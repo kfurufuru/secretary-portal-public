@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スキル一覧 — Secretary</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:          #0a0e1a;
+      --surface:     rgba(15,22,41,0.60);
+      --surface2:    rgba(15,22,41,0.85);
+      --border:      rgba(255,255,255,0.08);
+      --border-h:    rgba(255,255,255,0.18);
+      --text:        rgba(255,255,255,0.92);
+      --text2:       rgba(255,255,255,0.60);
+      --text3:       rgba(255,255,255,0.35);
+      --accent:      #22d3ee;
+      --accent-h:    #67e8f9;
+      --accent-glow: rgba(34,211,238,0.20);
+      --accent-sub:  #6366f1;
+      --accent-sub-h:#818cf8;
+      --green:       #10b981;
+      --yellow:      #f59e0b;
+      --red:         #ef4444;
+      --cyan:        #22d3ee;
+      --shadow:      rgba(0,0,0,0.5);
+      --header-bg:   rgba(10,14,26,0.90);
+      /* spacing */
+      --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
+      --sp-6:24px; --sp-8:32px; --sp-12:48px; --sp-16:64px;
+      /* typography */
+      --font-base: 'Inter','Noto Sans JP',sans-serif;
+      --fs-h1:2rem; --fs-h2:1.5rem; --fs-h3:1.25rem;
+      --fs-body: clamp(0.875rem, 2.5vw, 1rem); --fs-sm:0.78rem; --lh-body:1.6;
+      --fw-normal:400; --fw-bold:700;
+      --radius-sm:6px; --radius-md:14px; --radius-lg:20px;
+      --transition:0.2s ease;
+      --hover-lift: translateY(-2px);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html { line-break: strict; overflow-wrap: break-word; word-break: normal; }
+    body{
+      font-family:var(--font-base);
+      background:var(--bg); color:var(--text);
+      min-height:100vh;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    /* ---- ORBS ---- */
+    .orb{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0;}
+    .orb-1{width:520px;height:520px;background:#6366f1;opacity:.05;top:-160px;left:-120px;}
+    .orb-2{width:360px;height:360px;background:#06b6d4;opacity:.04;top:50%;right:-80px;}
+    .orb-3{width:280px;height:280px;background:#a855f7;opacity:.03;bottom:80px;left:38%;}
+
+    /* ---- HEADER ---- */
+    header{
+      position:sticky;top:0;z-index:200;
+      padding:12px 32px;
+      background:var(--header-bg);
+      backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:12px;
+    }
+    .logo{
+      font-size:0.9rem;font-weight:700;letter-spacing:-0.02em;
+      background:linear-gradient(135deg,#a5b4fc,#818cf8 50%,#c084fc);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    }
+    .header-back{
+      display:flex;align-items:center;gap:8px;
+      color:var(--text3);text-decoration:none;font-size:0.82rem;
+      cursor:pointer;transition:color var(--transition);
+    }
+    .header-back:hover{color:var(--accent);}
+    .header-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+    /* ---- MAIN GRID ---- */
+    main{
+      position:relative;z-index:1;
+      max-width:1040px;margin:0 auto;
+      padding:24px 24px 80px;
+      display:grid;
+      grid-template-columns:repeat(12,1fr);
+      gap:12px;
+    }
+
+    /* ---- CARD ---- */
+    .card{
+      background:var(--surface);
+      backdrop-filter:blur(8px) saturate(160%);
+      border:1px solid var(--border);
+      border-radius:var(--radius-lg);
+      padding:var(--sp-6);
+      box-shadow:0 8px 32px var(--shadow),inset 0 1px 0 rgba(255,255,255,0.05);
+      transition:border-color var(--transition),transform var(--transition);
+      grid-column: span 12;
+    }
+    .card:hover{border-color:var(--border-h);}
+    .card-label{
+      font-size:0.62rem;font-weight:600;letter-spacing:.10em;text-transform:uppercase;
+      color:var(--text3);margin-bottom:var(--sp-3);
+    }
+    .card-title{font-size:1rem;font-weight:600;letter-spacing:-0.01em;margin-bottom:4px;}
+
+    /* ---- SKILLS ---- */
+    .skills-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .skills-filter {
+      flex: 1; min-width: 160px; max-width: 280px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 12px;
+      color: var(--text); font-size: 0.82rem; font-family: var(--font-base);
+      outline: none; transition: border-color var(--transition);
+    }
+    .skills-filter:focus { border-color: var(--accent); }
+    .skills-filter::placeholder { color: var(--text3); }
+    .skills-group { margin-bottom: 18px; }
+    .skills-group-title {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: .10em; text-transform: uppercase;
+      color: var(--text3); padding: 0 4px 8px; border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .skills-table { width: 100%; border-collapse: collapse; }
+    .skills-table tr { border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .skills-table tr:last-child { border-bottom: none; }
+    .skills-table tr:hover td { background: rgba(255,255,255,0.03); }
+    .skills-table td { padding: 7px 8px; vertical-align: middle; }
+    .skill-cmd {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.82rem; font-weight: 600;
+      color: var(--accent); white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .skill-desc {
+      font-size: 0.78rem; color: var(--text2); flex: 1;
+    }
+    .skill-cost {
+      font-size: 0.68rem; font-weight: 600; white-space: nowrap;
+    }
+    .copy-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      cursor: pointer; color: var(--text3); background: transparent;
+      border: none; padding: 4px 8px; border-radius: 4px;
+      font-size: 0.8rem; transition: color var(--transition), background var(--transition);
+      line-height: 1;
+    }
+    .copy-btn:hover { color: var(--accent); background: rgba(34,211,238,0.08); }
+    .copy-btn.copied { color: var(--green); }
+    .skills-toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(16,185,129,0.18); border: 1px solid rgba(16,185,129,0.40);
+      color: #6ee7b7; font-size: 0.78rem; font-weight: 600;
+      padding: 8px 20px; border-radius: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s ease; z-index: 999;
+    }
+    .skills-toast.show { opacity: 1; }
+
+    /* ---- FOOTER ---- */
+    footer{
+      position:fixed;bottom:0;left:0;right:0;z-index:100;
+      padding:12px 24px;
+      background:var(--header-bg);
+      border-top:1px solid var(--border);
+      font-size:0.68rem;color:var(--text3);
+      text-align:center;
+      backdrop-filter:blur(20px);
+    }
+
+    /* ---- RESPONSIVE ---- */
+    @media(max-width:768px){
+      header{padding:12px 16px;}
+      main{padding:16px 16px 80px;}
+      .skills-header{flex-direction:column;align-items:stretch;}
+      .skills-filter{max-width:100%;}
+      .card{padding:var(--sp-4);}
+      .skills-table td{padding:5px 6px;font-size:0.75rem;}
+    }
+    @media(max-width:480px){
+      header{padding:8px 12px;}
+      .logo{font-size:0.8rem;}
+      main{padding:12px 12px 80px;}
+      .card{padding:var(--sp-3);border-radius:12px;}
+      .card-title{font-size:0.9rem;}
+      .skills-table td{padding:4px 4px;font-size:0.7rem;}
+      .skill-cmd{font-size:0.75rem;}
+      .skill-desc{font-size:0.7rem;}
+    }
+  header{position:relative}.portal-back{position:absolute;top:12px;right:16px;font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:rgba(255,255,255,0.03);color:#8a94b0;text-decoration:none;transition:border-color .15s,color .15s}.portal-back:hover{color:#fff;border-color:#ffd54f}
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<header><a class="portal-back" href="index.html">← Portal</a>
+  <a href="index.html" class="header-back">← ポータルに戻る</a>
+  <span class="logo">⚡ Secretary v2</span>
+  <div class="header-right"></div>
+</header>
+
+<main>
+  <div class="card">
+    <div class="card-label">Command Reference</div>
+    <div class="card-title">🛠️ スキル一覧</div>
+    <div class="skills-header">
+      <input class="skills-filter" id="skills-filter" placeholder="🔍 コマンド検索..." oninput="filterSkills(this.value)">
+      <span style="font-size:0.72rem;color:var(--text3);" id="skills-count"></span>
+    </div>
+    <div id="skills-body"></div>
+  </div>
+</main>
+
+<div class="skills-toast" id="skills-toast">コピーしました ✓</div>
+
+<footer>
+Secretary v2 — Command Reference
+</footer>
+
+<script>
+const SKILLS = [
+  { group: "🗺️ 知識グラフ", cmd: "/知識グラフ",              desc: "[[wiki-link]] → vis.js インタラクティブHTMLグラフ生成", cost: "green" },
+  { group: "🗺️ 知識グラフ", cmd: "/接続",                    desc: "全ナレッジ走査 → wiki-link 自動補完（重複なし）", cost: "yellow" },
+  { group: "🗺️ 知識グラフ", cmd: "/パイプライン [テーマ]",   desc: "海外リサーチ → ナレッジ化 → 接続 → 品質チェック → 投稿素材", cost: "yellow" },
+  { group: "🗺️ 知識グラフ", cmd: "/検証",                    desc: "重複・粒度・タグ不統一・旧情報の品質チェック", cost: "yellow" },
+  { group: "🗺️ 知識グラフ", cmd: "/last30days",              desc: "30日間の知識代謝レポート（孤立ノード・成長トピック）", cost: "yellow" },
+  { group: "⚡ 知識DB",      cmd: "知識追加 [テーマ]",        desc: "knowledge/ に新規ナレッジを追加", cost: "yellow" },
+  { group: "⚡ 知識DB",      cmd: "知識検索 [KW]",            desc: "キーワードで knowledge/ を横断検索", cost: "yellow" },
+  { group: "⚡ 知識DB",      cmd: "トラブル知識化",            desc: "factory/trouble-log から knowledge/ へ昇格", cost: "yellow" },
+  { group: "⚡ 知識DB",      cmd: "仮公開",                   desc: "level: draft → review に更新", cost: "green" },
+  { group: "⚡ 知識DB",      cmd: "知識棚卸し",               desc: "knowledge/ 全体の状況確認・整理提案", cost: "yellow" },
+  { group: "🔄 知識昇格",    cmd: "知識昇格",                 desc: "promote.py 実行 → L1→L2 自動昇格", cost: "yellow" },
+  { group: "🔄 知識昇格",    cmd: "昇格プレビュー",           desc: "py promote.py --dry-run で昇格候補を確認", cost: "green" },
+  { group: "🔄 知識昇格",    cmd: "昇格ログ",                 desc: "py promote.py --list-drafts でレビュー待ち一覧", cost: "green" },
+  { group: "🤝 Fカンパニー", cmd: "判断セッション [議題]",    desc: "マンガー・ダリオ・羽生が議題を多角分析", cost: "yellow" },
+  { group: "🤝 Fカンパニー", cmd: "実行セッション [タスク]",  desc: "ホリエモン・マスク・ひろゆきが実行を推進", cost: "yellow" },
+  { group: "🤝 Fカンパニー", cmd: "学習セッション [テーマ]",  desc: "テスラ・池谷・オークレーが学習設計", cost: "yellow" },
+  { group: "🤝 Fカンパニー", cmd: "設計セッション [設備名]",  desc: "デミング・豊田・落合陽一が設備設計", cost: "yellow" },
+  { group: "🤝 Fカンパニー", cmd: "戦略セッション",           desc: "孫・シネック・ホフマンが中長期戦略", cost: "red" },
+  { group: "🤝 Fカンパニー", cmd: "レビューセッション [成果物]", desc: "ジョブズ・ひろゆき・ホリエモンが成果物検証", cost: "yellow" },
+  { group: "🤝 Fカンパニー", cmd: "感情セッション",           desc: "さんま・オプラ・ミシェルが感情整理", cost: "green" },
+  { group: "🧠 発想支援",    cmd: "ブレスト [テーマ]",        desc: "発散思考でアイデア列挙", cost: "green" },
+  { group: "🧠 発想支援",    cmd: "ブレスト+",                desc: "制約・逆説・類推を加えた深堀りブレスト", cost: "yellow" },
+  { group: "🧠 発想支援",    cmd: "アイデアフォース [テーマ]", desc: "SCAMPER × 強制連想でアイデア発散", cost: "yellow" },
+  { group: "🧠 発想支援",    cmd: "強制発想",                 desc: "ランダム単語と課題を強制結合", cost: "yellow" },
+  { group: "📋 業務",        cmd: "日報作って",               desc: "本日の活動から日報を自動生成", cost: "yellow" },
+  { group: "📋 業務",        cmd: "育成計画作成 [メンバー]",  desc: "メンバー別育成計画を作成", cost: "yellow" },
+  { group: "📋 業務",        cmd: "受信箱整理",               desc: "Gmail MCP → 優先度・対応提案を構造化", cost: "yellow" },
+  { group: "📋 業務",        cmd: "朝のブリーフィング",        desc: "前日タスク・学習進捗の定時レポート生成", cost: "yellow" },
+  { group: "✍️ 生成",        cmd: "note記事を書いて [テーマ]", desc: "note.com有料記事（フィクション対応）", cost: "yellow" },
+  { group: "✍️ 生成",        cmd: "[名前] 作って",            desc: "HTML/React等のUI生成（67スタイル対応）", cost: "yellow" },
+  { group: "🔍 リサーチ",    cmd: "Xリサーチ",                desc: "X（旧Twitter）で最新動向をリサーチ", cost: "yellow" },
+  { group: "🔍 リサーチ",    cmd: "YTリサーチ",               desc: "YouTube で関連動画・知識収集", cost: "yellow" },
+  { group: "🏗️ 設備投資",   cmd: "仕様検討 [設備名]",        desc: "設備投資の仕様・要件を整理", cost: "yellow" },
+  { group: "🏗️ 設備投資",   cmd: "設備投資レビュー",          desc: "設備投資計画の多角レビュー", cost: "yellow" },
+  { group: "🏗️ 設備投資",   cmd: "稟議資料作成支援",          desc: "稟議書のドラフトを生成", cost: "yellow" },
+  { group: "🤖 デジタルツイン", cmd: "決定記録",              desc: "重要な意思決定を digital-twin/ に記録", cost: "yellow" },
+  { group: "🤖 デジタルツイン", cmd: "パターン分析",          desc: "判断ログから思考パターンを抽出", cost: "yellow" },
+  { group: "🤖 デジタルツイン", cmd: "ツイン参照",            desc: "digital-twin/ の判断軸を参照", cost: "yellow" },
+  { group: "🎓 フェインマン", cmd: "フェインマン [テーマ]",   desc: "理解度確認 → 弱点抽出 → 再説明", cost: "yellow" },
+  { group: "🎓 フェインマン", cmd: "学習プラン",              desc: "電験学習スケジュールを最適化", cost: "yellow" },
+  { group: "🎓 フェインマン", cmd: "誤答記録 [カテゴリ] [L1] [L2]", desc: "誤答を e-log に記録", cost: "green" },
+  { group: "🌍 ダイジェスト", cmd: "世界ダイジェスト",        desc: "海外ニュースを5分野で要約 ⚠️重い", cost: "red" },
+  { group: "🌍 ダイジェスト", cmd: "ダイジェスト深掘り [番号]", desc: "ダイジェスト特定トピックを深掘り", cost: "yellow" },
+  { group: "🔧 メタ",        cmd: "Skill作って [要件]",       desc: "新規SKILL.mdを設計・雛形生成", cost: "yellow" },
+  { group: "🔧 メタ",        cmd: "レビューして [対象]",      desc: "HTML・Skill・コード品質レポート", cost: "yellow" },
+  { group: "🔧 メタ",        cmd: "コンテキスト確認",         desc: "現在のコンテキスト・設定状況を確認", cost: "green" },
+];
+
+function renderSkills(data) {
+  const body = document.getElementById('skills-body');
+  const groups = {};
+  data.forEach(s => { (groups[s.group] = groups[s.group] || []).push(s); });
+  const costLabel = { green: '🟢 軽', yellow: '🟡 中', red: '🔴 重' };
+  body.innerHTML = Object.entries(groups).map(([g, items]) => `
+    <div class="skills-group">
+      <div class="skills-group-title">${g}</div>
+      <table class="skills-table">
+        ${items.map(s => `
+          <tr>
+            <td><span class="skill-cmd" onclick="copycmd(this,'${escHtml(s.cmd)}')" style="cursor:pointer;">
+              ${escHtml(s.cmd)} <button class="copy-btn">📋</button>
+            </span></td>
+            <td><span class="skill-desc">${escHtml(s.desc)}</span></td>
+            <td><span class="skill-cost">${costLabel[s.cost]}</span></td>
+          </tr>
+        `).join('')}
+      </table>
+    </div>
+  `).join('');
+  document.getElementById('skills-count').textContent = `${data.length} 件`;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function filterSkills(q) {
+  const kw = q.trim().toLowerCase();
+  renderSkills(kw ? SKILLS.filter(s =>
+    s.cmd.toLowerCase().includes(kw) ||
+    s.desc.toLowerCase().includes(kw) ||
+    s.group.toLowerCase().includes(kw)
+  ) : SKILLS);
+}
+
+let toastTimer;
+function copycmd(el, cmd) {
+  navigator.clipboard.writeText(cmd).then(() => {
+    const toast = document.getElementById('skills-toast');
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+  });
+}
+
+renderSkills(SKILLS);
+</script>
+
+</body>
+</html>

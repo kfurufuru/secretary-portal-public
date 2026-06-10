@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI News Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --font-base: 'Inter', 'Noto Sans JP', sans-serif;
+  --fs-h1:   2rem;
+  --fs-h2:   1.5rem;
+  --fs-h3:   1.25rem;
+  --fs-body: 0.92rem;
+  --fs-sm:   0.82rem;
+  --lh-body: 1.6;
+  --fw-normal: 400;
+  --fw-bold:   700;
+
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
+  --sp-6: 24px; --sp-8: 32px; --sp-12: 48px;
+
+  --transition: 0.2s ease;
+  --hover-lift: translateY(-2px);
+  --radius-sm: 6px; --radius-md: 12px; --radius-lg: 20px;
+
+  /* Slate Frost palette */
+  --color-bg:      #0f172a;
+  --color-bg2:     #1e293b;
+  --color-bg3:     #0d1f35;
+  --color-accent:  #38bdf8;
+  --color-accent2: #818cf8;
+  --color-text:    #e2e8f0;
+  --color-muted:   #64748b;
+  --color-border:  rgba(255,255,255,0.08);
+  --color-glass:   rgba(30,41,59,0.7);
+  --color-card:    rgba(15,23,42,0.85);
+
+  --score5: #f43f5e;
+  --score4: #f97316;
+  --score3: #eab308;
+  --score2: #22d3ee;
+  --score1: #64748b;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-base);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(56,189,248,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(129,140,248,0.07) 0%, transparent 60%);
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+header {
+  background: var(--color-glass);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--sp-4) var(--sp-8);
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: var(--sp-4);
+}
+.logo {
+  font-size: 1.1rem; font-weight: var(--fw-bold);
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: 0.05em;
+}
+.back-btn {
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  padding: 4px 12px; border-radius: var(--radius-sm);
+  background: rgba(56,189,248,0.10); border: 1px solid rgba(56,189,248,0.25);
+  color: var(--color-accent); font-size: var(--fs-sm); text-decoration: none;
+  transition: var(--transition);
+}
+.back-btn:hover { background: rgba(56,189,248,0.20); transform: var(--hover-lift); }
+.header-meta { color: var(--color-muted); font-size: var(--fs-sm); margin-left: auto; }
+.last-updated { color: var(--color-accent); }
+
+/* ── Layout ── */
+.container { max-width: 1200px; margin: 0 auto; padding: var(--sp-6) var(--sp-8); }
+
+/* ── Stats Bar ── */
+.stats-bar {
+  display: flex; gap: var(--sp-4); margin-bottom: var(--sp-6);
+  flex-wrap: wrap;
+}
+.stat-card {
+  background: var(--color-glass);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3) var(--sp-4);
+  min-width: 120px; text-align: center;
+}
+.stat-val { font-size: 1.5rem; font-weight: var(--fw-bold); color: var(--color-accent); }
+.stat-lbl { font-size: var(--fs-sm); color: var(--color-muted); }
+
+/* ── Tabs ── */
+.tabs {
+  display: flex; gap: var(--sp-2); margin-bottom: var(--sp-6); flex-wrap: wrap;
+}
+.tab {
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: var(--fs-sm); cursor: pointer;
+  transition: all var(--transition);
+}
+.tab:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.tab.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #0f172a; font-weight: var(--fw-bold);
+}
+
+/* ── Search ── */
+.search-wrap { position: relative; margin-bottom: var(--sp-6); }
+.search-wrap i { position: absolute; left: var(--sp-4); top: 50%; transform: translateY(-50%); color: var(--color-muted); }
+#search {
+  width: 100%; padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-8);
+  background: var(--color-glass);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text); font-size: var(--fs-body);
+  outline: none; transition: border-color var(--transition);
+}
+#search:focus { border-color: var(--color-accent); }
+
+/* ── Today's Pick ── */
+.section-title {
+  font-size: var(--fs-h3); font-weight: var(--fw-bold);
+  margin-bottom: var(--sp-4); display: flex; align-items: center; gap: var(--sp-2);
+}
+.section-title span { color: var(--color-accent); }
+
+.picks-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--sp-4); margin-bottom: var(--sp-8);
+}
+
+/* ── News Card ── */
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-4);
+  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+  position: relative; overflow: hidden;
+  cursor: pointer;
+}
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--score-color, var(--color-accent)), transparent);
+}
+.card:hover {
+  transform: var(--hover-lift);
+  border-color: var(--color-accent);
+  box-shadow: 0 8px 24px rgba(56,189,248,0.12);
+}
+.card-header { display: flex; align-items: flex-start; gap: var(--sp-2); margin-bottom: var(--sp-2); }
+.card-title { display: none; }
+
+/* ── Tier Badge（スコア3段階ラベル） ── */
+.tier-badge {
+  font-size: var(--fs-sm); font-weight: var(--fw-bold);
+  padding: 2px var(--sp-3); border-radius: 999px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.tier-red    { background: rgba(244,63,94,0.15);   color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); }
+.tier-yellow { background: rgba(234,179,8,0.15);   color: #eab308; border: 1px solid rgba(234,179,8,0.3); }
+.tier-gray   { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.2); }
+
+/* ── Headline / Detail ── */
+.card-headline {
+  font-size: var(--fs-body); font-weight: var(--fw-bold);
+  color: var(--color-text); margin-bottom: var(--sp-1);
+  line-height: 1.5;
+}
+.card-detail {
+  font-size: var(--fs-sm); color: var(--color-muted);
+  margin-top: var(--sp-1); margin-bottom: var(--sp-2);
+  line-height: 1.5;
+}
+
+/* ── Reason（常時表示） ── */
+.card-reason {
+  font-size: var(--fs-sm); color: var(--color-muted); margin-bottom: var(--sp-3);
+  padding-left: var(--sp-3); border-left: 2px solid var(--color-border);
+  display: block;
+}
+.card-footer { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.tag {
+  padding: 2px var(--sp-2); border-radius: var(--radius-sm);
+  font-size: 0.75rem; border: 1px solid var(--color-border);
+  color: var(--color-muted);
+}
+.tag.category { color: var(--color-accent2); border-color: rgba(129,140,248,0.3); }
+.tag.source   { color: var(--color-accent);  border-color: rgba(56,189,248,0.3); }
+.tag.tried    { color: #4ade80; border-color: rgba(74,222,128,0.3); background: rgba(74,222,128,0.08); }
+.card-actions { margin-left: auto; display: flex; gap: var(--sp-2); }
+.card-link { color: var(--color-muted); transition: color var(--transition); cursor: pointer; background: none; border: none; padding: 0; }
+.card-link:hover { color: var(--color-accent); }
+.card-open-link {
+  font-size: var(--fs-sm); color: var(--color-accent);
+  text-decoration: none; font-weight: var(--fw-bold);
+  transition: opacity var(--transition);
+}
+.card-open-link:hover { opacity: 0.75; }
+
+/* ── try-hint（🔴のみ常時表示） ── */
+.try-hint {
+  margin-top: var(--sp-2); padding: var(--sp-2) var(--sp-3);
+  background: rgba(56,189,248,0.08);
+  border-left: 2px solid var(--color-accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: var(--fs-sm); color: var(--color-accent);
+  display: block;
+}
+.no-summary { color: var(--score1); font-style: italic; }
+
+/* ── Featured Card（Today's Pick 1位） ── */
+.card.card-featured {
+  grid-column: 1 / -1;
+  background: var(--color-bg2);
+  border-color: rgba(244,63,94,0.4);
+}
+.card.card-featured .card-headline {
+  font-size: var(--fs-h3);
+}
+
+/* ── Digest View ── */
+.digest-view { display: none; }
+.digest-view.active { display: block; }
+.digest-item {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-4) var(--sp-6);
+  margin-bottom: var(--sp-3);
+  position: relative;
+}
+.digest-item::before {
+  content: '';
+  position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+  background: var(--score-color, var(--color-accent));
+  border-radius: 3px 0 0 3px;
+}
+.digest-meta {
+  display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2);
+  font-size: var(--fs-sm); color: var(--color-muted);
+}
+.digest-headline {
+  font-size: var(--fs-body); font-weight: var(--fw-bold);
+  color: var(--color-text); line-height: 1.7;
+  margin-bottom: var(--sp-1);
+}
+.digest-detail {
+  font-size: var(--fs-sm); color: var(--color-muted);
+  line-height: 1.6; margin-bottom: var(--sp-2);
+}
+.digest-reason {
+  font-size: var(--fs-sm); color: var(--color-muted);
+  padding-left: var(--sp-3); border-left: 2px solid var(--color-border);
+  margin-bottom: var(--sp-2);
+}
+.digest-actions {
+  display: flex; gap: var(--sp-3); font-size: var(--fs-sm);
+}
+.digest-actions a {
+  color: var(--color-accent); text-decoration: none;
+}
+.digest-actions a:hover { text-decoration: underline; }
+
+/* ── Feed Grid ── */
+.feed-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--sp-3);
+}
+.feed-grid.hidden { display: none; }
+
+/* ── Empty State ── */
+.empty {
+  text-align: center; padding: var(--sp-12);
+  color: var(--color-muted);
+}
+.empty i { display: block; margin: 0 auto var(--sp-4); }
+
+/* ── Tried Overlay ── */
+.tried-overlay { display: none; }
+.card.tried .card-title { opacity: 0.6; }
+.card.tried .tried-overlay { display: inline; }
+
+/* ── Score colors（::before ライン用） ── */
+.card[data-score="5"] { --score-color: var(--score5); }
+.card[data-score="4"] { --score-color: var(--score4); }
+.card[data-score="3"] { --score-color: var(--score3); }
+.card[data-score="2"] { --score-color: var(--score2); }
+.card[data-score="1"] { --score-color: var(--score1); }
+
+/* ── Ideas View ── */
+.ideas-view { display: none; }
+.ideas-view.active { display: block; }
+.idea-chips {
+  display: flex; gap: var(--sp-2); flex-wrap: nowrap;
+  overflow-x: auto; padding-bottom: var(--sp-2); margin-bottom: var(--sp-4);
+  scrollbar-width: thin; scrollbar-color: var(--color-muted) transparent;
+}
+.idea-chip {
+  flex-shrink: 0; padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--radius-lg); border: 1px solid var(--color-border);
+  background: var(--color-bg2); color: var(--color-muted);
+  cursor: pointer; font-size: var(--fs-sm); transition: var(--transition);
+  white-space: nowrap;
+}
+.idea-chip.active, .idea-chip:hover {
+  border-color: var(--color-accent2);
+  background: rgba(129,140,248,0.12);
+  color: var(--color-accent2);
+}
+.ideas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--sp-4);
+}
+.idea-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-4);
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.idea-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-accent2), #a78bfa);
+}
+.idea-card:hover {
+  transform: var(--hover-lift);
+  box-shadow: 0 8px 24px rgba(129,140,248,0.15);
+}
+.idea-card.starred { border-color: rgba(129,140,248,0.4); }
+.idea-cat-badge {
+  display: inline-block; font-size: var(--fs-sm);
+  padding: 2px var(--sp-2); border-radius: var(--radius-sm);
+  background: rgba(129,140,248,0.15); color: var(--color-accent2);
+  margin-bottom: var(--sp-2);
+}
+.idea-title {
+  font-size: 1rem; font-weight: var(--fw-bold);
+  color: var(--color-text); margin-bottom: var(--sp-2);
+  line-height: 1.4;
+}
+.idea-summary { font-size: var(--fs-sm); color: var(--color-muted); margin-bottom: var(--sp-2); }
+.idea-hypothesis { font-size: var(--fs-sm); color: var(--color-text); margin-bottom: var(--sp-2); }
+.idea-action {
+  font-size: var(--fs-sm); color: #4ade80;
+  background: rgba(74,222,128,0.08); border-radius: var(--radius-sm);
+  padding: var(--sp-2) var(--sp-3); margin-bottom: var(--sp-2);
+}
+.idea-action::before { content: '▶ '; }
+.idea-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: var(--sp-3); gap: var(--sp-2); flex-wrap: wrap;
+}
+.idea-persona { font-size: var(--fs-sm); color: var(--color-muted); font-style: italic; }
+.idea-star-btn {
+  background: none; border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm); padding: 4px var(--sp-2);
+  cursor: pointer; color: var(--color-muted); font-size: var(--fs-sm);
+  transition: var(--transition); flex-shrink: 0;
+}
+.idea-star-btn:hover, .idea-star-btn.starred {
+  border-color: #f59e0b; color: #f59e0b;
+  background: rgba(245,158,11,0.1);
+}
+.idea-sources { margin-top: var(--sp-2); }
+.idea-sources summary {
+  cursor: pointer; font-size: var(--fs-sm); color: var(--color-muted);
+  list-style: none; padding: 2px 0;
+}
+.idea-sources summary::-webkit-details-marker { display: none; }
+.idea-sources a {
+  display: block; font-size: var(--fs-sm); color: var(--color-accent);
+  text-decoration: none; padding: 2px 0; margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.idea-sources a:hover { text-decoration: underline; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  header { padding: var(--sp-3) var(--sp-4); }
+  .container { padding: var(--sp-4); }
+  .picks-grid, .feed-grid, .ideas-grid { grid-template-columns: 1fr; }
+  .stats-bar { gap: var(--sp-2); }
+}
+@media (max-width: 480px) {
+  .logo { font-size: 0.95rem; }
+  .stat-val { font-size: 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-btn" href="../index.html">← ポータル</a>
+  <div class="logo">⚡ AI News</div>
+  <div class="header-meta">
+    最終更新: <span class="last-updated" id="lastUpdated">—</span>
+    &nbsp;|&nbsp; 合計: <span id="totalCount">0</span> 件
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats-bar" id="statsBar"></div>
+
+  <!-- Today's Pick -->
+  <div class="section-title"><span>🔥</span> Today's Pick（触ってみたい度 4+）</div>
+  <div class="picks-grid" id="picks"></div>
+
+  <!-- Search + Filter -->
+  <div class="search-wrap">
+    <i data-lucide="search"></i>
+    <input id="search" type="text" placeholder="キーワードで絞り込み...">
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-filter="all">すべて</button>
+    <button class="tab" data-filter="ツール">ツール</button>
+    <button class="tab" data-filter="テクニック">テクニック</button>
+    <button class="tab" data-filter="ニュース">ニュース</button>
+    <button class="tab" data-filter="論文">論文</button>
+    <button class="tab" data-filter="チュートリアル">チュートリアル</button>
+    <button class="tab" data-filter="手動">手動追加</button>
+    <button class="tab" data-filter="tried">✅ 試した</button>
+    <button class="tab" data-filter="ideas">✨ 革新アイデア</button>
+    <button class="tab digest-tab" data-filter="digest">📖 まとめ</button>
+  </div>
+
+  <div class="feed-grid" id="feed"></div>
+  <div class="digest-view" id="digest"></div>
+  <div class="ideas-view" id="ideas-section"></div>
+</div>
+
+<script>
+// ── State ──
+let allNews = [];
+let triedUrls = new Set(JSON.parse(localStorage.getItem('tried') || '[]'));
+let currentFilter = 'all';
+let searchQuery = '';
+let allIdeas = [];
+let starredIdeas = new Set(JSON.parse(localStorage.getItem('starred-ideas') || '[]'));
+let ideaCategoryFilter = 'all';
+
+// ── Load ideas.json ──
+async function loadIdeas() {
+  try {
+    const resp = await fetch('ideas.json?t=' + Date.now());
+    if (!resp.ok) throw new Error('ideas.json not found');
+    const data = await resp.json();
+    allIdeas = data.ideas || [];
+    if (currentFilter === 'ideas') renderIdeas();
+  } catch (e) {
+    allIdeas = [];
+    if (currentFilter === 'ideas') {
+      document.getElementById('ideas-section').innerHTML =
+        `<div class="empty"><i data-lucide="cpu" style="width:48px;height:48px"></i>
+         <p>ideas.json がまだありません。<br><code>py ai-news/idea_generator.py --dry-run</code> を実行してください。</p></div>`;
+      lucide.createIcons();
+    }
+  }
+}
+
+const IDEA_CAT_EMOJIS = {
+  '驚き発見': '🎯', '日常応用': '🏠', '個人成長': '🌱',
+  '仕事好転': '💼', 'Claude Code改善': '🤖', 'クロスドメイン': '🔗'
+};
+
+// ── Render Ideas ──
+function renderIdeas() {
+  const el = document.getElementById('ideas-section');
+  if (!el) return;
+
+  const cats = ['all', '驚き発見', '日常応用', '個人成長', '仕事好転', 'Claude Code改善', 'クロスドメイン'];
+  const chipsHTML = `<div class="idea-chips">
+    ${cats.map(c => `<button class="idea-chip${ideaCategoryFilter === c ? ' active' : ''}" data-cat="${c}">${c === 'all' ? 'すべて' : (IDEA_CAT_EMOJIS[c] || '') + ' ' + c}</button>`).join('')}
+  </div>`;
+
+  const filtered = ideaCategoryFilter === 'all'
+    ? allIdeas
+    : allIdeas.filter(i => i.category === ideaCategoryFilter);
+
+  if (filtered.length === 0) {
+    el.innerHTML = chipsHTML + `<div class="empty"><i data-lucide="lightbulb" style="width:48px;height:48px"></i><p>アイデアがありません</p></div>`;
+    el.querySelectorAll('.idea-chip').forEach(btn => btn.addEventListener('click', () => {
+      ideaCategoryFilter = btn.dataset.cat; renderIdeas();
+    }));
+    lucide.createIcons();
+    return;
+  }
+
+  const cardsHTML = filtered.map(idea => {
+    const starred = starredIdeas.has(idea.id);
+    const emoji = IDEA_CAT_EMOJIS[idea.category] || '💡';
+    const sources = (idea.source_news || []).slice(0, 3);
+    const sourcesHTML = sources.length
+      ? `<details class="idea-sources"><summary>📰 元ニュース ${sources.length}件</summary>
+          ${sources.map(s => `<a href="${s.url}" target="_blank" title="${s.title}">${s.title || s.url}</a>`).join('')}
+         </details>`
+      : '';
+    return `<div class="idea-card${starred ? ' starred' : ''}" data-id="${idea.id}">
+  <div class="idea-cat-badge">${emoji} ${idea.category || ''}</div>
+  <div class="idea-title">${idea.title || ''}</div>
+  <div class="idea-summary">${idea.summary || ''}</div>
+  <div class="idea-hypothesis">${idea.hypothesis || ''}</div>
+  <div class="idea-action">${idea.action || ''}</div>
+  ${sourcesHTML}
+  <div class="idea-footer">
+    <span class="idea-persona">${idea.persona_tag || ''}</span>
+    <button class="idea-star-btn${starred ? ' starred' : ''}" data-id="${idea.id}" title="${starred ? 'スター解除' : 'スターをつける'}">
+      ${starred ? '⭐ 保存済' : '☆ 書き出す'}
+    </button>
+  </div>
+</div>`;
+  }).join('');
+
+  el.innerHTML = chipsHTML + `<div class="ideas-grid">${cardsHTML}</div>`;
+
+  el.querySelectorAll('.idea-chip').forEach(btn => btn.addEventListener('click', () => {
+    ideaCategoryFilter = btn.dataset.cat; renderIdeas();
+  }));
+  el.querySelectorAll('.idea-star-btn').forEach(btn => btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const id = btn.dataset.id;
+    if (starredIdeas.has(id)) starredIdeas.delete(id);
+    else starredIdeas.add(id);
+    localStorage.setItem('starred-ideas', JSON.stringify([...starredIdeas]));
+    renderIdeas();
+  }));
+  lucide.createIcons();
+}
+
+// ── Load news.json ──
+async function loadNews() {
+  try {
+    const resp = await fetch('news.json?t=' + Date.now());
+    if (!resp.ok) throw new Error('news.json not found');
+    allNews = await resp.json();
+    render();
+  } catch (e) {
+    document.getElementById('feed').innerHTML =
+      `<div class="empty" style="grid-column:1/-1">
+        <i data-lucide="wifi-off" style="width:48px;height:48px"></i>
+        <p>news.json が見つかりません。<br>collector.py を実行してください。</p>
+      </div>`;
+    lucide.createIcons();
+  }
+}
+
+// ── スコアを3段階ラベルに変換 ──
+function scoreTier(score) {
+  if (score >= 4) return { label: '🔴 試す',    cls: 'tier-red' };
+  if (score >= 2) return { label: '🟡 知る',    cls: 'tier-yellow' };
+  return              { label: '⚪ スキップ', cls: 'tier-gray' };
+}
+
+// ── ja_summary を headline / detail に分割 ──
+function splitSummary(jaSummary) {
+  const firstStop = jaSummary.indexOf('。');
+  const headline  = firstStop >= 0 ? jaSummary.slice(0, firstStop + 1) : jaSummary;
+  const detail    = firstStop >= 0 ? jaSummary.slice(firstStop + 1).trim() : '';
+  return { headline, detail };
+}
+
+// ── Render ──
+function render() {
+  // dry-run を除外した基底リスト
+  const validNews = allNews.filter(n => n.ja_summary !== '(dry-run)');
+
+  // Stats（全件ベース）
+  const byCategory = {};
+  validNews.forEach(n => {
+    const c = n.ai_category || n.category || '未分類';
+    byCategory[c] = (byCategory[c] || 0) + 1;
+  });
+  const statsEl = document.getElementById('statsBar');
+  statsEl.innerHTML = Object.entries(byCategory).map(([c, v]) =>
+    `<div class="stat-card"><div class="stat-val">${v}</div><div class="stat-lbl">${c}</div></div>`
+  ).join('') +
+  `<div class="stat-card"><div class="stat-val">${triedUrls.size}</div><div class="stat-lbl">✅ 試した</div></div>`;
+
+  // Header meta
+  const latest = validNews[0]?.published || '';
+  document.getElementById('lastUpdated').textContent =
+    latest ? new Date(latest).toLocaleString('ja-JP', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+  document.getElementById('totalCount').textContent = validNews.length;
+
+  // Today's Pick（dry-run除外済み、score>=4）
+  const picks = validNews.filter(n => (n.score || 0) >= 4).slice(0, 6);
+  const picksEl = document.getElementById('picks');
+  if (picks.length === 0) {
+    picksEl.innerHTML = '<div class="empty" style="grid-column:1/-1"><p>スコア4以上のアイテムがありません</p></div>';
+  } else {
+    picksEl.innerHTML = picks.map((n, i) => cardHTML(n, true, i === 0)).join('');
+  }
+
+  // Feed（dry-run除外済みリストでフィルタ）
+  let filtered = validNews;
+  if (currentFilter === 'tried') {
+    filtered = validNews.filter(n => triedUrls.has(n.url));
+  } else if (currentFilter !== 'all' && currentFilter !== 'digest') {
+    filtered = validNews.filter(n => (n.ai_category || n.category) === currentFilter);
+  }
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(n =>
+      (n.title || '').toLowerCase().includes(q) ||
+      (n.ja_summary || '').toLowerCase().includes(q) ||
+      (n.source || '').toLowerCase().includes(q)
+    );
+  }
+
+  const feedEl   = document.getElementById('feed');
+  const digestEl = document.getElementById('digest');
+  const ideasEl  = document.getElementById('ideas-section');
+
+  if (currentFilter === 'digest') {
+    feedEl.classList.add('hidden');
+    digestEl.classList.add('active');
+    ideasEl.classList.remove('active');
+    digestEl.innerHTML = digestHTML(filtered);
+  } else if (currentFilter === 'ideas') {
+    feedEl.classList.add('hidden');
+    digestEl.classList.remove('active');
+    ideasEl.classList.add('active');
+    renderIdeas();
+  } else {
+    feedEl.classList.remove('hidden');
+    digestEl.classList.remove('active');
+    ideasEl.classList.remove('active');
+    if (filtered.length === 0) {
+      feedEl.innerHTML = '<div class="empty" style="grid-column:1/-1"><i data-lucide="inbox" style="width:48px;height:48px"></i><p>該当記事なし</p></div>';
+    } else {
+      feedEl.innerHTML = filtered.map(n => cardHTML(n, false, false)).join('');
+    }
+  }
+
+  lucide.createIcons();
+  bindEvents();
+}
+
+// ── Card HTML ──
+function cardHTML(n, isPick, isFeatured = false) {
+  const score  = n.score || 2;
+  const tried  = triedUrls.has(n.url);
+  const cat    = n.ai_category || n.category || '';
+  const pub    = n.published
+    ? new Date(n.published).toLocaleDateString('ja-JP', {month:'numeric',day:'numeric'})
+    : '';
+  const rawSummary = n.ja_summary && n.ja_summary !== '(dry-run)' ? n.ja_summary : '';
+  const reason = n.reason && n.reason !== '-' ? n.reason : '';
+  const hint   = score >= 4 && n.try_hint && n.try_hint !== '-' && n.try_hint !== '' ? n.try_hint : '';
+
+  const tier = scoreTier(score);
+
+  let headlineHTML, detailHTML;
+  if (rawSummary) {
+    const { headline, detail } = splitSummary(rawSummary);
+    headlineHTML = `<div class="card-headline">${headline}</div>`;
+    detailHTML   = detail ? `<div class="card-detail">${detail}</div>` : '';
+  } else {
+    headlineHTML = `<div class="card-headline"><span class="no-summary">要約未生成</span></div>`;
+    detailHTML   = '';
+  }
+
+  const featuredClass = isFeatured ? ' card-featured' : '';
+
+  return `
+<div class="card${featuredClass}${tried ? ' tried' : ''}" data-score="${score}" data-url="${n.url}" onclick="window.open('${n.url}','_blank')">
+  <div class="card-header">
+    <div class="card-title">${n.title || '（タイトルなし）'}<span class="tried-overlay"> ✅</span></div>
+    <span class="tier-badge ${tier.cls}">${tier.label}</span>
+  </div>
+  ${headlineHTML}
+  ${detailHTML}
+  ${reason ? `<div class="card-reason">📊 ${reason}</div>` : ''}
+  ${hint ? `<div class="try-hint">💡 ${hint}</div>` : ''}
+  <div class="card-footer">
+    ${cat ? `<span class="tag category">${cat}</span>` : ''}
+    <span class="tag source">${n.source || ''}</span>
+    ${pub ? `<span class="tag">${pub}</span>` : ''}
+    ${tried ? `<span class="tag tried">✅ 試した</span>` : ''}
+    <div class="card-actions">
+      <button class="try-btn card-link" title="試した／未試に切り替え" data-url="${n.url}">
+        <i data-lucide="${tried ? 'rotate-ccw' : 'check-circle'}"></i>
+      </button>
+      <a href="${n.url}" target="_blank" class="card-open-link" onclick="event.stopPropagation()">元記事を読む →</a>
+    </div>
+  </div>
+</div>`;
+}
+
+// ── Digest HTML ──
+function digestHTML(items) {
+  if (items.length === 0) {
+    return '<div class="empty"><i data-lucide="inbox" style="width:48px;height:48px"></i><p>該当記事なし</p></div>';
+  }
+  return items.map(n => {
+    const score  = n.score || 2;
+    const cat    = n.ai_category || n.category || '';
+    const pub    = n.published
+      ? new Date(n.published).toLocaleDateString('ja-JP', {month:'numeric',day:'numeric'})
+      : '';
+    const rawSummary = n.ja_summary && n.ja_summary !== '(dry-run)' ? n.ja_summary : '';
+    const reason = n.reason && n.reason !== '-' ? n.reason : '';
+    const hint   = score >= 4 && n.try_hint && n.try_hint !== '-' && n.try_hint !== '' ? n.try_hint : '';
+
+    const tier = scoreTier(score);
+
+    let headlineHTML, detailHTML;
+    if (rawSummary) {
+      const { headline, detail } = splitSummary(rawSummary);
+      headlineHTML = `<div class="digest-headline">${headline}</div>`;
+      detailHTML   = detail ? `<div class="digest-detail">${detail}</div>` : '';
+    } else {
+      headlineHTML = `<div class="digest-headline"><span class="no-summary">要約未生成</span></div>`;
+      detailHTML   = '';
+    }
+
+    return `
+<div class="digest-item" data-score="${score}" style="--score-color: var(--score${score})">
+  <div class="digest-meta">
+    <span class="tier-badge ${tier.cls}">${tier.label}</span>
+    ${cat ? `<span class="tag category">${cat}</span>` : ''}
+    <span class="tag source">${n.source || ''}</span>
+    ${pub ? `<span>${pub}</span>` : ''}
+  </div>
+  ${headlineHTML}
+  ${detailHTML}
+  ${reason ? `<div class="digest-reason">📊 ${reason}</div>` : ''}
+  ${hint ? `<div class="try-hint">💡 ${hint}</div>` : ''}
+  <div class="digest-actions">
+    <a href="${n.url}" target="_blank">🔗 元記事を開く</a>
+  </div>
+</div>`;
+  }).join('');
+}
+
+// ── Events ──
+function bindEvents() {
+  document.querySelectorAll('.try-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const url = btn.dataset.url;
+      if (triedUrls.has(url)) triedUrls.delete(url);
+      else triedUrls.add(url);
+      localStorage.setItem('tried', JSON.stringify([...triedUrls]));
+      render();
+    });
+  });
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentFilter = tab.dataset.filter;
+    render();
+  });
+});
+
+// digest tab style
+document.querySelector('.digest-tab').style.cssText =
+  'background: rgba(56,189,248,0.1); border-color: rgba(56,189,248,0.3); color: var(--color-accent);';
+
+document.getElementById('search').addEventListener('input', e => {
+  searchQuery = e.target.value;
+  render();
+});
+
+// ── Init ──
+loadNews();
+loadIdeas();
+// 10分ごとに自動リロード
+setInterval(loadNews, 10 * 60 * 1000);
+setInterval(loadIdeas, 10 * 60 * 1000);
+</script>
+</body>
+</html>

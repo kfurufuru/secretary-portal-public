@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スキル診断 | Business Skills</title>
+<meta name="description" content="McKinsey / GAFA PM / 日本の優秀な管理職 — あなたのビジネススキルはどのレベルか。18問で診断。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet"></noscript>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="shared.css">
+<style>
+:root {
+  --font-base: 'Inter', 'Noto Sans JP', sans-serif;
+  --fs-body: 0.95rem; --fs-sm: 0.82rem; --fs-lg: 1.1rem;
+  --lh-body: 1.6; --lh-long: 1.8;
+  --fw-normal: 400; --fw-bold: 700;
+  --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
+  --sp-6: 24px; --sp-8: 32px; --sp-12: 48px; --sp-16: 64px;
+  --transition: 0.2s ease;
+  --radius-sm: 6px; --radius-md: 12px; --radius-lg: 20px;
+
+  --bg: #f6f5f2; --bg-card: #ffffff; --bg-hover: #ecebe6;
+  --accent: #0284c7; --accent-dim: rgba(56,189,248,0.12);
+  --accent-amber: #f59e0b; --accent-amber-dim: rgba(245,158,11,0.12);
+  --accent-green: #10b981; --accent-red: #f43f5e; --accent-purple: #a78bfa;
+  --text: #292a2e; --text-muted: #57606e; --text-dim: #8a8f9a;
+  --border: rgba(0,0,0,0.10); --border-hover: rgba(56,189,248,0.45);
+  --nav-bg: rgba(0,0,0,0.04);
+}
+html { scroll-behavior: smooth; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+body {
+  font-family: var(--font-base); background: var(--bg); color: var(--text);
+  line-height: var(--lh-body); font-size: var(--fs-body);
+  line-break: strict; overflow-wrap: break-word; word-break: normal;
+  min-height: 100vh;
+}
+
+/* ── Nav ── */
+.top-nav {
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  background: var(--nav-bg); border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 0 var(--sp-6); height: 48px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.nav-back {
+  display: flex; align-items: center; gap: var(--sp-2);
+  text-decoration: none; color: var(--text-muted);
+  font-size: var(--fs-sm); font-weight: 600; transition: color var(--transition);
+}
+.nav-back:hover { color: var(--accent); }
+.nav-title { font-size: var(--fs-sm); color: var(--text-dim); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* ── Screens ── */
+.screen { display: none; animation: fadeIn 0.4s ease; }
+.screen.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Intro Screen ── */
+.intro-wrap {
+  max-width: 640px; margin: 0 auto;
+  padding: var(--sp-16) var(--sp-6);
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.intro-eyebrow {
+  font-size: 0.7rem; color: var(--accent); font-weight: 700; letter-spacing: 0.16em;
+  text-transform: uppercase; margin-bottom: var(--sp-6);
+}
+.intro-title {
+  font-size: clamp(2rem, 5vw, 3rem); font-weight: 800;
+  line-height: 1.2; margin-bottom: var(--sp-6);
+}
+.intro-title span { color: var(--accent); }
+.intro-desc {
+  color: var(--text-muted); font-size: var(--fs-lg); line-height: var(--lh-long);
+  margin-bottom: var(--sp-8); max-width: 480px;
+}
+.intro-badges {
+  display: flex; gap: var(--sp-3); flex-wrap: wrap; justify-content: center;
+  margin-bottom: var(--sp-12);
+}
+.intro-badge {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: 6px 14px; border-radius: 99px;
+  font-size: var(--fs-sm); font-weight: 600;
+  border: 1px solid;
+}
+.badge-mckinsey { color: var(--accent-red); border-color: rgba(244,63,94,0.3); background: rgba(244,63,94,0.08); }
+.badge-gafa { color: var(--accent-amber); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.08); }
+.badge-jp { color: var(--accent-green); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); }
+
+.intro-meta {
+  display: flex; gap: var(--sp-8); margin-bottom: var(--sp-12);
+}
+.meta-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.meta-num { font-size: 2rem; font-weight: 800; color: var(--accent); line-height: 1; }
+.meta-label { font-size: 0.75rem; color: var(--text-dim); }
+
+.btn-start {
+  padding: 14px 48px; border-radius: 99px; border: none; cursor: pointer;
+  font-family: var(--font-base); font-size: 1rem; font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), #818cf8);
+  color: #0a0e1a; transition: transform var(--transition), box-shadow var(--transition);
+  letter-spacing: 0.04em;
+}
+.btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(56,189,248,0.35); }
+
+/* ── Quiz Screen ── */
+.quiz-wrap { max-width: 640px; margin: 0 auto; padding: var(--sp-8) var(--sp-6) var(--sp-16); }
+
+.quiz-progress-header {
+  display: flex; align-items: center; gap: var(--sp-4);
+  margin-bottom: var(--sp-8);
+}
+.quiz-prog-bar-wrap {
+  flex: 1; height: 4px; background: rgba(255,255,255,0.08);
+  border-radius: 99px; overflow: hidden;
+}
+.quiz-prog-bar { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.4s ease; }
+.quiz-prog-text { font-size: var(--fs-sm); color: var(--text-dim); font-weight: 600; white-space: nowrap; }
+
+.quiz-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: var(--sp-8);
+  margin-bottom: var(--sp-6);
+}
+.quiz-category-badge {
+  display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+  padding: 3px 10px; border-radius: 4px; margin-bottom: var(--sp-4);
+  text-transform: uppercase;
+}
+.cat-認知 { color: var(--accent); background: var(--accent-dim); }
+.cat-判断 { color: var(--accent-amber); background: var(--accent-amber-dim); }
+.cat-実行 { color: var(--accent-green); background: rgba(16,185,129,0.12); }
+.cat-伝達 { color: var(--accent-purple); background: rgba(167,139,250,0.12); }
+
+.quiz-skill-name {
+  font-size: 1.6rem; font-weight: 800; margin-bottom: var(--sp-4); line-height: 1.2;
+}
+.quiz-situation {
+  background: rgba(56,189,248,0.06); border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-4);
+  font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.65;
+}
+.quiz-instruction {
+  font-size: var(--fs-sm); color: var(--text-dim); margin-bottom: var(--sp-4);
+  font-weight: 600; letter-spacing: 0.03em;
+}
+
+.option-list { display: flex; flex-direction: column; gap: var(--sp-3); }
+.option-btn {
+  display: flex; align-items: flex-start; gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-4);
+  background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius-md); cursor: pointer;
+  text-align: left; width: 100%;
+  font-family: var(--font-base); font-size: var(--fs-sm); color: var(--text-muted);
+  line-height: 1.5; transition: border-color var(--transition), background var(--transition), color var(--transition);
+}
+.option-btn:hover { border-color: rgba(56,189,248,0.3); background: rgba(56,189,248,0.05); color: var(--text); }
+.option-btn.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--text); }
+.option-num {
+  font-size: 0.7rem; font-weight: 700; color: var(--accent);
+  background: var(--accent-dim); border-radius: 4px;
+  min-width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.option-btn.selected .option-num { background: var(--accent); color: #0a0e1a; }
+
+.quiz-nav { display: flex; align-items: center; justify-content: space-between; }
+.btn-back, .btn-next {
+  padding: 10px 28px; border-radius: 99px; border: none; cursor: pointer;
+  font-family: var(--font-base); font-size: var(--fs-sm); font-weight: 600;
+  transition: var(--transition);
+}
+.btn-back {
+  background: transparent; color: var(--text-dim);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.btn-back:hover { border-color: rgba(255,255,255,0.2); color: var(--text-muted); }
+.btn-next {
+  background: var(--accent); color: #0a0e1a;
+  opacity: 0.4; pointer-events: none;
+}
+.btn-next.enabled { opacity: 1; pointer-events: all; }
+.btn-next.enabled:hover { box-shadow: 0 4px 20px rgba(56,189,248,0.4); transform: translateY(-1px); }
+
+/* ── Result Screen ── */
+.result-wrap { max-width: 860px; margin: 0 auto; padding: var(--sp-8) var(--sp-6) var(--sp-16); }
+
+.result-top {
+  display: flex; align-items: flex-start; gap: var(--sp-6);
+  margin-bottom: var(--sp-8); flex-wrap: wrap;
+}
+.rank-block { flex-shrink: 0; }
+.rank-label {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-dim); margin-bottom: var(--sp-2);
+}
+.rank-badge-big {
+  font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; line-height: 1.1;
+  margin-bottom: var(--sp-2);
+}
+.rank-score {
+  font-size: var(--fs-sm); color: var(--text-dim);
+}
+.rank-score span { font-weight: 700; color: var(--text); }
+
+.rank-next-block {
+  flex: 1; min-width: 200px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: var(--sp-4) var(--sp-6);
+}
+.rank-next-label {
+  font-size: 0.68rem; color: var(--text-dim); font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; margin-bottom: var(--sp-3);
+}
+.rank-next-bar-wrap {
+  height: 8px; background: rgba(255,255,255,0.08);
+  border-radius: 99px; overflow: hidden; margin-bottom: var(--sp-2);
+  position: relative;
+}
+.rank-next-bar { height: 100%; border-radius: 99px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
+.rank-next-text { font-size: var(--fs-sm); color: var(--text-muted); }
+.rank-next-text strong { color: var(--text); }
+
+/* Charts layout */
+.charts-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: var(--sp-6); margin-bottom: var(--sp-8);
+}
+@media (max-width: 640px) { .charts-grid { grid-template-columns: 1fr; } }
+
+.chart-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: var(--sp-6);
+}
+.chart-card-title {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-dim); margin-bottom: var(--sp-4);
+}
+.chart-radar-wrap { position: relative; height: 280px; }
+.chart-legend {
+  display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-4);
+}
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text-dim); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* Skill bars */
+.skill-bars { display: flex; flex-direction: column; gap: var(--sp-3); }
+.skill-bar-row { display: flex; align-items: center; gap: var(--sp-3); }
+.skill-bar-name { font-size: 0.75rem; color: var(--text-muted); width: 110px; flex-shrink: 0; text-align: right; }
+.skill-bar-track {
+  flex: 1; height: 10px; background: rgba(255,255,255,0.06);
+  border-radius: 99px; overflow: visible; position: relative;
+}
+.skill-bar-fill {
+  height: 100%; border-radius: 99px;
+  transition: width 1s cubic-bezier(0.4,0,0.2,1);
+}
+.skill-bar-markers { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+.skill-bar-marker {
+  position: absolute; top: -3px; width: 3px; height: 16px;
+  border-radius: 2px; transform: translateX(-50%);
+}
+.skill-bar-score { font-size: 0.72rem; font-weight: 700; color: var(--text); width: 24px; flex-shrink: 0; }
+
+/* Strength/Weakness */
+.sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-8); }
+@media (max-width: 480px) { .sw-grid { grid-template-columns: 1fr; } }
+.sw-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: var(--sp-6);
+}
+.sw-header {
+  display: flex; align-items: center; gap: var(--sp-2);
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; margin-bottom: var(--sp-4);
+}
+.sw-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; }
+.sw-strength .sw-icon { background: rgba(16,185,129,0.2); color: var(--accent-green); }
+.sw-weakness .sw-icon { background: rgba(244,63,94,0.2); color: var(--accent-red); }
+.sw-item { font-size: var(--fs-sm); color: var(--text-muted); padding: var(--sp-2) 0; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+.sw-item:last-child { border-bottom: none; }
+.sw-item strong { color: var(--text); }
+.sw-link { font-size: 0.7rem; font-weight: 700; white-space: nowrap; text-decoration: none; padding: 2px 10px; border-radius: 99px; border: 1px solid; transition: var(--transition); flex-shrink: 0; }
+.sw-link-learn { color: var(--accent); border-color: rgba(56,189,248,0.3); background: var(--accent-dim); }
+.sw-link-learn:hover { background: rgba(56,189,248,0.22); border-color: var(--accent); }
+.sw-link-strengthen { color: var(--accent-red); border-color: rgba(244,63,94,0.3); background: rgba(244,63,94,0.08); }
+.sw-link-strengthen:hover { background: rgba(244,63,94,0.18); border-color: var(--accent-red); }
+.skill-bar-link { font-size: 0.65rem; color: var(--text-dim); text-decoration: none; flex-shrink: 0; transition: color var(--transition); }
+.skill-bar-link:hover { color: var(--accent); }
+.score-diff { font-size: 0.72rem; font-weight: 700; margin-left: 5px; padding: 1px 6px; border-radius: 4px; }
+.diff-pos { color: #10b981; background: rgba(16,185,129,0.15); }
+.diff-neg { color: #f43f5e; background: rgba(244,63,94,0.12); }
+.diff-zero { color: var(--text-dim); background: rgba(255,255,255,0.06); }
+.prev-date-note { font-size: 0.68rem; color: var(--text-dim); margin-top: 4px; display: none; }
+.prev-date-note span { color: var(--accent); font-weight: 600; }
+
+/* World Profiles */
+.world-section { margin-bottom: var(--sp-8); }
+.world-section-title {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-dim); margin-bottom: var(--sp-4);
+  display: flex; align-items: center; gap: var(--sp-4);
+}
+.world-section-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+
+.world-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
+@media (max-width: 640px) { .world-cards { grid-template-columns: 1fr; } }
+
+.world-card {
+  background: var(--bg-card); border-radius: var(--radius-md); padding: var(--sp-5);
+  border: 1px solid;
+}
+.world-card-name {
+  font-size: 0.75rem; font-weight: 700; margin-bottom: var(--sp-2);
+}
+.world-card-avg {
+  font-size: 1.6rem; font-weight: 800; line-height: 1; margin-bottom: var(--sp-3);
+}
+.world-card-traits { font-size: 0.72rem; color: var(--text-dim); line-height: 1.7; }
+.world-card-trait { margin-bottom: 2px; }
+
+.wc-mckinsey { border-color: rgba(244,63,94,0.3); }
+.wc-mckinsey .world-card-name { color: var(--accent-red); }
+.wc-mckinsey .world-card-avg { color: var(--accent-red); }
+.wc-gafa { border-color: rgba(245,158,11,0.3); }
+.wc-gafa .world-card-name { color: var(--accent-amber); }
+.wc-gafa .world-card-avg { color: var(--accent-amber); }
+.wc-jp { border-color: rgba(16,185,129,0.3); }
+.wc-jp .world-card-name { color: var(--accent-green); }
+.wc-jp .world-card-avg { color: var(--accent-green); }
+
+/* ── World Cases ── */
+.cases-section { margin-bottom: var(--sp-8); }
+.cases-section-title {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: var(--sp-4);
+  display: flex; align-items: center; gap: var(--sp-4);
+}
+.cases-section-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+.skill-tabs {
+  display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-5);
+}
+.skill-tab-btn {
+  font-family: var(--font-base); font-size: 0.72rem; font-weight: 600;
+  padding: 4px 12px; border-radius: 99px; cursor: pointer; white-space: nowrap;
+  border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03);
+  color: var(--text-dim); transition: var(--transition);
+}
+.skill-tab-btn:hover { border-color: rgba(56,189,248,0.3); color: var(--accent); }
+.skill-tab-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.cases-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
+@media (max-width: 640px) { .cases-grid { grid-template-columns: 1fr; } }
+.case-card {
+  background: var(--bg-card); border-radius: var(--radius-md); padding: var(--sp-5);
+  border: 1px solid; display: flex; flex-direction: column; gap: var(--sp-3);
+}
+.case-card-mck { border-color: rgba(244,63,94,0.25); }
+.case-card-gafa { border-color: rgba(245,158,11,0.25); }
+.case-card-jp  { border-color: rgba(16,185,129,0.25); }
+.case-level { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.cl-mck  { color: var(--accent-red); }
+.cl-gafa { color: var(--accent-amber); }
+.cl-jp   { color: var(--accent-green); }
+.case-scene { font-size: 0.78rem; font-weight: 700; color: var(--text); line-height: 1.4; }
+.case-row { display: flex; flex-direction: column; gap: 3px; }
+.case-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
+.case-text { font-size: 0.78rem; color: var(--text-muted); line-height: 1.55; }
+.case-outcome-text { font-size: 0.78rem; font-weight: 600; color: var(--text); }
+
+.btn-retry {
+  display: block; margin: 0 auto;
+  padding: 12px 36px; border-radius: 99px;
+  border: 1px solid rgba(255,255,255,0.12); background: transparent;
+  font-family: var(--font-base); font-size: var(--fs-sm); font-weight: 600;
+  color: var(--text-muted); cursor: pointer; transition: var(--transition);
+}
+.btn-retry:hover { border-color: var(--accent); color: var(--accent); }
+
+/* rank colors */
+.rank-mckinsey { color: var(--accent-red); }
+.rank-gafa { color: var(--accent-amber); }
+.rank-jp { color: var(--accent-green); }
+.rank-below { color: var(--text-muted); }
+
+@media (max-width: 480px) {
+  .quiz-card { padding: var(--sp-6); }
+  .intro-meta { gap: var(--sp-6); }
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="top-nav">
+  <a href="index.html" class="nav-back">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    Business Skills
+  </a>
+  <span class="nav-title">Skill Check</span>
+  <span style="width:80px"></span>
+</nav>
+
+<!-- ── Screen 1: Intro ── -->
+<div id="screen-intro" class="screen active">
+  <div class="intro-wrap">
+    <div class="intro-eyebrow">Business Skills Diagnostic</div>
+    <h1 class="intro-title">あなたは<span>どのレベル</span>か</h1>
+    <p class="intro-desc">18の職場シナリオに「自分ならどうするか」で答えるだけ。自己評価ではなく行動で測るスキル診断。</p>
+    <div class="intro-badges">
+      <div class="intro-badge badge-mckinsey">McKinsey社員</div>
+      <div class="intro-badge badge-gafa">GAFA PM</div>
+      <div class="intro-badge badge-jp">日本の優秀な管理職</div>
+    </div>
+    <div class="intro-meta">
+      <div class="meta-item"><div class="meta-num">18</div><div class="meta-label">問</div></div>
+      <div class="meta-item"><div class="meta-num">2</div><div class="meta-label">分</div></div>
+      <div class="meta-item"><div class="meta-num">3</div><div class="meta-label">ランク比較</div></div>
+    </div>
+    <button class="btn-start" onclick="startQuiz()">診断スタート</button>
+    <div id="prevResultBtn" style="display:none;margin-top:var(--sp-4)">
+      <button class="btn-retry" onclick="showPrevResult()" style="font-size:0.8rem">前回の結果を見る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Screen 2: Quiz ── -->
+<div id="screen-quiz" class="screen">
+  <div class="quiz-wrap">
+    <div class="quiz-progress-header">
+      <div class="quiz-prog-bar-wrap">
+        <div class="quiz-prog-bar" id="progBar" style="width:0%"></div>
+      </div>
+      <div class="quiz-prog-text" id="progText">0 / 11</div>
+    </div>
+    <div class="quiz-card" id="quizCard">
+      <!-- dynamically filled -->
+    </div>
+    <div class="quiz-nav">
+      <button class="btn-back" id="btnBack" onclick="prevQuestion()">← 戻る</button>
+      <button class="btn-next" id="btnNext" onclick="nextQuestion()">次へ →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Screen 3: Result ── -->
+<div id="screen-result" class="screen">
+  <div class="result-wrap">
+
+    <!-- Rank top -->
+    <div class="result-top">
+      <div class="rank-block">
+        <div class="rank-label">あなたのランク</div>
+        <div class="rank-badge-big" id="rankBadge">—</div>
+        <div class="rank-score">総合スコア: <span id="overallScore">—</span> / 5.0</div>
+        <div class="prev-date-note" id="prevDateNote">前回: <span id="prevDateText">—</span></div>
+      </div>
+      <div class="rank-next-block" id="rankNextBlock">
+        <div class="rank-next-label" id="rankNextLabel">次のレベルへ</div>
+        <div class="rank-next-bar-wrap">
+          <div class="rank-next-bar" id="rankNextBar" style="width:0%"></div>
+        </div>
+        <div class="rank-next-text" id="rankNextText">—</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-card-title">カテゴリー別レーダー</div>
+        <div class="chart-radar-wrap">
+          <canvas id="radarChart"></canvas>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#38bdf8"></div>あなた</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f43f5e"></div>McKinsey</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>GAFA PM</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>日本の優秀な管理職</div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">スキル別スコア</div>
+        <div class="skill-bars" id="skillBars"></div>
+      </div>
+    </div>
+
+    <!-- Strength / Weakness -->
+    <div class="sw-grid">
+      <div class="sw-card sw-strength">
+        <div class="sw-header">
+          <div class="sw-icon">▲</div>
+          <span style="color:var(--accent-green)">Top 3 強み</span>
+        </div>
+        <div id="strengthList"></div>
+      </div>
+      <div class="sw-card sw-weakness">
+        <div class="sw-header">
+          <div class="sw-icon">▼</div>
+          <span style="color:var(--accent-red)">Top 3 伸びしろ</span>
+        </div>
+        <div id="weaknessList"></div>
+      </div>
+    </div>
+
+    <!-- Weak Category Links -->
+    <div id="weak-links-bar" style="display:none;margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;"></div>
+
+    <!-- World Profiles -->
+    <div class="world-section">
+      <div class="world-section-title">世界水準プロファイル</div>
+      <div class="world-cards">
+        <div class="world-card wc-mckinsey">
+          <div class="world-card-name">McKinsey社員</div>
+          <div class="world-card-avg">4.6<span style="font-size:1rem;font-weight:400;color:var(--text-dim)">/5</span></div>
+          <div class="world-card-traits">
+            <div class="world-card-trait">✦ 構造化・論理化が呼吸レベル</div>
+            <div class="world-card-trait">✦ 問題解決フレームが高速起動</div>
+            <div class="world-card-trait">✦ コミュニケーションは常にMECE</div>
+            <div class="world-card-trait">✦ 学習速度が一般の3〜5倍</div>
+            <div class="world-card-trait" style="color:var(--text-dim);margin-top:6px">採用倍率: 1% 以下</div>
+          </div>
+        </div>
+        <div class="world-card wc-gafa">
+          <div class="world-card-name">GAFA PM</div>
+          <div class="world-card-avg">4.1<span style="font-size:1rem;font-weight:400;color:var(--text-dim)">/5</span></div>
+          <div class="world-card-traits">
+            <div class="world-card-trait">✦ 優先順位付けが戦略レベル</div>
+            <div class="world-card-trait">✦ 不確実性下での高速判断</div>
+            <div class="world-card-trait">✦ 時間設計で成果を最大化</div>
+            <div class="world-card-trait">✦ 多職種横断のコミュニケーション</div>
+            <div class="world-card-trait" style="color:var(--text-dim);margin-top:6px">書類通過率: 3〜5%</div>
+          </div>
+        </div>
+        <div class="world-card wc-jp">
+          <div class="world-card-name">日本の優秀な管理職</div>
+          <div class="world-card-avg">3.1<span style="font-size:1rem;font-weight:400;color:var(--text-dim)">/5</span></div>
+          <div class="world-card-traits">
+            <div class="world-card-trait">✦ 段取り力・実行力が安定的に高い</div>
+            <div class="world-card-trait">✦ チーム推進力と調整力に優れる</div>
+            <div class="world-card-trait">✦ 現場経験に基づく判断の厚み</div>
+            <div class="world-card-trait">✦ 構造コミュニケーションは伸びしろ</div>
+            <div class="world-card-trait" style="color:var(--text-dim);margin-top:6px">上位約 15% の管理職</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- World Cases Browser -->
+    <div class="cases-section">
+      <div class="cases-section-title">スキル別 世界水準 事例</div>
+      <div class="skill-tabs" id="caseTabs"></div>
+      <div class="cases-grid" id="casesGrid"></div>
+    </div>
+
+    <button class="btn-retry" onclick="resetQuiz()">もう一度診断する</button>
+  </div>
+</div>
+
+<script>
+// ── Skills Data ──
+const SKILLS = [
+  {
+    key: 'kozo_haaku', name: '構造把握力', category: '認知', link: 'kozo-haaku.html',
+    situation: '部長から月次会議の場で急に「今月のトラブル状況、整理して教えてくれ」と振られた。手元には担当者数名から断片的に聞いた口頭情報のみ。',
+    options: [
+      '「えーと、まず○○があって、その次に△△があって…」と思い出しながら時系列で話す',
+      '「主な問題点として3件ありました」と件数と概要を挙げるが、関係性や優先度は説明できない',
+      '「現象・原因・対策の3軸で整理すると…」と軸を立ててから順に説明する',
+      '「本質は2点です。①電気系の経年劣化、②点検スケジュールの抜け。残りはここから派生しています」と核心を先に言う',
+      '4の内容に加え「この構造だと来月に顕在化するリスクが1件あります」と潜在リスクまで指摘する',
+    ]
+  },
+  {
+    key: 'ronriteki', name: '論理的思考', category: '認知', link: 'ronriteki-shiko.html',
+    situation: '設備の稼働率が3ヶ月連続で低下している。上司から「なぜだと思う？」と聞かれた。',
+    options: [
+      '「いろんな要因が考えられますが…」と思いつくままに原因を列挙する',
+      '「○○が原因じゃないかと思います」と根拠なく直感で答える',
+      '「稼働率・速度・品質の3つに分解すると、稼働率の停止時間に問題が集中しています」と構造化して答える',
+      '「仮説は2つです。①定期点検の抜け、②特定設備の劣化。データを見るとAポンプの停止頻度が異常値なので①の可能性が高い」と根拠付きで答える',
+      '「問題の本質は稼働率ではなく、Aポンプを前提にした運転設計にあります。根本解決は代替手段の整備です」と問い自体を再定義する',
+    ]
+  },
+  {
+    key: 'atama', name: '頭のよさ', category: '認知', link: 'atama-ga-ii.html',
+    situation: '初めて担当する設備の改善を検討することになった。過去事例は少なく、ほぼゼロから考える必要がある。',
+    options: [
+      'とにかくマニュアルや参考書を読み込む。「まず情報収集から」と取りかかる',
+      '似た設備の事例を探し、そのパターンをそのまま当てはめようとする',
+      '「何が分かっていて、何が分からないか」を先に整理してから調べる方針を立てる',
+      '他業種の事例（食品・医療設備など）を参照し「この考え方を転用できる」と仮説を立てて検証する',
+      '「この設備特有の制約を逆手に取ると業界標準とは別のアプローチが取れる」と独自の問いを立て、検証・実装まで完結させる',
+    ]
+  },
+  {
+    key: 'mondai', name: '問題解決', category: '判断', link: 'mondai-kaiketsu.html',
+    situation: '現場から「○○設備でアラームが繰り返し出る」と連絡が来た。緊急性は中程度。',
+    options: [
+      '現場に行ってアラームをリセットし「しばらく様子見で」と伝える',
+      '前回同じアラームが出たときと同じ処置をする（経験則で対応）',
+      'アラームの発生パターン（時間帯・頻度・前後の状態）を調べ、原因を複数候補に絞ってから確認する',
+      '「アラームは症状で、本質は○○センサーの劣化兆候です」と根本原因を特定し、部品交換を提案する',
+      '根本原因の特定に加え「同型設備が他に3台ある。顕在化する前に予防保全を提案します」と先手を打つ',
+    ]
+  },
+  {
+    key: 'handan', name: '判断の質', category: '判断', link: 'handan-no-shitsu.html',
+    situation: '老朽設備の更新か修理かの判断を求められた。完全なデータは揃っていないが、来週月曜の会議までに回答が必要。',
+    options: [
+      '「もう少しデータを集めてから判断したい」と会議への回答を先延ばしにする',
+      '「どちらでもいいですが、どうしますか？」と上司に判断を委ねる',
+      '「現時点の情報で判断すると更新が妥当。修理費累計がXX万円、更新費がYY万円で3年以内に逆転します。ただし補助金調査次第で変わる」と条件付きで回答する',
+      '「判断します。更新推奨。根拠3点：①修理コスト累計、②部品調達難易度、③生産リスク。追加データは2日以内に揃えます」と明確に回答する',
+      '4の内容に加え「最大リスクは補助金が通らないケース。その場合の代替案はリース導入です」とリスクと対策もセットで提示する',
+    ]
+  },
+  {
+    key: 'yusen', name: '優先順位', category: '判断', link: 'yusen-juni.html',
+    situation: '月末に①定期点検の報告書、②急な稟議資料、③部下の育成計画提出、④メーカーへの問い合わせ回答、が同時に重なった。',
+    options: [
+      '全部「急ぎで対応します」と言って同時並行で始め、どれも締切ギリギリになる',
+      '「急ぎのもの優先」で稟議資料を最初に手がけ、残りは後回しにする',
+      '締切と影響度を整理し「今日やること・今週中・それ以外」に分類してから着手する',
+      '影響度と締切でマトリクスを立て「①と③は私、②は部下に振る。④は期限延長交渉する」と分担と交渉を同時に動かす',
+      '4の内容に加え「この4件が重なった原因は月末集中設計にある」と構造問題を指摘し、翌月の改善案を一言添える',
+    ]
+  },
+  {
+    key: 'dandori', name: '段取り力', category: '実行', link: 'dandori-ryoku.html',
+    situation: '来週に電気設備の停電工事を計画している。関係部署（製造・安全・保全）との調整、材料手配、手順書作成が必要。',
+    options: [
+      '工事前日に「材料手配していなかった」と気づき、慌てて対応する',
+      '材料手配はできていたが、関係部署への周知が直前になり「聞いてない」と言われる',
+      '1週前にチェックリストを作り、各部署の確認・材料・手順書の状況を一元管理する',
+      '3週前から動いており「製造ラインへの影響は○分、代替手順はX、エスカレ先はY」まで書いた手順書が準備済み。依存関係も全て把握している',
+      '4の内容に加え「この工事を標準化できる。手順書をテンプレ化して他の工事に横展します」と将来への応用まで設計している',
+    ]
+  },
+  {
+    key: 'jikan', name: '時間設計', category: '実行', link: 'jikan-sekkei.html',
+    situation: '重要な設計検討書の作成に集中時間が必要。だが日中は会議・問い合わせ対応・現場確認が続く状況。',
+    options: [
+      '「忙しくて時間がない」と感じながら隙間時間にちょこちょこ作業するが、なかなか進まない',
+      '残業時間を使って対応する。「夜のほうが集中できる」と感じている',
+      '翌日の朝1時間を「思考ブロック」としてカレンダーに入れ、その時間は他の予定を入れない',
+      '週の始まりに「深い思考：2h、会議：3h、対応：2h」の時間配分を設計し、週末に振り返る',
+      '4の内容に加え、チームの会議量・対応量も含めて設計し「朝会を15分に短縮する」と提案・実行する',
+    ]
+  },
+  {
+    key: 'jikko', name: '実行力', category: '実行', link: 'jikkouryoku.html',
+    situation: '「現場の5S改善」を自分で提案してプロジェクトリーダーになった。現場は多忙で協力が得にくい状況。',
+    options: [
+      'キックオフ会議を開いて方針を説明したが、現場に動きがなく「やっぱり難しい」と諦める',
+      '何度かフォローするが、優先度が後回しにされ、半年経っても進まない',
+      '現場の多忙期を外してスケジュールを組み直し、小さな成功事例を1件先に作って見せる',
+      '抵抗の強い担当者を先に巻き込んで初期の勝利事例を作り「動かせた」実績で他の参加者を引き込む',
+      '4の内容に加え「自分がいなくても続く体制」を設計してから完了とし、横展開の仕組みを整える',
+    ]
+  },
+  {
+    key: 'comm', name: '構造コミュニケーション', category: '伝達', link: 'kozo-communication.html',
+    situation: '設備トラブルが発生した。上司から「状況を教えて」と電話が来た。手元には断片的な情報しかない。',
+    options: [
+      '「えーと、○時に△△アラームが出て、その後□□をやって、今は…」と時系列で話す',
+      '「まだ詳細が分からない部分もあるんですが…」と前置きしながら情報を伝える',
+      '「結論：○設備が停止中。影響：ラインAに波及。対応：メーカー確認中。判明次第また連絡します」と3点に整理して伝える',
+      '「復旧見込み14:00。リスク：部品未着の場合+2h。追加情報は1時間後に再連絡します」と状況・見込み・リスクをセットで伝える',
+      '4の内容に加え「上司に今必要な判断があるとすれば○○の承認です。今すぐもらえますか？」と相手の意思決定を促す',
+    ]
+  },
+  {
+    key: 'gakushu', name: '学習効率', category: '伝達', link: 'gakushuu-kouritu.html',
+    situation: '電気主任技術者として新しい法改正の内容を3週間で理解する必要が生じた。',
+    options: [
+      'とにかく資料を全部印刷して読み始める。「まず全体を把握してから」と取りかかる',
+      '参考書と通達文書を通読する。読んだページ数で進捗を測っている',
+      '「この法改正で自分の業務に影響する箇所はどこか」を先に絞ってから重点的に学習する',
+      '「骨格を2日で把握→実務への影響を仮説化→現場で確認→ギャップを埋める」の2週サイクルで回す',
+      '4の内容に加え「理解した内容を部下向けに説明する機会を自分で設定する」ことで定着を加速させる',
+    ]
+  },
+  {
+    key: 'seichou', name: '人としての成長', category: '人間力', link: 'ningen-seichou.html',
+    situation: '管理職2年目。技術力では評価されているが、「人としての信頼感」で同世代の差がついていると感じる。',
+    options: [
+      '「経験を積めば自然と成長する」と考え、特に意識的な取り組みはしていない',
+      '読書や研修でスキルを増やしている。ただ行動が変わっているかは不明確。',
+      '月1回、自分の失敗・成功を記録し「なぜそうなったか」を振り返る内省習慣がある',
+      '自己認識（強み・弱み・価値観）を言語化し、信頼できる人に「自分の改善点」を定期的に聞いている',
+      '4の内容に加え「何のために成長するか（Why）」を言語化し、困難な状況でもブレない判断軸になっている',
+    ]
+  },
+  {
+    key: 'meta', name: 'メタ認知', category: 'セルフ', link: 'meta-ninchi.html',
+    situation: '重要な意思決定の場面で「なぜか判断が遅くなる」と感じている。原因が自分でも掴めない。',
+    options: [
+      '「今は忙しいから」と外部要因に帰因し、自分の思考パターンは振り返らない',
+      '「自分は慎重すぎるかも」と漠然と気づいているが、具体的に何が起きているかはわからない',
+      '判断が遅い場面を記録し「情報不足のとき」「上司の反応が読めないとき」に集中すると特定できた',
+      '特定の場面でバイアス（確証バイアス・承認欲求）が判断を歪めていると気づき、それを除外した判断ができる',
+      '4の内容に加え、判断前に「今の自分の状態（疲労・感情・前提）」を30秒でチェックし、毎回メタ認知を設計に組み込んでいる',
+    ]
+  },
+  {
+    key: 'unlearning', name: 'アンラーニング', category: '学習', link: 'unlearning.html',
+    situation: 'AI・デジタル化の波が来ているが、「今のやり方で十分回っている」という感覚が抜けない。',
+    options: [
+      '「今まで問題なかったし、わざわざ変える必要はない」と思っている',
+      '「変えた方がいいとは思うが、何を変えるかわからない」と感じている',
+      '「今の業務フローのうち、AIに代替できそうな手順」をリストアップして整理した',
+      '過去の成功パターン（手書き帳票・目視巡回）を意図的に疑い、「なぜこの手順が存在するか」を問い直して3つ廃止した',
+      '4の内容に加え「捨てた前提・廃止した手順」を記録し、年1回棚卸しするアンラーニングサイクルを個人に組み込んでいる',
+    ]
+  },
+  {
+    key: 'tettai', name: '撤退判断', category: '判断', link: 'tettai-handan.html',
+    situation: '半年間進めてきた設備改善プロジェクトが費用対効果で当初想定を大きく下回ることが明確になった。',
+    options: [
+      '「ここまで時間とコストをかけたのだから続けるべき」と継続を選択する',
+      '「もう少し様子を見てから判断する」と決断を先送りにする',
+      '費用・工期・効果の現状値を整理し、「このままいけば損失はXX万円」と数値化して上司に報告する',
+      '「撤退を推奨します。根拠3点：①累積費用、②効果の頭打ち、③代替案の費用対効果。撤退損失はXX万円です」と明確に報告する',
+      '4の内容に加え、次回プロジェクト開始時に「撤退基準（効果がYY%を下回ったら中止）」を開始時点で文書化する仕組みを導入した',
+    ]
+  },
+  {
+    key: 'aimai', name: '曖昧耐性', category: '認知', link: 'aimai-taisei.html',
+    situation: '原因不明の設備異常が発生。停止すべきか運転継続すべきか、情報が揃わないまま判断が必要。',
+    options: [
+      '「わからないから判断できない」と情報収集を待ち続け、結果的に現場に判断を委ねる',
+      '「とりあえず止めておこう」と最悪ケース回避のみで判断（機会損失の考慮なし）',
+      '「現時点でわかること・不明なこと」を整理し、安全基準に照らして運転継続可否の閾値を設定する',
+      '「仮説A：センサー誤報（70%）、仮説B：軸受け異常（30%）」と確率で並行保持し、各仮説への対応を同時準備する',
+      '4の内容に加え、段階的コミット（30分後・2時間後の判断ゲートを設定）とリバース可能判断（仮停止→確認→再開）で意思決定を設計した',
+    ]
+  },
+  {
+    key: 'shippai', name: '失敗報告', category: '伝達', link: 'shippai-hokoku.html',
+    situation: '担当設備で軽微な事故（ケガなし、生産影響2時間）が発生した。上司への第一報のタイミングと内容を判断している。',
+    options: [
+      '「原因が特定できてから報告しよう」と考え、調査が終わるまで2日間報告しなかった',
+      '即時報告はしたが「○○で事故がありました」のみで、影響範囲や対応状況は伝えられなかった',
+      '事故発生30分以内に「事実・影響範囲・現在の対応状況」を3点セットで報告した',
+      '「事実：▲▲で停止2時間。影響：生産XX個減。推定原因：軸受け摩耗（確認中）。暫定対策：手動切替。根本対策：明日XX時までに提示」と構造化報告した',
+      '4の内容に加え、部下からの報告フォーマット（事実/影響/原因仮説/暫定対策）を定型化し、チーム全体の報告品質を底上げした',
+    ]
+  },
+  {
+    key: 'anmoku', name: '暗黙知の言語化', category: 'AI活用', link: 'anmokuchi-gengoka.html',
+    situation: 'ベテラン作業員（定年3年前）が「音と振動でポンプの異常を察知する」スキルを持っている。この知識をマニュアル・AI化したい。',
+    options: [
+      '「本人に聞けばわかる」で放置。引退後に初めて「知識が消えた」と気づく',
+      '「異常音がしたら点検する」というレベルのマニュアルを作ったが、再現性がない',
+      '「どんな音のとき、どの設備で、何をするか」をインタビューで聞き起こし、行動レベルで書き出した',
+      '判断ポイント（「この音は正常、この音は異常」の分岐）を特定し、「もし○○音なら→△△を確認→□□のとき停止」というif-thenルールに変換した',
+      '4のif-thenルールをAIプロンプト（「以下の状態のとき、次に何を確認すべきか順番に教えて」）に変換し、現場タブレットで検証・運用開始した',
+    ]
+  },
+];
+
+// ── Benchmarks (scores per skill, 1-5 scale) ──
+const BENCHMARKS = {
+  mckinsey: {
+    label: 'McKinsey社員', color: '#f43f5e',
+    scores: [4.7, 4.8, 4.6, 4.7, 4.5, 4.5, 4.2, 4.4, 4.5, 4.7, 4.6, 4.8, 4.6, 4.5, 4.8, 4.7, 4.4, 3.8]
+  },
+  gafa: {
+    label: 'GAFA PM', color: '#f59e0b',
+    scores: [4.0, 4.0, 4.2, 4.0, 4.0, 4.3, 4.0, 4.2, 4.2, 4.2, 4.0, 4.5, 4.2, 4.6, 4.3, 4.5, 3.8, 4.6]
+  },
+  jp: {
+    label: '日本の優秀な管理職', color: '#10b981',
+    scores: [3.0, 2.8, 3.0, 3.0, 3.2, 3.0, 3.5, 3.0, 3.5, 2.8, 2.8, 3.2, 2.5, 2.2, 2.8, 2.5, 3.5, 2.0]
+  }
+};
+
+// Category groupings (indices into SKILLS)
+const CATEGORIES = [
+  { label: '認知', indices: [0, 1, 2] },
+  { label: '判断', indices: [3, 4, 5] },
+  { label: '実行', indices: [6, 7, 8] },
+  { label: '伝達・習得', indices: [9, 10] },
+  { label: '人間力', indices: [11] },
+];
+
+// ── World Cases Data ──
+const WORLD_CASES = {
+  kozo_haaku: {
+    jp:   { scene: '月次報告', action: '部門別実績を10ページに羅列。課題を箇条書きで20件列挙', outcome: '役員「で、何が一番の問題なの？」と聞かれ、追加資料作成で残業3時間' },
+    gafa: { scene: 'プロダクト改善', action: 'ユーザーフローを4段階に分解し、Step2でのdrop-off率68%を特定。他ステップは正常', outcome: 'Step2の改善施策に集中投資 → CVR+18%、他ステップは手を触れず' },
+    mck:  { scene: '経営戦略策定', action: '300pの調査資料を1時間で精査し、「収益悪化の本質は価格競争ではなく顧客セグメントの高齢化」と特定', outcome: '経営会議でその場で仮説採択。分析方向を全面転換' },
+  },
+  ronriteki: {
+    jp:   { scene: '設備トラブル対応', action: '経験則で「電源系の問題だろう」と判断し修理。論理的検証なし', outcome: '3ヶ月後に再発。本当の原因はセンサー劣化で、電源修理は無関係だった' },
+    gafa: { scene: 'MAU低下分析', action: '「なぜ離脱するか」を5Whysで分解 → 「通知が多い→設定が面倒→デフォルトがON」に到達', outcome: '通知デフォルトをOFFに変更するだけでMAU+12%' },
+    mck:  { scene: 'クライアント報告', action: '「売上低下」の因果ツリーを15分で構築。「主因は市場成熟ではなく競合の値引き戦略」と特定し、3つの根拠で証明', outcome: '役員の「市場が悪い」という反論を数値で全て封殺し、戦略転換を即決させた' },
+  },
+  atama: {
+    jp:   { scene: '新技術勉強会', action: 'DX推進のため参考書を通読3回。内容を丸暗記して発表', outcome: '質疑応答で「なぜこの技術が必要か」に答えられず信頼失墜' },
+    gafa: { scene: '推薦エンジン改善', action: '医療ロジスティクスの配達最適化アルゴリズムを転用できると気づき、プロダクト推薦に応用', outcome: '推薦精度+23%。業界標準とは全く異なるアプローチが突破口に' },
+    mck:  { scene: '価格戦略立案', action: '「業界の常識」を疑い、消費財の価格設定に保険数理（損失確率モデル）を適用提案', outcome: '利益率+4pp。クライアントの競合は2年後に追随' },
+  },
+  mondai: {
+    jp:   { scene: 'クレーム対応', action: '顧客クレームに謝罪と応急処置で対応。根本原因の調査なし', outcome: '翌月同じ問題が再発。クレーム件数は減らず、対応コストが積み上がる' },
+    gafa: { scene: 'バグ増加対応', action: 'バグ報告増加の真因を「QAプロセスの欠陥」と特定し、自動テストカバレッジを92%に改善', outcome: 'バグ件数-67%。問題の表面（バグ個々の修正）ではなく構造を直した' },
+    mck:  { scene: 'コスト削減依頼', action: '「コスト削減」という依頼を受け、本質問題は「コスト高」ではなく「収益構造の歪み」と再定義。解くべき問題を転換', outcome: '施策を全面転換。1年後に営業利益率が業界1位に' },
+  },
+  handan: {
+    jp:   { scene: '設備更新判断', action: '「もう少し情報を集めよう」を繰り返し判断を6ヶ月先送り', outcome: '老朽機器でライン停止2時間、損失200万円。情報収集コストより遅延コストが大きかった' },
+    gafa: { scene: 'A/Bテスト判断', action: '有意水準65%（閾値95%未満）でも「ユーザー体験を守る」判断でリリース却下。不確実性を受容した', outcome: '2週間後に競合が同機能を先行。判断基準の明確化を翌週にチームで合意' },
+    mck:  { scene: 'M&A判断支援', action: 'DD中に「財務数値ではなく文化的ミスマッチが致命傷」と判断し、数値化困難な根拠を整理して早期離脱を勧告', outcome: '翌年、その企業は別の買収先と合併後に経営危機。クライアントは2億円の損失を回避' },
+  },
+  yusen: {
+    jp:   { scene: '日常業務管理', action: '全依頼を「急ぎ」として受領。緊急度のみで優先付け', outcome: '重要な設備定期点検が後回しになり突発停止。緊急修理コスト80万円' },
+    gafa: { scene: 'OKR見直し', action: '「機能追加3件」を捨て、「リテンション改善」1本に全リソースを集中', outcome: 'LTV+31%。「やらないこと」を決めたことが最大の成果' },
+    mck:  { scene: '要件整理', action: 'クライアントの100要望を「3つの根本課題」に収束させ、残り97件は「3課題解決後に自然消滅する」と論証', outcome: '会議時間半減。クライアントが「整理してもらった初めての感覚」と評価' },
+  },
+  dandori: {
+    jp:   { scene: '工事準備', action: '事前確認なしで工事を発注。前日に材料不足が発覚', outcome: '当日2時間遅延。製造ラインへの影響で損失30万円。依存関係の確認が抜けていた' },
+    gafa: { scene: '新機能ローンチ', action: 'QA・法務・マーケの依存関係をGanttで可視化し、各チームのボトルネックを6週前に特定して先手を打つ', outcome: '計画通り0日遅延でリリース。法務レビューの遅延リスクを3週前に解消済みだった' },
+    mck:  { scene: 'プロジェクト設計', action: 'キックオフ初日に「Week10で何が起きるか」を可視化し、クライアントの稟議スケジュールに合わせて逆算で全工程を設計', outcome: 'Week10の意思決定会議に全成果物が揃い、プロジェクト期間内でのクライアント承認を実現' },
+  },
+  jikan: {
+    jp:   { scene: '日常業務', action: '会議が1日6時間、残りをメール処理に充てる生活が常態化', outcome: '思考時間ゼロで判断の質が低下。「忙しいのに成果が出ない」状態が継続' },
+    gafa: { scene: '個人生産性設計', action: '「Deep Work 2時間」を毎朝カレンダーブロック。会議は午後に集中させて思考時間を確保', outcome: 'プロジェクト完了速度が1.4倍。集中作業の質が上がり手戻りが半減' },
+    mck:  { scene: 'チームマネジメント', action: '週の時間を「思考40%・顧客30%・チーム20%・管理10%」に設計し、遵守率を週次レビューで数値監視', outcome: '四半期末のアウトプット品質が全社平均より37%高い。設計しない人との差は時間の「使い方」ではなく「設計」にあった' },
+  },
+  jikko: {
+    jp:   { scene: '改善施策推進', action: '改善施策を企画・発表。現場への展開は「後でやる」で後回し', outcome: '3ヶ月後に「あの件どうなった？」。施策が立ち消え、現場は何も変わらず' },
+    gafa: { scene: 'チーム推進', action: '「技術的負債が多すぎて動けない」という状況に対し「1スプリントに負債解消1件」をルール化し継続', outcome: '半年で本来の開発計画を完遂。"動けない言い訳"を構造で封じた' },
+    mck:  { scene: '組織変革推進', action: '社内抵抗が強い変革に対し、「早期勝利」を3件設計してまず実行。抵抗勢力が「効果が出ている」を否定できない状況を作る', outcome: '3ヶ月で抵抗が沈黙し、変革の第2フェーズが全会一致で承認された' },
+  },
+  comm: {
+    jp:   { scene: '障害報告', action: '「〜が起きて、〜をやって、その後〜になりました」と時系列で報告（5分）', outcome: '上司「で、今何が問題なの？ 次のアクションは？」と聞き直しが発生' },
+    gafa: { scene: '機能提案', action: 'Situation（背景）→Complication（問題）→Question（提案）の3行でSlack送信', outcome: '役員から3分で承認返信。「これだけ読めばわかる」が実現' },
+    mck:  { scene: '経営報告', action: '200pの分析を「結論1枚・根拠3枚・補足196枚」に構造化。補足は読まれない前提で設計', outcome: '役員が補足を一切読まずに意思決定。「会議が30分で終わった」' },
+  },
+  gakushu: {
+    jp:   { scene: '電気主任試験準備', action: '参考書を通読3回。試験2週前に過去問を解き始めて難易度に絶望', outcome: '試験不合格。インプット過多・アウトプット不足が原因だったと後で気づく' },
+    gafa: { scene: '新技術習得', action: '「目的→仮説→実装→振り返り」サイクルを2週間で3回転。わからないことをすぐ仮説検証', outcome: 'チーム最速での戦力化。座学ゼロでも実務レベルに達した' },
+    mck:  { scene: '未知業界アサイン', action: '72時間以内に「業界構造・主要プレイヤー・KPI体系」を習得。インプット→仮説→専門家確認のサイクルを高速回転', outcome: '初回クライアント会議で業界歴10年の担当者と対等に議論し、信頼獲得に成功' },
+  },
+};
+
+function renderCases(skillKey) {
+  const data = WORLD_CASES[skillKey];
+  if (!data) return;
+  document.querySelectorAll('.skill-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.key === skillKey));
+  document.getElementById('casesGrid').innerHTML = [
+    { key: 'jp',   label: '日本の優秀な管理職', cls: 'case-card-jp',   lcls: 'cl-jp'   },
+    { key: 'gafa', label: 'GAFA PM',           cls: 'case-card-gafa', lcls: 'cl-gafa' },
+    { key: 'mck',  label: 'McKinsey社員',       cls: 'case-card-mck',  lcls: 'cl-mck'  },
+  ].map(({ key, label, cls, lcls }) => {
+    const c = data[key];
+    return `<div class="case-card ${cls}">
+      <div class="case-level ${lcls}">${label}</div>
+      <div class="case-scene">${c.scene}</div>
+      <div class="case-row"><div class="case-label">行動</div><div class="case-text">${c.action}</div></div>
+      <div class="case-row"><div class="case-label">結果</div><div class="case-outcome-text">${c.outcome}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function initCaseTabs() {
+  const tabs = document.getElementById('caseTabs');
+  tabs.innerHTML = SKILLS.map(s =>
+    `<button class="skill-tab-btn" data-key="${s.key}" onclick="renderCases('${s.key}')">${s.name}</button>`
+  ).join('');
+  renderCases(SKILLS[0].key);
+}
+
+// ── State ──
+let currentIdx = 0;
+let answers = new Array(SKILLS.length).fill(null);
+let radarChartInstance = null;
+let autoAdvTimer = null;
+
+function avg(arr) { return arr.reduce((s, v) => s + v, 0) / arr.length; }
+function categoryAvg(scores, indices) { return avg(indices.map(i => scores[i])); }
+
+// ── Screen helpers ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── Quiz ──
+function startQuiz() {
+  currentIdx = 0;
+  answers = new Array(SKILLS.length).fill(null);
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+function renderQuestion() {
+  const skill = SKILLS[currentIdx];
+  const progress = ((currentIdx) / SKILLS.length) * 100;
+
+  document.getElementById('progBar').style.width = progress + '%';
+  document.getElementById('progText').textContent = `${currentIdx + 1} / ${SKILLS.length}`;
+
+  const isLast = currentIdx === SKILLS.length - 1;
+  const btnNext = document.getElementById('btnNext');
+  btnNext.textContent = isLast ? '結果を見る ✦' : '次へ →';
+
+  const selectedVal = answers[currentIdx];
+  const hasAnswer = selectedVal !== null;
+  btnNext.classList.toggle('enabled', hasAnswer);
+  document.getElementById('btnBack').style.opacity = currentIdx === 0 ? '0.3' : '1';
+  document.getElementById('btnBack').disabled = currentIdx === 0;
+
+  const labels = ['A', 'B', 'C', 'D', 'E'];
+  const card = document.getElementById('quizCard');
+  card.innerHTML = `
+    <div class="quiz-category-badge cat-${skill.category}">${skill.category}</div>
+    <div class="quiz-skill-name">${skill.name}</div>
+    <div class="quiz-situation">${skill.situation}</div>
+    <div class="quiz-instruction">この状況で、あなたはどうしますか？</div>
+    <div class="option-list">
+      ${skill.options.map((a, i) => `
+        <button class="option-btn ${selectedVal === i+1 ? 'selected' : ''}"
+                onclick="selectOption(${i+1})" data-val="${i+1}">
+          <span class="option-num">${labels[i]}</span>
+          <span>${a}</span>
+        </button>
+      `).join('')}
+    </div>
+  `;
+}
+
+function selectOption(val) {
+  answers[currentIdx] = val;
+  document.querySelectorAll('.option-btn').forEach((btn, i) => {
+    btn.classList.toggle('selected', i + 1 === val);
+  });
+  document.getElementById('btnNext').classList.add('enabled');
+
+  // auto-advance after short delay (cancel any pending timer first)
+  if (autoAdvTimer) clearTimeout(autoAdvTimer);
+  autoAdvTimer = setTimeout(() => {
+    autoAdvTimer = null;
+    if (currentIdx < SKILLS.length - 1) {
+      currentIdx++;
+      renderQuestion();
+    }
+  }, 320);
+}
+
+function nextQuestion() {
+  if (autoAdvTimer) { clearTimeout(autoAdvTimer); autoAdvTimer = null; }
+  if (answers[currentIdx] === null) return;
+  if (currentIdx < SKILLS.length - 1) {
+    currentIdx++;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function prevQuestion() {
+  if (autoAdvTimer) { clearTimeout(autoAdvTimer); autoAdvTimer = null; }
+  if (currentIdx > 0) {
+    currentIdx--;
+    renderQuestion();
+  }
+}
+
+function resetQuiz() {
+  if (radarChartInstance) { radarChartInstance.destroy(); radarChartInstance = null; }
+  startQuiz();
+}
+
+function showPrevResult() {
+  const stored = localStorage.getItem('bsk_result');
+  if (!stored) return;
+  const prev = JSON.parse(stored);
+  answers = prev.scores;
+  showResults();
+}
+
+// ── Init: show "前回の結果を見る" if localStorage has data ──
+(function() {
+  if (localStorage.getItem('bsk_result')) {
+    document.getElementById('prevResultBtn').style.display = 'block';
+  }
+})();
+
+// ── Results ──
+function showResults() {
+  showScreen('screen-result');
+
+  const userScores = answers.map(a => a || 3);
+  const userAvg = avg(userScores);
+
+  // Load previous result
+  const stored = localStorage.getItem('bsk_result');
+  const prev = stored ? JSON.parse(stored) : null;
+  const prevScores = prev ? prev.scores : null;
+  const prevAvg = prev ? prev.avg : null;
+
+  // Save current result
+  const today = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  localStorage.setItem('bsk_result', JSON.stringify({ date: today, scores: userScores, avg: parseFloat(userAvg.toFixed(2)) }));
+
+  // Show prev date note
+  if (prev) {
+    document.getElementById('prevDateNote').style.display = 'block';
+    document.getElementById('prevDateText').textContent = prev.date;
+  }
+
+  // Determine rank
+  let rank, rankClass, nextLabel, nextColor, nextPct, nextText;
+  if (userAvg >= 4.2) {
+    rank = 'McKinsey社員レベル'; rankClass = 'rank-mckinsey';
+    nextLabel = '世界最高水準へ';
+    nextColor = '#f43f5e'; nextPct = Math.min(100, ((userAvg - 4.2) / (5 - 4.2)) * 100);
+    nextText = `McKinseyトップ層（5.0）まであと <strong>${(5.0 - userAvg).toFixed(2)}点</strong>`;
+  } else if (userAvg >= 3.4) {
+    rank = 'GAFA PMレベル'; rankClass = 'rank-gafa';
+    nextLabel = 'McKinseyレベルへ';
+    nextColor = '#f59e0b'; nextPct = ((userAvg - 3.4) / (4.2 - 3.4)) * 100;
+    nextText = `McKinseyレベル（4.2）まであと <strong>${(4.2 - userAvg).toFixed(2)}点</strong>`;
+  } else if (userAvg >= 2.5) {
+    rank = '日本の優秀な管理職レベル'; rankClass = 'rank-jp';
+    nextLabel = 'GAFA PMレベルへ';
+    nextColor = '#10b981'; nextPct = ((userAvg - 2.5) / (3.4 - 2.5)) * 100;
+    nextText = `GAFA PMレベル（3.4）まであと <strong>${(3.4 - userAvg).toFixed(2)}点</strong>`;
+  } else {
+    rank = '一般管理職レベル'; rankClass = 'rank-below';
+    nextLabel = 'まず基礎固めを';
+    nextColor = '#94a3b8'; nextPct = (userAvg / 2.5) * 100;
+    nextText = `日本の優秀な管理職レベル（2.5）まであと <strong>${(2.5 - userAvg).toFixed(2)}点</strong>`;
+  }
+
+  const rankBadge = document.getElementById('rankBadge');
+  rankBadge.textContent = rank;
+  rankBadge.className = 'rank-badge-big ' + rankClass;
+
+  const diffAvg = prevAvg !== null ? userAvg - prevAvg : null;
+  const diffAvgHtml = diffAvg !== null
+    ? `<span class="score-diff ${diffAvg > 0.005 ? 'diff-pos' : diffAvg < -0.005 ? 'diff-neg' : 'diff-zero'}">${diffAvg > 0 ? '+' : ''}${diffAvg.toFixed(2)}</span>`
+    : '';
+  document.getElementById('overallScore').innerHTML = `${userAvg.toFixed(2)}${diffAvgHtml}`;
+
+  document.getElementById('rankNextLabel').textContent = nextLabel;
+  const nextBar = document.getElementById('rankNextBar');
+  nextBar.style.background = nextColor;
+  setTimeout(() => { nextBar.style.width = Math.round(nextPct) + '%'; }, 100);
+  document.getElementById('rankNextText').innerHTML = nextText;
+
+  // Radar Chart
+  const catUserScores = CATEGORIES.map(c => categoryAvg(userScores, c.indices));
+  const catMck = CATEGORIES.map(c => categoryAvg(BENCHMARKS.mckinsey.scores, c.indices));
+  const catGafa = CATEGORIES.map(c => categoryAvg(BENCHMARKS.gafa.scores, c.indices));
+  const catJp = CATEGORIES.map(c => categoryAvg(BENCHMARKS.jp.scores, c.indices));
+
+  if (radarChartInstance) radarChartInstance.destroy();
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  radarChartInstance = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: CATEGORIES.map(c => c.label),
+      datasets: [
+        {
+          label: 'あなた', data: catUserScores,
+          borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.15)',
+          borderWidth: 2.5, pointBackgroundColor: '#38bdf8', pointRadius: 4,
+        },
+        {
+          label: 'McKinsey', data: catMck,
+          borderColor: 'rgba(244,63,94,0.7)', backgroundColor: 'rgba(244,63,94,0.05)',
+          borderWidth: 1.5, borderDash: [4,3], pointRadius: 0,
+        },
+        {
+          label: 'GAFA PM', data: catGafa,
+          borderColor: 'rgba(245,158,11,0.7)', backgroundColor: 'rgba(245,158,11,0.05)',
+          borderWidth: 1.5, borderDash: [4,3], pointRadius: 0,
+        },
+        {
+          label: '日本の優秀な管理職', data: catJp,
+          borderColor: 'rgba(16,185,129,0.7)', backgroundColor: 'rgba(16,185,129,0.05)',
+          borderWidth: 1.5, borderDash: [4,3], pointRadius: 0,
+        },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: { duration: 800 },
+      scales: {
+        r: {
+          min: 0, max: 5, ticks: { stepSize: 1, display: false },
+          grid: { color: 'rgba(255,255,255,0.08)' },
+          angleLines: { color: 'rgba(255,255,255,0.08)' },
+          pointLabels: {
+            color: '#94a3b8', font: { family: "'Inter','Noto Sans JP',sans-serif", size: 12, weight: '600' }
+          }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // Skill bars
+  const barsEl = document.getElementById('skillBars');
+  barsEl.innerHTML = SKILLS.map((s, i) => {
+    const score = userScores[i];
+    const pct = (score / 5) * 100;
+    const catColor = { '認知': '#38bdf8', '判断': '#f59e0b', '実行': '#10b981', '伝達': '#a78bfa' };
+    const col = catColor[s.category] || '#38bdf8';
+    const markers = [
+      { pct: (BENCHMARKS.jp.scores[i] / 5) * 100, color: '#10b981' },
+      { pct: (BENCHMARKS.gafa.scores[i] / 5) * 100, color: '#f59e0b' },
+      { pct: (BENCHMARKS.mckinsey.scores[i] / 5) * 100, color: '#f43f5e' },
+    ];
+    return `
+      <div class="skill-bar-row">
+        <div class="skill-bar-name">${s.name}</div>
+        <div class="skill-bar-track">
+          <div class="skill-bar-fill" style="width:0%;background:${col}" data-pct="${pct}"></div>
+          <div class="skill-bar-markers">
+            ${markers.map(m => `<div class="skill-bar-marker" style="left:${m.pct}%;background:${m.color}"></div>`).join('')}
+          </div>
+        </div>
+        <div class="skill-bar-score">${score}${(() => { const d = prevScores ? score - prevScores[i] : null; return d !== null && d !== 0 ? `<span class="score-diff ${d > 0 ? 'diff-pos' : 'diff-neg'}">${d > 0 ? '+' : ''}${d}</span>` : ''; })()}</div>
+        <a href="${s.link}" class="skill-bar-link" title="${s.name}を学ぶ">→</a>
+      </div>
+    `;
+  }).join('');
+  setTimeout(() => {
+    document.querySelectorAll('.skill-bar-fill').forEach(el => {
+      el.style.width = el.dataset.pct + '%';
+    });
+  }, 100);
+
+  // Strength / Weakness
+  const indexed = userScores.map((s, i) => ({ i, s, name: SKILLS[i].name, link: SKILLS[i].link }));
+  const sorted = [...indexed].sort((a, b) => b.s - a.s);
+  const top3 = sorted.slice(0, 3);
+  const bot3 = sorted.slice(-3).reverse();
+
+  document.getElementById('strengthList').innerHTML = top3.map(item =>
+    `<div class="sw-item"><span><strong>${item.name}</strong> — ${item.s}.0 / 5</span><a href="${item.link}" class="sw-link sw-link-learn">学ぶ →</a></div>`
+  ).join('');
+  document.getElementById('weaknessList').innerHTML = bot3.map(item =>
+    `<div class="sw-item"><span><strong>${item.name}</strong> — ${item.s}.0 / 5</span><a href="${item.link}" class="sw-link sw-link-strengthen">強化する →</a></div>`
+  ).join('');
+
+  // Show weak category links
+  showWeakCategoryLinks(CATEGORIES, catUserScores);
+
+  initCaseTabs();
+}
+
+function showWeakCategoryLinks(categories, scores) {
+  const bar = document.getElementById('weak-links-bar');
+  if (!bar) return;
+  bar.innerHTML = '';
+
+  // Find weak categories (score <= 3.5)
+  const weakCategories = categories
+    .map((cat, i) => ({ label: cat.label, score: scores[i], idx: i }))
+    .filter(c => c.score <= 3.5)
+    .sort((a, b) => a.score - b.score);
+
+  if (weakCategories.length === 0) return;
+
+  // Add label
+  const label = document.createElement('span');
+  label.style.cssText = 'font-size:0.72rem;color:#94a3b8;align-self:center;flex-shrink:0;';
+  label.textContent = '弱点カテゴリを絞り込む:';
+  bar.appendChild(label);
+
+  // Add buttons for each weak category
+  weakCategories.forEach(cat => {
+    const a = document.createElement('a');
+    a.href = 'index.html?filter=' + encodeURIComponent(cat.label);
+    a.style.cssText = 'font-size:0.72rem;padding:3px 10px;border-radius:99px;background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.3);color:#f43f5e;text-decoration:none;font-weight:600;white-space:nowrap;transition:var(--transition);';
+    a.textContent = cat.label + ' (' + cat.score.toFixed(1) + ')';
+    a.onmouseover = () => { a.style.background = 'rgba(244,63,94,0.2)'; a.style.borderColor = '#f43f5e'; };
+    a.onmouseout = () => { a.style.background = 'rgba(244,63,94,0.1)'; a.style.borderColor = 'rgba(244,63,94,0.3)'; };
+    bar.appendChild(a);
+  });
+
+  bar.style.display = 'flex';
+}
+</script>
+<div style="text-align:center;padding:1.5rem 0 1rem;"><a href="../index.html" style="color:#8892a0;text-decoration:none;font-size:0.82rem;">← ポータルに戻る</a></div>
+</body>
+</html>

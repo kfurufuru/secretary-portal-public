@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PowerOS — プロジェクトを動かす9つの能力 | Fカンパニー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;600&family=Fraunces:opsz,wght@9..144,300;9..144,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:oklch(.985 .005 85);--bg2:oklch(.965 .008 85);
+  --surface:oklch(.995 .003 85);--surface2:oklch(.97 .008 85);
+  --line:oklch(.86 .01 85);--line2:oklch(.92 .008 85);
+  --ink:oklch(.21 .012 270);--ink2:oklch(.40 .012 270);
+  --ink3:oklch(.55 .012 270);--ink4:oklch(.70 .012 270);
+  --accent:oklch(.55 .14 165);
+  --blue:oklch(.45 .18 255);
+  --amber:oklch(.60 .14 60);
+  --violet:oklch(.55 .16 295);
+  --danger:oklch(.62 .18 25);
+  --r:12px;--pad:20px;--gap:16px;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Inter","Noto Sans JP",system-ui,sans-serif;
+  --serif:"Fraunces","Noto Sans JP",serif;
+  --shadow:0 1px 0 oklch(1 0 0/.8) inset,0 0 0 1px oklch(0 0 0/.04),0 18px 40px -28px oklch(0 0 0/.25);
+}
+html[data-theme="midnight"]{
+  --bg:oklch(.17 .012 255);--bg2:oklch(.20 .014 255);
+  --surface:oklch(.235 .014 255);--surface2:oklch(.27 .014 255);
+  --line:oklch(.32 .015 255/.8);--line2:oklch(.32 .015 255/.35);
+  --ink:oklch(.96 .005 255);--ink2:oklch(.78 .012 255);
+  --ink3:oklch(.58 .012 255);--ink4:oklch(.42 .012 255);
+  --accent:oklch(.82 .16 165);
+  --blue:oklch(.72 .18 255);
+  --amber:oklch(.84 .14 75);
+  --violet:oklch(.74 .16 295);
+  --shadow:0 1px 0 oklch(1 0 0/.04) inset,0 0 0 1px oklch(1 0 0/.03),0 24px 60px -30px oklch(0 0 0/.55);
+}
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(80rem 50rem at 12% -10%,oklch(.95 .05 255/.3),transparent 60%),
+    radial-gradient(60rem 40rem at 95% 110%,oklch(.95 .05 60/.2),transparent 60%);
+}
+html[data-theme="midnight"] body::before{
+  background:
+    radial-gradient(80rem 50rem at 12% -10%,oklch(.30 .06 255/.13),transparent 60%),
+    radial-gradient(60rem 40rem at 95% 110%,oklch(.32 .08 60/.08),transparent 60%);
+}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+
+.page{position:relative;z-index:1;max-width:940px;margin:0 auto;padding:32px 24px 100px}
+
+/* Topbar */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:36px}
+.back{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink3);
+  font-family:var(--mono);letter-spacing:.08em;
+  padding:6px 12px;border:1px solid var(--line2);border-radius:999px;background:var(--surface);
+  transition:color .15s,border-color .15s}
+.back:hover{color:var(--ink);border-color:var(--line)}
+.back svg{width:12px;height:12px}
+.seg{display:inline-flex;padding:3px;gap:2px;border:1px solid var(--line2);border-radius:10px;background:var(--surface)}
+.seg-btn{width:30px;height:26px;display:grid;place-items:center;border-radius:7px;color:var(--ink3)}
+.seg-btn:hover{color:var(--ink)}
+.seg-btn.on{background:var(--bg2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
+.seg-btn svg{width:14px;height:14px}
+
+/* Hero */
+.hero{margin-bottom:48px}
+.micro{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin-bottom:14px}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,56px);line-height:1.05;letter-spacing:-.02em;color:var(--ink);margin-bottom:16px}
+h1 em{font-style:italic;color:var(--blue);font-weight:400}
+.lead{font-size:15px;color:var(--ink2);line-height:1.7;max-width:62ch;margin-bottom:24px}
+.meta-pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;
+  border:1px solid var(--line2);background:var(--surface);
+  font-size:11.5px;color:var(--ink2);font-family:var(--mono)}
+.pill.blue{color:var(--blue);border-color:oklch(from var(--blue) l c h/.35);background:oklch(from var(--blue) l c h/.08)}
+.pill.green{color:var(--accent);border-color:oklch(from var(--accent) l c h/.35);background:oklch(from var(--accent) l c h/.08)}
+.pill.amber{color:var(--amber);border-color:oklch(from var(--amber) l c h/.35);background:oklch(from var(--amber) l c h/.08)}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line2);margin-bottom:36px;overflow-x:auto}
+.tab{padding:12px 16px;font-size:13.5px;color:var(--ink3);font-weight:500;
+  border-bottom:1.5px solid transparent;margin-bottom:-1px;
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap}
+.tab .num{font-family:var(--mono);font-size:11px;color:var(--ink4)}
+.tab.on{color:var(--ink);border-bottom-color:var(--accent)}
+.tab.on.think-tab{border-bottom-color:var(--blue)}
+.tab.on.exec-tab{border-bottom-color:var(--accent)}
+.tab.on.people-tab{border-bottom-color:var(--amber)}
+.tab.on.check-tab{border-bottom-color:var(--violet)}
+.tab:hover{color:var(--ink)}
+
+/* Panels */
+.panel{display:none}
+.panel.on{display:block}
+
+/* Intro tip */
+.intro-tip{padding:18px 22px;border-radius:var(--r);font-size:13.5px;line-height:1.7;
+  border:1px solid;margin-bottom:32px;display:flex;gap:14px;align-items:flex-start}
+.intro-tip.blue{background:oklch(from var(--blue) l c h/.06);border-color:oklch(from var(--blue) l c h/.24);color:var(--ink2)}
+.intro-tip.green{background:oklch(from var(--accent) l c h/.06);border-color:oklch(from var(--accent) l c h/.24);color:var(--ink2)}
+.intro-tip.amber{background:oklch(from var(--amber) l c h/.06);border-color:oklch(from var(--amber) l c h/.24);color:var(--ink2)}
+.intro-tip-icon{font-size:22px;flex:0 0 auto;margin-top:1px}
+.intro-tip strong{display:block;font-size:15px;font-weight:700;margin-bottom:6px}
+.intro-tip.blue strong{color:var(--blue)}
+.intro-tip.green strong{color:var(--accent)}
+.intro-tip.amber strong{color:var(--amber)}
+
+/* Skill grid */
+.skill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:var(--gap)}
+.skill-card{background:var(--surface);border:1px solid var(--line2);border-radius:var(--r);
+  padding:var(--pad);box-shadow:var(--shadow);position:relative;overflow:hidden;
+  transition:transform .18s cubic-bezier(.2,.8,.2,1),border-color .18s}
+.skill-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0}
+.skill-card.blue::before{background:var(--blue)}
+.skill-card.green::before{background:var(--accent)}
+.skill-card.amber::before{background:var(--amber)}
+.skill-card.blue:hover{border-color:oklch(from var(--blue) l c h/.4);transform:translateY(-2px)}
+.skill-card.green:hover{border-color:oklch(from var(--accent) l c h/.4);transform:translateY(-2px)}
+.skill-card.amber:hover{border-color:oklch(from var(--amber) l c h/.4);transform:translateY(-2px)}
+.skill-num{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--ink4);margin-bottom:8px}
+.skill-title{font-size:14.5px;font-weight:700;color:var(--ink);margin-bottom:8px;line-height:1.3}
+.skill-desc{font-size:12.5px;color:var(--ink3);line-height:1.65;margin-bottom:14px}
+.comp-list{display:flex;flex-wrap:wrap;gap:6px}
+.comp-pill{font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid;font-family:var(--mono);letter-spacing:.02em}
+.skill-card.blue .comp-pill{border-color:oklch(from var(--blue) l c h/.35);color:var(--blue);background:oklch(from var(--blue) l c h/.08)}
+.skill-card.green .comp-pill{border-color:oklch(from var(--accent) l c h/.35);color:var(--accent);background:oklch(from var(--accent) l c h/.08)}
+.skill-card.amber .comp-pill{border-color:oklch(from var(--amber) l c h/.35);color:var(--amber);background:oklch(from var(--amber) l c h/.08)}
+
+/* Checklist */
+.chk-sec-label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:700;padding:5px 12px;border-radius:6px;display:inline-block;margin:24px 0 12px}
+.chk-sec-label:first-of-type{margin-top:0}
+.chk-sec-label.think{color:var(--blue);background:oklch(from var(--blue) l c h/.1)}
+.chk-sec-label.exec{color:var(--accent);background:oklch(from var(--accent) l c h/.1)}
+.chk-sec-label.people{color:var(--amber);background:oklch(from var(--amber) l c h/.1)}
+.chk-list{display:grid;gap:8px}
+.chk{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;
+  border:1px solid var(--line2);border-radius:10px;background:var(--surface);cursor:pointer;
+  transition:background .14s,border-color .14s}
+.chk:hover{background:var(--surface2)}
+.chk.done[data-cat="think"]{background:oklch(from var(--blue) l c h/.06);border-color:oklch(from var(--blue) l c h/.3)}
+.chk.done[data-cat="exec"]{background:oklch(from var(--accent) l c h/.06);border-color:oklch(from var(--accent) l c h/.3)}
+.chk.done[data-cat="people"]{background:oklch(from var(--amber) l c h/.06);border-color:oklch(from var(--amber) l c h/.3)}
+.chk-box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--line);
+  flex:0 0 auto;margin-top:1px;background:var(--bg2);position:relative;transition:all .15s}
+.chk.done[data-cat="think"] .chk-box{background:var(--blue);border-color:var(--blue)}
+.chk.done[data-cat="exec"] .chk-box{background:var(--accent);border-color:var(--accent)}
+.chk.done[data-cat="people"] .chk-box{background:var(--amber);border-color:var(--amber)}
+.chk.done .chk-box::after{content:"";position:absolute;left:3px;top:5px;
+  width:8px;height:5px;border-left:1.5px solid var(--bg);border-bottom:1.5px solid var(--bg);
+  transform:rotate(-45deg)}
+.chk-txt b{display:block;font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.chk-txt span{font-size:12px;color:var(--ink3);font-family:var(--mono)}
+.chk.done .chk-txt b{color:var(--ink3);text-decoration:line-through}
+
+/* Score */
+.score-row{display:flex;align-items:stretch;gap:var(--gap);margin-bottom:24px;flex-wrap:wrap}
+.score-card{flex:1;min-width:140px;padding:16px 18px;border-radius:var(--r);border:1px solid;text-align:center}
+.score-card.blue{background:oklch(from var(--blue) l c h/.07);border-color:oklch(from var(--blue) l c h/.25)}
+.score-card.green{background:oklch(from var(--accent) l c h/.07);border-color:oklch(from var(--accent) l c h/.25)}
+.score-card.amber{background:oklch(from var(--amber) l c h/.07);border-color:oklch(from var(--amber) l c h/.25)}
+.score-card-label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.score-card.blue .score-card-label{color:var(--blue)}
+.score-card.green .score-card-label{color:var(--accent)}
+.score-card.amber .score-card-label{color:var(--amber)}
+.score-val{font-family:var(--mono);font-size:34px;font-weight:700;line-height:1}
+.score-card.blue .score-val{color:var(--blue)}
+.score-card.green .score-val{color:var(--accent)}
+.score-card.amber .score-val{color:var(--amber)}
+.score-denom{font-size:11px;color:var(--ink3);font-family:var(--mono)}
+.score-total{padding:16px 24px;border-radius:var(--r);background:var(--surface);
+  border:1px solid var(--line2);box-shadow:var(--shadow);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:32px}
+.score-total-big{font-family:var(--mono);font-size:40px;font-weight:700;color:var(--accent);transition:color .3s}
+.score-total-msg{font-size:13px;color:var(--ink2)}
+.reset-btn{font-family:var(--mono);font-size:11px;padding:5px 12px;border:1px solid var(--line2);
+  border-radius:999px;color:var(--ink3);background:var(--surface);cursor:pointer;
+  transition:color .15s,border-color .15s}
+.reset-btn:hover{color:var(--danger);border-color:oklch(from var(--danger) l c h/.4)}
+
+@media(max-width:640px){
+  .skill-grid{grid-template-columns:1fr}
+  .score-row{gap:8px}
+  .score-card{min-width:100px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <a class="back" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      BUSINESS SKILLS に戻る
+    </a>
+    <div class="seg" role="group">
+      <button class="seg-btn on" id="btn-paper" title="ライトモード">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <button class="seg-btn" id="btn-dark" title="ダークモード">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 14a8 8 0 11-10-10 7 7 0 0010 10z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="micro">POWER OS · BUSINESS CAPABILITY FRAMEWORK</div>
+    <h1><em>PowerOS</em> — プロジェクトを動かす9つの能力</h1>
+    <p class="lead">「考える力」「実行する力」「人を動かす力」——3大能力×9サブスキル×30+コンポーネントで構成されるビジネス能力フレームワーク。情報収集から育成まで、プロジェクトを前に進めるための能力地図。</p>
+    <div class="meta-pills">
+      <span class="pill blue">考える力</span>
+      <span class="pill green">実行する力</span>
+      <span class="pill amber">人を動かす力</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <nav class="tabs">
+    <div class="tab on think-tab" data-target="think"><span class="num">01</span> 考える力</div>
+    <div class="tab exec-tab" data-target="exec"><span class="num">02</span> 実行する力</div>
+    <div class="tab people-tab" data-target="people"><span class="num">03</span> 人を動かす力</div>
+    <div class="tab check-tab" data-target="check"><span class="num">✓</span> 自己診断</div>
+  </nav>
+
+  <!-- ===== PANEL 1: 考える力 ===== -->
+  <div class="panel on" id="think">
+
+    <div class="intro-tip blue">
+      <span class="intro-tip-icon">🧠</span>
+      <div>
+        <strong>考える力とは何か</strong>
+        問題の本質を見極め、解決策を導き出す力。「なんとなくそう思う」では動かせない。情報を収集し、構造化・分析し、正しい課題を設定する3ステップが、すべての実行の前提となる。
+      </div>
+    </div>
+
+    <div class="skill-grid">
+
+      <div class="skill-card blue">
+        <div class="skill-num">SKILL 01</div>
+        <div class="skill-title">情報収集力</div>
+        <p class="skill-desc">問題の本質を見極め、解決策を導き出す力。必要となる関連情報の収集やオープンリサーチが出来、効果的な仮説を立てる能力。</p>
+        <div class="comp-list">
+          <span class="comp-pill">関連情報の収集</span>
+        </div>
+      </div>
+
+      <div class="skill-card blue">
+        <div class="skill-num">SKILL 02</div>
+        <div class="skill-title">構造化・論理力・分析・検証力</div>
+        <p class="skill-desc">仮説の妥当性を確認し、偏りのない蓋然性の高い結論を導く力。問題整理や数値分析の基礎スキルが必要。</p>
+        <div class="comp-list">
+          <span class="comp-pill">問題整理</span>
+          <span class="comp-pill">数値理解・基礎分析</span>
+        </div>
+      </div>
+
+      <div class="skill-card blue">
+        <div class="skill-num">SKILL 03</div>
+        <div class="skill-title">課題設定力</div>
+        <p class="skill-desc">問題を突破するための適切な課題を設定し、実行可能な解決策を策定する力。KGIやKPIの設計も含まれる。</p>
+        <div class="comp-list">
+          <span class="comp-pill">課題設定</span>
+          <span class="comp-pill">KGI・KPI設計</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /think -->
+
+  <!-- ===== PANEL 2: 実行する力 ===== -->
+  <div class="panel" id="exec">
+
+    <div class="intro-tip green">
+      <span class="intro-tip-icon">⚡</span>
+      <div>
+        <strong>実行する力とは何か</strong>
+        待ちの姿勢ではなく、自らが中核となって物事を動かす力。課題を業務に落とし込み、チームを巻き込み、成果まで完遂する3軸——自走・管理・伝達が揃って初めてプロジェクトは動く。
+      </div>
+    </div>
+
+    <div class="skill-grid">
+
+      <div class="skill-card green">
+        <div class="skill-num">SKILL 04</div>
+        <div class="skill-title">自走力</div>
+        <p class="skill-desc">待ちの姿勢ではなく、自らが中核となって物事を動かす力。自己のモチベーション管理、新しい知識への学習意欲、ビジネスツールやAI技術の活用が含まれる。</p>
+        <div class="comp-list">
+          <span class="comp-pill">やる気コントロール</span>
+          <span class="comp-pill">知らないことから逃げない</span>
+        </div>
+      </div>
+
+      <div class="skill-card green">
+        <div class="skill-num">SKILL 05</div>
+        <div class="skill-title">実行管理力</div>
+        <p class="skill-desc">設定された課題を実際の業務に落とし込み、解決に導く力。スコープ・タスク・スケジュール・クオリティ・リスク・リソースの各種管理が含まれる。</p>
+        <div class="comp-list">
+          <span class="comp-pill">スコープ管理</span>
+          <span class="comp-pill">タスク管理</span>
+          <span class="comp-pill">スケジュール管理</span>
+          <span class="comp-pill">クオリティ管理</span>
+          <span class="comp-pill">リスク管理</span>
+          <span class="comp-pill">リソース管理</span>
+        </div>
+      </div>
+
+      <div class="skill-card green">
+        <div class="skill-num">SKILL 06</div>
+        <div class="skill-title">コミュニケーション力</div>
+        <p class="skill-desc">プロジェクトを円滑に進めるための対話力。伝達力、会議・質問・交渉能力、文書作成能力、ファシリテーション能力が含まれる。</p>
+        <div class="comp-list">
+          <span class="comp-pill">伝達力</span>
+          <span class="comp-pill">対話力（会話・質問・交渉）</span>
+          <span class="comp-pill">プレゼン</span>
+          <span class="comp-pill">ファシリテーション</span>
+          <span class="comp-pill">ドキュメント作成</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /exec -->
+
+  <!-- ===== PANEL 3: 人を動かす力 ===== -->
+  <div class="panel" id="people">
+
+    <div class="intro-tip amber">
+      <span class="intro-tip-icon">🤝</span>
+      <div>
+        <strong>人を動かす力とは何か</strong>
+        縦横の関係者と調整し、チームを機能させ、人を育てる力。ステークホルダー・メンバー・未来の人材——3つの対象に対して働きかける力の総体が、プロジェクトの持続的な推進力となる。
+      </div>
+    </div>
+
+    <div class="skill-grid">
+
+      <div class="skill-card amber">
+        <div class="skill-num">SKILL 07</div>
+        <div class="skill-title">ステークホルダーマネジメント力</div>
+        <p class="skill-desc">縦横の関係者と調整し、プロジェクトをスムーズに進める力。協力体制の構築、情報共有、調整力、適切なエスカレーションと人間関係の把握が含まれる。</p>
+        <div class="comp-list">
+          <span class="comp-pill">人間把握</span>
+          <span class="comp-pill">巻き込み（協力体制の構築）</span>
+          <span class="comp-pill">上司マネジメント</span>
+          <span class="comp-pill">情報共有</span>
+        </div>
+      </div>
+
+      <div class="skill-card amber">
+        <div class="skill-num">SKILL 08</div>
+        <div class="skill-title">メンバーマネジメント力</div>
+        <p class="skill-desc">チームメンバーを効果的に管理し、モチベーションを引き出す力。チームビルディング、サポート、ビジョン共有、モチベーション向上を行う。</p>
+        <div class="comp-list">
+          <span class="comp-pill">チームビルディング</span>
+          <span class="comp-pill">ビジョニング</span>
+          <span class="comp-pill">モチベーター</span>
+          <span class="comp-pill">サポートムーブ</span>
+        </div>
+      </div>
+
+      <div class="skill-card amber">
+        <div class="skill-num">SKILL 09</div>
+        <div class="skill-title">育成力</div>
+        <p class="skill-desc">関わったメンバーの能力を強化し、成長を促進する力。コーチングやティーチング、適切なレビューとフィードバック、キャリア設計の支援が含まれる。</p>
+        <div class="comp-list">
+          <span class="comp-pill">コーチング・ティーチング</span>
+          <span class="comp-pill">レビュー・フィードバック</span>
+          <span class="comp-pill">キャリア設計</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /people -->
+
+  <!-- ===== PANEL 4: 自己診断 ===== -->
+  <div class="panel" id="check">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+      <p style="font-size:13.5px;color:var(--ink2);line-height:1.6">3大能力の現在地を可視化する。チェックした項目が多いほどスコアが高くなる。</p>
+      <button class="reset-btn" id="reset-btn">リセット</button>
+    </div>
+
+    <!-- スコア -->
+    <div class="score-row">
+      <div class="score-card blue">
+        <div class="score-card-label">考える力</div>
+        <div class="score-val" id="sc-think">0</div>
+        <div class="score-denom">/ 9</div>
+      </div>
+      <div class="score-card green">
+        <div class="score-card-label">実行する力</div>
+        <div class="score-val" id="sc-exec">0</div>
+        <div class="score-denom">/ 9</div>
+      </div>
+      <div class="score-card amber">
+        <div class="score-card-label">人を動かす力</div>
+        <div class="score-val" id="sc-people">0</div>
+        <div class="score-denom">/ 9</div>
+      </div>
+    </div>
+    <div class="score-total">
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">TOTAL</div>
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span class="score-total-big" id="sc-total">0</span>
+          <span style="font-family:var(--mono);font-size:13px;color:var(--ink3)">/ 27</span>
+        </div>
+      </div>
+      <div class="score-total-msg" id="sc-msg">チェックを開始してください</div>
+    </div>
+
+    <!-- 考える力チェックリスト -->
+    <div class="chk-sec-label think">考える力</div>
+    <div class="chk-list">
+      <div class="chk" data-key="t1" data-cat="think" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>情報収集力 — 判断前に関連情報を十分に集めている</b><span>一次情報・現場データ・外部事例を事前に収集できる</span></div>
+      </div>
+      <div class="chk" data-key="t2" data-cat="think" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>情報収集力 — 効果的な仮説を立ててからリサーチできる</b><span>仮説→検証のサイクルで情報収集の効率を上げられる</span></div>
+      </div>
+      <div class="chk" data-key="t3" data-cat="think" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>構造化・分析力 — 問題を論理的に分解・構造化できる</b><span>MECE分解・因果構造の把握ができる</span></div>
+      </div>
+      <div class="chk" data-key="t4" data-cat="think" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>構造化・分析力 — データや数値で仮説を検証できる</b><span>問題整理・数値理解・基礎分析を使いこなしている</span></div>
+      </div>
+      <div class="chk" data-key="t5" data-cat="think" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>構造化・分析力 — 主観と客観を分けて判断できる</b><span>「感想」と「根拠」を明確に区別して伝えられる</span></div>
+      </div>
+      <div class="chk" data-key="t6" data-cat="think" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>課題設定力 — 解決策より先に正しい問いを設定している</b><span>イシュー起点で動けている（答えより問いを優先）</span></div>
+      </div>
+      <div class="chk" data-key="t7" data-cat="think" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>課題設定力 — 課題にKGI/KPIを設定している</b><span>「何を達成したら解決か」を数値で定義できる</span></div>
+      </div>
+      <div class="chk" data-key="t8" data-cat="think" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>課題設定力 — 課題の優先順位を根拠とともに説明できる</b><span>重要度×緊急度・影響度で優先順位を判断できる</span></div>
+      </div>
+      <div class="chk" data-key="t9" data-cat="think" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>課題設定力 — 問題の根本原因（真因）を特定できる</b><span>表面的な症状ではなく根本原因に対処している</span></div>
+      </div>
+    </div>
+
+    <!-- 実行する力チェックリスト -->
+    <div class="chk-sec-label exec">実行する力</div>
+    <div class="chk-list">
+      <div class="chk" data-key="e1" data-cat="exec" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>自走力 — 指示を待たず自ら課題を見つけて動ける</b><span>上からの指示がなくても自分で優先課題を見つけられる</span></div>
+      </div>
+      <div class="chk" data-key="e2" data-cat="exec" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>自走力 — モチベーションを自己管理できている</b><span>やる気の波に依存せず安定したパフォーマンスを出せる</span></div>
+      </div>
+      <div class="chk" data-key="e3" data-cat="exec" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>自走力 — 知らない領域でも逃げずに学習して取り組む</b><span>新しいツール・技術を積極的に取り入れる学習意欲がある</span></div>
+      </div>
+      <div class="chk" data-key="e4" data-cat="exec" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>実行管理力 — スコープ・タスク・スケジュールを文書化している</b><span>WBSや計画表を作成し、関係者と共有できる</span></div>
+      </div>
+      <div class="chk" data-key="e5" data-cat="exec" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>実行管理力 — リスクを事前に特定し対策を準備している</b><span>FMEA・リスクリストで先読みができている</span></div>
+      </div>
+      <div class="chk" data-key="e6" data-cat="exec" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>実行管理力 — クオリティ基準を事前に定義して管理している</b><span>「完了の定義（DoD）」を関係者と合意してから動く</span></div>
+      </div>
+      <div class="chk" data-key="e7" data-cat="exec" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>コミュニケーション力 — 情報を相手に合わせて明確に伝えられる</b><span>結論先行・数値付き・根拠明示で伝えられる</span></div>
+      </div>
+      <div class="chk" data-key="e8" data-cat="exec" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>コミュニケーション力 — プレゼン・報告資料を適切に作れる</b><span>相手の関心に合わせた構成・図表で資料を作成できる</span></div>
+      </div>
+      <div class="chk" data-key="e9" data-cat="exec" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>コミュニケーション力 — 会議をファシリテートし成果を出せる</b><span>アジェンダ設計・議事進行・決定事項の整理ができる</span></div>
+      </div>
+    </div>
+
+    <!-- 人を動かす力チェックリスト -->
+    <div class="chk-sec-label people">人を動かす力</div>
+    <div class="chk-list">
+      <div class="chk" data-key="p1" data-cat="people" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>ステークホルダー管理 — 関係者を把握し先手で調整している</b><span>誰が何に影響を受けるかを事前にマッピングできる</span></div>
+      </div>
+      <div class="chk" data-key="p2" data-cat="people" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>ステークホルダー管理 — 上司・他部署を巻き込む根回しができる</b><span>協力体制を事前に構築し、エスカレーションを最小化できる</span></div>
+      </div>
+      <div class="chk" data-key="p3" data-cat="people" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>ステークホルダー管理 — 情報共有の仕組みを整備している</b><span>必要な人に必要な情報が適切なタイミングで届く仕組みがある</span></div>
+      </div>
+      <div class="chk" data-key="p4" data-cat="people" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>メンバー管理 — チームメンバーのモチベーションを個別に把握している</b><span>各メンバーの動機・強み・不安を個別に理解している</span></div>
+      </div>
+      <div class="chk" data-key="p5" data-cat="people" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>メンバー管理 — ビジョンをチームに浸透させられる</b><span>「なぜこの仕事をするのか」をチームに伝えられる</span></div>
+      </div>
+      <div class="chk" data-key="p6" data-cat="people" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>メンバー管理 — メンバーの力を引き出すサポートができる</b><span>チームビルディング・モチベーション管理が実践できている</span></div>
+      </div>
+      <div class="chk" data-key="p7" data-cat="people" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>育成力 — コーチングとティーチングを使い分けられる</b><span>状況に応じて「教える」と「考えさせる」を切り替えられる</span></div>
+      </div>
+      <div class="chk" data-key="p8" data-cat="people" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>育成力 — SBIフィードバックを実践できる</b><span>Situation・Behavior・Impact で具体的なフィードバックを伝えられる</span></div>
+      </div>
+      <div class="chk" data-key="p9" data-cat="people" data-val="1">
+        <div class="chk-box"></div>
+        <div class="chk-txt"><b>育成力 — メンバーのキャリア設計を支援できる</b><span>強み・志向・成長課題を把握し中長期の育成計画を持っている</span></div>
+      </div>
+    </div>
+
+  </div><!-- /check -->
+
+</div><!-- /page -->
+
+<script>
+(function(){
+  // Theme
+  var btnPaper=document.getElementById("btn-paper"),btnDark=document.getElementById("btn-dark");
+  function setTheme(t){
+    if(t==="dark")document.documentElement.setAttribute("data-theme","midnight");
+    else document.documentElement.removeAttribute("data-theme");
+    btnPaper.classList.toggle("on",t==="paper");
+    btnDark.classList.toggle("on",t==="dark");
+  }
+  btnPaper.addEventListener("click",function(){setTheme("paper")});
+  btnDark.addEventListener("click",function(){setTheme("dark")});
+
+  // Tabs
+  document.querySelectorAll(".tab").forEach(function(t){
+    t.addEventListener("click",function(){
+      document.querySelectorAll(".tab").forEach(function(x){x.classList.toggle("on",x===t)});
+      document.querySelectorAll(".panel").forEach(function(p){p.classList.toggle("on",p.id===t.dataset.target)});
+    });
+  });
+
+  // Checklist
+  function calcScores(){
+    var think=0,exec=0,people=0;
+    document.querySelectorAll(".chk.done").forEach(function(c){
+      var v=parseFloat(c.dataset.val||0);
+      if(c.dataset.cat==="think")think+=v;
+      else if(c.dataset.cat==="exec")exec+=v;
+      else if(c.dataset.cat==="people")people+=v;
+    });
+    return{think:think,exec:exec,people:people,total:think+exec+people};
+  }
+
+  function updateScore(){
+    var s=calcScores();
+    document.getElementById("sc-think").textContent=s.think;
+    document.getElementById("sc-exec").textContent=s.exec;
+    document.getElementById("sc-people").textContent=s.people;
+    document.getElementById("sc-total").textContent=s.total;
+    var pct=s.total/27*100;
+    var msgs=["チェックを開始してください","基礎を固めよう","半分まできた","もう少し！","高い水準だ","フル装備 ⚡"];
+    document.getElementById("sc-msg").textContent=msgs[Math.min(5,Math.floor(pct/20))];
+    var el=document.getElementById("sc-total");
+    el.style.color=pct>=80?"var(--accent)":pct>=50?"var(--amber)":"var(--danger)";
+  }
+
+  function getState(){try{return JSON.parse(localStorage.getItem("poweros-check")||"[]")}catch(e){return[]}}
+  function saveState(){
+    var keys=[];
+    document.querySelectorAll(".chk.done").forEach(function(c){keys.push(c.dataset.key)});
+    try{localStorage.setItem("poweros-check",JSON.stringify(keys))}catch(e){}
+  }
+
+  var saved=getState();
+  document.querySelectorAll(".chk").forEach(function(c){
+    if(saved.indexOf(c.dataset.key)!==-1)c.classList.add("done");
+  });
+  updateScore();
+
+  document.querySelectorAll(".chk").forEach(function(c){
+    c.addEventListener("click",function(){c.classList.toggle("done");saveState();updateScore();});
+  });
+
+  document.getElementById("reset-btn").addEventListener("click",function(){
+    document.querySelectorAll(".chk.done").forEach(function(c){c.classList.remove("done")});
+    saveState();updateScore();
+  });
+})();
+</script>
+<div style="text-align:center;padding:1.5rem 0 1rem;"><a href="../index.html" style="color:#8892a0;text-decoration:none;font-size:0.82rem;">← ポータルに戻る</a></div>
+</body>
+</html>

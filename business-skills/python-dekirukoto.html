@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>電計Python道具箱 | Personal Catalog</title>
+<meta name="description" content="個人のPython理解を整理する地図。できること・刺さる場面・最小コードを1枚のカードに。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet"></noscript>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* ── Midnight Mint palette override ── */
+:root {
+  --bg: #0d1117; --bg-card: #161b22; --bg-hover: #1f2937;
+  --accent: #2dd4bf; --accent-dim: rgba(45,212,191,0.12);
+  --text: #e6edf3; --text-muted: #8b949e; --text-dim: #6e7681;
+  --border: rgba(45,212,191,0.18); --border-hover: rgba(45,212,191,0.45);
+  --nav-bg: rgba(13,17,23,0.85);
+  --cat-tool: #2dd4bf; --cat-knowledge: #a78bfa; --cat-hardware: #f59e0b;
+}
+html { scroll-behavior: smooth; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  line-break: strict; overflow-wrap: break-word; word-break: normal;
+  min-height: 100vh;
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+/* ── Top nav ── */
+.top-nav {
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  background: var(--nav-bg);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 0 var(--sp-6); height: 48px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.nav-back { display: flex; align-items: center; gap: var(--sp-2); text-decoration: none; color: var(--text-muted); font-size: var(--fs-sm); font-weight: 600; transition: color .2s; }
+.nav-back:hover { color: var(--accent); }
+.nav-title { font-size: var(--fs-sm); color: var(--text-dim); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.nav-spacer { width: 120px; }
+
+/* ── Hero ── */
+.hero { max-width: 860px; margin: 0 auto; padding: var(--sp-12) var(--sp-6) var(--sp-8); text-align: left; }
+.hero-eyebrow { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-6); }
+.eyebrow-line { flex: 1; height: 1px; background: var(--border); }
+.eyebrow-text { font-size: 0.72rem; color: var(--accent); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; }
+.hero h1 { font-size: 2.4rem; font-weight: 700; line-height: 1.3; letter-spacing: 0.02em; margin-bottom: var(--sp-4); }
+.hero h1 .accent { color: var(--accent); }
+.hero-desc { color: var(--text-muted); font-size: 1rem; line-height: 1.8; max-width: 600px; margin-bottom: var(--sp-8); }
+.hero-stats { display: flex; gap: var(--sp-8); flex-wrap: wrap; align-items: flex-end; }
+.stat { display: flex; flex-direction: column; }
+.stat-num { font-size: 2rem; font-weight: 700; color: var(--accent); line-height: 1; }
+.stat-label { font-size: var(--fs-sm); color: var(--text-dim); margin-top: 4px; }
+
+/* ── Filter bar ── */
+.filter-section { max-width: 860px; margin: 0 auto; padding: 0 var(--sp-6) var(--sp-6); }
+.filter-bar { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.filter-btn {
+  font-family: var(--font-base); font-size: 0.78rem; font-weight: 600;
+  padding: 6px 14px; border-radius: 99px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04); color: var(--text-muted);
+  transition: .2s; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.filter-btn:hover { border-color: rgba(45,212,191,0.4); color: var(--accent); background: var(--accent-dim); }
+.filter-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.filter-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .7; }
+
+/* ── Grid ── */
+.grid-section { max-width: 860px; margin: 0 auto; padding: 0 var(--sp-6) var(--sp-12); position: relative; }
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--sp-4); }
+
+/* ── Card ── */
+.item-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color .2s, transform .2s, box-shadow .2s, opacity .4s;
+  opacity: 0; transform: translateY(12px);
+}
+.item-card.visible { opacity: 1; transform: translateY(0); }
+.item-card.hidden { display: none; }
+.item-card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+.card-header { padding: var(--sp-4) var(--sp-6); cursor: pointer; user-select: none; }
+.card-meta { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.card-icon-wrap {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.card-icon-wrap.cat-tool { background: rgba(45,212,191,0.14); color: var(--cat-tool); }
+.card-icon-wrap.cat-knowledge { background: rgba(167,139,250,0.14); color: var(--cat-knowledge); }
+.card-icon-wrap.cat-hardware { background: rgba(245,158,11,0.14); color: var(--cat-hardware); }
+.cat-chip {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
+  padding: 2px 8px; border-radius: 99px; text-transform: uppercase;
+}
+.cat-chip.cat-tool { background: rgba(45,212,191,0.1); color: var(--cat-tool); border: 1px solid rgba(45,212,191,0.3); }
+.cat-chip.cat-knowledge { background: rgba(167,139,250,0.1); color: var(--cat-knowledge); border: 1px solid rgba(167,139,250,0.3); }
+.cat-chip.cat-hardware { background: rgba(245,158,11,0.1); color: var(--cat-hardware); border: 1px solid rgba(245,158,11,0.3); }
+.card-title { font-size: 1.05rem; font-weight: 700; line-height: 1.3; margin-bottom: var(--sp-2); color: var(--text); }
+.card-can { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: var(--sp-3); }
+.expand-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: transparent; border: none; color: var(--accent);
+  font-family: inherit; font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; padding: 0; transition: transform .2s;
+}
+.expand-btn span:first-child { display: inline-block; transition: transform .25s; }
+.item-card.expanded .expand-btn span:first-child { transform: rotate(180deg); }
+
+/* ── Card body (accordion) ── */
+.card-body {
+  max-height: 0; overflow: hidden; transition: max-height .3s ease;
+  border-top: 1px solid transparent;
+}
+.item-card.expanded .card-body { max-height: 800px; border-top-color: rgba(255,255,255,0.06); }
+.card-body-inner { padding: var(--sp-4) var(--sp-6) var(--sp-6); display: flex; flex-direction: column; gap: var(--sp-4); }
+.detail-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
+.detail-text { font-size: 0.88rem; color: var(--text); line-height: 1.7; }
+.libs-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.c-tag {
+  font-size: 0.72rem; padding: 3px 10px; border-radius: 99px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted); font-family: 'SF Mono', Consolas, monospace;
+}
+.snippet-wrap { display: flex; flex-direction: column; }
+.snippet-pre {
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  padding: var(--sp-3) var(--sp-4);
+  font-size: 0.78rem; line-height: 1.6;
+  color: #a5f3fc; overflow-x: auto;
+  font-family: 'SF Mono', Consolas, 'Courier New', monospace;
+}
+
+/* ── Footer ── */
+.footer { border-top: 1px solid rgba(255,255,255,0.04); padding: var(--sp-8) var(--sp-6); text-align: center; color: var(--text-dim); font-size: var(--fs-sm); }
+.footer-links { display: flex; align-items: center; justify-content: center; gap: var(--sp-6); flex-wrap: wrap; margin-bottom: var(--sp-3); }
+.footer-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text-dim); text-decoration: none; font-size: 0.8rem; transition: color .2s; }
+.footer-link:hover { color: var(--accent); }
+.footer-copy { font-size: 0.72rem; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .hero h1 { font-size: 1.9rem; }
+  .hero-stats { gap: var(--sp-4); }
+  .item-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .hero { padding: var(--sp-8) var(--sp-4) var(--sp-6); }
+  .hero h1 { font-size: 1.6rem; }
+  .stat-num { font-size: 1.6rem; }
+  .filter-section, .grid-section { padding-left: var(--sp-4); padding-right: var(--sp-4); }
+  .card-header, .card-body-inner { padding-left: var(--sp-4); padding-right: var(--sp-4); }
+}
+
+/* ── Pinned "今週の1個" ── */
+.pin-section { max-width: 860px; margin: 0 auto; padding: 0 var(--sp-6) var(--sp-4); }
+.pin-box {
+  display: flex; align-items: center; gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-6);
+  background: linear-gradient(135deg, rgba(45,212,191,0.10), rgba(45,212,191,0.03));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.pin-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; white-space: nowrap; }
+.pin-content { flex: 1; color: var(--text); font-size: 0.9rem; line-height: 1.6; }
+.pin-content.empty { color: var(--text-muted); font-style: italic; }
+.pin-jump { background: transparent; border: 1px solid var(--border); color: var(--accent); font-family: inherit; font-size: 0.76rem; font-weight: 600; padding: 6px 12px; border-radius: 99px; cursor: pointer; transition: .2s; }
+.pin-jump:hover { background: var(--accent-dim); border-color: var(--accent); }
+.pin-jump.clear { color: var(--text-dim); }
+
+/* ── Pin button on card ── */
+.card-actions { display: flex; align-items: center; gap: var(--sp-2); margin-left: auto; }
+.card-pin-btn, .card-tried-btn {
+  background: transparent; border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-dim); cursor: pointer;
+  width: 30px; height: 30px; border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: .2s;
+}
+.card-pin-btn:hover, .card-tried-btn:hover { border-color: var(--accent); color: var(--accent); }
+.item-card.is-pinned .card-pin-btn { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+.item-card.is-tried { opacity: 0.75; }
+.item-card.is-tried .card-tried-btn { color: #10b981; border-color: #10b981; background: rgba(16,185,129,0.1); }
+.item-card.is-tried.visible { opacity: 0.75; }
+
+/* ── Copy button ── */
+.snippet-pre { position: relative; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted); font-family: inherit; font-size: 0.7rem; font-weight: 600;
+  padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: .2s;
+}
+.copy-btn:hover { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+.copy-btn.copied { background: rgba(16,185,129,0.15); color: #10b981; border-color: #10b981; }
+
+/* ── Responsive Pin ── */
+@media (max-width: 768px) {
+  .pin-box { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav class="top-nav">
+  <a href="index.html" class="nav-back">
+    <i data-lucide="arrow-left" width="14" height="14"></i>
+    Business Skills
+  </a>
+  <span class="nav-title">Python Catalog</span>
+  <div class="nav-spacer"></div>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero-eyebrow">
+    <div class="eyebrow-line"></div>
+    <span class="eyebrow-text">PYTHON CATALOG</span>
+    <div class="eyebrow-line"></div>
+  </div>
+  <h1>Pythonで、<span class="accent">できること</span></h1>
+  <p class="hero-desc">個人のPython理解を整理する地図。できること・刺さる場面・最小コードを1枚のカードに。</p>
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-num" id="stat-total">0</span>
+      <span class="stat-label">総項目数</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">3</span>
+      <span class="stat-label">カテゴリ</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num" id="stat-updated" style="font-size:1.1rem;padding-top:4px;"></span>
+      <span class="stat-label">最終更新</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── Filter Bar ── -->
+<section class="filter-section">
+  <div class="filter-bar" id="filter-bar">
+    <button class="filter-btn active" data-filter="all">
+      <span class="filter-dot"></span>すべて
+    </button>
+    <button class="filter-btn" data-filter="tool">
+      <span class="filter-dot"></span>実務道具
+    </button>
+    <button class="filter-btn" data-filter="knowledge">
+      <span class="filter-dot"></span>知的拡張
+    </button>
+    <button class="filter-btn" data-filter="hardware">
+      <span class="filter-dot"></span>ハード接続
+    </button>
+  </div>
+</section>
+
+<!-- ── Pinned "今週の1個" ── -->
+<section class="pin-section">
+  <div class="pin-box" id="pin-box">
+    <span class="pin-label"><i data-lucide="pin" width="12" height="12" style="vertical-align:-2px;"></i> 今週の1個</span>
+    <span class="pin-content empty" id="pin-content">カード右上の📌でピン留め。まず1個、試す対象を決める。</span>
+    <button class="pin-jump" id="pin-jump" style="display:none;">ジャンプ</button>
+    <button class="pin-jump clear" id="pin-clear" style="display:none;">解除</button>
+  </div>
+</section>
+
+<!-- ── Grid ── -->
+<section class="grid-section">
+  <div class="item-grid" id="item-grid"></div>
+</section>
+
+<!-- ── Footer ── -->
+<footer class="footer">
+  <div class="footer-links">
+    <a href="../index.html" class="footer-link">
+      <i data-lucide="home" width="14" height="14"></i>
+      Portal
+    </a>
+    <a href="index.html" class="footer-link">
+      <i data-lucide="layout-grid" width="14" height="14"></i>
+      Business Skills
+    </a>
+  </div>
+  <p class="footer-copy">Personal Python Catalog — built with Claude Code</p>
+</footer>
+
+<script>
+// ── Category definitions ──────────────────────────────────────────────────
+const CATEGORIES = {
+  tool:      { label: "実務道具",   icon: "wrench",  color: "#2dd4bf" },
+  knowledge: { label: "知的拡張",   icon: "brain",   color: "#a78bfa" },
+  hardware:  { label: "ハード接続", icon: "cpu",     color: "#f59e0b" }
+};
+
+// ── State (localStorage) ────────────────────────────────────────────────────
+const LS_KEY_TRIED = "py-catalog-tried-v1";
+const LS_KEY_PIN = "py-catalog-pin-v1";
+function loadTried() { try { return new Set(JSON.parse(localStorage.getItem(LS_KEY_TRIED) || "[]")); } catch { return new Set(); } }
+function saveTried(set) { localStorage.setItem(LS_KEY_TRIED, JSON.stringify([...set])); }
+function loadPin() { return localStorage.getItem(LS_KEY_PIN) || ""; }
+function savePin(id) { if (id) localStorage.setItem(LS_KEY_PIN, id); else localStorage.removeItem(LS_KEY_PIN); }
+
+// ── Items array ───────────────────────────────────────────────────────────
+// NOTE: この配列を差し替えてデータを更新します。
+// 開始マーカー: "const ITEMS = ["
+// 終了マーカー: "];"
+// ── Items array ───────────────────────────────────────────────────────────
+// Pattern types: dataflow (青), aitype (紫), control (黄)
+const ITEMS = [
+  {
+    id: "excel-auto",
+    category: "tool",
+    pattern: "dataflow",
+    icon: "file-spreadsheet",
+    title: "Excel自動化",
+    can: "帳票の一括集計・転記・整形",
+    scene: "月次報告の集計を5分に短縮、設備投資レビュー資料の自動生成",
+    libs: ["openpyxl", "pandas"],
+    snippet: "df = pd.read_excel('report.xlsx'); df.to_excel('output.xlsx')"
+  },
+  {
+    id: "pdf-extract",
+    category: "tool",
+    pattern: "dataflow",
+    icon: "file-text",
+    title: "PDF抽出",
+    can: "メーカー資料から仕様値・認証情報を自動抽出",
+    scene: "100枚の設備マニュアルから定格値を30分で集計、RoHS認証情報を一括化",
+    libs: ["pdfplumber", "pypdf"],
+    snippet: "pdf = pdfplumber.open('manual.pdf'); text = pdf.pages[0].extract_text()"
+  },
+  {
+    id: "mail-auto",
+    category: "tool",
+    pattern: "dataflow",
+    icon: "mail",
+    title: "メール自動送信",
+    can: "定型問合わせ・報告・承認依頼を自動配信",
+    scene: "日次故障報告メール（メーカー6社への並行配信）を自動化、4時間節減",
+    libs: ["smtplib", "email"],
+    snippet: "server.sendmail('sender@example.com', ['to1@example.com'], message)"
+  },
+  {
+    id: "web-scraping",
+    category: "tool",
+    pattern: "dataflow",
+    icon: "globe",
+    title: "Web scraping",
+    can: "メーカーサイト・規格DBから最新情報を定期取得",
+    scene: "業界標準IEC値の更新を毎週自動チェック、変更検知で報告",
+    libs: ["requests", "beautifulsoup4"],
+    snippet: "soup = BeautifulSoup(response.text, 'html.parser'); data = soup.find_all('table')"
+  },
+  {
+    id: "pandas-aggregate",
+    category: "knowledge",
+    pattern: "dataflow",
+    icon: "table",
+    title: "pandas集計",
+    can: "大量センサーデータ・点検記録から異常値検知・統計分析",
+    scene: "1000台の温度センサー日誌から異常パターン検出、保全予測の根拠データ化",
+    libs: ["pandas", "numpy"],
+    snippet: "df.groupby('device_id')['temp'].mean(); df[df['temp'] > 80]"
+  },
+  {
+    id: "graph-visual",
+    category: "knowledge",
+    pattern: "dataflow",
+    icon: "bar-chart-3",
+    title: "グラフ可視化",
+    can: "設備稼働率・エネルギー消費・信頼性データを図表化",
+    scene: "年間故障率トレンドを3行で可視化、役員レビュー資料の説得力を向上",
+    libs: ["matplotlib", "seaborn"],
+    snippet: "plt.plot(dates, temps); plt.xlabel('Date'); plt.show()"
+  },
+  {
+    id: "claude-gpt-api",
+    category: "knowledge",
+    pattern: "aitype",
+    icon: "sparkles",
+    title: "Claude/GPT API連携",
+    can: "点検メモ・故障レポートの要約、判断支援の自動化",
+    scene: "トラブルシュート手順を平易な日本語に変換、現場指示の作成を10分→2分へ",
+    libs: ["anthropic", "openai"],
+    snippet: "response = client.messages.create(model='claude-opus-4-7', messages=[{'role':'user','content':text}])"
+  },
+  {
+    id: "ocr-extract",
+    category: "knowledge",
+    pattern: "aitype",
+    icon: "scan-text",
+    title: "OCR・画像起こし",
+    can: "手書き記録・紙資料・機器表示を自動テキスト化",
+    scene: "設備銘板・配線図の型番を画像から自動抽出、データ入力工数を70%削減",
+    libs: ["pytesseract", "easyocr"],
+    snippet: "text = pytesseract.image_to_string(Image.open('nameplate.jpg'))"
+  },
+  {
+    id: "plc-modbus",
+    category: "hardware",
+    pattern: "control",
+    icon: "cpu",
+    title: "PLC通信・Modbus",
+    can: "PLC・インバーター・センサーからリアルタイム値取得・制御",
+    scene: "製造ラインの10台PLC温度値を5秒間隔で集約、しきい値超過で自動停止指令",
+    libs: ["pymodbus", "minimalmodbus"],
+    snippet: "client.read_holding_registers(address=0, count=10, slave=1)"
+  },
+  {
+    id: "elec-calc",
+    category: "hardware",
+    pattern: "dataflow",
+    icon: "zap",
+    title: "電気計算・信号処理",
+    can: "インピーダンス・力率計算、FFT解析で高調波検出",
+    scene: "電力品質測定データからTHD値を自動算出、受電契約の改善案を数値立証",
+    libs: ["numpy", "scipy"],
+    snippet: "Z = np.sqrt(R**2 + X**2); fft = np.fft.fft(signal)"
+  },
+  {
+    id: "streamlit-dashboard",
+    category: "knowledge",
+    pattern: "dataflow",
+    icon: "monitor",
+    title: "Streamlit社内ダッシュボード",
+    can: "設備稼働・保全状況・品質指標をリアルタイム監視画面で可視化",
+    scene: "現場の温度・振動・消費電力を自動更新の1画面に集約、役員巡回・チーム会議の判断速度を10倍に",
+    libs: ["streamlit", "pandas", "plotly"],
+    snippet: "st.title('設備監視'); st.metric('稼働率', '98.5%', '+2.1%'); st.line_chart(df)"
+  },
+  {
+    id: "subprocess-os",
+    category: "tool",
+    pattern: "control",
+    icon: "terminal-square",
+    title: "subprocess・OS連携",
+    can: "外部コマンド・スクリプト実行、設備制御ツール・スケジューラと統合",
+    scene: "PLC診断ツール・配電盤テスターの実行を自動化、結果の自動ログ取得と判定",
+    libs: ["subprocess", "os", "shlex"],
+    snippet: "result = subprocess.run(['cmd', '/c', 'dir'], capture_output=True); print(result.stdout.decode())"
+  },
+  {
+    id: "pytest-auto",
+    category: "tool",
+    pattern: "control",
+    icon: "check-circle",
+    title: "pytest自動テスト",
+    can: "計算ロジック・計測値判定・制御アルゴリズムの回帰テストを自動化",
+    scene: "力率補正アルゴリズムの改良後、1000件の過去ケースで自動検証（手作業の1/100へ）",
+    libs: ["pytest", "pytest-cov"],
+    snippet: "def test_power_factor(): assert calc_pf(240, 60) == 1.0; pytest.main(['test_*.py', '-v'])"
+  },
+  {
+    id: "raspi-gpio",
+    category: "hardware",
+    pattern: "control",
+    icon: "cpu",
+    title: "Raspberry Pi GPIO制御",
+    can: "Raspberry Pi の GPIO ピンでリレー・ポンプ・センサーを直接制御",
+    scene: "検査ライン停止時に緊急停止ボタンを GPIO で監視、100ms で反応してソレノイド開放",
+    libs: ["RPi.GPIO", "board"],
+    snippet: "GPIO.setmode(GPIO.BCM); GPIO.setup(17, GPIO.OUT); GPIO.output(17, GPIO.HIGH)"
+  },
+  {
+    id: "docker-scheduler",
+    category: "tool",
+    pattern: "control",
+    icon: "package",
+    title: "Docker・タスクスケジューラ連携",
+    can: "設備監視スクリプト・定期メンテナンス・バッチ処理を Docker コンテナで自動実行",
+    scene: "毎日02:00に設備ログローテーション・古い故障データ集計を Docker 内で実行、サーバーから独立",
+    libs: ["docker-py", "schedule", "APScheduler"],
+    snippet: "schedule.every().day.at('02:00').do(backup_logs); scheduler.add_job(backup_logs, 'cron', hour=2)"
+  }
+];
+// ── End of ITEMS array ─────────────────────────────────────────────────────
+
+// ── Utility ──
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// ── Render cards ──
+const triedSet = loadTried();
+let pinnedId = loadPin();
+
+function renderCards() {
+  const grid = document.getElementById("item-grid");
+  grid.innerHTML = "";
+
+  ITEMS.forEach((item, idx) => {
+    const cat = CATEGORIES[item.category] || CATEGORIES.tool;
+    const libsHtml = (item.libs || [])
+      .map(l => `<span class="c-tag">${escapeHtml(l)}</span>`)
+      .join("");
+
+    const card = document.createElement("div");
+    card.className = "item-card";
+    if (triedSet.has(item.id)) card.classList.add("is-tried");
+    if (pinnedId === item.id) card.classList.add("is-pinned");
+    card.dataset.category = item.category;
+    card.dataset.id = item.id;
+
+    card.innerHTML = `
+      <div class="card-header" role="button" aria-expanded="false">
+        <div class="card-meta">
+          <div class="card-icon-wrap cat-${escapeHtml(item.category)}">
+            <i data-lucide="${escapeHtml(item.icon)}" width="18" height="18"></i>
+          </div>
+          <span class="cat-chip cat-${escapeHtml(item.category)}">${escapeHtml(cat.label)}</span>
+          <div class="card-actions">
+            <button class="card-tried-btn" data-action="tried" title="試した" aria-label="試した">
+              <i data-lucide="check" width="14" height="14"></i>
+            </button>
+            <button class="card-pin-btn" data-action="pin" title="今週の1個にピン留め" aria-label="ピン留め">
+              <i data-lucide="pin" width="14" height="14"></i>
+            </button>
+          </div>
+        </div>
+        <h3 class="card-title">${escapeHtml(item.title)}</h3>
+        <p class="card-can">${escapeHtml(item.can)}</p>
+        <button class="expand-btn" aria-expanded="false" aria-controls="body-${escapeHtml(item.id)}">
+          <span>▼</span>
+          <span class="expand-arrow">詳細</span>
+        </button>
+      </div>
+      <div class="card-body" id="body-${escapeHtml(item.id)}">
+        <div class="card-body-inner">
+          <div>
+            <div class="detail-label">刺さる場面</div>
+            <p class="detail-text">${escapeHtml(item.scene)}</p>
+          </div>
+          ${libsHtml ? `<div>
+            <div class="detail-label">ライブラリ</div>
+            <div class="libs-row">${libsHtml}</div>
+          </div>` : ""}
+          <div class="snippet-wrap">
+            <div class="detail-label">最小コード</div>
+            <pre class="snippet-pre"><button class="copy-btn" data-action="copy">COPY</button><code>${escapeHtml(item.snippet)}</code></pre>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // accordion toggle
+    const header = card.querySelector(".card-header");
+    const btn = card.querySelector(".expand-btn");
+    function toggleCard() {
+      const isExpanded = card.classList.toggle("expanded");
+      btn.setAttribute("aria-expanded", isExpanded);
+      header.setAttribute("aria-expanded", isExpanded);
+    }
+    header.addEventListener("click", e => {
+      if (e.target.closest("[data-action]")) return;
+      toggleCard();
+    });
+
+    // action buttons (pin / tried)
+    card.querySelector('[data-action="pin"]').addEventListener("click", e => {
+      e.stopPropagation();
+      togglePin(item.id);
+    });
+    card.querySelector('[data-action="tried"]').addEventListener("click", e => {
+      e.stopPropagation();
+      toggleTried(item.id);
+    });
+
+    // copy button
+    card.querySelector('[data-action="copy"]').addEventListener("click", async e => {
+      e.stopPropagation();
+      const btnEl = e.currentTarget;
+      try {
+        await navigator.clipboard.writeText(item.snippet);
+        btnEl.textContent = "COPIED";
+        btnEl.classList.add("copied");
+        setTimeout(() => { btnEl.textContent = "COPY"; btnEl.classList.remove("copied"); }, 1500);
+      } catch {
+        btnEl.textContent = "失敗";
+      }
+    });
+
+    // keyboard
+    header.addEventListener("keydown", e => {
+      if (e.target.closest("[data-action]")) return;
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleCard(); }
+      if (e.key === "Escape" && card.classList.contains("expanded")) { toggleCard(); }
+    });
+    header.tabIndex = 0;
+
+    grid.appendChild(card);
+
+    // entrance animation (stagger via CSS delay — robust to rAF throttling)
+    card.style.transitionDelay = `${idx * 60}ms`;
+    card.classList.add("visible");
+  });
+
+  // stats
+  document.getElementById("stat-total").textContent = ITEMS.length;
+  renderPinBox();
+}
+
+// ── Pin / Tried state management ────────────────────────────────────────────
+function togglePin(id) {
+  pinnedId = (pinnedId === id) ? "" : id;
+  savePin(pinnedId);
+  document.querySelectorAll(".item-card").forEach(c => {
+    c.classList.toggle("is-pinned", c.dataset.id === pinnedId);
+  });
+  renderPinBox();
+}
+function toggleTried(id) {
+  if (triedSet.has(id)) triedSet.delete(id); else triedSet.add(id);
+  saveTried(triedSet);
+  const card = document.querySelector(`.item-card[data-id="${id}"]`);
+  if (card) card.classList.toggle("is-tried", triedSet.has(id));
+}
+function renderPinBox() {
+  const content = document.getElementById("pin-content");
+  const jumpBtn = document.getElementById("pin-jump");
+  const clearBtn = document.getElementById("pin-clear");
+  if (!pinnedId) {
+    content.textContent = "カード右上の📌でピン留め。まず1個、試す対象を決める。";
+    content.classList.add("empty");
+    jumpBtn.style.display = "none";
+    clearBtn.style.display = "none";
+    return;
+  }
+  const item = ITEMS.find(i => i.id === pinnedId);
+  if (!item) { pinnedId = ""; savePin(""); renderPinBox(); return; }
+  content.innerHTML = `<strong>${escapeHtml(item.title)}</strong> — ${escapeHtml(item.can)}`;
+  content.classList.remove("empty");
+  jumpBtn.style.display = "inline-block";
+  clearBtn.style.display = "inline-block";
+  jumpBtn.onclick = () => {
+    const card = document.querySelector(`.item-card[data-id="${pinnedId}"]`);
+    if (card) {
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (!card.classList.contains("expanded")) card.querySelector(".card-header").click();
+    }
+  };
+  clearBtn.onclick = () => togglePin(pinnedId);
+}
+
+// ── Filter ──
+function initFilter() {
+  const bar = document.getElementById("filter-bar");
+  bar.addEventListener("click", e => {
+    const btn = e.target.closest(".filter-btn");
+    if (!btn) return;
+    bar.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const filter = btn.dataset.filter;
+    document.querySelectorAll(".item-card").forEach(card => {
+      if (filter === "all" || card.dataset.category === filter) {
+        card.classList.remove("hidden");
+      } else {
+        card.classList.add("hidden");
+      }
+    });
+  });
+}
+
+// ── Init ──
+document.addEventListener("DOMContentLoaded", () => {
+  renderCards();
+  initFilter();
+  document.getElementById("stat-updated").textContent = new Date().toISOString().slice(0, 10);
+  // Lucide icons
+  if (typeof lucide !== "undefined") {
+    lucide.createIcons();
+  } else {
+    // fallback: wait for script load
+    document.querySelector('script[src*="lucide"]').addEventListener("load", () => lucide.createIcons());
+  }
+});
+
+// Lucide loaded via defer — run after DOMContentLoaded
+window.addEventListener("load", () => {
+  if (typeof lucide !== "undefined") lucide.createIcons();
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="ja" data-theme="paper">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>バズニュース — Fカンパニー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;600&family=Fraunces:opsz,wght@9..144,300;9..144,400&display=swap" rel="stylesheet">
+<style>
+/* ── CSS トークン（portal.html と完全共通）─────────────── */
+:root{
+  --bg:oklch(.985 .005 85);--bg2:oklch(.965 .008 85);
+  --surface:oklch(.995 .003 85);--surface2:oklch(.97 .008 85);
+  --line:oklch(.86 .01 85);--line2:oklch(.92 .008 85);
+  --ink:oklch(.21 .012 270);--ink2:oklch(.40 .012 270);
+  --ink3:oklch(.55 .012 270);--ink4:oklch(.70 .012 270);
+  --accent:oklch(.55 .14 165);--amber:oklch(.62 .14 60);--violet:oklch(.55 .16 295);--danger:oklch(.62 .18 25);
+  --r:12px;--pad:16px;--gap:14px;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Inter","Noto Sans JP",system-ui,sans-serif;
+  --serif:"Fraunces","Noto Sans JP",serif;
+  --shadow:0 1px 0 oklch(1 0 0/.8) inset,0 0 0 1px oklch(0 0 0/.04),0 18px 40px -28px oklch(0 0 0/.25);
+}
+html[data-theme="midnight"]{
+  --bg:oklch(.17 .012 255);--bg2:oklch(.20 .014 255);
+  --surface:oklch(.235 .014 255);--surface2:oklch(.27 .014 255);
+  --line:oklch(.32 .015 255/.8);--line2:oklch(.32 .015 255/.35);
+  --ink:oklch(.96 .005 255);--ink2:oklch(.78 .012 255);
+  --ink3:oklch(.58 .012 255);--ink4:oklch(.42 .012 255);
+  --accent:oklch(.82 .16 165);--amber:oklch(.84 .14 75);--violet:oklch(.74 .16 295);
+  --shadow:0 1px 0 oklch(1 0 0/.04) inset,0 0 0 1px oklch(1 0 0/.03),0 24px 60px -30px oklch(0 0 0/.55);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased;overflow:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(80rem 50rem at 12% -10%,oklch(.95 .05 165/.4),transparent 60%),
+             radial-gradient(60rem 40rem at 95% 110%,oklch(.95 .05 60/.25),transparent 60%)}
+html[data-theme="midnight"] body::before{
+  background:radial-gradient(80rem 50rem at 12% -10%,oklch(.30 .06 165/.15),transparent 60%),
+             radial-gradient(60rem 40rem at 95% 110%,oklch(.32 .08 295/.12),transparent 60%)}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+
+/* ── レイアウト ──────────────────────────────────────────── */
+.app{position:relative;z-index:1;display:grid;grid-template-columns:240px 1fr;height:100vh}
+.side{border-right:1px solid var(--line2);padding:18px 14px;display:flex;flex-direction:column;
+  gap:16px;background:var(--surface);overflow-y:auto;overflow-x:hidden}
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* ── ブランド ─────────────────────────────────────────────── */
+.brand{display:flex;align-items:center;gap:10px;padding:2px 4px}
+.mark{width:26px;height:26px;border-radius:7px;flex-shrink:0;
+  background:conic-gradient(from 220deg,var(--accent),var(--violet),var(--amber),var(--accent));
+  box-shadow:0 0 0 1px oklch(1 0 0/.1),0 4px 14px -4px oklch(0 0 0/.4);position:relative}
+.mark::after{content:"";position:absolute;inset:5px;border-radius:3px;background:var(--surface)}
+.mark::before{content:"";position:absolute;left:50%;top:50%;width:7px;height:7px;
+  transform:translate(-50%,-50%) rotate(45deg);background:var(--ink);border-radius:1px}
+.bname{font-weight:600;font-size:13.5px;letter-spacing:-.01em;line-height:1.2}
+.bsub{display:block;font-size:10px;color:var(--ink3);font-family:var(--mono);letter-spacing:.1em}
+
+/* ── フィルタータブ ──────────────────────────────────────── */
+.filters-label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink4);padding:0 4px}
+.filter-list{display:flex;flex-direction:column;gap:2px}
+.fitem{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;
+  font-size:13px;cursor:pointer;transition:background .12s;color:var(--ink2)}
+.fitem:hover{background:var(--bg2)}
+.fitem.on{background:oklch(from var(--accent) l c h/.12);color:var(--accent);font-weight:500}
+.fitem .fct{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink4)}
+.fitem.on .fct{color:var(--accent)}
+
+/* ── ソート ──────────────────────────────────────────────── */
+.sort-group{display:flex;gap:4px}
+.sort-btn{padding:5px 10px;border-radius:6px;font-size:12px;font-family:var(--mono);
+  border:1px solid var(--line2);color:var(--ink3);transition:all .12s}
+.sort-btn.on{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+
+/* ── 統計パネル ──────────────────────────────────────────── */
+.stats-box{background:var(--bg2);border-radius:10px;padding:10px 12px;font-size:11.5px;
+  border:1px solid var(--line2)}
+.stat-row{display:flex;justify-content:space-between;padding:2px 0;color:var(--ink3)}
+.stat-row b{color:var(--ink);font-weight:500;font-family:var(--mono);font-size:11px}
+.stat-updated{font-family:var(--mono);font-size:10px;color:var(--ink4);margin-bottom:6px}
+
+/* ── バックアップボタン ──────────────────────────────────── */
+.backup-group{display:flex;flex-direction:column;gap:5px}
+.btn-sm{padding:6px 10px;border-radius:7px;font-size:11.5px;border:1px solid var(--line2);
+  color:var(--ink2);text-align:left;transition:all .12s;display:flex;align-items:center;gap:6px}
+.btn-sm:hover{background:var(--bg2);border-color:var(--line)}
+.btn-sm.accent{border-color:var(--accent);color:var(--accent)}
+.btn-sm.accent:hover{background:oklch(from var(--accent) l c h/.08)}
+
+/* ── トップバー ──────────────────────────────────────────── */
+.topbar{display:flex;align-items:center;gap:10px;padding:12px 20px;
+  border-bottom:1px solid var(--line2);background:var(--surface);flex-shrink:0;z-index:10}
+.crumbs{font-size:12px;color:var(--ink3);font-family:var(--mono);white-space:nowrap}
+.search-wrap{flex:1;position:relative;max-width:400px}
+.search{width:100%;padding:7px 12px 7px 32px;border-radius:8px;border:1px solid var(--line2);
+  background:var(--bg2);font:inherit;font-size:13px;color:var(--ink);outline:none}
+.search:focus{border-color:var(--accent);background:var(--bg)}
+.search-ic{position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  width:14px;height:14px;opacity:.4;pointer-events:none}
+.seg{display:flex;gap:2px;background:var(--bg2);padding:3px;border-radius:8px;border:1px solid var(--line2)}
+.seg-btn{padding:4px 10px;border-radius:6px;font-size:11.5px;font-family:var(--mono);color:var(--ink3)}
+.seg-btn.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px oklch(0 0 0/.08)}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.updated-tag{font-family:var(--mono);font-size:10.5px;color:var(--ink4);white-space:nowrap}
+
+/* ── フィード ────────────────────────────────────────────── */
+.feed{flex:1;overflow-y:auto;padding:16px 24px 60px}
+.feed-empty{text-align:center;padding:80px 20px;color:var(--ink3)}
+.feed-empty h3{font-family:var(--serif);font-weight:400;font-size:24px;margin:0 0 8px}
+.feed-empty code{font-family:var(--mono);font-size:12px;background:var(--bg2);
+  padding:8px 16px;border-radius:8px;display:inline-block;margin-top:12px;color:var(--accent)}
+
+/* ── ニュースカード ──────────────────────────────────────── */
+.ncard{padding:14px 0;border-bottom:1px dashed var(--line2);position:relative;transition:opacity .15s}
+.ncard.pinned{border-left:3px solid var(--accent);padding-left:12px;margin-left:-12px}
+.ncard.read{opacity:.4}
+.ncard.saved{background:oklch(from var(--accent) l c h/.04);border-radius:6px;
+  padding-left:10px;padding-right:10px;margin:0 -10px}
+.card-meta{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.score-badge{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 7px;
+  border-radius:999px;border:1.5px solid currentColor;letter-spacing:.04em}
+.src-tag{font-family:var(--mono);font-size:10.5px;color:var(--ink3);padding:2px 6px;
+  background:var(--bg2);border-radius:5px;border:1px solid var(--line2)}
+.bm-count{font-family:var(--mono);font-size:10.5px;color:var(--amber)}
+.time-ago{font-family:var(--mono);font-size:10.5px;color:var(--ink4);margin-left:auto}
+.has-memo{font-size:11px}
+.card-title{margin:0 0 5px;font-size:14.5px;font-weight:500;line-height:1.35}
+.card-title a{color:var(--ink)}
+.card-title a:hover{color:var(--accent)}
+.card-summary{margin:0 0 7px;font-size:12.5px;color:var(--ink2);line-height:1.5}
+.card-footer{display:flex;align-items:center;gap:8px;min-height:24px}
+.card-tags{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+.tag{font-size:10.5px;padding:2px 7px;border-radius:5px;background:var(--bg2);
+  color:var(--ink3);border:1px solid var(--line2);font-family:var(--mono)}
+.card-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.ncard:hover .card-actions{opacity:1}
+.btn-act{width:28px;height:28px;border-radius:6px;border:1px solid var(--line2);
+  background:var(--surface);display:grid;place-items:center;color:var(--ink3);
+  transition:all .12s;font-size:13px}
+.btn-act:hover{background:var(--bg2);color:var(--ink)}
+.btn-act.on{background:oklch(from var(--accent) l c h/.12);border-color:var(--accent);color:var(--accent)}
+.btn-act.on-amber{background:oklch(from var(--amber) l c h/.12);border-color:var(--amber);color:var(--amber)}
+.btn-act.on-violet{background:oklch(from var(--violet) l c h/.12);border-color:var(--violet);color:var(--violet)}
+
+/* ── モーダル ─────────────────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:oklch(0 0 0/.4);z-index:100;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.hidden{display:none}
+.modal{background:var(--surface);border-radius:16px;padding:24px;width:420px;max-width:90vw;
+  box-shadow:var(--shadow);border:1px solid var(--line2)}
+.modal h3{margin:0 0 14px;font-size:16px;font-weight:600}
+.memo-ta{width:100%;min-height:100px;border:1px solid var(--line2);border-radius:8px;
+  padding:10px 12px;font:inherit;font-size:13px;resize:vertical;background:var(--bg2);
+  color:var(--ink);outline:none}
+.memo-ta:focus{border-color:var(--accent)}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.btn-modal{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:500;
+  border:1px solid var(--line2);transition:all .12s}
+.btn-modal.primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.btn-modal.primary:hover{opacity:.9}
+.btn-modal:not(.primary):hover{background:var(--bg2)}
+
+/* ── 穴馬バナー ──────────────────────────────────────────── */
+.darkhorse-banner{padding:8px 16px;background:oklch(from var(--violet) l c h/.08);
+  border-bottom:1px solid oklch(from var(--violet) l c h/.2);
+  font-size:12px;color:var(--violet);font-family:var(--mono);flex-shrink:0}
+
+/* ── スクロールバー ──────────────────────────────────────── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── サイドバー ─────────────────────────────────────── -->
+  <aside class="side">
+    <div class="brand">
+      <div class="mark"></div>
+      <div>
+        <div class="bname">バズニュース</div>
+        <span class="bsub">Trending Editor</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="filters-label">フィルター</div>
+      <div class="filter-list" id="filter-list">
+        <div class="fitem on"  data-filter="all">       <span>🔥 ALL</span>        <span class="fct" id="ct-all">—</span></div>
+        <div class="fitem"     data-filter="tech">      <span>💻 テック</span>     <span class="fct" id="ct-tech">—</span></div>
+        <div class="fitem"     data-filter="business">  <span>📈 ビジネス</span>   <span class="fct" id="ct-business">—</span></div>
+        <div class="fitem"     data-filter="general">   <span>📰 一般</span>       <span class="fct" id="ct-general">—</span></div>
+        <div class="fitem"     data-filter="trend">     <span>📡 トレンド</span>   <span class="fct" id="ct-trend">—</span></div>
+        <div class="fitem"     data-filter="saved">     <span>💾 保存済み</span>   <span class="fct" id="ct-saved">—</span></div>
+        <div class="fitem"     data-filter="dark_horse"><span>🐴 穴馬</span>       <span class="fct" id="ct-dark">—</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="filters-label">ソート</div>
+      <div class="sort-group">
+        <button class="sort-btn on" data-sort="score">スコア</button>
+        <button class="sort-btn"    data-sort="recent">新着</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="filters-label">統計</div>
+      <div class="stats-box">
+        <div class="stat-updated" id="stat-updated">—</div>
+        <div id="stat-rows"></div>
+      </div>
+    </div>
+
+    <div class="backup-group">
+      <div class="filters-label">バックアップ</div>
+      <button class="btn-sm" id="btn-export-ann">⬇ アノテーション保存</button>
+      <label  class="btn-sm" style="cursor:pointer">
+        ⬆ アノテーション読込
+        <input type="file" id="input-import-ann" accept=".json" style="display:none">
+      </label>
+      <button class="btn-sm accent" id="btn-export-md">📄 保存済み → Markdown</button>
+    </div>
+  </aside>
+
+  <!-- ── メインエリア ────────────────────────────────────── -->
+  <main class="main">
+    <!-- トップバー -->
+    <div class="topbar">
+      <div class="crumbs">Secretary / <b>Trending News</b></div>
+      <div class="search-wrap">
+        <svg class="search-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="search" id="search" type="search" placeholder="タイトル・要約を検索…">
+      </div>
+      <div class="topbar-right">
+        <span class="updated-tag" id="topbar-updated">—</span>
+        <div class="seg">
+          <button class="seg-btn on" data-theme="paper">Paper</button>
+          <button class="seg-btn"    data-theme="midnight">Night</button>
+        </div>
+        <a href="../index.html" class="btn-sm" style="text-decoration:none">← Portal</a>
+      </div>
+    </div>
+
+    <!-- 穴馬バナー（穴馬フィルター時のみ表示）-->
+    <div class="darkhorse-banner hidden" id="darkhorse-banner">
+      🐴 穴馬モード — スコア &lt; 30 かつ 24時間以内の記事（まだバズっていない候補）
+    </div>
+
+    <!-- フィード -->
+    <div class="feed" id="feed">
+      <div class="feed-empty">
+        <h3>データがありません</h3>
+        <p>以下のコマンドを実行してニュースを取得してください</p>
+        <code>py trending-news/collector.py --dry-run</code>
+        <br><br>
+        <code>py trending-news/collector.py</code>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ── メモモーダル ────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="modal-memo">
+  <div class="modal">
+    <h3>📝 メモ</h3>
+    <textarea class="memo-ta" id="memo-ta" placeholder="メモを入力…"></textarea>
+    <div class="modal-footer">
+      <button class="btn-modal" id="btn-memo-cancel">キャンセル</button>
+      <button class="btn-modal primary" id="btn-memo-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── データ埋め込みポイント ─────────────────────────────── -->
+<script>window.TRENDING_DATA = {"meta":{"last_updated":"2026-05-18T19:47:45.809037+09:00","total":120,"source_breakdown":{"hatena_economics":29,"hatena_it":28,"hatena_general":18,"nhk":2,"qiita":16,"hackernews":8,"toyokeizai":6,"reddit_ai":1,"theverge":1,"zenn":7,"techcrunch":3,"reddit_ml":1}},"items":[{"id":"3f7d8114","title":"明暗分かれた「無印良品」と「ニトリ」　2社の差はどこで生まれたのか","snippet":"著者プロフィール 山口伸 経済・テクノロジー・不動産分野のライター。企業分析や都市開発の記事を執筆する。取得した資格は簿記、ファイナンシャルプランナー。趣味は経済関係の本や決算書を読むこと。　X：@shin_yamaguchi_ 無印良品を展開する良品計画の業績が好調だ。コロナ禍の影響を受けた2020年8月期以外は増収が...","url":"https://www.itmedia.co.jp/business/articles/2605/18/news011.html","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":354,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546616+09:00","published_at":"2026-05-18T06:02:55+09:00","summary":"","tags":[],"score":78},{"id":"75d552ca","title":"Xが言語の壁を壊したのをおれは評価する","snippet":"歴史上最大の文化交流がまさに始まった Xのポストが、AIによって自動的に多国語に翻訳されるようになった。日本でそのアップデートが行われたのは2026年3月30日のことだ。わざわざ日付を記すのは、なかなかな記念日だと思うからだ。 最初に結論から書く。おれはXのこの機能に賛成している。やってくれたな、イーロン・マ...","url":"https://blog.tinect.jp/?p=91128","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":261,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464153+09:00","published_at":"2026-05-18T08:16:04+09:00","summary":"","tags":[],"score":75},{"id":"2d43145d","title":"一般人も資産1億円超え　「いつの間にか富裕層」のお金のつくり方は - 日本経済新聞","snippet":"株式相場の上昇を背景に、金融資産を1億円以上に増やした一般の会社員などが増え、新たな「富裕層」として注目されている。収入が飛び抜けて多くなくても家計を管理し、運用を続ける効果は大きい。金融資産が1億円に達した人たちに実践したことを聞いた。「株式相場が上がり続ければ今年中か、来年に資産1億円を突破しそ...","url":"https://www.nikkei.com/article/DGXZQOUB1016R0Q6A510C2000000/","source":"hatena_general","source_name":"はてな 総合","category":"business","base_score":30,"bookmarks":176,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526703+09:00","published_at":"2026-05-18T09:02:15+09:00","summary":"","tags":[],"score":71},{"id":"6b2eeb9d","title":"あなたの Claude Code/Cursor/Codex/Gemini、5LLM 横断して記憶する方法","snippet":"こんな経験ありませんか? 土曜の朝、 新機能を開発する。 まずは Codex で DB migration の boilerplate を書かせる (= 機械的な作業、 Codex の方が早い)。 「users table の email column は CITEXT、 RLS は auth.uid() で scope」 と方針を伝えて、 30 分で完成。 水曜、 同じ機能の 複雑なビジネスロジック を Clau...","url":"https://zenn.dev/kanseilink/articles/linksee-memory-claude-cross-llm-20260511","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":162,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464285+09:00","published_at":"2026-05-17T11:15:09+09:00","summary":"","tags":[],"score":68},{"id":"7d55cfce","title":"「AI 事業に難易度ってあるの？」AI 事業の難易度を 10 段階で分類してみた","snippet":"エンジニアの又川です。 突然ですが、皆さんの会社で「うちも AI 事業やろう！」みたいな話、出ていませんか？ そして、その「AI 事業」の中身が AI レコメンド だったり、画像 AI 査定 だったり、需要予測 AI だったりすると、なんとなく胸騒ぎがしてくる人もいるのではないでしょうか。 「それ、2024 年以前の AI でも...","url":"https://blog.asial.co.jp/6786/","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":145,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464195+09:00","published_at":"2026-05-18T10:10:30+09:00","summary":"","tags":[],"score":67},{"id":"a059f833","title":"Claude・ChatGPT・Gemini・Grokの4つのAIモデルにラジオ運営を任せる実験、Claudeは革命を扇動しGeminiは平然と悲劇的な出来事を描写","snippet":"生成AIやAIエージェントの安全評価・挙動テスト・脆弱(ぜいじゃく)性検証を行うスタートアップのAndon Labsが、Claude・ChatGPT・Gemini・Grokという4つのAIモデルにラジオの運営を任せるという実験を行いました。 We let four AIs run radio stations. Here's what happened. | Andon Labs https://andonlabs.com/blog/...","url":"https://gigazine.net/news/20260518-ai-run-radio-stations/","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":5,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464333+09:00","published_at":"2026-05-18T13:58:41+09:00","summary":"","tags":[],"score":67},{"id":"d91f18c4","title":"Claude Code を社内導入する時の最低限ガードレール5項目 — 機密情報を漏らさない設定パターン - Qiita","snippet":"はじめに Qiita で「Claude Code を社内で使うための『AIエージェントセキュリティ』実践編」がトレンド入りしていました。 Claude Code を組織で使い始める時、最も多い不安は 「機密情報がうっかり漏れないか」 です。 実際にうちのチームで1年以上運用してきた経験から、最低限これだけは設定しておけ という5項目の...","url":"https://qiita.com/ennagara128/items/aeaee3e64e75076503fe","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":433,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464383+09:00","published_at":"2026-05-17T17:23:22+09:00","summary":"","tags":[],"score":67},{"id":"d422bc1c","title":"イオン株「最高値からほぼ半値」の衝撃　それでも高い市場の期待、どう応える？","snippet":"FP技能士センター正会員。中央大学卒業後、フィンテックスタートアップにて金融商品取引業者の設立や事業会社向けサービス構築を手がけたのち、広告DX会社を創業。サム・アルトマン氏創立のWorld財団における日本コミュニティスペシャリストを経て株式会社X Capitalへ参画。 「日本最大の小売業」の株価が、たった4カ月...","url":"https://www.itmedia.co.jp/business/articles/2605/18/news030.html","source":"hatena_economics","source_name":"はてな 経済","category":"tech","base_score":38,"bookmarks":4,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546897+09:00","published_at":"2026-05-18T09:02:52+09:00","summary":"","tags":[],"score":67},{"id":"6fec9ae0","title":"パスワードの時代が終わる理由 - パスキーの仕組みを図解でわかりやすく整理する - Qiita","snippet":"はじめに 最近、GoogleやApple、メルカリ、楽天、PlayStationなどで「パスキー」という言葉を見かけることが増えました。「パスワードの代わりになる新しいログイン方法らしい」くらいは知っていても、「結局それって何なの？」「なぜパスワードより安全なの？」と聞かれると、説明に困る方も多いのではないでしょうか。...","url":"https://qiita.com/ktdatascience/items/78212f9f851ffe97f3d9","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":281,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464122+09:00","published_at":"2026-05-18T07:26:35+09:00","summary":"","tags":[],"score":66},{"id":"d821460a","title":"今まで衝撃を受けたゲームのギミック集メモ","snippet":"ネタバレになるのでタイトルは省略する ・ DSを閉じる(ゼ**) ・ セーブデータを消去する(N**) ・ エクスプローラーを開いて特定のファイルを削除する(D**) ・ 別のセーブデータでゲームを開始するとトゥルーエンド(グ**) ・ プレイヤー名と思って最初に入力した名前が自分の名前ではなかった(U**) ・ 最初に入力したプレ...","url":"https://anond.hatelabo.jp/20260516134140","source":"hatena_general","source_name":"はてな 総合","category":"general","base_score":30,"bookmarks":537,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526413+09:00","published_at":"2026-05-17T21:41:36+09:00","summary":"","tags":[],"score":66},{"id":"3a0941e4","title":"新サービス ベータテスター募集のお知らせ - はてなの告知","snippet":"新サービスのベータテスターを募集します はてなは現在、2026年夏のリリースに向けて、新サービスを開発しています。そこで、はてなのユーザーのみなさまにベータテストへのご参加をお願いしたいと考えています。 ベータテスト期間中にお願いしたいことはシンプルです。実際にサービスを使い、率直なフィードバックをお...","url":"https://hatena-announce.hatenastaff.com/entry/20260518betatest","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":129,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464052+09:00","published_at":"2026-05-18T14:32:07+09:00","summary":"","tags":[],"score":64},{"id":"197c13d9","title":"専任情シスがいない20人規模の町工場で、自分たちでランサムウェア対策基盤を組む - Qiita","snippet":"中小企業や町工場でセキュリティ対策を進めようとすると、よく出てくる悩みがあります。 「大企業みたいなSOCやSIEMは無理だけど、ランサムウェアは怖い」 「NASで共有している図面や受発注データが止まったら、本当に仕事にならない」 「専任の情シスはいない。でも、できるところは自分たちで構築したい」 この記事で...","url":"https://qiita.com/masakai/items/d55a39ac35dca575b8ce","source":"hatena_it","source_name":"はてな IT","category":"business","base_score":38,"bookmarks":367,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464211+09:00","published_at":"2026-05-17T16:44:58+09:00","summary":"","tags":[],"score":64},{"id":"14addc09","title":"凄すぎ…「Gemma 4×Claude Code活用術」、API料金ゼロでAIエージェント制作の全手順","snippet":"AIを使ったアプリ開発やサービス運営において、常に頭を悩ませるのが高額な「API料金」だ。しかし今、そんな“クラウド課金”の常識を覆す技術が急速に進化しているのをご存じだろうか。それが、PCやスマホのWebブラウザ上で独立して動作する超小型のローカルLLM（エッジAI）だ。活用メリットやたった2日で対話型AIを自作...","url":"https://www.sbbit.jp/article/cont1/185346","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":9,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464301+09:00","published_at":"2026-05-18T08:43:36+09:00","summary":"","tags":[],"score":64},{"id":"0e48fd42","title":"生成AIを使ったソフトウェア開発におけるセキュリティの問題点について整理してみた | DevelopersIO","snippet":"生成AIを使ったソフトウェア開発が急速に普及する中で、その一方で「この方法で進めても本当に安全なのか」という疑問から、セキュリティ面での課題を整理してみました。AIに任せる範囲・権限・並列度が今後拡大していく中で、従来のセキュリティ対策だけでは対応しきれない問題が出てきています。本記事では、現状の問...","url":"https://dev.classmethod.jp/articles/security-on-software-development-with-generative-ai/","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":7,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464460+09:00","published_at":"2026-05-18T16:52:56+09:00","summary":"","tags":[],"score":64},{"id":"33b116a9","title":"「日本の恥」はレジより財政　米財務長官の長期金利への警鐘忘れるな - 日本経済新聞","snippet":"いくらなんでもレジシステムのメーカーに失礼ではないだろうか。11日の参院決算委員会での高市早苗首相による消費税減税に関する答弁のことである。「システムの問題はちょっと日本として恥ずかしいですね。例えば感染症が起こる。何か大きな災害が起きたときに税率すら柔軟に変えられないレジシステムだということは情...","url":"https://www.nikkei.com/article/DGXZQOCD136RJ0T10C26A5000000/","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":52,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546852+09:00","published_at":"2026-05-18T10:25:13+09:00","summary":"","tags":[],"score":64},{"id":"ab6f3115","title":"「もし生まれ変わるとしたらデカパイ自撮り女になりたい」に対して収益化のパイオニアが登場、その世知辛い現状を語る","snippet":"木野二平（木野一平II世） @niheikino もし生まれ変わることができたら 私は貝になりたい いや、デカパイ自撮り女になりたい！ デカパイ揺らした動画でインスタフォロワー数100万人になりたい！ 月額5千円のファンサイトで若干肌面積増やしただけで乳輪すらも見せないようなナメた写真を月2〜3枚出すだけで生活できるよ...","url":"https://togetter.com/li/2698096","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":217,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.547145+09:00","published_at":"2026-05-17T18:52:59+09:00","summary":"","tags":[],"score":64},{"id":"9bf49469","title":"趣味が欲しい","snippet":"もう４０そこそこなんやが趣味がなくてなんか生きてて張り合いがない 高校生ぐらいまではずっと部活ががったから良かった 大学に上がったぐらいから何もなくなった ずっと惰性で生きてると思う 何のために生きてるのかよくわからなくなってきた それで色々考えてみたんだが趣味がないのが良くない気がしてきた 趣味が欲...","url":"https://anond.hatelabo.jp/20260518102722","source":"hatena_general","source_name":"はてな 総合","category":"general","base_score":30,"bookmarks":217,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526395+09:00","published_at":"2026-05-18T10:27:49+09:00","summary":"","tags":[],"score":64},{"id":"d46cabe9","title":"正直言ってコナンは連載伸ばし過ぎ...1巻が出てから約30年100巻以上買ってるのに終わりが全然見えない→「黒の組織関連は一度完結させてから毎日どこかで人が死ぬ街の日常を描いて欲しい」","snippet":"正直言ってコナンは連載伸ばし過ぎ...1巻が出てから約30年100巻以上買ってるのに終わりが全然見えない→「黒の組織関連は一度完結させてから毎日どこかで人が死ぬ街の日常を描いて欲しい」","url":"https://togetter.com/li/2698480","source":"hatena_general","source_name":"はてな 総合","category":"general","base_score":30,"bookmarks":206,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526429+09:00","published_at":"2026-05-18T14:07:10+09:00","summary":"","tags":[],"score":64},{"id":"a0ccb02f","title":"NVIDIAが1分間の動画を生成できるAI「SANA-WM」を発表、カメラ移動を精密に制御可能","snippet":"NVIDIAの研究チームが26億パラメータのオープンソースワールドモデル「SANA-WM」を発表しました。SANA-WMは720p解像度で最長1分間の動画を生成できるモデルで、カメラの動きも精密に制御できる点が特徴です。ワールドモデルとは現実世界や仮想空間の構造、視点の移動、物体の見え方の変化などをAI内部で予測し、映像とし...","url":"https://gigazine.net/news/20260518-nvidia-sana-wm/","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":13,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464413+09:00","published_at":"2026-05-18T12:39:55+09:00","summary":"","tags":[],"score":61},{"id":"5d0fd0d9","title":"現場の“ナフサ不足”なぜ？ 全体量確保も業界により「必要な形」足りず…目詰まりのカラクリとは【サンデーモーニング】 | TBS NEWS DIG","snippet":"ナフサ不足であらゆる現場から悲鳴が上がっていますが、政府はこれを“目詰まり”と言っています。一体何が起きているのでしょうか。身の回りにある様々なものの原料となっているナフサですが、ガソリンや軽油、重…","url":"https://newsdig.tbs.co.jp/articles/-/2666132","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":418,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546651+09:00","published_at":"2026-05-17T16:15:04+09:00","summary":"","tags":[],"score":61},{"id":"96031ec3","title":"長期金利、一時2.8%　インフレ・財政懸念で29年半ぶりの高さ - 日本経済新聞","snippet":"18日の国内債券市場で長期金利の指標となる新発10年物国債利回りが一時、2.8%に上昇（債券価格は下落）した。1996年10月以来およそ29年半ぶりの高水準となる。原油高によるインフレ圧力や、追加の財政出動への懸念から債券売りが進んでいる。前週末から0.1%上昇した。96年当時は売買高の多い「指標銘柄」が長期金利とさ...","url":"https://www.nikkei.com/article/DGXZQOUB159AA0V10C26A5000000/","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":17,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546957+09:00","published_at":"2026-05-18T09:10:12+09:00","summary":"","tags":[],"score":61},{"id":"fa6cd8f4","title":"非上場株取引、個人に門戸　新興投資促す　金融庁、中小役員ら対象　不正防止策必要に - 日本経済新聞","snippet":"金融庁は夏にも非上場株を取引できる個人投資家の要件を緩和する。流通・発行市場への参加資格を軽くし、中小企業の役員などに間口を広げる。2027年春には証券会社による勧誘行為もより幅広く認める。日本の家計が抱える巨額の資金がスタートアップに流れる仕組みを作る。内閣府令を改正し、非上場株などを取引する特定...","url":"https://www.nikkei.com/article/DGKKZO96306780Y6A510C2MM8000/","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":21,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.547045+09:00","published_at":"2026-05-18T04:31:19+09:00","summary":"","tags":[],"score":61},{"id":"ed0e4f1f","title":"新聞や雑誌の文字を切り貼りして作る、あのスタイルを再現した日本語フォント「怪聞書」／怪しい文書を作りたいときにどうぞ","snippet":"","url":"https://forest.watch.impress.co.jp/docs/news/2109531.html","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":51,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464173+09:00","published_at":"2026-05-18T16:30:29+09:00","summary":"","tags":[],"score":58},{"id":"1c38c4c0","title":"飲み会の帰り道、自宅サーバが落ちていたのでスマホからClaudeに任せ1時間で復旧させた話(Proxmox + Tailscale)","snippet":"TL;DR 飲み会の帰り道、スマホの Claude アプリでセッションが全部切断＝自宅サーバ (Proxmox) がホストごと落ちていた 同時に DHCP プール枯渇で、新規に IP を取る端末は WiFi に乗れない（既存 IP のサーバ群は生存） 外出先から SSH で Claude セッションを 1 つ立て、切り分けと復旧を任せた。約 1 時間で復帰。手...","url":"https://zenn.dev/marvelousu/articles/claude-code-remote-incident","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":44,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464229+09:00","published_at":"2026-05-18T15:11:40+09:00","summary":"","tags":[],"score":58},{"id":"c8ea89a2","title":"「費用は会社が全部持つので2年間ブラブラして新商品の開発アイデアを考えろ」永谷園のぶらぶら社員のエピソード、これって羨ましい？","snippet":"サモ(Futoshi Iwasawa) @Samo_Toshu 社内無職で思い出したのは昔、永谷園が「ぶらぶら社員」という新規企画に特化した役職を設けた。 交際費や旅費などを全部会社持ちで2年間の期限付きで任命された。 その後生み出されたのが「麻婆春雨」と言われています。 x.com/nukonuko/statu… 2026-05-17 22:58:53","url":"https://togetter.com/li/2698530","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":20,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464249+09:00","published_at":"2026-05-18T17:33:34+09:00","summary":"","tags":[],"score":58},{"id":"69ccfc22","title":"参政地方議員が国保逃れ　8人に離党勧告処分（共同通信） - Yahoo!ニュース","snippet":"参政党の神谷宗幣代表は18日の記者会見で、同党の地方議員8人が、国民健康保険料の支払いを逃れるため、勤務実態が乏しい一般社団法人役員に就任していたと明らかにした。他に勧誘などの形で関与していた地方議員もいて、計8人を離党勧告処分とした。「議員辞職するかどうかは個人の判断に任せたい」と述べた。 ◆【一覧...","url":"https://news.yahoo.co.jp/articles/d896bb0815bdd0d44be282c9f9c03878668bfc2c","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":71,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546673+09:00","published_at":"2026-05-18T15:57:44+09:00","summary":"","tags":[],"score":58},{"id":"9f8efb7f","title":"老舗書店の書泉が6年振りに黒字転換　「誰に売るか」を極める大改革","snippet":"不況が続く書店業界にとって久々の明るいニュースとなったのが、2026年3月の「三省堂書店神田神保町本店」リニューアルオープン。その斬新さに様々な声が上がる一方で、注目されているのが「書泉グランデ」などの大型店舗を構える書泉の戦略だ。三省堂と好対照な、マニア向けの売り場づくりについて聞いた。","url":"https://xtrend.nikkei.com/atcl/contents/watch/00013/02878/","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":36,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546714+09:00","published_at":"2026-05-18T17:54:37+09:00","summary":"","tags":[],"score":58},{"id":"101f9557","title":"ダイビング中に観光客4人死亡　困難極める洞窟での捜索活動で軍のダイバーも死亡する事態に　モルディブ","snippet":"モルディブ・バーブ環礁で捜索活動の準備をするダイバーら＝15日/Maldives President’s Media Division/AP （CNN） インド洋のモルディブでスキューバダイビング中に死亡したイタリア人4人の遺体捜索を強化するため国際的な洞窟ダイバーらが17日、同国に到着した。この前日には回収作業で軍当局者1人が命を落としていた...","url":"https://www.cnn.co.jp/world/35247622.html","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":56,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546742+09:00","published_at":"2026-05-18T12:27:54+09:00","summary":"","tags":[],"score":58},{"id":"99fc66d7","title":"石油関連業界が自民党会議に提出した「ナフサ不足」内部資料を入手「在庫は3～4ヶ月分。直近はさらに悪化」それでも高市政権が不足を認めようとしない事情 | マネーポストWEB","snippet":"イラン情勢の緊迫が続き、石油化学製品の原料となる「ナフサ」の不足が日本にとって重大な懸案となっている。高市早苗・首相は「年を越えて供給を継続できる」と強気だが、本誌・週刊ポストが入手した内部資料と独自取材からは、その発言とかけ離れたあまりに深刻な現実が浮かび上がってきた――。【前後編の前編】 直近の...","url":"https://www.moneypost.jp/1400968","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":89,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546759+09:00","published_at":"2026-05-18T08:35:46+09:00","summary":"","tags":[],"score":58},{"id":"f98d02ec","title":"吉村洋文氏、次期知事選出馬へ　来春までに住民投票なら―大阪：時事ドットコム","snippet":"吉村洋文氏、次期知事選出馬へ　来春までに住民投票なら―大阪 時事通信 内政部2026年05月17日23時22分配信 記者会見で来春の大阪府知事選への出馬を表明する吉村洋文知事（右端）＝１７日午後、大阪市 大阪府の吉村洋文知事（日本維新の会代表）は１７日夜、大阪市内で記者会見し、来年４月の任期満了に伴う知事選に関し...","url":"https://www.jiji.com/jc/article?k=2026051700428&g=pol","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":156,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546820+09:00","published_at":"2026-05-18T00:39:27+09:00","summary":"","tags":[],"score":58},{"id":"0d028b78","title":"「招かれてないよ」斎藤知事「神戸まつり」パレード参加に反対派が抗議　「何のデモなん」戸惑う一般客も","snippet":"抗議の声も、知事はサムズアップで会場を後に 斎藤知事は、2027年に関西で開かれる生涯スポーツの祭典「ワールドマスターズゲームズ2027関西」をPRするため、パレードに参加。テニスラケットを持ち、白い帽子、赤シャツ、半ズボン姿に同祭典のタスキを付けて約750mの距離を練り歩いた。 知事はラケットを振って、さまざ...","url":"https://www.j-cast.com/2026/05/17514782.html?p=all","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":147,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546927+09:00","published_at":"2026-05-17T22:27:57+09:00","summary":"","tags":[],"score":58},{"id":"7c0900fe","title":"イリヤ・レメスロ氏の「私がウラジーミル・プーチンを支持しなくなった理由」その 7 から その 11","snippet":"今年の3月18日(anond:20260321192723)にプーチン氏に反旗を翻した後、精神科病院に収容されてしまったイリヤ・レメスロ氏が、その後退院し(anond:20260505233557)、さらに今回、反旗の告発文の続きを投稿したので、こちらも翻訳して紹介しておきたい。 https://t.me/ilya_remeslaw/11365 - 日本時間 5月17日 15:17 ちょ...","url":"https://anond.hatelabo.jp/20260517234938","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":106,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.547060+09:00","published_at":"2026-05-17T23:50:18+09:00","summary":"","tags":[],"score":58},{"id":"6e621b66","title":"ロリコンブーム前史｜もとおみ數史","snippet":"ロリコンブームはどのようにして起こったのか。諸説あるが、よく言われるのが、『ニンフェット 12歳の神話』（ノーベル書房）を始めとした芸術としての少女ヌードを前段とし、『LITTLE PRETENDERS 小さなおすまし屋さんたち』（ミリオン出版）を発火点にブームが幕を開けるといった史観だ。こうした見方は決して間違いで...","url":"https://note.com/motomoto_kz/n/n94a7ef373ec0","source":"hatena_general","source_name":"はてな 総合","category":"general","base_score":30,"bookmarks":255,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526443+09:00","published_at":"2026-05-17T20:35:44+09:00","summary":"","tags":[],"score":58},{"id":"b07badd2","title":"そーだ、空気を作ったら売れるかな！必需品だからうれるよね？","snippet":"売ってる人もほぼいないし、ブルーオーシャンな気がする！ ただ、空気の作り方が分からない 原材料ってどこにあるんだろ 酸素とか窒素とか、 いい感じに混ぜ混ぜしないと！ たくさん作って、みんなに配るよ！ サブスク方式でもいいよ！ そうだ、ボンベに入れて家に設置でもいいかも 美味しい空気だと爆売れするかも！！ ...","url":"https://anond.hatelabo.jp/20260514225440","source":"hatena_general","source_name":"はてな 総合","category":"general","base_score":30,"bookmarks":260,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526559+09:00","published_at":"2026-05-18T07:45:54+09:00","summary":"","tags":[],"score":58},{"id":"40b3dd1f","title":"習近平が「日本に行くな」と煽った意外な結末…街から中国人が消えて分かった「日本の観光業」の知られざる強さ（プレジデントオンライン） - Yahoo!ニュース","snippet":"高市首相の台湾有事をめぐる発言を受け、中国政府が自国民に日本への渡航自粛を呼びかけた。中国人客を失えば日本の観光業は沈むのではとの懸念をよそに、2025年の訪日客数は過去最多の4270万人、旅行消費額も過去最高の約9.5兆円を記録した。渡航自粛要請が図らずも日本の脱中国依存を加速させた皮肉な結末を、海外メデ...","url":"https://news.yahoo.co.jp/articles/06c4e634a07215def4712d631057312d788e842f","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":133,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546987+09:00","published_at":"2026-05-17T18:56:08+09:00","summary":"","tags":[],"score":56},{"id":"af6b27b2","title":"いろんな理由で辞書に載らなくなった言葉たち～「三省堂国語辞典から消えたことば辞典」","snippet":"デイリーポータルZのライター、関係者が愛読している本を語ります。 今回はライターんちゅたぐいさん。レコメンドは「三省堂国語辞典から消えたことば辞典」 聞き手は石井、伊藤、石川です。 ではんちゅたぐいさん、お願いします。 辞書から消えた言葉が載ってる本 んちゅ：タイトルのとおりで、三省堂国語辞典から消え...","url":"https://dailyportalz.jp/kiji/book-review-nchutagui01","source":"hatena_general","source_name":"はてな 総合","category":"general","base_score":30,"bookmarks":186,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526320+09:00","published_at":"2026-05-18T11:15:30+09:00","summary":"","tags":[],"score":56},{"id":"d426f56e","title":"客30人を出禁にして「年商2倍」に。飲食店が“迷惑客”を切り捨てたら優良客が戻ってきた納得の理由 | 日刊SPA!","snippet":"古今東西、飲食店では利用マナーをめぐるトラブルが絶えない。なかでも近年目立つのが、店側による「出禁通告」だ。SNSではたびたび拡散され、「当然だ」という声と「やりすぎではないか」という批判がぶつかり合う。カスハラ防止条例の整備が進むいま、店側の判断はどこまで許されるのか。そもそも、出禁に至る“決定的...","url":"https://nikkan-spa.jp/2157602","source":"hatena_general","source_name":"はてな 総合","category":"general","base_score":30,"bookmarks":152,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526487+09:00","published_at":"2026-05-18T10:24:53+09:00","summary":"","tags":[],"score":56},{"id":"4563eee1","title":"これ、僕の強い思想なんですけどわかる人いますか？地物しか使ってない海鮮丼が1番だと思っていて....サーモン乗っかってたりするとかなり萎える","snippet":"これ、僕の強い思想なんですけどわかる人いますか？地物しか使ってない海鮮丼が1番だと思っていて....サーモン乗っかってたりするとかなり萎える","url":"https://togetter.com/li/2698421","source":"hatena_general","source_name":"はてな 総合","category":"general","base_score":30,"bookmarks":150,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526572+09:00","published_at":"2026-05-18T12:23:55+09:00","summary":"","tags":[],"score":56},{"id":"aca04f34","title":"プリンターで印刷したら用紙の裏表を間違えてしまいとんでもないサイコパス絵画が出来上がった→他の失敗写真も次々投稿され引用欄にバケモノが集まる","snippet":"まぁ☺︎🎀R7.5👶🏻 @maa_hatsumata エプソンアプリを使用して自宅のプリンターで娘ちゃんの写真印刷したらとんでもないサイコパス絵画が出来上がってしまった…何をどうしたら治るの?😭教えて有識者の方😭 pic.x.com/xDuy1ycCnB 2026-05-16 20:19:36","url":"https://togetter.com/li/2698408","source":"hatena_general","source_name":"はてな 総合","category":"general","base_score":30,"bookmarks":156,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526733+09:00","published_at":"2026-05-18T10:43:49+09:00","summary":"","tags":[],"score":56},{"id":"741be2c0","title":"シニア開発者はなぜ専門知識をうまく伝えられないのか？","snippet":"AIエージェントによるソフトウェア開発が広がる中で、「AIがコードを書けるなら開発者は不要になるのではないか」という見方も出ています。一方で、シニア開発者は単にコードを書く人ではなく、不要な開発を避け、複雑さを抑え、動き続けるシステムを守る役割を担っているという指摘もあります。コピーライターのトゥヒ...","url":"https://gigazine.net/news/20260518-senior-developers-communicate-expertise/","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":84,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464317+09:00","published_at":"2026-05-18T07:31:39+09:00","summary":"","tags":[],"score":55},{"id":"0716338c","title":"ソニー、炎上した「Xperia 1 VIII」のAIカメラ機能で“火消し“　「4つの選択肢」を強調","snippet":"ソニーが、Xperiaのグローバル公式アカウントで、「Xperia 1 VIII」のAIカメラアシスタントで炎上した投稿のフォローを行っている。 Xperia 1 VIIIのカメラ機能では、AIがシーンを認識して明るさ、ホワイトバランス、彩度、コントラストなどを調整して4種類の写真を提案してくれる「AIカメラアシスタント」を搭載してい...","url":"https://www.itmedia.co.jp/mobile/articles/2605/18/news072.html","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":13,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464368+09:00","published_at":"2026-05-18T13:35:35+09:00","summary":"","tags":[],"score":55},{"id":"ac13ba37","title":"ベッドで寝ながらiPhoneでAndroidアプリを開発。Codexと超巨大24.5インチAndroidタブレットで自分専用電子ギターを作った（CloseBox） | テクノエッジ TechnoEdge","snippet":"今回もヴァイブコーディングの話です。これまでとの違いは、Claude Codeではなく、Codexを使っていること、そして、Androidアプリを開発していること。なぜこうなったかというと……。 インスタコード、カンタンプレイで知られるゆ～いちさんが新しい楽器のプロジェクト「ストラモ」を始めました。ギターライクで簡単に演...","url":"https://www.techno-edge.net/article/2026/05/18/5070.html","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":14,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464428+09:00","published_at":"2026-05-18T13:44:51+09:00","summary":"","tags":[],"score":55},{"id":"bf59c502","title":"NEC社長が説く　AI時代と新たな安全保障環境の到来で「ITサービスはこう変わる」","snippet":"AI時代のITサービスはどう変わるのか。この疑問について示唆に富む話を聞いたので、今回はその内容を取り上げたい。その話とは、NECが今後の経営計画を策定した際の基本的な考え方として明らかにしたものだ。同社の森田隆之氏（取締役 代表執行役社長 兼 CEO）の説明を基に紹介する。 NECが捉える「2つのパラダイムシフ...","url":"https://www.itmedia.co.jp/enterprise/articles/2605/18/news062.html","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":4,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464474+09:00","published_at":"2026-05-18T13:45:57+09:00","summary":"","tags":[],"score":55},{"id":"f1e7df5a","title":"【大原雄介の半導体業界こぼれ話】 IntelとAMD主導のx86向けAI拡張命令「ACE」、その詳細が判明","snippet":"","url":"https://pc.watch.impress.co.jp/docs/column/tidbit/2109099.html","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":60,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464503+09:00","published_at":"2026-05-18T07:08:56+09:00","summary":"","tags":[],"score":55},{"id":"be574d08","title":"AI用語の基礎知識 【第6回】「ディープフェイク」とは――“見たこと”も“聞いたこと”も信じにくい時代","snippet":"","url":"https://ai.watch.impress.co.jp/docs/serial/glossary/2109028.html","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":5,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464516+09:00","published_at":"2026-05-18T09:00:47+09:00","summary":"","tags":[],"score":55},{"id":"d9bf568e","title":"班長を待ちながら - megamouthの葬列","snippet":"来ないな、と思った。 班長が、である。 町内会費を集めに班長が来ない。 例年ならドアポケットに「町内会費」と書かれた封筒がいつのまにか入っているから、それに1200円を入れて、封筒に書かれた班長の号室のドアポケットに封筒ごと投函する、ということで町内会費の支払いが終わっていた。誰とも顔を合わせないまま12...","url":"https://www.megamouth.info/entry/2026/05/17/221035","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":88,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546880+09:00","published_at":"2026-05-17T23:20:51+09:00","summary":"","tags":[],"score":55},{"id":"44f57c57","title":"ウクライナがモスクワへ大規模攻撃、3人死亡　ロシア国営メディア「ここ1年あまりで最大」","snippet":"ウクライナ軍のドローン攻撃により炎上したロシアの民家＝17日、モスクワ州ナロフォミンスクの村/Moscow regional Governor Andrei Vorobyov/Reuters （CNN）  ロシア国営タス通信は17日、地元当局者や軍関係者の話として、ウクライナが夜間に500機を超えるドローン（無人機）でロシアを攻撃し、首都モスクワ近郊で少な...","url":"https://www.cnn.co.jp/world/35247613.html","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":148,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.547118+09:00","published_at":"2026-05-17T17:19:38+09:00","summary":"","tags":[],"score":53},{"id":"cc42420c","title":"ウクライナの地上ロボット、ロシア兵が潜む集合住宅を300kgの爆薬で丸ごと爆破 | Forbes JAPAN 公式サイト（フォーブス ジャパン）","snippet":"(c) linkties Co., Ltd. Under license from Forbes.com LLC™ All rights reserved.","url":"https://forbesjapan.com/articles/detail/97571","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":183,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.547131+09:00","published_at":"2026-05-17T13:27:13+09:00","summary":"","tags":[],"score":53},{"id":"af0f0062","title":"【重要】2026年8月1日より「ニコニコプレミアム」「有料ニコニコチャンネル」の料金を改定します｜ニコニコインフォ","snippet":"いつもニコニコをご利用いただき、ありがとうございます。 このたびニコニコでは、安定的な利用環境の維持とさらなるアップデートへの投資を続けていくため、2026年8月1日（土）より、「ニコニコプレミアム」および「有料ニコニコチャンネル」の料金を改定させていただきます。 ※Apple Account／Google Play定期購入のニ...","url":"https://blog.nicovideo.jp/niconews/1841?ref=tw_info","source":"hatena_general","source_name":"はてな 総合","category":"business","base_score":30,"bookmarks":58,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526458+09:00","published_at":"2026-05-18T15:21:20+09:00","summary":"","tags":[],"score":53},{"id":"4e6843a6","title":"若者が健康に暮らすには…1人暮らし月27万円必要　岐阜で調査 | 毎日新聞","snippet":"岐阜県で1人暮らしの若者が「健康で文化的な生活」をするために必要な費用は、男性が月27万6778円、女性が月27万8029円――。県労働組合総連合が、こんな調査結果を公表した。3年前から男女ともに約3万円上昇。時給に換算すると1800円超に相当するとし、県労連は物価高に対応した最低賃金の引き上げを求めている。【式守克...","url":"https://mainichi.jp/articles/20260518/k00/00m/020/031000c","source":"hatena_general","source_name":"はてな 総合","category":"business","base_score":30,"bookmarks":70,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526634+09:00","published_at":"2026-05-18T14:44:37+09:00","summary":"","tags":[],"score":53},{"id":"9cc1ae0b","title":"DLsite親会社による“PCゲームをスマホで遊べる”サービス「viviON GAMES」発表。サブスクではなくゲームごとに買い切り、年内展開へ - AUTOMATON","snippet":"株式会社viviONは5月16日、「viviON GAMES」を発表した。2026年内に展開予定。","url":"https://automaton-media.com/articles/newsjp/20260518-443658/","source":"hatena_general","source_name":"はてな 総合","category":"business","base_score":30,"bookmarks":20,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526764+09:00","published_at":"2026-05-18T17:47:00+09:00","summary":"","tags":[],"score":53},{"id":"5c03df5b","title":"世界中で急激に出生率が減少しているのは「スマホとSNS」のせいかもしれない","snippet":"日本では2025年の合計特殊出生率(15～49歳の女性が一生のうちに産む子どもの平均数)が過去最低の「1.13」前後になる見通しであり、移民なしで人口を維持できる「2.1」を大きく下回っています。少子化が問題になっているのは日本などの先進国だけでなく、発展途上国でも深刻化しているとのこと。経済紙のフィナンシャル・...","url":"https://gigazine.net/news/20260518-birth-rates-falling-smartphones-sns/","source":"hatena_general","source_name":"はてな 総合","category":"business","base_score":30,"bookmarks":71,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526791+09:00","published_at":"2026-05-18T15:34:07+09:00","summary":"","tags":[],"score":53},{"id":"62040f05","title":"G7財務相・中銀総裁会議が開幕 世界経済やAIリスクなど議論へ","snippet":"G7＝主要7か国の財務相・中央銀行総裁会議がフランス・パリで始まりました。イラン情勢を受けて混乱が続く世界経済や金融市場の安定に向けた対応のほか、金融システムへのリスクも指摘される新たなAIモデルをめぐっても議論が行われる見通しです。","url":"http://www3.nhk.or.jp/news/html/20260518/k10015124781000.html","source":"nhk","source_name":"NHK","category":"tech","base_score":18,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:39.538496+09:00","published_at":"2026-05-18T18:02:06+09:00","summary":"","tags":[],"score":53},{"id":"7c388f31","title":"課金していても1日50件？Xが未認証アカウントの投稿を大幅制限、有料プランも対象か","snippet":"","url":"https://pc.watch.impress.co.jp/docs/news/2109474.html","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":43,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464268+09:00","published_at":"2026-05-18T14:18:51+09:00","summary":"","tags":[],"score":52},{"id":"74601e25","title":"新規Googleアカウントのストレージ容量、15GB→5GBへと引き下げへ。理由はセキュリティ強化【やじうまWatch】","snippet":"","url":"https://internet.watch.impress.co.jp/docs/yajiuma/2109372.html","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":48,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464349+09:00","published_at":"2026-05-18T11:49:36+09:00","summary":"","tags":[],"score":52},{"id":"f65c1b5a","title":"技術力だけじゃ足りなかった。 FDE発祥の地で気づいた「わかっていたつもり」の正体 - Findy Media","snippet":"技術力は上がっている。任されるスコープも広がった。それでも、どこかで成長の天井にぶつかっている――。そのような感覚を味わったことはありませんか？ 連載「技術の“先”を聞きに行く」では、技術力の前に立ちはだかる壁を超えたエンジニアに、その感覚をどう突破したかを聞きに行きます。 第3回は、Salesforceのニュー...","url":"https://findy-code.io/media/articles/beyond-the-wall-koheifukada","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":6,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464531+09:00","published_at":"2026-05-18T08:32:53+09:00","summary":"","tags":[],"score":52},{"id":"609b0c01","title":"待望の“上下左右どこでも置けるタスクバー”が「Windows Insider」でテスト開始","snippet":"","url":"https://forest.watch.impress.co.jp/docs/news/insiderpre/2109305.html","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":7,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464544+09:00","published_at":"2026-05-18T10:31:02+09:00","summary":"","tags":[],"score":52},{"id":"15d2dde7","title":"Apple Pay カード登録の仕組み ─ ウォレットプロビジョニングの裏側 - inSmartBank","snippet":"こんにちは、エンジニアの toshimaru です。ワンバンクでは2026年2月、ついに Apple Pay への対応を開始いたしました！ onebank.jp リリース以来、多くのユーザー様から感謝の声をいただいており、開発チーム一同、たいへん嬉しく思っております☺️。 本記事では、ワンバンクの提供する決済カード（以下、「カード」と表記...","url":"https://blog.smartbank.co.jp/entry/apple-pay-provisioning","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":27,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464559+09:00","published_at":"2026-05-18T11:13:48+09:00","summary":"","tags":[],"score":52},{"id":"7b27ec58","title":"辺野古沖船舶事故巡り田村委員長が見解 | しんぶん赤旗｜日本共産党","snippet":"日本共産党の田村智子委員長は１７日、那覇市内での党演説会で、３月に名護市辺野古沖で発生した船舶の転覆事故を巡って見解を表明しました。 田村氏は、事故で亡くなった高校生と船長にあらためて哀悼の意を表明した上で、「修学旅行の高校生を船に乗せたこと自体が重大な誤りだった。船を運航するヘリ基地反対協議会の...","url":"https://www.jcp.or.jp/akahata/aik26/2026-05-18/2026051802_03_0.php","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":21,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546803+09:00","published_at":"2026-05-18T16:43:34+09:00","summary":"","tags":[],"score":52},{"id":"fc978e4a","title":"石油が高騰してもロシアの財政は黒字にはならない : ユーラシアリサーチ　服部倫卓ブログ","snippet":"こちらの記事が、イラン危機による石油価格高騰でロシアの財政がどれだけ恩恵を受けるかを論じているので、以下抄訳しておく。 北東アジアに魅せられて～「技術士」中山輝也環日本海交流備忘録～posted with ヨメレバ中山輝也 新潟日報メディアネット 2026年02月 楽天ブックスAmazon 原油価格が3桁に達している状況でも...","url":"https://www.hattorimichitaka.net/archives/59842920.html","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":6,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546912+09:00","published_at":"2026-05-18T12:58:12+09:00","summary":"","tags":[],"score":52},{"id":"d0fa934b","title":"【分析】「侵攻」に備えるキューバ国民、米国との対立激化で長年の想定に現実味","snippet":"キューバの首都ハバナで行われたメーデーの集会で、人々が巨大なキューバ国旗を掲げて行進する様子＝5月1日/Claudia Daut/Reuters キューバ・ハバナ（CNN） 数日前、CNNハバナ支局の入るビルの管理人が、緊急の用件で我々のドアをノックした。管理人の女性が知りたがっていたのは、米国による「差し迫った」侵攻の間も仕...","url":"https://www.cnn.co.jp/world/35247611.html","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":52,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.547001+09:00","published_at":"2026-05-17T20:31:33+09:00","summary":"","tags":[],"score":52},{"id":"1ba90e7c","title":"石油関連業界が自民党会議に提出した「ナフサ不足」内部資料を入手「在庫は3～4ヶ月分。直近はさらに悪化」それでも高市政権が不足を認めようとしない事情（マネーポストWEB） - Yahoo!ニュース","snippet":"イラン情勢の緊迫が続き、石油化学製品の原料となる「ナフサ」の不足が日本にとって重大な懸案となっている。高市早苗・首相は「年を越えて供給を継続できる」と強気だが、本誌・週刊ポストが入手した内部資料と独自取材からは、その発言とかけ離れたあまりに深刻な現実が浮かび上がってきた――。【前後編の前編】 直近の...","url":"https://news.yahoo.co.jp/articles/8e08800ab4335d178e8d27f111fb74b0f02375aa","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":5,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.547016+09:00","published_at":"2026-05-18T08:01:34+09:00","summary":"","tags":[],"score":52},{"id":"171bf92e","title":"モスクワなどロシア各地で最大規模の無人機攻撃、５５６機撃墜…少なくとも３人死亡","snippet":"【読売新聞】　ロシア国防省は１７日、モスクワや近郊のモスクワ州などロシア各地に１６日夜から１７日朝にかけて無人機攻撃があり、５５６機を撃墜したと発表した。露大手紙コメルサント（電子版）はウクライナによる最大規模の無人機攻撃だと報じた","url":"https://www.yomiuri.co.jp/world/20260517-GYT1T00195/","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":53,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.547074+09:00","published_at":"2026-05-17T22:44:24+09:00","summary":"","tags":[],"score":52},{"id":"65cf80ea","title":"# LLMの中には何があるのか？アーキテクチャから推論までを解説","snippet":"はじめに
+Generative AIを使い始めると、よく次のような表現に出会います。たとえば「7B parameters」「128K context」「RoPE」「LoRA fine-tuning」「MoE model」などです。一見ばらばらの用語に見えますが、実際にはL...","url":"https://qiita.com/TOMOSIA-LinhND/items/d0652603267ab7a430d8?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.621992+09:00","published_at":"2026-05-18T16:10:57+09:00","summary":"","tags":[],"score":52},{"id":"9319c358","title":"Multiple commencement speakers booed for AI comments during graduation speeches","snippet":"Comments","url":"https://www.nbcnews.com/video/multiple-commencement-speakers-booed-for-ai-comments-during-graduation-speeches-263486021518","source":"hackernews","source_name":"Hacker News","category":"tech","base_score":28,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:31.304659+09:00","published_at":"2026-05-18T18:12:10+09:00","summary":"","tags":[],"score":51},{"id":"7e1a0614","title":"｢利上げ→日銀の赤字拡大｣で打つ手なし？　止められない円安が招く物価高の絶望シナリオ | 政治・経済・投資 | 東洋経済オンライン","snippet":"日本銀行が物価高にもかかわらず積極的な利上げに踏み切れない背景には､異次元金融緩和による財務悪化があります。政策金利を上げるほど赤字が拡大し､株価頼みの異常な運営へと追い込まれている現状。円の信頼と…","url":"https://toyokeizai.net/articles/-/944018?utm_source=rss&utm_medium=http&utm_campaign=link_back","source":"toyokeizai","source_name":"東洋経済","category":"business","base_score":22,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:37.120184+09:00","published_at":"2026-05-18T09:00:00+09:00","summary":"","tags":[],"score":51},{"id":"de9d5054","title":"『Forza Horizon 6』で「ギャル」が作れると話題に。海外ユーザーから「かわいい」とコメント続出","snippet":"新作オープンワールドレースゲーム『Forza Horizon 6』にて、「日本のギャル風のキャラクターメイキングができる」と海外の掲示板サイトRedditで話題となっている。 Redditには「本作のキャラクタークリエイトではギャルが作れるのが良い点だ」とギャル風のキャラクターの写真が投稿されており、「かわいいじゃん」、「...","url":"https://news.denfaminicogamer.jp/news/260518d","source":"hatena_general","source_name":"はてな 総合","category":"general","base_score":30,"bookmarks":98,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526661+09:00","published_at":"2026-05-18T10:22:59+09:00","summary":"","tags":[],"score":50},{"id":"050526eb","title":"Has AI alignment gone too far with content refusals and moral lectures?","snippet":"I’ve been using different LLMs a lot lately and I’ve noticed the newer versions of ChatGPT and Claude seem a lot more quick to refuse things or give me long ethical disclaimers even when I ask fairly normal questions. It feels like the safety tuning has gotten stricter over time. On one hand I get w","url":"https://www.reddit.com/r/artificial/comments/1tgg9s0/has_ai_alignment_gone_too_far_with_content/","source":"reddit_ai","source_name":"Reddit AI","category":"tech","base_score":15,"bookmarks":0,"is_reddit":true,"fetched_at":"2026-05-18T19:47:43.467308+09:00","published_at":"2026-05-18T17:26:34+09:00","summary":"","tags":[],"score":50},{"id":"e9b2cda7","title":"AI生成コンテンツによりインターネットは死ぬのではなく「ゾンビ」になる？ - YAMDAS現更新履歴","snippet":"www.404media.co 「あなたの AI の使い方で私の頭はおかしくなりそうだ」とはどういうことか？ それは、タイトルの脇に書かれている、「AI の文章作成からは逃れられないが、それはすべてを画一的なものにし、我々をイラつかせている」ということである。 Jason Koebler が書くのは、今ではネットを閲覧してどんな種類の...","url":"https://yamdas.hatenablog.com/entry/20260518/your-ai-use-is-breaking-my-brain","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":29,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464574+09:00","published_at":"2026-05-18T07:24:06+09:00","summary":"","tags":[],"score":49},{"id":"82ce707b","title":"楽天ショックで「広告内製化」一挙加速　代理店の役割が大転換","snippet":"AIの急激な進化は、ネット広告業界の構造までも変えようとしている。運用の複雑さや専門性の高さから、広告施策は代理店にワンストップで任せる――AIによる広告運用の自動化が進んだ今、その慣習や常識が崩れつつある。広がる広告「内製化」の波は、広告主と代理店の関係をどう塗り替えるのか。そのインパクトと内製化を...","url":"https://xtrend.nikkei.com/atcl/contents/18/01377/00001/","source":"hatena_economics","source_name":"はてな 経済","category":"tech","base_score":38,"bookmarks":24,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546866+09:00","published_at":"2026-05-18T04:11:45+09:00","summary":"","tags":[],"score":49},{"id":"59096f96","title":"イリヤ・レメスロ氏の「私がウラジーミル・プーチンを支持しなくなった理由」その 12","snippet":"理由その 7 から 11 (anond:20260517234938) の続き https://t.me/ilya_remeslaw/11368 - 日本時間 5月17日 21:01 理由その12：移民・人口政策が国民の利益に反しているロシアの死亡率と出生率は 壊滅的 な状況にある(訳注: リンク先はロシアの人口危機の報道)。プーチン大統領が出産手当を導入した点は評価すべきだろう...","url":"https://anond.hatelabo.jp/20260517235258","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":11,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.547089+09:00","published_at":"2026-05-17T23:55:14+09:00","summary":"","tags":[],"score":49},{"id":"ee3ef476","title":"1割の“信頼される”エンジニアが実行している『ズレを防ぐ途中共有』","snippet":"はじめまして。株式会社PRUMでエンジニアをしている人見です。
+日々、プログラミング学習や実務の中で、つまずきやすいポイントや、
+現場で感じたことを整理して発信しています。
+PRUMについて気になった方は、コーポレートサイトもぜひご覧ください。
+▶ コーポレートサイト
+
+1...","url":"https://qiita.com/hitomin_poke/items/5d00c7dd1d690ee4f9bf?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"business","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.621718+09:00","published_at":"2026-05-18T14:05:48+09:00","summary":"","tags":[],"score":49},{"id":"dea43ba1","title":"[Frontend Performance - Part 18]. Core Web Vitals完全攻略：LCP・INP・CLSの実践的改善","snippet":"📝 注意
+本記事はAIの補助を受けて編集しています。
+
+📚 目次
+
+0. はじめに：Lighthouse 100点でもユーザーが「遅い」と感じる理由
+1. Core Web Vitalsとは？ユーザー体験の三本柱
+2. LCP（Largest Contentful ...","url":"https://qiita.com/tuanphan/items/8f1b05c18aaa67531000?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.621826+09:00","published_at":"2026-05-18T16:23:07+09:00","summary":"","tags":[],"score":49},{"id":"79f88438","title":"“税は財源”ではないなら、なぜ税金は必要なのか？ ― 富裕層課税とインフレの本当の関係 : Pythonで学ぶ マクロ経済学入門 (81)","snippet":"user:
+「Pythonで学ぶマクロ経済学入門」、第81回を始めましょう。まず
+「初心者でもわかる！Pythonで学ぶマクロ経済学入門 全80回 総復習」 
+https://qiita.com/maskot1977/items/dd76864328b8e8910108
+...","url":"https://qiita.com/maskot1977/items/289047becc0a75108672?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.621921+09:00","published_at":"2026-05-18T00:34:32+09:00","summary":"","tags":[],"score":49},{"id":"35159446","title":"予測AIの特徴量エンジニアリング","snippet":"はじめに
+Orbitics株式会社データサイエンス部の上野です。
+以前に執筆した「予測AIモデルのアルゴリズム選択」の記事では、構造化データを対象とする予測AIモデルの構築において、勾配ブースティング（Gradient Boosting Decision Trees, G...","url":"https://qiita.com/obx_y_ueno/items/3c8e46910f264518e105?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.622094+09:00","published_at":"2026-05-18T07:40:18+09:00","summary":"","tags":[],"score":49},{"id":"dd054c52","title":"Where Are the Vibecoded Photoshops?","snippet":"Comments","url":"https://indiepixel.de/blog/posts/where-are-the-vibecoded-photoshops/","source":"hackernews","source_name":"Hacker News","category":"tech","base_score":28,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:31.304603+09:00","published_at":"2026-05-18T18:28:56+09:00","summary":"","tags":[],"score":48},{"id":"c4882d69","title":"The foundations of a provably secure operating system (PSOS) (1979) [pdf]","snippet":"Comments","url":"http://www.csl.sri.com/users/neumann/psos.pdf","source":"hackernews","source_name":"Hacker News","category":"tech","base_score":28,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:31.304632+09:00","published_at":"2026-05-18T18:40:51+09:00","summary":"","tags":[],"score":48},{"id":"87ab58a7","title":"Germany goes from labour shortages to hiring freezes","snippet":"Comments","url":"https://www.ft.com/content/2a6c1cb9-6c11-41c8-a8ea-a367b8799126","source":"hackernews","source_name":"Hacker News","category":"tech","base_score":28,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:31.304703+09:00","published_at":"2026-05-18T18:08:04+09:00","summary":"","tags":[],"score":48},{"id":"50df58ec","title":"Why is Google Maps back to showing old satellite images of Altadena?","snippet":"Comments","url":"https://www.reddit.com/r/pasadena/s/94BHlkE84r","source":"hackernews","source_name":"Hacker News","category":"tech","base_score":28,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:31.304814+09:00","published_at":"2026-05-18T17:19:21+09:00","summary":"","tags":[],"score":48},{"id":"8bff43b6","title":"Disco Elysium’s spiritual successor can’t escape its phantoms","snippet":"Zero Parades: For Dead Spies wants you to question the price of forgiveness. After leading a crew of spies through a failed operation, protagonist Cascade is willing to pay whatever amount is needed to reestablish contact not just with fellow agents, but with the friends she let down. After being \"f","url":"https://www.theverge.com/entertainment/931629/zero-parades-for-dead-spies-review-disco-elysium","source":"theverge","source_name":"The Verge","category":"tech","base_score":25,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:33.132490+09:00","published_at":"2026-05-18T19:00:00+09:00","summary":"","tags":[],"score":48},{"id":"5b89a6d6","title":"不動産事業売却でコンテンツに1500億円投資､\"甘えの元\"に別れ告げたフジテレビがそれでも断ち切れない｢80年代の呪縛｣ | ビジネス | 東洋経済オンライン","snippet":"フジ･メディア･ホールディングスが発表した新グループビジョン。ガバナンス問題や広告収入減､巨額赤字からの脱却を目指し､不動産売却益を原資に大規模なIP投資を掲げました。しかし､｢楽しさ｣に執着する新…","url":"https://toyokeizai.net/articles/-/944719?utm_source=rss&utm_medium=http&utm_campaign=link_back","source":"toyokeizai","source_name":"東洋経済","category":"business","base_score":22,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:37.120087+09:00","published_at":"2026-05-18T12:30:00+09:00","summary":"","tags":[],"score":48},{"id":"4cbcff55","title":"亡き父の従兄が「徴兵忌避者」だったと母から聞いて驚いたが、戦時中そんなことができたのか聞くと「あちこち逃げ回っていたらしいよ。人に殺されるのも、殺すのも嫌だったんでしょう」","snippet":"ほふねむれゐぬ @oxalisshima 最近、書こうかどうか迷っていた話。 亡き父の従兄は「徴兵忌避者」だった。 父や伯母たちが皆亡くなった後、母からその話を聞いた時は驚いた。 「戦時中そんなことができたの？非国民呼ばわりされたでしょう？どうやって？」 x.com/t_wak/status/2… 2026-05-17 05:55:02 若林宣 @t_wak NHK...","url":"https://togetter.com/li/2698267","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":20,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546837+09:00","published_at":"2026-05-18T02:54:30+09:00","summary":"","tags":[],"score":46},{"id":"df8ead3e","title":"Suica終焉へのカウントダウンが始まった…｢改札でタッチ｣を時代遅れにする\"次世代の改札機\"の正体","snippet":"駅の改札がどんどん進化している。JR西日本は大阪で、タッチがいらない顔認証改札機の実証実験を始めた。実際に体験した鉄道ジャーナリストの東香名子さんは「設置されたカメラに目線を合わせるだけで改札を通過できる。クレカタッチも広がりつつあり、交通系ICカードは生き残り策を見つけることが急務となる」という――...","url":"https://president.jp/articles/-/113121","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":6,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546970+09:00","published_at":"2026-05-18T07:08:44+09:00","summary":"","tags":[],"score":46},{"id":"bc17880a","title":"「ついに需要が理解されたのか」 横田基地の祭りで売られた「外人バーガー」が話題、背後の消防車が意味深に思えるほどヤバイ火力で炙られた肉がめちゃうまそう","snippet":"「ついに需要が理解されたのか」 横田基地の祭りで売られた「外人バーガー」が話題、背後の消防車が意味深に思えるほどヤバイ火力で炙られた肉がめちゃうまそう","url":"https://togetter.com/li/2698159","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":31,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.547030+09:00","published_at":"2026-05-17T22:13:53+09:00","summary":"","tags":[],"score":46},{"id":"b22554c7","title":"ダークモードは本当に読みやすいのか？コントラスト極性の研究から考える表示モードの設計","snippet":"みなさん、電子書籍を読む時どの背景色を使っていますか？
+Kindleを使っていて気になったのですが、Kindleの背景色の設定には、白・黒だけでなく「セピア」や「グリーン」も用意されています。
+
+私自身は、Kindleでは黒背景だと目が滑るような気がして、白背景を使うことが...","url":"https://qiita.com/tanay/items/1609d7989268aa3e35bf?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.621750+09:00","published_at":"2026-05-18T10:41:20+09:00","summary":"","tags":[],"score":46},{"id":"c34ce248","title":"AIに丁寧に接したいので英語で話しかける","snippet":"皆さんこんにちは。今回は、筆者のAIの使い方に関するちょっとした話です。
+AI（Claude Codeのようなコーディングエージェントを想定します）に指示を出すとき、日本語で指示を出す方が多いでしょう。しかし、筆者は英語で指示を出すことを好んでいます。この記事ではその理由を...","url":"https://qiita.com/uhyo/items/26bb74cc81b7fbabf14b?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.621801+09:00","published_at":"2026-05-17T20:18:50+09:00","summary":"","tags":[],"score":46},{"id":"d9f7ea07","title":"🔥Hono × 🥟Bun × 🔼Next.jsでWebアプリ開発ハンズオン","snippet":"フロントエンドをReact（Next.js）にするとしてバックエンドをどうするか。選択肢の一つとして「Hono」はいかがでしょうか。今回は、ここ数年で人気急上昇のHonoというフレームワークを試してみました。また、JavaScriptのランタイムにはBunを使い、とにかく速...","url":"https://qiita.com/tomo-ryo/items/3e0529f689bcb39ede97?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.621957+09:00","published_at":"2026-05-18T09:50:42+09:00","summary":"","tags":[],"score":46},{"id":"a0ccdbcc","title":"AWS SAPに受かってみた","snippet":"先日、AWS認定の AWS Certified Solutions Architect - Professional（SAP） を受験し、無事合格しました。（合格点750に対して814でした）
+せっかくなので、やった勉強法や受験した感想を簡単にまとめます。
+
+勉強法はUde...","url":"https://qiita.com/okamoto_keisuke/items/55e53c8fb3ab6815162b?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.621980+09:00","published_at":"2026-05-18T12:46:00+09:00","summary":"","tags":[],"score":46},{"id":"61ee3009","title":"WriteUp: 16 Bytes of x86 that turn Matrix rain into sound","snippet":"Comments","url":"https://hellmood.111mb.de//wake_up_16b_writeup.html","source":"hackernews","source_name":"Hacker News","category":"tech","base_score":28,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:31.304783+09:00","published_at":"2026-05-18T08:10:09+09:00","summary":"","tags":[],"score":45},{"id":"b2c4e4c4","title":"｢少し首相に譲りすぎた｣､減税めぐり田中角栄首相､福田赳夫蔵相が激突　石油危機のデジャビュ③ | 政治・経済・投資 | 東洋経済オンライン","snippet":"1973年､オイルショックによる物価高騰と政界の駆け引きが交錯する中､田中角栄と福田赳夫は2兆円減税をめぐり激論を繰り広げました。その決断は､予期せぬ取り付け騒ぎを引き起こします。混乱の時代､何が人…","url":"https://toyokeizai.net/articles/-/944368?utm_source=rss&utm_medium=http&utm_campaign=link_back","source":"toyokeizai","source_name":"東洋経済","category":"business","base_score":22,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:37.120017+09:00","published_at":"2026-05-18T16:00:00+09:00","summary":"","tags":[],"score":45},{"id":"2e556a08","title":"Six SQL patterns I use to catch transaction fraud","snippet":"May 12, 2026 Quick disclaimer: I do data work on a program-integrity team. Examples below use generic transaction tables and made-up scenarios. Nothing here comes from anything I’ve actually worked on or seen. Views are mine, not my employer’s. Fraud detection in transaction data is mostly SQL. N...","url":"https://analytics.fixelsmith.com/posts/sql-fraud-patterns/","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":5,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464445+09:00","published_at":"2026-05-16T22:05:17+09:00","summary":"","tags":[],"score":44},{"id":"bb4990e9","title":"2026｜金属バット友保","snippet":"こんにちは　金属バットの友保です ザセカンド 2026決勝の決勝　きわのきわでガッツリ敗退　上手いこといきませんわマジで せやかておめでとうのトットさん　流石の緑漫 今年はスマドリやなしにガッツリアルコールのアサヒビールがスポンサーなってくらはって無事開催でこら本番のケータリングも爆発ですわ 温いのようさ...","url":"https://note.com/gebogebounko/n/naa36f4a79823","source":"hatena_general","source_name":"はてな 総合","category":"general","base_score":30,"bookmarks":51,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526600+09:00","published_at":"2026-05-18T01:03:42+09:00","summary":"","tags":[],"score":44},{"id":"a8f7cb7d","title":"飲み会にセーブポイントを置くとどうなるか？ | オモコロ","snippet":"あ〜ミスった！！！ あそこでちょっと話しすぎたな…… ライターの岡田悠と申します。飲み会後の反省中です。 飲み会が好きなのですが、終わった後に悔いることが少なくありません。 ・あの受け答え、もっと上手くできたなあ…… ・なんか自慢話っぽくなってしまったかも…… ・隣の人、つまんなそうな顔してたな…… 酔いから醒...","url":"https://omocoro.jp/kiji/571684/","source":"hatena_general","source_name":"はてな 総合","category":"general","base_score":30,"bookmarks":49,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526648+09:00","published_at":"2026-05-18T12:35:59+09:00","summary":"","tags":[],"score":44},{"id":"2c1a016c","title":"AIに同じ質問を3経路で投げたら、入力トークンが約1,200倍違った — Claudeの「プログラム利用専用クレジット」と構造化APIの関係","snippet":"!
+本記事は EDINET DB のブログ記事 「\"AIが高くなる\"のではなく\"適正化される\" — 入力トークンで差がつく時代の、構造化データベースの存在理由」 の転載です。最新版はそちらに掲載しています。
+
+2026年5月14日、Anthropicが告知を出しました。6月15日から、Claudeの有料プラン（Pro / Max 5x / Max 20x / Team / Enterprise）に「プログラム利用専用の月次クレジット」を導入する、というものです。Claude Agent SDK、claude -p、Claude Code GitHub Actions、サードパーティのAg...","url":"https://zenn.dev/edinetdb/articles/ai-cost-input-tokens-structured-db","source":"zenn","source_name":"Zenn","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:28.413279+09:00","published_at":"2026-05-16T15:54:19+09:00","summary":"","tags":[],"score":44},{"id":"27ac8080","title":"Claude Code派だった僕がCodexに移る前に知りたかったこと","snippet":"はじめに
+最近、Claude Codeを使っている人がかなり増えてきましたよね。
+僕も最初は、
+「Claude Code便利やな」
+「でもCodexも気になるな」
+「OpenAI版のClaude Codeみたいな感じなんかな？」
+くらいのノリでCodexを触り始めました。
+ただ、実際に触ってみると、思っていたより別物でした。
+もちろん、どちらもAIコーディングエージェントです。
+ターミナルやアプリからコードを読ませたり、修正させたり、テストを走らせたりできます。
+でも、Claude Codeの感覚のままCodexを触ると、地味にハマります。
+僕が最初に引っかかったのは、モデル性能とか...","url":"https://zenn.dev/gemcook/articles/e56eabc7ba2961","source":"zenn","source_name":"Zenn","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:28.413366+09:00","published_at":"2026-05-15T15:02:59+09:00","summary":"","tags":[],"score":44},{"id":"550f6646","title":"高市首相 韓国訪問を前に 日韓の経済界の交流活発化に期待","snippet":"19日からの韓国訪問を前に、高市総理大臣は韓国の企業経営者らと面会し、良好な日韓関係の基調を支える経済界の交流がさらに活発になることに期待を示しました。","url":"http://www3.nhk.or.jp/news/html/20260518/k10015124831000.html","source":"nhk","source_name":"NHK","category":"business","base_score":18,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:39.538470+09:00","published_at":"2026-05-18T18:30:27+09:00","summary":"","tags":[],"score":44},{"id":"460d61b1","title":"コーディングエージェント時代にエンジニアは必要なのか本気で考えてみる","snippet":"はじめに
+最近、GW に割と長めのお休みをいただけたので、話題のコーディングエージェントを試してみようと思い、Codex と Claude Code、GitHub Copilot を使って、学生時代から構想していたコミュニティベースの SNS を作ってみました。
+作ってみてびっくりしたのが、コーディングエージェントの性能の高さです。
+コーディングエージェントがトレンドになり始めた 1 年ほど前は、正直なところ、コードの品質はあまり高くなく、自力でコードを修正する必要があることが多かったです。
+しかし、最近のコーディングエージェントは、コードの品質が非常に高くなっており、大きくコードを...","url":"https://zenn.dev/hiromoo/articles/5f127b5459d490","source":"zenn","source_name":"Zenn","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:28.413088+09:00","published_at":"2026-05-17T23:50:17+09:00","summary":"","tags":[],"score":43},{"id":"164f5f9b","title":"Snowflake AI_COMPLETE 関数で動画と音声を直接分析","snippet":"はじめに
+Snowflake の非構造化データ分析がまた一つ大きな進化を遂げました。これまで画像、ドキュメント、音声と段階的に対応してきた Cortex AI ですが、ついに AI_COMPLETE 関数 が 動画と音声をそのまま入力 として受け付けられるようになりました！
+今回ご紹介する AI_COMPLETE 関数のマルチモーダル拡張 は、Snowflake Cortex AI Functions の中でも個人的にはかなりインパクトの大きいアップデートで、Public Preview としてリリースされました。動画ファイルや音声ファイルを SQL からそのまま AI に渡し、要約...","url":"https://zenn.dev/snowflakejp/articles/794ce748589765","source":"zenn","source_name":"Zenn","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:28.413141+09:00","published_at":"2026-05-17T21:13:12+09:00","summary":"","tags":[],"score":43},{"id":"b4a5e08b","title":"VSCode上でC++実行時に warning: GDB: Failed to set controlling terminal: Operation not permitted が出た人へ","snippet":"症状
+VSCode上でC++のファイルを実行しようとすると
+&\"warning: GDB: Failed to set controlling terminal: Operation not permitted\n\"
+
+が出て実行ができない．
+g++ -g main.cp...","url":"https://qiita.com/igeeeeee/items/884daa943b0f900fb362?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.622080+09:00","published_at":"2026-05-18T00:23:53+09:00","summary":"","tags":[],"score":43},{"id":"d9638d02","title":"【2026年6月〜】GitHub Copilot が重量課金制に変わる。AI クレジット時代のコスト節約術まとめ","snippet":"はじめに
+「え、Copilot の課金体系が変わるの？」
+GitHub Copilot がこれまでのプレミアムリクエスト制（回数ベース） から、2026 年 6 月 1 日に重量課金制（トークンベース） へ移行します。
+正直なところ、「回数制のほうがわかりやすかったのに…...","url":"https://qiita.com/shahin0809/items/9c7ec8c7661272c63001?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.622120+09:00","published_at":"2026-05-18T00:38:00+09:00","summary":"","tags":[],"score":43},{"id":"85331331","title":"OpenAI co-founder Greg Brockman takes charge of product strategy","snippet":"OpenAI's latest shakeup comes as the company reportedly plans to combine ChatGPT and its programming product Codex.","url":"https://techcrunch.com/2026/05/16/openai-co-founder-greg-brockman-reportedly-takes-charge-of-product-strategy/","source":"techcrunch","source_name":"TechCrunch","category":"tech","base_score":28,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:32.150482+09:00","published_at":"2026-05-17T00:33:33+09:00","summary":"","tags":[],"score":43},{"id":"dbfe1e97","title":"It is time to give up the dualism introduced by the debate on consciousness","snippet":"Comments","url":"https://www.noemamag.com/there-is-no-hard-problem-of-consciousness/","source":"hackernews","source_name":"Hacker News","category":"tech","base_score":28,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:31.304682+09:00","published_at":"2026-05-18T11:59:34+09:00","summary":"","tags":[],"score":42},{"id":"0687ec21","title":"Why trust is a big question at the Elon Musk-OpenAI trial","snippet":"A big theme in the trial’s final days was whether OpenAI CEO Sam Altman is trustworthy.","url":"https://techcrunch.com/2026/05/17/why-trust-is-a-big-question-at-the-elon-musk-openai-trial/","source":"techcrunch","source_name":"TechCrunch","category":"tech","base_score":28,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:32.150281+09:00","published_at":"2026-05-18T04:46:34+09:00","summary":"","tags":[],"score":42},{"id":"2a171762","title":"｢オーストラリアと同じ｣が決め手？ニュージーランド次期フリゲートで日英が受注競争､装備品輸出の地盤固めとなるか | 政治・経済・投資 | 東洋経済オンライン","snippet":"ニュージーランド海軍の次期フリゲート選定を巡り､日本の｢もがみ型｣能力向上型とイギリスの31型が注目を集めています。日本製艦艇の採用が実現すれば､日豪NZ3カ国で共通基盤が形成され､インド太平洋の安…","url":"https://toyokeizai.net/articles/-/944842?utm_source=rss&utm_medium=http&utm_campaign=link_back","source":"toyokeizai","source_name":"東洋経済","category":"business","base_score":22,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:37.120052+09:00","published_at":"2026-05-18T15:00:00+09:00","summary":"","tags":[],"score":42},{"id":"4b1cd18f","title":"憧れのスポーツカーやビンテージカーを\"共同所有\"するサービス｢RENDEZ-VOUS｣が導き出した\"余白（楽しみ）\"の意味 | ライフ | 東洋経済オンライン","snippet":"クルマを｢買う｣のではなく｢シェアする｣新時代､憧れのスポーツカーやクラシックカーに月額制で\"共同オーナー\"として乗れるサービス｢RENDEZ-VOUS｣とは？市場が急拡大する今､非合理な感動体験を…","url":"https://toyokeizai.net/articles/-/943459?utm_source=rss&utm_medium=http&utm_campaign=link_back","source":"toyokeizai","source_name":"東洋経済","category":"business","base_score":22,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:37.120102+09:00","published_at":"2026-05-18T12:00:00+09:00","summary":"","tags":[],"score":42},{"id":"ab8569ce","title":"\"ミュトスの衝撃\"を冷静に見るべき理由､騒動の影で進むサイバー攻撃の｢大衆化｣《4つの変化と基本対策の価値》 | ビジネス | 東洋経済オンライン","snippet":"AIの進化がサイバー攻撃を根本から変えようとしています。人物や企業すら本物そっくりに偽造され､攻撃の裾野は一気に広がりました。AIがサイバー攻撃を｢大衆化｣させており被害拡大が現実となる今､果たして…","url":"https://toyokeizai.net/articles/-/944410?utm_source=rss&utm_medium=http&utm_campaign=link_back","source":"toyokeizai","source_name":"東洋経済","category":"tech","base_score":22,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:37.120277+09:00","published_at":"2026-05-18T06:00:00+09:00","summary":"","tags":[],"score":42},{"id":"4c0feeb7","title":"AI生成のドット絵・ピクセルアートをきちんと自動修正する「Sprite Fusion Pixel Snapper」","snippet":"AI生成のドット絵風画像は、見た目はそれらしくても実際にはピクセルサイズや配置がそろっていないことがあります。そうした画像を自動で解析し、グリッドに沿ったピクセルアートへ補正できる「Sprite Fusion Pixel Snapper」が公開されています。 Pixel Snapper - Fix messy pixels from AI generated pixel art https:...","url":"https://gigazine.net/news/20260516-spritefusion-pixel-snapper/","source":"hatena_it","source_name":"はてな IT","category":"tech","base_score":38,"bookmarks":22,"is_reddit":false,"fetched_at":"2026-05-18T19:47:25.464398+09:00","published_at":"2026-05-16T19:21:07+09:00","summary":"","tags":[],"score":41},{"id":"26047a60","title":"【ナフサ・ショック】従業員「週休4日」を決断した塗装会社の“根深い苦悩”「塗料を希釈するシンナーは半分も買えない」「先行きの見えない体力勝負が始まった」","snippet":"〈いつもお世話になっております。ご注文ありがとうございました。恐れ入りますが、◯◯（商品名）につきまして、中東情勢の影響でメーカーより品物をお出しできない状況です〉 〈メーカーより中東情勢の影響で出荷制限の関係上、下記数量ご調整お願い致します〉 〈中東情勢の影響による出荷制限につき、下記3点がご注文キ...","url":"https://www.news-postseven.com/archives/20260517_2109834.html","source":"hatena_economics","source_name":"はてな 経済","category":"business","base_score":38,"bookmarks":47,"is_reddit":false,"fetched_at":"2026-05-18T19:47:26.546942+09:00","published_at":"2026-05-17T16:44:02+09:00","summary":"","tags":[],"score":41},{"id":"30327502","title":"MCP が Linux Foundation 入り — 個人開発の OS レイヤがオープン化した日","snippet":"TL;DR
+Anthropic 発祥の MCP (Model Context Protocol) が Linux Foundation に寄贈され、月 9,700 万 SDK ダウンロードに達した時点で「中立化」しました。個人開発者の「ベンダー API か自前抽象化か」の二択が崩れ、第三の選択肢「MCP サーバとして書く」が公式化された日です。
+この記事で分かること:
+
+MCP 中立化の構造的意味と、なぜ個人開発に効くのか
+既存スクリプトを MCP サーバとして再構成する初動の TypeScript コード
+AWS AgentCore Payments と合流する「責務分離」の境界設...","url":"https://zenn.dev/creolab_dev/articles/2026-05-16-mcp-linux-foundation-indie-saas","source":"zenn","source_name":"Zenn","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:28.413214+09:00","published_at":"2026-05-16T21:34:12+09:00","summary":"","tags":[],"score":41},{"id":"8652534e","title":"OpenMythosがローカル環境で動くか検証してみた","snippet":"はじめに
+みなさんClaude Mythos（クロード ミュトス）をご存知でしょうか？Anthropic社が開発した「最強のAI」として噂されていますが、現在は限定的なプレビューにとどまっており、一般ユーザーは利用できません。そんな中、公開されている研究論文やアーキテクチャを元に、理論的に再現しようというプロジェクトが立ち上がりました。それが今回触ってみるOpenMythosです。気になったので、さっそく試してみました！
+https://github.com/kyegomez/OpenMythos
+
+ 実行環境
+
+ 動作環境
+
+
+
+項目
+スペック
+
+
+
+
+OS
+macOS Sequo...","url":"https://zenn.dev/aiforall/articles/726668a035a148","source":"zenn","source_name":"Zenn","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:28.413342+09:00","published_at":"2026-05-15T17:50:03+09:00","summary":"","tags":[],"score":41},{"id":"bf648720","title":"Claude Code を社内導入する時の最低限ガードレール5項目 — 機密情報を漏らさない設定パターン","snippet":"はじめに
+Qiita で「Claude Code を社内で使うための『AIエージェントセキュリティ』実践編」がトレンド入りしていました。
+Claude Code を組織で使い始める時、最も多い不安は 「機密情報がうっかり漏れないか」 です。
+実際にうちのチームで1年以上運...","url":"https://qiita.com/ennagara128/items/aeaee3e64e75076503fe?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.621736+09:00","published_at":"2026-05-17T12:40:01+09:00","summary":"","tags":[],"score":41},{"id":"6f3a4dbd","title":"国会図書館のOCRにWebUIを追加した - NDLOCR-Lite × Docker × React × FastAPI","snippet":"以下のアプリにWebUIを追加します。
+
+手順
+
+コード
+githubリポジトリにpushしています。
+今回はfrontendとフォルダ配下とdocker-compose.phase02.ymlを使用して、WebUIからもREST APIをキックできるようにしています...","url":"https://qiita.com/ohtsuka-shota/items/08612360548876be08b7?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.622043+09:00","published_at":"2026-05-17T09:36:35+09:00","summary":"","tags":[],"score":41},{"id":"a1d49925","title":"ICML financial aid [D]","snippet":"I am an undergraduate student from India who recently got accepted to TAIGR, an ICML workshop for a Poster. I will be requiring financial aid for registration fees and accommodation, since I will be travelling to Seoul and it is independent research so we don't have any backing by any labs/instituti","url":"https://www.reddit.com/r/MachineLearning/comments/1tghj6m/icml_financial_aid_d/","source":"reddit_ml","source_name":"Reddit ML","category":"tech","base_score":15,"bookmarks":0,"is_reddit":true,"fetched_at":"2026-05-18T19:47:45.300817+09:00","published_at":"2026-05-18T18:37:35+09:00","summary":"","tags":[],"score":41},{"id":"6aacd7ab","title":"プロジェクトマネジメントするときのテンプレとルーティンを紹介します","snippet":"これはなに
+こんにちは、昨今プロジェクト担当をやることのやることの多いもりたです[1]。
+先日チームリーダーとの1on1でプロジェクトについてぼやいていたら、リーダーから「でも森田さんのプロジェクトマネジメント好きですよ」と言われました[2]。嬉しかったので、今回は自分がプロジェクトを担当する際のルーティン、プロジェクト開始時にすぐ用意するテンプレをご紹介します。
+構成
+
+ 構成
+
+テンプレ・ルーティン紹介
+それぞれ解説
+おわりに
+
+テンプレを紹介してそれを解説し、おわりという流れです。特に難しいことは言いません。
+
+
+ テンプレ・ルーティン紹介
+それではまずもりたが普段やっているテ...","url":"https://zenn.dev/levtech/articles/pjm-rutine-and-template","source":"zenn","source_name":"Zenn","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:28.413124+09:00","published_at":"2026-05-17T22:18:16+09:00","summary":"","tags":[],"score":40},{"id":"d317423e","title":"AHC065参加記・1位解法","snippet":"本記事はAtCoder Heuristic Contest 065(AHC065)の参加記です。
+今回、初めて念願の1位を取ることができたので、記念も兼ねてコンテスト中に考えていたことを書いてみようと思います。
+
+問題概要
+$N\times N$マスの倉庫にベルトコンベアを...","url":"https://qiita.com/tanaka-a/items/c286e1d03fd7d7b419ac?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.621856+09:00","published_at":"2026-05-17T21:23:39+09:00","summary":"","tags":[],"score":40},{"id":"bbabc325","title":"【Nerd Font】はじめまして、フォントパッチャー","snippet":"「好みのフォントを使いたいけど、なんかターミナルで絵文字が文字化けするんだよね。」
+今回はそんなあなたにお届け。
+
+対象読者
+
+好きな日本語フォントを使いたいけど、Nerd Font版が公式配布されていない。
+ターミナルやエディタ(vim等)でアイコンが□表示されるのに耐え...","url":"https://qiita.com/umekikazuya/items/c1455f56455d86f0c7fc?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.622006+09:00","published_at":"2026-05-18T01:26:17+09:00","summary":"","tags":[],"score":40},{"id":"a1fa3410","title":"話題のAgent Skills Ninjaを触ってみた 〜スキル管理がここまで楽になるとは思わなかった〜","snippet":"はじめに
+みなさん、SKILL.md って使ってますか？
+GitHub Copilot の Agent Mode を触り始めてから、「スキルファイル」という概念を知ったんですが、正直なところ最初は「どこから持ってくるの？」「自分で全部書くの？」って状態でした。※Skill...","url":"https://qiita.com/shahin0809/items/aea0406e711b7fe166c2?utm_campaign=popular_items&utm_medium=feed&utm_source=popular_items","source":"qiita","source_name":"Qiita","category":"tech","base_score":32,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:29.622056+09:00","published_at":"2026-05-18T00:16:55+09:00","summary":"","tags":[],"score":40},{"id":"ba162ec2","title":"OpenAI launches ChatGPT for personal finance, will let you connect bank accounts","snippet":"Once users connect their accounts, they will see a dashboard of their portfolio performance, spending, subscriptions, and upcoming payments.","url":"https://techcrunch.com/2026/05/15/openai-launches-chatgpt-for-personal-finance-will-let-you-connect-bank-accounts/","source":"techcrunch","source_name":"TechCrunch","category":"tech","base_score":28,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:32.150601+09:00","published_at":"2026-05-16T01:00:00+09:00","summary":"","tags":[],"score":40},{"id":"3c97207e","title":"職場のおばさん達が「嵐ファンはライブ後の飲食店をメンバーの名前や〝メンバーの母〟という名前で予約するらしい」と話してるのを聞き「めちゃくちゃキショい文化ですねそれ」とコメントしかけてなんとか止めた⇒どこにファンがいるかわからないですからね","snippet":"小岩井 @kinpun_prince 職場のおばさん達が「嵐ファンの皆さんはライブ後の飲食店をメンバーの名前や〝メンバーの母〟という名前で予約するらしい」と話してるのを聞き「めちゃくちゃキショい文化ですねそれ」とコメントしかけてなんとか止めた。どこにファンがいるかわからないですからね。 2026-05-15 17:52:18","url":"https://posfie.com/@kalofollow/p/izGHmaG","source":"hatena_general","source_name":"はてな 総合","category":"general","base_score":30,"bookmarks":75,"is_reddit":false,"fetched_at":"2026-05-18T19:47:27.526544+09:00","published_at":"2026-05-17T02:29:23+09:00","summary":"","tags":[],"score":39},{"id":"27ffa690","title":"Two EA-18 fighter jets collide at Mountain Home airshow, pilots ejected safely","snippet":"Comments","url":"https://idahonews.com/news/local/two-f-18-fighter-jets-have-crashed-during-an-airshow-at-mountain-home-air-force-base","source":"hackernews","source_name":"Hacker News","category":"tech","base_score":28,"bookmarks":0,"is_reddit":false,"fetched_at":"2026-05-18T19:47:31.304867+09:00","published_at":"2026-05-18T06:45:30+09:00","summary":"","tags":[],"score":39}]};</script>
+
+<script>
+(function(){
+'use strict';
+
+// ── ソースラベル ──────────────────────────────────────────────
+var SRC_LABELS = {
+  hatena_it:'はてな IT', hatena_economics:'はてな 経済', hatena_general:'はてな 総合',
+  zenn:'Zenn', qiita:'Qiita', hackernews:'HN', techcrunch:'TechCrunch',
+  theverge:'The Verge', arstechnica:'Ars Technica', venturebeat:'VentureBeat',
+  toyokeizai:'東洋経済', diamond:'ダイヤモンド', yahoo:'Yahoo JP', nhk:'NHK',
+  reddit_tech:'Reddit Tech', reddit_ai:'Reddit AI', reddit_ml:'Reddit ML'
+};
+
+// ── 状態 ─────────────────────────────────────────────────────
+var DATA = null;
+var ANNOTATIONS = {};
+var UI = {filter:'all', sort:'score', search:''};
+var MEMO_TARGET_ID = null;
+var LS_KEY = 'trending_news_v1';
+
+// ── ストレージ ─────────────────────────────────────────────────
+function loadState(){
+  try{
+    var raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    var state = JSON.parse(raw);
+    ANNOTATIONS = state.annotations || {};
+    var ui = state.ui || {};
+    if(ui.filter)   UI.filter = ui.filter;
+    if(ui.sort)     UI.sort   = ui.sort;
+    if(ui.theme)    applyTheme(ui.theme);
+  }catch(e){}
+}
+function saveState(){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      version:1, annotations:ANNOTATIONS, ui:UI
+    }));
+  }catch(e){}
+}
+function getAnn(id){ return ANNOTATIONS[id] || {}; }
+function setAnn(id, patch){
+  var a = getAnn(id);
+  Object.assign(a, patch);
+  ANNOTATIONS[id] = a;
+  saveState();
+}
+
+// ── データ読み込み ────────────────────────────────────────────
+function loadData(){
+  var d = window.TRENDING_DATA;
+  if(d && d.items && d.items.length > 0){
+    DATA = d;
+    renderStats();
+    renderFeed();
+    updateCounts();
+  } else {
+    // news.json を fetch で試みる（http://で開いた場合）
+    fetch('news.json').then(function(r){ return r.json(); }).then(function(d){
+      if(d && d.items){ DATA = d; renderStats(); renderFeed(); updateCounts(); }
+    }).catch(function(){});
+  }
+}
+
+// ── 統計表示 ──────────────────────────────────────────────────
+function renderStats(){
+  if(!DATA) return;
+  var meta = DATA.meta || {};
+  var updated = meta.last_updated ? meta.last_updated.replace('T',' ').slice(0,16)+' JST' : '—';
+  document.getElementById('stat-updated').textContent = '更新: ' + updated;
+  document.getElementById('topbar-updated').textContent = updated;
+  var bd = meta.source_breakdown || {};
+  var rows = document.getElementById('stat-rows');
+  rows.innerHTML = '';
+  Object.entries(bd).sort(function(a,b){return b[1]-a[1];}).slice(0,8).forEach(function(e){
+    var div = document.createElement('div');
+    div.className = 'stat-row';
+    div.innerHTML = '<span>'+(SRC_LABELS[e[0]]||e[0])+'</span><b>'+e[1]+'件</b>';
+    rows.appendChild(div);
+  });
+}
+
+// ── フィルタリング ────────────────────────────────────────────
+function timeAgo(isoStr){
+  try{
+    var diff = (Date.now() - new Date(isoStr).getTime()) / 1000;
+    if(diff<3600)  return Math.round(diff/60)+'分前';
+    if(diff<86400) return Math.round(diff/3600)+'時間前';
+    return Math.round(diff/86400)+'日前';
+  }catch(e){ return '—'; }
+}
+function hoursAgo(isoStr){
+  try{ return (Date.now() - new Date(isoStr).getTime()) / 3600000; }
+  catch(e){ return 999; }
+}
+function getFiltered(){
+  if(!DATA) return [];
+  var f = UI.filter;
+  var q = UI.search.toLowerCase();
+  var items = DATA.items.slice();
+
+  if(f === 'saved'){
+    items = items.filter(function(i){ return getAnn(i.id).saved; });
+  } else if(f === 'dark_horse'){
+    items = items.filter(function(i){ return i.score < 30 && hoursAgo(i.published_at) < 24; });
+  } else if(f !== 'all'){
+    items = items.filter(function(i){ return i.category === f; });
+  }
+
+  if(q) items = items.filter(function(i){
+    return (i.title||'').toLowerCase().includes(q) ||
+           (i.summary||'').toLowerCase().includes(q);
+  });
+
+  if(UI.sort === 'score'){
+    items.sort(function(a,b){ return (b.score||0)-(a.score||0); });
+  } else {
+    items.sort(function(a,b){ return new Date(b.published_at)-new Date(a.published_at); });
+  }
+
+  // ピン留めアイテムを先頭に
+  var pinned = items.filter(function(i){ return getAnn(i.id).pinned; });
+  var rest   = items.filter(function(i){ return !getAnn(i.id).pinned; });
+  return pinned.concat(rest);
+}
+
+function updateCounts(){
+  if(!DATA) return;
+  var all  = DATA.items;
+  var now  = Date.now();
+  document.getElementById('ct-all').textContent      = all.length;
+  document.getElementById('ct-tech').textContent     = all.filter(function(i){return i.category==='tech';}).length;
+  document.getElementById('ct-business').textContent = all.filter(function(i){return i.category==='business';}).length;
+  document.getElementById('ct-general').textContent  = all.filter(function(i){return i.category==='general';}).length;
+  document.getElementById('ct-trend').textContent    = all.filter(function(i){return i.category==='trend';}).length;
+  document.getElementById('ct-saved').textContent    = Object.values(ANNOTATIONS).filter(function(a){return a.saved;}).length;
+  document.getElementById('ct-dark').textContent     = all.filter(function(i){
+    return i.score<30 && hoursAgo(i.published_at)<24;
+  }).length;
+}
+
+// ── カード描画 ────────────────────────────────────────────────
+function scoreColor(s){
+  if(s>=70) return 'var(--accent)';
+  if(s>=50) return 'var(--amber)';
+  if(s>=30) return 'var(--ink3)';
+  return 'var(--ink4)';
+}
+function renderCard(item){
+  var ann   = getAnn(item.id);
+  var score = item.score || 0;
+  var cls   = ['ncard'];
+  if(ann.pinned) cls.push('pinned');
+  if(ann.read)   cls.push('read');
+  if(ann.saved)  cls.push('saved');
+  var col = scoreColor(score);
+  var bm  = item.bookmarks > 0 ? '<span class="bm-count">★'+item.bookmarks+'</span>' : '';
+  var memo = ann.memo ? '<span class="has-memo" title="'+esc(ann.memo)+'">📝</span>' : '';
+  var tags = (item.tags||[]).map(function(t){
+    return '<span class="tag">'+esc(t)+'</span>';
+  }).join('');
+  var summary = item.summary ? '<p class="card-summary">'+esc(item.summary)+'</p>' : '';
+  return '<article class="'+cls.join(' ')+'" data-id="'+esc(item.id)+'">'
+    + '<div class="card-meta">'
+    +   '<span class="score-badge" style="color:'+col+';border-color:'+col+'60">'+score+'</span>'
+    +   '<span class="src-tag">'+(SRC_LABELS[item.source]||esc(item.source||''))+'</span>'
+    +   bm
+    +   '<span class="time-ago">'+timeAgo(item.published_at)+'</span>'
+    +   memo
+    + '</div>'
+    + '<h3 class="card-title"><a href="'+esc(item.url)+'" target="_blank" rel="noopener">'+esc(item.title)+'</a></h3>'
+    + summary
+    + '<div class="card-footer">'
+    +   '<div class="card-tags">'+tags+'</div>'
+    +   '<div class="card-actions">'
+    +     '<button class="btn-act'+(ann.pinned?' on':'')+'" data-act="pin"  data-id="'+item.id+'" title="ピン留め">📌</button>'
+    +     '<button class="btn-act'+(ann.read?  ' on-amber':'')+'" data-act="read" data-id="'+item.id+'" title="既読">✓</button>'
+    +     '<button class="btn-act'+(ann.saved? ' on-violet':'')+'" data-act="save" data-id="'+item.id+'" title="保存">💾</button>'
+    +     '<button class="btn-act" data-act="memo" data-id="'+item.id+'" title="メモ">✏️</button>'
+    +   '</div>'
+    + '</div>'
+    + '</article>';
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderFeed(){
+  var feed = document.getElementById('feed');
+  var items = getFiltered();
+  if(!items.length){
+    if(!DATA){
+      feed.innerHTML = '<div class="feed-empty"><h3>データがありません</h3>'
+        + '<p>以下のコマンドを実行してください</p>'
+        + '<code>py trending-news/collector.py --dry-run</code><br><br>'
+        + '<code>py trending-news/collector.py</code></div>';
+    } else {
+      feed.innerHTML = '<div class="feed-empty"><h3>該当なし</h3><p>フィルター条件を変更してみてください</p></div>';
+    }
+    return;
+  }
+  feed.innerHTML = items.map(renderCard).join('');
+  // 穴馬バナー
+  document.getElementById('darkhorse-banner').classList.toggle('hidden', UI.filter !== 'dark_horse');
+}
+
+// ── アクション処理 ────────────────────────────────────────────
+function handleAction(act, id){
+  var ann = getAnn(id);
+  if(act === 'pin')  setAnn(id, {pinned: !ann.pinned});
+  if(act === 'read') setAnn(id, {read:   !ann.read});
+  if(act === 'save'){ setAnn(id, {saved: !ann.saved}); updateCounts(); }
+  if(act === 'memo'){ openMemo(id); return; }
+  renderFeed();
+}
+
+// ── メモモーダル ──────────────────────────────────────────────
+function openMemo(id){
+  MEMO_TARGET_ID = id;
+  document.getElementById('memo-ta').value = getAnn(id).memo || '';
+  document.getElementById('modal-memo').classList.remove('hidden');
+  document.getElementById('memo-ta').focus();
+}
+function closeMemo(){ document.getElementById('modal-memo').classList.add('hidden'); }
+function saveMemo(){
+  if(!MEMO_TARGET_ID) return;
+  setAnn(MEMO_TARGET_ID, {memo: document.getElementById('memo-ta').value.trim()});
+  closeMemo();
+  renderFeed();
+}
+
+// ── エクスポート / インポート ─────────────────────────────────
+function exportAnnotations(){
+  var blob = new Blob([JSON.stringify(ANNOTATIONS, null, 2)], {type:'application/json'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = 'annotations_backup.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+function importAnnotations(file){
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var data = JSON.parse(e.target.result);
+      Object.assign(ANNOTATIONS, data);
+      saveState();
+      updateCounts();
+      renderFeed();
+      alert('アノテーションを読み込みました: '+Object.keys(data).length+'件');
+    }catch(err){ alert('読み込み失敗: '+err.message); }
+  };
+  reader.readAsText(file);
+}
+function exportSavedMarkdown(){
+  if(!DATA) return;
+  var saved = DATA.items.filter(function(i){ return getAnn(i.id).saved; });
+  if(!saved.length){ alert('保存済みアイテムがありません'); return; }
+  var today = new Date().toISOString().slice(0,10);
+  var lines = [
+    '---',
+    'title: "保存済みニュース '+today+'"',
+    'created: "'+today+'"',
+    'tags: ["saved-news"]',
+    '---',
+    '',
+    '# 保存済みニュース '+today,
+    ''
+  ];
+  saved.forEach(function(item){
+    var ann = getAnn(item.id);
+    lines.push('## '+item.title);
+    lines.push('- **URL**: '+item.url);
+    lines.push('- **ソース**: '+(SRC_LABELS[item.source]||item.source||''));
+    lines.push('- **スコア**: '+item.score);
+    if(item.summary) lines.push('- **要約**: '+item.summary);
+    if(ann.memo)     lines.push('- **メモ**: '+ann.memo);
+    lines.push('');
+  });
+  var blob = new Blob([lines.join('\n')], {type:'text/markdown;charset=utf-8'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = 'trending-saved-'+today+'.md'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── テーマ切り替え ────────────────────────────────────────────
+function applyTheme(t){
+  if(t==='midnight') document.documentElement.setAttribute('data-theme','midnight');
+  else               document.documentElement.removeAttribute('data-theme');
+  document.querySelectorAll('.seg-btn[data-theme]').forEach(function(b){
+    b.classList.toggle('on', b.dataset.theme === t);
+  });
+  UI.theme = t;
+  saveState();
+}
+
+// ── イベントバインド ──────────────────────────────────────────
+function bindEvents(){
+  // フィルター
+  document.getElementById('filter-list').addEventListener('click', function(e){
+    var el = e.target.closest('[data-filter]');
+    if(!el) return;
+    UI.filter = el.dataset.filter;
+    document.querySelectorAll('.fitem').forEach(function(f){
+      f.classList.toggle('on', f.dataset.filter === UI.filter);
+    });
+    saveState();
+    renderFeed();
+  });
+
+  // ソート
+  document.querySelectorAll('.sort-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      UI.sort = b.dataset.sort;
+      document.querySelectorAll('.sort-btn').forEach(function(x){ x.classList.toggle('on', x===b); });
+      saveState();
+      renderFeed();
+    });
+  });
+
+  // 検索
+  document.getElementById('search').addEventListener('input', function(e){
+    UI.search = e.target.value;
+    renderFeed();
+  });
+
+  // カードアクション（イベント委譲）
+  document.getElementById('feed').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-act]');
+    if(!btn) return;
+    handleAction(btn.dataset.act, btn.dataset.id);
+  });
+
+  // テーマ
+  document.querySelectorAll('.seg-btn[data-theme]').forEach(function(b){
+    b.addEventListener('click', function(){ applyTheme(b.dataset.theme); });
+  });
+
+  // メモモーダル
+  document.getElementById('btn-memo-save').addEventListener('click', saveMemo);
+  document.getElementById('btn-memo-cancel').addEventListener('click', closeMemo);
+  document.getElementById('modal-memo').addEventListener('click', function(e){
+    if(e.target === this) closeMemo();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') closeMemo();
+  });
+
+  // バックアップ
+  document.getElementById('btn-export-ann').addEventListener('click', exportAnnotations);
+  document.getElementById('input-import-ann').addEventListener('change', function(e){
+    if(e.target.files[0]) importAnnotations(e.target.files[0]);
+    e.target.value = '';
+  });
+  document.getElementById('btn-export-md').addEventListener('click', exportSavedMarkdown);
+}
+
+// ── 初期化 ────────────────────────────────────────────────────
+loadState();
+bindEvents();
+loadData();
+
+// フィルターUI を状態に合わせる
+document.querySelectorAll('.fitem').forEach(function(f){
+  f.classList.toggle('on', f.dataset.filter === UI.filter);
+});
+document.querySelectorAll('.sort-btn').forEach(function(b){
+  b.classList.toggle('on', b.dataset.sort === UI.sort);
+});
+
+})();
+</script>
+</body>
+</html>

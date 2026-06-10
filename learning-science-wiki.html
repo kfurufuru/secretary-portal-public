@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light" data-accent="forest">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>学習科学Wiki — 脳科学×学習法×時間設計</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Noto+Serif+JP:wght@500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+/* ============================================================
+   学習科学Wiki — Stylesheet
+   ============================================================ */
+:root {
+  --bg: oklch(0.985 0.005 85);
+  --bg-elev: oklch(0.995 0.003 85);
+  --bg-sunken: oklch(0.96 0.006 85);
+  --ink: oklch(0.22 0.02 260);
+  --ink-soft: oklch(0.42 0.018 260);
+  --ink-mute: oklch(0.58 0.014 260);
+  --rule: oklch(0.88 0.008 260);
+  --rule-soft: oklch(0.93 0.006 260);
+  --accent: oklch(0.45 0.10 155);
+  --accent-soft: oklch(0.92 0.04 155);
+  --accent-ink: oklch(0.32 0.11 155);
+  --warn: oklch(0.55 0.14 50);
+  --warn-soft: oklch(0.95 0.04 70);
+  --ok: oklch(0.55 0.10 155);
+  --ok-soft: oklch(0.94 0.04 155);
+  --danger: oklch(0.55 0.16 25);
+  --danger-soft: oklch(0.95 0.03 25);
+  --info: oklch(0.50 0.12 230);
+  --info-soft: oklch(0.94 0.04 230);
+  --font-serif: "Noto Serif JP", "Hiragino Mincho ProN", serif;
+  --font-sans: "Noto Sans JP", "Hiragino Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", monospace;
+  --fs-base: 15px;
+  --lh-base: 1.85;
+  --sidebar-w: 280px;
+  --toc-w: 220px;
+  --content-max: 760px;
+}
+[data-theme="dark"] {
+  --bg: oklch(0.18 0.012 260);
+  --bg-elev: oklch(0.22 0.012 260);
+  --bg-sunken: oklch(0.14 0.012 260);
+  --ink: oklch(0.94 0.008 85);
+  --ink-soft: oklch(0.78 0.012 260);
+  --ink-mute: oklch(0.60 0.014 260);
+  --rule: oklch(0.32 0.014 260);
+  --rule-soft: oklch(0.26 0.012 260);
+  --accent: oklch(0.78 0.12 155);
+  --accent-soft: oklch(0.28 0.05 155);
+  --accent-ink: oklch(0.86 0.10 155);
+  --warn: oklch(0.78 0.14 70);
+  --warn-soft: oklch(0.32 0.05 70);
+  --ok: oklch(0.78 0.12 155);
+  --ok-soft: oklch(0.28 0.05 155);
+  --danger: oklch(0.78 0.14 25);
+  --danger-soft: oklch(0.32 0.05 25);
+  --info: oklch(0.74 0.12 230);
+  --info-soft: oklch(0.28 0.05 230);
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-sans); font-size: var(--fs-base); line-height: var(--lh-base);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent-ink); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* Layout */
+.app { display: grid; grid-template-columns: var(--sidebar-w) 1fr var(--toc-w); min-height: 100vh; }
+@media (max-width: 1100px) { .app { grid-template-columns: var(--sidebar-w) 1fr; } .toc { display: none; } }
+@media (max-width: 760px) { .app { grid-template-columns: 1fr; } .sidebar { display: none; } }
+/* Sidebar */
+.sidebar {
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  border-right: 1px solid var(--rule); background: var(--bg-sunken); padding: 22px 18px 60px;
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 4px 4px 18px; border-bottom: 1px solid var(--rule); margin-bottom: 16px; }
+.brand-mark {
+  width: 36px; height: 36px; border-radius: 6px;
+  background: var(--accent); color: #fff;
+  display: grid; place-items: center;
+  font-family: var(--font-serif); font-weight: 700; font-size: 14px; flex-shrink: 0;
+}
+.brand-title { font-family: var(--font-serif); font-size: 15px; font-weight: 600; line-height: 1.3; }
+.brand-sub { font-size: 11px; color: var(--ink-mute); letter-spacing: 0.05em; text-transform: uppercase; }
+.search { position: relative; margin-bottom: 18px; }
+.search input {
+  width: 100%; padding: 8px 10px 8px 32px;
+  border: 1px solid var(--rule); background: var(--bg-elev); border-radius: 5px;
+  color: var(--ink); font-family: var(--font-sans); font-size: 13px;
+}
+.search input::placeholder { color: var(--ink-mute); }
+.search input:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--ink-mute); pointer-events: none; }
+.search-results {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--bg-elev); border: 1px solid var(--rule); border-radius: 6px;
+  max-height: 320px; overflow-y: auto; z-index: 30;
+  box-shadow: 0 12px 32px -12px oklch(0.2 0.02 260 / 0.25);
+}
+.search-result { padding: 9px 12px; border-bottom: 1px solid var(--rule-soft); cursor: pointer; font-size: 13px; }
+.search-result:last-child { border-bottom: 0; }
+.search-result:hover, .search-result.active { background: var(--accent-soft); }
+.search-result-title { font-weight: 600; color: var(--ink); }
+.search-result-meta { font-size: 11px; color: var(--ink-mute); margin-top: 2px; }
+.search-result mark { background: var(--accent-soft); color: var(--accent-ink); padding: 0 2px; border-radius: 2px; }
+.nav-group { margin-bottom: 4px; }
+.nav-chapter {
+  display: flex; align-items: center; gap: 6px; width: 100%;
+  background: transparent; border: 0; padding: 6px 4px; text-align: left; cursor: pointer;
+  font-family: var(--font-sans); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute);
+}
+.nav-chapter:hover { color: var(--ink); }
+.nav-chapter-caret { width: 10px; height: 10px; transition: transform 0.15s; }
+.nav-chapter[data-open="false"] .nav-chapter-caret { transform: rotate(-90deg); }
+.nav-chapter-num { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); margin-left: auto; }
+.nav-items { list-style: none; padding: 0; margin: 0 0 6px; border-left: 1px solid var(--rule); margin-left: 8px; }
+.nav-items[data-open="false"] { display: none; }
+.nav-item {
+  display: flex; align-items: baseline; gap: 8px; padding: 4px 10px 4px 14px;
+  margin-left: -1px; border-left: 2px solid transparent;
+  font-size: 13px; color: var(--ink-soft); cursor: pointer; transition: all 0.12s; line-height: 1.4;
+}
+.nav-item:hover { color: var(--ink); background: var(--rule-soft); }
+.nav-item.active { color: var(--accent-ink); border-left-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.nav-item-num { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); flex-shrink: 0; font-weight: 400; }
+.nav-item.active .nav-item-num { color: var(--accent); }
+.sidebar-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--rule); font-size: 11px; color: var(--ink-mute); line-height: 1.6; }
+/* Main */
+.main { padding: 36px 48px 120px; min-width: 0; }
+@media (max-width: 760px) { .main { padding: 24px 20px 80px; } }
+/* TOC */
+.toc { position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 40px 18px 60px 12px; border-left: 1px solid var(--rule); background: var(--bg-sunken); }
+.toc-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); margin-bottom: 10px; padding-left: 8px; }
+.toc-item { display: block; padding: 4px 8px; font-size: 12px; color: var(--ink-soft); border-radius: 4px; margin-bottom: 1px; cursor: pointer; }
+.toc-item:hover { color: var(--ink); background: var(--rule-soft); }
+.toc-item.active { color: var(--accent-ink); background: var(--accent-soft); font-weight: 600; }
+/* Page header */
+.page-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+.page-title { font-family: var(--font-serif); font-size: clamp(22px, 2.8vw, 32px); font-weight: 700; line-height: 1.25; margin: 0 0 12px; color: var(--ink); }
+.page-deck { font-size: 16px; color: var(--ink-soft); line-height: 1.7; margin: 0 0 20px; max-width: 640px; }
+.page-meta { display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 0 28px; border-bottom: 1px solid var(--rule); margin-bottom: 32px; }
+.page-meta-item { font-size: 12px; }
+.page-meta-label { color: var(--ink-mute); display: block; }
+.page-meta-value { color: var(--ink); font-weight: 600; font-family: var(--font-mono); font-size: 13px; }
+/* Breadcrumbs */
+.crumbs { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-mute); margin-bottom: 20px; flex-wrap: wrap; }
+.crumb { cursor: pointer; }
+.crumb:hover { color: var(--accent-ink); }
+.crumb-sep { color: var(--rule); }
+/* Content elements */
+.content h2 {
+  font-family: var(--font-serif); font-size: 19px; font-weight: 700;
+  margin: 36px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--rule);
+  display: flex; align-items: baseline; gap: 10px; color: var(--ink);
+}
+.content h3 { font-family: var(--font-serif); font-size: 16px; font-weight: 700; margin: 24px 0 10px; color: var(--ink); }
+.content p { margin: 0 0 14px; }
+.content ul, .content ol { margin: 0 0 14px; padding-left: 1.5em; }
+.content li { margin-bottom: 5px; }
+.content table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13.5px; }
+.content th { background: var(--bg-sunken); font-weight: 700; padding: 8px 12px; border: 1px solid var(--rule); text-align: left; font-size: 12px; }
+.content td { padding: 7px 12px; border: 1px solid var(--rule); vertical-align: top; }
+.content tr:hover td { background: var(--rule-soft); }
+.h-num { font-family: var(--font-mono); font-size: 13px; font-weight: 400; color: var(--ink-mute); flex-shrink: 0; }
+.marker { background: oklch(0.94 0.12 90); padding: 0 3px; border-radius: 2px; }
+/* Cards */
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
+.card {
+  border: 1px solid var(--rule); border-radius: 8px; padding: 16px; background: var(--bg-elev);
+  cursor: pointer; transition: all 0.15s;
+}
+.card:hover { border-color: var(--accent); box-shadow: 0 4px 16px -6px oklch(0.2 0.02 260 / 0.12); transform: translateY(-1px); }
+.card-num { font-family: var(--font-mono); font-size: 11px; color: var(--ink-mute); margin-bottom: 6px; }
+.card-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; line-height: 1.4; }
+.card-deck { font-size: 12px; color: var(--ink-soft); line-height: 1.5; margin-bottom: 8px; }
+.card-foot { font-size: 11px; color: var(--accent-ink); font-weight: 600; margin-top: auto; }
+/* Admonition */
+.adm { border-radius: 6px; padding: 14px 16px; margin: 16px 0; border-left: 3px solid; }
+.adm-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.adm-body { font-size: 13.5px; }
+.adm-body ul { margin: 6px 0; }
+.adm-body p { margin: 0 0 6px; }
+.adm-body p:last-child { margin: 0; }
+.adm.info { background: var(--info-soft); border-color: var(--info); }
+.adm.info .adm-title { color: var(--info); }
+.adm.warn { background: var(--warn-soft); border-color: var(--warn); }
+.adm.warn .adm-title { color: var(--warn); }
+.adm.ok { background: var(--ok-soft); border-color: var(--ok); }
+.adm.ok .adm-title { color: var(--ok); }
+.adm.danger { background: var(--danger-soft); border-color: var(--danger); }
+.adm.danger .adm-title { color: var(--danger); }
+/* Stat strip */
+.stat-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin: 0 0 32px; }
+.stat { border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; background: var(--bg-elev); }
+.stat-label { font-size: 11px; color: var(--ink-mute); margin-bottom: 4px; }
+.stat-value { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--accent-ink); margin-bottom: 2px; }
+.stat-sub { font-size: 11px; color: var(--ink-mute); }
+/* Badge / chip */
+.badge { display: inline-block; font-family: var(--font-mono); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; letter-spacing: 0.03em; }
+.badge-g { background: var(--ok-soft); color: var(--ok); }
+.badge-y { background: var(--warn-soft); color: var(--warn); }
+.badge-r { background: var(--danger-soft); color: var(--danger); }
+/* Step list */
+.steps { list-style: none; padding: 0; margin: 16px 0; counter-reset: step; }
+.steps li { counter-increment: step; display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; }
+.steps li::before {
+  content: counter(step); flex-shrink: 0; width: 26px; height: 26px;
+  background: var(--accent); color: #fff; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 700; font-size: 13px; font-family: var(--font-mono);
+}
+/* Theme toggle */
+.theme-toggle { display: flex; gap: 6px; margin-top: 14px; }
+.theme-btn { font-size: 11px; padding: 4px 9px; border: 1px solid var(--rule); background: var(--bg-elev); color: var(--ink-soft); border-radius: 4px; cursor: pointer; font-family: var(--font-sans); }
+.theme-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+/* Mobile hamburger */
+.mobile-bar { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--bg-elev); border-bottom: 1px solid var(--rule); padding: 10px 16px; align-items: center; gap: 12px; }
+@media (max-width: 760px) { .mobile-bar { display: flex; } .main { padding-top: 64px; } }
+.hamburger { background: none; border: 1px solid var(--rule); border-radius: 5px; padding: 5px 8px; cursor: pointer; color: var(--ink); }
+.mobile-drawer { position: fixed; inset: 0; z-index: 200; display: flex; }
+.mobile-drawer-overlay { flex: 1; background: oklch(0 0 0 / 0.45); }
+.mobile-drawer-panel { width: 280px; background: var(--bg-sunken); overflow-y: auto; padding: 22px 18px 60px; }
+/* Timeline (schedule pages) */
+.timeline { position: relative; padding-left: 28px; margin: 16px 0; }
+.timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--rule); }
+.tl-item { position: relative; margin-bottom: 18px; }
+.tl-dot { position: absolute; left: -24px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+.tl-time { font-family: var(--font-mono); font-size: 11px; color: var(--ink-mute); margin-bottom: 2px; }
+.tl-label { font-weight: 600; font-size: 14px; }
+.tl-desc { font-size: 13px; color: var(--ink-soft); }
+.tl-item.focus .tl-dot { background: var(--ok); width: 14px; height: 14px; left: -25px; top: 3px; }
+.tl-item.rest .tl-dot { background: var(--warn); }
+.tl-item.study .tl-dot { background: var(--info); }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
+
+/* ============================================================
+   WIKI_DATA — 学習科学Wiki コンテンツ定義
+   ============================================================ */
+window.WIKI_DATA = {
+  chapters: [
+    { id: "ch1", num: "01", title: "脳科学の基礎", pages: [
+      { id: "nou-kasseika",  num: "1.1", title: "脳の可塑性と活性化" },
+      { id: "atama-ga-ii",   num: "1.2", title: "「頭が良い」の科学" },
+      { id: "brain-speed",   num: "1.3", title: "脳の処理速度" },
+      { id: "brain-detox",   num: "1.4", title: "脳デトックス" },
+    ]},
+    { id: "ch2", num: "02", title: "学習効率の科学", pages: [
+      { id: "gakushuu-kouritu", num: "2.1", title: "学習効率を上げる原則" },
+      { id: "study-methods",    num: "2.2", title: "科学的勉強法カタログ" },
+      { id: "joho-input",       num: "2.3", title: "情報インプットの最適化" },
+    ]},
+    { id: "ch3", num: "03", title: "メタ認知・思考革新", pages: [
+      { id: "meta-ninchi", num: "3.1", title: "メタ認知の技術" },
+      { id: "unlearning",  num: "3.2", title: "アンラーニング" },
+    ]},
+    { id: "ch4", num: "04", title: "理想の1日設計", pages: [
+      { id: "weekday-schedule", num: "4.1", title: "平日スケジュール設計" },
+      { id: "dayoff-rest",      num: "4.2", title: "休日OFF設計" },
+      { id: "dayoff-study",     num: "4.3", title: "休日勉強設計" },
+    ]},
+  ],
+};
+
+/* ============================================================
+   Shared Components
+   ============================================================ */
+const Crumbs = ({ items, onNav }) => (
+  <nav className="crumbs">
+    <span className="crumb" onClick={() => onNav('home')}>ホーム</span>
+    {items.map((it, i) => (
+      <React.Fragment key={i}>
+        <span className="crumb-sep">›</span>
+        {it.id ? <span className="crumb" onClick={() => onNav(it.id)}>{it.label}</span>
+               : <span>{it.label}</span>}
+      </React.Fragment>
+    ))}
+  </nav>
+);
+
+const PageHeader = ({ eyebrow, title, deck, meta }) => (
+  <div style={{marginBottom: 8}}>
+    {eyebrow && <div className="page-eyebrow">{eyebrow}</div>}
+    <h1 className="page-title">{title}</h1>
+    {deck && <p className="page-deck">{deck}</p>}
+    {meta && (
+      <div className="page-meta">
+        {meta.map((m, i) => (
+          <div key={i} className="page-meta-item">
+            <span className="page-meta-label">{m.label}</span>
+            <span className="page-meta-value">{m.value}</span>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
+const Adm = ({ type = 'info', title, children }) => {
+  const icons = { info: 'ℹ️', warn: '⚠️', ok: '✅', danger: '🚫', tip: '💡' };
+  const cls = type === 'tip' ? 'info' : type;
+  return (
+    <div className={`adm ${cls}`}>
+      {title && <div className="adm-title">{icons[type] || 'ℹ️'} {title}</div>}
+      <div className="adm-body">{children}</div>
+    </div>
+  );
+};
+
+const Sidebar = ({ chapters, currentPage, onNav }) => {
+  const init = {};
+  chapters.forEach(c => { init[c.id] = true; });
+  const [open, setOpen] = useState(init);
+  const [theme, setTheme] = useState('light');
+  const toggle = id => setOpen(p => ({ ...p, [id]: !p[id] }));
+  const setT = t => { setTheme(t); document.documentElement.dataset.theme = t; };
+  return (
+    <aside className="sidebar">
+      <div className="brand">
+        <div className="brand-mark">学</div>
+        <div>
+          <div className="brand-title">学習科学Wiki</div>
+          <div className="brand-sub">Brain × Learning × Time</div>
+        </div>
+      </div>
+      <nav>
+        <div className="nav-group">
+          <div className={`nav-item ${currentPage === 'home' ? 'active' : ''}`} onClick={() => onNav('home')}>
+            <span className="nav-item-num">00</span>ホーム
+          </div>
+        </div>
+        {chapters.map(ch => (
+          <div key={ch.id} className="nav-group">
+            <button className="nav-chapter" data-open={String(!!open[ch.id])} onClick={() => toggle(ch.id)}>
+              <svg className="nav-chapter-caret" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M2 3.5 5 6.5 8 3.5"/>
+              </svg>
+              {ch.title}
+              <span className="nav-chapter-num">{ch.num}</span>
+            </button>
+            <ul className="nav-items" data-open={String(!!open[ch.id])}>
+              {ch.pages.map(p => (
+                <li key={p.id} className={`nav-item ${currentPage === p.id ? 'active' : ''}`} onClick={() => onNav(p.id)}>
+                  <span className="nav-item-num">{p.num}</span>{p.title}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </nav>
+      <div className="sidebar-footer">
+        <div className="theme-toggle">
+          <button className={`theme-btn ${theme === 'light' ? 'active' : ''}`} onClick={() => setT('light')}>ライト</button>
+          <button className={`theme-btn ${theme === 'dark' ? 'active' : ''}`} onClick={() => setT('dark')}>ダーク</button>
+        </div>
+        <div style={{marginTop: 10}}>最終更新 2026.04</div>
+        <div style={{marginTop: 10, borderTop: '1px solid var(--rule)', paddingTop: 10}}>
+          <a href="index.html" style={{color: 'var(--ink-mute)', textDecoration: 'none', fontSize: '0.82rem'}}>← ポータルに戻る</a>
+        </div>
+      </div>
+    </aside>
+  );
+};
+
+/* ============================================================
+   0. HomePage
+   ============================================================ */
+const HomePage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ label: 'ホーム' }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="LEARNING SCIENCE WIKI"
+      title="学習科学Wiki"
+      deck="脳科学・認知心理学・時間設計の知見を実務に接続するリファレンス。9つの既存コンテンツを1本に統合。"
+      meta={[
+        { label: '章数', value: '4 章' },
+        { label: 'ページ数', value: '12 ページ' },
+        { label: '最終更新', value: '2026.04' },
+      ]}
+    />
+    <div className="content">
+      <div className="stat-strip">
+        <div className="stat"><div className="stat-label">脳科学の基礎</div><div className="stat-value">4 P</div><div className="stat-sub">可塑性・処理速度・デトックス</div></div>
+        <div className="stat"><div className="stat-label">学習効率の科学</div><div className="stat-value">3 P</div><div className="stat-sub">能動想起・間隔反復・インプット</div></div>
+        <div className="stat"><div className="stat-label">メタ認知・思考革新</div><div className="stat-value">2 P</div><div className="stat-sub">モニタリング・アンラーニング</div></div>
+        <div className="stat"><div className="stat-label">理想の1日設計</div><div className="stat-value">3 P</div><div className="stat-sub">平日・休日OFF・休日勉強</div></div>
+      </div>
+      <h2><span className="h-num">1</span>このWikiの使い方</h2>
+      <p>左のサイドバーから章・ページを選んでナビゲート。各ページはそれぞれ独立して読める構造になっている。初めての場合は <strong>1.1 脳の可塑性と活性化</strong> → <strong>2.1 学習効率を上げる原則</strong> → <strong>4.1 平日スケジュール設計</strong> の順で通読すると全体像をつかみやすい。</p>
+      <h2><span className="h-num">2</span>章一覧</h2>
+      <div className="card-grid">
+        {data.chapters.map(ch => (
+          <div key={ch.id} className="card" onClick={() => onNav(ch.pages[0].id)}>
+            <div className="card-num">Ch.{ch.num}</div>
+            <div className="card-title">{ch.title}</div>
+            <div className="card-deck">{ch.pages.map(p => p.title).join(' · ')}</div>
+            <div className="card-foot">{ch.pages.length} ページ →</div>
+          </div>
+        ))}
+      </div>
+      <Adm type="tip" title="読み方のコツ">
+        <p>各ページの <span className="marker">黄色マーカー</span> は実践で即使える要点。忙しい日はマーカー部分だけ読み返すと効率が良い。</p>
+      </Adm>
+    </div>
+  </>
+);
+
+/* ============================================================
+   Ch1: 脳科学の基礎
+   ============================================================ */
+const NouKasseikaPage = ({ onNav }) => (
+  <>
+    <Crumbs items={[{ label: 'Ch.01 脳科学の基礎' }, { label: '1.1 脳の可塑性と活性化' }]} />
+    <PageHeader eyebrow="Ch.01 脳科学の基礎" title="脳の可塑性と活性化" deck="神経新生・シナプス強化・ミエリン化の3メカニズムで脳を活性化" />
+    <meta label="根拠" value="認知科学・神経科学" />
+    <meta label="実践難易度" value="★★☆" />
+    <h2><span className="h-num">1</span> 脳の可塑性の科学</h2>
+    <p>脳は何歳でも変わる。ただし「新しい刺激」にしか反応しない。慣れは可塑性の敵。神経新生・シナプス強化・ミエリン化の3メカニズムにより、成人期以降も適切な刺激と回復の設計次第で脳は構造的に変化し続ける。</p>
+    <Adm type="info">
+      <p>BDNF（脳由来神経栄養因子）は神経回路の「肥料」。運動・睡眠・断食で増加。低いと学習効率・記憶定着が落ちる。（Erickson, 2011；Van Dongen, 2003）</p>
+    </Adm>
+    <h2><span className="h-num">2</span> データとメトリクス</h2>
+    <table>
+      <tr>
+        <th>変数</th>
+        <th>影響</th>
+        <th>研究</th>
+      </tr>
+      <tr>
+        <td>睡眠</td>
+        <td>7〜9時間/日</td>
+        <td>Van Dongen, 2003</td>
+      </tr>
+      <tr>
+        <td>運動</td>
+        <td>週150分以上</td>
+        <td>Erickson, 2011</td>
+      </tr>
+      <tr>
+        <td>栄養</td>
+        <td>オメガ3脂肪酸（DHA/EPA）</td>
+        <td>Cheatham, 2020</td>
+      </tr>
+    </table>
+    <h2><span className="h-num">3</span> 実践ステップ</h2>
+    <ol className="steps">
+      <li>毎日7時間以上の睡眠を確保する</li>
+      <li>週3回以上、20〜30分の有酸素運動を実施する</li>
+      <li>業務外の新しいテーマを継続的に学習する</li>
+      <li>「なぜそうなるのか」を自分の言葉で説明できるまで理解を確認する</li>
+      <li>週1回以上、後輩や同僚に知識・技術を教えるまたは対話する機会を作る</li>
+    </ol>
+    <Adm type="ok">
+      <p>脳活性化の実践レベルを診断するチェックリスト:</p>
+      <ul>
+        <li>毎日7時間以上の睡眠を確保できている</li>
+        <li>週3回以上、20〜30分の有酸素運動を実施している</li>
+        <li>業務外の新しいテーマを継続的に学習している</li>
+        <li>「なぜそうなるのか」を自分の言葉で説明できるまで理解を確認する習慣がある</li>
+        <li>週1回以上、後輩や同僚に知識・技術を教えるまたは対話する機会を作っている</li>
+      </ul>
+    </Adm>
+    <p>神経新生・シナプス強化・ミエリン化の3メカニズムを理解し、<span className="marker">BDNF</span>を増加させるために、<span className="marker">運動</span>・<span className="marker">睡眠</span>・<span className="marker">断食</span>を実践しましょう。継続的な学習と社会的接触も重要です。認知予備力を構築するために、<span className="marker">複雑な思考習慣</span>・<span className="marker">多様な表現系</span>・<span className="marker">継続的な新規学習</span>を実践しましょう。</p>
+  </>
+);
+
+const AtamaGaIiPage = ({ onNav }) => (
+  <>
+    <Crumbs items={[{ label: 'Ch.01 脳科学の基礎' }, { label: '1.2 「頭が良い」の科学' }]} />
+    <PageHeader eyebrow="Ch.01 脳科学の基礎" title="「頭が良い」の科学" deck="知能の多次元モデルと実践的アプローチ" />
+    <meta label="根拠" value="認知科学・神経科学" />
+    <meta label="実践難易度" value="★★☆" />
+    <h2><span className="h-num">1</span>頭が良い人の5要素</h2>
+    <p>認知科学の研究によると、<span className="marker">流動性知能</span>と<span className="marker">結晶性知能</span>は、頭が良い人の2つの重要な要素です。研究者は、流動性知能は問題解決能力を決定し、結晶性知能は知識の蓄積量を決定することを発見しました (<span className="badge badge-g">80%</span> の相関性)。</p>
+    <Adm type="info"><p>ハワード・ガードナーによる多重知能理論（MI）によると、人間には少なくとも8つの独立した知能が存在します。言語・語学知能、論理・数学的知能、視覚・空間的知能などが含まれます (<span className="marker">2019年の研究</span>)。</p></Adm>
+    <h2><span className="h-num">2</span>データ分析</h2>
+    <table>
+      <tr>
+        <th>知能タイプ</th>
+        <th>相関性</th>
+      </tr>
+      <tr>
+        <td>流動性知能</td>
+        <td>0.8</td>
+      </tr>
+      <tr>
+        <td>結晶性知能</td>
+        <td>0.7</td>
+      </tr>
+    </table>
+    <p>上記の表から、流動性知能と結晶性知能の相関性がわかります。流動性知能は問題解決能力を決定し、結晶性知能は知識の蓄積量を決定します。</p>
+    <h2><span className="h-num">3</span>実践的アプローチ</h2>
+    <p>電験3種受験中の36歳電気エンジニアの方には、以下の3つのアクションを実践することをお勧めします。</p>
+    <ol className="steps">
+      <li>「なぜ？」を3段階掘る</li>
+      <li>抽象↔具体を往復する</li>
+      <li>答えを先に書く</li>
+    </ol>
+    <Adm type="ok">
+      <p>チェックリスト:</p>
+      <ul>
+        <li>日常の出来事・判断に「なぜ」を3回繰り返す</li>
+        <li>具体的な事象を「一般化」してから、別の具体例に「適用」する</li>
+        <li>資料・報告書を「結論から書く」習慣</li>
+      </ul>
+    </Adm>
+    <p>これらのアクションを実践することで、<span className="marker">仮説思考</span>、<span className="marker">フレームワーク思考</span>、<span className="marker">抽象化思考</span>を鍛えることができます。さらに、<span className="badge badge-y">20%</span> の時間短縮と、<span className="badge badge-g">30%</span> の生産性向上が期待できます。</p>
+  </>
+);
+
+const BrainSpeedPage = ({ onNav }) => (
+  <>
+    <Crumbs items={[{ label: 'Ch.01 脳科学の基礎' }, { label: '1.3 脳の処理速度' }]} />
+    <PageHeader
+      eyebrow="Ch.01 脳科学の基礎"
+      title="脳の処理速度"
+      deck="脳の情報処理速度を科学的に引き上げる方法"
+    />
+    <div className="meta">
+      <span className="meta-item">根拠: 認知科学・神経科学</span>
+      <span className="meta-item">実践難易度: ★★☆</span>
+    </div>
+
+    <h2><span className="h-num">1</span>脳の処理速度の核心概念</h2>
+    <p>
+      脳の処理速度は、情報を受け取り、判断し、行動に移すまでの神経伝達の速さを指します。主に、<span className="marker">有髄線維のミエリン厚</span>、<span className="marker">シナプス可塑性</span>、および<span className="marker">作業記憶容量</span>（マジカルナンバー4±1）によって決まります。これらは訓練や生活習慣によって変化します。例えば、神経伝導速度は0.5〜120 m/sの範囲で、ミエリンの有無や直径によって大きく異なります（Hartline & Colman 2007）。
+    </p>
+    <Adm type="info">
+      <p>
+        研究によると、成人でも神経可塑性があり、ミエリンは「固定した構造」ではなく、使用頻度に応じて変化します（Fields 2008）。特に、<span className="marker">BDNF</span>（脳由来神経栄養因子）は神経新生やシナプス可塑性に重要な役割を果たします。
+      </p>
+    </Adm>
+
+    <h2><span className="h-num">2</span>処理速度低下の要因とデータ</h2>
+    <table>
+      <tr>
+        <th>要因</th>
+        <th>処理速度低下率</th>
+      </tr>
+      <tr>
+        <td>睡眠不足</td>
+        <td>最大30%</td>
+      </tr>
+      <tr>
+        <td>スマホ使用</td>
+        <td>約20%</td>
+      </tr>
+      <tr>
+        <td>マルチタスク</td>
+        <td>最大40%</td>
+      </tr>
+    </table>
+    <p>
+      これらの要因は、脳の処理速度を著しく低下させることが示されています。特に、マルチタスクは最大で40%の処理速度低下を引き起こすことが研究で確認されています（Meyer et al. 2001）。
+    </p>
+
+    <h2><span className="h-num">3</span>処理速度を上げる実践的手法</h2>
+    <p>
+      速読や<span className="marker">チャンキング</span>、自動化を通じて処理速度を向上させることが可能です。具体的には、以下のステップを実践してください：
+    </p>
+    <ol className="steps">
+      <li>毎日10分間の速読練習を行う。</li>
+      <li>情報を4つのチャンクに分けて記憶する。</li>
+      <li>日常業務の中で自動化できるタスクを見つけ、繰り返し実行する。</li>
+    </ol>
+    <Adm type="ok">
+      <p>実践チェックリスト：</p>
+      <ul>
+        <li>速読練習の時間を確保したか？</li>
+        <li>チャンキングを意識しているか？</li>
+        <li>自動化できる業務をリストアップしたか？</li>
+      </ul>
+    </Adm>
+  </>
+);
+
+const BrainDetoxPage = ({ onNav }) => (
+  <>
+    <Crumbs items={[{ label: 'Ch.01 脳科学の基礎' }, { label: '1.4 脳デトックス' }]} />
+    <PageHeader
+      eyebrow="Ch.01 脳科学の基礎"
+      title="脳デトックス"
+      deck="脳の健康を取り戻すための実践的なアプローチ"
+    />
+    <div className="meta">
+      <span>根拠: 認知科学・神経科学</span>
+      <span>実践難易度: ★★☆</span>
+    </div>
+
+    <h2><span className="h-num">1</span>グリンパティックシステムの重要性</h2>
+    <p>
+      脳は睡眠中に<span className="marker">βアミロイド</span>を除去するためのグリンパティックシステムを活用します。このプロセスは、睡眠不足や常時刺激によって妨げられ、認知機能の低下を引き起こします。研究によると、<span className="marker">7時間未満の睡眠が5日続く</span>と、酔っている状態と同等の認知低下が見られます（Stanford 2020）。
+    </p>
+
+    <Adm type="info">
+      <p>
+        グリンパティック系の機能を高めるためには、質の高い睡眠が不可欠です。睡眠中に脳脊髄液が循環し、老廃物を排出するため、毎晩7時間以上の睡眠を確保することが推奨されます。
+      </p>
+    </Adm>
+
+    <h2><span className="h-num">2</span>脳疲労とコルチゾールの影響</h2>
+    <p>
+      慢性的なストレスは、コルチゾールの蓄積を引き起こし、海馬の体積を最大<span className="marker">20%</span>減少させることが示されています（Max Planck）。この影響により、記憶や判断力が阻害され、特に午後の判断の質が低下します。
+    </p>
+
+    <table>
+      <tr>
+        <th>影響要因</th>
+        <th>影響度</th>
+      </tr>
+      <tr>
+        <td>睡眠不足（7時間未満）</td>
+        <td>認知機能低下（酔っている状態と同等）</td>
+      </tr>
+      <tr>
+        <td>コルチゾール蓄積</td>
+        <td>海馬の体積減少（最大20%）</td>
+      </tr>
+      <tr>
+        <td>マルチタスク</td>
+        <td>判断の質低下（1.8倍増加）</td>
+      </tr>
+    </table>
+
+    <Adm type="ok">
+      <p>
+        脳デトックスを実践するためのチェックリスト:
+        <ul>
+          <li>毎晩7時間以上の睡眠を確保する</li>
+          <li>デジタルデトックスを実施する（就寝90分前からスクリーンをオフ）</li>
+          <li>毎時間5分の休憩を取り入れる</li>
+        </ul>
+      </p>
+    </Adm>
+
+    <h2><span className="h-num">3</span>週次脳デトックスプロトコル</h2>
+    <p>
+      36歳のエンジニアに最適化した週次脳デトックスプロトコルを以下に示します。これにより、集中力を高め、パフォーマンスを向上させることができます。
+    </p>
+    <ol className="steps">
+      <li>毎日、90分の集中学習後に15分の休憩を取る。</li>
+      <li>週に1日はデジタルデトックスデーを設け、全てのデジタルデバイスをオフにする。</li>
+      <li>毎晩、21:30以降は電験関連の学習を行わず、リラックスする時間を設ける。</li>
+      <li>運動を取り入れ、週に1回はアウトドア活動を行う。</li>
+      <li>毎日の終わりに、感謝リストを作成し、ポジティブな思考を促進する。</li>
+    </ol>
+  </>
+);
+
+/* ============================================================
+   Ch2: 学習効率の科学
+   ============================================================ */
+const GakushuuKourituPage = ({ onNav }) => (
+  <>
+    <Crumbs 
+      items={[{ label: 'Ch.02 学習効率の科学' }, { label: '2.1 学習効率を上げる原則' }]} 
+    />
+    <PageHeader 
+      eyebrow="Ch.02 学習効率の科学" 
+      title="学習効率を上げる原則" 
+      deck="学習の質を高めるための科学的原則と実践方法" 
+    />
+    <div className="meta">
+      <span className="meta-item">根拠: 認知科学・神経科学</span>
+      <span className="meta-item">実践難易度: ★★☆</span>
+    </div>
+
+    <h2><span className="h-num">1</span>テスト効果とそのメカニズム</h2>
+    <Adm type="info">
+      <p>
+        <span className="marker">テスト効果</span>（Roediger & Karpicke, 2006）によると、再読よりも想起練習を行うことで記憶の定着率が約80%向上します。具体的には、想起テストを受けた場合、正答率は42%から80%に上昇します。この効果は、記憶回路を物理的に強化するため、学習者にとって非常に重要です。
+      </p>
+    </Adm>
+
+    <h2><span className="h-num">2</span>間隔反復の重要性</h2>
+    <table>
+      <tr>
+        <th>復習タイミング</th>
+        <th>保持率</th>
+      </tr>
+      <tr>
+        <td>直後</td>
+        <td>100%</td>
+      </tr>
+      <tr>
+        <td>20分後</td>
+        <td>58%</td>
+      </tr>
+      <tr>
+        <td>1日後</td>
+        <td>23%</td>
+      </tr>
+      <tr>
+        <td>1週間後</td>
+        <td>80%以上</td>
+      </tr>
+      <tr>
+        <td>1ヶ月後</td>
+        <td>85%+</td>
+      </tr>
+    </table>
+    <Adm type="ok">
+      <p>
+        <span className="marker">間隔反復</span>（Ebbinghaus, 1885）を活用することで、学習後の保持率を劇的に改善できます。具体的には、学習後24時間以内に復習することで保持率が90%以上に回復します。
+      </p>
+    </Adm>
+
+    <h2><span className="h-num">3</span>実践的な学習ステップ</h2>
+    <ol className="steps">
+      <li>当日：問題を解く → 誤答をノートに記録（原因分類まで）</li>
+      <li>翌日：教材を閉じてR1復習 — ノートを見ずに誤答問題を再解</li>
+      <li>1週間後：R2復習 — 同範囲の別問題で想起テスト実施</li>
+      <li>1ヶ月後：R3復習 — インターリービングで転移確認</li>
+      <li>AnkiやObsidianのFlashcard機能でSRS管理を自動化</li>
+    </ol>
+    <p>
+      これらのステップを通じて、電験3種の学習を効率的に進めることができます。特に、<span className="marker">アクティブリコール</span>を重視し、学習時間の半分を「閉じて思い出す」に使うことで、定着率が2倍近く向上します。
+    </p>
+
+    <h2><span className="h-num">4</span>学習の質を高めるための自己チェック</h2>
+    <p>以下の6項目をチェックして、今週の学習を診断しましょう。</p>
+    <ol>
+      <li>学んだ内容を1週間後に見直す予定を入れた</li>
+      <li>教科書・資料を閉じて「思い出す」練習をした</li>
+      <li>異なる科目・テーマを混ぜて学習した</li>
+      <li>間違えた問題の原因を当日中に言語化した</li>
+      <li>学習計画を実績に基づいて修正した</li>
+      <li>概念を学ぶ際に図・イメージと言葉を同時に使った</li>
+    </ol>
+    <p>チェックを入れてください: 0 / 6</p>
+  </>
+);
+
+const StudyMethodsPage = ({ onNav }) => (
+  <>
+    <Crumbs items={[{ label: 'Ch.02 学習効率の科学' }, { label: '2.2 科学的勉強法カタログ' }]} />
+    <PageHeader
+      eyebrow="Ch.02 学習効率の科学"
+      title="科学的勉強法カタログ"
+      deck="エビデンスに基づいた学習法を活用し、電験3種の合格を目指す"
+    />
+    <div className="meta">
+      <span>根拠: 認知科学・神経科学</span>
+      <span>実践難易度: ★★☆</span>
+    </div>
+
+    <h2><span className="h-num">1</span>学習科学の原則</h2>
+    <p>
+      学習法の効果を最大化するためには、<span className="marker">能動想起</span>や<span className="marker">間隔反復</span>などの科学的原則を理解することが重要です。
+      例えば、Roediger & Karpicke (2006) の研究によると、能動想起は再読よりも最大60%記憶保持率が高いとされています。
+      また、Cepeda et al. (2006) によると、間隔反復は集中学習に比べて長期保持率で2〜3倍の差があることが示されています。
+    </p>
+
+    <Adm type="info">
+      <h3>研究に基づく学習法</h3>
+      <p>
+        精緻化（Elaboration）は、Brownらの「Make It Stick」によると、単純再読より保持・転移に圧倒的に有効です。
+      </p>
+    </Adm>
+
+    <h2><span className="h-num">2</span>エビデンスベースの学習法</h2>
+    <table>
+      <tr>
+        <th>学習法</th>
+        <th>効果</th>
+        <th>実践時間</th>
+      </tr>
+      <tr>
+        <td>能動想起</td>
+        <td>記憶保持率60%向上</td>
+        <td>5〜20分/回</td>
+      </tr>
+      <tr>
+        <td>間隔反復</td>
+        <td>長期保持率2〜3倍</td>
+        <td>毎日10〜15分</td>
+      </tr>
+      <tr>
+        <td>Feynman法</td>
+        <td>理解度向上</td>
+        <td>15〜30分/テーマ</td>
+      </tr>
+      <tr>
+        <td>精緻化質問</td>
+        <td>因果構造の理解</td>
+        <td>学習中リアルタイム</td>
+      </tr>
+      <tr>
+        <td>インターリービング</td>
+        <td>識別力向上</td>
+        <td>1日3〜4科目ローテ</td>
+      </tr>
+    </table>
+
+    <Adm type="ok">
+      <h3>実践チェックリスト</h3>
+      <ul>
+        <li>能動想起を毎日5〜20分実施する</li>
+        <li>間隔反復を利用して復習スケジュールを設定する</li>
+        <li>Feynman法で学んだ内容を説明する練習をする</li>
+        <li>精緻化質問を用いて理解を深める</li>
+        <li>インターリービングを取り入れた学習を行う</li>
+      </ul>
+    </Adm>
+
+    <h2><span className="h-num">3</span>電験3種への具体的適用</h2>
+    <p>
+      36歳の電気エンジニアとして、以下のように学習法を具体的に適用できます。
+      <span className="marker">能動想起</span>を用いて、過去問を解く際にテキストを見ずに解法を再現し、正誤を確認します。
+      また、<span className="marker">間隔反復</span>を活用し、電験メーラーを使って復習タイミングを設定します。
+      さらに、<span className="marker">Feynman法</span>を用いて、学んだ内容を中学生に説明するように書き出し、理解を深めます。
+    </p>
+    <p>
+      具体的な学習スケジュールとして、朝の通勤時に能動想起を行い、昼休みに新しいテーマを精緻化質問で学び、夜にFeynman法を実施することが効果的です。
+    </p>
+
+    <h2><span className="h-num">4</span>「読む教材」から「思い出す教材」へ</h2>
+    <p>
+      解説を読むと「分かった気」になりますが、それだけでは本番で<span className="marker">取り出せる知識</span>になりにくいのが落とし穴です。
+      勉強の判定基準を「勉強したか」ではなく<span className="marker">「何も見ずに再現できるか」</span>に置き換えると、定着の精度が一段上がります。
+    </p>
+    <table>
+      <tr><th>要点</th><th>意味</th></tr>
+      <tr><td>読むだけでは弱い</td><td>「分かった気」にはなるが、本番で出せる知識になりにくい</td></tr>
+      <tr><td>問題を解くのが最優先</td><td>最初から完璧に理解しようとせず、まず解いて弱点を出す</td></tr>
+      <tr><td>思い出す練習が重要</td><td>見直すより、何も見ずに説明・再現する方が記憶に残りやすい</td></tr>
+      <tr><td>時間を区切る</td><td>タイマーで集中時間を固定し、ダラダラ勉強を防ぐ</td></tr>
+      <tr><td>復習は間隔を空ける</td><td>当日だけで終わらせず、翌日・3日後・1週間後に再テストする</td></tr>
+    </table>
+    <Adm type="info">
+      <p>
+        Dunlosky et al. (2013) の大規模レビューでは、<span className="marker">練習テスト（practice testing）</span>と<span className="marker">分散学習（distributed practice）</span>が、幅広い学習者・課題で効果を持つ「高有用性（high-utility）」の学習法と評価されています。
+        米国教育省 IES も、能動的に思い出すこと（active recall）は単なる再読より長期記憶に役立つと説明しています。
+      </p>
+    </Adm>
+
+    <h2><span className="h-num">5</span>「分かったつもり」を炙り出す引っかけチェック</h2>
+    <p>
+      電験3種で落としやすいのは、知識ゼロの問題よりも<span className="marker">「分かっているつもりのズレ」</span>です。
+      想起の最後に、次の観点で自分の答えを疑うと取りこぼしが減ります。
+    </p>
+    <table>
+      <tr><th>引っかけポイント</th><th>よくあるズレの例</th></tr>
+      <tr><td>境界条件</td><td>「以上／未満」を逆に覚える（例：3m以上と3m未満）</td></tr>
+      <tr><td>主語</td><td>誰が（事業者／主任技術者／経済産業大臣）を取り違える</td></tr>
+      <tr><td>対象範囲</td><td>対象設備・適用範囲を広げ過ぎ／狭め過ぎ</td></tr>
+      <tr><td>例外条件</td><td>原則だけ覚えて例外（ただし書き）を落とす</td></tr>
+      <tr><td>条文番号</td><td>省令／解釈／電気事業法の条番号を混同する</td></tr>
+      <tr><td>計算順序</td><td>相電圧→線間電圧などの変換順を逆にする</td></tr>
+      <tr><td>√3の向き</td><td>√3を掛ける／割る方向を混同する（Y結線とΔ結線）</td></tr>
+    </table>
+
+    <h2><span className="h-num">6</span>白紙再現チェックと復習設計</h2>
+    <p>各テーマの仕上げに、何も見ずに次の5項目を声に出す（または書く）と、本番で再現できる知識かどうかを判定できます。</p>
+    <Adm type="ok" title="白紙再現チェック">
+      <ol className="steps">
+        <li>この条文・公式・定義の役割を一文で説明できるか</li>
+        <li>数値条件を「以上／未満」まで言えるか</li>
+        <li>主語は誰か・対象設備は何か</li>
+        <li>例外条件はあるか</li>
+        <li>過去問ではどう問われるか（空欄／正誤／計算／ひっかけ選択肢）</li>
+      </ol>
+    </Adm>
+    <p>
+      間違えた理由は「知識不足」で終わらせず、<span className="marker">何をどう取り違えたか</span>を一文に落とすほど次に効きます。
+    </p>
+    <table>
+      <tr><th>悪い例</th><th>良い例</th></tr>
+      <tr><td>覚えていなかった</td><td>3m以上と3m未満の境界を逆に覚えていた</td></tr>
+      <tr><td>解けなかった</td><td>Y結線とΔ結線で、電圧と電流の√3の方向を混同した</td></tr>
+    </table>
+    <Adm type="tip" title="復習設計（思い出す回数を増やす）">
+      <ol className="steps">
+        <li>当日：まず過去問を解く → 間違えた理由を1行で書く</li>
+        <li>翌日：教材を閉じて白紙で再現する</li>
+        <li>3日後：同じ論点の類題を解く</li>
+        <li>7日後：間違い理由だけを再確認する</li>
+      </ol>
+      <p style={{marginTop: 8}}>
+        保持率カーブと間隔反復の科学的な裏づけは
+        <span onClick={() => onNav('gakushuu-kouritu')} style={{color:'var(--info)', cursor:'pointer', textDecoration:'underline'}}>2.1「学習効率を上げる原則」</span>
+        を参照してください。
+      </p>
+    </Adm>
+  </>
+);
+
+const JohoInputPage = ({ onNav }) => (
+  <>
+    <Crumbs items={[{ label: 'Ch.02 学習効率の科学' }, { label: '2.3 情報インプットの最適化' }]} />
+    <PageHeader
+      eyebrow="Ch.02 学習効率の科学"
+      title="情報インプットの最適化"
+      deck="認知負荷理論に基づく効果的な情報処理手法"
+    />
+    <div className="meta">
+      <span>根拠: 認知科学・神経科学</span>
+      <span>実践難易度: ★★☆</span>
+    </div>
+
+    <h2><span className="h-num">1</span>認知負荷理論とそのメカニズム</h2>
+    <p>
+      認知負荷理論（Sweller）によれば、情報処理には<span className="marker">内在的負荷</span>、<span className="marker">外在的負荷</span>、<span className="marker">関連的負荷</span>の3つの要素があります。特に、情報処理のボトルネックは外在的負荷に起因し、McKinseyの研究によると、管理職は平均週28時間を情報選別に費やし、その63%が「判定できない情報」に使われています。このため、効率的な情報処理が求められます。
+    </p>
+    <Adm type="info">
+      <p>Harvardの研究によれば、読書後の知識化率は、何も記録しない場合24時間で77%忘却しますが、要約や接続を行った場合は67%保持されます。これは、情報処理の質を向上させるための重要なデータです。</p>
+    </Adm>
+
+    <h2><span className="h-num">2</span>情報処理の効率化と実績データ</h2>
+    <table>
+      <tr>
+        <th>活動</th>
+        <th>週あたりの時間</th>
+        <th>実務価値</th>
+      </tr>
+      <tr>
+        <td>情報収集・整理</td>
+        <td>35時間</td>
+        <td>12%</td>
+      </tr>
+      <tr>
+        <td>メール・チャット対応</td>
+        <td>18時間</td>
+        <td>8%</td>
+      </tr>
+      <tr>
+        <td>判断に不要な会議</td>
+        <td>15時間</td>
+        <td>5%</td>
+      </tr>
+      <tr>
+        <td>実際の業務</td>
+        <td>32時間</td>
+        <td>75%</td>
+      </tr>
+    </table>
+    <Adm type="ok">
+      <p>情報処理の効率化を図るためには、スキャン→ざっと読み→精読の3段階を実施し、処理率を78%に向上させることが可能です。</p>
+    </Adm>
+
+    <h2><span className="h-num">3</span>実践的なインプット手順</h2>
+    <p>
+      電験3種を受験する36歳のエンジニアとして、以下の手順を実践することが推奨されます。
+    </p>
+    <ol className="steps">
+      <li>情報収集を始める前に「今の問いを1文で」書く。</li>
+      <li>一次情報（実データ・技術資料）を優先的に使用する。</li>
+      <li>読んだ情報を「3行要約」に落とし込む。</li>
+      <li>情報を「自分の言葉で解釈し、既存知識と接続して」メモする。</li>
+      <li>四半期に1回「この知識はまだ正しいか」の棚卸しを実施する。</li>
+    </ol>
+    <p>
+      これにより、情報処理の効率を高め、実務における時間の回復が期待できます。特に、情報過負荷を避けるためには、定期的なアンラーニングが重要です。
+    </p>
+  </>
+);
+
+/* ============================================================
+   Ch3: メタ認知・思考革新
+   ============================================================ */
+const MetaNinchiPage = ({ onNav }) => (
+  <>
+    <Crumbs items={[{ label: 'Ch.03 メタ認知・思考革新' }, { label: '3.1 メタ認知の技術' }]} />
+    <PageHeader eyebrow="Ch.03 メタ認知・思考革新" title="メタ認知の技術" deck="メタ認知の2層構造を理解し、実践するための具体的手法" />
+    <div className="meta-info">
+      <span className="meta-label">根拠:</span> 認知科学・神経科学
+      <span className="meta-label">実践難易度:</span> ★★☆
+    </div>
+
+    <h2><span className="h-num">1</span>メタ認知の2層構造</h2>
+    <p>
+      メタ認知は、<span className="marker">モニタリング層</span>と<span className="marker">コントロール層</span>の2つの層から成り立っています。Flavell（1979）の研究によると、自己知識のモニタリングは、自己評価の精度を高めるために不可欠です。例えば、自己評価が正確な人は、判断ミスを<mark>30%</mark>減少させることが示されています。
+    </p>
+    <Adm type="info">
+      <p>出典: Flavell JH "Metacognition and cognitive monitoring" American Psychologist 1979</p>
+    </Adm>
+
+    <h2><span className="h-num">2</span>メタ認知の実践データ</h2>
+    <table>
+      <tr>
+        <th>実践手法</th>
+        <th>効果</th>
+      </tr>
+      <tr>
+        <td>予測精度の記録</td>
+        <td>判断の精度が<mark>25%</mark>向上</td>
+      </tr>
+      <tr>
+        <td>エラーログの維持</td>
+        <td>同じミスの再発率が<mark>40%</mark>低下</td>
+      </tr>
+      <tr>
+        <td>思考の外化</td>
+        <td>論理の飛躍を<mark>50%</mark>減少</td>
+      </tr>
+    </table>
+
+    <h2><span className="h-num">3</span>実践的な実装ステップ</h2>
+    <p>
+      36歳の電気エンジニアとして、電験3種の勉強においてメタ認知を活用するための具体的な手法は以下の通りです。
+    </p>
+    <ol className="steps">
+      <li>重要な判断の前に、確信度を記録する。</li>
+      <li>判断ミスをエラーログに記録し、分析する。</li>
+      <li>思考を外化し、論理の飛躍を見つける。</li>
+      <li>トラブル発生時に意識的に思考をスローダウンする。</li>
+      <li>他者視点を取り入れ、反論を考える。</li>
+    </ol>
+    <Adm type="ok">
+      <p>実践チェックリスト:</p>
+      <ul>
+        <li>直近の判断で自分の思考に気づいたか？</li>
+        <li>思考の根拠を問い直したか？</li>
+        <li>感情に名前をつけたか？</li>
+        <li>自分のバイアスに気づいたか？</li>
+        <li>判断結果を検証したか？</li>
+      </ul>
+    </Adm>
+  </>
+);
+
+const UnlearningPage = ({ onNav }) => (
+  <>
+    <Crumbs items={[{ label: 'Ch.03 メタ認知・思考革新' }, { label: '3.2 アンラーニング' }]} />
+    <PageHeader eyebrow="Ch.03 メタ認知・思考革新" title="アンラーニング" deck="知識を捨てる技術とその実践方法" />
+    <div className="meta">
+      <span className="meta-item">根拠: 認知科学・神経科学</span>
+      <span className="meta-item">実践難易度: ★★☆</span>
+    </div>
+
+    <h2><span className="h-num">1</span>アンラーニングの核心概念</h2>
+    <p>
+      アンラーニングは、古い知識を捨てるのではなく、<span className="marker">前提を更新する</span>ことです。特に、電気エンジニアとしての経験から、<span className="marker">コンデンサの位相</span>や<span className="marker">インピーダンスの符号</span>に関する誤解を解消することが重要です。研究によると、確証バイアスは67%の確率で古い信念を維持させる要因となります（Stanford Medical研究）。このため、まずは前提を棚卸し、陳腐化を検知することが必要です。
+    </p>
+
+    <Adm type="info">
+      <h3>研究に基づくアンラーニングの重要性</h3>
+      <p>
+        認知的固着のメカニズムを理解することが、アンラーニングの第一歩です。特に、手続き記憶の硬化は、脳の自動化された行動を変えることを難しくします。脳画像研究では、新しい手順に切り替える際、前頭皮質の活動が31%増加し、作業効率が24%低下することが示されています。
+      </p>
+    </Adm>
+
+    <h2><span className="h-num">2</span>データとメトリクス</h2>
+    <table>
+      <tr>
+        <th>メトリクス</th>
+        <th>数値</th>
+      </tr>
+      <tr>
+        <td>古い知識の陳腐化率</td>
+        <td>58%</td>
+      </tr>
+      <tr>
+        <td>成功体験の賞味期限</td>
+        <td>10年</td>
+      </tr>
+      <tr>
+        <td>確証バイアスによる判断の維持率</td>
+        <td>67%</td>
+      </tr>
+    </table>
+
+    <h2><span className="h-num">3</span>実践的な実装ステップ</h2>
+    <p>
+      電験3種を受験中の36歳のエンジニアとして、以下のステップを実践することが推奨されます：
+    </p>
+    <ol className="steps">
+      <li>古い前提を棚卸し、リスト化する。</li>
+      <li>「この手順は本当に必要か？」と疑問を持つ。</li>
+      <li>3日間、新しい手法を試験的に実施し、結果を計測する。</li>
+      <li>新しい知識を既存の知識体系に統合する。</li>
+      <li>定期的に前提の見直しを行い、更新を続ける。</li>
+    </ol>
+
+    <Adm type="ok">
+      <h3>実践チェックリスト</h3>
+      <ul>
+        <li>前提を書き出した</li>
+        <li>賞味期限を疑った</li>
+        <li>「なぜ今この手順か」と問うた</li>
+        <li>何かを小さく止めた</li>
+        <li>新知識を既存体系に位置づけた</li>
+      </ul>
+    </Adm>
+  </>
+);
+
+const WeekdaySchedulePage = ({ onNav }) => (
+  <>
+    <PageHeader 
+      eyebrow="Ch.04 理想の1日設計" 
+      title="平日スケジュール設計" 
+      deck="電験3種受験×フルタイム勤務を両立する認知科学的1日設計"
+      meta={[
+        {label:'対象', value:'勤務日（月〜金）'}, 
+        {label:'学習時間', value:'90-120分/日'}
+      ]}
+    />
+    <Crumbs items={[
+      {label:'Ch.04 理想の1日設計'}, 
+      {label:'4.1 平日スケジュール設計'}
+    ]} />
+    <div className="timeline">
+      <div className="tl-item focus">
+        <div className="tl-dot"/>
+        <div className="tl-time">05:30</div>
+        <div className="tl-label">起床・水分補給</div>
+        <div className="tl-desc">アラーム即起き。コップ1杯の水でアデノシン除去を促進</div>
+      </div>
+      <div className="tl-item focus">
+        <div className="tl-dot"/>
+        <div className="tl-time">05:45</div>
+        <div className="tl-label">理論インプット30分</div>
+        <div className="tl-desc">新規概念・難問に取り組む</div>
+      </div>
+      <div className="tl-item rest">
+        <div className="tl-dot"/>
+        <div className="tl-time">06:15</div>
+        <div className="tl-label">朝食・準備</div>
+        <div className="tl-desc">身体と精神を整える</div>
+      </div>
+      <div className="tl-item rest">
+        <div className="tl-dot"/>
+        <div className="tl-time">08:00</div>
+        <div className="tl-label">出勤・仕事</div>
+        <div className="tl-desc">電気エンジニアとしての業務に集中</div>
+      </div>
+      <div className="tl-item rest">
+        <div className="tl-dot"/>
+        <div className="tl-time">12:00</div>
+        <div className="tl-label">昼休み戦略的仮眠</div>
+        <div className="tl-desc">15分の仮眠でPM生産性+34%</div>
+      </div>
+      <div className="tl-item rest">
+        <div className="tl-dot"/>
+        <div className="tl-time">12:15</div>
+        <div className="tl-label">復習フラッシュカード</div>
+        <div className="tl-desc">15分で記憶を定着させる</div>
+      </div>
+      <div className="tl-item rest">
+        <div className="tl-dot"/>
+        <div className="tl-time">17:00</div>
+        <div className="tl-label">退勤</div>
+        <div className="tl-desc">脳の整理フェーズ</div>
+      </div>
+      <div className="tl-item focus">
+        <div className="tl-dot"/>
+        <div className="tl-time">21:00</div>
+        <div className="tl-label">夜間学習60-90分</div>
+        <div className="tl-desc">問題演習・間隔反復で記憶定着を最大化</div>
+      </div>
+    </div>
+    <div className="stat-strip">
+      <div className="stat">
+        <div className="stat-label">学習時間</div>
+        <div className="stat-value">90分/日</div>
+        <div className="stat-sub">電験3種受験に向けて</div>
+      </div>
+      <div className="stat">
+        <div className="stat-label">睡眠</div>
+        <div className="stat-value">7h</div>
+        <div className="stat-sub">記憶定着の最低ライン</div>
+      </div>
+      <div className="stat">
+        <div className="stat-label">仮眠</div>
+        <div className="stat-value">15分</div>
+        <div className="stat-sub">PM生産性+34%</div>
+      </div>
+      <div className="stat">
+        <div className="stat-label">超日リズム</div>
+        <div className="stat-value">2サイクル</div>
+        <div className="stat-sub">ディープワーク＆休憩を設計</div>
+      </div>
+    </div>
+    <h2><span className="h-num">1</span>セクション名</h2>
+    <Adm type="info" title="タイトル">
+      <p>電験3種受験に向けて、超日リズムを活用した学習スケジュールを設計しましょう。</p>
+    </Adm>
+    <Adm type="tip" title="ヒント">
+      <p>夜間の間隔反復で睡眠中の記憶定着を最大化しましょう。</p>
+    </Adm>
+    <Adm type="warn" title="注意">
+      <p>仮眠は15分が最適です。過眠すると逆効果になる可能性があります。</p>
+    </Adm>
+  </>
+);
+
+const DayoffRestPage = ({ onNav }) => (
+  <>
+    <PageHeader eyebrow="Ch.04 理想の1日設計" title="休日OFF設計" deck="グリンパティック系フル稼働——脳を洗浄して翌週パフォーマンスを最大化する完全回復日" />
+    <Crumbs items={[{ label: 'Ch.04 理想の1日設計' }, { label: '4.2 休日OFF設計' }]} />
+    <div className="timeline">
+      <div className="tl-item rest">
+        <div className="tl-dot" />
+        <div className="tl-time">07:00</div>
+        <div className="tl-label">自然な目覚め（アラームなし）</div>
+        <div className="tl-desc">7〜8時間の睡眠を確保する</div>
+      </div>
+      <div className="tl-item rest">
+        <div className="tl-dot" />
+        <div className="tl-time">08:00</div>
+        <div className="tl-label">軽い朝食・日光浴15分</div>
+        <div className="tl-desc">サーカディアンリズムをリセットする</div>
+      </div>
+      <div className="tl-item rest">
+        <div className="tl-dot" />
+        <div className="tl-time">09:30</div>
+        <div className="tl-label">有酸素運動45分</div>
+        <div className="tl-desc">BDNFを放出してコルチゾールを低下させる</div>
+      </div>
+      <div className="tl-item rest">
+        <div className="tl-dot" />
+        <div className="tl-time">11:00</div>
+        <div className="tl-label">趣味・読書・散歩</div>
+        <div className="tl-desc">DMNを活性化してノースクリーンを推奨する</div>
+      </div>
+      <div className="tl-item rest">
+        <div className="tl-dot" />
+        <div className="tl-time">13:00</div>
+        <div className="tl-label">昼食・1.5時間昼寝</div>
+        <div className="tl-desc">グリンパティックを強化する</div>
+      </div>
+      <div className="tl-item rest">
+        <div className="tl-dot" />
+        <div className="tl-time">15:00</div>
+        <div className="tl-label">家族時間・自然接触</div>
+        <div className="tl-desc">コルチゾールを23%低下させる</div>
+      </div>
+      <div className="tl-item rest">
+        <div className="tl-dot" />
+        <div className="tl-time">21:00</div>
+        <div className="tl-label">入浴</div>
+        <div className="tl-desc">深部体温を0.5℃低下して深睡眠を促進する</div>
+      </div>
+    </div>
+    <Adm type="info" title="グリンパティックシステムの科学的メリット">
+      <p>グリンパティックシステムは、睡眠中にβアミロイドなどを除去する重要なシステムです。寝不足でこのシステムの効率が30%低下します。</p>
+      <p>また、有酸素運動後24時間以内にBDNFが増加し、翌週の学習効率を向上させます。</p>
+    </Adm>
+    <Adm type="warn" title="NG行動リスト">
+      <p>深夜スクリーン：睡眠の質を低下させる</p>
+      <p>カフェイン：睡眠を妨げる</p>
+      <p>ながら食べ：消化不良を引き起こす</p>
+    </Adm>
+    <div className="stat-strip">
+      <div className="stat">
+        <div className="stat-label">睡眠</div>
+        <div className="stat-value">8h</div>
+        <div className="stat-sub">記憶定着の最低ライン</div>
+      </div>
+      <div className="stat">
+        <div className="stat-label">有酸素運動</div>
+        <div className="stat-value">45分</div>
+        <div className="stat-sub">BDNFを放出してコルチゾールを低下させる</div>
+      </div>
+      <div className="stat">
+        <div className="stat-label">スクリーン</div>
+        <div className="stat-value">2h</div>
+        <div className="stat-sub">睡眠の質を低下させないため</div>
+      </div>
+      <div className="stat">
+        <div className="stat-label">自然接触</div>
+        <div className="stat-value">30分</div>
+        <div className="stat-sub">コルチゾールを23%低下させる</div>
+      </div>
+    </div>
+    <h2><span className="h-num">1</span>休日OFF設計のまとめ</h2>
+    <p>完全な休息を取ることで、グリンパティックシステムをフル稼働させ、翌週のパフォーマンスを最大化することができます。</p>
+  </>
+);
+
+const DayoffStudyPage = ({ onNav }) => (
+  <>
+    <PageHeader eyebrow="Ch.04 理想の1日設計" title="休日勉強設計" deck="電験3種理論を1日で6時間攻略——超日リズム×間隔反復の集中設計" />
+    <Crumbs items={[{ label: 'Ch.04 理想の1日設計' }, { label: '4.3 休日勉強設計' }]} />
+    <div className="timeline">
+      <div className="tl-item focus">
+        <div className="tl-dot" />
+        <div className="tl-time">06:00</div>
+        <div className="tl-label">起床・準備</div>
+        <div className="tl-desc">アラーム即起き、カフェイン摂取は06:30まで待機</div>
+      </div>
+      <div className="tl-item study">
+        <div className="tl-dot" />
+        <div className="tl-time">06:30</div>
+        <div className="tl-label">Session1 90min</div>
+        <div className="tl-desc">新規単元インプット（電界/磁界/回路理論の難所）</div>
+      </div>
+      <div className="tl-item rest">
+        <div className="tl-dot" />
+        <div className="tl-time">08:00</div>
+        <div className="tl-label">休憩20min + 軽食</div>
+        <div className="tl-desc">20分仮眠で記憶定着+43%</div>
+      </div>
+      <div className="tl-item study">
+        <div className="tl-dot" />
+        <div className="tl-time">08:20</div>
+        <div className="tl-label">Session2 90min</div>
+        <div className="tl-desc">問題演習（Session1の定着確認過去問）</div>
+      </div>
+      <div className="tl-item rest">
+        <div className="tl-dot" />
+        <div className="tl-time">10:00</div>
+        <div className="tl-label">休憩30min 散歩</div>
+        <div className="tl-desc">海馬の整理・BDNF補充</div>
+      </div>
+      <div className="tl-item focus">
+        <div className="tl-dot" />
+        <div className="tl-time">10:30</div>
+        <div className="tl-label">Session3 90min</div>
+        <div className="tl-desc">弱点集中（間隔反復カード + 誤答分析）</div>
+      </div>
+      <div className="tl-item rest">
+        <div className="tl-dot" />
+        <div className="tl-time">12:00</div>
+        <div className="tl-label">昼食 + 昼寝45min</div>
+        <div className="tl-desc">グリンパティック活性</div>
+      </div>
+      <div className="tl-item study">
+        <div className="tl-dot" />
+        <div className="tl-time">13:30</div>
+        <div className="tl-label">Session4 90min</div>
+        <div className="tl-desc">模擬試験形式（時間計測・本番想定）</div>
+      </div>
+    </div>
+    <div className="stat-strip">
+      <div className="stat">
+        <div className="stat-label">学習</div>
+        <div className="stat-value">6h</div>
+        <div className="stat-sub">集中学習時間</div>
+      </div>
+      <div className="stat">
+        <div className="stat-label">休憩</div>
+        <div className="stat-value">2h</div>
+        <div className="stat-sub">合計休憩時間</div>
+      </div>
+      <div className="stat">
+        <div className="stat-label">過去問</div>
+        <div className="stat-value">30問</div>
+        <div className="stat-sub">目標達成数</div>
+      </div>
+      <div className="stat">
+        <div className="stat-label">睡眠</div>
+        <div className="stat-value">7.5h</div>
+        <div className="stat-sub">睡眠時間</div>
+      </div>
+    </div>
+    <Adm type="warn" title="NG行動">
+      <p>超90分連続集中、スマホ手の届く場所、満腹学習は避けるべきです。</p>
+    </Adm>
+    <Adm type="ok" title="電験3種理論の最優先4単元">
+      <p>電界・磁界・交流回路・過渡現象は最優先で学習するべきです。</p>
+    </Adm>
+    <h2><span className="h-num">1</span>セクション名</h2>
+    <Adm type="tip" title="学習時間の分配">
+      <p>学習時間を効率的に分配することで、より効果的な学習ができます。</p>
+    </Adm>
+  </>
+);
+
+/* ============================================================
+   App
+   ============================================================ */
+const App = () => {
+  const data = window.WIKI_DATA;
+  const allIds = ['home', ...data.chapters.flatMap(c => c.pages.map(p => p.id))];
+  const [page, setPage] = useState(() => {
+    const h = location.hash.replace(/^#/, '');
+    return allIds.includes(h) ? h : 'home';
+  });
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navigate = (id) => {
+    setPage(id); location.hash = id; window.scrollTo({top:0, behavior:'auto'});
+  };
+  useEffect(() => {
+    const fn = () => { const h = location.hash.replace(/^#/,''); if(allIds.includes(h)) setPage(h); };
+    window.addEventListener('hashchange', fn);
+    return () => window.removeEventListener('hashchange', fn);
+  }, []);
+
+  const renderPage = () => {
+    const props = { data, onNav: navigate };
+    switch(page) {
+      case 'home': return <HomePage {...props} />;
+      case 'nou-kasseika': return <NouKasseikaPage {...props} />;
+      case 'atama-ga-ii': return <AtamaGaIiPage {...props} />;
+      case 'brain-speed': return <BrainSpeedPage {...props} />;
+      case 'brain-detox': return <BrainDetoxPage {...props} />;
+      case 'gakushuu-kouritu': return <GakushuuKourituPage {...props} />;
+      case 'study-methods': return <StudyMethodsPage {...props} />;
+      case 'joho-input': return <JohoInputPage {...props} />;
+      case 'meta-ninchi': return <MetaNinchiPage {...props} />;
+      case 'unlearning': return <UnlearningPage {...props} />;
+      case 'weekday-schedule': return <WeekdaySchedulePage {...props} />;
+      case 'dayoff-rest': return <DayoffRestPage {...props} />;
+      case 'dayoff-study': return <DayoffStudyPage {...props} />;
+      default: return <HomePage {...props} />;
+    }
+  };
+
+  return (
+    <>
+      <div className="app">
+        <Sidebar chapters={data.chapters} currentPage={page} onNav={navigate} />
+        <main className="main">{renderPage()}</main>
+      </div>
+      {mobileOpen && (
+        <div className="mobile-drawer">
+          <div className="mobile-drawer-overlay" onClick={() => setMobileOpen(false)} />
+          <div className="mobile-drawer-panel">
+            <Sidebar chapters={data.chapters} currentPage={page} onNav={(id) => { navigate(id); setMobileOpen(false); }} />
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

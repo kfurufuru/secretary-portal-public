@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>知識グラフ解析レポート — secretary</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f172a; --bg2: #1e293b; --surface: #1e293b; --surface2: #263145;
+  --border: #334155; --text: #e2e8f0; --sub: #94a3b8; --sub2: #64748b;
+  --accent: #38bdf8; --green: #34d399; --amber: #fbbf24; --violet: #a78bfa; --danger: #f87171;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter','Noto Sans JP',sans-serif;
+       font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Nav */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: 12px; padding: 10px 24px;
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+}
+.nav-back {
+  display: flex; align-items: center; gap: 6px; color: var(--sub); font-size: 12px;
+  padding: 4px 10px; border: 1px solid var(--border); border-radius: 6px;
+  transition: color .15s, border-color .15s;
+}
+.nav-back:hover { color: var(--accent); border-color: var(--accent); text-decoration: none; }
+.nav-title { font-size: 13px; font-weight: 600; color: var(--accent); margin-left: 4px; }
+.nav-date { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--sub2); }
+
+/* Layout */
+.container { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+/* Header */
+.report-header { margin-bottom: 40px; }
+.report-header h1 { font-size: 24px; font-weight: 600; color: var(--text); letter-spacing: -.01em; margin-bottom: 8px; }
+.report-header p { color: var(--sub); font-size: 13px; }
+.badges { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.badge { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 3px 10px;
+         border-radius: 4px; border: 1px solid; }
+.badge-blue { color: var(--accent); border-color: rgba(56,189,248,.3); background: rgba(56,189,248,.08); }
+.badge-green { color: var(--green); border-color: rgba(52,211,153,.3); background: rgba(52,211,153,.08); }
+.badge-amber { color: var(--amber); border-color: rgba(251,191,36,.3); background: rgba(251,191,36,.08); }
+
+/* Section */
+section { margin-bottom: 40px; }
+h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em;
+     color: var(--sub); font-family: 'JetBrains Mono', monospace;
+     padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
+     display: flex; align-items: center; gap: 10px; }
+h2 .bar { width: 20px; height: 2px; background: var(--accent); border-radius: 2px; }
+h2.amber .bar { background: var(--amber); }
+h2.green .bar { background: var(--green); }
+h2.violet .bar { background: var(--violet); }
+
+/* Stat cards */
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600;
+                  color: var(--accent); letter-spacing: -.02em; }
+.stat-card .val.green { color: var(--green); }
+.stat-card .val.amber { color: var(--amber); }
+.stat-card .label { font-size: 11px; color: var(--sub); margin-top: 4px; }
+.stat-card .delta { font-size: 10px; font-family: 'JetBrains Mono', monospace;
+                    color: var(--green); margin-top: 6px; }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+     text-transform: uppercase; letter-spacing: .08em; color: var(--sub2);
+     padding: 8px 12px; border-bottom: 1px solid var(--border); }
+td { padding: 10px 12px; border-bottom: 1px solid rgba(51,65,85,.5); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,.02); }
+.node-name { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent); }
+.degree { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text); }
+.rank-1 { color: var(--amber); }
+.rank-2, .rank-3 { color: var(--accent); }
+
+/* Cluster diagram */
+.cluster-wrap { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.cluster-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.cluster-box.core { border-color: rgba(167,139,250,.4); }
+.cluster-box.mgmt { border-color: rgba(56,189,248,.4); }
+.cluster-box.study { border-color: rgba(52,211,153,.3); }
+.cluster-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em;
+                 margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; }
+.cluster-box.core .cluster-title { color: var(--violet); }
+.cluster-box.mgmt .cluster-title { color: var(--accent); }
+.cluster-box.study .cluster-title { color: var(--green); }
+.cluster-count { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+.cluster-nodes { font-size: 11px; color: var(--sub); line-height: 2; }
+.cluster-nodes code { font-family: 'JetBrains Mono', monospace; font-size: 10px;
+                      background: var(--bg); padding: 1px 5px; border-radius: 3px;
+                      color: var(--sub); display: inline-block; margin: 1px 2px; }
+
+/* Bridge viz */
+.bridge { display: flex; align-items: center; gap: 8px; padding: 14px 16px;
+          background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+          margin-bottom: 10px; font-size: 13px; }
+.bridge-node { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent);
+               background: var(--bg); padding: 3px 10px; border-radius: 4px; border: 1px solid var(--border); }
+.bridge-arrow { color: var(--sub2); font-size: 16px; }
+.bridge-arrow.bi { color: var(--green); }
+.bridge-label { margin-left: auto; font-size: 11px; color: var(--sub); font-family: 'JetBrains Mono', monospace; }
+
+/* Issue / insight cards */
+.card-list { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+.card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.card-icon { font-size: 14px; }
+.card-title { font-size: 13px; font-weight: 600; }
+.card-body { font-size: 12px; color: var(--sub); line-height: 1.7; }
+.card-body code { font-family: 'JetBrains Mono', monospace; font-size: 11px;
+                  color: var(--accent); background: var(--bg); padding: 1px 5px; border-radius: 3px; }
+.card.warn { border-color: rgba(251,191,36,.3); }
+.card.warn .card-title { color: var(--amber); }
+.card.ok { border-color: rgba(52,211,153,.3); }
+.card.ok .card-title { color: var(--green); }
+.card.info { border-color: rgba(56,189,248,.25); }
+.card.info .card-title { color: var(--accent); }
+
+/* Timeline */
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before { content:''; position: absolute; left: 6px; top: 4px; bottom: 4px;
+                    width: 1px; background: var(--border); }
+.tl-item { position: relative; margin-bottom: 16px; }
+.tl-dot { position: absolute; left: -21px; top: 5px; width: 8px; height: 8px;
+           border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+.tl-dot.green { background: var(--green); }
+.tl-label { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--sub2); margin-bottom: 2px; }
+.tl-text { font-size: 13px; }
+.tl-delta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--green); margin-left: 8px; }
+
+/* Footer */
+footer { text-align: center; padding: 32px; color: var(--sub2); font-size: 11px;
+         font-family: 'JetBrains Mono', monospace; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="../index.html" class="nav-back">← ポータル</a>
+  <a href="knowledge-graph.html" class="nav-back">🗺 グラフを開く</a>
+  <span class="nav-title">知識グラフ 解析レポート</span>
+  <span class="nav-date">2026-04-28</span>
+</nav>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="report-header">
+    <h1>知識グラフ 解析レポート</h1>
+    <p>knowledge/ の25ノードを対象に、エッジ構造・クラスター・ハブ・残存課題を分析した記録。AI社員（ひろゆき・落合陽一・ホリエモン）との議論を経て改善を実施。</p>
+    <div class="badges">
+      <span class="badge badge-blue">25 nodes</span>
+      <span class="badge badge-blue">51 edges</span>
+      <span class="badge badge-green">孤立ノード 0件</span>
+      <span class="badge badge-green">Broken links 0件</span>
+      <span class="badge badge-amber">平均次数 4.1</span>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <section>
+    <h2><span class="bar"></span>サマリー指標</h2>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="val">25</div>
+        <div class="label">ノード数</div>
+      </div>
+      <div class="stat-card">
+        <div class="val green">51</div>
+        <div class="label">エッジ数</div>
+        <div class="delta">+6 (改善前 45)</div>
+      </div>
+      <div class="stat-card">
+        <div class="val green">0</div>
+        <div class="label">孤立ノード</div>
+        <div class="delta">−2 解消</div>
+      </div>
+      <div class="stat-card">
+        <div class="val amber">4.1</div>
+        <div class="label">平均次数</div>
+        <div class="delta">改善前 3.6</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hubs -->
+  <section>
+    <h2 class="amber"><span class="bar"></span>ハブノード Top 5</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ランク</th>
+          <th>ノード</th>
+          <th>推定次数</th>
+          <th>役割</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="degree rank-1">1</td>
+          <td><span class="node-name">mcp-claude-integration</span></td>
+          <td class="degree">~12</td>
+          <td style="color:var(--sub);font-size:12px">最大ハブ。AI実行層の中心。Tools層実装知識が集約</td>
+        </tr>
+        <tr>
+          <td class="degree rank-2">2</td>
+          <td><span class="node-name">cc-playbook</span></td>
+          <td class="degree">~10</td>
+          <td style="color:var(--sub);font-size:12px">実践知の集約点。Claude Code運用の参照先</td>
+        </tr>
+        <tr>
+          <td class="degree rank-2">3</td>
+          <td><span class="node-name">ai-agent-architecture</span> <span style="font-size:10px;color:var(--green);font-family:monospace">NEW</span></td>
+          <td class="degree">~10</td>
+          <td style="color:var(--sub);font-size:12px">本日作成・即ハブ化。設計概念の結節点</td>
+        </tr>
+        <tr>
+          <td class="degree rank-3">4</td>
+          <td><span class="node-name">claude-code-knowledge-pipeline</span></td>
+          <td class="degree">~9</td>
+          <td style="color:var(--sub);font-size:12px">運用系の中心。被参照数が全ノード最大</td>
+        </tr>
+        <tr>
+          <td class="degree rank-3">5</td>
+          <td><span class="node-name">portal-health-observability</span></td>
+          <td class="degree">~8</td>
+          <td style="color:var(--sub);font-size:12px">インフラ監視の結節点</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:12px;color:var(--sub);margin-top:12px;">
+      ▶ 今日1日で作成・接続した <code style="font-family:monospace;color:var(--accent)">ai-agent-architecture</code> が即座に3位に。「ハブになる概念」を最初に設計すると後続リンクが自然集積する。
+    </p>
+  </section>
+
+  <!-- Clusters -->
+  <section>
+    <h2 class="violet"><span class="bar"></span>クラスター構造</h2>
+    <div class="cluster-wrap">
+      <div class="cluster-box core">
+        <div class="cluster-title">AI活用コア</div>
+        <div class="cluster-count" style="color:var(--violet)">13</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:10px">ノード / 密結合</div>
+        <div class="cluster-nodes">
+          <code>mcp-claude-integration</code>
+          <code>cc-playbook</code>
+          <code>ai-agent-architecture</code>
+          <code>agentic-graphrag</code>
+          <code>claude-memory</code>
+          <code>knowledge-pipeline</code>
+          <code>portal-health</code>
+          <code>promote-py</code>
+          <code>claude-long-edit</code>
+          <code>top3-monday</code>
+          <code>terminal-shell</code>
+          <code>ai-tool-comparison</code>
+          <code>claude-lessons</code>
+        </div>
+      </div>
+      <div class="cluster-box mgmt">
+        <div class="cluster-title">Fカンパニー/マネジメント</div>
+        <div class="cluster-count" style="color:var(--accent)">6</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:10px">ノード / 中密度</div>
+        <div class="cluster-nodes">
+          <code>f-company-session</code>
+          <code>business-skill-gap</code>
+          <code>ai-gyomu-sentaku</code>
+          <code>ideas-from-news/04-20</code>
+          <code>ideas-from-news/04-21</code>
+          <code>kozo-haaku-ryoku</code>
+          <code>zatsudan-skill</code>
+        </div>
+      </div>
+      <div class="cluster-box study">
+        <div class="cluster-title">電験 / Obsidian</div>
+        <div class="cluster-count" style="color:var(--green)">4</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:10px">ノード / 弱結合</div>
+        <div class="cluster-nodes">
+          <code>denken-wiki-workflow</code>
+          <code>wiki-validation-checklist</code>
+          <code>obsidian-properties</code>
+          <code>dataview-query-template</code>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bridges -->
+  <section>
+    <h2 class="green"><span class="bar"></span>クラスター間ブリッジ</h2>
+    <div class="bridge">
+      <span class="bridge-node">f-company-session-framework</span>
+      <span class="bridge-arrow bi">⇄</span>
+      <span class="bridge-node">ai-agent-architecture</span>
+      <span class="bridge-label">AI活用コア ↔ マネジメント</span>
+    </div>
+    <div class="bridge">
+      <span class="bridge-node">denken-wiki-workflow</span>
+      <span class="bridge-arrow">→</span>
+      <span class="bridge-node">cc-playbook</span>
+      <span class="bridge-label">電験 → AI活用コア</span>
+    </div>
+    <div class="bridge">
+      <span class="bridge-node">ai-agent-architecture</span>
+      <span class="bridge-arrow">→</span>
+      <span class="bridge-node">kozo-haaku-ryoku</span>
+      <span class="bridge-label">AI活用コア → マネジメント</span>
+    </div>
+    <p style="font-size:12px;color:var(--sub);margin-top:12px;">
+      ▶ 改善前は2クラスター間ブリッジ 0本。3本追加により情報流通経路を確立。
+    </p>
+  </section>
+
+  <!-- Insights -->
+  <section>
+    <h2><span class="bar"></span>グラフが示す知識の構造</h2>
+    <div class="card-list">
+      <div class="card ok">
+        <div class="card-head">
+          <span class="card-icon">📈</span>
+          <span class="card-title">実装系知識が最も参照される</span>
+        </div>
+        <div class="card-body">
+          <code>knowledge-pipeline</code>（被参照9件）・<code>mcp</code>（被参照8件）が最大。抽象的な概念より「具体的な手順・設定」が実際に使われている。
+        </div>
+      </div>
+      <div class="card info">
+        <div class="card-head">
+          <span class="card-icon">🏗</span>
+          <span class="card-title">概念→実装の参照チェーンが成立</span>
+        </div>
+        <div class="card-body">
+          <code>ai-agent-architecture</code> → <code>mcp</code> → <code>portal-health</code> → <code>promote-py</code> の経路が存在。「設計から運用」の文脈がグラフ構造に現れている。
+        </div>
+      </div>
+      <div class="card info">
+        <div class="card-head">
+          <span class="card-icon">⚡</span>
+          <span class="card-title">本日作成ノードが即ハブ化</span>
+        </div>
+        <div class="card-body">
+          <code>ai-agent-architecture</code>（本日作成）が次数~10で3位。既存ノードが参照したい概念の「欠けていたハブ」を補完した形。知識グラフは空白を埋めるほど密度が上がる。
+        </div>
+      </div>
+      <div class="card warn">
+        <div class="card-head">
+          <span class="card-icon">⚠</span>
+          <span class="card-title">電験/Obsidianクラスターが依然弱接続</span>
+        </div>
+        <div class="card-body">
+          4ノードで1本のブリッジのみ（<code>denken-wiki-workflow</code> → <code>cc-playbook</code>）。電験学習にAIツールを活用している実態がグラフに反映されていない。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Timeline -->
+  <section>
+    <h2><span class="bar"></span>改善の経緯</h2>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-label">開始時</div>
+        <div class="tl-text">25ノード / 45エッジ / 孤立2件 / Broken links 3件 / クラスター間ブリッジ 0本</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-label">ラウンド1（AI社員議論後）</div>
+        <div class="tl-text">Broken links 3件削除・孤立2件解消・クラスターブリッジ1本追加 <span class="tl-delta">→ 50 edges</span></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot green"></div>
+        <div class="tl-label">ラウンド2（最終）</div>
+        <div class="tl-text">ブリッジ双方向化・電験クラスター接続・kozo-haaku-ryoku のIn-degree 解消 <span class="tl-delta">→ 51 edges</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Next -->
+  <section>
+    <h2 class="amber"><span class="bar"></span>次の改善候補</h2>
+    <div class="card-list">
+      <div class="card">
+        <div class="card-head">
+          <span class="card-icon">1</span>
+          <span class="card-title">電験クラスターとAI活用コアの接続強化</span>
+        </div>
+        <div class="card-body">
+          <code>wiki-validation-checklist</code> → <code>ai-agent-architecture</code>（Wiki構築にエージェント設計の知識を活用）を追加でブリッジを2本化。
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-icon">2</span>
+          <span class="card-title">Obsidianクラスターの孤立解消</span>
+        </div>
+        <div class="card-body">
+          <code>obsidian-properties-dataview</code> は誰からも参照されていない。<code>claude-code-knowledge-pipeline</code> からリンクを追加（知識管理の実装ツールとして）。
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-icon">3</span>
+          <span class="card-title">理解度スコア未設定ノードへの補完</span>
+        </div>
+        <div class="card-body">
+          <code>business-skill-gap-analysis</code>・<code>f-company-session-framework</code>・<code>claude-code-knowledge-pipeline</code> に <code>understanding_score</code> が未設定。スコアを追加するとグラフのノードサイズが正確になる。
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  knowledge-graph-report.html — generated 2026-04-28 — secretary v3
+</footer>
+
+</body>
+</html>

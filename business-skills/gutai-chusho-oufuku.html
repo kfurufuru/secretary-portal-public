@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>具体と抽象の往復 | Business Skills</title>
+<meta name="description" content="細谷功『具体と抽象』をベースに、「共通点を抜き、別領域へ下ろす」二段運動を5要素で設計する。報連相・議事録・マニュアル化など実務6場面への当てはめと演習付き。">
+<meta property="og:title" content="具体と抽象の往復 | Business Skills">
+<meta property="og:description" content="一段上って型にし、一段下ろして別の場面で使う。応用力の正体を5要素＋実務マトリクス＋演習で構造化。">
+<meta property="og:type" content="article">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet"></noscript>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* ── ローカルトーン調整（Midnight Mint 寄せ・落ち着いた色合い） ──
+   shared.css の sky-cyan #38bdf8 ＋ amber #f59e0b を、
+   本ページのみ mint teal #2dd4bf ＋ taupe #c9a37a に上書き。
+   背景も純黒寄り #0a0e1a → slate-warm #161b22 に和らげる。
+   shared.css は46ページ共通のため触らず、本ページの :root だけで完結。 */
+:root {
+  /* 背景：純黒 → slate-warm（Midnight Mint と整合） */
+  --bg: #161b22;
+  --bg-card: #1e2530;
+  --bg-hover: #262e3b;
+  --nav-bg: rgba(22,27,34,0.88);
+
+  /* テキスト：ややソフトに */
+  --text: #e6ebf2;
+  --text-muted: #9aa5b4;
+  --text-dim: #6b7585;
+
+  /* アクセント：mint teal ＋ muted taupe */
+  --accent: #2dd4bf;
+  --accent-dim: rgba(45,212,191,0.10);
+  --accent-core: #c9a37a;
+  --accent-core-dim: rgba(201,163,122,0.10);
+  --border: rgba(45,212,191,0.16);
+  --border-hover: rgba(45,212,191,0.38);
+  --border-core: rgba(201,163,122,0.30);
+}
+
+/* shared.css の `body { background: var(--bg) }` は :root 上書きで反映されるが、
+   html レベルでも確実に当てるため明示。 */
+html, body { background: var(--bg); color: var(--text); }
+
+/* ── 抽象度ピラミッド ── */
+.pyramid-wrap { display: flex; flex-direction: column; align-items: center; gap: 0; padding: var(--sp-4) 0; }
+.pyramid-row { display: flex; align-items: center; justify-content: center; gap: var(--sp-3); padding: var(--sp-2) var(--sp-4); border: 1px solid var(--border); background: rgba(45,212,191,0.04); font-weight: 700; font-size: 0.9rem; color: var(--text); margin: 2px 0; border-radius: var(--radius-sm); }
+.pyramid-row.l1 { width: 30%; background: rgba(45,212,191,0.11); }
+.pyramid-row.l2 { width: 45%; background: rgba(45,212,191,0.07); }
+.pyramid-row.l3 { width: 65%; background: rgba(45,212,191,0.04); }
+.pyramid-row.l4 { width: 85%; background: rgba(255,255,255,0.03); color: var(--text-muted); }
+.pyramid-axis { display: flex; justify-content: space-between; align-items: flex-start; width: 92%; margin-top: var(--sp-3); font-size: 0.72rem; color: var(--text-dim); }
+.pyramid-axis-l, .pyramid-axis-r { display: flex; flex-direction: column; gap: 2px; }
+.pyramid-axis-l { color: var(--accent); align-items: flex-start; }
+.pyramid-axis-r { color: var(--accent-core); align-items: flex-end; }
+
+/* ── 実務マトリクス ── */
+.gc-matrix { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); margin-bottom: var(--sp-4); }
+.gc-matrix th { padding: var(--sp-3) var(--sp-4); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: rgba(255,255,255,0.04); color: var(--text-dim); text-align: left; border: 1px solid rgba(255,255,255,0.07); }
+.gc-matrix th.col-up { color: var(--accent); background: var(--accent-dim); }
+.gc-matrix th.col-down { color: var(--accent-core); background: var(--accent-core-dim); }
+.gc-matrix td { padding: var(--sp-3) var(--sp-4); border: 1px solid rgba(255,255,255,0.07); vertical-align: top; line-height: 1.6; color: var(--text-muted); }
+.gc-matrix td.scene { font-weight: 700; background: rgba(255,255,255,0.03); color: var(--text); white-space: nowrap; }
+.gc-matrix td.cell-up { background: rgba(45,212,191,0.03); }
+.gc-matrix td.cell-down { background: rgba(201,163,122,0.03); }
+.gc-matrix .cell-head { font-weight: 700; color: var(--text); font-size: 0.85rem; display: block; margin-bottom: 4px; }
+.gc-matrix .cell-body { font-size: 0.82rem; color: var(--text-muted); line-height: 1.55; }
+.gc-matrix .cell-quote { display: block; margin-top: 6px; padding: 4px 8px; border-left: 2px solid rgba(45,212,191,0.25); font-size: 0.75rem; color: var(--text-muted); font-style: italic; background: rgba(255,255,255,0.02); }
+.gc-matrix .cell-quote::before { content: '💬 '; font-style: normal; }
+.gc-matrix .cell-template { display: block; margin-top: 6px; padding: 4px 8px; border-left: 2px solid rgba(201,163,122,0.28); font-size: 0.75rem; color: var(--text-muted); background: rgba(201,163,122,0.03); }
+.gc-matrix .cell-template::before { content: '🧱 テンプレ：'; color: var(--accent-core); font-weight: 700; }
+
+/* ── 演習カード ── */
+.exercise-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md); padding: var(--sp-5); margin-bottom: var(--sp-4); }
+.exercise-num { font-size: 0.68rem; font-weight: 700; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: var(--sp-2); }
+.exercise-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: var(--sp-3); }
+.exercise-steps { display: flex; flex-direction: column; gap: var(--sp-3); }
+.exercise-step { display: flex; gap: var(--sp-3); align-items: flex-start; font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.7; }
+.exercise-step-tag { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; min-width: 64px; text-align: center; }
+.exercise-step-tag.up { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--border); }
+.exercise-step-tag.down { background: var(--accent-core-dim); color: var(--accent-core); border: 1px solid rgba(201,163,122,0.25); }
+.exercise-step-tag.case { background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid rgba(255,255,255,0.08); }
+.exercise-blank { display: inline-block; min-width: 180px; border-bottom: 1px dashed var(--border-hover); padding: 0 6px; color: var(--text-dim); font-style: italic; }
+
+/* ── 比較表 ── */
+.compare-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); margin-bottom: var(--sp-4); }
+.compare-table th, .compare-table td { padding: var(--sp-3) var(--sp-4); border: 1px solid rgba(255,255,255,0.07); vertical-align: top; line-height: 1.6; }
+.compare-table th { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: rgba(255,255,255,0.04); color: var(--text-dim); text-align: left; }
+.compare-table td { color: var(--text-muted); }
+.compare-table td.pair { font-weight: 700; color: var(--text); background: rgba(45,212,191,0.04); }
+.compare-table td.diff { background: rgba(201,163,122,0.03); }
+.compare-table tr.group-sep td { background: rgba(255,255,255,0.06); color: var(--accent); font-weight: 700; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px var(--sp-4); }
+
+/* ── クイックリファレンス ── */
+.qref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+.qref-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md); padding: var(--sp-5); }
+.qref-card.up { border-color: rgba(45,212,191,0.22); background: rgba(45,212,191,0.04); }
+.qref-card.down { border-color: rgba(201,163,122,0.22); background: rgba(201,163,122,0.03); }
+.qref-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: var(--sp-2); }
+.qref-card.up .qref-label { color: var(--accent); }
+.qref-card.down .qref-label { color: var(--accent-core); }
+.qref-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: var(--sp-3); }
+.qref-list { list-style: none; display: flex; flex-direction: column; gap: var(--sp-2); }
+.qref-list li { font-size: var(--fs-sm); color: var(--text-muted); padding-left: var(--sp-4); position: relative; line-height: 1.6; }
+.qref-list li::before { content: '▸'; position: absolute; left: 0; }
+.qref-card.up .qref-list li::before { color: var(--accent); }
+.qref-card.down .qref-list li::before { color: var(--accent-core); }
+
+/* ── 相互リンクカード ── */
+.xref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--sp-3); }
+.xref-card { display: block; padding: var(--sp-4); background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: var(--radius-sm); text-decoration: none; color: inherit; transition: var(--transition); }
+.xref-card:hover { background: var(--accent-dim); border-color: var(--border-hover); }
+.xref-num { font-size: 0.65rem; color: var(--text-dim); font-weight: 700; letter-spacing: 0.1em; }
+.xref-title { font-size: 0.88rem; font-weight: 700; color: var(--text); margin: 4px 0; }
+.xref-desc { font-size: 0.72rem; color: var(--text-muted); line-height: 1.5; }
+
+/* ── セクション共通 ── */
+.gc-section { max-width: 900px; margin: 0 auto; padding: 0 var(--sp-4) var(--sp-12); }
+.gc-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--sp-8); }
+.gc-title { font-size: var(--fs-h2); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+.gc-sub { color: var(--text-muted); font-size: var(--fs-sm); margin-bottom: var(--sp-6); line-height: var(--lh-long); }
+.gc-sub strong { color: var(--accent); }
+.gc-section-h { font-size: 1rem; font-weight: 700; color: var(--accent); margin: var(--sp-8) 0 var(--sp-4); letter-spacing: 0.04em; }
+
+/* ── 注記 ── */
+.notice {
+  max-width: 900px; margin: 0 auto var(--sp-6);
+  padding: var(--sp-3) var(--sp-5);
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed rgba(255,255,255,0.12);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: var(--lh-long);
+}
+
+/* ── 明日の1アクション（落ち着いた taupe / 視線集中しすぎない） ── */
+.action-now {
+  max-width: 900px; margin: 0 auto var(--sp-8);
+  display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--sp-4);
+}
+.action-now-card {
+  background: linear-gradient(135deg, rgba(201,163,122,0.06) 0%, rgba(201,163,122,0.01) 80%);
+  border: 1px solid rgba(201,163,122,0.22);
+  border-radius: var(--radius-md);
+  padding: var(--sp-5) var(--sp-6);
+}
+.action-now-label {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--accent-core); margin-bottom: var(--sp-2);
+}
+.action-now-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: var(--sp-3); }
+.action-now-body { font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.7; }
+.action-now-body strong { color: var(--text); }
+
+.foothold-card {
+  background: rgba(45,212,191,0.04);
+  border: 1px solid rgba(45,212,191,0.18);
+  border-radius: var(--radius-md);
+  padding: var(--sp-5) var(--sp-6);
+}
+.foothold-label {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: var(--sp-3);
+}
+.foothold-chain {
+  display: flex; align-items: center; gap: var(--sp-2);
+  flex-wrap: wrap; margin-bottom: var(--sp-3);
+}
+.foothold-step {
+  padding: 4px 10px;
+  background: rgba(45,212,191,0.07);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  font-size: 0.82rem; font-weight: 700; color: var(--text);
+}
+.foothold-arrow { color: var(--accent); font-weight: 700; }
+.foothold-note { font-size: 0.78rem; color: var(--text-muted); line-height: 1.6; }
+
+@media (max-width: 768px) {
+  .action-now { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .gc-matrix, .compare-table { display: block; overflow-x: auto; }
+  .qref-grid { grid-template-columns: 1fr; }
+  .pyramid-row.l1 { width: 50%; }
+  .pyramid-row.l2 { width: 65%; }
+  .pyramid-row.l3 { width: 80%; }
+  .pyramid-row.l4 { width: 95%; }
+}
+</style>
+<script src="skill-tracker.js" defer></script>
+<script src="selfcheck-bridge.js" defer></script>
+</head>
+<body>
+<nav class="top-nav">
+  <a class="nav-back" href="index.html"><i data-lucide="chevron-left" width="16" height="16"></i>Business Skills</a>
+  <span class="nav-title-text">具体と抽象の往復</span>
+  <div class="nav-spacer"></div>
+</nav>
+
+<header class="hero">
+  <span class="hero-label">Business Skills Series · 46</span>
+  <h1>具体と抽象の<span>往復</span></h1>
+  <p class="hero-sub">細谷功『具体と抽象』が示す思考の二段運動。共通点を抜いて<strong>一段上り</strong>、別の現場へ<strong>一段下ろす</strong>——応用力の正体を5要素＋実務6場面＋演習で構造化する。</p>
+</header>
+
+<div class="notice">
+  <strong>注記：</strong>本ページは細谷功『具体と抽象 ―世界が変わって見える知性のしくみ』（dZERO）の一般的内容に基づいて構成しています。特定動画の字幕は未取得のため、動画固有の言い回しや例は反映していません。書籍の確立された主張をアンカーにした学習用まとめです。
+</div>
+
+<!-- 明日の1アクション＋具体例フットホールド -->
+<section class="action-now">
+  <div class="action-now-card">
+    <div class="action-now-label">▼ 明日の朝イチで1回</div>
+    <div class="action-now-title">「要するに？」か「たとえば？」を、最初の会話で必ず1回口にする</div>
+    <div class="action-now-body">読むだけでは身につかない。明日の朝会・1on1・チャットの<strong>最初の発言</strong>で、相手が抽象側なら「たとえば？」、具体側なら「要するに？」と1回口にする。これだけで往復のスイッチが入る。</div>
+  </div>
+  <div class="foothold-card">
+    <div class="foothold-label">▲ 上る／下りるとはこの動き</div>
+    <div class="foothold-chain">
+      <span class="foothold-step">近所のポチ</span>
+      <span class="foothold-arrow">→</span>
+      <span class="foothold-step">犬</span>
+      <span class="foothold-arrow">→</span>
+      <span class="foothold-step">動物</span>
+      <span class="foothold-arrow">→</span>
+      <span class="foothold-step">生き物</span>
+    </div>
+    <div class="foothold-note">下から上へ進むのが<strong>抽象化（上る）</strong>、上から下へ戻すのが<strong>具体化（下りる）</strong>。本ページは、この上下運動を5要素＋6場面＋演習で訓練するためのもの。</div>
+  </div>
+</section>
+
+<!-- Structure Map -->
+<section class="structmap-section">
+  <div class="structmap-card">
+    <div class="structmap-hd">
+      <h2 class="structmap-title">5要素の構造マップ</h2>
+      <p class="structmap-hint">クリックで詳細へジャンプ</p>
+    </div>
+    <div class="structmap-body">
+      <div class="smap-band">
+        <div class="smap-band-tag core">CORE — 思考の二段運動</div>
+        <div class="smap-center">
+          <button class="smap-node core-node" onclick="goAndScroll(0)">
+            <span class="sn-core-badge">CORE</span>
+            <span class="sn-num">01</span>
+            <span class="sn-name">抽象化</span>
+            <span class="sn-sub">共通点を抜き、枝葉を捨てる</span>
+            <span class="sn-dmg">⚠ 「上れない」と経験が積み上がっても次に活きない</span>
+          </button>
+        </div>
+      </div>
+      <div class="smap-v-arr">↓</div>
+      <div class="smap-band">
+        <div class="smap-band-tag">LADDER — 上下に往復する</div>
+        <div class="smap-pair">
+          <button class="smap-node" onclick="goAndScroll(1)">
+            <span class="sn-num">02</span>
+            <span class="sn-name">抽象度ピラミッド</span>
+            <span class="sn-sub">上るほど適用範囲が広がる</span>
+            <span class="sn-dmg">⚠ 抽象が見えないと議論がかみ合わない</span>
+          </button>
+          <span class="smap-h-arr">→</span>
+          <button class="smap-node" onclick="goAndScroll(2)">
+            <span class="sn-num">03</span>
+            <span class="sn-name">アナロジー</span>
+            <span class="sn-sub">別領域へ型を運ぶ</span>
+            <span class="sn-dmg">⚠ 表面類似のこじつけになりやすい</span>
+          </button>
+        </div>
+      </div>
+      <div class="smap-v-arr">↓</div>
+      <div class="smap-band">
+        <div class="smap-band-tag">CONTROL — 誤解と訓練</div>
+        <div class="smap-pair">
+          <button class="smap-node" onclick="goAndScroll(3)">
+            <span class="sn-num">04</span>
+            <span class="sn-name">混同しやすい対</span>
+            <span class="sn-sub">抽象的vs曖昧 / 抽象化vs省略</span>
+            <span class="sn-dmg">⚠ 切り分けないと「抽象=役立たず」と誤解する</span>
+          </button>
+          <span class="smap-h-arr">+</span>
+          <button class="smap-node" onclick="goAndScroll(4)">
+            <span class="sn-num">05</span>
+            <span class="sn-name">往復の問いかけ</span>
+            <span class="sn-sub">「要するに？」と「たとえば？」</span>
+            <span class="sn-dmg">⚠ 問いを切り替えないと思考が片寄る</span>
+          </button>
+        </div>
+      </div>
+      <div class="smap-axiom">
+        <strong>「具体と具体を直接つながない。いったん抽象を経由して別の具体へ運ぶ」</strong> — これができれば一つの経験が何倍にも効く
+      </div>
+    </div>
+  </div>
+</section>
+
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab core" data-i="0" onclick="go(0)"><span class="num">01</span><span class="tab-title">抽象化</span><span class="core-dot"></span></button>
+    <button class="tab" data-i="1" onclick="go(1)"><span class="num">02</span><span class="tab-title">ピラミッド</span></button>
+    <button class="tab" data-i="2" onclick="go(2)"><span class="num">03</span><span class="tab-title">アナロジー</span></button>
+    <button class="tab" data-i="3" onclick="go(3)"><span class="num">04</span><span class="tab-title">混同対</span></button>
+    <button class="tab" data-i="4" onclick="go(4)"><span class="num">05</span><span class="tab-title">往復の問い</span></button>
+  </div>
+  <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill core" id="progress"></div></div></div>
+</nav>
+<main class="panel-wrap"><div class="panel" id="panel"></div></main>
+
+<section class="insight-section">
+  <div class="insight-card">
+    <h2 class="insight-title">5要素の統合：一段上って、別の場所へ下ろす</h2>
+    <div class="insight-flow">
+      <div class="flow-item" onclick="go(0)">①共通点を抜く</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item" onclick="go(1)">②抽象度を上げる</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item" onclick="go(2)">③別領域へ運ぶ</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item" onclick="go(3)">④誤解を避ける</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item" onclick="go(4)">⑤問いを切替える</div>
+    </div>
+    <p class="insight-text">
+      5要素は<strong>独立した技ではなく1つの動きの分解</strong>。①共通点を抜く（抽象化）→②上下の階を意識する（ピラミッド）→③別領域へ運ぶ（アナロジー）→④誤解を切り分ける（混同対）→⑤2つの問いで往復する（口ぐせ）。詳細は各パネルへ。要点は<strong>「具体と具体を直接つなげず、いったん抽象を経由して別の具体へ運ぶ」</strong>——これだけ持ち帰れれば成功。
+    </p>
+  </div>
+</section>
+
+<section class="selfcheck-section">
+  <div class="selfcheck-card">
+    <h2 class="selfcheck-title">総合セルフチェック</h2>
+    <p class="selfcheck-sub">5問。直近1週間の判断・会話・資料作成を振り返る。</p>
+    <div class="check-list">
+      <div class="check-item">
+        <input type="checkbox" id="c1">
+        <label for="c1"><strong>共通点を抜き出した</strong> — 複数の事例・クレーム・トラブルから「要するに同じこと」を1段上で言語化できた</label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c2">
+        <label for="c2"><strong>抽象度を意識的に切り替えた</strong> — 会議で「抽象→具体」「具体→抽象」をその場で動かして話を進めた</label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c3">
+        <label for="c3"><strong>別領域へ型を運んだ</strong> — 過去の経験から取り出したパターンを、まったく違うケースに当てはめた</label>
+      </div>
+      <div class="check-item" style="flex-direction:column;align-items:stretch;">
+        <label for="c4-text" style="display:flex;gap:var(--sp-2);align-items:flex-start;cursor:pointer;"><input type="checkbox" id="c4" style="margin-top:3px;flex-shrink:0;"><span><strong>抽象的と曖昧を切り分けて「書字」した</strong> — 直近1週間で「これは曖昧」と判定して詰め返した発言・文書を1つ書き出す（書けたらチェック）</span></label>
+        <textarea id="c4-text" rows="2" placeholder="例：『なるべく早く』を『6/2 17時まで』に詰め返した／『品質を上げる』を『不良率3%→1.5%に』に詰め直した 等" style="margin-top:8px;width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:8px;color:var(--text);font-family:var(--font-base);font-size:var(--fs-sm);resize:vertical;"></textarea>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c5">
+        <label for="c5"><strong>2つの問いを使い分けた</strong> — 「要するに？」と「たとえば？」を会話・思考の中で意図的に切り替えた</label>
+      </div>
+    </div>
+    <div class="score-display" id="score-disp">
+      <span id="score-num">0</span> / 5 実践中<br>
+      <small id="score-msg" style="color:var(--text-muted);">直近1週間で何個当てはまるか確認してください</small>
+    </div>
+  </div>
+</section>
+
+<!-- ── 抽象度ピラミッド ── -->
+<section class="gc-section">
+  <div class="gc-card">
+    <h2 class="gc-title">抽象度ピラミッド：上下の往復こそが思考力</h2>
+    <p class="gc-sub">縦のピラミッドで捉えると、抽象と具体の関係が一目で分かる。<strong>上るほど数が少なく適用範囲が広く、下るほど数が多く実感がある</strong>。思考力とは、このピラミッドを<strong>両方向に自在に往復できる</strong>こと。</p>
+    <div class="pyramid-wrap">
+      <div class="pyramid-row l1">生き物</div>
+      <div class="pyramid-row l2">動物</div>
+      <div class="pyramid-row l3">犬</div>
+      <div class="pyramid-row l4">近所のポチ</div>
+      <div class="pyramid-axis">
+        <div class="pyramid-axis-l">
+          <span>▲ 抽象（上）</span>
+          <span>数が少ない・概念的</span>
+          <span>適用範囲が広い</span>
+          <span>応用・再利用ができる</span>
+        </div>
+        <div class="pyramid-axis-r">
+          <span>具体（下）▼</span>
+          <span>数が多い・五感でわかる</span>
+          <span>適用範囲が狭い</span>
+          <span>実感がわく・すぐ動ける</span>
+        </div>
+      </div>
+    </div>
+    <p class="gc-sub" style="margin-top:var(--sp-6);">
+      <strong>マジックミラーの非対称：</strong>抽象という二階が見えている人からは一階（具体）も二階も両方見える。しかし具体の一階しか見えていない人には、二階の存在そのものが見えない。<strong>二階建ての家で、二階の人は一階も見下ろせるが、一階の人は二階に部屋があることに気づかない</strong>——このイメージ。議論がかみ合わない原因の多くは、この「抽象度のギャップ」にある。
+    </p>
+  </div>
+</section>
+
+<!-- ── 実務6場面マトリクス ── -->
+<section class="gc-section">
+  <div class="gc-card">
+    <h2 class="gc-title">実務マトリクス：6場面に「上る／下る」を当てはめる</h2>
+    <p class="gc-sub">抽象化スキルは、頭の中の話ではなく日常業務の<strong>具体的な6場面</strong>に効く。それぞれで「上る（型を抜く）」と「下る（型を使う）」が何を意味するかを揃えると、明日からの動き方が変わる。</p>
+    <table class="gc-matrix">
+      <thead>
+        <tr>
+          <th style="width:140px;">業務場面</th>
+          <th class="col-up">▲ 上る（抽象化）</th>
+          <th class="col-down">▼ 下ろす（具体化）</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="scene">報連相</td>
+          <td class="cell-up">
+            <span class="cell-head">結論を1行に圧縮</span>
+            <span class="cell-body">細部を並べず「要するに何が起きたか」を上司の意思決定に必要な粒度に。</span>
+            <span class="cell-template">「結論→事実→所感」の3行で先頭から書く</span>
+          </td>
+          <td class="cell-down">
+            <span class="cell-head">数字・固有名詞・期限</span>
+            <span class="cell-body">「具体的にいくらの損失か」「明日までに誰が何をするか」を必ず添える。</span>
+            <span class="cell-quote">「結論：A案で進めます。事実：金額B、期限C。所感：D」</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="scene">議事録</td>
+          <td class="cell-up">
+            <span class="cell-head">3ラベルに集約</span>
+            <span class="cell-body">発言の羅列ではなく「決定／論点／アクション」の3ラベルに振り分ける。</span>
+            <span class="cell-template">行頭に【決定】【論点】【ToDo】を付ける</span>
+          </td>
+          <td class="cell-down">
+            <span class="cell-head">誰が・何を・いつまでに</span>
+            <span class="cell-body">読み手が動けるよう、具体名と期限まで書き残す。抽象ラベルだけでは実行できない。</span>
+            <span class="cell-quote">「【ToDo】山田が見積もりを6/2までにB社へ提出」</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="scene">業務マニュアル化</td>
+          <td class="cell-up">
+            <span class="cell-head">先輩の動きを3手順に</span>
+            <span class="cell-body">ケース差を乗り越える共通骨格を「3手順の型」に抜き出す。</span>
+            <span class="cell-template">「①見る ②起こす ③検算」など動詞3つで書く</span>
+          </td>
+          <td class="cell-down">
+            <span class="cell-head">初日と非常時の具体例</span>
+            <span class="cell-body">骨格だけでは動けない。「初日は何を」「壊れた時はどこを」と具体例を必ず添える。</span>
+            <span class="cell-quote">「①計装盤を見る ②該当ループをマニュアルで起こす ③出力を実値で検算」</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="scene">クレーム対応</td>
+          <td class="cell-up">
+            <span class="cell-head">原因を1つに集約</span>
+            <span class="cell-body">3件のクレームを「要するに初期設定の説明不足」と1段上げる。同じ原因に集約できれば対策は1本。</span>
+            <span class="cell-template">「3件以上溜まったら共通分母を取る」</span>
+          </td>
+          <td class="cell-down">
+            <span class="cell-head">チャネル別に先回り</span>
+            <span class="cell-body">「メール本文のどこに」「FAQのどの項目に」と対策をチャネル別の具体に下ろす。</span>
+            <span class="cell-quote">「FAQ Q3を書き換え／納品メールに注意文を追加／チャットの自動応答も更新」</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="scene">会議ファシリ</td>
+          <td class="cell-up">
+            <span class="cell-head">目的軸まで引き戻す</span>
+            <span class="cell-body">議論が枝葉に流れたら、目的の階まで一段上げて全員を同じ階に揃える。</span>
+            <span class="cell-quote">「すみません、この会議で決めるのは何でしたっけ？」</span>
+          </td>
+          <td class="cell-down">
+            <span class="cell-head">具体ケースで合意</span>
+            <span class="cell-body">話が宙に浮いたら、過去の実例や来週起きる案件に下ろして合意を取りにいく。</span>
+            <span class="cell-quote">「たとえば先週の田中さんの件で言うと、どちらで動きますか？」</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="scene">数字で語る</td>
+          <td class="cell-up">
+            <span class="cell-head">共通尺度に変換</span>
+            <span class="cell-body">バラバラの数値を「率」「平均」「分布」など同じ土俵に乗せ、比較可能にする。</span>
+            <span class="cell-template">「絶対値だけでなく必ず率／前年比とセットで」</span>
+          </td>
+          <td class="cell-down">
+            <span class="cell-head">分母を添えて実感に戻す</span>
+            <span class="cell-body">「3割」だけでなく「全120件中36件」と分母を添え、抽象指標と具体件数をセットで提示する。</span>
+            <span class="cell-quote">「不良率3.0％ ＝ 全1,200個中36個。前月比 +0.4pt」</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="gc-sub" style="margin-top:var(--sp-4);">
+      <strong>現場での合言葉：</strong>業務でつまずいたら「いま自分は上る方が足りないのか、下ろす方が足りないのか」を自問する。片方だけ得意な人は、もう片方が必ず弱点になっている。
+    </p>
+  </div>
+</section>
+
+<!-- ── 演習：穴埋め ── -->
+<section class="gc-section">
+  <div class="gc-card">
+    <h2 class="gc-title">演習：自分の業務を型に上げて、別業務へ下ろす</h2>
+    <p class="gc-sub">読むだけでは身につかない。自分の現場の出来事を1つ取り出し、<strong>「上る → 抽象の型 → 下ろす」</strong>の3ステップで書いてみる。空欄は紙でもメモアプリでも構わない。</p>
+
+    <div class="exercise-card">
+      <div class="exercise-num">演習 01 — 個別 → 型 → 別領域</div>
+      <div class="exercise-title">直近1か月で繰り返した「同じような困りごと」を1つ思い浮かべる</div>
+      <div class="exercise-steps">
+        <div class="exercise-step">
+          <span class="exercise-step-tag case">具体①</span>
+          <span>例：<span class="exercise-blank">先月発生した、自分の業務での個別事例を1つ</span></span>
+        </div>
+        <div class="exercise-step">
+          <span class="exercise-step-tag up">▲ 上る</span>
+          <span>要するに何が起きていたか（1行で）：<span class="exercise-blank">共通の構造・原因・パターンを言語化</span></span>
+        </div>
+        <div class="exercise-step">
+          <span class="exercise-step-tag down">▼ 下ろす</span>
+          <span>同じ型が当てはまる<strong>別の業務</strong>はどこか：<span class="exercise-blank">別チーム・別チャネル・別案件</span></span>
+        </div>
+        <div class="exercise-step">
+          <span class="exercise-step-tag case">具体②</span>
+          <span>そちらでは具体的に何を先回りすればよいか：<span class="exercise-blank">明日からの1アクション</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="exercise-card">
+      <div class="exercise-num">演習 02 — 「要するに？」と「たとえば？」の切替</div>
+      <div class="exercise-title">直近の会議や会話で、自分が片方の問いに偏っていなかったか確認する</div>
+      <div class="exercise-steps">
+        <div class="exercise-step">
+          <span class="exercise-step-tag up">▲ 上る不足</span>
+          <span>「個別事例を延々と説明していて結論が出ない」状況だったか：<span class="exercise-blank">YES / NO</span> → 次は「要するに？」を口にする</span>
+        </div>
+        <div class="exercise-step">
+          <span class="exercise-step-tag down">▼ 下ろす不足</span>
+          <span>「概念だけが宙に浮いていて誰も動けない」状況だったか：<span class="exercise-blank">YES / NO</span> → 次は「たとえば？」を口にする</span>
+        </div>
+        <div class="exercise-step">
+          <span class="exercise-step-tag case">置き換え</span>
+          <span>その会議で<strong>もう1度やり直せるなら</strong>どの発言を別の問いに置き換えるか：<span class="exercise-blank">具体的な発言の差し替え</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="exercise-card">
+      <div class="exercise-num">演習 03 — 過去の解決パターンを別案件に運ぶ</div>
+      <div class="exercise-title">自分が過去に解決した別案件から「型」を借りてきて、いまの問題に当てる</div>
+      <div class="exercise-steps">
+        <div class="exercise-step">
+          <span class="exercise-step-tag case">いまの問題</span>
+          <span>解決の糸口が見えていない、いまの業務上の問題：<span class="exercise-blank">1行で書く</span></span>
+        </div>
+        <div class="exercise-step">
+          <span class="exercise-step-tag up">▲ 型を借りる</span>
+          <span><strong>過去に自分（または周囲）が解決した別案件</strong>を1つ思い出す：<span class="exercise-blank">分野が違っていてOK・1〜3年以内</span></span>
+        </div>
+        <div class="exercise-step">
+          <span class="exercise-step-tag up">▲ 構造</span>
+          <span>その案件は、要するに何が効いて解決したか（型を1行で）：<span class="exercise-blank">原因の集約／関係者の巻き込み／検査の前倒し 等</span></span>
+        </div>
+        <div class="exercise-step">
+          <span class="exercise-step-tag down">▼ 当てる</span>
+          <span>その型をいまの問題に当てると、明日からの1アクションは何になるか：<span class="exercise-blank">明日朝イチの動き</span></span>
+        </div>
+        <div class="exercise-step">
+          <span class="exercise-step-tag case">こじつけ判定</span>
+          <span>表面の言葉だけで似ているのか、構造で本当に同じか：<span class="exercise-blank">構造一致を1行で説明できればGO</span></span>
+        </div>
+      </div>
+    </div>
+
+    <p class="gc-sub" style="margin-top:var(--sp-6);">
+      <strong>3行に圧縮した型：</strong>①具体①を1つ書く → ②「要するに何か」を1行で抜く → ③同型が当てはまる別業務へ下ろす。この3行が書ければ<strong>往復が1回回った</strong>ことになる。3つの演習はどれもこの3行型の練習。
+    </p>
+  </div>
+</section>
+
+<!-- ── クイックリファレンス ── -->
+<section class="gc-section">
+  <div class="gc-card">
+    <h2 class="gc-title">クイックリファレンス：迷ったらこの問いを口にする</h2>
+    <p class="gc-sub">往復は才能ではなく口ぐせで鍛えられる。詰まった瞬間に取り出せる<strong>問いの引き出し</strong>を、上る側と下ろす側で2つに分けて常備しておく。</p>
+    <div class="qref-grid">
+      <div class="qref-card up">
+        <div class="qref-label">▲ 上る（抽象化）</div>
+        <div class="qref-title">経験が積み上がってきたら</div>
+        <ul class="qref-list">
+          <li>要するに何の話？</li>
+          <li>これらの共通点は？</li>
+          <li>これは何の一例？</li>
+          <li>一段まとめると？</li>
+          <li>同じパターンを過去に見たか？</li>
+          <li>別の言い方をすると？</li>
+        </ul>
+      </div>
+      <div class="qref-card down">
+        <div class="qref-label">▼ 下ろす（具体化）</div>
+        <div class="qref-title">話が宙に浮いてきたら</div>
+        <ul class="qref-list">
+          <li>具体的には？</li>
+          <li>たとえば？</li>
+          <li>実際の場面でいうと？</li>
+          <li>誰の何がどう変わる？</li>
+          <li>数字でいうとどれくらい？</li>
+          <li>明日からの1アクションは？</li>
+        </ul>
+      </div>
+    </div>
+    <p class="gc-sub" style="margin-top:var(--sp-6);">
+      <strong>明日の1手：</strong>会議で詰まったら「たとえば？」、思考が個別事例の山で迷子になったら「要するに？」。この2つの問いの往復が、そのまま思考力のトレーニング。明日の朝イチ会話で1回口にする。
+    </p>
+  </div>
+</section>
+
+<!-- ── 混同しやすい対 ── -->
+<section class="gc-section">
+  <div class="gc-card">
+    <h2 class="gc-title">混同しやすい対：似て非なる概念を切り分ける</h2>
+    <p class="gc-sub">抽象の話は、似て非なる概念と取り違えられがち。ここを切り分けないと「抽象的＝役立たず」と誤解して、最強の道具を捨ててしまう。<strong>違いは「基準があるか」と「構造で一致しているか」</strong>の2点に集約される。</p>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th style="width:24%;">混同しやすい対</th>
+          <th style="width:32%;">似て見える点</th>
+          <th style="width:44%;">決定的な違い</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="group-sep"><td colspan="3">▸ 日常で頻繁に混同する 3 対（まずここを切る）</td></tr>
+        <tr>
+          <td class="pair">抽象的 ↔ 曖昧</td>
+          <td>どちらも「ぼんやり」に見える</td>
+          <td class="diff"><strong>抽象的</strong>＝意図的に枝葉を捨てて本質を残した状態（具体に下ろせる）／<strong>曖昧</strong>＝何を指すか定まらず詰めが甘い（下ろせない）</td>
+        </tr>
+        <tr>
+          <td class="pair">抽象化 ↔ 単なる省略・手抜き</td>
+          <td>どちらも情報が減る</td>
+          <td class="diff"><strong>抽象化</strong>＝共通の本質を残して枝葉を捨てる（基準がある）／<strong>省略・手抜き</strong>＝重要かどうかを問わず適当に減らす（基準がない）</td>
+        </tr>
+        <tr>
+          <td class="pair">抽象化 ↔ 要約</td>
+          <td>どちらも元情報を短くする</td>
+          <td class="diff"><strong>抽象化</strong>＝別領域に持ち出して使うためのゲート（下ろし先は別事例）／<strong>要約</strong>＝元情報をその場で縮約する作業（下ろし先は同じ題材）。下ろす先が「別の話」になるかで判別</td>
+        </tr>
+        <tr class="group-sep"><td colspan="3">▸ 上級・行き過ぎ系 2 対（やりすぎ／別軸との混同）</td></tr>
+        <tr>
+          <td class="pair">アナロジー ↔ こじつけ</td>
+          <td>別物どうしを結びつける</td>
+          <td class="diff"><strong>アナロジー</strong>＝抽象レベルの構造が本当に一致している（転用が効く）／<strong>こじつけ</strong>＝表面の言葉や印象が似ているだけで構造は不一致（転用すると外れる）</td>
+        </tr>
+        <tr>
+          <td class="pair">抽象化 ↔ ステレオタイプ</td>
+          <td>多数をまとめて扱う</td>
+          <td class="diff"><strong>抽象化</strong>＝捨ててよい枝葉を見極めて共通項を残す／<strong>ステレオタイプ</strong>＝行き過ぎて個別の違いを切り捨てすぎ偏見・決めつけになる</td>
+        </tr>
+        <tr class="group-sep"><td colspan="3">▸ 紛らわしい別軸 2 対（同じに見えるが別の話）</td></tr>
+        <tr>
+          <td class="pair">抽象 ↔ 一般化（量の話）</td>
+          <td>どちらも「広く当てはまる」</td>
+          <td class="diff"><strong>抽象</strong>＝本質を抜く軸の話（質）。例：「ポチ→犬→動物」と上に進む／<strong>一般化</strong>＝サンプル数を増やして法則化する量の話。例：犬を100匹観察して「犬は吠える」。抽象化していなくても一般化はできるし、その逆もある</td>
+        </tr>
+        <tr>
+          <td class="pair">本質 ↔ 目的</td>
+          <td>どちらも「要するに？」で出てくる</td>
+          <td class="diff"><strong>本質</strong>＝対象が「何であるか」の構造を抜く問い（説明の方向）／<strong>目的</strong>＝対象を「何のために使うか」の意図を問う（行動の方向）。両方が混ざると「要するに？」が空回りする。場面で意識的に切り替える</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="gc-sub" style="margin-top:var(--sp-4);">
+      <strong>判定の合言葉：</strong>「抽象的＝役に立たない」は誤解。役に立たなくなるのは<strong>下ろし方を省いたとき</strong>であって、抽象そのものが無価値なわけではない。捨てすぎれば偏見、基準なく減らせば手抜き——どちらも「下ろせるか」を見ればすぐ判定できる。
+    </p>
+  </div>
+</section>
+
+<!-- ── 相互リンク ── -->
+<section class="gc-section">
+  <div class="gc-card">
+    <h2 class="gc-title">関連スキル：上下の往復を支える隣のページ</h2>
+    <p class="gc-sub">具体と抽象の往復は、ほぼ全ての思考スキルの<strong>骨格</strong>になる。隣接する5つのページと相互に読むと、それぞれが「上る／下ろす」のどこを担っているかが見えてくる。</p>
+    <div class="xref-grid">
+      <a class="xref-card" href="kangae-wo-fukaku.html">
+        <div class="xref-num">SERIES · 27</div>
+        <div class="xref-title">考えを深くする5要素</div>
+        <div class="xref-desc">「抽象⇔具体往復」を5要素の1つに据える深掘り編。Why×5と前提疑いで上り方を鍛える。</div>
+      </a>
+      <a class="xref-card" href="kozo-haaku.html">
+        <div class="xref-num">SERIES · 05</div>
+        <div class="xref-title">構造把握力の5要素</div>
+        <div class="xref-desc">複雑な現実から「幹と枝葉」を分ける技術。抽象化の前段にあたる構造の見方。</div>
+      </a>
+      <a class="xref-card" href="ronriteki-shiko.html">
+        <div class="xref-num">SERIES · 17</div>
+        <div class="xref-title">論理的思考力の5要素</div>
+        <div class="xref-desc">演繹・帰納・仮説思考・MECE。型を抜く帰納と、型を下ろす演繹の両方を扱う。</div>
+      </a>
+      <a class="xref-card" href="kozo-communication.html">
+        <div class="xref-num">SERIES · 02</div>
+        <div class="xref-title">構造化コミュニケーションの5要素</div>
+        <div class="xref-desc">BLUFと抽象度制御。「要するに」と「たとえば」を相手に届くように設計する。</div>
+      </a>
+      <a class="xref-card" href="bunsho-ryoku.html">
+        <div class="xref-num">SERIES · 22</div>
+        <div class="xref-title">文章力の5要素</div>
+        <div class="xref-desc">結論先行・構造化・具体化。書くこと自体が抽象と具体の往復そのもの。</div>
+      </a>
+      <a class="xref-card" href="suji-de-kataru.html">
+        <div class="xref-num">SERIES · 10</div>
+        <div class="xref-title">数字で語る5要素</div>
+        <div class="xref-desc">数値も抽象化の道具。違う対象を同じ尺度に乗せ、再び個別件数に戻して実感を取り戻す。</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <a href="index.html" style="color:var(--text-dim);text-decoration:none;font-size:0.78rem;">← Business Skills 一覧へ</a>
+  <p style="margin-top:8px;">⚡ Fカンパニー — Business Skills Series · © 2026</p>
+</footer>
+
+<script>
+const PANELS = [
+  {
+    core: true,
+    icon: 'layers',
+    num: 'ELEMENT 01 / CORE',
+    title: '抽象化',
+    theory: '共通項の抽出 / 捨象 / 数と言葉',
+    badge: 'CORE',
+    summary: '複数の事物から「共通して起きていること」を抜き出し、それ以外の枝葉を意図的に捨てる（捨象＝捨てる作業のこと）。これが抽象化の本体。「犬」という一語が無数の犬の共通点だけを残し、毛色や大きさを切り捨てているからこそ、一語で広い範囲をカバーできる。',
+    why: '抽象化なしには、経験を次に活かせない。個別事例を1件ずつ覚えるだけでは、少し角度を変えられた瞬間に対応できなくなる。共通の本質を抜き出して初めて、別ケースにも当てはめられる「型」が手に入る。人類が手にした二大道具が「数」と「言葉」——数は量の側面を、言葉は性質の側面を抽象化する。',
+    how: '3件以上の事例が揃ったら「これらに共通して起きていることは何か？」と1段上の問いを立てる。共通点を1行で書き出す。同時に「いま自分は何を捨てているか」も意識する。捨てる基準が言えなければ、それは抽象化ではなく単なる省略。',
+    deficit: '抽象化できない人：3件のクレームをそれぞれ謝って終わり、4件目もまた同じ原因で起きる。研修で習った内容を「あの事例」としか覚えられず、別案件で使えない。経験は積み上がるのに次に活かせない状態。',
+    check: '直近のクレーム・トラブル・うまくいったケースを3件思い浮かべ、「要するに同じことが起きていた」と1行で言えるか？ 言えなければ、まだ抽象化していない。'
+  },
+  {
+    core: false,
+    icon: 'triangle',
+    num: 'ELEMENT 02',
+    title: '抽象度ピラミッド',
+    theory: 'ピラミッド構造 / 上下の往復 / マジックミラー',
+    badge: null,
+    summary: '抽象には「程度」がある。下にいくほど具体的で数が多く五感でとらえられる。上にいくほど抽象的で数は少なく概念的になり、そのぶん適用範囲が広がる。「生き物 ＞ 動物 ＞ 犬 ＞ 近所のポチ」のように縦に並ぶ。',
+    why: '思考力の正体は、このピラミッドを上下に行き来できること。上れない人は経験から法則を抜けず個別対応の繰り返し。下れない人は理屈は語れても現実を動かせない。両方向に往復できることが知的能力の核。さらに「抽象が見える人と見えない人」の間ではマジックミラーのような非対称が生まれ、議論がかみ合わない原因になる。',
+    how: '会議や思考で詰まったら、自分が「いまどの階にいるか」を自問する。経験が積み上がってきたら一段上る（要するに？）。話が宙に浮いてきたら一段下りる（たとえば？）。上司との議論がかみ合わないときは、相手が何階で話しているかを推定し、自分が階を合わせに行く。',
+    deficit: '抽象階層を意識しない人：抽象派の上司が「要するにオペレーション設計の問題だ」と言ったときに、具体派の部下は「先週の田中さんの件ですか？」と返してすれ違う。互いに「相手が分からないことを言っている」と感じるが、本当は階が違うだけ。',
+    check: 'きのうの会議で「話がかみ合わなかった」場面を思い出し、自分と相手のどちらが「上の階」「下の階」にいたか言えるか？ 言えるなら次は階を意識的に合わせに行ける。'
+  },
+  {
+    core: false,
+    icon: 'arrow-up-down',
+    num: 'ELEMENT 03',
+    title: 'アナロジー',
+    theory: '構造的類似 / 別領域への転用 / 表面vs構造',
+    badge: null,
+    summary: '別領域への橋渡しの技術。表面上はまったく違う二つの物事から、抽象レベルでの構造的な共通点を見抜き、片方で得た知見をもう片方へ転用する。「会社組織は生き物のようだ」と言えるのは、表面ではなく「環境に適応して変化する」という抽象構造が似ているから。',
+    how: '自分の業務を「○○のようなもの」と1段上げてみる。料理・スポーツ・園芸・自然現象などの世界の知恵を持ち帰る。ただし表面類似（言葉や見た目）と構造類似（仕組み・動き方）を必ず分ける。構造類似なら転用が効き、表面類似はこじつけになって外れる。',
+    why: '一つの場面で学んだことを別の場面に運べると、経験が何倍にも効く。新しい問題に出くわしても「過去に解いたあの問題に構造が似ている」と気づければ、解法を引っ張ってこられる。これは記憶量や経験年数より、抽象化の精度で決まる。',
+    deficit: 'アナロジーがない人：分野が違うと毎回ゼロから学び直す。営業で身につけた段取りを設備管理に運べない、設備で得た「兆候から先回り」の感覚を人材育成に運べない。アナロジーが弱い人ほど「うちの業界は特殊だから」と言いがち。',
+    check: '今まさに困っている問題を1つ取り、「これは○○のようなもの」と別世界の例で言い直してみる。言い直せたら、その世界の知恵から1つ持ち帰れることを書き出す。'
+  },
+  {
+    core: false,
+    icon: 'split',
+    num: 'ELEMENT 04',
+    title: '混同しやすい対',
+    theory: '抽象的vs曖昧 / 抽象化vs省略 / アナロジーvsこじつけ',
+    badge: null,
+    summary: '抽象の話は似て非なる概念と取り違えられがち。「抽象的＝曖昧・手抜き・無価値」は誤解。本当の違いは「基準があるか」と「構造で一致しているか」の2点に集約される。これを切り分けないと、最強の道具を捨ててしまう。',
+    why: '抽象化こそが応用と再利用を可能にする。なのに「抽象的＝わかりにくい」と決めつけて避ける人が多いのは、混同が解けていないから。抽象的な主張は具体に下ろせるが、曖昧な主張は下ろせない——この1点を見るだけで、ほとんどの誤解は切り分けられる。',
+    how: '誰かが「ふわっとした主張」をしたとき、自分の中で「これは抽象的（具体に下ろせる）か、曖昧（下ろせない）か」を判定する。下ろせないなら詰めが甘いだけなので「たとえば？」と聞き返して詰める。下ろせるなら本質を残した抽象なので、そのまま型として使う。',
+    deficit: '切り分けできない人：上司の「もっと考えて」を「曖昧で意味がない指示」と片付けて学ばない、自分の主張を「抽象的だから良い」と思い込んで具体に下ろさず誰も動けない、表面類似のこじつけを「アナロジー」と言い張って外れる、抽象化を強くやりすぎて偏見・ステレオタイプに陥る。',
+    check: 'きのう自分が使った「ふわっとした言葉」を1つ取り出し、それを「具体に下ろせるか」と自問する。下ろせないなら、それは抽象ではなく曖昧。詰める必要がある。'
+  },
+  {
+    core: false,
+    icon: 'message-circle-question',
+    num: 'ELEMENT 05',
+    title: '往復の問いかけ',
+    theory: '「要するに？」と「たとえば？」/ 口ぐせで鍛える',
+    badge: null,
+    summary: '往復は才能ではなく、2つの問いの口ぐせで鍛えられる。詰まったら「上る問い」と「下る問い」を意識的に切り替える。会議で話が宙に浮いたら「たとえば？」、経験が積み上がってきたら「要するに？」。この往復が、そのまま思考力のトレーニングになる。',
+    why: '抽象化は頭の良し悪しではなく、問いのレパートリーの問題。2つの問いを常備しておけば、自分の思考が片方に偏ったときに気づいて引き戻せる。さらに、他人との議論でも「いま自分はどちらの問いを口にすべきか」を選べるようになる。',
+    how: '上る問い：「要するに何の話？」「これらの共通点は？」「これは何の一例？」「一段まとめると？」。下る問い：「具体的には？」「たとえば？」「実際の場面でいうと？」「誰の何がどう変わる？」。会議・1on1・自分の思考で詰まったときに、どちらかを意識的に口にする習慣。',
+    deficit: '片方の問いに偏った人：「要するに？」ばかり言う人は概念遊びに走り、誰も動けない指示を出す。「たとえば？」ばかり言う人は個別事例の山で迷子になり、全体の判断ができない。両方の問いを切り替えられないと、思考も会議もどこかで詰まる。',
+    check: '直近の会議で、自分は「要するに？」と「たとえば？」のどちらに偏っていたか？ 偏っていたなら、次の会議では反対側の問いを意識的に1回は口にしてみる。'
+  }
+];
+
+let cur = 0;
+
+function renderPanel(i) {
+  const p = PANELS[i];
+  const el = document.getElementById('panel');
+  el.className = 'panel' + (p.core ? ' core' : '');
+  el.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-icon"><i data-lucide="${p.icon}" width="24" height="24"></i></div>
+      <div class="panel-title-wrap">
+        <div class="panel-num">${p.num}</div>
+        <div class="panel-title">${p.title}</div>
+        <div class="panel-theory">${p.theory}</div>
+      </div>
+      ${p.badge ? `<div class="badges"><span class="badge badge-core">${p.badge}</span></div>` : ''}
+    </div>
+    <p class="panel-summary">${p.summary}</p>
+    <div class="detail-grid">
+      <div class="detail-block">
+        <div class="detail-label">なぜ重要か</div>
+        <div class="detail-text">${p.why}</div>
+      </div>
+      <div class="detail-block">
+        <div class="detail-label">どう使うか</div>
+        <div class="detail-text">${p.how}</div>
+      </div>
+    </div>
+    <div class="deficit-block">
+      <div class="deficit-label">欠如すると</div>
+      <div class="deficit-text">${p.deficit}</div>
+    </div>
+    <div class="check-block">
+      <div class="check-label">セルフチェック</div>
+      <div class="check-text">${p.check}</div>
+    </div>
+    <div class="panel-nav">
+      <button class="nav-btn prev" onclick="go(${i - 1})" ${i === 0 ? 'disabled' : ''}>
+        <i data-lucide="chevron-left" width="16" height="16"></i>
+        <span class="nav-btn-label"><span class="nav-btn-hint">PREV</span><span>${i > 0 ? PANELS[i-1].title : ''}</span></span>
+      </button>
+      <button class="nav-btn next" onclick="go(${i + 1})" ${i === PANELS.length - 1 ? 'disabled' : ''}>
+        <span class="nav-btn-label"><span class="nav-btn-hint">NEXT</span><span>${i < PANELS.length - 1 ? PANELS[i+1].title : ''}</span></span>
+        <i data-lucide="chevron-right" width="16" height="16"></i>
+      </button>
+    </div>
+  `;
+  lucide.createIcons();
+}
+
+function updateTabs(i) {
+  document.querySelectorAll('.tab').forEach((t, idx) => {
+    t.classList.toggle('active', idx === i);
+    if (idx === 0) t.classList.toggle('core', idx === i);
+  });
+  const pct = ((i + 1) / PANELS.length) * 100;
+  const fill = document.getElementById('progress');
+  fill.style.width = pct + '%';
+  fill.className = 'progress-fill' + (PANELS[i].core ? ' core' : '');
+}
+
+function go(i) {
+  if (i < 0 || i >= PANELS.length) return;
+  cur = i;
+  renderPanel(i);
+  updateTabs(i);
+}
+
+function goAndScroll(i) {
+  go(i);
+  document.querySelector('.tab-nav').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  go(0);
+});
+</script>
+<div style="text-align:center;padding:1.5rem 0 1rem;"><a href="../index.html" style="color:#8892a0;text-decoration:none;font-size:0.82rem;">← ポータルに戻る</a></div>
+</body>
+</html>

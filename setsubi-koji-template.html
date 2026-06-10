@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>設備投資 機電工事 リスクアセスメント & 撤去チェックリスト</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --card-2: #273449;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --ok: #a3e635;
+    --warn: #facc15;
+    --danger: #fb923c;
+    --critical: #f472b6;
+    --border: #334155;
+    --p-required: #fb923c;
+    --p-recommended: #facc15;
+    --p-reference: #94a3b8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 1rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Yu Gothic UI", "Segoe UI", sans-serif;
+    line-height: 1.55;
+  }
+  header { margin-bottom: 1rem; position: relative; }
+  h1 { font-size: 1.4rem; margin: 0 0 0.25rem; }
+  .meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
+  .meta input { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 0.25rem 0.5rem; border-radius: 4px; }
+  .tabs { display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; flex-wrap: wrap; }
+  .tab { padding: 0.5rem 1rem; cursor: pointer; background: var(--card); border: 1px solid var(--border); border-bottom: none; border-radius: 6px 6px 0 0; color: var(--muted); font-size: 0.9rem; }
+  .tab.active { background: var(--accent); color: #0f172a; font-weight: bold; }
+  .pane { display: none; }
+  .pane.active { display: block; }
+  .section { background: var(--card); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+  .section h2 { font-size: 1.1rem; margin: 0 0 0.5rem; color: var(--accent); border-left: 4px solid var(--accent); padding-left: 0.5rem; }
+  .section h3 { font-size: 1rem; margin: 1rem 0 0.5rem; color: var(--text); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { padding: 0.4rem 0.5rem; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+  th { background: var(--card-2); color: var(--muted); font-weight: normal; font-size: 0.8rem; position: sticky; top: 0; }
+  td.cat { font-weight: bold; color: var(--accent); white-space: nowrap; }
+  td.num { text-align: center; font-variant-numeric: tabular-nums; }
+  tr.priority-required td:first-child { border-left: 4px solid var(--p-required); }
+  tr.priority-recommended td:first-child { border-left: 4px solid var(--p-recommended); }
+  tr.priority-reference td:first-child { border-left: 4px solid var(--p-reference); }
+  .risk-low { background: rgba(163, 230, 53, 0.15); color: var(--ok); font-weight: bold; }
+  .risk-mid { background: rgba(250, 204, 21, 0.15); color: var(--warn); font-weight: bold; }
+  .risk-high { background: rgba(251, 146, 60, 0.20); color: var(--danger); font-weight: bold; }
+  .risk-critical { background: rgba(244, 114, 182, 0.20); color: var(--critical); font-weight: bold; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+  .legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.8rem; margin-bottom: 0.5rem; }
+  .legend span { padding: 0.15rem 0.5rem; border-radius: 4px; }
+  .check-row { display: grid; grid-template-columns: 32px 1fr 80px; gap: 0.5rem; padding: 0.4rem 0; border-bottom: 1px solid var(--border); align-items: center; }
+  .check-row:last-child { border-bottom: none; }
+  .check-row label { cursor: pointer; }
+  .check-row.checked label { text-decoration: line-through; color: var(--muted); }
+  .check-row .ref { color: var(--muted); font-size: 0.75rem; text-align: right; }
+  .check-row.priority-required { border-left: 4px solid var(--p-required); padding-left: 0.5rem; }
+  .check-row.priority-recommended { border-left: 4px solid var(--p-recommended); padding-left: 0.5rem; }
+  .check-row.priority-reference { border-left: 4px solid var(--p-reference); padding-left: 0.5rem; }
+  .pill { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.7rem; background: var(--card-2); color: var(--muted); margin-right: 0.3rem; }
+  .type-tag { display: inline-block; padding: 0.05rem 0.3rem; border-radius: 3px; font-size: 0.65rem; background: var(--card-2); color: var(--muted); margin-right: 0.2rem; white-space: nowrap; }
+  .priority-badge { display: inline-block; padding: 0.05rem 0.3rem; border-radius: 3px; font-size: 0.65rem; font-weight: bold; margin-right: 0.3rem; }
+  .priority-badge.required { background: var(--p-required); color: #0f172a; }
+  .priority-badge.recommended { background: var(--p-recommended); color: #0f172a; }
+  .priority-badge.reference { background: #475569; color: #cbd5e1; }
+  .formula { background: var(--card-2); padding: 0.75rem; border-radius: 4px; font-family: ui-monospace, monospace; }
+  ul.law { padding-left: 1.2rem; margin: 0.5rem 0; }
+  ul.law li { margin: 0.25rem 0; font-size: 0.9rem; }
+  .law-name { color: var(--accent); font-weight: bold; }
+  .controls { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+  .btn { padding: 0.4rem 0.8rem; background: var(--card-2); border: 1px solid var(--border); color: var(--text); border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+  .btn:hover { background: var(--accent); color: var(--bg); }
+  .progress { background: var(--card-2); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem; }
+  .progress > div { background: var(--accent); height: 100%; transition: width 0.3s; }
+  .note { font-size: 0.8rem; color: var(--muted); margin: 0.5rem 0; padding: 0.5rem; border-left: 3px solid var(--warn); background: rgba(250, 204, 21, 0.05); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .filter-bar { background: var(--card); border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .filter-label { font-size: 0.8rem; color: var(--muted); margin-right: 0.3rem; font-weight: bold; }
+  .filter-pill { padding: 0.3rem 0.7rem; background: var(--card-2); border: 1px solid var(--border); border-radius: 999px; font-size: 0.78rem; color: var(--text); cursor: pointer; transition: all 0.15s; user-select: none; }
+  .filter-pill:hover { border-color: var(--accent); }
+  .filter-pill.active { background: var(--accent); color: #0f172a; border-color: var(--accent); font-weight: bold; }
+  .filter-pill.priority-required.active { background: var(--p-required); border-color: var(--p-required); }
+  .filter-pill.priority-recommended.active { background: var(--p-recommended); border-color: var(--p-recommended); }
+  .filter-pill.priority-reference.active { background: var(--p-reference); border-color: var(--p-reference); }
+  .filter-info { font-size: 0.72rem; color: var(--ok); margin-left: 0.5rem; background: rgba(163, 230, 53, 0.1); padding: 0.2rem 0.5rem; border-radius: 4px; }
+  .filter-clear { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem; margin-left: auto; }
+  .filter-clear:hover { color: var(--text); border-color: var(--accent); }
+  .filter-summary { font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem; width: 100%; padding: 0.3rem 0 0; border-top: 1px solid var(--border); }
+  .filter-summary strong { color: var(--accent); }
+  .filtered-out { display: none !important; }
+  .field-area { background: var(--card-2); border: 1px dashed var(--border); border-radius: 4px; padding: 0.5rem; margin: 0.5rem 0; }
+  .field-area label { display: block; font-size: 0.8rem; color: var(--accent); margin-bottom: 0.3rem; font-weight: bold; }
+  .field-area textarea { width: 100%; min-height: 60px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 0.4rem; font-family: inherit; font-size: 0.85rem; resize: vertical; }
+  .field-area .field-hint { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
+  .field-required { border-left: 3px solid var(--p-required); padding-left: 0.5rem; }
+  @media (max-width: 720px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    table { font-size: 0.75rem; }
+    .check-row { grid-template-columns: 24px 1fr; }
+    .check-row .ref { grid-column: 2; text-align: left; }
+  }
+  @media print {
+    body { background: white; color: black; padding: 0; font-size: 9pt; }
+    .tabs, .controls, header .meta input, .filter-bar, .filter-clear { display: none; }
+    .pane { display: block !important; page-break-before: always; }
+    .pane:first-of-type { page-break-before: avoid; }
+    .section { background: white; border: 1px solid #999; break-inside: avoid; }
+    th { background: #eee; color: #333; }
+    .risk-low, .risk-mid, .risk-high, .risk-critical { color: black; }
+    input[type="range"] { display: none; }
+    .meta { color: #333; }
+    h1 { color: black; }
+    h2 { color: black !important; border-color: #333 !important; }
+    .filtered-out { display: table-row !important; }
+    .check-row.filtered-out { display: grid !important; }
+    .field-area { background: #f5f5f5; }
+    .priority-badge.required { background: #999; color: white; }
+    .priority-badge.recommended { background: #ccc; color: black; }
+    .priority-badge.reference { background: #eee; color: #666; }
+  }
+.portal-back{position:absolute;top:12px;right:16px;font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:rgba(255,255,255,0.03);color:#8a94b0;text-decoration:none;transition:border-color .15s,color .15s}.portal-back:hover{color:#fff;border-color:#ffd54f}
+</style>
+</head>
+<body>
+<header><a class="portal-back" href="index.html">← Portal</a>
+  <h1>設備投資 機電工事 リスクアセスメント &amp; 撤去チェックリスト</h1>
+  <div class="meta">
+    プロジェクト名: <input type="text" id="projectName" placeholder="例：A工場 配管更新工事 2026Q3" style="width: 280px;">
+    作成日: <input type="date" id="projectDate">
+    作成者: <input type="text" id="projectAuthor" placeholder="氏名">
+  </div>
+</header>
+
+<div class="filter-bar" id="filterBar">
+  <span class="filter-label">案件タイプ:</span>
+  <div class="filter-pill" data-type="control-panel">制御盤</div>
+  <div class="filter-pill" data-type="equipment">装置更新</div>
+  <div class="filter-pill" data-type="dcs">DCS更新</div>
+  <div class="filter-pill" data-type="motor">モーター</div>
+  <div class="filter-pill" data-type="piping">配管</div>
+  <div class="filter-pill" data-type="cable">ケーブル</div>
+  <div class="filter-pill" data-type="tie-in">タイイン</div>
+  <span class="filter-info">共通項目は常時表示</span>
+  <button class="filter-clear" onclick="clearTypeFilters()">案件タイプ全解除</button>
+  <div class="filter-summary" id="filterSummary"></div>
+</div>
+
+<div class="filter-bar" id="priorityBar">
+  <span class="filter-label">優先度:</span>
+  <div class="filter-pill priority-required active" data-priority="required">必須（赤）</div>
+  <div class="filter-pill priority-recommended active" data-priority="recommended">推奨（黄）</div>
+  <div class="filter-pill priority-reference active" data-priority="reference">参考（灰）</div>
+  <span class="filter-info">必須＝死亡事故直結 / 推奨＝重大災害源 / 参考＝運用効率化</span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-pane="ra">① リスクアセスメント</div>
+  <div class="tab" data-pane="checklist">② 撤去工事チェックリスト</div>
+  <div class="tab" data-pane="guideline">③ ガイドライン</div>
+</div>
+
+<!-- ============================== -->
+<!-- TAB 1: リスクアセスメント -->
+<!-- ============================== -->
+<div class="pane active" id="pane-ra">
+  <div class="section">
+    <h2>リスク評価方法</h2>
+    <div class="formula">
+      <strong>R</strong> = <strong>S</strong>（重篤度 1-4） × <strong>F</strong>（頻度 1-4） × <strong>D</strong>（回避難度 1-4）
+    </div>
+    <div class="legend" style="margin-top: 0.5rem;">
+      <span class="risk-low">低（1-12）</span>
+      <span class="risk-mid">中（13-24）</span>
+      <span class="risk-high">高（25-40）</span>
+      <span class="risk-critical">極高（41-64）</span>
+    </div>
+    <div class="note">
+      重篤度S: 1=軽傷／2=休業／3=後遺症／4=死亡。頻度F: 1=年1回／2=月数回／3=週数回／4=毎日。回避難度D: 1=容易／2=可能／3=困難／4=不可能。
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" onclick="resetRA()">RAスライダ初期化</button>
+    <button class="btn" onclick="window.print()">印刷（全タブ展開）</button>
+  </div>
+
+  <div class="section field-required">
+    <h2>全エネルギー源リスト（必須・5分で書き切る）</h2>
+    <div class="field-area">
+      <label>本案件で関与する全エネルギー源を列挙（電気／圧力／温度／化学／重力／位置／回転／放射線）</label>
+      <textarea id="energySources" placeholder="例：&#10;・電気: 高圧6.6kV受電・制御DC24V・UPS非常電源・モーター誘起電圧&#10;・圧力: 4MPa蒸気・1.6MPa圧縮空気・配管低部ドレン残液&#10;・温度: 反応器内残熱120℃・蒸気凝縮水90℃&#10;・化学: 残液（VCM/MEK）・触媒残・N2パージ後の溶存O2&#10;・重力: 上部足場工具落下・吊り荷ジブクレーン&#10;・位置: ばね蓄勢式遮断器・スプリング操作機構"></textarea>
+      <div class="field-hint">「停止＝ゼロエネルギー」の思考停止を防ぐ。隠れたエネルギー源（UPS・残液・残熱・誘起電圧）の見落としを構造的に防止する欄。</div>
+    </div>
+  </div>
+
+  <div class="section field-required">
+    <h2>MOC・前回工事差分・運転側追記</h2>
+    <div class="field-area">
+      <label>MOC（変更管理）番号：</label>
+      <textarea id="mocNumber" placeholder="例：MOC-2026-Q3-014（DCS更新／I/O点増設に伴う変更管理）" style="min-height: 40px;"></textarea>
+      <div class="field-hint">装置更新・DCS更新・配管経路変更は MOC 対象。未取得で工事完了→運転再開は重大コンプラ違反。</div>
+    </div>
+    <div class="field-area">
+      <label>前回類似工事との差分（運転条件・残留物・人員交代・隣接設備状態）：</label>
+      <textarea id="prevDiff" placeholder="例：&#10;・前回（2024Q1）は触媒入替前で残触媒なし → 今回は反応器内残触媒あり、N2置換時間2倍&#10;・前回担当オペレータ退職 → 引継書による特殊事情共有が必要&#10;・隣接ユニット稼働率が前回より高い → 共用配管の振動影響増"></textarea>
+      <div class="field-hint">「過去にやったから大丈夫」の思考停止防止。自社プラント連続プロセスは前回と残留物・運転条件が異なるのが普通。</div>
+    </div>
+    <div class="field-area">
+      <label>運転側（元請）固有 hazard 追記（最低1項目必須）：</label>
+      <textarea id="ownerHazards" placeholder="例：&#10;・第3ヘッダー側弁にクセあり（過去2回シール漏れ）→ 縁切り後の漏れ確認時間+15分&#10;・隣接プラント新人オペレータ多数→ 緊急停止波及時の判断遅延リスク&#10;・図面D-2026-0042 と現場の配管支持位置が不一致（現場優先で合意済）"></textarea>
+      <div class="field-hint">協力会社RA丸投げ防止。現場暗黙知（弁のクセ・運転員特性・図面齟齬）は運転側しか知らない。</div>
+    </div>
+    <div class="field-area">
+      <label>図面 vs 現場 不一致時の正先合意（事前に決めておく）：</label>
+      <textarea id="drawingPriority" placeholder="例：&#10;・配管経路：図面 P-001 Rev.3 が最新（現場で図面と異なる場合は施工監督者へ即報告・運転側と協議）&#10;・電気単線図：現場側を正とする（前回更新時の図面反映漏れ事案あり）&#10;・盲板リスト：施工側赤線図と運転側盲板台帳の照合を完工前に必須" style="min-height: 60px;"></textarea>
+      <div class="field-hint">図面齟齬を「現場が間違い」と決めつける罠の防止。事前合意でトラブル時の判断遅延を防ぐ。</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>ハザード一覧</h2>
+    <table id="raTable">
+      <thead>
+        <tr>
+          <th style="width:80px;">区分</th>
+          <th>作業工程</th>
+          <th style="width:120px;">対象案件</th>
+          <th>想定ハザード／リスク事象</th>
+          <th style="width:60px;">S</th>
+          <th style="width:60px;">F</th>
+          <th style="width:60px;">D</th>
+          <th style="width:70px;">R</th>
+          <th>主な対策</th>
+        </tr>
+      </thead>
+      <tbody id="raBody"></tbody>
+    </table>
+    <div class="note">
+      汎用テンプレ。実プロジェクトでは ① フィルタで該当案件選択 ② 該当行のS/F/D見直し ③ 固有ハザード追記。「対象案件」列は適用範囲の目安（共通＝全案件必須）。
+    </div>
+  </div>
+</div>
+
+<!-- ============================== -->
+<!-- TAB 2: 撤去チェックリスト -->
+<!-- ============================== -->
+<div class="pane" id="pane-checklist">
+  <div class="section">
+    <h2>進捗状況</h2>
+    <div class="progress"><div id="progressBar" style="width: 0%;"></div></div>
+    <div class="meta"><span id="progressText">0 / 0 完了</span></div>
+    <div class="controls">
+      <button class="btn" onclick="resetChecklist()">全チェック解除</button>
+      <button class="btn" onclick="exportChecklist()">JSONエクスポート</button>
+    </div>
+    <div class="note">
+      プロジェクト名キーで localStorage 保存。同名プロジェクトで再オープン時に復元。進捗％は **フィルタ後の表示項目** から計算（案件タイプ未選択時は共通項目のみ対象）。
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>① 着手前（書類・計画段階）</h2>
+    <div id="check-pre"></div>
+  </div>
+
+  <div class="section">
+    <h2>② 当日作業前（縁切り・残存エネルギー処理・LOTO）</h2>
+    <div id="check-day"></div>
+  </div>
+
+  <div class="section">
+    <h2>③ 完了時（復旧・廃棄処理・引継）</h2>
+    <div id="check-post"></div>
+  </div>
+</div>
+
+<!-- ============================== -->
+<!-- TAB 3: ガイドライン -->
+<!-- ============================== -->
+<div class="pane" id="pane-guideline">
+  <div class="section">
+    <h2>1. リスクアセスメントの基本思想（ISO 12100 / JIS B 9700）</h2>
+    <p><strong>3ステップメソッド</strong>（優先順）:</p>
+    <ol>
+      <li><strong>本質的安全設計</strong>: ハザードそのものを除去・低減（無圧化・冷却・絶縁設計）</li>
+      <li><strong>安全防護および付加保護方策</strong>: ガード・インタロック・遮断器・接地</li>
+      <li><strong>使用上の情報</strong>: 警告ラベル・KY・教育・PPE</li>
+    </ol>
+    <div class="note">
+      PPE（保護具）はあくまで「最終手段」。PPE頼みのRAは不十分。設計段階での①②検討の証跡を残すこと。
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>2. 残存エネルギー5原則（撤去工事の必読項目）</h2>
+    <div class="grid-2">
+      <div>
+        <h3>5種類のエネルギー</h3>
+        <ul class="law">
+          <li><span class="law-name">圧力</span>: 配管・タンク・ボンベ・蓄圧器</li>
+          <li><span class="law-name">電気</span>: 電源／コンデンサ蓄電／誘導電圧／UPS・非常電源</li>
+          <li><span class="law-name">熱</span>: 高温配管／低温（液窒・冷媒）</li>
+          <li><span class="law-name">化学</span>: 残液・残ガス・反応性物質・触媒</li>
+          <li><span class="law-name">位置／運動</span>: 吊り荷・バネ・ばね蓄勢</li>
+        </ul>
+      </div>
+      <div>
+        <h3>縁切りの優先順位</h3>
+        <ol>
+          <li><strong>物理切断</strong>（配管：盲板挿入／ケーブル：切断＋絶縁テープ）</li>
+          <li><strong>二重弁＋ベント</strong>（DBB: Double Block &amp; Bleed）</li>
+          <li><strong>単弁＋札掛け</strong>（LOTO: Lockout/Tagout）</li>
+          <li><strong>札掛けのみ</strong>（最低限／推奨せず）</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>3. 関連法令体系</h2>
+    <div class="grid-2">
+      <div>
+        <h3>労働安全衛生分野</h3>
+        <ul class="law">
+          <li><span class="law-name">労働安全衛生法</span> 第28条の2（RA努力義務）／第57条（表示）</li>
+          <li><span class="law-name">安衛則</span> 第36条（特別教育）／第151条（クレーン）／第518条（高所）</li>
+          <li><span class="law-name">特化則</span>: 特定化学物質取扱（特管／第3類）</li>
+          <li><span class="law-name">有機則</span>: 有機溶剤55物質</li>
+          <li><span class="law-name">石綿則</span>: アスベスト含有材の解体・除去</li>
+          <li><span class="law-name">酸欠則</span>: 酸欠危険場所（第一種／第二種）</li>
+          <li><span class="law-name">電離則</span>: 放射線取扱（該当時）</li>
+        </ul>
+      </div>
+      <div>
+        <h3>設備・物質関連</h3>
+        <ul class="law">
+          <li><span class="law-name">電気事業法</span> 第43条（主任技術者）／第48条（工事計画届）</li>
+          <li><span class="law-name">電技解釈</span>: 接地・離隔・絶縁の具体基準</li>
+          <li><span class="law-name">高圧ガス保安法</span>: 容器・配管・冷凍／第14条許可</li>
+          <li><span class="law-name">消防法</span> 危険物（第4類等）・指定数量</li>
+          <li><span class="law-name">廃棄物処理法</span> 産廃／特管（PCB・石綿）／マニフェスト</li>
+          <li><span class="law-name">PCB特措法</span>: PCB廃棄物の処分期限</li>
+          <li><span class="law-name">フロン排出抑制法</span>: SF6・冷媒の回収</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>4. KY（危険予知）実施タイミング</h2>
+    <ul class="law">
+      <li><span class="pill">必須</span> <strong>TBM-KY</strong>: 当日朝、作業開始前（Tool Box Meeting）</li>
+      <li><span class="pill">必須</span> <strong>工程変更時</strong>: 想定外発生・手順変更・人員交代</li>
+      <li><span class="pill">必須</span> <strong>作業中断後の再開時</strong>: 昼休憩後・翌日朝</li>
+      <li><span class="pill">推奨</span> <strong>協力会社入替時</strong>: 引継ぎ部分の認識合わせ</li>
+      <li><span class="pill">推奨</span> <strong>ヒヤリハット直後</strong>: 当事者だけでなく作業班全体で</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>5. 用語混同チェック（届出 / 許可 / 認可 / 報告 / 通知）</h2>
+    <table>
+      <thead><tr><th>用語</th><th>性質</th><th>例</th></tr></thead>
+      <tbody>
+        <tr><td><strong>届出</strong></td><td>事前提出のみ・行政の応答不要</td><td>労基署 機械等設置届／電気主任技術者選任届</td></tr>
+        <tr><td><strong>許可</strong></td><td>行政の判断あり・許可なしは違法</td><td>高圧ガス製造許可／産廃収集運搬業許可</td></tr>
+        <tr><td><strong>認可</strong></td><td>第三者行為の効力を補完</td><td>料金認可（電気・ガス）</td></tr>
+        <tr><td><strong>報告</strong></td><td>事後・定期的</td><td>労災事故報告／PCB処分状況報告</td></tr>
+        <tr><td><strong>通知</strong></td><td>関係者への一方的伝達</td><td>停電作業通知／工事工程通知</td></tr>
+      </tbody>
+    </table>
+    <div class="note">
+      日常会話で混用される5語。RA／工事計画書では正確に使い分けること。「届出 = 役所に出すだけでOK」と「許可 = 判断待ち」の差は工程遅延に直結する。
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>6. 運用ルール</h2>
+    <ol>
+      <li>本テンプレを基に、案件着手時に複製してプロジェクト名を入れる</li>
+      <li>案件タイプフィルタで該当タイプを選択（複数選択可）。共通項目は常時表示</li>
+      <li>RAは <strong>計画段階・着工前・完工時</strong> の3回見直す</li>
+      <li>残留リスクは「低」になるまで対策を追加（「中」止まりは原則NG）</li>
+      <li>チェックリストは「再開発困難な状態」（縁切り・残圧抜き）を <strong>個別に確認者サインを残す</strong> 運用が望ましい</li>
+      <li>完了後は本HTMLをPDF化して工事記録に保存</li>
+    </ol>
+  </div>
+
+  <div class="section">
+    <h2>7. 案件タイプ別の留意点</h2>
+
+    <h3>7.1 制御盤撤去/更新</h3>
+    <ul class="law">
+      <li><strong>制御電源の3系統確認</strong>: AC100V/DC24V／UPS／非常電源／予備系電源。1系統見逃しで活線残</li>
+      <li><strong>盤内コンデンサ残留電荷</strong>: 平滑コンデンサ・サージアブソーバ。電源遮断後 <strong>5分以上の放電待機</strong></li>
+      <li><strong>通信線抜線時のシステム影響</strong>: FF（Fieldbus）/PROFIBUS/Ethernet。抜いた瞬間に他制御系がフェールセーフ動作する可能性</li>
+      <li><strong>古い制御盤の有害物質</strong>: 1990年以前のトランス＝PCB含有疑い／盤内断熱材＝石綿含有疑い。事前分析必須</li>
+      <li><strong>インタロック解除波及</strong>: 撤去対象盤が他設備のインタロック源になっている場合、解除が隣接プラント緊急停止を引き起こす</li>
+    </ul>
+
+    <h3>7.2 装置更新（圧力容器・反応器・熱交・ポンプ）</h3>
+    <ul class="law">
+      <li><strong>残圧・残液・残熱・残ガス・残触媒</strong>の5残：縁切り・パージ・冷却・ベント・触媒抜出のシーケンス管理</li>
+      <li><strong>MOC（変更管理）必須</strong>: 仕様変更（材質・容量・接続位置）は P&amp;ID 更新と承認プロセス</li>
+      <li><strong>銘板重量と実重量の乖離</strong>: 残油・触媒残・ライニング・保温材で銘板＋20-50%重量増。クレーン能力余裕必須</li>
+      <li><strong>新設後の PSSR</strong>（Pre-Startup Safety Review）: 工事完了≠運転再開可。試運転前に安全点検必須</li>
+      <li><strong>タイイン工事</strong>: 既設活管への接続。Hot Tap 採用時は専門業者・許可書必須</li>
+    </ul>
+
+    <h3>7.3 DCS更新（制御システム移行）</h3>
+    <ul class="law">
+      <li><strong>カットオーバー戦略の事前合意</strong>: Big Bang／Phased／Parallel Run。自社規模は Parallel Run 推奨（旧系統並行運転）</li>
+      <li><strong>FAT/SAT</strong>: Factory（工場）/Site（現地）受入試験。ループチェック完了サイン（施工＋運転2名）</li>
+      <li><strong>バックアップ＋ロールバック手順書</strong>: 切替失敗時に旧系統に戻せる手順。事前に書面化＋演習</li>
+      <li><strong>I/O 仕様不一致リスク</strong>: アナログ4-20mA／デジタル接点／HART通信。旧新で電気特性・通信プロトコル差異がないか確認</li>
+      <li><strong>過渡期のオペレータ体制</strong>: 並行運転中はオペレータ負荷2倍。新人配置NG・熟練者ダブル配置</li>
+      <li><strong>パラメータ移行</strong>: PID整定値・アラーム設定・トレンド設定。手作業移行はミス源 → スクリプト＋目視照合</li>
+    </ul>
+
+    <h3>7.4 モーター更新</h3>
+    <ul class="law">
+      <li><strong>絶縁試験</strong>: 巻線対地 1MΩ以上（500V/1000V メガー）。試験中は <strong>誘起高電圧</strong> による感電危険</li>
+      <li><strong>芯出し</strong>: カップリング・プーリ。ダイヤルゲージ／レーザアライナで 0.05mm 以下。芯出し不良→異常振動・軸折損</li>
+      <li><strong>相回転確認</strong>: 結線後の試運転前に相回転計で正相確認。逆相起動でポンプ・送風機破損</li>
+      <li><strong>インバータ容量整合</strong>: 既設インバータの容量が新モーター定格に対応するか（過電流保護設定見直し）</li>
+      <li><strong>重量物</strong>: 大型モーター（&gt;500kg）は専用吊り具・タンデムリフト。銘板重量と実重量に注意</li>
+    </ul>
+
+    <h3>7.5 配管撤去/更新（タイイン含む）</h3>
+    <ul class="law">
+      <li><strong>盲板（ブラインド）番号管理</strong>: 取付番号と撤去番号の照合表。「忘れ盲板」は復旧時の重大トラブル源</li>
+      <li><strong>残液・残圧確認の3点ルール</strong>: 上流弁閉→ベント開→圧力計0表示→低部ドレン排出</li>
+      <li><strong>断熱材撤去</strong>: 古い保温材（1980年代以前）はアスベスト含有率 &gt; 0.1% の確率。事前分析・湿潤化・隔離養生</li>
+      <li><strong>切断方法選択</strong>: Hot Cutting（溶断）vs Cold Cutting（コールドソー）。可燃性ガス雰囲気は Cold 必須</li>
+      <li><strong>タイイン時の隣接ライン誤開放</strong>: 「ブラインド対象が違った」事故は実在。現場照合＋運転側立会必須</li>
+    </ul>
+
+    <h3>7.6 ケーブル撤去/更新</h3>
+    <ul class="law">
+      <li><strong>経路追跡の3手段</strong>: 図面（最新Rev確認）／タグ照合／信号注入器（パルス送信→受信機で特定）。図面のみは事故源</li>
+      <li><strong>既設活線混在の特定</strong>: ケーブルラック上で撤去対象と運転中が同居。誤切断＝感電・プラント停止</li>
+      <li><strong>通信線・制御線の他系統影響</strong>: 動力以外の信号線も「切れたら波及」リスク。シーケンス制御・インタロック信号の特定</li>
+      <li><strong>残留誘導電圧</strong>: 長尺ケーブル・他活線並走で誘起。接地→検電→接地短絡器具で安全確保</li>
+      <li><strong>外被材の有害物質</strong>: 古いケーブルの鉛シース・PCB含有油浸ケーブル。事前分析・特管処理</li>
+    </ul>
+
+    <h3>7.7 全案件共通の落とし穴（AI社員諮問・3者一致）</h3>
+    <ol>
+      <li><strong>「書類のための書類」化</strong>: 立派なテンプレほど形骸化する。本テンプレは現場記入欄（測定値・写真・サイン・コメント）を強制することで防止</li>
+      <li><strong>「過去にやったから大丈夫」のコピペ横展開</strong>: 自社連続プロセスは前回と残留物・運転条件が異なる。「前回工事との差分」欄を強制入力</li>
+      <li><strong>「協力会社丸投げ・元請判子だけ」</strong>: 元請固有 hazard（運転側暗黙知）追記欄を最低1項目必須に</li>
+      <li><strong>「停止＝ゼロエネルギー」過信</strong>: 全エネルギー源リスト記入欄で隠れエネルギー（UPS／残液／誘起電圧／残触媒）の見落とし防止</li>
+      <li><strong>「図面と現場の不一致を現場が間違いと決めつけ」</strong>: 事前に正先合意欄を設けトラブル時の判断遅延防止</li>
+      <li><strong>「MOC（変更管理）と RA の分離忘れ」</strong>: 工事RA で OK でも MOC 未取得で運転再開はコンプラ違反。MOC 番号入力欄で防止</li>
+    </ol>
+  </div>
+
+  <div class="section">
+    <h2>8. 参照ガイドライン（国際・国内）</h2>
+    <ul class="law">
+      <li><strong>ISO 12100 / JIS B 9700</strong>: 機械安全 リスクアセスメント 3ステップメソッド</li>
+      <li><strong>ISO 45001</strong>: 労働安全衛生マネジメントシステム</li>
+      <li><strong>OSHA 29 CFR 1910.119</strong>: Process Safety Management (PSM) 14要素</li>
+      <li><strong>CCPS Risk Based Process Safety</strong>: 20要素（米国化学工学会 CCPS）</li>
+      <li><strong>IOGP Life-Saving Rules</strong>: 9項目（高所・墜落・LOTO・PTW・閉所・運転中作業・ライン断・吊り作業・運転中設備接近）</li>
+      <li><strong>JCIA レスポンシブル・ケア</strong>: 日本化学工業協会 安全衛生・プロセス安全行動計画</li>
+      <li><strong>JPCA 設備管理ガイドライン</strong>: 日本石油化学工業協会</li>
+      <li><strong>HSE UK Asset Integrity</strong>: 英国安全衛生庁 設備健全性管理</li>
+      <li><strong>KHK 高圧ガス保安協会 ガイドライン</strong>: 高圧ガス設備の保安・撤去基準</li>
+      <li><strong>NFPA 70E / IEEE 1584</strong>: アークフラッシュ境界・PPE Category 算定（50V以上電気作業）</li>
+      <li><strong>IEC 61511 SIL</strong>: Safety Instrumented System の機能安全（SIL1-4）・bypass運用</li>
+      <li><strong>HAZOP（IEC 61882）</strong>: brownfield modification時の revalidation 必須</li>
+      <li><strong>JNIOSH プロセス災害防止 RA マニュアル</strong>: 厚労省系・工事RAの4段階分離</li>
+      <li><strong>自社プラント「保安防災・労働安全衛生」</strong>: 重大事故定義（死1/重2 etc）・社内基準</li>
+    </ul>
+
+    <h3>9.1 時限要素（期限管理）</h3>
+    <table>
+      <thead><tr><th>項目</th><th>期限</th><th>影響案件</th></tr></thead>
+      <tbody>
+        <tr><td><strong>工作物石綿事前調査者 必須化</strong></td><td>2026/1/1〜</td><td>装置・配管・制御盤・ケーブル（古設備）</td></tr>
+        <tr><td><strong>低濃度PCB 処分期限</strong></td><td>2027/3/31</td><td>変圧器・コンデンサ・OF/SOFケーブル</td></tr>
+        <tr><td><strong>第一種フロン類充塡回収業者登録</strong></td><td>5年更新</td><td>SF6遮断器・冷媒設備</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ===========================
+// 案件タイプ・優先度 定義
+// ===========================
+const PROJECT_TYPES = {
+  'common':         { label: '共通', short: '共' },
+  'control-panel':  { label: '制御盤', short: '盤' },
+  'equipment':      { label: '装置更新', short: '装' },
+  'dcs':            { label: 'DCS', short: 'DCS' },
+  'motor':          { label: 'モーター', short: 'M' },
+  'piping':         { label: '配管', short: '配' },
+  'cable':          { label: 'ケーブル', short: 'C' },
+  'tie-in':         { label: 'タイイン', short: 'TI' },
+};
+
+const PRIORITY_LABEL = {
+  'required':    '必須',
+  'recommended': '推奨',
+  'reference':   '参考',
+};
+
+// ===========================
+// データ定義: リスクアセスメント
+// ===========================
+const RA_DATA = [
+  // ----- 既存 27 項目（types/priority タグ付与） -----
+  // 機械工事
+  { cat: '機械', work: '重量物運搬・玉掛け', hazard: '吊り荷落下・玉掛け外れ・激突', s: 4, f: 2, d: 3, countermeasure: '玉掛け技能者配置・吊り点確認・立入禁止区画・タグライン', types: ['common'], priority: 'recommended' },
+  { cat: '機械', work: '回転機据付（ポンプ・送風機）', hazard: '巻込まれ・カップリング不整列による異常振動', s: 3, f: 1, d: 2, countermeasure: '芯出し基準遵守・回転部ガード復旧確認・試運転立会', types: ['motor', 'equipment'], priority: 'recommended' },
+  { cat: '機械', work: '配管接続・締付作業', hazard: 'スプリングバック・残応力解放による激突', s: 3, f: 2, d: 3, countermeasure: '応力解放手順遵守・支持金物先行・トルク管理表', types: ['piping', 'tie-in'], priority: 'recommended' },
+  { cat: '機械', work: '高所作業（足場・高所車）', hazard: '墜落・物品落下・足場崩壊', s: 4, f: 3, d: 2, countermeasure: '安全帯フルハーネス・足場点検札・工具落下防止紐', types: ['common'], priority: 'required' },
+  { cat: '機械', work: '溶接・ガス切断（火気作業）', hazard: '火災・有害ガス発生・スパッタ飛散', s: 4, f: 2, d: 2, countermeasure: '火気許可・防炎シート・消火器近接・局所排気・酸欠測定', types: ['common', 'tie-in'], priority: 'required' },
+  { cat: '機械', work: 'タンク・配管内部点検', hazard: '酸欠・有害ガス残留・閉込め', s: 4, f: 1, d: 4, countermeasure: '酸素・有害ガス測定（連続）・送気マスク・監視員配置', types: ['equipment', 'piping'], priority: 'required' },
+  { cat: '機械', work: 'グラインダ・電動工具使用', hazard: '砥石飛散・切創・感電', s: 3, f: 3, d: 2, countermeasure: '砥石点検・カバー確実装着・漏電遮断器・防護メガネ', types: ['common'], priority: 'recommended' },
+
+  // 電気工事
+  { cat: '電気', work: '停電作業（高圧盤）', hazard: '復電誤操作・他回路活線残・コンデンサ残留電荷', s: 4, f: 2, d: 3, countermeasure: 'LOTO（施錠＋札掛け）・検電器3点確認・短絡接地器具', types: ['control-panel', 'common'], priority: 'required' },
+  { cat: '電気', work: '活線近接作業', hazard: '感電・アークフラッシュ・短絡', s: 4, f: 2, d: 4, countermeasure: '離隔距離確保・絶縁防具・低圧電気特別教育・耐アーク服', types: ['common', 'control-panel'], priority: 'required' },
+  { cat: '電気', work: '接地工事', hazard: '接地抵抗不足・歩幅電圧・他回路への循環電流', s: 3, f: 1, d: 3, countermeasure: '接地抵抗測定・接地系統図確認・等電位ボンディング', types: ['common'], priority: 'recommended' },
+  { cat: '電気', work: '受変電設備（高圧盤）', hazard: '高圧アーク・SF6ガス・PCB絶縁油', s: 4, f: 1, d: 4, countermeasure: '電力会社停電連携・SF6回収手順・PCB機器分類確認', types: ['equipment', 'control-panel'], priority: 'required' },
+  { cat: '電気', work: '動力配線・モータ結線', hazard: '逆相起動・絶縁劣化・過電流', s: 3, f: 2, d: 2, countermeasure: '相回転計確認・絶縁抵抗測定（1MΩ以上）・保護リレー整定', types: ['motor', 'cable'], priority: 'recommended' },
+  { cat: '電気', work: '計装ケーブル布設', hazard: '誘導電圧・ノイズ・誤動作', s: 2, f: 3, d: 2, countermeasure: '動力と分離布設・シールド接地・サージ吸収', types: ['cable', 'dcs'], priority: 'recommended' },
+
+  // ケーブル・配管共通
+  { cat: 'ケーブル/配管', work: 'ケーブルピット内作業', hazard: '酸欠・滞留ガス・他線損傷', s: 4, f: 2, d: 3, countermeasure: '酸素濃度測定・換気・既設ケーブル特定・監視員', types: ['cable', 'common'], priority: 'required' },
+  { cat: 'ケーブル/配管', work: '配管解体前の残圧確認', hazard: 'ブローバック・残液飛散', s: 3, f: 2, d: 2, countermeasure: '上流弁閉＋ベント開放・圧力計目視確認・薬液耐性PPE', types: ['piping', 'common'], priority: 'required' },
+  { cat: 'ケーブル/配管', work: 'シール・パッキン交換', hazard: '残圧・残液・有機溶剤暴露', s: 3, f: 3, d: 2, countermeasure: '縁切り確認・受け皿・有機溶剤マスク・MSDS確認', types: ['piping', 'equipment'], priority: 'recommended' },
+  { cat: 'ケーブル/配管', work: '配管断熱材撤去', hazard: 'アスベスト含有材飛散', s: 4, f: 1, d: 4, countermeasure: '事前分析・湿潤化・隔離養生・防じんマスク・特管廃棄', types: ['piping', 'common'], priority: 'required' },
+
+  // 撤去工事
+  { cat: '撤去', work: '既設機器解体（圧力容器）', hazard: '残圧・残液・残ガス・残熱', s: 4, f: 2, d: 3, countermeasure: '5エネルギー縁切り表・盲板挿入・窒素パージ・温度測定', types: ['equipment', 'common'], priority: 'required' },
+  { cat: '撤去', work: '機器搬出（搬入経路）', hazard: '通路狭隘・養生不足・既設配管接触', s: 3, f: 3, d: 2, countermeasure: '搬出経路図・養生・スポッタ配置・既設識別タグ', types: ['equipment', 'motor', 'common'], priority: 'recommended' },
+  { cat: '撤去', work: '絶縁油・PCB含有機器処分', hazard: 'PCB漏洩・特管廃棄物未届出', s: 4, f: 1, d: 4, countermeasure: '事前分析・JESCO登録・運搬業者特管許可確認・マニフェスト', types: ['equipment', 'control-panel'], priority: 'required' },
+  { cat: '撤去', work: 'SF6含有遮断器解体', hazard: 'SF6大気放出・地球温暖化係数2万倍', s: 2, f: 2, d: 3, countermeasure: 'SF6回収装置使用・回収量記録・フロン法に基づく報告', types: ['control-panel', 'equipment'], priority: 'required' },
+  { cat: '撤去', work: '残置配管の盲板・縁切り', hazard: '復旧時誤通・隣接プロセスへの混入', s: 4, f: 1, d: 3, countermeasure: '盲板リスト・赤線図面作成・運転側引継書・タグ色分け', types: ['piping', 'tie-in'], priority: 'required' },
+
+  // 高圧ガス・化学物質
+  { cat: '高圧ガス/化学', work: '高圧ガス容器取扱', hazard: '転倒・噴出・容器圧損', s: 4, f: 2, d: 3, countermeasure: '転倒防止チェーン・キャップ装着搬送・温度40℃以下管理', types: ['common', 'equipment'], priority: 'recommended' },
+  { cat: '高圧ガス/化学', work: '特定化学物質取扱', hazard: '吸入暴露・皮膚障害・発がん', s: 4, f: 2, d: 3, countermeasure: '局所排気・送気マスク・特殊健診・作業記録30年保存', types: ['common', 'equipment'], priority: 'required' },
+  { cat: '高圧ガス/化学', work: '有機溶剤取扱（第1-3種）', hazard: '中毒・引火・爆発', s: 3, f: 3, d: 2, countermeasure: '有機溶剤主任者選任・換気・防爆電気機器・MSDS現場掲示', types: ['common'], priority: 'recommended' },
+  { cat: '高圧ガス/化学', work: '酸欠危険場所立入', hazard: '酸欠・硫化水素中毒', s: 4, f: 1, d: 4, countermeasure: '酸欠主任者選任・連続測定・換気・退避経路確保', types: ['common', 'piping'], priority: 'required' },
+  { cat: '高圧ガス/化学', work: '圧力容器開放点検', hazard: '残圧・有害ガス・突沸', s: 4, f: 2, d: 3, countermeasure: '冷却完了確認・大気開放後ガス測定・段階開放手順', types: ['equipment', 'piping'], priority: 'required' },
+
+  // ----- 新規追加 12 項目（諮問結果統合） -----
+  { cat: '制御盤', work: '制御電源残（AC100V/DC24V/UPS/非常電源）', hazard: '主電源遮断後の補助電源活線・誤通電による感電', s: 4, f: 2, d: 4, countermeasure: '電源系統図3系統確認・全電源 LOTO・検電器で全点測定', types: ['control-panel'], priority: 'required' },
+  { cat: '制御盤', work: '盤内コンデンサ残留電荷', hazard: '平滑コンデンサ・サージアブソーバ蓄電による感電・直流アーク', s: 3, f: 2, d: 3, countermeasure: '電源遮断後5分以上放電待機・放電抵抗確認・残電圧測定', types: ['control-panel', 'dcs'], priority: 'required' },
+  { cat: '制御盤/DCS', work: '通信線（FF/PROFIBUS/Ethernet）抜線', hazard: '抜線時の他制御系フェールセーフ動作・隣接プラント緊急停止', s: 3, f: 1, d: 3, countermeasure: 'インタロック影響事前調査・運転側立会・通信切替手順書', types: ['dcs', 'control-panel'], priority: 'required' },
+  { cat: 'DCS', work: 'DCSカットオーバー誤操作', hazard: 'I/O点誤接続・パラメータ移行ミス・隣接プラントへの誤信号', s: 4, f: 2, d: 3, countermeasure: 'Parallel Run戦略・FAT/SAT・ループチェック2名サイン・ロールバック手順', types: ['dcs'], priority: 'required' },
+  { cat: 'DCS', work: 'パラメータ移行・FAT/SAT検証', hazard: 'PID整定値・アラーム設定移行ミス・トレンド設定漏れ', s: 3, f: 2, d: 2, countermeasure: 'スクリプト移行＋目視照合・運転側パラメータレビュー・試運転24h監視', types: ['dcs'], priority: 'recommended' },
+  { cat: '共通', work: '隣接運転系への影響（interlock解除波及）', hazard: '撤去対象の解除が他設備のインタロック源だった・緊急停止連鎖', s: 4, f: 1, d: 4, countermeasure: 'インタロック系統図確認・運転側影響レビュー・段階解除手順', types: ['common'], priority: 'required' },
+  { cat: 'ケーブル', work: '既設活線誤切断', hazard: 'ラック上の運転中ケーブル誤切断・感電・プラント停止', s: 4, f: 2, d: 4, countermeasure: '図面＋タグ照合＋信号注入器3手段・運転側立会・1本ずつ切断', types: ['cable'], priority: 'required' },
+  { cat: 'ケーブル', work: 'ケーブル経路追跡不足', hazard: '通信線・制御線の他系統巻添え・残留誘導電圧', s: 3, f: 2, d: 3, countermeasure: '最新Rev図面入手・タグ照合・パルス信号注入・接地短絡器具', types: ['cable'], priority: 'required' },
+  { cat: '配管/タイイン', work: 'タイイン時の隣接ライン誤開放', hazard: 'ブラインド対象誤りで隣接活管開放・薬液噴出', s: 4, f: 1, d: 3, countermeasure: '盲板リスト現場照合・運転側立会・タグ色分け・1工程1ブラインド', types: ['piping', 'tie-in'], priority: 'required' },
+  { cat: 'モーター', work: 'モーター芯出し・銘板vs実重量乖離', hazard: '芯出し不良による異常振動・軸折損／銘板重量過小評価でクレーン能力不足', s: 3, f: 2, d: 2, countermeasure: 'ダイヤルゲージ／レーザアライナで0.05mm以下・実重量実測・クレーン能力余裕30%', types: ['motor', 'equipment'], priority: 'recommended' },
+  { cat: 'モーター', work: 'モーター絶縁試験（高電圧印加）', hazard: '試験中の誘起電圧による感電・絶縁破壊によるアーク', s: 3, f: 2, d: 3, countermeasure: '500V/1000V メガー使用・試験区画立入禁止・試験後放電・1MΩ以上判定', types: ['motor'], priority: 'recommended' },
+  { cat: '共通', work: '静電気着火（可燃性雰囲気の切断作業）', hazard: '可燃性ガス残・配管樹脂ライニング摩擦帯電・スパーク', s: 4, f: 1, d: 3, countermeasure: 'Cold Cutting選択・等電位ボンディング・湿潤化・LEL測定', types: ['common', 'piping'], priority: 'recommended' },
+];
+
+function riskClass(r) {
+  if (r <= 12) return 'risk-low';
+  if (r <= 24) return 'risk-mid';
+  if (r <= 40) return 'risk-high';
+  return 'risk-critical';
+}
+
+function renderTypeBadges(types) {
+  return (types || []).map(t => {
+    const meta = PROJECT_TYPES[t];
+    if (!meta) return '';
+    return `<span class="type-tag" title="${meta.label}">${meta.short}</span>`;
+  }).join('');
+}
+
+function renderPriorityBadge(priority) {
+  const label = PRIORITY_LABEL[priority] || '推奨';
+  return `<span class="priority-badge ${priority}">${label}</span>`;
+}
+
+function renderRA() {
+  const body = document.getElementById('raBody');
+  body.innerHTML = RA_DATA.map((row, i) => {
+    const typesStr = (row.types || ['common']).join(',');
+    const priority = row.priority || 'recommended';
+    return `
+    <tr data-idx="${i}" data-types="${typesStr}" data-priority="${priority}" class="priority-${priority}">
+      <td class="cat">${row.cat}</td>
+      <td>${renderPriorityBadge(priority)}${row.work}</td>
+      <td>${renderTypeBadges(row.types)}</td>
+      <td>${row.hazard}</td>
+      <td><input type="range" min="1" max="4" value="${row.s}" data-field="s" data-idx="${i}"><div class="num" id="s-${i}">${row.s}</div></td>
+      <td><input type="range" min="1" max="4" value="${row.f}" data-field="f" data-idx="${i}"><div class="num" id="f-${i}">${row.f}</div></td>
+      <td><input type="range" min="1" max="4" value="${row.d}" data-field="d" data-idx="${i}"><div class="num" id="d-${i}">${row.d}</div></td>
+      <td class="num ${riskClass(row.s * row.f * row.d)}" id="r-${i}">${row.s * row.f * row.d}</td>
+      <td>${row.countermeasure}</td>
+    </tr>
+  `;
+  }).join('');
+
+  body.querySelectorAll('input[type="range"]').forEach(input => {
+    input.addEventListener('input', e => {
+      const idx = +e.target.dataset.idx;
+      const field = e.target.dataset.field;
+      RA_DATA[idx][field] = +e.target.value;
+      document.getElementById(`${field}-${idx}`).textContent = e.target.value;
+      const r = RA_DATA[idx].s * RA_DATA[idx].f * RA_DATA[idx].d;
+      const cell = document.getElementById(`r-${idx}`);
+      cell.textContent = r;
+      cell.className = `num ${riskClass(r)}`;
+      saveRA();
+    });
+  });
+  applyFilter();
+}
+
+function resetRA() {
+  if (!confirm('全てのS/F/Dスライダを初期値に戻します。よろしいですか？')) return;
+  localStorage.removeItem(raKey());
+  location.reload();
+}
+
+function raKey() {
+  return 'ra-' + (document.getElementById('projectName').value || 'default');
+}
+
+function saveRA() {
+  localStorage.setItem(raKey(), JSON.stringify(RA_DATA.map(r => ({ s: r.s, f: r.f, d: r.d }))));
+}
+
+function loadRA() {
+  const saved = localStorage.getItem(raKey());
+  if (!saved) return;
+  try {
+    const arr = JSON.parse(saved);
+    arr.forEach((v, i) => {
+      if (RA_DATA[i]) {
+        RA_DATA[i].s = v.s;
+        RA_DATA[i].f = v.f;
+        RA_DATA[i].d = v.d;
+      }
+    });
+  } catch (e) { console.warn('RA load failed', e); }
+}
+
+// ===========================
+// データ定義: チェックリスト
+// ===========================
+const CHECK_PRE = [
+  // 既存 12項目（types/priority タグ付与）
+  { text: '図面確認（PID／単線結線図／配管アイソメ／機器配置図）の最新版入手', ref: '工事計画', types: ['common'], priority: 'required' },
+  { text: '関連配管・配線の追跡完了（上流／下流／分岐／予備系）', ref: '残存エネルギー', types: ['common'], priority: 'required' },
+  { text: '残存エネルギー一覧の作成（圧力・電気・熱・化学・位置）', ref: 'ガイドライン 第2節', types: ['common'], priority: 'required' },
+  { text: '隣接設備への影響評価（運転中ユニット・共用配管）', ref: '工事計画', types: ['common'], priority: 'required' },
+  { text: '労基署届出（機械等設置届・特定元方事業者）', ref: '安衛則 第36条', types: ['common'], priority: 'required' },
+  { text: '消防／高圧ガス／PCB等の法定届出・許可確認', ref: '消防法／高圧法', types: ['common', 'equipment'], priority: 'required' },
+  { text: '廃棄物分類計画（産廃／特管／PCB／石綿／SF6）', ref: '廃棄物処理法', types: ['common'], priority: 'required' },
+  { text: '作業届・作業許可書（火気・酸欠・高所）の取得', ref: '安衛則', types: ['common'], priority: 'required' },
+  { text: 'TBM-KYミーティング実施・参加者全員サイン', ref: 'ガイドライン 第4節', types: ['common'], priority: 'required' },
+  { text: '関係先連絡（運転課／隣接ユニット／保全／電力会社）', ref: '社内手順', types: ['common'], priority: 'required' },
+  { text: '緊急時対応計画（避難経路・初期消火・通報先）の周知', ref: '安衛則 第642条', types: ['common'], priority: 'required' },
+  { text: '協力会社・作業員の特別教育修了確認', ref: '安衛則 第36条', types: ['common'], priority: 'required' },
+
+  // 新規追加 11項目
+  { text: 'MOC（変更管理）番号取得・変更管理レビュー完了', ref: 'CCPS RBPS', types: ['equipment', 'dcs', 'control-panel', 'piping'], priority: 'required' },
+  { text: 'DCSバックアップ取得（現行ロジック・パラメータ）＋ロールバック手順書', ref: 'PSSR', types: ['dcs'], priority: 'required' },
+  { text: 'カットオーバー戦略の事前合意（Big Bang / Phased / Parallel Run）', ref: 'PSSR', types: ['dcs'], priority: 'required' },
+  { text: 'ケーブル経路の他系統巻き込み事前マーキング（信号注入器・タグ照合）', ref: '社内手順', types: ['cable'], priority: 'required' },
+  { text: '盲板（ブラインド）番号管理表の作成・取付/撤去照合欄', ref: '配管解体手順', types: ['piping', 'tie-in'], priority: 'recommended' },
+  { text: '制御盤電源系統3系統確認（AC100V/DC24V/UPS/非常電源/予備系）', ref: '電技解釈', types: ['control-panel'], priority: 'required' },
+  { text: '通信線抜線時のインタロック影響レビュー（隣接プラント波及）', ref: 'CCPS RBPS', types: ['dcs', 'control-panel'], priority: 'required' },
+  { text: '重量物銘板重量vs実重量チェック（残油・触媒・保温材を含む）', ref: 'クレーン取扱', types: ['motor', 'equipment'], priority: 'recommended' },
+  { text: '撤去前現品写真3方向（復旧用・before写真）', ref: '工事記録', types: ['common'], priority: 'reference' },
+  { text: '協力会社職長への口頭読み合わせ実施（日時記録）', ref: 'TBM-KY', types: ['common'], priority: 'recommended' },
+  { text: 'PCB/石綿事前分析結果の確認（1990年以前設備）', ref: 'PCB特措法／石綿則', types: ['equipment', 'control-panel', 'piping'], priority: 'required' },
+  { text: '工作物石綿事前調査済証（2026/1/1法改正・有資格者調査＋電子報告受付番号）', ref: '石綿則改正2026', types: ['equipment', 'control-panel', 'piping', 'cable'], priority: 'required' },
+  { text: 'Arc Flash 計算結果（IEEE 1584）・PPE Category 確認・盤ラベル撮影', ref: 'NFPA 70E', types: ['control-panel', 'dcs', 'cable', 'motor'], priority: 'required' },
+  { text: 'Critical Lift Plan 作成（>75%定格 / >10t / 2台吊り の場合）', ref: 'Hanford HR 1-5', types: ['motor', 'equipment'], priority: 'required' },
+  { text: 'HMI Storyboard Workshop 実施（operator参加・graphic削減数記録）', ref: 'ISA HP-HMI', types: ['dcs'], priority: 'recommended' },
+  { text: 'ICS Cybersecurity 計画（zone&conduit / firewall / USB禁止 / default password変更）', ref: 'IEC 62443', types: ['dcs'], priority: 'recommended' },
+  { text: 'SIMOPS マップ（同一エリア同時並行作業の相互影響可視化）', ref: 'AIChE CEP', types: ['common'], priority: 'recommended' },
+  { text: 'HAZOP revalidation（brownfield modification時の安全性再検証）', ref: 'CCPS RBPS', types: ['equipment', 'dcs', 'control-panel'], priority: 'recommended' },
+];
+
+const CHECK_DAY = [
+  // 既存 15項目（types/priority タグ付与）
+  { text: '元電源遮断＋施錠（LOTO: Lockout/Tagout）', ref: '電技解釈', types: ['common'], priority: 'required' },
+  { text: '札掛け実施（電源／弁／制御／空気源）', ref: 'LOTO', types: ['common'], priority: 'required' },
+  { text: '検電器3点確認（電源前・遮断後・接地後）', ref: '電気作業手順', types: ['common', 'control-panel', 'cable'], priority: 'required' },
+  { text: '残圧抜き完了（圧力計0表示確認・大気開放）', ref: '高圧法', types: ['piping', 'equipment'], priority: 'required' },
+  { text: '残液抜き完了（受け皿・廃液回収）', ref: 'MSDS', types: ['piping', 'equipment'], priority: 'required' },
+  { text: '残ガス置換完了（窒素パージ→大気開放→ガス測定）', ref: '酸欠則', types: ['piping', 'equipment'], priority: 'required' },
+  { text: '残留電荷放電（コンデンサ・ケーブルキャパシタンス）', ref: '電気作業', types: ['control-panel', 'dcs', 'cable'], priority: 'required' },
+  { text: '接地取付（短絡接地器具・等電位）', ref: '電技解釈', types: ['common', 'control-panel', 'cable'], priority: 'required' },
+  { text: '隔離フェンス・立入禁止表示の設置', ref: '安衛則', types: ['common'], priority: 'required' },
+  { text: '火気使用箇所の消火設備・防炎シート配置', ref: '消防法', types: ['common'], priority: 'required' },
+  { text: '局所排気・全体換気の稼働確認', ref: '有機則／特化則', types: ['common'], priority: 'required' },
+  { text: '酸素濃度・有害ガス濃度測定（連続記録）', ref: '酸欠則', types: ['common', 'piping'], priority: 'required' },
+  { text: '個人保護具（PPE）確認: ヘルメット／保護メガネ／安全帯／耐溶剤手袋', ref: 'PPE管理', types: ['common'], priority: 'required' },
+  { text: '監視員（火気・酸欠・高所）の配置と通信手段', ref: '安衛則', types: ['common'], priority: 'required' },
+  { text: 'KY結果の現場掲示・全員認識共有', ref: 'TBM-KY', types: ['common'], priority: 'required' },
+
+  // 新規追加 7項目
+  { text: 'LOTO 責任者写真記録（タグNo./施錠者氏名/施錠日時/解除予定日）', ref: 'LOTO手順', types: ['common'], priority: 'required' },
+  { text: 'N2パージ後 O2/LEL/H2S 測定値記入（数値必須・口頭NG・O2≧18%）', ref: '酸欠則', types: ['piping', 'equipment', 'common'], priority: 'required' },
+  { text: 'DCSループチェック完了サイン（施工＋運転 2名サイン）', ref: 'PSSR', types: ['dcs'], priority: 'required' },
+  { text: '隣接運転系オペレータ立会（切替時・通信線抜線時）', ref: '社内手順', types: ['dcs', 'equipment', 'control-panel'], priority: 'required' },
+  { text: '制御盤コンデンサ放電待機5分以上＋残電圧測定', ref: '電気作業', types: ['control-panel', 'dcs'], priority: 'required' },
+  { text: '静電気対策確認（等電位ボンディング・湿潤化・可燃性雰囲気LEL測定）', ref: '消防法／RAGAGEP', types: ['common', 'piping'], priority: 'recommended' },
+  { text: 'モーター絶縁試験区画立入禁止＋試験後放電確認', ref: '電技解釈', types: ['motor'], priority: 'recommended' },
+  { text: 'Arc Flash Boundary 内作業時の PPE Category 適合確認（cal/cm² 計算値≧PPE性能値）', ref: 'NFPA 70E', types: ['control-panel', 'cable', 'motor'], priority: 'required' },
+  { text: '4ガス測定（O2/LEL/H2S/CO）定期記録（入域時＋作業中30分毎）', ref: 'OSHA 1910.146', types: ['common', 'piping', 'equipment'], priority: 'required' },
+  { text: 'Critical Lift 実施判定（地耐力・風速制限・swing exclusion zone・signaler配置）', ref: 'Hanford HR 1-5', types: ['motor', 'equipment'], priority: 'recommended' },
+];
+
+const CHECK_POST = [
+  // 既存 12項目（types/priority タグ付与）
+  { text: '残置範囲の盲板・絶縁処置完了（赤線図面と一致確認）', ref: 'ガイドライン 第2節', types: ['piping', 'tie-in', 'common'], priority: 'required' },
+  { text: '養生・防食処置（雨水・粉じん侵入防止）', ref: '工事仕様', types: ['common'], priority: 'recommended' },
+  { text: '復旧範囲の識別タグ取付（電源側／配管側）', ref: '社内手順', types: ['common'], priority: 'recommended' },
+  { text: '廃棄物マニフェスト発行（A-E票回収管理）', ref: '廃棄物処理法', types: ['common'], priority: 'required' },
+  { text: 'PCB機器の特管廃棄物登録更新・JESCO引渡し', ref: 'PCB特措法', types: ['equipment', 'control-panel'], priority: 'required' },
+  { text: 'アスベスト処分報告書の提出', ref: '石綿則', types: ['piping', 'equipment'], priority: 'required' },
+  { text: 'SF6回収量の記録・フロン法に基づく報告', ref: 'フロン排出抑制法', types: ['control-panel', 'equipment'], priority: 'required' },
+  { text: '図面更新依頼（赤線提出 → CAD反映）', ref: '社内手順', types: ['common'], priority: 'recommended' },
+  { text: '工事完了報告書・写真記録の整理', ref: '工事記録', types: ['common'], priority: 'recommended' },
+  { text: '運転課への引継ぎ（残置配管・盲板リスト・操作変更点）', ref: '引継書', types: ['common'], priority: 'required' },
+  { text: 'ヒヤリハット・改善提案の収集・水平展開', ref: '安全活動', types: ['common'], priority: 'reference' },
+  { text: 'RA見直し（実績との差異）・次回テンプレ反映', ref: 'PDCA', types: ['common'], priority: 'reference' },
+
+  // 新規追加 5項目
+  { text: '作業後の工具員数確認（容器内残留防止ポカヨケ）', ref: 'TPS poka-yoke', types: ['common'], priority: 'required' },
+  { text: '戻り工事工程・養生・盲板施工責任分界の確認', ref: '工事仕様', types: ['piping', 'equipment'], priority: 'required' },
+  { text: 'DCSロジック検証完了・試運転24時間監視記録', ref: 'PSSR', types: ['dcs'], priority: 'required' },
+  { text: 'PCB/石綿/特管廃棄物マニフェスト確定（A-E票揃い）', ref: '廃棄物処理法', types: ['equipment', 'control-panel', 'piping'], priority: 'required' },
+  { text: 'PSSR（Pre-Startup Safety Review）完了・運転再開承認', ref: 'CCPS RBPS', types: ['equipment', 'dcs'], priority: 'required' },
+];
+
+function checkKey() {
+  return 'check-' + (document.getElementById('projectName').value || 'default');
+}
+
+function loadChecks() {
+  const saved = localStorage.getItem(checkKey());
+  if (!saved) return {};
+  try { return JSON.parse(saved); } catch (e) { return {}; }
+}
+
+function saveChecks(state) {
+  localStorage.setItem(checkKey(), JSON.stringify(state));
+}
+
+function renderChecklist() {
+  const state = loadChecks();
+  const sections = [
+    { id: 'check-pre', data: CHECK_PRE, prefix: 'pre' },
+    { id: 'check-day', data: CHECK_DAY, prefix: 'day' },
+    { id: 'check-post', data: CHECK_POST, prefix: 'post' },
+  ];
+  sections.forEach(sec => {
+    const container = document.getElementById(sec.id);
+    container.innerHTML = sec.data.map((item, i) => {
+      const key = `${sec.prefix}-${i}`;
+      const checked = state[key] ? 'checked' : '';
+      const priority = item.priority || 'recommended';
+      const typesStr = (item.types || ['common']).join(',');
+      const rowCls = `check-row priority-${priority}${state[key] ? ' checked' : ''}`;
+      return `
+        <div class="${rowCls}" data-key="${key}" data-types="${typesStr}" data-priority="${priority}">
+          <input type="checkbox" id="ck-${key}" ${checked}>
+          <label for="ck-${key}">${renderPriorityBadge(priority)}${item.text} ${renderTypeBadges(item.types)}</label>
+          <div class="ref">${item.ref}</div>
+        </div>
+      `;
+    }).join('');
+    container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', e => {
+        const row = e.target.closest('.check-row');
+        const key = row.dataset.key;
+        const st = loadChecks();
+        st[key] = e.target.checked;
+        saveChecks(st);
+        row.classList.toggle('checked', e.target.checked);
+        updateProgress();
+      });
+    });
+  });
+  applyFilter();
+}
+
+function updateProgress() {
+  const state = loadChecks();
+  // 表示中のみカウント（filter考慮）
+  const visibleRows = document.querySelectorAll('.check-row:not(.filtered-out)');
+  let total = 0, done = 0;
+  visibleRows.forEach(row => {
+    total++;
+    if (state[row.dataset.key]) done++;
+  });
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${done} / ${total} 完了（${pct}%）表示中項目のみ`;
+}
+
+function resetChecklist() {
+  if (!confirm('全てのチェックを解除します。よろしいですか？')) return;
+  localStorage.removeItem(checkKey());
+  renderChecklist();
+}
+
+function exportChecklist() {
+  const projectName = document.getElementById('projectName').value || 'unnamed';
+  const data = {
+    project: projectName,
+    date: document.getElementById('projectDate').value,
+    author: document.getElementById('projectAuthor').value,
+    activeTypes: Array.from(activeTypes),
+    activePriorities: Array.from(activePriorities),
+    energySources: document.getElementById('energySources').value,
+    mocNumber: document.getElementById('mocNumber').value,
+    prevDiff: document.getElementById('prevDiff').value,
+    ownerHazards: document.getElementById('ownerHazards').value,
+    drawingPriority: document.getElementById('drawingPriority').value,
+    ra: RA_DATA,
+    checklist: loadChecks(),
+    exported: new Date().toISOString(),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `setsubi-koji-${projectName}-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===========================
+// フィルタロジック
+// ===========================
+let activeTypes = new Set();
+let activePriorities = new Set(['required', 'recommended', 'reference']);
+
+function applyFilter() {
+  const filterRow = (row) => {
+    const types = (row.dataset.types || '').split(',').filter(Boolean);
+    const priority = row.dataset.priority || 'recommended';
+    const typeMatch = types.includes('common') || activeTypes.size === 0 ? types.includes('common') : types.some(t => activeTypes.has(t));
+    // common は常時表示, そうでない場合は activeTypes との交差
+    const isCommon = types.includes('common');
+    const matchType = isCommon || (activeTypes.size > 0 && types.some(t => activeTypes.has(t)));
+    const matchPriority = activePriorities.has(priority);
+    row.classList.toggle('filtered-out', !(matchType && matchPriority));
+  };
+  document.querySelectorAll('#raBody tr').forEach(filterRow);
+  document.querySelectorAll('.check-row').forEach(filterRow);
+  updateFilterSummary();
+  updateProgress();
+}
+
+function updateFilterSummary() {
+  const summary = document.getElementById('filterSummary');
+  const types = Array.from(activeTypes).map(t => PROJECT_TYPES[t]?.label || t);
+  const priorities = Array.from(activePriorities).map(p => PRIORITY_LABEL[p] || p);
+  const visibleHazards = document.querySelectorAll('#raBody tr:not(.filtered-out)').length;
+  const visibleChecks = document.querySelectorAll('.check-row:not(.filtered-out)').length;
+  if (types.length === 0) {
+    summary.innerHTML = `<strong>共通項目のみ表示中</strong>: hazard ${visibleHazards}件 / checklist ${visibleChecks}件（案件タイプを選択すると該当項目が追加表示されます）`;
+  } else {
+    summary.innerHTML = `<strong>選択中</strong>: ${types.join(' + ')} + 共通 / 優先度: ${priorities.join('/')} → hazard <strong>${visibleHazards}件</strong> / checklist <strong>${visibleChecks}件</strong>`;
+  }
+}
+
+function clearTypeFilters() {
+  activeTypes.clear();
+  document.querySelectorAll('.filter-pill[data-type]').forEach(p => p.classList.remove('active'));
+  applyFilter();
+}
+
+function setupFilters() {
+  document.querySelectorAll('.filter-pill[data-type]').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const type = pill.dataset.type;
+      if (activeTypes.has(type)) {
+        activeTypes.delete(type);
+        pill.classList.remove('active');
+      } else {
+        activeTypes.add(type);
+        pill.classList.add('active');
+      }
+      applyFilter();
+    });
+  });
+  document.querySelectorAll('.filter-pill[data-priority]').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const p = pill.dataset.priority;
+      if (activePriorities.has(p)) {
+        activePriorities.delete(p);
+        pill.classList.remove('active');
+      } else {
+        activePriorities.add(p);
+        pill.classList.add('active');
+      }
+      applyFilter();
+    });
+  });
+}
+
+// ===========================
+// タブ切替
+// ===========================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('pane-' + tab.dataset.pane).classList.add('active');
+  });
+});
+
+// ===========================
+// プロジェクト名・記入欄の保存
+// ===========================
+const META_KEY = 'setsubi-meta';
+function loadMeta() {
+  const saved = localStorage.getItem(META_KEY);
+  if (!saved) return;
+  try {
+    const m = JSON.parse(saved);
+    if (m.name) document.getElementById('projectName').value = m.name;
+    if (m.date) document.getElementById('projectDate').value = m.date;
+    if (m.author) document.getElementById('projectAuthor').value = m.author;
+    if (m.energySources !== undefined) document.getElementById('energySources').value = m.energySources;
+    if (m.mocNumber !== undefined) document.getElementById('mocNumber').value = m.mocNumber;
+    if (m.prevDiff !== undefined) document.getElementById('prevDiff').value = m.prevDiff;
+    if (m.ownerHazards !== undefined) document.getElementById('ownerHazards').value = m.ownerHazards;
+    if (m.drawingPriority !== undefined) document.getElementById('drawingPriority').value = m.drawingPriority;
+  } catch (e) {}
+}
+function saveMeta() {
+  localStorage.setItem(META_KEY, JSON.stringify({
+    name: document.getElementById('projectName').value,
+    date: document.getElementById('projectDate').value,
+    author: document.getElementById('projectAuthor').value,
+    energySources: document.getElementById('energySources').value,
+    mocNumber: document.getElementById('mocNumber').value,
+    prevDiff: document.getElementById('prevDiff').value,
+    ownerHazards: document.getElementById('ownerHazards').value,
+    drawingPriority: document.getElementById('drawingPriority').value,
+  }));
+}
+
+['projectName', 'projectDate', 'projectAuthor', 'energySources', 'mocNumber', 'prevDiff', 'ownerHazards', 'drawingPriority'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('input', () => {
+    saveMeta();
+    if (id === 'projectName') {
+      loadRA();
+      renderRA();
+      renderChecklist();
+    }
+  });
+});
+
+// 初期化
+loadMeta();
+loadRA();
+renderRA();
+renderChecklist();
+setupFilters();
+applyFilter();
+if (!document.getElementById('projectDate').value) {
+  document.getElementById('projectDate').value = new Date().toISOString().slice(0, 10);
+}
+</script>
+</body>
+</html>

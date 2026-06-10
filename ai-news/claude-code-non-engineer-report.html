@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>非エンジニアのClaude Code活用 2026調査レポート</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    :root {
+      --purple: #7c3aed;
+      --purple-light: #a855f7;
+      --purple-glow: rgba(124,58,237,0.4);
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6,182,212,0.3);
+      --bg: #050508;
+      --surface: rgba(255,255,255,0.04);
+      --surface-hover: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(168,85,247,0.5);
+      --text: #f0f0f5;
+      --text-muted: #8888aa;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ─── Background grid ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+
+    /* ─── Header ─── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      padding: 16px 0;
+      background: rgba(5,5,8,0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    header .container { display: flex; align-items: center; justify-content: space-between; }
+
+    .logo {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      background: linear-gradient(90deg, var(--purple-light), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    nav { display: flex; gap: 32px; }
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      transition: color 0.2s;
+      position: relative;
+    }
+    nav a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: var(--purple-light);
+      transition: width 0.3s;
+    }
+    nav a:hover { color: var(--text); }
+    nav a:hover::after { width: 100%; }
+
+    /* ─── Scroll reveal ─── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── Hero ─── */
+    #hero {
+      position: relative;
+      padding: 130px 0 110px;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    /* animated blobs */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+      animation: drift 14s ease-in-out infinite alternate;
+    }
+    .blob-1 { width: 500px; height: 500px; background: var(--purple); top: -150px; left: -100px; animation-delay: 0s; }
+    .blob-2 { width: 400px; height: 400px; background: var(--cyan); top: -80px; right: -80px; animation-delay: -5s; }
+    .blob-3 { width: 300px; height: 300px; background: #ec4899; bottom: -100px; left: 50%; animation-delay: -9s; }
+
+    @keyframes drift {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, 30px) scale(1.08); }
+    }
+
+    .hero-inner { display: flex; flex-direction: column; align-items: center; gap: 32px; position: relative; z-index: 1; }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(168,85,247,0.3);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--purple-light);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hero-title {
+      font-size: 60px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #fff 30%, var(--purple-light) 70%, var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 17px;
+      color: var(--text-muted);
+      max-width: 520px;
+      line-height: 1.7;
+    }
+
+    .hero-badges { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+
+    .hero-badge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px 36px;
+      text-align: center;
+      min-width: 170px;
+      backdrop-filter: blur(12px);
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+    }
+    .hero-badge:hover {
+      border-color: var(--border-hover);
+      box-shadow: 0 0 30px var(--purple-glow);
+      transform: translateY(-4px);
+    }
+
+    .badge-number {
+      display: block;
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      background: linear-gradient(135deg, var(--purple-light), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+    }
+    .badge-label { display: block; font-size: 14px; color: var(--text); font-weight: 600; margin-top: 4px; }
+    .badge-desc { display: block; font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+    /* ─── Section base ─── */
+    section { padding: 96px 0; position: relative; z-index: 1; }
+
+    .section-header { margin-bottom: 52px; }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--purple-light);
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .section-title em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--purple-light), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ─── Divider ─── */
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 0;
+    }
+
+    /* ─── Table section ─── */
+    .table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid var(--border); }
+
+    table { width: 100%; border-collapse: collapse; }
+    table thead { background: rgba(124,58,237,0.1); }
+    table th {
+      padding: 16px 20px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    table td { padding: 16px 20px; border-top: 1px solid var(--border); font-size: 14px; }
+    table tbody tr { transition: background 0.2s; }
+    table tbody tr:hover { background: var(--surface-hover); }
+
+    .rate-cell { display: flex; align-items: center; gap: 12px; }
+    .rate-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; min-width: 80px; }
+    .rate-bar {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--purple), var(--cyan));
+      width: 0;
+      transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+    }
+    .rate-num { font-weight: 700; font-size: 15px; color: var(--purple-light); min-width: 38px; text-align: right; }
+
+    /* ─── Vibe section ─── */
+    .vibe-description {
+      font-size: 17px;
+      color: var(--text-muted);
+      line-height: 1.85;
+      margin-bottom: 40px;
+      max-width: 780px;
+    }
+    .vibe-description strong { color: var(--text); }
+
+    .vibe-comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .compare-box {
+      border-radius: 16px;
+      padding: 32px;
+      backdrop-filter: blur(8px);
+      transition: transform 0.3s;
+    }
+    .compare-box:hover { transform: translateY(-2px); }
+    .compare-ng {
+      background: rgba(239,68,68,0.06);
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+    .compare-ok {
+      background: rgba(124,58,237,0.08);
+      border: 1px solid rgba(168,85,247,0.3);
+      box-shadow: 0 0 40px rgba(124,58,237,0.1);
+    }
+
+    .compare-label { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .compare-icon { font-size: 20px; }
+    .compare-tag { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+    .ng-tag { color: #f87171; }
+    .ok-tag { color: var(--purple-light); }
+
+    .compare-text {
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.7;
+      margin-bottom: 12px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px;
+      font-style: italic;
+    }
+    .compare-note { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+    /* ─── Cards ─── */
+    .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+    .use-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      transition: all 0.35s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .use-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      padding: 1px;
+      background: linear-gradient(135deg, var(--purple-light), var(--cyan));
+      border-radius: 16px;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      pointer-events: none;
+    }
+    .use-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-6px);
+      box-shadow: 0 20px 60px rgba(124,58,237,0.2);
+    }
+    .use-card:hover::before { opacity: 1; }
+
+    .card-icon { font-size: 36px; margin-bottom: 14px; display: block; position: relative; }
+    .card-role {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      position: relative;
+    }
+    .card-detail { font-size: 13px; color: var(--text-muted); line-height: 1.75; position: relative; }
+
+    /* ─── Sources ─── */
+    .sources-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .sources-col {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      backdrop-filter: blur(8px);
+    }
+    .sources-lang-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--purple-light);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sources-list { list-style: none; display: flex; flex-direction: column; gap: 0; }
+    .sources-list li a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13.5px;
+      line-height: 1.5;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .sources-list li:last-child a { border-bottom: none; }
+    .sources-list li a::before {
+      content: '→';
+      font-size: 11px;
+      color: var(--purple-light);
+      opacity: 0;
+      transform: translateX(-4px);
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .sources-list li a:hover { color: var(--text); padding-left: 4px; }
+    .sources-list li a:hover::before { opacity: 1; transform: translateX(0); }
+
+    /* ─── Footer ─── */
+    footer {
+      padding: 48px 0;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+    }
+    .footer-logo {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, var(--purple-light), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    .footer-text { font-size: 13px; color: var(--text-muted); }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 768px) {
+      .hero-title { font-size: 38px; }
+      .hero-badges { flex-direction: column; align-items: center; }
+      .section-title { font-size: 28px; }
+      nav { gap: 20px; }
+      nav a { font-size: 12px; }
+      .vibe-comparison { grid-template-columns: 1fr; }
+      .cards-grid { grid-template-columns: 1fr; }
+      .sources-columns { grid-template-columns: 1fr; }
+      table th, table td { padding: 12px 14px; font-size: 12px; }
+    }
+
+    /* ── Haiku additions ── */
+    @keyframes shimmer {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .hero-badge { position: relative; overflow: hidden; }
+    .hero-badge::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+      animation: shimmer 3s infinite;
+    }
+    @keyframes pulse-glow {
+      0%   { box-shadow: 0 0 8px rgba(168,85,247,0.4); }
+      100% { box-shadow: 0 0 24px rgba(168,85,247,0.65); }
+    }
+    .hero-tag { animation: pulse-glow 2s infinite alternate; }
+    table tbody tr td:first-child {
+      border-left: 2px solid transparent;
+      transition: border-left-color 0.3s ease;
+    }
+    table tbody tr:hover td:first-child { border-left-color: var(--purple-light); }
+    .sources-list li a:hover { text-shadow: 0 0 8px rgba(168,85,247,0.5); }
+    .section-label::before { content: '── '; color: var(--purple-light); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="logo">CLAUDE CODE REPORT 2026</div>
+    <nav>
+      <a href="#table">データ</a>
+      <a href="#vibe">Vibe Coding</a>
+      <a href="#cards">活用例</a>
+      <a href="#sources">資料</a>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="container">
+    <div class="hero-inner">
+      <div class="hero-tag">✦ 2026年調査レポート</div>
+      <h1 class="hero-title">非エンジニアの<br>Claude Code活用</h1>
+      <p class="hero-subtitle">プログラミング不要。AIと働く時代の到来。<br>業務時間を劇的に削減した実態を調査した。</p>
+      <div class="hero-badges">
+        <div class="hero-badge">
+          <span class="badge-number" data-target="93">0</span><span class="badge-number" style="font-size:36px">%</span>
+          <span class="badge-label">時間削減</span>
+          <span class="badge-desc">Excel集計業務の最大削減率</span>
+        </div>
+        <div class="hero-badge">
+          <span class="badge-number" data-target="34">0</span><span class="badge-number" style="font-size:36px">%</span>
+          <span class="badge-label">が非エンジニア起業</span>
+          <span class="badge-desc">2026 Q1 新規マイクロSaaS</span>
+        </div>
+        <div class="hero-badge">
+          <span class="badge-number">$50K</span>
+          <span class="badge-label">月収超も</span>
+          <span class="badge-desc">非エンジニア起業家の月収上限</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- TABLE -->
+<section id="table">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">Evidence</div>
+      <h2 class="section-title">業務別 <em>時間削減実績</em></h2>
+    </div>
+    <div class="table-wrapper reveal">
+      <table>
+        <thead>
+          <tr>
+            <th>職種</th>
+            <th>業務</th>
+            <th>削減前</th>
+            <th>削減後</th>
+            <th>削減率</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>製造業 営業部</td>
+            <td>Excel月次集計</td>
+            <td>3.2時間</td>
+            <td>14分</td>
+            <td><div class="rate-cell"><div class="rate-bar-wrap"><div class="rate-bar" data-rate="93"></div></div><span class="rate-num">93%</span></div></td>
+          </tr>
+          <tr>
+            <td>経理部門</td>
+            <td>PDF請求書一覧化</td>
+            <td>4.5時間</td>
+            <td>35分</td>
+            <td><div class="rate-cell"><div class="rate-bar-wrap"><div class="rate-bar" data-rate="87"></div></div><span class="rate-num">87%</span></div></td>
+          </tr>
+          <tr>
+            <td>EC会社 CS</td>
+            <td>返信作成</td>
+            <td>15分/通</td>
+            <td>3分/通</td>
+            <td><div class="rate-cell"><div class="rate-bar-wrap"><div class="rate-bar" data-rate="80"></div></div><span class="rate-num">80%</span></div></td>
+          </tr>
+          <tr>
+            <td>小売業 営業チーム</td>
+            <td>週次報告書</td>
+            <td>8時間</td>
+            <td>45分</td>
+            <td><div class="rate-cell"><div class="rate-bar-wrap"><div class="rate-bar" data-rate="91"></div></div><span class="rate-num">91%</span></div></td>
+          </tr>
+          <tr>
+            <td>経営企画部</td>
+            <td>月次レポート</td>
+            <td>4.2時間</td>
+            <td>35分</td>
+            <td><div class="rate-cell"><div class="rate-bar-wrap"><div class="rate-bar" data-rate="86"></div></div><span class="rate-num">86%</span></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- VIBE CODING -->
+<section id="vibe">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">Trend</div>
+      <h2 class="section-title"><em>Vibe Coding</em> とは</h2>
+    </div>
+    <p class="vibe-description reveal">
+      コードを一行も書かずに「やりたいこと」を日本語でAIに伝えるだけで、アプリや自動化ツールを作り上げる開発手法。
+      従来のプログラミング知識は不要。必要なのは「何を実現したいか」を言語化する力だけ。
+      2026年Q1時点で、新規マイクロSaaSの<strong>34%が非エンジニアによるVibe Coding製</strong>という統計が報告されており、
+      ビジネスパーソンの間で急速に普及している。
+    </p>
+    <div class="vibe-comparison reveal">
+      <div class="compare-box compare-ng">
+        <div class="compare-label">
+          <span class="compare-icon">❌</span>
+          <span class="compare-tag ng-tag">NG — HOW指定（技術用語で命令）</span>
+        </div>
+        <p class="compare-text">「useStateでユーザーログイン状態を管理して、APIレスポンスをXXXの形式でマッピングして」</p>
+        <p class="compare-note">実装方法を指示しても、AIが意図を誤解しやすく、望む結果になりにくい。</p>
+      </div>
+      <div class="compare-box compare-ok">
+        <div class="compare-label">
+          <span class="compare-icon">✅</span>
+          <span class="compare-tag ok-tag">OK — WHAT指定（目的・ゴールで伝える）</span>
+        </div>
+        <p class="compare-text">「3日間ログインしていないユーザー一覧を見て、ワンクリックでメール送れるダッシュボードが欲しい」</p>
+        <p class="compare-note">何を達成したいかを具体的に伝えると、AIが最適な実装を選んで完成させてくれる。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- CARDS -->
+<section id="cards">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">Use Cases</div>
+      <h2 class="section-title">職種別 <em>活用パターン</em></h2>
+    </div>
+    <div class="cards-grid">
+      <div class="use-card reveal">
+        <span class="card-icon">📊</span>
+        <h3 class="card-role">営業</h3>
+        <p class="card-detail">Excelデータの自動集計・グラフ化、週次報告書のドラフト自動生成、顧客リストの整理・重複除去までノーコードで完結。</p>
+      </div>
+      <div class="use-card reveal">
+        <span class="card-icon">💰</span>
+        <h3 class="card-role">経理</h3>
+        <p class="card-detail">PDFの請求書を一括テキスト化・一覧表に変換。月次集計レポートの自動作成で転記ミスをゼロに近づける。</p>
+      </div>
+      <div class="use-card reveal">
+        <span class="card-icon">🎯</span>
+        <h3 class="card-role">マーケター</h3>
+        <p class="card-detail">VS Code上でSEO記事のアウトライン設計・リサーチ・執筆を一気通貫。競合調査レポートも自動整形で即納品。</p>
+      </div>
+      <div class="use-card reveal">
+        <span class="card-icon">🤝</span>
+        <h3 class="card-role">CS担当</h3>
+        <p class="card-detail">問い合わせ内容を自動分類・要約し、状況別の返信テンプレートを生成。対応時間を最大80%短縮した事例も。</p>
+      </div>
+      <div class="use-card reveal">
+        <span class="card-icon">👔</span>
+        <h3 class="card-role">経営者</h3>
+        <p class="card-detail">経営判断をAIと協働しながら高速化。繰り返し発生する集計・資料作成・会議サマリーは完全に丸投げ可能。</p>
+      </div>
+      <div class="use-card reveal">
+        <span class="card-icon">🚀</span>
+        <h3 class="card-role">非エンジニア起業家</h3>
+        <p class="card-detail">Vibe Codingでアプリをゼロから開発し、月収$5K〜$50KのマイクロSaaSを単独リリース。2026年最も注目の起業スタイル。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- SOURCES -->
+<section id="sources">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">References</div>
+      <h2 class="section-title">参考<em>ソース集</em></h2>
+    </div>
+    <div class="sources-columns reveal">
+      <div class="sources-col">
+        <h3 class="sources-lang-title">🇯🇵 日本語ソース</h3>
+        <ul class="sources-list">
+          <li><a href="https://uravation.com/media/claude-code-non-engineer-business-scenes-2026/" target="_blank" rel="noopener">非エンジニア完全ガイド（Uravation）</a></li>
+          <li><a href="https://qiita.com/ussu_ussu_ussu/items/33ba41fadad02215aede" target="_blank" rel="noopener">Qiita: 1ヶ月でできたこと（Flutter）</a></li>
+          <li><a href="https://note.com/kajiken0630/n/nc0cb92bc080f" target="_blank" rel="noopener">全員が使うべきツールに（梶谷健人）</a></li>
+          <li><a href="https://start-link.jp/hubspot-ai/ai/claude-code-practice/claude-code-non-engineer-use-cases" target="_blank" rel="noopener">StartLink: 業務自動化事例</a></li>
+          <li><a href="https://reverve-consulting.com/claude-code-for-executives/" target="_blank" rel="noopener">経営者のためのClaude Code入門</a></li>
+          <li><a href="https://xtrend.nikkei.com/atcl/contents/18/00791/00014/" target="_blank" rel="noopener">日経Xtrend: 実務で使う超実践法</a></li>
+        </ul>
+      </div>
+      <div class="sources-col">
+        <h3 class="sources-lang-title">🌐 英語ソース</h3>
+        <ul class="sources-list">
+          <li><a href="https://alexlieberman.com/claude-code-beyond-engineering-11-powerful-use-cases-from-ultra-users/" target="_blank" rel="noopener">11 Powerful Use Cases（Alex Lieberman）</a></li>
+          <li><a href="https://departmentofproduct.substack.com/p/how-to-use-claude-code-for-non-engineering" target="_blank" rel="noopener">Non-engineering use cases（Department of Product）</a></li>
+          <li><a href="https://www.lennysnewsletter.com/p/everyone-should-be-using-claude-code" target="_blank" rel="noopener">Lenny's Newsletter: Everyone should use Claude Code</a></li>
+          <li><a href="https://stormy.ai/blog/claude-code-startup-playbook-2026" target="_blank" rel="noopener">Non-Technical Founder Startup Guide</a></li>
+          <li><a href="https://www.amazon.com/Vibe-Coding-Non-Developers-Playbook-Building/dp/B0GTZ13CWX" target="_blank" rel="noopener">Vibe Coding Book（Amazon）</a></li>
+          <li><a href="https://www.producttalk.org/claude-code-what-it-is-and-how-its-different/" target="_blank" rel="noopener">Product Talk: Why non-technical should use it</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-logo">Claude Code Report</div>
+    <p class="footer-text">2026年4月 調査レポート &nbsp;·&nbsp; by kfurufuru</p>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Count-up animation
+  function countUp(el, target, duration = 1800) {
+    let start = 0;
+    const step = (timestamp) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.floor(ease * target);
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  const counterObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        countUp(el, parseInt(el.dataset.target));
+        counterObs.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('[data-target]').forEach(el => counterObs.observe(el));
+
+  // Rate bars
+  const barObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.rate-bar').forEach(bar => {
+          setTimeout(() => { bar.style.width = bar.dataset.rate + '%'; }, 200);
+        });
+        barObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  document.querySelectorAll('.table-wrapper').forEach(el => barObs.observe(el));
+</script>
+
+
+<script>
+// ── Canvas Particles ──
+(function initHeroParticles() {
+  const hero = document.getElementById('hero');
+  if (!hero) return;
+  const canvas = document.createElement('canvas');
+  canvas.id = 'hero-canvas';
+  canvas.style.cssText = 'position:absolute;inset:0;z-index:0;width:100%;height:100%;pointer-events:none;';
+  hero.insertBefore(canvas, hero.firstChild);
+  const ctx = canvas.getContext('2d');
+  let particles = [], animId;
+  function resize() { canvas.width = hero.offsetWidth; canvas.height = hero.offsetHeight; }
+  const COLORS = ['rgba(168,85,247,0.5)', 'rgba(6,182,212,0.4)'];
+  const COUNT = Math.floor(Math.random() * 31) + 50;
+  function mkP() {
+    return { x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      r: Math.random() * 1 + 1, color: COLORS[Math.floor(Math.random() * 2)],
+      vy: -(Math.random() * 0.4 + 0.2), vx: (Math.random() - 0.5) * 0.3,
+      phase: Math.random() * Math.PI * 2, amp: Math.random() * 0.5 + 0.2 };
+  }
+  function init() { resize(); particles = Array.from({ length: COUNT }, mkP); }
+  function tick() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.phase += 0.012; p.x += p.vx + Math.sin(p.phase) * p.amp; p.y += p.vy;
+      if (p.y + p.r < 0) { p.y = canvas.height + p.r; p.x = Math.random() * canvas.width; }
+      if (p.x < -p.r) p.x = canvas.width + p.r;
+      if (p.x > canvas.width + p.r) p.x = -p.r;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color; ctx.fill();
+    });
+    animId = requestAnimationFrame(tick);
+  }
+  init(); animId = requestAnimationFrame(tick);
+  let rt;
+  window.addEventListener('resize', () => {
+    clearTimeout(rt); rt = setTimeout(() => { cancelAnimationFrame(animId); init(); animId = requestAnimationFrame(tick); }, 150);
+  });
+})();
+
+// ── Typewriter ──
+(function initTypewriter() {
+  const el = document.querySelector('.hero-title');
+  if (!el) return;
+  const raw = el.innerHTML;
+  const tokens = [];
+  let buf = '', i = 0;
+  while (i < raw.length) {
+    const chunk = raw.slice(i, i + 4).toLowerCase();
+    if (chunk === '<br>') { if (buf) { tokens.push(...buf.split('')); buf = ''; } tokens.push('\n'); i += 4; }
+    else { buf += raw[i]; i++; }
+  }
+  if (buf) tokens.push(...buf.split(''));
+  const cursor = document.createElement('span');
+  cursor.textContent = '|';
+  cursor.style.cssText = 'display:inline-block;margin-left:2px;opacity:1;transition:opacity 0.6s;color:#a855f7;';
+  el.innerHTML = '';
+  el.appendChild(cursor);
+  let blinkId = setInterval(() => { cursor.style.opacity = cursor.style.opacity === '0' ? '1' : '0'; }, 500);
+  let idx = 0;
+  function typeNext() {
+    if (idx >= tokens.length) {
+      clearInterval(blinkId); cursor.style.opacity = '1';
+      setTimeout(() => { cursor.style.opacity = '0'; }, 1000); return;
+    }
+    const t = tokens[idx++];
+    if (t === '\n') el.insertBefore(document.createElement('br'), cursor);
+    else el.insertBefore(document.createTextNode(t), cursor);
+    setTimeout(typeNext, 30);
+  }
+  setTimeout(() => {
+    clearInterval(blinkId);
+    blinkId = setInterval(() => { cursor.style.opacity = cursor.style.opacity === '0' ? '1' : '0'; }, 500);
+    typeNext();
+  }, 800);
+})();
+
+// ── Nav Active Tracking ──
+(function initNavTracker() {
+  const s = document.createElement('style');
+  s.textContent = 'nav a.active{color:#fff!important;}nav a.active::after{width:100%!important;}';
+  document.head.appendChild(s);
+  const ids = ['table','vibe','cards','sources'];
+  const secs = ids.map(id => document.getElementById(id)).filter(Boolean);
+  const links = ids.map(id => document.querySelector(`nav a[href="#${id}"]`)).filter(Boolean);
+  function update() {
+    const mid = window.scrollY + window.innerHeight * 0.4;
+    let cur = null;
+    secs.forEach(s => { if (s.offsetTop <= mid) cur = s.id; });
+    if (cur) links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + cur));
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+</script>
+<div style="text-align:center;padding:1.5rem 0 1rem;"><a href="../index.html" style="color:#8892a0;text-decoration:none;font-size:0.82rem;">← ポータルに戻る</a></div>
+</body>
+</html>

@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code 操作ガイド | Fカンパニー公認</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --bg:       #0f172a;
+      --bg2:      #1e293b;
+      --surface:  rgba(30,41,59,0.7);
+      --surface2: rgba(30,41,59,0.95);
+      --border:   rgba(255,255,255,0.08);
+      --border-h: rgba(56,189,248,0.3);
+      --text:     rgba(255,255,255,0.92);
+      --text2:    rgba(255,255,255,0.60);
+      --text3:    rgba(255,255,255,0.35);
+      --accent:   #38bdf8;
+      --accent-h: #7dd3fc;
+      --accent-glow: rgba(56,189,248,0.15);
+      --green:    #10b981;
+      --yellow:   #f59e0b;
+      --purple:   #6366f1;
+      --red:      #ef4444;
+      --font-base: 'Inter','Noto Sans JP',sans-serif;
+      --fs-h1: 2rem; --fs-h2: 1.4rem; --fs-h3: 1.1rem;
+      --fs-body: 0.92rem; --fs-sm: 0.78rem;
+      --lh-body: 1.6; --lh-heading: 1.4;
+      --ls-heading: 0.04em;
+      --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
+      --sp-6:24px; --sp-8:32px; --sp-12:48px; --sp-16:64px;
+      --radius-sm:6px; --radius-md:12px; --radius-lg:20px;
+      --transition: 0.2s ease;
+    }
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-base);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      line-break: strict;
+      overflow-wrap: break-word;
+      word-break: normal;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-h); }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 var(--sp-6); }
+
+    /* ── Sticky Nav ── */
+    .sticky-nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(15,23,42,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1100px; margin: 0 auto;
+      padding: 0 var(--sp-6);
+      display: flex; align-items: center; gap: var(--sp-2);
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .nav-inner::-webkit-scrollbar { display: none; }
+    .nav-home {
+      color: var(--text2); font-size: var(--fs-sm); font-weight: 600;
+      padding: var(--sp-4) var(--sp-3);
+      border-right: 1px solid var(--border);
+      margin-right: var(--sp-2);
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .nav-home:hover { color: var(--accent); }
+    .nav-tab {
+      padding: var(--sp-4) var(--sp-3);
+      font-size: var(--fs-sm); font-weight: 600;
+      color: var(--text2); cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition);
+      white-space: nowrap; user-select: none;
+    }
+    .nav-tab:hover { color: var(--text); }
+    .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0c2340 100%);
+      border-bottom: 1px solid var(--border);
+      padding: var(--sp-12) var(--sp-6) var(--sp-8);
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 70% 50%, rgba(56,189,248,0.07), transparent);
+      pointer-events: none;
+    }
+    .hero-inner { max-width: 1100px; margin: 0 auto; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: var(--sp-2);
+      background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.25);
+      color: var(--accent); font-size: var(--fs-sm); font-weight: 600;
+      padding: var(--sp-1) var(--sp-3); border-radius: 100px;
+      margin-bottom: var(--sp-4); letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .hero h1 {
+      font-size: clamp(1.6rem, 4vw, 2.6rem);
+      font-weight: 800; letter-spacing: var(--ls-heading);
+      line-height: var(--lh-heading);
+      background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: var(--sp-3);
+    }
+    .hero-desc {
+      color: var(--text2); font-size: 1rem; max-width: 600px; line-height: 1.7;
+    }
+
+    /* ── Section ── */
+    .section { padding: var(--sp-12) var(--sp-6); }
+    .section-title {
+      font-size: var(--fs-h2); font-weight: 700;
+      letter-spacing: var(--ls-heading);
+      margin-bottom: var(--sp-6);
+      display: flex; align-items: center; gap: var(--sp-3);
+    }
+    .section-title::after {
+      content: ''; flex: 1;
+      height: 1px; background: var(--border);
+    }
+
+    /* ── AI社員吹き出し ── */
+    .persona-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: var(--sp-4);
+    }
+    .persona-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--sp-4) var(--sp-5);
+      transition: transform var(--transition), border-color var(--transition);
+      position: relative;
+    }
+    .persona-card:hover { transform: translateY(-2px); }
+    .persona-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px; border-radius: var(--radius-md) var(--radius-md) 0 0;
+    }
+    .persona-card.munger::before { background: var(--purple); border-color: rgba(99,102,241,0.3); }
+    .persona-card.munger { border-color: rgba(99,102,241,0.2); }
+    .persona-card.horie::before { background: var(--yellow); }
+    .persona-card.horie { border-color: rgba(245,158,11,0.2); }
+    .persona-card.hiro::before { background: var(--green); }
+    .persona-card.hiro { border-color: rgba(16,185,129,0.2); }
+    .persona-header {
+      display: flex; align-items: center; gap: var(--sp-3);
+      margin-bottom: var(--sp-3);
+    }
+    .persona-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .munger .persona-avatar { background: rgba(99,102,241,0.15); color: var(--purple); }
+    .horie .persona-avatar { background: rgba(245,158,11,0.15); color: var(--yellow); }
+    .hiro .persona-avatar { background: rgba(16,185,129,0.15); color: var(--green); }
+    .persona-name { font-size: var(--fs-sm); font-weight: 700; }
+    .persona-role { font-size: 0.72rem; color: var(--text3); margin-top: 2px; }
+    .persona-quote {
+      font-size: var(--fs-body); line-height: 1.7;
+      color: var(--text2);
+    }
+    .persona-quote strong { color: var(--text); }
+    .persona-tag {
+      display: inline-block;
+      margin-top: var(--sp-3);
+      background: rgba(56,189,248,0.08);
+      border: 1px solid rgba(56,189,248,0.15);
+      color: var(--accent); font-size: 0.72rem; font-weight: 600;
+      padding: 2px var(--sp-2); border-radius: 100px;
+    }
+    .munger .persona-tag { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.2); color: var(--purple); }
+    .horie .persona-tag { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.2); color: var(--yellow); }
+    .hiro .persona-tag { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.2); color: var(--green); }
+    .persona-card.jobs::before { background: var(--accent); }
+    .persona-card.jobs { border-color: rgba(56,189,248,0.25); }
+    .jobs .persona-avatar { background: rgba(56,189,248,0.15); color: var(--accent); }
+    .jobs .persona-tag { background: rgba(56,189,248,0.1); border-color: rgba(56,189,248,0.25); color: var(--accent); }
+
+    /* ── Level Tabs ── */
+    .level-tabs-nav {
+      display: flex; gap: var(--sp-2);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: var(--sp-6);
+    }
+    .level-tab-btn {
+      padding: var(--sp-3) var(--sp-4);
+      font-size: var(--fs-body); font-weight: 600;
+      color: var(--text2); cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition);
+      user-select: none;
+    }
+    .level-tab-btn:hover { color: var(--text); }
+    .level-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .level-content { display: none; }
+    .level-content.active { display: block; }
+
+    .level-intro {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--sp-4) var(--sp-6);
+      margin-bottom: var(--sp-6);
+      font-size: var(--fs-body); color: var(--text2);
+      border-left: 3px solid var(--accent);
+    }
+
+    /* ── Feature Cards ── */
+    .feature-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-4);
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--sp-5);
+      transition: border-color var(--transition);
+    }
+    .feature-card:hover { border-color: var(--border-h); }
+    .feature-icon {
+      width: 36px; height: 36px;
+      background: var(--accent-glow);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: var(--sp-3);
+      color: var(--accent);
+    }
+    .feature-title {
+      font-size: var(--fs-h3); font-weight: 700;
+      margin-bottom: var(--sp-2);
+    }
+    .feature-desc {
+      font-size: var(--fs-body); color: var(--text2);
+      line-height: var(--lh-body);
+    }
+    .feature-when {
+      margin-top: var(--sp-3);
+      font-size: var(--fs-sm); color: var(--text3);
+    }
+    .feature-when strong { color: var(--accent); }
+
+    /* ── Code Block ── */
+    .code-block {
+      position: relative;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: var(--sp-3) var(--sp-4);
+      margin-top: var(--sp-3);
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem; color: var(--accent-h);
+    }
+    .code-block pre { white-space: pre-wrap; word-break: break-all; }
+    .copy-btn {
+      position: absolute; top: var(--sp-2); right: var(--sp-2);
+      background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.2);
+      color: var(--accent); padding: 2px var(--sp-2);
+      border-radius: var(--radius-sm); font-size: 0.72rem; font-weight: 600;
+      cursor: pointer; transition: all var(--transition);
+    }
+    .copy-btn:hover { background: rgba(56,189,248,0.2); }
+
+    /* ── Shortcut Table ── */
+    .shortcut-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .shortcut-table th {
+      text-align: left; font-size: var(--fs-sm);
+      color: var(--text3); padding: var(--sp-2) var(--sp-3);
+      border-bottom: 1px solid var(--border);
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .shortcut-table td {
+      padding: var(--sp-3);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: var(--fs-body); color: var(--text2);
+    }
+    .shortcut-table tr:hover td { background: rgba(255,255,255,0.02); }
+    kbd {
+      display: inline-block;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem; color: var(--text);
+    }
+
+    /* ── Routines ── */
+    .trigger-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4);
+      margin-top: var(--sp-4);
+    }
+    .trigger-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--sp-4);
+    }
+    .trigger-type {
+      font-size: var(--fs-sm); font-weight: 700;
+      color: var(--accent); margin-bottom: var(--sp-2);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .trigger-desc {
+      font-size: var(--fs-body); color: var(--text2);
+      line-height: var(--lh-body);
+    }
+    .cloud-badge {
+      display: inline-block; margin-top: var(--sp-3);
+      background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2);
+      color: var(--green); font-size: 0.72rem; font-weight: 600;
+      padding: 2px var(--sp-2); border-radius: 100px;
+    }
+
+    /* ── Jobs Quote ── */
+    .jobs-quote {
+      background: linear-gradient(135deg, rgba(56,189,248,0.06), rgba(56,189,248,0.02));
+      border: 1px solid rgba(56,189,248,0.2);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-8) var(--sp-8);
+      text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .jobs-quote::before {
+      content: '"';
+      position: absolute; top: -20px; left: 40px;
+      font-size: 8rem; font-weight: 800; opacity: 0.04;
+      color: var(--accent); line-height: 1;
+    }
+    .jobs-quote-text {
+      font-size: 1.15rem; font-weight: 600;
+      color: var(--text); line-height: 1.8; margin-bottom: var(--sp-4);
+    }
+    .jobs-name { font-size: var(--fs-sm); color: var(--accent); font-weight: 600; }
+
+    /* ── Back Link ── */
+    .back-link {
+      display: inline-flex; align-items: center; gap: var(--sp-2);
+      color: var(--text2); font-size: var(--fs-sm); font-weight: 600;
+      text-decoration: none;
+      margin-top: var(--sp-8);
+      transition: color var(--transition);
+    }
+    .back-link:hover { color: var(--accent); }
+
+    /* ── Filter Visual ── */
+    .filter-demo {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--sp-4);
+      margin-top: var(--sp-4);
+    }
+    .filter-row {
+      display: flex; gap: var(--sp-3); flex-wrap: wrap; align-items: center;
+    }
+    .filter-chip {
+      display: flex; align-items: center; gap: var(--sp-2);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: var(--sp-1) var(--sp-3);
+      font-size: var(--fs-sm); color: var(--text2);
+    }
+    .filter-chip.active { background: rgba(56,189,248,0.12); border-color: rgba(56,189,248,0.3); color: var(--accent); }
+    .filter-label { font-size: 0.72rem; color: var(--text3); }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .persona-grid { grid-template-columns: 1fr; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .trigger-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 1.6rem; }
+    }
+    @media (max-width: 480px) {
+      .section { padding: var(--sp-8) var(--sp-4); }
+      .hero { padding: var(--sp-8) var(--sp-4); }
+    }
+
+    /* ── Animation ── */
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .persona-card { animation: fade-in 0.4s ease both; }
+    .persona-card:nth-child(1) { animation-delay: 0.05s; }
+    .persona-card:nth-child(2) { animation-delay: 0.10s; }
+    .persona-card:nth-child(3) { animation-delay: 0.15s; }
+  </style>
+</head>
+<body>
+
+<!-- Sticky Nav -->
+<nav class="sticky-nav">
+  <div class="nav-inner">
+    <a class="nav-home" href="index.html">← Portal</a>
+    <div class="nav-tab active" onclick="scrollToSection('personas')">AI社員の声</div>
+    <div class="nav-tab" onclick="switchLevel('beginner'); scrollToSection('guide')">初級</div>
+    <div class="nav-tab" onclick="switchLevel('intermediate'); scrollToSection('guide')">中級</div>
+    <div class="nav-tab" onclick="switchLevel('advanced'); scrollToSection('guide')">上級</div>
+    <div class="nav-tab" onclick="scrollToSection('routines')">Routines</div>
+    <div class="nav-tab" onclick="scrollToSection('tips')">活用Tips</div>
+    <div class="nav-tab" onclick="scrollToSection('git-knowledge')">Git落とし穴</div>
+    <div class="nav-tab" onclick="scrollToSection('shortcuts')">ショートカット</div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">🤖 Fカンパニー公認ガイド</div>
+    <h1>Claude Code<br>操作ガイド</h1>
+    <p class="hero-desc">
+      左パネル・Routines・セッション管理の使い方を初級〜上級の3段階で解説。<br>
+      Fカンパニー AI社員チームが「何を最初に覚えるべきか」を議論して構成した。
+    </p>
+  </div>
+</div>
+
+<!-- AI社員の声 -->
+<div class="section" id="personas">
+  <div class="container">
+    <div class="section-title">Fカンパニー AI社員の声</div>
+    <div class="persona-grid">
+
+      <div class="persona-card munger">
+        <div class="persona-header">
+          <div class="persona-avatar">M</div>
+          <div>
+            <div class="persona-name">チャーリー・マンガー</div>
+            <div class="persona-role">逆算思考 / 判断セッション担当</div>
+          </div>
+        </div>
+        <p class="persona-quote">
+          「まず <strong>失敗パターン</strong> を消せ。セッションが増えすぎて迷子になる。重要なセッションがRecentsに埋もれる。この2つを防げば生産性は倍になる。<strong>StatusフィルタをActiveに固定</strong> するのが最初の一手だ。」
+        </p>
+        <span class="persona-tag">→ Recents フィルタ</span>
+      </div>
+
+      <div class="persona-card horie">
+        <div class="persona-header">
+          <div class="persona-avatar">H</div>
+          <div>
+            <div class="persona-name">堀江貴文（ホリエモン）</div>
+            <div class="persona-role">実行スピード / 実行セッション担当</div>
+          </div>
+        </div>
+        <p class="persona-quote">
+          「<strong>PCオフでもクラウドで動き続ける</strong> ——それがRoutinesだ。毎週の情報収集をRoutinesに登録すれば、寝ている間に仕事が完了する。この自動化をやらないのは時間の無駄遣いだ。」
+        </p>
+        <span class="persona-tag">→ Routines 自動化</span>
+      </div>
+
+      <div class="persona-card hiro">
+        <div class="persona-header">
+          <div class="persona-avatar">ひ</div>
+          <div>
+            <div class="persona-name">ひろゆき</div>
+            <div class="persona-role">論理整理 / 実行セッション担当</div>
+          </div>
+        </div>
+        <p class="persona-quote">
+          「<strong>セッションは記憶の単位</strong>、ってことなんですよね。タスクが変わったら新しいセッションを作る。混ぜると精度が落ちる。あと <strong>/compact</strong> は、会話が長くなったと思ったら打てばいい。それだけです。」
+        </p>
+        <span class="persona-tag">→ セッション管理</span>
+      </div>
+
+      <div class="persona-card jobs">
+        <div class="persona-header">
+          <div class="persona-avatar"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 12.04c-.03-3.13 2.56-4.63 2.67-4.71-1.46-2.13-3.73-2.42-4.54-2.46-1.93-.2-3.77 1.14-4.75 1.14-.99 0-2.49-1.11-4.1-1.08-2.11.03-4.06 1.23-5.14 3.12-2.19 3.81-.56 9.43 1.58 12.51 1.05 1.51 2.29 3.2 3.92 3.14 1.58-.06 2.18-1.02 4.09-1.02 1.91 0 2.45 1.02 4.12.99 1.7-.03 2.78-1.54 3.82-3.06 1.2-1.76 1.69-3.46 1.72-3.55-.04-.02-3.3-1.27-3.34-5.02zM13.91 3.34c.87-1.06 1.46-2.53 1.3-4-1.25.05-2.77.84-3.67 1.89-.81.93-1.51 2.42-1.32 3.86 1.39.11 2.81-.71 3.69-1.75z"/></svg></div>
+          <div>
+            <div class="persona-name">スティーブ・ジョブズ</div>
+            <div class="persona-role">本質追求 / レビューセッション担当</div>
+          </div>
+        </div>
+        <p class="persona-quote">
+          「Opusは美しい。だが <strong>すべてをOpusで書く必要はない</strong>。grepはHaikuで十分、設計はOpusで深く考える。<strong>モデル切替を覚えるだけで月額が1/5</strong> になる。質を落とさず無駄を消せ——それが Think Different だ。」
+        </p>
+        <span class="persona-tag">→ モデル＆工数Tips</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- レベル別ガイド -->
+<div class="section" id="guide">
+  <div class="container">
+    <div class="section-title">レベル別ガイド</div>
+
+    <div class="level-tabs-nav">
+      <div class="level-tab-btn active" onclick="switchLevel('beginner')">🟢 初級</div>
+      <div class="level-tab-btn" onclick="switchLevel('intermediate')">🟡 中級</div>
+      <div class="level-tab-btn" onclick="switchLevel('advanced')">🔴 上級</div>
+    </div>
+
+    <!-- 初級 -->
+    <div class="level-content active" id="level-beginner">
+      <div class="level-intro">
+        <strong>こんな人向け：</strong> Claude Codeを使い始めたばかり。左パネルに何があるか分からない。
+      </div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon"><i data-lucide="plus-circle" size="18"></i></div>
+          <div class="feature-title">New session</div>
+          <div class="feature-desc">タスクが変わるたびに新しいセッションを作る。セッション＝記憶の単位。混ぜると精度が落ちる。</div>
+          <div class="feature-when"><strong>タイミング：</strong>別プロジェクト・別目的に切り替える時</div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre>左パネル上部「+ New session」をクリック
+または Ctrl+N (Windows) / Cmd+N (Mac)</pre>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i data-lucide="clock" size="18"></i></div>
+          <div class="feature-title">Recents — 最近のセッション</div>
+          <div class="feature-desc">左パネル下部に最近使ったセッションが一覧表示される。● 青が Active（進行中）、○ 白が完了済み。</div>
+          <div class="feature-when"><strong>タイミング：</strong>昨日の続きを再開したい時</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i data-lucide="filter" size="18"></i></div>
+          <div class="feature-title">Status フィルタ（最優先）</div>
+          <div class="feature-desc">Recents右上の「⚡」アイコンからフィルタを開く。<strong>Status → Active</strong> に設定するだけで、進行中のセッションだけ表示される。</div>
+          <div class="feature-when"><strong>タイミング：</strong>最初の設定として必ず行う</div>
+          <div class="filter-demo">
+            <div class="filter-label" style="margin-bottom:8px">フィルタ例</div>
+            <div class="filter-row">
+              <span class="filter-chip active">Status: Active ✓</span>
+              <span class="filter-chip">Project: All</span>
+              <span class="filter-chip">Group by: None</span>
+            </div>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i data-lucide="pin" size="18"></i></div>
+          <div class="feature-title">Pinned — ピン留め</div>
+          <div class="feature-desc">よく使うセッションを左パネル上部に固定できる。Recentsでのセッションを右クリック → 「Pin」。</div>
+          <div class="feature-when"><strong>タイミング：</strong>毎日使うプロジェクトを固定したい時</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中級 -->
+    <div class="level-content" id="level-intermediate">
+      <div class="level-intro">
+        <strong>こんな人向け：</strong> 基本操作は分かる。セッションが増えてきて整理したい。
+      </div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon"><i data-lucide="sliders" size="18"></i></div>
+          <div class="feature-title">Recents フィルタ全機能</div>
+          <div class="feature-desc">
+            5つのフィルタを組み合わせてセッションを絞込む。
+            <ul style="margin-top:8px;padding-left:16px;color:var(--text2)">
+              <li><strong style="color:var(--text)">Status</strong>: Active / Archived / All</li>
+              <li><strong style="color:var(--text)">Project</strong>: リポジトリ名で絞込</li>
+              <li><strong style="color:var(--text)">Environment</strong>: 実行環境で絞込</li>
+              <li><strong style="color:var(--text)">Last activity</strong>: 最終更新日時</li>
+              <li><strong style="color:var(--text)">Group by</strong>: Project / Date でグループ化</li>
+            </ul>
+          </div>
+          <div class="feature-when"><strong>タイミング：</strong>セッションが20件超えてきたら設定する</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i data-lucide="message-square" size="18"></i></div>
+          <div class="feature-title">Side chat</div>
+          <div class="feature-desc">メインセッションを中断せず、脇で別の質問ができる。調べ物・確認だけしたい時に使う。</div>
+          <div class="feature-when"><strong>タイミング：</strong>実装中に「あ、これどうだっけ」と思った瞬間</div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre>Cmd+; (Mac) / Ctrl+; (Windows)</pre>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i data-lucide="zap" size="18"></i></div>
+          <div class="feature-title">/compact — コンテキスト圧縮</div>
+          <div class="feature-desc">会話が長くなるとモデルの精度が落ちる。/compact を打つと会話履歴を自動サマリして圧縮する。</div>
+          <div class="feature-when"><strong>タイミング：</strong>会話が50往復を超えた頃 / 「なんか精度落ちた？」と感じた時</div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre>/compact</pre>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i data-lucide="eye" size="18"></i></div>
+          <div class="feature-title">View mode 切替</div>
+          <div class="feature-desc">出力の詳細度を変更できる。Normal（通常）/ Verbose（詳細ログ）/ Summary（要約のみ）の3段階。</div>
+          <div class="feature-when"><strong>タイミング：</strong>デバッグ時はVerbose、発表資料確認はSummaryが有効</div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre>Ctrl+O — View mode 循環切替</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 上級 -->
+    <div class="level-content" id="level-advanced">
+      <div class="level-intro">
+        <strong>こんな人向け：</strong> 毎日使っている。繰り返し作業を自動化して時間を取り戻したい。
+      </div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon"><i data-lucide="repeat" size="18"></i></div>
+          <div class="feature-title">Routines — 定期自動実行</div>
+          <div class="feature-desc">
+            <strong style="color:var(--green)">PCオフでもクラウドで実行継続する。</strong><br>
+            毎日・毎週・平日のみ等のスケジュールで、指定したプロンプトを自動実行する。左パネル「Routines」から設定。
+          </div>
+          <div class="feature-when"><strong>タイミング：</strong>毎週同じ指示を打っていると気づいた瞬間</div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre>左パネル「Routines」→「+」→ プロンプト入力 → スケジュール設定</pre>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i data-lucide="terminal" size="18"></i></div>
+          <div class="feature-title">/schedule — 会話からRoutine作成</div>
+          <div class="feature-desc">会話の中で /schedule コマンドを打つと、今の会話内容をRoutineとして登録できる。UIを開かず設定できる。</div>
+          <div class="feature-when"><strong>タイミング：</strong>「この作業、定期化したい」と思った瞬間に即打つ</div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre>/schedule</pre>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i data-lucide="git-branch" size="18"></i></div>
+          <div class="feature-title">GitHub Trigger</div>
+          <div class="feature-desc">PRのopen・merge、Releaseの発行など、GitHubイベントをトリガーにRoutineを自動実行できる。</div>
+          <div class="feature-when"><strong>タイミング：</strong>PR作成時に自動レビュー・リリース時に自動ドキュメント更新等</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i data-lucide="cpu" size="18"></i></div>
+          <div class="feature-title">モデル / Effort 切替</div>
+          <div class="feature-desc">タスクに応じてモデルとEfortレベルを切り替える。軽いタスクはHaiku、深い思考はOpusが最適。</div>
+          <div class="feature-when"><strong>タイミング：</strong>コスト節約 or 精度最優先で使い分ける</div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre>Cmd+Shift+M — Model 切替メニュー
+Cmd+Shift+E — Effort 切替メニュー</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Routines トリガー詳細 -->
+<div class="section" id="routines" style="background: rgba(15,23,42,0.5); border-top:1px solid var(--border);">
+  <div class="container">
+    <div class="section-title">Routines — 3種のトリガー</div>
+    <p style="color:var(--text2);margin-bottom:var(--sp-2);">
+      Routinesはクラウドで実行されるため、<strong style="color:var(--green)">PCの電源オフ中でも動き続ける。</strong>
+    </p>
+    <div class="trigger-grid">
+      <div class="trigger-card">
+        <div class="trigger-type">⏰ スケジュール</div>
+        <div class="trigger-desc">時間・曜日・頻度でトリガー。「毎日8時」「月曜のみ」「平日だけ」などの設定が可能。</div>
+        <div class="cloud-badge">☁ クラウド実行</div>
+      </div>
+      <div class="trigger-card">
+        <div class="trigger-type">🔗 API / HTTP</div>
+        <div class="trigger-desc">HTTP POSTリクエストでRoutineを起動。他システムからの連携・自動化パイプラインに組込む。</div>
+        <div class="cloud-badge">☁ クラウド実行</div>
+      </div>
+      <div class="trigger-card">
+        <div class="trigger-type">🐙 GitHub Events</div>
+        <div class="trigger-desc">PR open・merge・Releaseなど、GitHubイベントをフックしてRoutineを実行。CI連携に最適。</div>
+        <div class="cloud-badge">☁ クラウド実行</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 活用Tips: モデル＆工数 -->
+<div class="section" id="tips">
+  <div class="container">
+    <div class="section-title">モデル＆工数 完全ガイド</div>
+
+    <p style="color:var(--text2);margin-bottom:var(--sp-6);max-width:780px;line-height:1.7;">
+      Claude Codeは <strong style="color:var(--text)">モデル × 工数（Effort）</strong> の2軸で性能とコストが決まる。
+      シーンに応じた切替で <strong style="color:var(--green)">月額コストを1/5</strong> に抑えながら品質を維持できる。
+    </p>
+
+    <!-- ① モデル比較 -->
+    <h3 style="font-size:var(--fs-h3);margin-bottom:var(--sp-4);color:var(--text);font-weight:700">① モデル5種比較</h3>
+    <div class="feature-card" style="margin-bottom:var(--sp-8);overflow-x:auto">
+      <table class="shortcut-table">
+        <thead>
+          <tr>
+            <th>モデル</th>
+            <th>入力 ($/MTok)</th>
+            <th>出力 ($/MTok)</th>
+            <th>速度</th>
+            <th>主用途</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><strong style="color:var(--text)">Opus 4.7</strong></td><td>$15</td><td>$75</td><td>50-70 t/s</td><td>最高品質。複雑な設計・長文編集</td></tr>
+          <tr><td><strong style="color:var(--text)">Opus 4.7 1M</strong></td><td>$15→$30 ※</td><td>$75→$150 ※</td><td>50-70 t/s</td><td>1M context版。大型HTML全体読込</td></tr>
+          <tr><td><strong style="color:var(--text)">Sonnet 4.6</strong></td><td>$3</td><td>$15</td><td>80-100 t/s</td><td>バランス型。日常実装の主力</td></tr>
+          <tr><td><strong style="color:var(--text)">Haiku 4.5</strong></td><td>$1</td><td>$5</td><td>150-200 t/s</td><td>並列エージェント・grep的探索</td></tr>
+          <tr><td><strong style="color:var(--text)">Opus 4.6 レガシー</strong></td><td>$15</td><td>$75</td><td>通常〜高速 ✨</td><td><kbd>/fast</kbd> 対応</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:var(--fs-sm);color:var(--text3);margin-top:var(--sp-3);line-height:1.6">
+        ※ 200K超の入力時は単価2倍。<br>
+        Opusは Sonnet の <strong style="color:var(--accent)">5倍コスト</strong>、Haiku の 15倍コスト。Sonnetで足りる作業はSonnetに寄せる。
+      </p>
+    </div>
+
+    <!-- ② 工数比較 -->
+    <h3 style="font-size:var(--fs-h3);margin-bottom:var(--sp-4);color:var(--text);font-weight:700">② 工数（Extended Thinking）レベル</h3>
+    <div class="feature-card" style="margin-bottom:var(--sp-8);overflow-x:auto">
+      <table class="shortcut-table">
+        <thead>
+          <tr>
+            <th>工数</th>
+            <th>思考トークン目安</th>
+            <th>速度</th>
+            <th>用途</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>低</td><td>〜2K</td><td>最速</td><td>雑談・確認・単純編集</td></tr>
+          <tr><td>中</td><td>〜8K</td><td>速</td><td>通常コーディング</td></tr>
+          <tr><td><strong style="color:var(--accent)">高（推奨デフォルト）</strong></td><td>〜16K</td><td>中</td><td>複雑な設計・PlanMode</td></tr>
+          <tr><td>超高</td><td>〜32K</td><td>遅</td><td>多変数の最適化・難バグ</td></tr>
+          <tr><td>Max</td><td>64K以上</td><td>最遅</td><td>数学的証明・大規模アーキ判断</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:var(--fs-sm);color:var(--text3);margin-top:var(--sp-3);line-height:1.6">
+        工数を上げると <strong style="color:var(--yellow)">思考トークンも課金対象</strong>。Opus×Maxは1ターン $0.5〜$2 食う場面あり。
+      </p>
+    </div>
+
+    <!-- ③ /fast モード -->
+    <h3 style="font-size:var(--fs-h3);margin-bottom:var(--sp-4);color:var(--text);font-weight:700">③ <kbd>/fast</kbd> 高速モードの正体</h3>
+    <div class="feature-grid" style="grid-template-columns:1fr;margin-bottom:var(--sp-8)">
+      <div class="feature-card" style="border-left:3px solid var(--green)">
+        <div class="feature-icon"><i data-lucide="rocket" size="18"></i></div>
+        <div class="feature-title">小型モデルへの劣化ではない</div>
+        <div class="feature-desc">
+          <strong style="color:var(--green)">Opus 4.6 レガシー専用</strong> の機能。Opus 4.7 では使えない。<br>
+          モデル品質は Opus 4.6 のまま、<strong style="color:var(--text)">出力速度のみ高速化</strong> される。
+        </div>
+        <div class="feature-when"><strong>使うとき：</strong>Opus品質が必要だが速度も欲しい時（大型HTMLの連続Edit等）</div>
+        <div class="feature-when" style="color:var(--yellow)">
+          <strong style="color:var(--yellow)">トレードオフ：</strong>Opus 4.7 の最新コーディング精度向上分は使えない
+        </div>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre>/fast    # トグル（Opus 4.6 選択時のみ有効）</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ シーン別推奨 -->
+    <h3 style="font-size:var(--fs-h3);margin-bottom:var(--sp-4);color:var(--text);font-weight:700">④ シーン別 推奨モデル＆工数（Fカンパニー実戦）</h3>
+    <div class="feature-card" style="margin-bottom:var(--sp-8);overflow-x:auto">
+      <table class="shortcut-table">
+        <thead>
+          <tr>
+            <th>シーン</th>
+            <th>モデル</th>
+            <th>工数</th>
+            <th>理由</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>大型HTML編集（denken-hoki/riron-wiki）</td><td><strong style="color:var(--accent)">Opus 4.7 1M</strong></td><td>高</td><td>500KB級の単一HTMLを全体把握</td></tr>
+          <tr><td>法規記事 新規作成（公式PDF照合）</td><td>Opus 4.7</td><td><strong style="color:var(--accent)">超高</strong></td><td>数値1つの誤りでサイト信頼度毀損</td></tr>
+          <tr><td>過去問履歴更新・grep探索</td><td><strong style="color:var(--green)">Sonnet 4.6</strong></td><td>低</td><td>定型処理。安価＆高速</td></tr>
+          <tr><td>並列エージェント（Haikuタスク）</td><td><strong style="color:var(--green)">Haiku 4.5</strong></td><td>低</td><td>コスト1/15。本体精度を保つため</td></tr>
+          <tr><td>Babel構文エラー連発対応</td><td>Opus 4.6 ＋ <kbd>/fast</kbd></td><td>中</td><td>速度優先。修正サイクル短縮</td></tr>
+          <tr><td>レビューセッション・設計判断</td><td>Opus 4.7</td><td>高〜超高</td><td>多角的視点・トレードオフ考慮</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ⑤ トークン節約Tips -->
+    <h3 style="font-size:var(--fs-h3);margin-bottom:var(--sp-4);color:var(--text);font-weight:700">⑤ トークン節約Tips（実戦則）</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon"><i data-lucide="layers" size="18"></i></div>
+        <div class="feature-title">同一ファイルEditは1ターンに集約</div>
+        <div class="feature-desc">複数箇所の修正は <code>old_string</code> を大きく取って一括置換。Edit連打はターン数=トークン消費。</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i data-lucide="search" size="18"></i></div>
+        <div class="feature-title">Grep優先・全Read禁止</div>
+        <div class="feature-desc">100KB超ファイルの全Readはトークン爆食い。<code>Grep output_mode:"content" head_limit:20</code> で局所抽出。</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i data-lucide="refresh-cw" size="18"></i></div>
+        <div class="feature-title">/compact をこまめに打つ</div>
+        <div class="feature-desc">15往復超 or 重コマンド後に実行。会話履歴を圧縮して次ターンの入力単価を抑える。</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i data-lucide="git-branch" size="18"></i></div>
+        <div class="feature-title">タスクごと新セッション</div>
+        <div class="feature-desc">無関係な新タスクへの切替時は新セッション。コンテキスト引き継ぎは精度低下＋コスト増の両損。</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i data-lucide="users" size="18"></i></div>
+        <div class="feature-title">調査はサブエージェントへ</div>
+        <div class="feature-desc">codebase探索・並列分析はAgent toolで分離。メインのコンテキストを枯渇させない。</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i data-lucide="bar-chart-3" size="18"></i></div>
+        <div class="feature-title"><code>/cost</code> でキャッシュ比率確認</div>
+        <div class="feature-desc">セッション長期化時に実行。キャッシュヒット率が下がっていたら新セッション推奨サイン。</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i data-lucide="lock" size="18"></i></div>
+        <div class="feature-title">編集ロック宣言で並列衝突防止</div>
+        <div class="feature-desc">大型HTML編集前に <code>python claim_edit.py claim --target &lt;file&gt;</code>。並列セッションのcommit巻込み事故を防ぐ。</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i data-lucide="image-off" size="18"></i></div>
+        <div class="feature-title">スクリーンショットは最後の手段</div>
+        <div class="feature-desc">画像はテキストの4-10倍トークン消費。構造確認は <code>preview_eval</code> + JS queryで代替する。</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Git／GitHub 連携で詰まるポイント -->
+<div class="section" id="git-knowledge">
+  <div class="container">
+    <div class="section-title">Git/GitHub連携で詰まるポイント</div>
+
+    <p style="color:var(--text2);margin-bottom:var(--sp-6);max-width:780px;line-height:1.7;">
+      Claude Codeは <strong style="color:var(--text)">複数セッション・worktreeで並列作業</strong> するため、Gitの分岐・コンフリクト事故が起きやすい。
+      実戦で遭遇した落とし穴と対処法をまとめる。
+    </p>
+
+    <!-- ① HEAD と origin/main の分岐とは -->
+    <h3 style="font-size:var(--fs-h3);margin-bottom:var(--sp-4);color:var(--text);font-weight:700">① HEAD と origin/main の「分岐」とは何か</h3>
+    <div class="feature-card" style="margin-bottom:var(--sp-6)">
+      <div class="feature-desc" style="margin-bottom:var(--sp-4)">
+        <strong style="color:var(--text)">分岐 = 同じ祖先から枝分かれして、両側がそれぞれ別のコミットを積んでいる状態</strong>。
+        この状態で <code>git push</code> しても fast-forward できず、Git は「上書きできません」と拒否する。
+      </div>
+      <div class="code-block" style="background:#0a0f1c;padding:var(--sp-4);border-radius:var(--radius-sm);font-family:monospace;font-size:0.85rem;line-height:1.6;color:var(--text);white-space:pre">
+                   ┌── a ── b ── c ── … (origin/main 側に58コミット積まれた)
+共通の祖先 ────────┤
+                   └── x ── y ── z (ローカルHEAD側に5コミット積まれた)
+      </div>
+      <div class="feature-when" style="margin-top:var(--sp-3)">
+        <strong>典型的な発生原因：</strong>
+        別のClaude Codeセッション（別worktree）が origin/main に直接commit & pushしていた一方、
+        このセッションは古いベースから始まったため、その間の進化を取り込まなかった。
+      </div>
+    </div>
+
+    <!-- ② 対処法（3択） -->
+    <h3 style="font-size:var(--fs-h3);margin-bottom:var(--sp-4);color:var(--text);font-weight:700">② 分岐したときの対処法（3択）</h3>
+    <div class="feature-grid">
+      <div class="feature-card" style="border-left:3px solid var(--green)">
+        <div class="feature-icon"><i data-lucide="check-circle" size="18"></i></div>
+        <div class="feature-title">A: 純粋な貢献分のみ抽出して載せ直す（推奨）</div>
+        <div class="feature-desc">
+          自分の作業ブランチで何が変わったかを見極め、<strong style="color:var(--text)">origin/main の最新を取得 → そこに自分の差分だけを手動適用 → 1コミットでpush</strong>。
+          相手側の進化（別セッションの作業）を温存できる。
+        </div>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre>git branch backup-detached HEAD                # 念のためバックアップ
+git fetch origin main
+git checkout -B tmp-merge origin/main          # 最新ベースに乗せ替え
+# ここで自分の変更を手動で再適用（必要箇所のみ）
+git add -A &amp;&amp; git commit -m "feat: ..."
+git push origin tmp-merge:main                 # main へ反映</pre>
+        </div>
+      </div>
+
+      <div class="feature-card" style="border-left:3px solid var(--yellow)">
+        <div class="feature-icon"><i data-lucide="git-merge" size="18"></i></div>
+        <div class="feature-title">B: cherry-pick（小規模な分岐向け）</div>
+        <div class="feature-desc">
+          自分の数コミットを <code>git cherry-pick</code> で origin/main 上に乗せ直す。
+          ただし <strong style="color:var(--yellow)">既に同じ内容が origin/main に入っているとコンフリクト</strong>するため、大規模分岐では避ける。
+        </div>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre>git checkout -B tmp origin/main
+git cherry-pick &lt;commit1&gt; &lt;commit2&gt; …
+git push origin tmp:main</pre>
+        </div>
+      </div>
+
+      <div class="feature-card" style="border-left:3px solid var(--red)">
+        <div class="feature-icon"><i data-lucide="alert-triangle" size="18"></i></div>
+        <div class="feature-title">C: force-push（最終手段／原則禁止）</div>
+        <div class="feature-desc">
+          <code>git push -f origin HEAD:main</code> で自分の歴史を上書き。
+          <strong style="color:var(--red)">origin/main の他セッションの作業が全消失</strong>するため、
+          自分以外がpushしていないと確信できる場合のみ。GH Pages 配信元なら配信内容も巻き戻る。
+        </div>
+        <div class="feature-when" style="color:var(--red)">
+          <strong style="color:var(--red)">ルール：</strong>main/master への force-push は受験者の明示許可がない限り絶対やらない。
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ 予防策 -->
+    <h3 style="font-size:var(--fs-h3);margin:var(--sp-8) 0 var(--sp-4);color:var(--text);font-weight:700">③ 分岐を起こさない予防策</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon"><i data-lucide="download" size="18"></i></div>
+        <div class="feature-title">作業開始前に必ず fetch</div>
+        <div class="feature-desc">
+          新セッション開始時・worktree作成時は <code>git fetch origin</code> → <code>git log origin/main HEAD --oneline</code> で分岐有無を確認。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i data-lucide="lock" size="18"></i></div>
+        <div class="feature-title">編集ロック宣言（並列セッション）</div>
+        <div class="feature-desc">
+          大型HTML編集前に <code>python claim_edit.py claim --target &lt;file&gt;</code> でロック宣言。並列セッションの commit 巻き込み事故を防ぐ。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i data-lucide="git-pull-request" size="18"></i></div>
+        <div class="feature-title">こまめに小さくpush</div>
+        <div class="feature-desc">
+          1セッションで5コミット以上溜めない。pushが遅れるほど他セッションとの分岐リスクが累積する。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i data-lucide="git-branch" size="18"></i></div>
+        <div class="feature-title">detached HEAD で長居しない</div>
+        <div class="feature-desc">
+          worktreeのcheckoutが detached HEAD のまま放置されると、後で「どのブランチに反映するか」判断が難しくなる。作業前に名前付きブランチ化。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i data-lucide="archive" size="18"></i></div>
+        <div class="feature-title">バックアップブランチを切る</div>
+        <div class="feature-desc">
+          rebase / cherry-pick / 強制操作の前に <code>git branch backup-YYYY-MM-DD HEAD</code>。事故時に1コマンドで戻れる。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i data-lucide="search" size="18"></i></div>
+        <div class="feature-title">push前の分岐状況確認</div>
+        <div class="feature-desc">
+          <code>git rev-list --count HEAD ^origin/main</code> で「自分が何コミット先行しているか」、
+          <code>git rev-list --count origin/main ^HEAD</code> で「相手が何コミット先行しているか」を確認。両方0以外＝分岐。
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ 実戦事例 -->
+    <h3 style="font-size:var(--fs-h3);margin:var(--sp-8) 0 var(--sp-4);color:var(--text);font-weight:700">④ 実戦事例: 2026-05-08 hoki-wiki §6.0 追加時</h3>
+    <div class="feature-card" style="border-left:3px solid var(--accent)">
+      <div class="feature-desc">
+        <strong style="color:var(--text)">状況：</strong>detached HEAD で5コミット積んだ後、push しようとしたら origin/main が58コミット先行していた。<br><br>
+        <strong style="color:var(--text)">判断：</strong>cherry-pick だと QuickReview 等で origin/main と二重実装になりコンフリクト多発。
+        → <strong style="color:var(--green)">A案（純粋な貢献分のみ抽出）</strong>を採用。<br><br>
+        <strong style="color:var(--text)">手順：</strong>
+        <ol style="padding-left:1.4em;margin-top:0.5em;line-height:1.8">
+          <li><code>git branch backup-detached-2026-05-08 HEAD</code> で歴史を保全</li>
+          <li><code>git checkout -B tmp-merge-demand-page origin/main</code> で最新ベースに乗り替え</li>
+          <li>新規ファイル（DemandKwhKisoPage関数 / sec06.0データ / .goal-question CSS）<strong style="color:var(--text)">のみ</strong>を手動適用</li>
+          <li><code>python build-hoki-wiki.py</code> で再ビルド</li>
+          <li>1コミットにまとめて <code>git push origin tmp-merge-demand-page:main</code></li>
+        </ol>
+        <strong style="color:var(--text)">結果：</strong>origin/main の既存58コミット（4段階UI・検索・他ページ追加）を温存しつつ、自分の貢献を反映。所要約2分。
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ショートカット -->
+<div class="section" id="shortcuts" style="background: rgba(15,23,42,0.5); border-top:1px solid var(--border);">
+  <div class="container">
+    <div class="section-title">キーボードショートカット</div>
+    <div class="feature-card" style="max-width:700px">
+      <table class="shortcut-table">
+        <thead>
+          <tr>
+            <th>操作</th>
+            <th>Mac</th>
+            <th>Windows / Linux</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>新規セッション</td><td><kbd>Cmd+N</kbd></td><td><kbd>Ctrl+N</kbd></td></tr>
+          <tr><td>Side chat（脇道質問）</td><td><kbd>Cmd+;</kbd></td><td><kbd>Ctrl+;</kbd></td></tr>
+          <tr><td>ショートカット一覧表示</td><td><kbd>Cmd+/</kbd></td><td><kbd>Ctrl+/</kbd></td></tr>
+          <tr><td>View mode 切替</td><td colspan="2"><kbd>Ctrl+O</kbd></td></tr>
+          <tr><td>Model 切替</td><td><kbd>Cmd+Shift+M</kbd></td><td><kbd>Ctrl+Shift+M</kbd></td></tr>
+          <tr><td>Effort 切替</td><td><kbd>Cmd+Shift+E</kbd></td><td><kbd>Ctrl+Shift+E</kbd></td></tr>
+          <tr><td>Permission 設定</td><td><kbd>Cmd+Shift+I</kbd></td><td><kbd>Ctrl+Shift+I</kbd></td></tr>
+          <tr><td>コンテキスト圧縮</td><td colspan="2">チャット内 <kbd>/compact</kbd></td></tr>
+          <tr><td>コンテキスト使用量確認</td><td colspan="2">チャット内 <kbd>/context</kbd></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ジョブズの一言 -->
+<div class="section" style="padding-bottom:var(--sp-16)">
+  <div class="container">
+    <div class="jobs-quote">
+      <p class="jobs-quote-text">
+        「このガイドの弱点は、<strong>読んだだけで終わること</strong>だ。<br>
+        Statusフィルタを今すぐActiveにセットする。Routinesを1つ登録する。<br>
+        それだけでいい。完璧なガイドより<strong>1つの実行</strong>の方が価値がある。」
+      </p>
+      <div class="jobs-name">— スティーブ・ジョブズ（レビューセッション）</div>
+    </div>
+
+    <div style="text-align:center;margin-top:var(--sp-8)">
+      <a class="back-link" href="index.html">← Portalに戻る</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function switchLevel(level) {
+    document.querySelectorAll('.level-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.level-tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById('level-' + level).classList.add('active');
+    const labels = { beginner: '🟢 初級', intermediate: '🟡 中級', advanced: '🔴 上級' };
+    document.querySelectorAll('.level-tab-btn').forEach(el => {
+      if (el.textContent.trim() === labels[level]) el.classList.add('active');
+    });
+  }
+
+  function copyCode(btn) {
+    const pre = btn.nextElementSibling;
+    navigator.clipboard.writeText(pre.textContent.trim()).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = '✓';
+      setTimeout(() => { btn.textContent = orig; }, 800);
+    });
+  }
+</script>
+</body>
+</html>

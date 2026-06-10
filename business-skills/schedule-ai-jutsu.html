@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI時代の予定設計術 5要素 | Business Skills</title>
+<meta name="description" content="AI協働を前提にした予定管理。時間オーナーシップ設計・代行可否ライン・エラー前提バッファ・割込み許容度・AI共同レビューの5要素。">
+<meta property="og:title" content="AI時代の予定設計術 5要素 | Business Skills">
+<meta property="og:description" content="個人最適のスケジュール術ではなく、AI社員と時間を分けあう協働設計。45テーマのSeriesで唯一の『AI×時間』テーマ。">
+<meta property="og:type" content="article">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet"></noscript>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<link rel="stylesheet" href="shared.css">
+<script src="skill-tracker.js" defer></script>
+<script src="selfcheck-bridge.js" defer></script>
+<style>
+/* ── 既存テーマ相互リンクバー ── */
+.related-bar {
+  max-width: 900px;
+  margin: 0 auto var(--sp-8);
+  padding: 0 var(--sp-4);
+}
+.related-card {
+  background: rgba(56,189,248,0.04);
+  border: 1px solid rgba(56,189,248,0.18);
+  border-radius: var(--radius-md);
+  padding: var(--sp-5) var(--sp-6);
+}
+.related-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: var(--sp-3);
+}
+.related-text {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: var(--lh-long);
+  margin-bottom: var(--sp-4);
+}
+.related-text strong { color: var(--text); }
+.related-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.related-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: all var(--transition);
+}
+.related-link:hover {
+  background: var(--accent-dim);
+  border-color: var(--border-hover);
+  color: var(--accent);
+}
+.related-link .num {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+/* ── 5要素構造マップ ── */
+.sai-map-section {
+  max-width: 1000px;
+  margin: 0 auto var(--sp-12);
+  padding: 0 var(--sp-4);
+}
+.sai-map-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-8);
+}
+.sai-map-title {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  margin-bottom: var(--sp-2);
+  color: var(--text);
+}
+.sai-map-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: var(--sp-8);
+}
+.sai-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--sp-3);
+}
+.sai-node {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-md);
+  padding: var(--sp-5) var(--sp-3);
+  text-decoration: none;
+  color: inherit;
+  transition: all var(--transition);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sai-node:hover {
+  background: var(--accent-dim);
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+.sai-node.core {
+  background: rgba(245,158,11,0.07);
+  border-color: rgba(245,158,11,0.35);
+}
+.sai-node.core::before {
+  content: 'CORE';
+  position: absolute;
+  top: -8px;
+  left: 10px;
+  background: var(--accent-core);
+  color: #000;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.08em;
+}
+.sai-num {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.sai-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.4;
+}
+.sai-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.sai-dmg {
+  font-size: 0.68rem;
+  color: #f87171;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+.sai-axiom {
+  margin-top: var(--sp-6);
+  padding: var(--sp-4) var(--sp-5);
+  background: rgba(245,158,11,0.06);
+  border-left: 3px solid var(--accent-core);
+  border-radius: 6px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: var(--lh-long);
+}
+.sai-axiom strong { color: var(--accent-core); }
+@media (max-width: 768px) {
+  .sai-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── 各要素の深掘りセクション ── */
+.sai-deep {
+  max-width: 900px;
+  margin: 0 auto var(--sp-12);
+  padding: 0 var(--sp-4);
+}
+.sai-deep-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-8);
+}
+.sai-deep-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: var(--sp-3);
+}
+.sai-deep-label.core { color: var(--accent-core); }
+.sai-deep-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: var(--sp-3);
+  line-height: var(--lh-heading);
+}
+.sai-deep-sub {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: var(--lh-long);
+  margin-bottom: var(--sp-6);
+}
+.sai-deep-body h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: var(--sp-6) 0 var(--sp-3);
+  padding-left: 12px;
+  border-left: 3px solid var(--accent);
+}
+.sai-deep-body p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: var(--lh-long);
+  margin-bottom: var(--sp-3);
+}
+.sai-deep-body p strong { color: var(--text); }
+.sai-deep-body ul {
+  margin: var(--sp-3) 0;
+  padding-left: var(--sp-6);
+}
+.sai-deep-body li {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: var(--lh-long);
+  margin-bottom: 6px;
+}
+.sai-deep-body li strong { color: var(--text); }
+
+/* タスクマトリクス（4象限） */
+.sai-matrix {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  background: rgba(255,255,255,0.04);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin: var(--sp-5) 0;
+}
+.sai-cell {
+  padding: var(--sp-4);
+  background: var(--bg-card);
+}
+.sai-cell.q1 { background: rgba(245,158,11,0.07); }
+.sai-cell.q2 { background: rgba(56,189,248,0.07); }
+.sai-cell.q3 { background: rgba(139,92,246,0.07); }
+.sai-cell.q4 { background: rgba(239,68,68,0.07); }
+.sai-cell-q {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.sai-cell.q1 .sai-cell-q { color: var(--accent-core); }
+.sai-cell.q2 .sai-cell-q { color: var(--accent); }
+.sai-cell.q3 .sai-cell-q { color: #a78bfa; }
+.sai-cell.q4 .sai-cell-q { color: #f87171; }
+.sai-cell-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.sai-cell-eg {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* 時間配分プレビュー */
+.sai-block-preview {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  margin: var(--sp-5) 0 var(--sp-3);
+}
+.sai-block {
+  padding: var(--sp-3) 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  text-align: center;
+  line-height: 1.3;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.sai-block.human { background: rgba(245,158,11,0.1); color: var(--accent-core); border-color: rgba(245,158,11,0.3); }
+.sai-block.ai { background: rgba(56,189,248,0.1); color: var(--accent); border-color: rgba(56,189,248,0.3); }
+.sai-block.hybrid { background: rgba(139,92,246,0.1); color: #a78bfa; border-color: rgba(139,92,246,0.3); }
+.sai-block.buffer { background: rgba(148,163,184,0.1); color: var(--text-muted); border-color: rgba(148,163,184,0.3); }
+.sai-block-legend {
+  display: flex;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-bottom: var(--sp-4);
+}
+.sai-block-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sai-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.sai-legend-dot.human { background: rgba(245,158,11,0.6); }
+.sai-legend-dot.ai { background: rgba(56,189,248,0.6); }
+.sai-legend-dot.hybrid { background: rgba(139,92,246,0.6); }
+.sai-legend-dot.buffer { background: rgba(148,163,184,0.5); }
+@media (max-width: 768px) {
+  .sai-block-preview { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* 統合インサイト */
+.sai-insight {
+  max-width: 900px;
+  margin: 0 auto var(--sp-12);
+  padding: 0 var(--sp-4);
+}
+.sai-insight-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-8);
+}
+.sai-insight-title {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: var(--sp-5);
+}
+.sai-insight-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-6);
+}
+.sai-flow-item {
+  background: var(--accent-dim);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.sai-flow-arrow {
+  color: var(--text-dim);
+  font-weight: 700;
+}
+.sai-insight-text {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: var(--lh-long);
+}
+
+/* セルフチェック */
+.sai-selfcheck {
+  max-width: 900px;
+  margin: 0 auto var(--sp-12);
+  padding: 0 var(--sp-4);
+}
+.sai-selfcheck-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-8);
+}
+.sai-selfcheck-title {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: var(--sp-2);
+}
+.sai-selfcheck-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: var(--sp-5);
+}
+.sai-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.sai-check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.sai-check-item:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: var(--border);
+}
+.sai-check-item input[type="checkbox"] {
+  margin-top: 3px;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.sai-check-item label {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  line-height: var(--lh-long);
+  cursor: pointer;
+}
+.sai-check-item label strong { color: var(--text); }
+.sai-score {
+  margin-top: var(--sp-5);
+  padding: var(--sp-4);
+  text-align: center;
+  background: rgba(56,189,248,0.06);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.sai-score #sai-score-num {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.sai-score.full {
+  background: rgba(245,158,11,0.08);
+  border-color: rgba(245,158,11,0.3);
+}
+.sai-score.full #sai-score-num { color: var(--accent-core); }
+header{position:relative}.portal-back{position:absolute;top:12px;right:16px;font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:4px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:rgba(255,255,255,0.03);color:#8a94b0;text-decoration:none;transition:border-color .15s,color .15s}.portal-back:hover{color:#fff;border-color:#ffd54f}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a class="nav-back" href="index.html">
+    <i data-lucide="chevron-left" width="16" height="16"></i>
+    Business Skills
+  </a>
+  <span class="nav-title-text">AI時代の予定設計術 5要素</span>
+  <div class="nav-spacer"></div>
+</nav>
+
+<header class="hero"><a class="portal-back" href="../index.html">← Portal</a>
+  <span class="hero-label">Business Skills Series · 47</span>
+  <h1><span>AI時代</span>の予定設計術</h1>
+  <p class="hero-sub">個人最適のスケジュール術ではない。AI社員と時間を分けあう設計。「自分の予定」ではなく「人間ブロック・AIブロック・ハイブリッドブロック・バッファ」の4区分で設計する。</p>
+</header>
+
+<!-- 既存テーマ相互リンク -->
+<section class="related-bar">
+  <div class="related-card">
+    <div class="related-label">隣接テーマ — 個人最適の前提を補完</div>
+    <p class="related-text">
+      本ページは「<strong>AI協働を前提にした時間設計</strong>」に特化。個人の生産性レイヤーは以下5テーマで網羅済み。AI協働の前段として読み合わせると効果的。
+    </p>
+    <div class="related-links">
+      <a class="related-link" href="jikan-sekkei.html"><span class="num">04</span>時間設計</a>
+      <a class="related-link" href="kaigi-sekkei.html"><span class="num">11</span>会議設計</a>
+      <a class="related-link" href="dandori-ryoku.html"><span class="num">16</span>段取り力</a>
+      <a class="related-link" href="yusen-juni.html"><span class="num">19</span>優先順位</a>
+      <a class="related-link" href="shukan-review.html"><span class="num">30</span>週次レビュー</a>
+      <a class="related-link" href="ai-gyomu-sentaku.html"><span class="num">25</span>AI業務選択</a>
+    </div>
+  </div>
+</section>
+
+<!-- 5要素構造マップ -->
+<section class="sai-map-section">
+  <div class="sai-map-card">
+    <h2 class="sai-map-title">5要素の構造マップ</h2>
+    <p class="sai-map-sub">クリックで詳細へジャンプ — AI協働下で「予定を崩さず成果を出す」5つの技術</p>
+    <div class="sai-grid">
+      <a class="sai-node core" href="#elem-1">
+        <span class="sai-num">01</span>
+        <span class="sai-name">時間オーナーシップ設計</span>
+        <span class="sai-sub">4区分の意図的配分</span>
+        <span class="sai-dmg">⚠ 区分なし→AI待ちで停止</span>
+      </a>
+      <a class="sai-node" href="#elem-2">
+        <span class="sai-num">02</span>
+        <span class="sai-name">代行可否ライン</span>
+        <span class="sai-sub">学習性×失敗許容度</span>
+        <span class="sai-dmg">⚠ 任せるべきを抱える</span>
+      </a>
+      <a class="sai-node" href="#elem-3">
+        <span class="sai-num">03</span>
+        <span class="sai-name">エラー前提バッファ</span>
+        <span class="sai-sub">15-20% takeover予約</span>
+        <span class="sai-dmg">⚠ 100%詰込→失敗で連鎖崩壊</span>
+      </a>
+      <a class="sai-node" href="#elem-4">
+        <span class="sai-num">04</span>
+        <span class="sai-name">割込み許容度設計</span>
+        <span class="sai-sub">Deep/Shallow × AI</span>
+        <span class="sai-dmg">⚠ Deep中AI通知で40%損失</span>
+      </a>
+      <a class="sai-node" href="#elem-5">
+        <span class="sai-num">05</span>
+        <span class="sai-name">AI共同レビュー</span>
+        <span class="sai-sub">日次5分 + 週次30分</span>
+        <span class="sai-dmg">⚠ レビュー無→次週も同失敗</span>
+      </a>
+    </div>
+    <div class="sai-axiom">
+      <strong>軸命題：AI時代のスケジュールは「自分の予定表」ではない。</strong>
+      予定表は「人間判断」「AI委譲」「ハイブリッド」「バッファ」の4資源を時間軸に配分する管理盤。個人の生産性術（#04-#42）に「AI協働の前提」が乗ると、空き時間の意味が変わる。空き時間 ≠ 暇時間。AIが動いている時間に人間は別の意思決定に充てる。
+    </div>
+  </div>
+</section>
+
+<!-- 要素1：時間オーナーシップ設計 -->
+<section class="sai-deep" id="elem-1">
+  <div class="sai-deep-card">
+    <div class="sai-deep-label core">CORE · 01</div>
+    <h2 class="sai-deep-title">時間オーナーシップ設計 — 4区分の配分</h2>
+    <p class="sai-deep-sub">
+      1日24時間を「人間判断ブロック」「AI委譲ブロック」「ハイブリッドブロック」「予備バッファ」に意図的に分割する。配分の偏りがすべての失敗の源泉。
+    </p>
+    <div class="sai-deep-body">
+      <h3>4区分の定義</h3>
+      <div class="sai-block-legend">
+        <div class="sai-block-legend-item"><span class="sai-legend-dot human"></span>人間判断</div>
+        <div class="sai-block-legend-item"><span class="sai-legend-dot ai"></span>AI委譲</div>
+        <div class="sai-block-legend-item"><span class="sai-legend-dot hybrid"></span>ハイブリッド</div>
+        <div class="sai-block-legend-item"><span class="sai-legend-dot buffer"></span>バッファ</div>
+      </div>
+      <div class="sai-block-preview">
+        <div class="sai-block human">08:00<br>人間</div>
+        <div class="sai-block hybrid">09:00<br>ハイブ</div>
+        <div class="sai-block ai">10:00<br>AI</div>
+        <div class="sai-block ai">11:00<br>AI</div>
+        <div class="sai-block buffer">12:00<br>buf</div>
+        <div class="sai-block human">13:00<br>人間</div>
+        <div class="sai-block hybrid">14:00<br>ハイブ</div>
+        <div class="sai-block buffer">15:00<br>buf</div>
+      </div>
+      <ul>
+        <li><strong>人間判断ブロック</strong>：戦略・対人・倫理・最終承認。AI不可。例：1on1・経営判断・重要顧客対応</li>
+        <li><strong>AI委譲ブロック</strong>：調査・要約・草稿生成・パターン認識。人間は別タスク並走。例：レポート初稿生成・データ集計・コード生成中</li>
+        <li><strong>ハイブリッドブロック</strong>：AI補助で人間最終判断。例：AI提案を見ながら会議・AI分析を見ながら設計判断</li>
+        <li><strong>予備バッファ</strong>：失敗対応・割込み・予定外。15-20%確保。詰込厳禁</li>
+      </ul>
+
+      <h3>失敗パターン</h3>
+      <p>
+        <strong>① 区分なし</strong>：全時間を「自分の時間」と認識 → AIが裏で動いている時間に手持ち無沙汰 → 結局Deep Workもできず半端な作業で潰す。<br>
+        <strong>② 人間判断ブロックの過小評価</strong>：戦略時間をAI委譲時間で侵食 → 重要判断が雑になる → 後で巻き戻し工数が膨らむ。<br>
+        <strong>③ バッファ0%</strong>：100%詰込み → AI失敗1件で全予定崩壊。
+      </p>
+
+      <h3>受験者向け実装（電計CL × 勤務地シフト）</h3>
+      <p>
+        朝のDeep Work 2h は<strong>人間判断ブロック固定</strong>（戦略・電験学習・難判断）。日中のシフト業務中は<strong>ハイブリッド主軸</strong>（AI社員諮問を会議中に並走）。退勤後の整理時間に<strong>AI委譲</strong>（議事録要約・翌日準備）を渡してバッファで終わる。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 要素2：代行可否ライン -->
+<section class="sai-deep" id="elem-2">
+  <div class="sai-deep-card">
+    <div class="sai-deep-label">02</div>
+    <h2 class="sai-deep-title">代行可否ライン — 学習性×失敗許容度</h2>
+    <p class="sai-deep-sub">
+      タスクを「学習性（AIが学習可能か）×失敗許容度（失敗時の損失）」で2軸評価。<a href="ai-gyomu-sentaku.html" style="color:var(--accent);">#25 AI業務選択</a>の時間軸版。
+    </p>
+    <div class="sai-deep-body">
+      <div class="sai-matrix">
+        <div class="sai-cell q2">
+          <div class="sai-cell-q">Q2 — 学習性◯ × 失敗許容◯</div>
+          <div class="sai-cell-title">即委譲（AI 100%）</div>
+          <div class="sai-cell-eg">例：議事録要約・調査・草稿生成・スケジュール提案・ログ整形</div>
+        </div>
+        <div class="sai-cell q1">
+          <div class="sai-cell-q">Q1 — 学習性◯ × 失敗許容✗</div>
+          <div class="sai-cell-title">ハイブリッド（AI下書き＋人間確認）</div>
+          <div class="sai-cell-eg">例：法令解釈・顧客提案書・重要報告書・予算策定下書き</div>
+        </div>
+        <div class="sai-cell q3">
+          <div class="sai-cell-q">Q3 — 学習性✗ × 失敗許容◯</div>
+          <div class="sai-cell-title">人間優先（AI補助のみ）</div>
+          <div class="sai-cell-eg">例：チーム1on1・社内政治判断・暗黙知必要な交渉</div>
+        </div>
+        <div class="sai-cell q4">
+          <div class="sai-cell-q">Q4 — 学習性✗ × 失敗許容✗</div>
+          <div class="sai-cell-title">人間100%（AI禁止）</div>
+          <div class="sai-cell-eg">例：人事評価・倫理判断・最終決裁・対外公式発言</div>
+        </div>
+      </div>
+
+      <h3>判定の3ステップ</h3>
+      <ul>
+        <li><strong>ステップ1：学習性チェック</strong>「過去事例・パターンから学習可能か？」→ Yes なら右側（Q1/Q2）</li>
+        <li><strong>ステップ2：失敗許容度チェック</strong>「失敗してもリカバリーできるか？」→ Yes なら下側（Q2/Q3）</li>
+        <li><strong>ステップ3：時間配分</strong>Q2は<strong>AI委譲ブロック</strong>、Q1は<strong>ハイブリッド</strong>、Q3/Q4は<strong>人間判断ブロック</strong>へ</li>
+      </ul>
+
+      <h3>受験者の典型タスク振り分け</h3>
+      <p>
+        <strong>Q2（AI即委譲）</strong>：電気主任技術者業務の日報・点検結果まとめ・電験過去問の解説生成・wiki記事の初稿。<br>
+        <strong>Q1（ハイブリッド）</strong>：上司向け報告書・社外文書・電験記事の最終仕上げ。<br>
+        <strong>Q3（人間優先）</strong>：チームメンバーとの面談・現場の暗黙知が絡む判断。<br>
+        <strong>Q4（人間100%）</strong>：人事評価・重大事故対応・経営判断。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 要素3：エラー前提バッファ -->
+<section class="sai-deep" id="elem-3">
+  <div class="sai-deep-card">
+    <div class="sai-deep-label">03</div>
+    <h2 class="sai-deep-title">エラー前提バッファ — Human takeover の予約</h2>
+    <p class="sai-deep-sub">
+      AIは必ず失敗する。失敗確率は平均10-30%（タスク難度依存）。失敗時の人間takeover時間を<strong>必ず予約しておく</strong>こと。100%詰込みは1件の失敗で連鎖崩壊する。
+    </p>
+    <div class="sai-deep-body">
+      <h3>バッファ配分の目安</h3>
+      <ul>
+        <li><strong>低リスクタスク（Q2型）</strong>：バッファ10%。AI失敗時の再投入時間のみ</li>
+        <li><strong>中リスクタスク（Q1型）</strong>：バッファ20%。人間レビュー＋修正時間込み</li>
+        <li><strong>高リスクタスク（Q3/Q4型）</strong>：そもそもAI委譲しない。バッファ計算外</li>
+      </ul>
+
+      <h3>連鎖崩壊の典型パターン</h3>
+      <p>
+        AIに3タスク委譲 → 1件失敗 → 人間takeover発生 → takeoverに時間を取られ次のハイブリッドブロックに食い込む → 会議準備が雑になる → 会議で意思決定が遅れる → 終電…<br>
+        <strong>1件のAI失敗が4-5件の予定を倒す</strong>のがAI協働の最大リスク。
+      </p>
+
+      <h3>実装プロトコル</h3>
+      <ul>
+        <li><strong>AIに渡したタスクは「期限ではなく確認時刻」を予約</strong>：締切16:00ではなく「15:00に確認」と設定</li>
+        <li><strong>確認時刻にバッファを連続配置</strong>：15:00確認 → 15:00-16:00 をバッファに（失敗時はここで対応）</li>
+        <li><strong>バッファ消化率を週次レビュー</strong>：80%超なら配分が攻めすぎ。50%未満なら配分を増やせる</li>
+      </ul>
+
+      <h3>受験者の勤務地シフトでの実装</h3>
+      <p>
+        昼休み前30分と退勤30分前を<strong>バッファ常時予約</strong>。AI失敗の人間takeoverはここで吸収。会議や現場対応とは絶対重ねない。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 要素4：割込み許容度設計 -->
+<section class="sai-deep" id="elem-4">
+  <div class="sai-deep-card">
+    <div class="sai-deep-label">04</div>
+    <h2 class="sai-deep-title">割込み許容度設計 — Deep/Shallow × AI</h2>
+    <p class="sai-deep-sub">
+      AIの通知・進捗報告・追加質問は新型の割込み。Deep Work中のAI割込みは平均40%の集中力損失（注意残余効果）。割込み許容度を時間帯別に明示する。
+    </p>
+    <div class="sai-deep-body">
+      <h3>許容度マトリクス</h3>
+      <ul>
+        <li><strong>Deep Work（朝・最重要時間）</strong>：AI割込み禁止。通知OFF・AI追加質問は次のブロックまで保留</li>
+        <li><strong>Shallow Work（ハイブリッド・調整時間）</strong>：AI割込み許可。質問即対応OK</li>
+        <li><strong>Buffer / Transit</strong>：AI進捗チェック専用時間。能動的にAIに状況確認</li>
+      </ul>
+
+      <h3>カレンダー色分けプロトコル</h3>
+      <p>
+        Google Calendar / Outlook の色を「許容度」で割り当てる：
+      </p>
+      <ul>
+        <li><strong>🔴 赤＝Do Not Disturb</strong>：人間判断ブロック・Deep Work・AI通知も切る</li>
+        <li><strong>🟡 黄＝ハイブリッド</strong>：AI質問対応可・人間判断と並走</li>
+        <li><strong>🔵 青＝AI委譲中</strong>：AIが動いている時間。人間は別タスクOK</li>
+        <li><strong>⚪ 白＝バッファ</strong>：何でも受ける時間</li>
+      </ul>
+
+      <h3>AI側の設定</h3>
+      <p>
+        Claude / ChatGPT / Gemini に<strong>「現在Deep Work中なので質問はXX時以降に保留」</strong>と明示。AIに割込み禁止時間を学習させる（システムプロンプト or 指示文に記載）。AI社員Notion諮問ログにも「諮問可能時間」を記録する運用も有効。
+      </p>
+
+      <h3>受験者の典型崩壊シナリオ</h3>
+      <p>
+        朝のDeep Work（電験学習）中にAIから「諮問結果が出ました」通知 → 確認のためClaude Code 切替 → 集中切れて電験学習が消化試合化。<strong>対策：諮問は前夜に投げて朝は通知OFF・Buffer時間に確認</strong>。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 要素5：AI共同レビュー -->
+<section class="sai-deep" id="elem-5">
+  <div class="sai-deep-card">
+    <div class="sai-deep-label">05</div>
+    <h2 class="sai-deep-title">AI共同レビュー — 日次5分 + 週次30分</h2>
+    <p class="sai-deep-sub">
+      予定の崩壊パターンは記録しないと繰り返す。AIに今日・今週の予定をレビューさせ、改善提案を受け取る。<a href="shukan-review.html" style="color:var(--accent);">#30 週次レビュー</a>のAI協働版。
+    </p>
+    <div class="sai-deep-body">
+      <h3>日次AI共同レビュー（夜5分）</h3>
+      <ul>
+        <li><strong>入力</strong>：今日のカレンダー実績・完了/未完了タスク・バッファ消化率</li>
+        <li><strong>AIに聞くこと</strong>：「①予定通り進まなかった原因は何か ②明日の配分で削れる時間はあるか ③Q2に分類できるのにQ3扱いしているタスクはあるか」</li>
+        <li><strong>出力</strong>：明日のカレンダーへの1-2件の修正提案</li>
+      </ul>
+
+      <h3>週次AI共同レビュー（金曜30分）</h3>
+      <ul>
+        <li><strong>入力</strong>：1週間のカレンダー実績・バッファ消化率・人間/AI/ハイブリッド時間比率</li>
+        <li><strong>AIに聞くこと</strong>：「①4区分の比率は適切か ②Deep Work時間は確保できていたか ③AI委譲のうち失敗率の高いタスクは何か ④来週の人間判断ブロックに入れるべき重要案件は何か」</li>
+        <li><strong>出力</strong>：来週の時間配分の再設計案</li>
+      </ul>
+
+      <h3>受験者のフローへの組込み（既存運用との接続）</h3>
+      <p>
+        既に Fカンパニーで稼働している<strong>朝レポート（morning-reporter）</strong>・<strong>夜レポート（yoru-routine相当）</strong>・<strong>AI社員諮問ログ</strong>を活用。日次レビューは morning-reporter の前夜分集計に統合可能。週次は <code>shukan-review.html</code>（#30）と連動させる。
+      </p>
+
+      <h3>失敗パターン</h3>
+      <p>
+        <strong>① レビューしない</strong>：同じ崩壊パターンが翌週も再発。学習曲線が立たない。<br>
+        <strong>② レビューが長すぎる</strong>：30分超は形骸化。日次5分・週次30分の上限を厳守。<br>
+        <strong>③ AIに丸投げ</strong>：AIは仮説提示までで、最終判断は人間。提案を盲従しない。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 統合インサイト -->
+<section class="sai-insight">
+  <div class="sai-insight-card">
+    <h2 class="sai-insight-title">5要素の統合：AI時代に予定を崩さない構造</h2>
+    <div class="sai-insight-flow">
+      <div class="sai-flow-item">①4区分配分</div>
+      <span class="sai-flow-arrow">→</span>
+      <div class="sai-flow-item">②代行ライン判定</div>
+      <span class="sai-flow-arrow">→</span>
+      <div class="sai-flow-item">③バッファ予約</div>
+      <span class="sai-flow-arrow">→</span>
+      <div class="sai-flow-item">④許容度色分け</div>
+      <span class="sai-flow-arrow">→</span>
+      <div class="sai-flow-item">⑤共同レビュー</div>
+    </div>
+    <p class="sai-insight-text">
+      ①時間を4区分に分けて初めて「AI協働時間」が予定表に存在する。<br>
+      ②各タスクをQ1-Q4のどこに置くかで、AI委譲・ハイブリッド・人間100%が決まる。<br>
+      ③AIは失敗する前提で15-20%バッファを必ず確保。1件のAI失敗が4-5件の予定を倒すのが最大リスク。<br>
+      ④カレンダーの色分けで「いつAI割込みOKか」を可視化。Deep Work中のAI通知は40%集中損失。<br>
+      ⑤レビューしない限り同じ崩壊が翌週も再発する。日次5分・週次30分でPDCAを回す。<br><br>
+      <strong>本質</strong>：AI時代の予定表は「自分の予定」ではなく、<strong>「人間・AI・ハイブリッド・バッファの4資源を時間軸に配分する管理盤」</strong>。個人最適のスケジュール術（#04・#11・#16・#19・#30）に「AI協働の前提」が乗ると、空き時間 ≠ 暇時間に変わる。
+    </p>
+  </div>
+</section>
+
+<!-- セルフチェック -->
+<section class="sai-selfcheck">
+  <div class="sai-selfcheck-card">
+    <h2 class="sai-selfcheck-title">AI時代の予定設計術 セルフチェック</h2>
+    <p class="sai-selfcheck-sub">5問。今週のAI協働下での予定運用を振り返る。</p>
+    <div class="sai-check-list">
+      <div class="sai-check-item">
+        <input type="checkbox" id="sai-c1" onchange="updateSaiScore()">
+        <label for="sai-c1"><strong>①</strong> カレンダーを「人間判断・AI委譲・ハイブリッド・バッファ」の4区分で意図的に配分した</label>
+      </div>
+      <div class="sai-check-item">
+        <input type="checkbox" id="sai-c2" onchange="updateSaiScore()">
+        <label for="sai-c2"><strong>②</strong> 新規タスクを学習性×失敗許容度で評価し、Q1-Q4のどこに置くかを判定した</label>
+      </div>
+      <div class="sai-check-item">
+        <input type="checkbox" id="sai-c3" onchange="updateSaiScore()">
+        <label for="sai-c3"><strong>③</strong> AI委譲タスクに対して15-20%のバッファ（人間takeover時間）を予約した</label>
+      </div>
+      <div class="sai-check-item">
+        <input type="checkbox" id="sai-c4" onchange="updateSaiScore()">
+        <label for="sai-c4"><strong>④</strong> Deep Work中はAI通知をOFFにし、割込み禁止時間を物理的に確保した</label>
+      </div>
+      <div class="sai-check-item">
+        <input type="checkbox" id="sai-c5" onchange="updateSaiScore()">
+        <label for="sai-c5"><strong>⑤</strong> 日次5分または週次30分のAI共同レビューを実施し、来週の配分を修正した</label>
+      </div>
+    </div>
+    <div class="sai-score" id="sai-score">
+      <span id="sai-score-num">0</span> / 5 — チェックを入れてください
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div style="display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="index.html" style="color:#8892a0;text-decoration:none;font-size:0.78rem;display:flex;align-items:center;gap:4px;"><i data-lucide="layout-grid" width="13" height="13"></i>シリーズ一覧</a>
+    <a href="../index.html" style="color:#8892a0;text-decoration:none;font-size:0.78rem;display:flex;align-items:center;gap:4px;"><i data-lucide="layout-dashboard" width="13" height="13"></i>ポータル</a>
+  </div>
+  <p style="font-size:0.72rem;color:#64748b;">⚡ Fカンパニー — Business Skills Series · 思考・行動の設計図 · © 2026</p>
+</footer>
+
+<script>
+  if (typeof lucide !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+  }
+  function updateSaiScore() {
+    let count = 0;
+    for (let i = 1; i <= 5; i++) {
+      const cb = document.getElementById('sai-c' + i);
+      if (cb && cb.checked) count++;
+    }
+    const num = document.getElementById('sai-score-num');
+    const box = document.getElementById('sai-score');
+    if (num) num.textContent = count;
+    if (box) {
+      box.classList.toggle('full', count === 5);
+      const msgs = [
+        'チェックを入れてください',
+        'スタート地点 — 4区分の認識から',
+        '前進中 — 代行ラインを引けるように',
+        '中間 — バッファと許容度の習慣化',
+        'もう一歩 — レビューを習慣に',
+        '完成 — AI協働下の予定運用が回っている'
+      ];
+      const suffix = ' — ' + msgs[count];
+      box.innerHTML = '<span id="sai-score-num">' + count + '</span> / 5' + suffix;
+    }
+  }
+</script>
+</body>
+</html>
