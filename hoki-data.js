@@ -4,7 +4,8 @@ window.WIKI_DATA = { chapters: [
     { id:"top", num:"00.0", title:"法規の学習マップ" },
     { id:"tokuten-senryaku", num:"00.2", title:"得点戦略（配点・時間配分・捨て問）" },
     { id:"hourei-kaisei", num:"00.3", title:"法改正トラッキング（最新の改正論点）" },
-    { id:"yomikata-kata", num:"00.1", title:"法規の読み方の型（5W）" }
+    { id:"yomikata-kata", num:"00.1", title:"法規の読み方の型（5W）" },
+    { id:"exam-overview", num:"00.4", title:"試験概要・受験案内（科目・配点・CBT）" }
   ]},
   { id:"sec01", num:"01", title:"B問題・計算問題対策", ch:"CH04", pages:[
     { id:"zetsuen-tairyoku",   num:"1.1", title:"絶縁耐力試験",                   freq:"max",  ch:"CH04" },
@@ -16,7 +17,8 @@ window.WIKI_DATA = { chapters: [
     { id:"bshu-setsuchi",      num:"1.7", title:"B種接地抵抗値",                  freq:"max",  ch:"CH04" },
     { id:"hichusei-jiraku",    num:"1.8", title:"中性点非接地系の地絡電流",       freq:"high", ch:"CH04" },
     { id:"zerosou-henryuki",   num:"1.9", title:"零相変流器（ZCT）の仕組み",       freq:"mid",  ch:"CH04" },
-    { id:"hogokyo-dgr",        num:"1.10", title:"保護協調・地絡方向継電器（DGR）", freq:"high", ch:"CH04" }
+    { id:"hogokyo-dgr",        num:"1.10", title:"保護協調・地絡方向継電器（DGR）", freq:"high", ch:"CH04" },
+    { id:"densen-tarumi",      num:"1.11", title:"架空電線のたるみ・張力・実長（計算）", freq:"high", ch:"CH04" }
   ]},
   { id:"sec02", num:"02", title:"頻出数値・表暗記", ch:"CH03/04", pages:[
     { id:"setsuchi-ichiran",    num:"2.1", title:"接地工事一覧表",       freq:"max",  ch:"CH03" },

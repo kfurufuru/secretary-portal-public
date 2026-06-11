@@ -11,6 +11,7 @@ window.renderPage = function(page, navigate) {
     case 'tokuten-senryaku':       return React.createElement(TokutenSenryakuPage, props);
     case 'hourei-kaisei':          return React.createElement(HoreiKaiseiPage, props);
     case 'yomikata-kata':          return React.createElement(YomikataKataPage, props);
+    case 'exam-overview':          return React.createElement(ExamOverviewPage, props);
     case 'zetsuen-tairyoku':       return React.createElement(ZetsuenTairyokuPage, props);
     case 'denatsu-kouka':          return React.createElement(DenatsuKoukaPage, props);
     case 'shisen-hikisama':        return React.createElement(ShisenHikisamaPage, props);
@@ -21,6 +22,7 @@ window.renderPage = function(page, navigate) {
     case 'hichusei-jiraku':        return React.createElement(HichuseiJirakuPage, props);
     case 'zerosou-henryuki':       return React.createElement(ZeroSouHenryukiPage, props);
     case 'hogokyo-dgr':            return React.createElement(HogoKyochoDgrPage, props);
+    case 'densen-tarumi':          return React.createElement(DensenTarumiPage, props);
     case 'setsuchi-ichiran':       return React.createElement(SetsuchiIchiranPage, props);
     case 'zetsuen-ichiran':        return React.createElement(ZetsuenIchiranPage, props);
     case 'rikkaku-ichiran':        return React.createElement(RikkakuIchiranPage, props);
@@ -56,10 +58,10 @@ window.renderPage = function(page, navigate) {
     case 'demand-kwh-kiso':        return React.createElement(DemandKwhKisoPage, props);
     case 'juyoritsu-gainen':       return React.createElement(JuyoritsuGainenPage, props);
     case 'furitsu':                return React.createElement(FuritsuPage, props);
-    case 'futorito':               return React.createElement(StubPage, { ...props, pageId: 'futorito' });
+    case 'futorito':               return React.createElement(FutoritoPage, props);
     case 'hensyatsuki-yoryo':      return React.createElement(HensyatsukiYoryoPage, props);
-    case 'haiden-kanri':           return React.createElement(StubPage, { ...props, pageId: 'haiden-kanri' });
-    case 'juden-setsubi-kanri':    return React.createElement(StubPage, { ...props, pageId: 'juden-setsubi-kanri' });
+    case 'haiden-kanri':           return React.createElement(HaidenKanriPage, props);
+    case 'juden-setsubi-kanri':    return React.createElement(JudenSetsubiKanriPage, props);
     case 'demand-kanri':           return React.createElement(DemandKanriPage, props);
     case 'kakomon-b':              return React.createElement(KakomonThemePage, { ...props, cfg: KAKOMON_THEME_CFG['kakomon-b'] });
     case 'kakomon-setsuchi':       return React.createElement(KakomonSetsuchiPage, props);
@@ -169,7 +171,7 @@ function YomikataKataPage({ data, onNav }) {
           ['電線路 / 電気工作物', '範囲が狭い ／ 広い（電気工作物が上位概念）'],
           ['犯罪捜査 / 立入検査', '刑事目的 ／ 行政目的'],
         ]}
-        note="暗記カードではなく『比較カード』に変えると、似た選択肢での取り違えが減る。受験者の失点は「知らない」より取り違えが多い。"
+        note="暗記カードではなく『比較カード』に変えると、似た選択肢での取り違えが減る。監修者さんの失点は「知らない」より取り違えが多い。"
       />
 
       <h2 style={h2}>4. 弱い覚え方 と 強い覚え方</h2>
@@ -894,6 +896,45 @@ function MachigaiNotePage({ pageId, data, onNav }) {
                 )}
               </div>
               <div style={{ fontSize: 13, lineHeight: 1.55 }}>{r.itemTitle}</div>
+              {/* 📖 Wikiで復習・解説 — PDCAのAct導線。出典ページ（解説）へ誘導する */}
+              {r.articleUrl ? (
+                <div style={{ marginTop: 8 }}>
+                  <a
+                    href={r.articleUrl}
+                    target={(r.source === 'denken' || r.source === 'riron-daily') ? '_blank' : undefined}
+                    rel="noopener"
+                    onClick={(e) => {
+                      // 同一SPA内(hoki)は React ルーティングで遷移（hash 依存を避ける）
+                      if (r.source === 'hoki') {
+                        e.preventDefault();
+                        const sl = (r.articleUrl.split('#')[1] || '').split(':')[0];
+                        if (sl && onNav) onNav(sl);
+                      }
+                    }}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      padding: '5px 12px',
+                      background: 'var(--accent)', color: '#fff',
+                      borderRadius: 6, fontSize: 12, fontWeight: 700,
+                      textDecoration: 'none', cursor: 'pointer',
+                    }}
+                  >📖 Wikiで復習・解説 →</a>
+                </div>
+              ) : r.source === 'daily' ? (
+                <div style={{ marginTop: 8 }}>
+                  <a
+                    href="#"
+                    onClick={(e) => { e.preventDefault(); if (onNav) onNav('top'); }}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      padding: '5px 12px',
+                      background: 'var(--accent)', color: '#fff',
+                      borderRadius: 6, fontSize: 12, fontWeight: 700,
+                      textDecoration: 'none', cursor: 'pointer',
+                    }}
+                  >📖 今日の一問で復習 →</a>
+                </div>
+              ) : null}
               {/* 問題を見る — fetch して該当ブロックをインライン展開（同タブで完結） */}
               {r.source === 'denken' && r.articleUrl && (
                 <div style={{ marginTop: 8 }}>
@@ -2024,7 +2065,9 @@ function HomePage({ onNav, data }) {
             <span className={`rank rank-${currentQ.rank}`}>{currentQ.rank}</span>
             <span className="tag">{'#' + (dailyTopicLabels[currentQ.topic] || currentQ.topic)}</span>
             {(currentQ.tags || []).map(t => <span key={t} className="tag">{t}</span>)}
-            <span style={{ color: 'var(--ink-3)' }}>· 平均正答率 {currentQ.avgRate}</span>
+            {currentQ.avgRate && currentQ.avgRate !== '—' && (
+              <span style={{ color: 'var(--ink-3)' }}>· 平均正答率 {currentQ.avgRate}</span>
+            )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {currentQ.choices.map((c) => {
@@ -2640,7 +2683,7 @@ function BshuSetsuchiPage({ onNav, data }) {
             </tr>
             <tr>
               <td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', fontWeight: 600 }}>頻出罠</td>
-              <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>① B種は計算値（A/C/D種は固定値）／② 遮断が速い＝抵抗値<strong>緩和</strong>方向（誤解しやすい）／③ B種接地線は <strong>4.0mm</strong>（他種より太い）</td>
+              <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>① B種は計算値（A/C/D種は固定値）／② 遮断が速い＝抵抗値<strong>緩和</strong>方向（誤解しやすい）／③ B種接地線は <strong>原則4.0mm・高圧との結合変圧器は2.6mm</strong>（C/D種の1.6mmより太い）</td>
             </tr>
             <tr>
               <td style={{ padding: '6px 10px', background: 'var(--bg-2)', fontWeight: 600 }}>出題</td>
@@ -2719,7 +2762,7 @@ function BshuSetsuchiPage({ onNav, data }) {
           <li>B種接地工事は <strong>変圧器低圧側中性点（または一端）</strong> に施設する（混触時の低圧側電圧上昇を抑制）</li>
           <li>接地抵抗上限: <strong>R_B ≤ 150/Ig</strong>（Ig: 高圧電路の1線地絡電流）</li>
           <li>自動遮断が速いほど上限が緩和：1秒超〜2秒以内→<strong>300/Ig</strong>、1秒以内→<strong>600/Ig</strong></li>
-          <li>接地線の太さ: <strong>4.0 mm 以上</strong>（A/C/D種より太い・B種だけ別格）</li>
+          <li>接地線の太さ: <strong>原則 4.0 mm 以上</strong>（高圧電路との結合変圧器では <strong>2.6 mm 以上</strong>・解釈第17条。C/D種の1.6mmより太い）</li>
         </ul>
       </ConclusionBox>
 
@@ -2791,7 +2834,7 @@ function BshuSetsuchiPage({ onNav, data }) {
         examType="B問題"
         targets="R06下・R05上・H28"
         tags={["B種接地", "1線地絡電流", "混触防止", "変圧器", "解釈17条"]}
-        lastChecked="2026-05-11"
+        lastChecked="2026-06-11"
       />
 
       <h2 id="exam-focus">3. 試験で問われること</h2>
@@ -2800,7 +2843,7 @@ function BshuSetsuchiPage({ onNav, data }) {
         "B種接地抵抗の最大値計算：R_B = 150/Ig（数値代入）",
         "遮断時間による係数の使い分け：150・300・600の3パターン",
         "B種接地の施設場所：変圧器低圧側中性点（または一端）",
-        "B種接地線の太さ：4.0 mm 以上（他種との差）",
+        "B種接地線の太さ：原則 4.0 mm 以上・高圧との結合変圧器は 2.6 mm 以上",
         "B種接地の目的：高低圧混触時の低圧側電圧上昇抑制",
       ]} />
 
@@ -2900,11 +2943,11 @@ function BshuSetsuchiPage({ onNav, data }) {
         headers={["種別", "施設場所", "接地抵抗", "接地線太さ", "備考"]}
         rows={[
           ["A種", "高圧・特高機器の外箱", "10 Ω 以下",   "2.6 mm 以上", "固定値"],
-          ["B種", "変圧器低圧側中性点",   "150/Ig [Ω]", "4.0 mm 以上", "計算値・最も太い"],
+          ["B種", "変圧器低圧側中性点",   "150/Ig [Ω]", "原則4.0 mm（高圧結合は2.6 mm）以上", "計算値"],
           ["C種", "300V超 低圧機器外箱",  "10 Ω 以下",   "1.6 mm 以上", "固定値"],
           ["D種", "300V以下 低圧機器外箱","100 Ω 以下",  "1.6 mm 以上", "固定値"],
         ]}
-        note="B種は唯一の「計算値」かつ「接地線が最も太い（4.0mm）」。この2点でA/C/D種と区別する"
+        note="B種は唯一の「計算値」。接地線は原則4.0mm以上（高圧電路との結合変圧器は2.6mm以上・解釈第17条）でC/D種の1.6mmより太い"
       />
 
       <h2 id="vs-18">9. 1.8（中性点非接地系）との対比</h2>
@@ -2947,7 +2990,7 @@ function BshuSetsuchiPage({ onNav, data }) {
         { wrong: "B種の接地抵抗値は固定値（例：10Ω以下）",         correct: "計算値：150/Ig（Igによって変わる）" },
         { wrong: "遮断が速いほど接地抵抗の上限値が小さくなる",       correct: "逆。遮断が速いほど上限が大きくなる（緩和）" },
         { wrong: "B種は低圧機器（モーター・照明）の保護",            correct: "変圧器の高低圧混触防止（施設場所は低圧側中性点）" },
-        { wrong: "B種の接地線は1.6mm以上",                           correct: "4.0mm以上（B種だけ最も太い）" },
+        { wrong: "B種の接地線は1.6mm以上",                           correct: "原則4.0mm以上・高圧との結合変圧器は2.6mm以上（C/D種の1.6mmより太い）" },
         { wrong: "混触事故では常に高圧電流が低圧機器に流れる",        correct: "B種接地があれば低圧側対地電圧をIg×R_B≤150Vに抑制できる" },
         { wrong: "係数150は任意に決めた値",                           correct: "「混触時の低圧側対地電圧≤150V」という保護目標から導かれる設計値" },
         { wrong: "Ig = 5Aのとき R_B = 150/5 = 30Ω以上にしなければならない", correct: "上限30Ω以下（30Ω「以下」が正しい。以上は誤り）" },
@@ -3100,7 +3143,7 @@ function BshuSetsuchiPage({ onNav, data }) {
         { q: "B種接地抵抗の基本式は？",                        a: "R_B ≤ 150/Ig [Ω]（Ig: 1線地絡電流[A]）" },
         { q: "1秒超〜2秒以内遮断の場合の係数は？",             a: "300（R_B ≤ 300/Ig）" },
         { q: "1秒以内遮断の場合の係数は？",                    a: "600（R_B ≤ 600/Ig）" },
-        { q: "B種の接地線太さは？",                            a: "4.0 mm 以上（A/C/D種より太い）" },
+        { q: "B種の接地線太さは？",                            a: "原則 4.0 mm 以上（高圧との結合変圧器は 2.6 mm 以上）" },
         { q: "係数「150」の物理的意味は？",                    a: "混触時の低圧側対地電圧をIg×R_B = 150V以下に制限するという設計目標" },
       ]} />
 
@@ -3145,7 +3188,7 @@ function BshuSetsuchiPage({ onNav, data }) {
       <UpdateLog entries={[
         { date: "2026-05-31", content: "v2.1: 物理直感WHY 4経路セット横展開（teiatsu-densenro-zetsuen v2.0 パターン適用・AI社員諮問 unanimous=C採用・1ヶ月後 R4再演習正答率向上目的）。3箇所追加：①死活5ステップ視覚化グリッドカード（MinShortcutCard直後・①Ig+遮断時間→②係数選択→③R_B計算→④以下境界判定→⑤目的確認 の5段カード・各「なぜ:」物理理由付き・3大ミス集約ボックス）／②9.5節 暗記フック節（150の物理的意味=対地電圧150V以下・係数2倍ルール=遮断速いほど2倍・ニ・イチ・コンマゴ境界・Bは Big で4.0mm・場所固定 の5覚え方）／③12.5節 自己練習3問（Ig=10A・2秒超／Ig=20A・1秒以内／Ig=2A・中間緩和・detailsで解き方/正解折り畳み）", reason: "AI社員諮問（pool: decision+drive+design-learning）全員一致1位＝C横展開。teiatsu-densenro-zetsuen v2.0 で確立した『物理直感WHY 4経路セット』が R4過去問再演習成功に直結する pattern を、freq:max・rank:S の B種接地ハブに最速適用。20マス中 既に15充実・残5欠落（5stepグリッド・暗記フック・自己練習3問）を補完して 20/20 完備化" },
         { date: "2026-05-24", content: "v2.0: 3層構造＋PDCAパイロット適用（パイロット第4号）", reason: "第22条PR#29・denro-zetsuen PR#30・setsuchi-koji PR#36 と整合する形で A層全体像・Plan・SectionCheck×10・D. Act パネルを追加。setsuchi-koji の次の学習推奨先からの動線完成" },
-        { date: "2026-05-09", content: "v1.1: B種接地抵抗の遮断時間条件を電技解釈第17条第2項の正規表現に修正（誤『1秒以内→300・0.5秒以内→600』→ 正『1秒超〜2秒以内→300・1秒以内→600』）", reason: "誤数値修正・受験者指摘" },
+        { date: "2026-05-09", content: "v1.1: B種接地抵抗の遮断時間条件を電技解釈第17条第2項の正規表現に修正（誤『1秒以内→300・0.5秒以内→600』→ 正『1秒超〜2秒以内→300・1秒以内→600』）", reason: "誤数値修正・監修者さん指摘" },
         { date: "2026-05-07", content: "v1.0: 初版作成（直前確認モード・最短解法・深掘り解説・ひっかけ7項目・過去問2パターン）", reason: "stub解消・freq:max最優先タスク" },
       ]} />
 
@@ -3419,7 +3462,7 @@ function HichuseiJirakuPage({ onNav, data }) {
           ["現在（1970年代〜）", "6.6kV配電は非接地方式が標準", "通信線分離・需要家設備での選択遮断（DGR）整備", "保護協調・メンテナンス性"],
           ["未来（2030年代〜）", "分散電源連系で再検討の動き", "PV・蓄電池の双方向潮流／フェランチ効果／系統安定化", "再エネ普及率・系統慣性低下"],
         ]}
-        note="技術選択は「物理的最適解」ではなく「時代の支配因子」で決まる。受験者が現役のあいだに非接地→接地への回帰議論が起きる可能性大"
+        note="技術選択は「物理的最適解」ではなく「時代の支配因子」で決まる。監修者さんが現役のあいだに非接地→接地への回帰議論が起きる可能性大"
       />
 
       <h2 id="explain1">6. 深掘り解説①: なぜ「線間電圧V」を「対地電圧V/√3」に変換するのか</h2>
@@ -3893,7 +3936,7 @@ function HichuseiJirakuPage({ onNav, data }) {
           <text x="207" y="290" textAnchor="middle" fontSize="10" fill="#aaa">正三角形（3相フェーザ先端）</text>
 
           <circle cx="207" cy="215" r="4" fill="#444"/>
-          <text x="218" y="230" fontSize="11" fill="#555">O（中性点）</text>
+          <text x="176" y="248" fontSize="11" fill="#555">O（中性点）</text>
 
           <line x1="207" y1="215" x2="207" y2="122" stroke="#d33" strokeWidth="2.5" markerEnd="url(#ph60Red)"/>
           <text x="218" y="118" fontSize="13" fill="#d33" fontWeight="700">V_a</text>
@@ -3905,10 +3948,10 @@ function HichuseiJirakuPage({ onNav, data }) {
           <text x="60" y="272" fontSize="13" fill="#27c" fontWeight="700">V_c</text>
 
           <path d="M 207 175 A 40 40 0 0 1 241 235" fill="none" stroke="#888" strokeWidth="1.3"/>
-          <text x="231" y="202" fontSize="12" fill="#888" fontWeight="600">120°</text>
+          <text x="213" y="210" fontSize="12" fill="#888" fontWeight="600">120°</text>
 
           <path d="M 207 175 A 40 40 0 0 0 173 235" fill="none" stroke="#888" strokeWidth="1.3"/>
-          <text x="160" y="202" fontSize="12" fill="#888" fontWeight="600">120°</text>
+          <text x="175" y="210" fontSize="12" fill="#888" fontWeight="600">120°</text>
 
           <rect x="415" y="20" width="395" height="340" fill="#fff9f0" stroke="#bbb" strokeWidth="1" rx="6"/>
           <text x="612" y="42" textAnchor="middle" fontSize="13" fontWeight="700" fill="#a11">【a相完全地絡後】駆動電圧の位相差 = 60°</text>
@@ -3932,7 +3975,7 @@ function HichuseiJirakuPage({ onNav, data }) {
           <text x="450" y="282" fontSize="10" fill="#27c">線間電圧</text>
 
           <path d="M 632 145 A 40 40 0 0 1 592 145" fill="none" stroke="#e60" strokeWidth="2.5"/>
-          <text x="612" y="164" textAnchor="middle" fontSize="15" fill="#e60" fontWeight="700">60°</text>
+          <text x="612" y="172" textAnchor="middle" fontSize="15" fill="#e60" fontWeight="700">60°</text>
 
           <text x="612" y="316" textAnchor="middle" fontSize="12" fill="#a11" fontWeight="700">正三角形の内角 = 60° → V_ba と V_ca の位相差 = 60°</text>
           <text x="612" y="334" textAnchor="middle" fontSize="11" fill="#666">I_b = jωC·V_ba、I_c = jωC·V_ca → 電流の位相差も 60°</text>
@@ -3964,7 +4007,7 @@ function HichuseiJirakuPage({ onNav, data }) {
           <text x="20" y="48" fontSize="11" fill="#666">大きさは同じ ωCV、間の角度は60°（線間電圧の位相差）</text>
 
           <circle cx="200" cy="200" r="3.5" fill="#333"/>
-          <text x="170" y="218" fontSize="11" fill="#666">原点（中性点）</text>
+          <text x="118" y="218" fontSize="11" fill="#666">原点（中性点）</text>
 
           <line x1="200" y1="200" x2="313" y2="135" stroke="#2a8" strokeWidth="2.5" markerEnd="url(#vbArrIb)"/>
           <text x="265" y="125" fontSize="13" fill="#2a8" fontWeight="700">I_b</text>
@@ -4076,7 +4119,7 @@ function HichuseiJirakuPage({ onNav, data }) {
           <line x1="716" y1="366" x2="744" y2="366" stroke="#333" strokeWidth="1.5"/>
           <line x1="722" y1="372" x2="738" y2="372" stroke="#333" strokeWidth="1.2"/>
           <path d="M 180 252 Q 180 410 290 410 Q 300 410 300 200" fill="none" stroke="#d33" strokeWidth="2" strokeDasharray="6,4" markerEnd="url(#arrowR)"/>
-          <text x="195" y="425" fontSize="12" fill="#d33" fontWeight="600">C₁ループ：電源側で完結／ZCT貫通せず</text>
+          <text x="195" y="433" fontSize="12" fill="#d33" fontWeight="600">C₁ループ：電源側で完結／ZCT貫通せず</text>
           <path d="M 730 372 Q 730 440 500 440 Q 305 440 300 200" fill="none" stroke="#27c" strokeWidth="2" strokeDasharray="6,4" markerEnd="url(#arrowB)"/>
           <text x="510" y="455" fontSize="12" fill="#27c" fontWeight="600">C₂ループ：需要設備側→ZCT貫通＝検出</text>
         </svg>
@@ -4583,6 +4626,18 @@ function ZeroSouHenryukiPage({ onNav, data }) {
         </ul>
       </ConclusionBox>
 
+      <MinShortcutCard
+        title="📋 試験用 急所カード（ZCTの問われ方・正誤判定）"
+        steps={[
+          <span><strong>構造の正誤</strong>：ZCTは<strong>3線一括貫通</strong>が正。「1相だけ通す」記述は普通のCTの説明で誤り</span>,
+          <span><strong>出力の正誤</strong>：二次出力は <strong>3I₀（零相電流）に比例</strong>。「系統地絡電流 I_g がそのまま出る」は誤り</span>,
+          <span><strong>平常時の正誤</strong>：平常時はベクトル和ゼロ→<strong>二次出力なし</strong>。「常に電流が出ている」は誤り</span>,
+          <span><strong>役割分担の正誤</strong>：<strong>ZCT=検出・GR=判定・CB=遮断</strong>。「ZCTが地絡を遮断する」は誤り</span>,
+          <span><strong>DGRとの組合せ</strong>：DGRは方向判別を加えた高度版（貰い事故防止）。詳細は保護協調・DGR（1.10）へ</span>,
+        ]}
+        hint="ZCTは計算でなく正誤判定が出題の中心。「一括貫通・3I₀・検出のみ」の3点で選択肢を切る"
+      />
+
       <MetaStrip
         ch="CH04"
         category="01 B問題・計算問題対策"
@@ -4591,7 +4646,7 @@ function ZeroSouHenryukiPage({ onNav, data }) {
         examType="A問題/B問題前提"
         targets="地絡保護全般"
         tags={["ZCT", "零相電流", "電磁誘導", "保護装置"]}
-        lastChecked="2026-05-06"
+        lastChecked="2026-06-11"
       />
 
       <h2 id="exam-focus">3. 試験で問われること</h2>
@@ -4646,7 +4701,8 @@ function ZeroSouHenryukiPage({ onNav, data }) {
           <line x1="280" y1="240" x2="280" y2="270" stroke="#444" strokeWidth="1" strokeDasharray="3,3"/>
           <text x="280" y="285" textAnchor="middle" fontSize="12" fill="#444">3線一括で貫通孔を通す</text>
           <path d="M 200 130 A 100 100 0 0 1 360 130" fill="none" stroke="#a06" strokeWidth="2.5" markerEnd="url(#zarrFlux)"/>
-          <text x="280" y="105" textAnchor="middle" fontSize="13" fill="#a06" fontWeight="700">磁束 Φ（鉄心内を周回）</text>
+          <line x1="148" y1="56" x2="258" y2="92" stroke="#a06" strokeWidth="1" />
+          <text x="14" y="58" fontSize="13" fill="#a06" fontWeight="700">磁束 Φ（鉄心内を周回）</text>
           <g stroke="#666" strokeWidth="2" fill="none">
             <path d="M 388 225 Q 395 215 405 220 Q 415 225 422 215"/>
             <path d="M 388 240 Q 395 230 405 235 Q 415 240 422 230"/>
@@ -4805,7 +4861,10 @@ function ZeroSouHenryukiPage({ onNav, data }) {
       ]} />
 
       <NextAction nextPageId="setsuchi-ichiran" nextPageTitle="接地工事一覧表" onNav={onNav} />
-      <UpdateLog entries={[{ date: "2026-05-06", content: "初版作成", reason: "1.8地絡電流ページの ZCT 検出機構を独立解説するため新設" }]} />
+      <UpdateLog entries={[
+        { date: "2026-06-11", content: "試験用 急所カード（ZCTの問われ方・正誤判定5点）を追加（ConclusionBox直後）。内容は既存のTrapTable・役割分担・3I₀記述から再構成", reason: "AI社員諮問（design-learning pool）全員一致：仕組みページに計算手順カードは出題形式の誤学習リスクがあるため、正誤判定の急所カード（代替形式）を採用" },
+        { date: "2026-05-06", content: "初版作成", reason: "1.8地絡電流ページの ZCT 検出機構を独立解説するため新設" },
+      ]} />
       <PageNav
         prevId="hichusei-jiraku"   prevTitle="中性点非接地系の地絡電流"
         nextId="setsuchi-ichiran"  nextTitle="接地工事一覧表"
@@ -4862,7 +4921,7 @@ function ChokuzenSuuchiPage({ onNav, data }) {
         examType="A問題対策"
         targets="R07・R06・R05"
         tags={["直前","数値暗記","混同ペア","S頻出","メタページ"]}
-        lastChecked="2026-05-16"
+        lastChecked="2026-06-11"
       />
 
       <ConclusionBox>
@@ -4877,13 +4936,13 @@ function ChokuzenSuuchiPage({ onNav, data }) {
 
       {/* ─ Section 0: 混同ペア（先頭配置） ─ */}
       <h2 id="trap">Section 0. 直前ひっかけ TOP10（混同ペア）</h2>
-      {/* SOT: 各sec02 TrapTable から抽出（setsuchi-ichiran L3350-3354 / zetsuen-ichiran L3424-3428 / den-atsu-kubun L3601-3605 / kosakubutsu-bunrui L3831-3837 / shunin-gijutsusya L3957-3965） */}
+      {/* SOT: SetsuchiIchiranPage と同期（各sec02 TrapTable から抽出。ZetsuenIchiranPage / DenAtsuKubunPage / KosakubutsuBunruiPage / ShuninGijutsusyaPage も参照） */}
       <TrapTable traps={[
         { wrong: "交流も直流も低圧の上限は 600V",                          correct: "交流 600V 以下、直流 750V 以下（直流の方が高い）" },
         { wrong: "C 種と D 種は同じ接地抵抗値",                            correct: "C 種は 10Ω 以下、D 種は 100Ω 以下（10 倍違う）" },
         { wrong: "第三種電気主任技術者は 50kV 以下を監督できる",            correct: "電圧 5 万 V 未満（『以下』ではない）＋出力 5,000 kW 以上の発電所を除く" },
         { wrong: "B 種接地の分子は常に 150",                               correct: "原則 150/Ig、遮断時間で 300/Ig（1〜2 秒）・600/Ig（1 秒以内）に緩和" },
-        { wrong: "絶縁耐力試験は電圧によらず 1.5 倍",                       correct: "低圧 1.5 倍／高圧 1.25 倍／特高（中性点直接接地）0.64 倍" },
+        { wrong: "絶縁耐力試験は電圧によらず 1.5 倍",                       correct: "最大使用電圧7kV以下 1.5 倍／7kV超 1.25 倍が基本。60kV超は接地方式で1.1・0.72・0.64倍にも分岐" },
         { wrong: "配線用遮断器は定格電流 1 倍で動作する",                   correct: "配線用遮断器は 1 倍で『動作しない』（ヒューズの不動作は 1.1 倍）" },
         { wrong: "出力 50kW 未満の太陽光は一般用電気工作物",                correct: "現行法（2022 年改正）は太陽光 10kW 未満が一般用／10〜50kW 未満は小規模事業用／50kW 以上は自家用" },
         { wrong: "事業用電気工作物は必ず主任技術者の選任が必要",            correct: "小規模事業用（事業用の一部）は保安規程・主任技術者ともに不要" },
@@ -4893,7 +4952,7 @@ function ChokuzenSuuchiPage({ onNav, data }) {
 
       {/* ─ Section 1: 電圧区分 ─ */}
       <h2 id="voltage">1. 電圧区分 <span style={{ background:'#c95a00', color:'#fff', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:999, marginLeft:6 }}>S 毎年</span></h2>
-      {/* SOT: hoki-pages.jsx DenAtsuKubunPage L3590-3598 */}
+      {/* SOT: DenAtsuKubunPage と同期（電圧区分表） */}
       <MemTable
         headers={["区分", "交流", "直流"]}
         rows={[
@@ -4907,22 +4966,24 @@ function ChokuzenSuuchiPage({ onNav, data }) {
 
       {/* ─ Section 2: 接地工事 A/B/C/D ─ */}
       <h2 id="setsuchi">2. 接地工事 A/B/C/D <span style={{ background:'#c95a00', color:'#fff', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:999, marginLeft:6 }}>S 毎年</span></h2>
-      {/* SOT: hoki-pages.jsx SetsuchiIchiranPage L3338-3347 */}
+      {/* SOT: SetsuchiIchiranPage の接地工事一覧表と同期 */}
       <MemTable
         headers={["種別", "対象", "接地抵抗値", "電線太さ"]}
         rows={[
           ["A種", "高圧・特高機器",  "10 Ω 以下",  "2.6 mm 以上"],
-          ["B種", "変圧器中性点",    "150 / Ig",   "4.0 mm 以上"],
+          ["B種", "変圧器中性点",    "150 / Ig",   "原則4.0 mm（高圧結合は2.6 mm）以上"],
           ["C種", "300V 超低圧",     "10 Ω 以下",  "1.6 mm 以上"],
+          ["C種（地絡遮断0.5秒以内）", "C種の緩和規定", "500 Ω 以下", "—"],
           ["D種", "300V 以下低圧",   "100 Ω 以下", "1.6 mm 以上"],
+          ["D種（地絡遮断0.5秒以内）", "D種の緩和規定", "500 Ω 以下", "—"],
         ]}
-        note="B 種の 150/Ig は「1 秒超〜2 秒以内に自動遮断→300/Ig、1 秒以内に自動遮断→600/Ig」に緩和（電技解釈第 17 条第 2 項）"
+        note="B 種の 150/Ig は「1 秒超〜2 秒以内に自動遮断→300/Ig、1 秒以内→600/Ig」に緩和（電技解釈第 17 条第 2 項）。C種/D種は 0.5 秒以内動作の地絡遮断装置で 500 Ω まで緩和（第 3 項・第 4 項・正答率58%最難）。「—」は当該規定なし"
       />
       {sec02Link("setsuchi-ichiran", "接地工事一覧（sec02）")}
 
       {/* ─ Section 3: 主任技術者免状 ─ */}
       <h2 id="shunin">3. 主任技術者免状の監督範囲 <span style={{ background:'#c95a00', color:'#fff', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:999, marginLeft:6 }}>S 毎年</span></h2>
-      {/* SOT: hoki-pages.jsx ShuninGijutsusyaPage L3957-3965 / ConclusionBox L3902-3910 */}
+      {/* SOT: ShuninGijutsusyaPage と同期（免状種別ごとの監督範囲表） */}
       <MemTable
         headers={["種別", "監督範囲", "出力制限"]}
         rows={[
@@ -4936,7 +4997,7 @@ function ChokuzenSuuchiPage({ onNav, data }) {
 
       {/* ─ Section 4: 電気工作物 4 区分（2022 年改正後） ─ */}
       <h2 id="kosakubutsu">4. 電気工作物の 4 区分（2022 年改正後） <span style={{ background:'#c95a00', color:'#fff', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:999, marginLeft:6 }}>S 毎年</span></h2>
-      {/* SOT: hoki-pages.jsx KosakubutsuBunruiPage L3804-3814（小規模発電設備閾値）／ L3818-3828（義務マトリクス） */}
+      {/* SOT: KosakubutsuBunruiPage の小規模発電設備閾値表・義務マトリクスと同期 */}
       <MemTable
         headers={["発電方式", "一般用", "小規模事業用"]}
         rows={[
@@ -4949,14 +5010,16 @@ function ChokuzenSuuchiPage({ onNav, data }) {
         note="2022 年改正（令和 5 年 3 月 20 日施行）で太陽光の一般用上限が 50kW 未満→10kW 未満に変更。10〜50kW は新設『小規模事業用』。50kW 以上は自家用"
       />
       <MemTable
-        headers={["義務", "一般用", "小規模事業用", "自家用"]}
+        headers={["義務項目", "一般用", "小規模事業用", "自家用", "電力会社等"]}
         rows={[
-          ["保安規程（42 条）",        "不要", "不要",         "必要"],
-          ["主任技術者（43 条）",      "不要", "不要",         "必要"],
-          ["基礎情報届出",             "不要", "必要（新設）", "—"],
-          ["使用前自己確認",           "不要", "必要（新設）", "—"],
+          ["技術基準適合",          "不要", "必要",         "必要",     "必要"],
+          ["基礎情報届出",          "不要", "必要（新設）", "—",       "—"],
+          ["使用前自己確認",        "不要", "必要（新設）", "—",       "—"],
+          ["保安規程（第42条）",    "不要", "不要",         "必要",     "必要"],
+          ["主任技術者（第43条）",  "不要", "不要",         "必要",     "必要"],
+          ["定期調査（第57条）", "一般送配電事業者が4年に1回", "なし（自己確認のみ）", "自主保安", "国の検査"],
         ]}
-        note="小規模事業用は『事業用』だが保安規程・主任技術者は不要（中間カテゴリ）"
+        note="小規模事業用は『事業用』だが保安規程・主任技術者は不要（中間カテゴリ）。『事業用＝必ず主任技術者』は誤り"
       />
       {sec02Link("kosakubutsu-bunrui", "工作物の区分（sec02）")}
 
@@ -4981,16 +5044,19 @@ function ChokuzenSuuchiPage({ onNav, data }) {
 
       {/* ─ Section 6: 絶縁耐力試験倍率 ─ */}
       <h2 id="zetsuen-bairitsu">6. 絶縁耐力試験の倍率 <span style={{ background:'#c95a00', color:'#fff', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:999, marginLeft:6 }}>S 頻出</span></h2>
-      {/* SOT: hoki-pages.jsx ZetsuenIchiranPage L3413-3421 */}
+      {/* SOT: ZetsuenIchiranPage の15-1表（全区分）と同期 */}
       <MemTable
-        headers={["電路", "最大使用電圧", "倍率", "時間"]}
+        headers={["最大使用電圧の区分", "接地方式の条件", "倍率", "下限"]}
         rows={[
-          ["低圧",                  "7,000 V 以下",         "1.5 倍",   "10 分"],
-          ["高圧",                  "7,000 V 超 60kV 以下", "1.25 倍",  "10 分"],
-          ["特高（中性点直接接地）", "170kV 超",             "0.64 倍",  "10 分"],
-          ["特高（その他）",         "60kV 超",              "1.25 倍",  "10 分"],
+          ["7kV以下",          "—",                              "1.5 倍",  "—"],
+          ["7kV超 15kV以下",   "中性点接地式（中性線多重接地）",  "0.92 倍", "—"],
+          ["7kV超 60kV以下（上記以外）", "—",                    "1.25 倍", "10,500V"],
+          ["60kV超",           "中性点非接地式",                  "1.25 倍", "—"],
+          ["60kV超",           "中性点接地式（直接接地を除く）",  "1.1 倍",  "75,000V"],
+          ["60kV超",           "中性点直接接地式（下行を除く）",  "0.72 倍", "—"],
+          ["170kV超",          "直接接地式（発電所・変電所等に施設）", "0.64 倍", "—"],
         ]}
-        note="低圧は 1.5 倍（高い）、高圧・特高は 1.25 倍が基本。中性点直接接地の特高だけ 0.64 倍。時間はすべて 10 分間"
+        note="解釈第15条15-1表の全区分。時間は一律10分間。頻出は1.5倍と1.25倍だが、60kV超は接地方式で4分岐（『その他は全部1.25倍』と覚えない）。「—」は当該区分での該当規定なし"
       />
       {sec02Link("zetsuen-ichiran", "絶縁耐力試験一覧（sec02）")}
 
@@ -5010,7 +5076,7 @@ function ChokuzenSuuchiPage({ onNav, data }) {
 
       {/* ─ Section 8: 需要率・負荷率・不等率 ─ */}
       <h2 id="juyoritsu">8. 需要率・負荷率・不等率 <span style={{ background:'#c95a00', color:'#fff', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:999, marginLeft:6 }}>S 毎年</span></h2>
-      {/* SOT: hoki-pages.jsx JuyoritsuGainenPage L5521-5529 / L5531-5539 */}
+      {/* SOT: JuyoritsuGainenPage と同期（需要率・負荷率・不等率の定義表） */}
       <MemTable
         headers={["指標", "分子 / 分母", "範囲（電験計算上）"]}
         rows={[
@@ -5030,9 +5096,9 @@ function ChokuzenSuuchiPage({ onNav, data }) {
         { q: "C 種接地と D 種接地の抵抗値の違いは？",    a: "C 種 10Ω 以下 / D 種 100Ω 以下（10 倍）" },
         { q: "B 種接地の分子（原則）は？",              a: "150 / Ig（緩和で 300/Ig・600/Ig）" },
         { q: "第三種の監督電圧と出力上限は？",          a: "5 万 V 未満かつ 5,000 kW 未満の発電所" },
-        { q: "低圧電路の絶縁耐力試験の倍率は？",        a: "1.5 倍 × 10 分" },
-        { q: "高圧電路の絶縁耐力試験の倍率は？",        a: "1.25 倍 × 10 分" },
-        { q: "中性点直接接地の特高の倍率は？",          a: "0.64 倍 × 10 分（170kV 超）" },
+        { q: "最大使用電圧7kV以下の絶縁耐力試験の倍率は？", a: "1.5 倍 × 10 分" },
+        { q: "最大使用電圧7kV超 60kV以下の絶縁耐力試験の倍率は？", a: "1.25 倍 × 10 分（計算結果が10,500V未満なら10,500V）" },
+        { q: "中性点直接接地の特高の絶縁耐力試験の倍率は？", a: "170kV超・発変電所等に施設は0.64倍／それ以外の直接接地は0.72倍" },
         { q: "300V 以下・対地電圧 150V 以下の絶縁抵抗値は？", a: "0.1 MΩ 以上" },
         { q: "300V 超の絶縁抵抗値は？",                 a: "0.4 MΩ 以上" },
         { q: "太陽光 30kW の電気工作物区分は？",        a: "小規模事業用（10〜50kW 未満）" },
@@ -5101,7 +5167,7 @@ function ChokuzenFormulaPage({ onNav, data }) {
         examType="B 問題対策"
         targets="R07・R06・R05"
         tags={["直前","公式暗記","B 問題","計算","メタページ"]}
-        lastChecked="2026-05-16"
+        lastChecked="2026-06-11"
       />
 
       <ConclusionBox>
@@ -5115,7 +5181,7 @@ function ChokuzenFormulaPage({ onNav, data }) {
 
       {/* 1. 需要率・負荷率・不等率 */}
       <h2 id="f1">1. 需要率・負荷率・不等率</h2>
-      {/* SOT: hoki-pages.jsx JuyoritsuGainenPage L5521-5529 */}
+      {/* SOT: JuyoritsuGainenPage と同期（需要率・負荷率・不等率の定義表） */}
       <MemTable
         headers={["公式", "分子 / 分母", "単位"]}
         rows={[
@@ -5129,7 +5195,7 @@ function ChokuzenFormulaPage({ onNav, data }) {
 
       {/* 2. 合わせた需要率・総合負荷率 */}
       <h2 id="f2">2. 合わせた需要率・総合負荷率（2 工場合算）</h2>
-      {/* SOT: hoki-pages.jsx JuyoritsuKeisanPage L6064-6068 */}
+      {/* SOT: JuyoritsuKeisanPage と同期（合わせた需要率・総合負荷率） */}
       <MemTable
         headers={["公式", "分子 / 分母", "ひっかけ"]}
         rows={[
@@ -5142,7 +5208,7 @@ function ChokuzenFormulaPage({ onNav, data }) {
 
       {/* 3. 変圧器容量 */}
       <h2 id="f3">3. 変圧器容量算定</h2>
-      {/* SOT: hoki-pages.jsx HensyatsukiYoryoPage L6211 / JuyoritsuKeisanPage L6054 */}
+      {/* SOT: HensyatsukiYoryoPage と同期（変圧器容量算定、JuyoritsuKeisan も参照） */}
       <MemTable
         headers={["項目", "式", "注意"]}
         rows={[
@@ -5210,7 +5276,7 @@ function ChokuzenFormulaPage({ onNav, data }) {
         ]}
         note="力率を 0.8 から 0.95 に改善するとき：tan を計算して引き算"
       />
-      {refLink("https://kfurufuru.github.io/denken-wiki/themes/", "denken-wiki「力率改善」")}
+      {refLink("https://kfurufuru.github.io/denken-wiki/themes/ryokuritsu-kaizen/", "denken-wiki「力率改善」")}
 
       {/* 8. パーセントインピーダンス */}
       <h2 id="f8">8. パーセントインピーダンスと短絡電流</h2>
@@ -5242,7 +5308,7 @@ function ChokuzenFormulaPage({ onNav, data }) {
 
       {/* 10. B 種接地抵抗 */}
       <h2 id="f10">10. B 種接地抵抗</h2>
-      {/* SOT: 電技解釈第 17 条第 2 項・hoki-pages.jsx SetsuchiIchiranPage L3346 */}
+      {/* SOT: 電技解釈第 17 条第 2 項（SetsuchiIchiranPage と同期） */}
       <MemTable
         headers={["条件（遮断時間）", "B 種接地抵抗 [Ω]"]}
         rows={[
@@ -5325,7 +5391,7 @@ function ChokuzenHikkakePage({ onNav, data }) {
         examType="A 問題対策"
         targets="R07・R06・R05"
         tags={["直前","ひっかけ","条文","手続き","メタページ"]}
-        lastChecked="2026-05-16"
+        lastChecked="2026-06-11"
       />
 
       <ConclusionBox>
@@ -5341,7 +5407,7 @@ function ChokuzenHikkakePage({ onNav, data }) {
 
       {/* A. 手続き種別 */}
       <h2 id="tA">A. 手続き種別（届出 / 許可 / 承認）</h2>
-      {/* SOT: hoki-pages.jsx ShuninGijutsusyaPage L3971-3981（手続種別整理）／ KosakubutsuBunruiPage 義務マトリクス */}
+      {/* SOT: ShuninGijutsusyaPage と同期（手続種別整理、KosakubutsuBunrui 義務マトリクスも参照） */}
       <TrapTable traps={[
         { wrong: "主任技術者の選任は『許可』を受ける",                  correct: "原則『届出』（法 43 条 3 項）。免状なしの選任のみ『許可』（同条 2 項）" },
         { wrong: "主任技術者の兼任は『届出』でよい",                    correct: "兼任は『承認』が必要（施行規則第 52 条）。届出ではない" },
@@ -5353,7 +5419,7 @@ function ChokuzenHikkakePage({ onNav, data }) {
 
       {/* B. 条文番号 */}
       <h2 id="tB">B. 条文番号の入れ替え（電気事業法）</h2>
-      {/* SOT: hoki-pages.jsx ShuninGijutsusyaPage L3941-3950（43 条整理）／ KosakubutsuBunruiPage */}
+      {/* SOT: ShuninGijutsusyaPage と同期（43 条整理、KosakubutsuBunrui も参照） */}
       <TrapTable traps={[
         { wrong: "保安規程は法 43 条",                                   correct: "保安規程は法 42 条。法 43 条は主任技術者" },
         { wrong: "工事計画の届出は法 42 条",                             correct: "工事計画は法 48 条。法 42 条は保安規程" },
@@ -5374,7 +5440,7 @@ function ChokuzenHikkakePage({ onNav, data }) {
 
       {/* D. 電気工作物区分 */}
       <h2 id="tD">D. 電気工作物 4 区分（2022 年改正後）</h2>
-      {/* SOT: hoki-pages.jsx KosakubutsuBunruiPage L3804-3814 / L3818-3828 */}
+      {/* SOT: KosakubutsuBunruiPage と同期（電気工作物 4 区分） */}
       <TrapTable traps={[
         { wrong: "太陽光 30 kW は一般用",                                correct: "太陽光 30 kW は『小規模事業用』（10〜50 kW 未満は 2022 年改正で新設）" },
         { wrong: "事業用電気工作物は必ず主任技術者の選任が必要",          correct: "小規模事業用（事業用の一部）は保安規程・主任技術者ともに不要" },
@@ -5385,7 +5451,7 @@ function ChokuzenHikkakePage({ onNav, data }) {
 
       {/* E. 接地工事 */}
       <h2 id="tE">E. 接地工事のひっかけ</h2>
-      {/* SOT: hoki-pages.jsx SetsuchiIchiranPage L3350-3354 */}
+      {/* SOT: SetsuchiIchiranPage と同期（接地工事ひっかけ） */}
       <TrapTable traps={[
         { wrong: "C 種と D 種は同じ接地抵抗値",                          correct: "C 種 10Ω 以下／D 種 100Ω 以下（10 倍違う）" },
         { wrong: "B 種接地の分子は常に 150",                              correct: "原則 150/Ig、1 秒超〜2 秒以内自動遮断で 300/Ig、1 秒以内で 600/Ig" },
@@ -5448,7 +5514,7 @@ function SetsuchiIchiranPage({ onNav, data }) {
         examType="A問題・B問題"
         targets="R05・R04・R03"
         tags={["接地","頻出S","表暗記","高圧"]}
-        lastChecked="2026-04-28"
+        lastChecked="2026-06-11"
       />
 
       <h2 id="tables">接地工事一覧表</h2>
@@ -5456,7 +5522,7 @@ function SetsuchiIchiranPage({ onNav, data }) {
         headers={["種別", "対象", "接地抵抗値", "電線太さ"]}
         rows={[
           ["A種", "高圧・特高機器",  "10 Ω 以下",  "2.6 mm 以上"],
-          ["B種", "変圧器中性点",    "150 / Ig",   "4.0 mm 以上"],
+          ["B種", "変圧器中性点",    "150 / Ig",   "原則4.0 mm（高圧結合は2.6 mm）以上"],
           ["C種", "300V 超低圧",     "10 Ω 以下",  "1.6 mm 以上"],
           ["C種（地絡遮断0.5秒以内）", "C種の緩和規定", "500 Ω 以下", "—"],
           ["D種", "300V 以下低圧",   "100 Ω 以下", "1.6 mm 以上"],
@@ -5540,7 +5606,7 @@ function SetsuchiIchiranPage({ onNav, data }) {
 
       <UpdateLog entries={[
         { date: "2026-05-31", content: "ハブページ過去問完備化（rikkaku-ichiran と同パターン横展）: ConclusionBox 4 bullet に着眼点1行追記、MemTable に C種/D種 緩和2行追加（500Ω）、TrapTable に D種緩和+300V境界の2件追加、QuickReview ⑤を D種緩和論点で入替", reason: "AI諮問結論 F(横展)・memory feedback_hub_page_kakomon_completeness 初適用。D種+0.5秒遮断装置→500Ω緩和の論点（過去問正答率58%最難）が未反映だった" },
-        { date: "2026-05-09", content: "B種接地のnote内記述を電技解釈第17条第2項の正規表現に修正（誤『1秒以内→300/Ig』→ 正『1秒超〜2秒以内→300/Ig、1秒以内→600/Ig』）", reason: "並列監査で発見・受験者指摘の波及修正" },
+        { date: "2026-05-09", content: "B種接地のnote内記述を電技解釈第17条第2項の正規表現に修正（誤『1秒以内→300/Ig』→ 正『1秒超〜2秒以内→300/Ig、1秒以内→600/Ig』）", reason: "並列監査で発見・監修者さん指摘の波及修正" },
         { date: "2026-04-28", content: "初版作成", reason: "—" },
       ]} />
       <PageNav
@@ -5566,10 +5632,10 @@ function ZetsuenIchiranPage({ onNav, data }) {
 
       <ConclusionBox>
         <ul>
-          <li><strong>低圧（7kV以下）</strong>: 1.5倍 × 10分<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 区分軸は <strong>「最大使用電圧」</strong>（事業法の電圧区分 低圧/高圧 とは別軸）。7kV以下=1.5倍が頻出（解釈第15条・正答率69%）</span></li>
-          <li><strong>高圧（7kV超 60kV以下）</strong>: 1.25倍 × 10分<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 7kV以下=1.5倍／7kV超=1.25倍。<strong>境界値の取り違え</strong>に注意（「7kV以下も1.25倍」は誤）</span></li>
-          <li><strong>特高（中性点直接接地、170kV超）</strong>: 0.64倍 × 10分<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 特高でも <strong>「中性点直接接地」かつ「170kV超」</strong> の <strong>2条件同時</strong>で初めて0.64倍。条件文を必ず確認</span></li>
-          <li><strong>特高（その他、60kV超）</strong>: 1.25倍 × 10分<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 「特高は全部1.25倍」と覚えると0.64倍（中性点直接接地・170kV超）を間違える。3 case 区別が必要</span></li>
+          <li><strong>最大使用電圧 7kV以下</strong>: 1.5倍 × 10分<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 区分軸は <strong>「最大使用電圧」</strong>（事業法の電圧区分 低圧/高圧 とは別軸）。7kV以下=1.5倍が頻出（解釈第15条・正答率69%）</span></li>
+          <li><strong>最大使用電圧 7kV超 60kV以下</strong>: 1.25倍 × 10分<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 7kV以下=1.5倍／7kV超=1.25倍。<strong>境界値の取り違え</strong>に注意（「7kV以下も1.25倍」は誤）。計算結果が<strong>10,500V未満なら10,500V</strong>（下限）</span></li>
+          <li><strong>170kV超・中性点直接接地（発電所・変電所等に施設）</strong>: 0.64倍 × 10分<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: <strong>「直接接地」「170kV超」「発変電所等に施設」</strong>の条件が揃って0.64倍。170kV以下の直接接地は<strong>0.72倍</strong></span></li>
+          <li><strong>60kV超の特高は接地方式で4分岐</strong>: 非接地1.25倍／接地式1.1倍（75,000V未満なら75,000V）／直接接地0.72倍／170kV超・発変電所等0.64倍<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 「その他は全部1.25倍」と単純化しない。60kV超で1.25倍なのは<strong>非接地式</strong>のときだけ（解釈第15条15-1表）</span></li>
           <li>試験時間はすべて<strong>10分間</strong><br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 「電圧によって時間が異なる」は誤。<strong>全電路一律10分間</strong>（解釈第15条共通）</span></li>
         </ul>
       </ConclusionBox>
@@ -5582,35 +5648,38 @@ function ZetsuenIchiranPage({ onNav, data }) {
         examType="A問題・B問題"
         targets="R05・R04・H30"
         tags={["絶縁","頻出S","表暗記","高圧","特別高圧"]}
-        lastChecked="2026-04-27"
+        lastChecked="2026-06-11"
       />
 
       <h2 id="tables">絶縁耐力試験一覧表</h2>
       <MemTable
-        headers={["電路", "最大使用電圧", "倍率", "時間"]}
+        headers={["最大使用電圧の区分", "接地方式の条件", "倍率", "下限・備考"]}
         rows={[
-          ["低圧",                 "7,000 V 以下",       "1.5 倍",  "10 分"],
-          ["高圧",                 "7,000 V 超 60kV 以下","1.25 倍","10 分"],
-          ["特高（中性点直接接地）","170kV 超",           "0.64 倍","10 分"],
-          ["特高（その他）",        "60kV 超",            "1.25 倍","10 分"],
+          ["7kV以下（例: 6.6kV受電）",  "—",                              "1.5 倍",  "—"],
+          ["7kV超 15kV以下",            "中性点接地式（中性線多重接地）",  "0.92 倍", "—"],
+          ["7kV超 60kV以下（上記以外・例: 22kV・33kV）", "—",             "1.25 倍", "10,500V未満なら10,500V"],
+          ["60kV超",                    "中性点非接地式",                  "1.25 倍", "—"],
+          ["60kV超",                    "中性点接地式（直接接地を除く）",  "1.1 倍",  "75,000V未満なら75,000V"],
+          ["60kV超",                    "中性点直接接地式（下行を除く）",  "0.72 倍", "—"],
+          ["170kV超",                   "中性点直接接地式（発電所・変電所等に施設）", "0.64 倍", "—"],
         ]}
-        note="低圧は1.5倍（高い）、高圧・特高は1.25倍が基本。中性点直接接地の特高だけ0.64倍（低い）"
+        note="解釈第15条15-1表の全区分。試験時間は全区分一律10分間。頻出は1.5倍（7kV以下）と1.25倍で、60kV超は接地方式で4分岐（『特高はその他すべて1.25倍』と覚えると1.1倍・0.72倍を取りこぼす）。区分軸は最大使用電圧（事業法の低圧=交流600V以下とは別軸）。「—」は当該区分での該当規定なし"
       />
 
       <h2 id="traps">よくあるひっかけ</h2>
       <TrapTable traps={[
-        { wrong: "高圧電路の試験電圧は1.5倍",          correct: "高圧は1.25倍（1.5倍は低圧）" },
+        { wrong: "6.6kV受電（事業法の高圧）だから試験倍率は1.25倍", correct: "区分軸は最大使用電圧。6.6kV→最大使用電圧6.9kVは7kV以下区分で1.5倍（6,900V×1.5=10,350V）" },
         { wrong: "絶縁耐力試験の時間は電圧によって異なる", correct: "すべて10分間（一律）" },
-        { wrong: "特高はすべて同じ倍率",               correct: "中性点直接接地（170kV超）だけ0.64倍で異なる" },
+        { wrong: "60kV超の特高は0.64倍以外すべて1.25倍", correct: "接地方式で4分岐: 非接地1.25倍／接地式1.1倍（最低75,000V）／直接接地0.72倍／170kV超・発変電所等0.64倍" },
       ]} />
 
       <h2 id="quick-review">1分復習</h2>
       <QuickReview items={[
-        { q: "低圧電路の絶縁耐力試験の倍率は？",         a: "1.5倍" },
-        { q: "高圧電路の絶縁耐力試験の倍率は？",         a: "1.25倍" },
-        { q: "絶縁耐力試験の時間は？",                   a: "10分間（すべて共通）" },
-        { q: "絶縁耐力試験の倍率が0.64倍になるのはどんな電路？",  a: "中性点直接接地の特高電路（170kV超）" },
-        { q: "7,000V超 60kV以下の電路は何V以上で試験？", a: "最大使用電圧の1.25倍" },
+        { q: "絶縁耐力試験で最大使用電圧7,000V以下の電路に適用する倍率は？", a: "1.5倍（× 10分間）。正答率69%の頻出論点" },
+        { q: "絶縁耐力試験で最大使用電圧7,000V超 60kV以下の電路に適用する倍率は？", a: "1.25倍（× 10分間）。計算結果が10,500V未満となる場合は10,500V" },
+        { q: "絶縁耐力試験の印加時間はすべての電路で同じか？", a: "はい。すべて10分間（電圧区分によらず共通）" },
+        { q: "絶縁耐力試験の倍率が0.64倍になるのはどんな条件の電路？", a: "中性点直接接地式で最大使用電圧170kV超・発電所/変電所等に施設の場合（170kV以下の直接接地は0.72倍）" },
+        { q: "絶縁耐力試験の区分軸は電気事業法の低圧・高圧と同じか？", a: "異なる。試験の区分軸は『最大使用電圧』（6.6kV受電は最大使用電圧6.9kV→7kV以下区分で1.5倍）" },
       ]} />
 
       {/* denken-wiki への逆リンク（条文ベース解説） */}
@@ -5631,6 +5700,8 @@ function ZetsuenIchiranPage({ onNav, data }) {
       </div>
 
       <UpdateLog entries={[
+        { date: "2026-06-11", content: "ChatGPT第4監修反映: MemTableを解釈第15条15-1表の全区分に完全化（0.92倍/1.1倍/0.72倍を追加・1.25倍の下限10,500V・1.1倍の下限75,000V・0.64倍の施設場所条件を明記）。ConclusionBoxとTrapTable・QuickReviewを『60kV超は接地方式で4分岐』に修正", reason: "ChatGPT監修（2026-06-11）判定△: 旧4行表の『特高（その他）60kV超→1.25倍』は中性点接地式1.1倍・直接接地0.72倍を誤誘導。chokuzen-suuchi/chokuzen-hikkake/zetsuen-tairyokuの同型簡略化も同時修正（feedback_chatgpt_mandatory_for_criticalの第4監修プロセス）" },
+        { date: "2026-06-11", content: "区分ラベルを条文準拠に統一: ConclusionBox『低圧（7kV以下）』→『最大使用電圧 7kV以下』・『高圧（7kV超 60kV以下）』→『最大使用電圧 7kV超 60kV以下』。MemTable区分列に代表例（6.6kV受電/22kV・33kV）を付記、TrapTable 1行目を『6.6kV受電→6.9kV=7kV以下区分で1.5倍』の混同トラップに差替（旧表現は事業法の高圧と試験区分を混同させる逆効果のため）。QuickReview 5件を単独表示でも自己完結する形に書換え＋区分軸の独立設問を追加（hub第3ループ）", reason: "AI社員諮問（law-fact pool: 江間・不動・早川）全員一致『変更する』。電技解釈第15条の区分軸は最大使用電圧であり、事業法の低圧（交流600V以下）との混同および第15条の対象が高圧・特高電路である事実との不整合を解消。2026-05-31ログの『別件で再検討』の解決" },
         { date: "2026-05-31", content: "ハブページ過去問完備化（rikkaku/setsuchi/kosakubutsu/shunin/hoan-kitei/teiatsu-densenro-zetsuen と同パターン横展★7）: ConclusionBox 5 bullet に着眼点1行追記（最大使用電圧の区分軸明示・境界値ひっかけ判断・3 case 区別・10分一律・正答率69%）。MemTable/TrapTable/QuickReview は既に過去問完備のため無変更", reason: "hub-page-kakomon-update Skill 適用7ページ目。区分軸が事業法の電圧区分（低圧/高圧）と別の『最大使用電圧』ベースであることを着眼点で明示。本文ラベル『低圧（7kV以下）』は条文表現の精度確認後に別件で再検討" },
         { date: "2026-04-27", content: "初版作成", reason: "—" },
       ]} />
@@ -5659,7 +5730,7 @@ function ZetsuenTairyokuPage({ onNav }) {
             <tr><td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', fontWeight: 600 }}>核心</td><td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>試験電圧（＝最大使用電圧×倍率）を電路と大地の間に<strong>連続10分間</strong>印加し、絶縁破壊しなければ合格</td></tr>
             <tr><td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', fontWeight: 600 }}>対象</td><td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>高圧・特別高圧の電路（ケーブル・受電設備等）。低圧の<strong>絶縁抵抗</strong>(0.1/0.2/0.4MΩ・第14条)とは別物</td></tr>
             <tr><td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', fontWeight: 600 }}>頻出罠</td><td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>① 倍率は<strong>最大使用電圧</strong>に掛ける（公称電圧ではない）／② 直流試験は交流の<strong>2倍</strong>／③ 時間は<strong>連続10分</strong></td></tr>
-            <tr><td style={{ padding: '6px 10px', background: 'var(--bg-2)', fontWeight: 600 }}>出題</td><td style={{ padding: '6px 10px' }}>最大使用電圧→試験電圧の計算（H19問11・H22問8 等）・試験方法の論説</td></tr>
+            <tr><td style={{ padding: '6px 10px', background: 'var(--bg-2)', fontWeight: 600 }}>出題</td><td style={{ padding: '6px 10px' }}>最大使用電圧→試験電圧の計算（H19問11・H22問8）・充電電流/電源容量（R3問12）・試験方法の論説</td></tr>
           </tbody>
         </table>
         <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -5728,12 +5799,13 @@ function ZetsuenTairyokuPage({ onNav }) {
         hint="ゴール問題：6600×1.15/1.1=6900V → ×1.5 = 10,350V を10分（正解③）"
       />
 
-      <MetaStrip ch="CH01" category="01 絶縁" importance="S" freq="毎年" examType="A問題・B問題" targets="H22・H19・R01" tags={["絶縁耐力","頻出S","計算","高圧","特別高圧"]} lastChecked="2026-06-03" />
+      <MetaStrip ch="CH01" category="01 絶縁" importance="S" freq="毎年" examType="A問題・B問題" targets="H22・H19・R01" tags={["絶縁耐力","頻出S","計算","高圧","特別高圧"]} lastChecked="2026-06-11" />
 
       <h2 id="exam-focus">3. 試験で問われること</h2>
       <SectionCheck pageId="zetsuen-tairyoku" sectionId="exam-focus" />
       <ExamFocus items={[
         { label: "計算", value: "公称電圧→最大使用電圧→試験電圧（最大使用電圧×倍率）" },
+        { label: "容量", value: "充電電流 I=2πfCV → 試験電源容量 P=V·I（3線一括は×3・R3問12）" },
         { label: "時間", value: "連続10分間（交流・直流とも）" },
         { label: "直流", value: "交流試験電圧の2倍（ケーブル等）" },
         { label: "課電", value: "電路と大地の間（ケーブルは心線と大地・心線相互間）" },
@@ -5744,47 +5816,64 @@ function ZetsuenTairyokuPage({ onNav }) {
       <h2 id="circuit">4. 試験回路（どう課電するか）</h2>
       <SectionCheck pageId="zetsuen-tairyoku" sectionId="circuit" />
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ 絶縁耐力試験の基本回路 — 試験電圧を電路と大地の間に連続10分間印加</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ 絶縁耐力試験の実回路（R3問12の構成）— スライダックで0から昇圧し、試験用変圧器で試験電圧をつくる</div>
         <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12 }}>
-          <svg viewBox="0 0 820 300" width="100%" style={{ display: 'block', maxWidth: 820 }} role="img" aria-label="絶縁耐力試験の基本回路。可変電源から試験用変圧器で昇圧し、試験電圧を被試験電路と大地の間に連続10分間印加。電圧計で試験電圧、電流計で漏れ電流を監視する">
-            <text x="410" y="26" textAnchor="middle" fontSize="14" fill="#333" fontWeight="700">試験電圧 ＝ 最大使用電圧 × 倍率 を 電路↔大地 間に 連続10分間 印加</text>
-            {/* 地面 */}
-            <line x1="30" y1="250" x2="800" y2="250" stroke="#396" strokeWidth="2.5" />
-            <text x="40" y="242" fontSize="11" fill="#396">大地</text>
-            {/* 可変電源 */}
-            <circle cx="90" cy="150" r="26" fill="#fff" stroke="#555" strokeWidth="1.8" />
-            <text x="90" y="146" textAnchor="middle" fontSize="16" fill="#555">∿</text>
-            <text x="90" y="162" textAnchor="middle" fontSize="9" fill="#888">可変</text>
-            <text x="90" y="196" textAnchor="middle" fontSize="11" fill="#555">可変電源</text>
-            <line x1="90" y1="176" x2="90" y2="250" stroke="#555" strokeWidth="1.5" />
-            {/* 試験用変圧器 */}
-            <line x1="116" y1="150" x2="200" y2="150" stroke="#555" strokeWidth="1.8" />
-            <rect x="200" y="110" width="110" height="80" rx="6" fill="#f3eafb" stroke="#a06" strokeWidth="1.8" />
-            <text x="255" y="146" textAnchor="middle" fontSize="12" fill="#a06" fontWeight="700">試験用変圧器</text>
-            <text x="255" y="164" textAnchor="middle" fontSize="11" fill="#a06">（昇圧）</text>
-            <line x1="255" y1="190" x2="255" y2="250" stroke="#555" strokeWidth="1.5" />
-            {/* 高圧出力線 */}
-            <line x1="310" y1="130" x2="560" y2="130" stroke="#c0392b" strokeWidth="2.6" />
-            <text x="420" y="120" textAnchor="middle" fontSize="11" fill="#c0392b" fontWeight="700">試験電圧（高電圧）</text>
+          <svg viewBox="0 0 920 300" width="100%" style={{ display: 'block', maxWidth: 920 }} role="img" aria-label="絶縁耐力試験の実回路。試験用電源AC100Vをスライダックで0から可変し、試験用変圧器で昇圧。電圧計で印加電圧、電流計で充電電流を監視し、3線一括した高圧CVTケーブルの心線と大地（接地した金属遮蔽層）の間に試験電圧を印加する。">
+            <text x="460" y="22" textAnchor="middle" fontSize="13" fill="#333" fontWeight="700">電源 → スライダックで0から昇圧 → 試験用変圧器 → A計で充電電流監視 → 3線一括で印加</text>
+            <line x1="30" y1="252" x2="890" y2="252" stroke="#396" strokeWidth="2.5" />
+            <text x="36" y="245" fontSize="11" fill="#396">大地（接地）</text>
+            {/* 試験用電源 */}
+            <text x="78" y="50" textAnchor="middle" fontSize="11" fill="#555" fontWeight="700">試験用電源</text>
+            <text x="78" y="64" textAnchor="middle" fontSize="9.5" fill="#888">AC100V・50Hz</text>
+            <circle cx="78" cy="120" r="22" fill="#fff" stroke="#555" strokeWidth="1.8" />
+            <text x="78" y="126" textAnchor="middle" fontSize="16" fill="#555">∿</text>
+            <line x1="78" y1="98" x2="78" y2="82" stroke="#555" strokeWidth="1.5" />
+            <line x1="78" y1="82" x2="162" y2="82" stroke="#555" strokeWidth="1.5" />
+            <line x1="78" y1="142" x2="78" y2="252" stroke="#555" strokeWidth="1.5" />
+            {/* スライダック */}
+            <text x="205" y="50" textAnchor="middle" fontSize="11" fill="#a06" fontWeight="700">スライダック</text>
+            <rect x="162" y="66" width="86" height="84" rx="6" fill="#faf3fb" stroke="#a06" strokeWidth="1.6" />
+            <text x="205" y="106" textAnchor="middle" fontSize="10" fill="#a06">100V→</text>
+            <text x="205" y="122" textAnchor="middle" fontSize="10" fill="#a06">0–120V</text>
+            <line x1="172" y1="140" x2="240" y2="78" stroke="#a06" strokeWidth="1.2" />
+            <polygon points="240,78 231,80 236,89" fill="#a06" />
+            <line x1="248" y1="82" x2="360" y2="82" stroke="#555" strokeWidth="1.5" />
             {/* 電圧計 */}
-            <line x1="430" y1="130" x2="430" y2="186" stroke="#27c" strokeWidth="1.5" strokeDasharray="4,2" />
-            <circle cx="430" cy="200" r="16" fill="#fff" stroke="#27c" strokeWidth="1.8" />
-            <text x="430" y="205" textAnchor="middle" fontSize="13" fill="#27c" fontWeight="700">V</text>
-            <line x1="430" y1="216" x2="430" y2="250" stroke="#27c" strokeWidth="1.5" strokeDasharray="4,2" />
-            <text x="452" y="204" textAnchor="start" fontSize="10.5" fill="#27c">試験電圧を監視</text>
-            {/* 被試験機器 */}
-            <rect x="560" y="100" width="170" height="90" rx="6" fill="#eaf2fb" stroke="#2471a3" strokeWidth="1.8" />
-            <text x="645" y="132" textAnchor="middle" fontSize="12.5" fill="#2471a3" fontWeight="700">被試験電路・機器</text>
-            <text x="645" y="151" textAnchor="middle" fontSize="11" fill="#2471a3">高圧受電設備</text>
-            <text x="645" y="168" textAnchor="middle" fontSize="11" fill="#2471a3">ケーブル等</text>
-            {/* 被試験機器→大地（課電対象＝電路と大地の間） */}
-            <line x1="645" y1="190" x2="645" y2="250" stroke="#c0392b" strokeWidth="2" />
-            <text x="660" y="222" fontSize="10.5" fill="#c0392b">課電（電路↔大地）</text>
-            {/* 漏れ電流計（接地側） */}
-            <circle cx="645" cy="234" r="13" fill="#fff" stroke="#a06" strokeWidth="1.6" />
-            <text x="645" y="238" textAnchor="middle" fontSize="10" fill="#a06" fontWeight="700">mA</text>
+            <line x1="300" y1="82" x2="300" y2="152" stroke="#27c" strokeWidth="1.2" strokeDasharray="4,2" />
+            <circle cx="300" cy="168" r="14" fill="#fff" stroke="#27c" strokeWidth="1.6" />
+            <text x="300" y="173" textAnchor="middle" fontSize="12" fill="#27c" fontWeight="700">V</text>
+            <line x1="300" y1="182" x2="300" y2="252" stroke="#27c" strokeWidth="1.2" strokeDasharray="4,2" />
+            <text x="318" y="172" fontSize="10" fill="#27c">印加電圧</text>
+            {/* 試験用変圧器 */}
+            <text x="430" y="50" textAnchor="middle" fontSize="11" fill="#a06" fontWeight="700">試験用変圧器（昇圧）</text>
+            <rect x="370" y="64" width="120" height="100" rx="6" fill="#f3eafb" stroke="#a06" strokeWidth="1.8" />
+            <text x="430" y="96" textAnchor="middle" fontSize="10" fill="#a06">入力 0–120V</text>
+            <text x="430" y="114" textAnchor="middle" fontSize="10" fill="#a06">出力 0–12000V</text>
+            <text x="430" y="132" textAnchor="middle" fontSize="9.5" fill="#888">50Hz</text>
+            <line x1="360" y1="82" x2="370" y2="82" stroke="#555" strokeWidth="1.5" />
+            <line x1="390" y1="164" x2="390" y2="252" stroke="#555" strokeWidth="1.2" />
+            {/* 高圧出力（試験電圧） */}
+            <line x1="490" y1="92" x2="648" y2="92" stroke="#c0392b" strokeWidth="2.4" />
+            <text x="568" y="84" textAnchor="middle" fontSize="10.5" fill="#c0392b" fontWeight="700">試験電圧 10,350V</text>
+            {/* 電流計（充電電流） */}
+            <line x1="470" y1="164" x2="470" y2="196" stroke="#a06" strokeWidth="1.2" />
+            <circle cx="470" cy="212" r="14" fill="#fff" stroke="#a06" strokeWidth="1.6" />
+            <text x="470" y="217" textAnchor="middle" fontSize="12" fill="#a06" fontWeight="700">A</text>
+            <line x1="470" y1="226" x2="470" y2="252" stroke="#a06" strokeWidth="1.2" />
+            <text x="488" y="216" fontSize="10" fill="#a06">充電電流を測定</text>
+            {/* 3線一括ケーブル */}
+            <text x="660" y="56" textAnchor="middle" fontSize="10.5" fill="#c0392b" fontWeight="700">3線一括</text>
+            <line x1="648" y1="78" x2="648" y2="170" stroke="#c0392b" strokeWidth="2.2" />
+            <rect x="648" y="78" width="206" height="14" fill="#161616" />
+            <rect x="648" y="117" width="206" height="14" fill="#161616" />
+            <rect x="648" y="156" width="206" height="14" fill="#161616" />
+            <line x1="845" y1="170" x2="845" y2="252" stroke="#0a7d50" strokeWidth="1.6" />
+            <text x="800" y="188" textAnchor="middle" fontSize="9" fill="#0a7d50">金属遮蔽層を接地（片側）</text>
+            <text x="751" y="208" textAnchor="middle" fontSize="11" fill="#2471a3" fontWeight="700">高圧ケーブル CVT×3</text>
+            <text x="751" y="224" textAnchor="middle" fontSize="9.5" fill="#2471a3">6600V・100sq・220m</text>
+            <text x="751" y="238" textAnchor="middle" fontSize="9.5" fill="#2471a3">1線の対地静電容量 0.45μF/km</text>
           </svg>
-          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 8 }}>※ 試験電圧は<strong>電路と大地の間</strong>に印加。ケーブルは<strong>心線と大地・心線相互間</strong>に課電。電流計(mA)で漏れ電流を監視し、10分間絶縁破壊が無ければ合格。</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 8 }}>※ <strong>スライダック</strong>で電圧を0から徐々に上げ、<strong>試験用変圧器</strong>で昇圧して試験電圧をつくる。<strong>3線一括</strong>した心線と大地（接地した金属遮蔽層）の間に印加し、<strong>A計で充電電流</strong>を監視。10分間 絶縁破壊が無ければ合格。充電電流・電源容量の計算は<strong>次の節8</strong>へ。</div>
         </div>
       </div>
 
@@ -5821,10 +5910,10 @@ function ZetsuenTairyokuPage({ onNav }) {
         { wrong: "[②主語] 絶縁耐力試験＝絶縁抵抗試験",             correct: "別物。絶縁抵抗(0.1/0.2/0.4MΩ・低圧・第14条) と 絶縁耐力(高圧課電・第15条)" },
         { wrong: "試験電圧に一瞬耐えれば合格",                      correct: "連続10分間 絶縁破壊しないことが要件" },
         { wrong: "[①数値] 最大使用電圧＝公称電圧",                correct: "1000V超は公称電圧×1.15/1.1（例 6600→6900V）" },
-        { wrong: "[⑥例外] 特別高圧は全部1.25倍",                  correct: "中性点直接接地・170kV超は0.64倍（条件2つ同時）" },
+        { wrong: "[⑥例外] 特別高圧は全部1.25倍",                  correct: "60kV超は接地方式で1.25／1.1／0.72／0.64倍（170kV超・発変電所等）に分岐。全区分は2.1へ" },
       ]} />
 
-      <h2 id="exam-calc">7. 過去問形式演習（試験電圧の計算）</h2>
+      <h2 id="exam-calc">7. 過去問演習①（試験電圧の計算）</h2>
       <SectionCheck pageId="zetsuen-tairyoku" sectionId="exam-calc" />
       <ExamQuestion
         year="頻出（計算型・H19/H22系）"
@@ -5849,7 +5938,126 @@ function ZetsuenTairyokuPage({ onNav }) {
         ]}
       />
 
-      <h2 id="related-law">8. 関連法規（条文との対応）</h2>
+      <h2 id="exam-cap">8. 過去問演習②（充電電流 → 試験用電源容量）</h2>
+      <SectionCheck pageId="zetsuen-tairyoku" sectionId="exam-cap" />
+      <PlainExplain>
+        <p>B問題は試験電圧で終わらない。その先の<strong>充電電流 I ＝ 2πf·C·V</strong>（C＝対地静電容量、V＝試験電圧）と、<strong>試験用変圧器の所要容量 P ＝ V·I [kVA]</strong> まで問われる（R3問12・R6下期問13）。</p>
+        <p><strong>多心ケーブルを3線一括で試験</strong>すると、対地静電容量が3線分（並列）効くので <strong>I ＝ 3 × 2πf·C·V</strong>。この「×3」を掛け忘れるのが最頻出ミス。</p>
+        <p>容量を計算するのは<strong>交流試験</strong>のとき。<strong>直流試験は充電電流が流れない</strong>ため大容量電源が不要で、これがケーブルで直流を使う利点。</p>
+      </PlainExplain>
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ なぜ「×3」か① — 高圧ケーブルの断面：心線と「接地した金属遮蔽層」の間が対地静電容量C</div>
+        <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12 }}>
+          <svg viewBox="0 0 720 270" width="100%" style={{ display: 'block', maxWidth: 720 }} role="img" aria-label="高圧CVTケーブルの断面構造。中心から導体・絶縁体・金属遮蔽層・ケーブル外装の順。金属遮蔽層を接地すると、導体（心線）と遮蔽層の間が対地静電容量Cになる。CVT3心では3つのCが並列になる。">
+            <text x="360" y="22" textAnchor="middle" fontSize="13" fill="#333" fontWeight="700">高圧ケーブル断面 — 心線と「接地した金属遮蔽層」の間が対地静電容量C</text>
+            <circle cx="172" cy="142" r="78" fill="#1a1a1a" />
+            <circle cx="172" cy="142" r="62" fill="#9aa0a6" />
+            <circle cx="172" cy="142" r="46" fill="#f3e8d8" />
+            <circle cx="172" cy="142" r="20" fill="#b87333" />
+            <line x1="180" y1="132" x2="300" y2="72" stroke="#888" strokeWidth="1" />
+            <text x="305" y="76" fontSize="11" fill="#b87333" fontWeight="700">導体（心線）</text>
+            <line x1="190" y1="118" x2="300" y2="104" stroke="#888" strokeWidth="1" />
+            <text x="305" y="108" fontSize="11" fill="#9a7b3f" fontWeight="700">絶縁体</text>
+            <line x1="210" y1="152" x2="300" y2="148" stroke="#888" strokeWidth="1" />
+            <text x="305" y="152" fontSize="11" fill="#5a6066" fontWeight="700">金属遮蔽層（接地）</text>
+            <line x1="200" y1="196" x2="300" y2="192" stroke="#888" strokeWidth="1" />
+            <text x="305" y="196" fontSize="11" fill="#333" fontWeight="700">ケーブル外装</text>
+            <line x1="172" y1="204" x2="172" y2="240" stroke="#0a7d50" strokeWidth="2" />
+            <line x1="158" y1="240" x2="186" y2="240" stroke="#0a7d50" strokeWidth="2" />
+            <line x1="162" y1="246" x2="182" y2="246" stroke="#0a7d50" strokeWidth="1.5" />
+            <line x1="166" y1="251" x2="178" y2="251" stroke="#0a7d50" strokeWidth="1.2" />
+            <text x="214" y="238" fontSize="9.5" fill="#0a7d50">A種・片側接地</text>
+            <rect x="430" y="118" width="272" height="100" rx="8" fill="#eef6fb" stroke="#2471a3" strokeWidth="1.4" />
+            <text x="566" y="146" textAnchor="middle" fontSize="11" fill="#1a5276" fontWeight="700">心線 ↔ 接地遮蔽層 ＝ 対地静電容量 C</text>
+            <text x="566" y="172" textAnchor="middle" fontSize="11" fill="#1a5276">CVT×3 なら C が3心ぶん</text>
+            <text x="566" y="198" textAnchor="middle" fontSize="12.5" fill="#c0392b" fontWeight="700">並列で合計 3C</text>
+          </svg>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ なぜ「×3」か② — 3線一括の等価回路：対地静電容量Cが3つ並列 → 合成3C</div>
+        <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12 }}>
+          <svg viewBox="0 0 780 280" width="100%" style={{ display: 'block', maxWidth: 780 }} role="img" aria-label="3線一括試験の等価回路。3本の心線を一括して試験電圧Vを印加すると、各心線と接地された金属遮蔽層の間の対地静電容量Cが3つ並列になり、合成容量3C、充電電流は3かける2πfCVになる。">
+            <text x="390" y="22" textAnchor="middle" fontSize="13" fill="#333" fontWeight="700">3線一括 → 対地静電容量Cが3つ並列 → 合成3C → I ＝ 3×2πfC·V</text>
+            <text x="70" y="112" textAnchor="middle" fontSize="10.5" fill="#c0392b">試験電圧</text>
+            <circle cx="70" cy="150" r="20" fill="#fff" stroke="#c0392b" strokeWidth="1.8" />
+            <text x="70" y="156" textAnchor="middle" fontSize="13" fill="#c0392b" fontWeight="700">V</text>
+            <line x1="70" y1="130" x2="70" y2="70" stroke="#c0392b" strokeWidth="1.6" />
+            <line x1="70" y1="70" x2="150" y2="70" stroke="#c0392b" strokeWidth="2" />
+            <line x1="150" y1="70" x2="150" y2="208" stroke="#c0392b" strokeWidth="2" />
+            <text x="150" y="58" textAnchor="middle" fontSize="10.5" fill="#c0392b" fontWeight="700">3線一括</text>
+            <line x1="150" y1="80" x2="330" y2="80" stroke="#333" strokeWidth="1.6" />
+            <text x="250" y="74" textAnchor="middle" fontSize="10" fill="#666">心線1</text>
+            <line x1="150" y1="135" x2="330" y2="135" stroke="#333" strokeWidth="1.6" />
+            <text x="250" y="129" textAnchor="middle" fontSize="10" fill="#666">心線2</text>
+            <line x1="150" y1="190" x2="330" y2="190" stroke="#333" strokeWidth="1.6" />
+            <text x="250" y="184" textAnchor="middle" fontSize="10" fill="#666">心線3</text>
+            <line x1="330" y1="80" x2="360" y2="80" stroke="#333" strokeWidth="1.6" />
+            <line x1="360" y1="66" x2="360" y2="94" stroke="#2471a3" strokeWidth="2.4" />
+            <line x1="372" y1="66" x2="372" y2="94" stroke="#2471a3" strokeWidth="2.4" />
+            <line x1="372" y1="80" x2="400" y2="80" stroke="#333" strokeWidth="1.6" />
+            <text x="366" y="58" textAnchor="middle" fontSize="11" fill="#2471a3" fontWeight="700">C</text>
+            <line x1="330" y1="135" x2="360" y2="135" stroke="#333" strokeWidth="1.6" />
+            <line x1="360" y1="121" x2="360" y2="149" stroke="#2471a3" strokeWidth="2.4" />
+            <line x1="372" y1="121" x2="372" y2="149" stroke="#2471a3" strokeWidth="2.4" />
+            <line x1="372" y1="135" x2="400" y2="135" stroke="#333" strokeWidth="1.6" />
+            <text x="366" y="116" textAnchor="middle" fontSize="11" fill="#2471a3" fontWeight="700">C</text>
+            <line x1="330" y1="190" x2="360" y2="190" stroke="#333" strokeWidth="1.6" />
+            <line x1="360" y1="176" x2="360" y2="204" stroke="#2471a3" strokeWidth="2.4" />
+            <line x1="372" y1="176" x2="372" y2="204" stroke="#2471a3" strokeWidth="2.4" />
+            <line x1="372" y1="190" x2="400" y2="190" stroke="#333" strokeWidth="1.6" />
+            <text x="366" y="172" textAnchor="middle" fontSize="11" fill="#2471a3" fontWeight="700">C</text>
+            <line x1="400" y1="80" x2="430" y2="80" stroke="#333" strokeWidth="1.6" />
+            <line x1="400" y1="135" x2="430" y2="135" stroke="#333" strokeWidth="1.6" />
+            <line x1="400" y1="190" x2="430" y2="190" stroke="#333" strokeWidth="1.6" />
+            <line x1="430" y1="80" x2="430" y2="190" stroke="#0a7d50" strokeWidth="2" />
+            <line x1="430" y1="135" x2="470" y2="135" stroke="#0a7d50" strokeWidth="2" />
+            <text x="455" y="118" textAnchor="middle" fontSize="10" fill="#0a7d50">金属遮蔽層</text>
+            <line x1="470" y1="120" x2="470" y2="150" stroke="#0a7d50" strokeWidth="2" />
+            <line x1="458" y1="150" x2="482" y2="150" stroke="#0a7d50" strokeWidth="2" />
+            <line x1="462" y1="156" x2="478" y2="156" stroke="#0a7d50" strokeWidth="1.6" />
+            <line x1="466" y1="162" x2="474" y2="162" stroke="#0a7d50" strokeWidth="1.2" />
+            <text x="470" y="178" textAnchor="middle" fontSize="9.5" fill="#0a7d50">接地</text>
+            <rect x="520" y="95" width="240" height="100" rx="8" fill="#fff7ed" stroke="#c95a00" strokeWidth="1.4" />
+            <text x="640" y="120" textAnchor="middle" fontSize="11" fill="#9a4a00" fontWeight="700">合成容量 ＝ C＋C＋C ＝ 3C</text>
+            <text x="640" y="146" textAnchor="middle" fontSize="11" fill="#9a4a00">充電電流 I ＝ ω(3C)V</text>
+            <text x="640" y="172" textAnchor="middle" fontSize="12.5" fill="#c0392b" fontWeight="700">＝ 3 × 2πfC·V</text>
+          </svg>
+        </div>
+      </div>
+      <ExamQuestion
+        year="R3 問12（B問題・3種法規）"
+        qNum="充電電流・電源容量"
+        question="公称6,600V・50Hzの高圧ケーブル（こう長220m、1線あたり対地静電容量0.45μF/km）を3線一括で交流絶縁耐力試験する。試験用変圧器に必要な容量[kVA]に最も近いものはどれか。"
+        choices={["約3 kVA","約6 kVA","約10 kVA","約20 kVA"]}
+        note="ケーブル全長のC→試験電圧→I=3×2πfCV→P=V·I の順で組み立てる"
+      />
+      <SolveFlow type="解法" steps={[
+        "対地静電容量 C = 0.45[μF/km] × 0.220[km] = 0.099 [μF]（1線あたり）",
+        "最大使用電圧 = 6,600 × 1.15/1.1 = 6,900 [V]",
+        "交流試験電圧 V = 6,900 × 1.5 = 10,350 [V]",
+        "充電電流 I = 3 × 2πfCV = 3 × 2π×50×0.099×10⁻⁶×10,350 ≈ 0.97 [A]（3線一括なので×3）",
+        "所要容量 P = V × I = 10,350 × 0.97 ≈ 10,000 [VA] = 約10 [kVA]",
+      ]} />
+      <ExamAnswer
+        correct="③ 約10 kVA"
+        explanations={[
+          "① 約3kVA … 3線一括の「×3」を忘れた値（I≈0.32A）。誘導の定番ミス",
+          "② 約6kVA … Cの換算ミスや係数の取りこぼし",
+          "③ C=0.099μF・V=10,350V・I=3×2πfCV≈0.97A・P=V·I≈10kVA が正しい",
+          "④ 約20kVA … 直流試験電圧20,700Vを使ってしまう誤り（容量計算は交流試験電圧で）",
+        ]}
+      />
+      <TrapTable traps={[
+        { wrong: "[①数値] 充電電流 I = 2πfCV（1線分のまま）",     correct: "3線一括は I = 3×2πfCV（対地容量が3線分・並列）" },
+        { wrong: "[①数値] 0.45μF/km をそのまま代入",              correct: "こう長を掛ける：0.45 × 0.220 = 0.099 μF" },
+        { wrong: "[⑥例外] 直流試験でも大容量電源が必要",          correct: "直流は充電電流ゼロ → 大容量電源不要（ケーブルで直流を使う利点）" },
+        { wrong: "[①数値] 所要容量は最大使用電圧で計算",          correct: "試験電圧 V(=10,350V) で計算：P = V·I" },
+      ]} />
+
+      <h2 id="related-law">9. 関連法規（条文との対応）</h2>
       <SectionCheck pageId="zetsuen-tairyoku" sectionId="related-law" />
       <MemTable
         headers={["階層", "法規・条文", "本ページとの関係"]}
@@ -5862,7 +6070,16 @@ function ZetsuenTairyokuPage({ onNav }) {
         note="法規B問題では条文番号と内容の組合せが問われる。第15条=電路の耐力／第16条=機器／第14条=低圧の絶縁抵抗"
       />
 
-      <h2 id="quick-review">9. 1分復習</h2>
+      <div style={{ background:'var(--bg-elev)', border:'1px solid var(--border)', borderLeft:'4px solid var(--accent)', borderRadius:'var(--radius)', padding:'12px 16px', margin:'14px 0', fontSize:13 }}>
+        <strong>🔆 太陽電池モジュールの絶縁耐力（電技解釈 第16条第5項）</strong>
+        <ul style={{ margin:'8px 0 0', paddingLeft:18, lineHeight:1.8 }}>
+          <li>最大使用電圧の<strong>1.5倍の直流電圧</strong>、または<strong>1倍の交流電圧</strong>（500V未満となる場合は<strong>500V</strong>）を</li>
+          <li><strong>充電部分と大地の間</strong>に<strong>連続10分間</strong>加えて耐えること（R5上期 問4）</li>
+          <li>電路（第15条）は「交流1.5倍」。<strong>太陽電池は交流なら1倍／直流なら1.5倍</strong>と係数が違う点が引っかけ</li>
+        </ul>
+      </div>
+
+      <h2 id="quick-review">10. 1分復習</h2>
       <SectionCheck pageId="zetsuen-tairyoku" sectionId="quick-review" />
       <QuickReview items={[
         { q: "試験電圧は何に倍率を掛ける？", a: "最大使用電圧（公称電圧ではない）" },
@@ -5872,7 +6089,7 @@ function ZetsuenTairyokuPage({ onNav }) {
         { q: "回転機など機器の絶縁性能を定めるのは何条？", a: "電技解釈第16条（電路は第15条）" },
       ]} />
 
-      <h2 id="cross-ref">10. 掛け算出題パターン</h2>
+      <h2 id="cross-ref">11. 掛け算出題パターン</h2>
       <SectionCheck pageId="zetsuen-tairyoku" sectionId="cross-ref" />
       <CrossRef patterns={[
         { a: "絶縁耐力（第15条・試験方法）", b: "絶縁耐力倍率表（zetsuen-ichiran）", result: "最大使用電圧→倍率→試験電圧の計算B問題" },
@@ -5887,10 +6104,11 @@ function ZetsuenTairyokuPage({ onNav }) {
           { id: "circuit",      label: "4節 試験回路" },
           { id: "voltage",      label: "5節 試験電圧の決め方" },
           { id: "traps",        label: "6節 よくあるひっかけ" },
-          { id: "exam-calc",    label: "7節 過去問形式演習" },
-          { id: "related-law",  label: "8節 関連法規" },
-          { id: "quick-review", label: "9節 1分復習" },
-          { id: "cross-ref",    label: "10節 掛け算出題パターン" },
+          { id: "exam-calc",    label: "7節 過去問演習①（試験電圧）" },
+          { id: "exam-cap",     label: "8節 過去問演習②（充電電流・容量）" },
+          { id: "related-law",  label: "9節 関連法規" },
+          { id: "quick-review", label: "10節 1分復習" },
+          { id: "cross-ref",    label: "11節 掛け算出題パターン" },
         ]}
         onJump={(id) => { location.hash = id; }}
       />
@@ -5904,6 +6122,8 @@ function ZetsuenTairyokuPage({ onNav }) {
       </div>
 
       <UpdateLog entries={[
+        { date: "2026-06-06", content: "図3点を追加・更新（監修者さん共有のR3問12試験図ベース）：① 節4試験回路を実回路版に差し替え（試験用電源→スライダック→試験用変圧器0-12000V→V/A計→3線一括CVT）／② 節8に『なぜ×3か①』ケーブル断面図（導体/絶縁体/金属遮蔽層/外装・心線↔接地遮蔽層=C）／③ 節8に『なぜ×3か②』3線一括等価回路（Cが3つ並列→3C→I=3×2πfCV）。SVG自作・座標重なり検査0件", reason: "『絵が分かりやすい』との指摘＋全3図採用の合意。×3の根拠（対地容量が3心ぶん並列）を視覚化し計算の納得度を上げる" },
+        { date: "2026-06-06", content: "B問題の計算チェーンを拡張：新節8『充電電流 I=2πfCV → 試験用電源容量 P=V·I』演習を追加（R3問12・3線一括の×3・C=0.45μF/km×220m=0.099μF・I≈0.97A・P≈10kVA を電験王で一次照合）。太陽電池モジュールの絶縁耐力（第16条第5項・交流1倍/直流1.5倍・最低500V・10分・充電部分↔大地・R5上期問4）callout追加。ExamFocus/全体像/SectionCheckSummary同期、節番号 8→9・9→10・10→11", reason: "外部解説(denken.joho.info)との差分監査で『試験電圧の先（充電電流・電源容量）』欠落を検出。gap≠採用ゲートで実出題(R3問12/R6下期問13/R5上期問4)を一次照合してから採用" },
         { date: "2026-06-03", content: "Stub→新規実装（試験方法フォーカス）。試験回路SVG・試験電圧の組み立て(最大使用電圧×倍率)・直流2倍・連続10分・第15/16条の役割分担・計算過去問・TrapTable11項目。倍率の細表は zetsuen-ichiran へ委譲し棲み分け", reason: "freq:max の Stub 解消（監査検出）。一次ソース(電技解釈第15条・Lawzilla/電験Tips)で直流2倍・10分・最大使用電圧換算を検証" },
       ]} />
       <PageNav
@@ -6083,7 +6303,7 @@ function DenAtsuKubunPage({ onNav, data }) {
         examType="A問題"
         targets="R03・H28・H25"
         tags={["電圧区分","頻出A","表暗記","ひっかけ注意"]}
-        lastChecked="2026-04-25"
+        lastChecked="2026-06-11"
       />
 
       <h2 id="tables">電圧区分一覧表</h2>
@@ -6106,11 +6326,11 @@ function DenAtsuKubunPage({ onNav, data }) {
 
       <h2 id="quick-review">1分復習</h2>
       <QuickReview items={[
-        { q: "交流の低圧の上限電圧は？",   a: "600 V 以下" },
-        { q: "直流の低圧の上限電圧は？",   a: "750 V 以下" },
-        { q: "高圧の上限電圧は交流・直流とも？", a: "7,000 V 以下" },
-        { q: "直流750Vは何圧？",           a: "低圧（750V以下が低圧）" },
-        { q: "交流7,001Vの電圧区分は？",   a: "特別高圧（7,000V超が特別高圧）" },
+        { q: "電気設備技術基準における交流の低圧上限電圧は？", a: "600 V 以下（直流の低圧上限 750 V より低い）。正答率76%の頻出論点" },
+        { q: "電気設備技術基準における直流の低圧上限電圧は？", a: "750 V 以下（交流の 600 V より高い）" },
+        { q: "電気設備技術基準における高圧の上限電圧は交流・直流とも何V以下？", a: "7,000 V 以下（上限は交流・直流で共通）。正答率70%" },
+        { q: "電気設備技術基準で直流1,000Vの電路は低圧・高圧・特別高圧のどれか？", a: "高圧（直流は750V超〜7,000V以下が高圧。1,000Vは750Vを超えるので高圧）" },
+        { q: "電気設備技術基準における特別高圧とは交流・直流ともに何Vを超えるものか？", a: "7,000 V 超（交流・直流の区別なく7,000V超が特別高圧）。正答率75%" },
       ]} />
 
       {/* denken-wiki への逆リンク（条文ベース解説） */}
@@ -6131,6 +6351,7 @@ function DenAtsuKubunPage({ onNav, data }) {
       </div>
 
       <UpdateLog entries={[
+        { date: "2026-06-11", content: "QuickReview 5件を単独表示でも自己完結する形に書換え（『電気設備技術基準における』主語付与・『直流750V→低圧』を『直流1,000V→高圧』の境界ひっかけに差替・特別高圧を交直共通の明示形に）＋頻出論点に正答率76/70/75%を付記。MemTableは過去問完備済みのため無変更（hub第2/3ループ）", reason: "間違いノート単独表示で文脈が失われる主語省略の解消（punch-list-2026-05-30）＋hub-page-kakomon-update 第3ループ" },
         { date: "2026-05-31", content: "ハブページ過去問完備化（punch list 最終 page・★8）: ConclusionBox 4 bullet に着眼点1行追記（交直差・上限共通・境界値・直流低圧上限の誤答源・正答率76/70/75%）。MemTable/TrapTable/QuickReview は既に過去問完備のため無変更", reason: "hub-page-kakomon-update Skill 適用8ページ目で punch list 完走" },
         { date: "2026-04-25", content: "初版作成", reason: "—" },
       ]} />
@@ -6404,7 +6625,7 @@ function KosakubutsuBunruiPage({ onNav, data }) {
         examType="A問題"
         targets="R06・H29・H25"
         tags={["法令","電気工作物","電圧区分","4区分","頻出S"]}
-        lastChecked="2026-05-11"
+        lastChecked="2026-06-11"
       />
 
       <h2 id="tables">電圧区分一覧表</h2>
@@ -6428,7 +6649,7 @@ function KosakubutsuBunruiPage({ onNav, data }) {
           ["内燃力",   "10 kW 未満",  "—"],
           ["燃料電池", "10 kW 未満",  "—"],
         ]}
-        note="2022年改正（令和5年3月20日施行）で太陽光の一般用上限が50kW未満→10kW未満に変更。10kW以上50kW未満は新設の「小規模事業用」に移行。なお旧用語は現行法に存在せず、現行は一般用も小規模事業用もどちらも「小規模発電設備」と呼び出力閾値で区分する"
+        note="2022年改正（令和5年3月20日施行）で太陽光の一般用上限が50kW未満→10kW未満に変更。10kW以上50kW未満は新設の「小規模事業用」に移行。なお旧用語は現行法に存在せず、現行は一般用も小規模事業用もどちらも「小規模発電設備」と呼び出力閾値で区分する。受電電圧については600V超（例：6.6kV受電のビル受変電設備）は自家用電気工作物に該当（正答率56%）"
       />
 
       <h2 id="four-bunrui">4区分の義務マトリクス（2022年改正後）</h2>
@@ -6440,7 +6661,7 @@ function KosakubutsuBunruiPage({ onNav, data }) {
           ["使用前自己確認", "不要",   "必要（新設）", "—",     "—"],
           ["保安規程（第42条）", "不要", "不要",  "必要",   "必要"],
           ["主任技術者（第43条）","不要","不要",  "必要",   "必要"],
-          ["定期調査",      "電力会社実施（第57条）", "なし（自己確認のみ）", "自主保安", "国の検査"],
+          ["定期調査（第57条）", "一般送配電事業者が4年に1回", "なし（自己確認のみ）", "自主保安", "国の検査"],
         ]}
         note="小規模事業用は「事業用」だが保安規程・主任技術者は不要（中間カテゴリ）。「事業用 = 必ず主任技術者」は誤り"
       />
@@ -6472,6 +6693,7 @@ function KosakubutsuBunruiPage({ onNav, data }) {
       />
 
       <UpdateLog entries={[
+        { date: "2026-06-11", content: "第2/第3ループ棚卸し: 4区分義務マトリクスの定期調査行に一般用の実施者と頻度（一般送配電事業者が4年に1回・第57条）を数値明示（chokuzen-suuchiミラーも同期）、工作物区分表noteに6.6kV受電=自家用の典型例を補記（正答率56%最難論点）。QuickReview 5件は対象過去問4問を完全カバーのため変更なし", reason: "ハブページ第2/第3ループ横展。定期調査の『4年に1回』数値がMemTable行本体に未記載だった（正答率52%）" },
         { date: "2026-05-31", content: "ハブページ過去問完備化（rikkaku-ichiran/setsuchi-ichiran と同パターン横展★2）: ConclusionBox 5 bullet に着眼点1行追記、TrapTable に 高圧6.6kV受電→自家用・一般用調査義務4年に1回 の2件追加、QuickReview を6→5件に整理しQ1/Q3冗長定義削除＋過去問頻出論点追加（slice(0,5)制約で旧Q6が表示されない既存バグも解消）", reason: "AI諮問結論 F(横展) 第3 page。memory feedback_hub_page_kakomon_completeness 適用。高圧6.6kV→自家用（過去問正答率56%最難）・一般用調査義務（同52%）の2論点が未反映だった" },
         { date: "2026-05-11", content: "Phase Hoki-A 緊急修正：太陽光10kW境界（2022年改正反映）・「小出力発電設備」→「小規模発電設備」用語統一・4区分体系追加", reason: "G4監査で2022年改正前の旧基準のまま残存していたため現行法準拠に書き換え" },
         { date: "2026-05-08", content: "スタブ→暗記Hubページに昇格", reason: "S・必須テーマ。数値暗記を hoki-wiki に集約" },
@@ -6537,7 +6759,7 @@ function ShuninGijutsusyaPage({ onNav, data }) {
         examType="A問題"
         targets="R07・R05・R03・H30"
         tags={["法令","主任技術者","頻出S","電圧区分","43条","外部委託","兼任"]}
-        lastChecked="2026-05-09"
+        lastChecked="2026-06-11"
       />
 
       <DenkenWikiCTA
@@ -6675,12 +6897,14 @@ function ShuninGijutsusyaPage({ onNav, data }) {
       <QuickReview items={[
         { q: "第三種の監督範囲は？",                              a: "電圧 5 万 V 未満（ただし出力 5,000 kW 以上の発電所を除く）" },
         { q: "電気事業法 43 条 2 項は？",                         a: "自家用設置者（小規模事業用を除く）に限る、免状を持たない者の許可選任" },
-        { q: "電気事業法 43 条 3 項は？",                         a: "主任技術者の選任・解任の届出（遅滞なく）" },
+        { q: "電気事業法 43 条 3 項は？",                         a: "主任技術者の選任・解任の届出（遅滞なく・正答率66%）" },
         { q: "主任技術者の兼任承認における要件4つの数字は？",     a: "7,000 V 以下 / 2,000 kW 未満 / 6 カ所以内 / 2 時間以内（承認・届出ではない）" },
-        { q: "外部委託承認の対象範囲と制度趣旨は？",              a: "主任技術者を選任しないことができる制度（外部から選任ではない）。原則 受電電圧 7,000 V 以下の需要設備" },
+        { q: "外部委託承認の対象範囲と制度趣旨は？",              a: "主任技術者を選任しないことができる制度（外部から選任ではない）。原則 受電電圧 7,000 V 以下の需要設備（正答率55%）" },
+        { q: "第二種の監督範囲は？",                              a: "電圧 17 万 V 未満（「以下」ではなく「未満」・正答率58%）" },
       ]} />
 
       <UpdateLog entries={[
+        { date: "2026-06-11", content: "第2/第3ループ棚卸し: MemTable群は対象過去問7問の数値・語句を完全カバー済みのため変更なし。QuickReview に第二種監督範囲（17万V未満・正答率58%）を末尾追加し5→6件（現行表示は先頭5件のため新規分は表示cap撤廃PRのマージ後に可視化）。43条3項届出・外部委託承認の回答に正答率を付記", reason: "ハブページ第2/第3ループ横展。第二種の単独復習行が欠けていた" },
         { date: "2026-05-31", content: "ハブページ過去問完備化（rikkaku/setsuchi/kosakubutsu と同パターン横展★3）: ConclusionBox 5 bullet に着眼点1行追記（正答率N%・核心キーワード）、QuickReview を 11→5 件に整理し冗長定義削除＋外部委託7,000V以下数値を Q5 に含める（最大5件表示制約で旧Q6-11が表示されない既存バグ解消）。MemTable/TrapTable は既に過去問完備のため無変更", reason: "hub-page-kakomon-update Skill 初試運転。外部委託承認の受電電圧7,000V以下（正答率55%最難）が QuickReview に直接数値で出ていなかった" },
         { date: "2026-05-11", content: "Phase Hoki-B：43条2項「自家用（小規模事業用を除く）の設置者に限る」明示・43条5項『従業者』→『従事する者』条文表現に統一（4箇所）", reason: "B5 法令一次表現優先（feedback_law_text_accuracy.md）・許可選任の範囲混同遮断" },
         { date: "2026-05-09", content: "ChatGPT指摘に基づき大幅再構成：①重要度ラベル(🔴🟠🟡⚪)で優先度可視化 ②冒頭に「3点」success ③43条1〜5項の項番整理表+warning ④免状種別ごとの監督範囲表（電圧+出力2軸判定） ⑤届出/許可/承認の違いを5種一覧で整理 ⑥外部委託承認を3段階分割（まず覚える/正誤注意/令和7年改正） ⑦兼任承認7-2-6-2 tip+承認/届出warning ⑧原則/例外を note/warning で分離 ⑨ひっかけ拡充（7問） ⑩過去問演習要点表+QuickReview 11問", reason: "免状種別と手続が混在・外部委託の誤解・43条項番混乱・兼任承認の手続種別曖昧、を整理（ChatGPTレビュー）" },
@@ -6726,7 +6950,7 @@ function HoanKiteiPage({ onNav, data }) {
         examType="A問題"
         targets="R07・R04・H29"
         tags={["法令","保安規程","施行規則第50条","頻出S"]}
-        lastChecked="2026-05-11"
+        lastChecked="2026-06-11"
       />
 
       <h2 id="tables">保安規程の必要記載事項（電気事業法施行規則 第50条）</h2>
@@ -6744,6 +6968,18 @@ function HoanKiteiPage({ onNav, data }) {
         note="頭文字「職保巡措記」で5語暗記。運転操作・保全方法は施設内容に応じ追加"
       />
 
+      <h2 id="todoke">届出・遵守義務の整理</h2>
+      <MemTable
+        headers={["項目","内容","根拠"]}
+        rows={[
+          ["届出義務者",   "事業用電気工作物（小規模事業用を除く）の設置者",        "法第42条第1項"],
+          ["新規届出時期", "使用開始前（「30日前」「開始後」は誤・正答率58%）",      "法第42条第1項"],
+          ["変更届出時期", "変更後、遅滞なく（事前届出ではない・正答率60%）",        "法第42条第2項"],
+          ["遵守義務者",   "設置者及びその従業者（双方・正答率56%最難）",            "法第42条第4項"],
+        ]}
+        note="新規は『使用開始前』（事前）・変更は『遅滞なく』（事後）。この非対称が最頻出ひっかけ"
+      />
+
       <h2 id="traps">よくあるひっかけ</h2>
       <TrapTable traps={[
         { wrong: "保安規程は自家用電気工作物の設置者のみが対象",  correct: "『事業用電気工作物（小規模事業用を除く）の設置者』が対象。電気事業者の事業用設備も含む" },
@@ -6755,11 +6991,11 @@ function HoanKiteiPage({ onNav, data }) {
 
       <h2 id="quick-review">1分復習</h2>
       <QuickReview items={[
-        { q: "保安規程の対象者は？",                    a: "事業用電気工作物（小規模事業用を除く）を設置する者" },
-        { q: "保安規程の届出時期は？",                  a: "使用開始前（事前届出）" },
-        { q: "保安規程の変更時の届出は？",              a: "遅滞なく（事後でも可）" },
-        { q: "保安規程の遵守義務を負うのは？",          a: "設置者及びその従業者（双方が義務・事業法第42条第4項）" },
-        { q: "小規模事業用電気工作物に保安規程は必要？",a: "不要（KAISEI-2022-001 で対象外）" },
+        { q: "保安規程を定めて届け出る義務を負うのは誰か？", a: "事業用電気工作物（小規模事業用を除く）の設置者（主任技術者ではない・正答率67%）" },
+        { q: "保安規程の新規届出はいつまでに？",          a: "使用開始前（「30日前」「開始後遅滞なく」は誤・正答率58%）" },
+        { q: "保安規程の変更時の届出はいつまでに？",      a: "変更後、遅滞なく（事後届出・事前ではない・正答率60%）" },
+        { q: "保安規程に電気料金の算定方法は含まれるか？", a: "含まれない。保安規程は安全確保のための社内ルールで料金は対象外（正答率73%）" },
+        { q: "保安規程の遵守義務を負うのは誰か？",        a: "設置者及びその従業者（双方・事業法第42条第4項・正答率56%最難）" },
       ]} />
 
       <DenkenWikiCTA
@@ -6769,6 +7005,7 @@ function HoanKiteiPage({ onNav, data }) {
       />
 
       <UpdateLog entries={[
+        { date: "2026-06-11", content: "第2/第3ループ棚卸し: MemTable「届出・遵守義務の整理」を新規追加（届出義務者・新規/変更届出時期・遵守義務者を法第42条の項対応で表化）。QuickReview は問い文を主語明確化（『対象者は？』→『定めて届け出る義務を負うのは誰か？』）し、電気料金非記載（正答率73%）を追加・小規模事業用（TrapTableと重複）を削除して5件に整理。正答率を各回答に付記", reason: "ハブページ第2/第3ループ横展。届出手続きを問う過去問3問の数値・語句がMemTable本体に未集約で、Q1問い文が単独表示で主語不明確だった" },
         { date: "2026-05-31", content: "ハブページ過去問完備化（rikkaku/setsuchi/kosakubutsu/shunin と同パターン横展★4）: ConclusionBox 5 bullet に着眼点1行追記（正答率N%・核心キーワード）、TrapTable に遵守義務者の論点1件追加（4→5件）、QuickReview Q4 を核心7項目（MemTable既出で冗長）から遵守義務者に入替", reason: "hub-page-kakomon-update Skill 適用4ページ目。保安規程の遵守義務が設置者『及び従業者』双方（事業法第42条第4項・正答率56%最難）の論点が ConclusionBox/TrapTable/QuickReview いずれにも未反映だった" },
         { date: "2026-05-11", content: "Phase Hoki-A 緊急修正：義務者範囲「自家用→事業用（小規模事業用除く）」拡大（denken-wiki Phase B反映）・保安原則と保安規程の混在解消・施行規則第50条由来の核心追加", reason: "denken-wiki jigyoho/42 v1.2 と整合" },
         { date: "2026-05-08", content: "スタブ→暗記Hubページに昇格", reason: "S・必須テーマ。保安原則4条の暗記表を整備" },
@@ -7641,12 +7878,25 @@ function GijutsuKijunTekigouPage({ onNav, data }) {
         note="覚え方『修・改・移・止・制（しゅう・かい・い・し・せい）』。1〜4は『命ずる』、5の使用制限は『制限することができる』と別建て"
       />
 
+      <h2 id="hikaku-56">事業用（第40条）⇄ 一般用（第56条）の適合命令 対比</h2>
+      <MemTable
+        headers={["項目", "第40条（事業用）", "第56条（一般用）"]}
+        rows={[
+          ["対象", "事業用電気工作物", "一般用電気工作物"],
+          ["命令の主体", "主務大臣", "経済産業大臣"],
+          ["命令の相手", "設置する者", "所有者又は占有者"],
+          ["命令の内容（5点）", "修理・改造・移転・使用の一時停止・使用の制限", "同左（5点とも同一）"],
+        ]}
+        note="命令内容の5点は事業用・一般用で完全に同一。違うのは①対象 ②命令主体 ③命令の相手の3つだけ。一般用の相手『所有者又は占有者』は第57条（調査の立入承諾・不適合通知）と同じ主体 → 一般用は一貫して『所有者又は占有者』、事業用は『設置する者』"
+      />
+
       <h2 id="traps">よくあるひっかけ（設置 vs 管理）</h2>
       <TrapTable traps={[
         { wrong: "適合命令の相手は『管理する者』", correct: "『設置する者』。管理する者（日常点検・運転・保守）は原則この条文の相手ではない" },
         { wrong: "命令の相手は電気主任技術者", correct: "主任技術者（第43条・保安監督）は直接の命令先ではない。命令先は設置する者" },
         { wrong: "命令の主体は経済産業大臣に限る", correct: "条文は『主務大臣』。経済産業大臣に限定する表現は誤り" },
         { wrong: "『設置する者』＝工事で物理的に置いた人", correct: "その事業用電気工作物を法的に持ち・使い・維持する責任主体（その設備で事業をする会社側）" },
+        { wrong: "一般用電気工作物の適合命令（第56条）の相手も『設置する者』", correct: "一般用の相手は『所有者又は占有者』（第56条）。『設置する者』は事業用（第39・40条）の相手。対象が変わると相手も変わる" },
       ]} />
 
       <h2 id="points">試験ポイント</h2>
@@ -7661,7 +7911,8 @@ function GijutsuKijunTekigouPage({ onNav, data }) {
       <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderLeft: '4px solid var(--ink-3)', borderRadius: 'var(--radius)', padding: '12px 16px', margin: '18px 0', fontSize: 13 }}>
         📜 <strong>条文逐語（e-Gov・改変禁止）</strong><br />
         <strong>第39条第1項</strong>: 事業用電気工作物を設置する者は、事業用電気工作物を主務省令で定める技術基準に適合するように維持しなければならない。<br />
-        <strong>第40条</strong>: 主務大臣は、事業用電気工作物が前条第一項の主務省令で定める技術基準に適合していないと認めるときは、事業用電気工作物を設置する者に対し、その技術基準に適合するように事業用電気工作物を修理し、改造し、若しくは移転し、若しくはその使用を一時停止すべきことを命じ、又はその使用を制限することができる。
+        <strong>第40条</strong>: 主務大臣は、事業用電気工作物が前条第一項の主務省令で定める技術基準に適合していないと認めるときは、事業用電気工作物を設置する者に対し、その技術基準に適合するように事業用電気工作物を修理し、改造し、若しくは移転し、若しくはその使用を一時停止すべきことを命じ、又はその使用を制限することができる。<br /><br />
+        <strong>第56条（参考・一般用）</strong>: 経済産業大臣は、一般用電気工作物が経済産業省令で定める技術基準に適合していないと認めるときは、その所有者又は占有者に対し、その技術基準に適合するように一般用電気工作物を修理し、改造し、若しくは移転し、若しくはその使用を一時停止すべきことを命じ、又はその使用を制限することができる。
       </div>
 
       <h2 id="quick-review">1分復習</h2>
@@ -7670,7 +7921,7 @@ function GijutsuKijunTekigouPage({ onNav, data }) {
         { q: "第39条で維持義務を負うのは？", a: "事業用電気工作物を設置する者" },
         { q: "適合命令の主体は？", a: "主務大臣" },
         { q: "適合命令の内容5点は？", a: "修理・改造・移転・使用の一時停止・使用の制限" },
-        { q: "第57条と第39・40条の対象の違いは？", a: "第57条＝一般用、第39・40条＝事業用" },
+        { q: "一般用（第56・57条）と事業用（第39・40条）の違いは？", a: "対象が一般用⇄事業用で、相手も変わる: 一般用＝所有者又は占有者（第56条）、事業用＝設置する者（第40条）" },
       ]} />
 
       <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: '18px 0' }}>
@@ -7684,6 +7935,7 @@ function GijutsuKijunTekigouPage({ onNav, data }) {
       />
 
       <UpdateLog entries={[
+        { date: "2026-06-01", content: "v1.1: 第40条(事業用)⇄第56条(一般用)の適合命令対比を追加。命令5点は同一で、違いは対象/主体/相手の3つ。一般用＝所有者又は占有者(第56・57条で一貫)、事業用＝設置する者。e-Gov第56条第1項を逐語照合。TrapTable・QuickReview・条文逐語にも反映", reason: "第40条の双子条文(第56条)との識別は頻出論点。『設置する者 vs 所有者又は占有者』の横断整理で得点力を強化" },
         { date: "2026-06-01", content: "v1.0: 新規作成（C/D層特化）。第39条維持義務→第40条適合命令の型・命令5点（修改移止制）・設置vs管理トラップ表。e-Gov原文API逐語照合。過去問は出題年度・種別が未確定のため解説のみ（pool未追加）", reason: "e-sysnet「技術基準への適合」差分。denken-wiki jigyoho/39・40 をSoTとしhoki側はC/D層特化＋CTA（hoki_wiki_implementation_workflow 二分法ゲート）。別セッション(S-e281c97e)のe-Gov照合済ドラフトを実装" },
       ]} />
 
@@ -7809,6 +8061,131 @@ function DenroZetsuenPage({ onNav, data }) {
         lastChecked="2026-05-08"
       />
 
+      <h2 id="zukai">条文を図で理解（第14条）</h2>
+      <div style={{ background: 'var(--bg-2)', borderLeft: '3px solid var(--accent)', borderRadius: 4, padding: '12px 16px', marginBottom: 16, fontSize: 12.5, lineHeight: 1.9, color: 'var(--ink-2)' }}>
+        「電気使用場所における使用電圧が低圧の電路の<strong>電線相互間</strong>及び<strong>電路と大地との間</strong>の絶縁抵抗は、<strong>開閉器又は過電流遮断器で区切ることのできる電路ごと</strong>に、次の表に掲げる値<strong>以上</strong>でなければならない」（電技解釈 第14条）
+        <div style={{ marginTop: 8, color: 'var(--ink-3)' }}>この一文を <strong>3つの問い</strong> に分解して図にしました → <strong>① どこを測る？</strong>／<strong>② どの単位で？</strong>／<strong>③ いくつ以上？</strong></div>
+      </div>
+
+      {/* ── 図1: ① 何を測るか（電線相互間 と 電路-大地 の2経路） ── */}
+      <div style={{ fontSize: 12.5, color: 'var(--ink-2)', fontWeight: 600, margin: '4px 0 8px' }}>① 何を測るか — 「電線相互間」と「電路と大地との間」の2か所</div>
+      <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12, marginBottom: 18 }}>
+        <svg viewBox="0 0 820 300" width="100%" style={{ display: 'block', maxWidth: 820 }} role="img" aria-label="低圧電路の絶縁抵抗を測る2つの経路。電源（分電盤）から負荷へL線とN線が伸びる。1つ目は電線相互間（L-N線間）の絶縁抵抗。2つ目は電路と大地との間（対地）の絶縁抵抗。絶縁抵抗計（メガー）でこの2か所を測定する。">
+          {/* 電源側 */}
+          <rect x="28" y="96" width="92" height="94" rx="8" fill="#eef2f7" stroke="#555" strokeWidth="1.6" />
+          <text x="74" y="138" textAnchor="middle" fontSize="12" fill="#333" fontWeight="700">低圧電路</text>
+          <text x="74" y="156" textAnchor="middle" fontSize="10.5" fill="#888">（分電盤側）</text>
+          {/* L/N 線 */}
+          <line x1="120" y1="116" x2="632" y2="116" stroke="#222" strokeWidth="2.4" />
+          <line x1="120" y1="176" x2="632" y2="176" stroke="#222" strokeWidth="2.4" />
+          <text x="132" y="108" textAnchor="start" fontSize="12" fill="#c0392b" fontWeight="700">L（電圧線）</text>
+          <text x="132" y="196" textAnchor="start" fontSize="12" fill="#2471a3" fontWeight="700">N（中性線）</text>
+          {/* 負荷 */}
+          <rect x="632" y="98" width="112" height="90" rx="8" fill="#f4f6f8" stroke="#555" strokeWidth="1.6" />
+          <text x="688" y="138" textAnchor="middle" fontSize="12" fill="#333" fontWeight="700">負荷</text>
+          <text x="688" y="156" textAnchor="middle" fontSize="10.5" fill="#888">（機器）</text>
+          {/* ① 電線相互間（縦・赤） */}
+          <line x1="372" y1="120" x2="372" y2="172" stroke="#c0392b" strokeWidth="2" strokeDasharray="5 4" />
+          <polygon points="372,116 368,126 376,126" fill="#c0392b" />
+          <polygon points="372,176 368,166 376,166" fill="#c0392b" />
+          <rect x="392" y="130" width="156" height="30" rx="6" fill="#fdeaea" stroke="#c0392b" strokeWidth="1.3" />
+          <text x="470" y="150" textAnchor="middle" fontSize="11.5" fill="#c0392b" fontWeight="700">① 電線相互間（線間）</text>
+          {/* ② 電路と大地（縦・青） */}
+          <line x1="232" y1="116" x2="232" y2="248" stroke="#2471a3" strokeWidth="2" strokeDasharray="5 4" />
+          <polygon points="232,248 228,238 236,238" fill="#2471a3" />
+          {/* 大地 */}
+          <line x1="120" y1="250" x2="720" y2="250" stroke="#222" strokeWidth="2.6" />
+          {/* 接地記号 */}
+          <line x1="232" y1="250" x2="232" y2="262" stroke="#222" strokeWidth="2" />
+          <line x1="214" y1="262" x2="250" y2="262" stroke="#222" strokeWidth="2" />
+          <line x1="220" y1="268" x2="244" y2="268" stroke="#222" strokeWidth="2" />
+          <line x1="226" y1="274" x2="238" y2="274" stroke="#222" strokeWidth="2" />
+          <rect x="282" y="232" width="208" height="30" rx="6" fill="#eaf2fb" stroke="#2471a3" strokeWidth="1.3" />
+          <text x="386" y="252" textAnchor="middle" fontSize="11.5" fill="#2471a3" fontWeight="700">② 電路と大地との間（対地）</text>
+          {/* メガー注記 */}
+          <text x="688" y="232" textAnchor="middle" fontSize="11" fill="#555">絶縁抵抗計</text>
+          <text x="688" y="249" textAnchor="middle" fontSize="11" fill="#555">（メガー）で測定</text>
+        </svg>
+      </div>
+
+      {/* ── 図2: ② どの単位で（開閉器・過電流遮断器で区切れる電路ごと） ── */}
+      <div style={{ fontSize: 12.5, color: 'var(--ink-2)', fontWeight: 600, margin: '4px 0 8px' }}>② どの単位で測るか — 開閉器・過電流遮断器で区切れる電路ごと</div>
+      <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12, marginBottom: 18 }}>
+        <svg viewBox="0 0 820 300" width="100%" style={{ display: 'block', maxWidth: 820 }} role="img" aria-label="分電盤の主開閉器（過電流遮断器）から母線が伸び、3つの分岐ブレーカーB1・B2・B3を経て各回路につながる。絶縁抵抗は、開閉器や過電流遮断器で切り離せる電路ごとに測定する。ブレーカーを開放すればその先の電路だけを他と切り離して測れる。">
+          {/* 引込 */}
+          <line x1="20" y1="150" x2="60" y2="150" stroke="#222" strokeWidth="2.4" />
+          {/* 主開閉器 */}
+          <rect x="60" y="120" width="120" height="60" rx="8" fill="#fff4e0" stroke="#d68910" strokeWidth="1.8" />
+          <text x="120" y="146" textAnchor="middle" fontSize="12" fill="#b9770e" fontWeight="700">主開閉器</text>
+          <text x="120" y="164" textAnchor="middle" fontSize="10.5" fill="#b9770e">(過電流遮断器)</text>
+          {/* 母線 */}
+          <line x1="180" y1="150" x2="230" y2="150" stroke="#222" strokeWidth="2.4" />
+          <line x1="230" y1="70" x2="230" y2="246" stroke="#222" strokeWidth="2.6" />
+          {/* 分岐1 */}
+          <line x1="230" y1="86" x2="270" y2="86" stroke="#222" strokeWidth="2" />
+          <rect x="270" y="68" width="64" height="36" rx="6" fill="#eaf6ef" stroke="#2e8b57" strokeWidth="1.6" />
+          <text x="302" y="91" textAnchor="middle" fontSize="13" fill="#2e8b57" fontWeight="700">B1</text>
+          <line x1="334" y1="86" x2="470" y2="86" stroke="#222" strokeWidth="2" />
+          <rect x="470" y="70" width="96" height="34" rx="6" fill="#f4f6f8" stroke="#555" strokeWidth="1.4" />
+          <text x="518" y="92" textAnchor="middle" fontSize="11.5" fill="#333" fontWeight="700">回路1</text>
+          <rect x="258" y="62" width="320" height="48" rx="8" fill="none" stroke="#2e8b57" strokeWidth="1.3" strokeDasharray="6 4" />
+          {/* 分岐2 */}
+          <line x1="230" y1="150" x2="270" y2="150" stroke="#222" strokeWidth="2" />
+          <rect x="270" y="132" width="64" height="36" rx="6" fill="#fff4e0" stroke="#d68910" strokeWidth="1.6" />
+          <text x="302" y="155" textAnchor="middle" fontSize="13" fill="#b9770e" fontWeight="700">B2</text>
+          <line x1="334" y1="150" x2="470" y2="150" stroke="#222" strokeWidth="2" />
+          <rect x="470" y="134" width="96" height="34" rx="6" fill="#f4f6f8" stroke="#555" strokeWidth="1.4" />
+          <text x="518" y="156" textAnchor="middle" fontSize="11.5" fill="#333" fontWeight="700">回路2</text>
+          <rect x="258" y="126" width="320" height="48" rx="8" fill="none" stroke="#d68910" strokeWidth="1.3" strokeDasharray="6 4" />
+          {/* 分岐3 */}
+          <line x1="230" y1="214" x2="270" y2="214" stroke="#222" strokeWidth="2" />
+          <rect x="270" y="196" width="64" height="36" rx="6" fill="#eaf2fb" stroke="#2471a3" strokeWidth="1.6" />
+          <text x="302" y="219" textAnchor="middle" fontSize="13" fill="#2471a3" fontWeight="700">B3</text>
+          <line x1="334" y1="214" x2="470" y2="214" stroke="#222" strokeWidth="2" />
+          <rect x="470" y="198" width="96" height="34" rx="6" fill="#f4f6f8" stroke="#555" strokeWidth="1.4" />
+          <text x="518" y="220" textAnchor="middle" fontSize="11.5" fill="#333" fontWeight="700">回路3</text>
+          <rect x="258" y="190" width="320" height="48" rx="8" fill="none" stroke="#2471a3" strokeWidth="1.3" strokeDasharray="6 4" />
+          {/* 注記 */}
+          <text x="600" y="90" textAnchor="start" fontSize="11" fill="#2e8b57" fontWeight="700">← この区切り</text>
+          <text x="600" y="106" textAnchor="start" fontSize="11" fill="#2e8b57">　ごとに測定</text>
+          <text x="410" y="276" textAnchor="middle" fontSize="11" fill="#555">ブレーカーを開放 → その先の電路だけを切り離して測れる</text>
+        </svg>
+      </div>
+
+      {/* ── 図3: ③ いくつ以上（電圧で3段階・い に し） ── */}
+      <div style={{ fontSize: 12.5, color: 'var(--ink-2)', fontWeight: 600, margin: '4px 0 8px' }}>③ いくつ以上か — 電圧で3段階（語呂「い・に・し」）</div>
+      <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12, marginBottom: 18 }}>
+        <svg viewBox="0 0 820 240" width="100%" style={{ display: 'block', maxWidth: 820 }} role="img" aria-label="低圧電路の絶縁抵抗値は電圧で3段階。対地電圧150V以下は0.1MΩ以上、対地電圧150V超300V以下は0.2MΩ以上、使用電圧300V超は0.4MΩ以上。語呂はい・に・し。150V境界は対地電圧、300V超は使用電圧で判定する。">
+          {/* 3区間バー */}
+          <rect x="70" y="70" width="220" height="60" fill="#eaf6ef" stroke="#2e8b57" strokeWidth="1.8" />
+          <rect x="290" y="70" width="220" height="60" fill="#fff4e0" stroke="#d68910" strokeWidth="1.8" />
+          <rect x="510" y="70" width="240" height="60" fill="#fdeaea" stroke="#c0392b" strokeWidth="1.8" />
+          {/* 区間ラベル：抵抗値 */}
+          <text x="180" y="97" textAnchor="middle" fontSize="17" fill="#2e8b57" fontWeight="700">0.1 MΩ 以上</text>
+          <text x="400" y="97" textAnchor="middle" fontSize="17" fill="#b9770e" fontWeight="700">0.2 MΩ 以上</text>
+          <text x="630" y="97" textAnchor="middle" fontSize="17" fill="#c0392b" fontWeight="700">0.4 MΩ 以上</text>
+          {/* 語呂 */}
+          <text x="180" y="120" textAnchor="middle" fontSize="13" fill="#2e8b57" fontWeight="700">「い」</text>
+          <text x="400" y="120" textAnchor="middle" fontSize="13" fill="#b9770e" fontWeight="700">「に」</text>
+          <text x="630" y="120" textAnchor="middle" fontSize="13" fill="#c0392b" fontWeight="700">「し」</text>
+          {/* 数直線 */}
+          <line x1="70" y1="150" x2="760" y2="150" stroke="#222" strokeWidth="2" />
+          <polygon points="760,150 748,145 748,155" fill="#222" />
+          {/* 目盛 */}
+          <line x1="290" y1="144" x2="290" y2="156" stroke="#222" strokeWidth="2" />
+          <line x1="510" y1="144" x2="510" y2="156" stroke="#222" strokeWidth="2" />
+          <text x="70" y="174" textAnchor="middle" fontSize="12" fill="#888">0</text>
+          <text x="290" y="174" textAnchor="middle" fontSize="13" fill="#222" fontWeight="700">150V</text>
+          <text x="510" y="174" textAnchor="middle" fontSize="13" fill="#222" fontWeight="700">300V</text>
+          {/* 区分種別ラベル */}
+          <text x="180" y="196" textAnchor="middle" fontSize="11" fill="#555">対地電圧 150V以下</text>
+          <text x="400" y="196" textAnchor="middle" fontSize="11" fill="#555">対地電圧 150V超〜300V以下</text>
+          <text x="630" y="196" textAnchor="middle" fontSize="11" fill="#555">使用電圧 300V超</text>
+          {/* 罠注記 */}
+          <text x="410" y="224" textAnchor="middle" fontSize="11" fill="#c0392b" fontWeight="700">※ 150V境界は「対地電圧」／ 300V超だけ「使用電圧」で判定</text>
+        </svg>
+      </div>
+
       <h2 id="tables">絶縁抵抗値（電技解釈 第14条）</h2>
       <SectionCheck pageId="denro-zetsuen" sectionId="tables" />
       <MemTable
@@ -7885,7 +8262,7 @@ function DenroZetsuenPage({ onNav, data }) {
 
       <UpdateLog entries={[
         { date: "2026-05-08", content: "スタブ→暗記Hubページに昇格", reason: "S・必須テーマ。絶縁抵抗値0.1/0.2/0.4MΩ暗記表を整備" },
-        { date: "2026-05-24", content: "3層構造＋PDCAパイロット適用（v2.0）", reason: "受験者指摘の3層構造（A:全体像/B:詳細/C:試験対策/D:Act）と SectionCheck/SectionCheckSummary を導入。第22条ページ（teiatsu-densenro-zetsuen）と整合。冒頭でdenken-wiki 第58条/解釈第14条/第22条への3動線を明示" },
+        { date: "2026-05-24", content: "3層構造＋PDCAパイロット適用（v2.0）", reason: "監修者さん指摘の3層構造（A:全体像/B:詳細/C:試験対策/D:Act）と SectionCheck/SectionCheckSummary を導入。第22条ページ（teiatsu-densenro-zetsuen）と整合。冒頭でdenken-wiki 第58条/解釈第14条/第22条への3動線を明示" },
       ]} />
       <PageNav
         prevId="hokoku-todoke-kigen"     prevTitle="報告・届出期限"
@@ -8097,7 +8474,7 @@ function JuutakuTaichiDenatsuPage({ onNav, data }) {
         { q: "住宅で対地電圧 300V 以下まで許容される例外条件は？",                    a: "容量大機器（一般に 2kW 以上等・要再確認）＋専用回路＋接触防護＋接地・漏電遮断器 の組み合わせ充足" },
         { q: "単相3線100/200V 電路の 200V 側の対地電圧は？",                          a: "100V（接地中性線基準で 150V 以下 → 例外条件不要で原則OK）" },
         { q: "三相3線200V 非接地式電路の対地電圧は？住宅で使えるか？",                a: "対地電圧 ≒ 線間電圧 = 200V。住宅では原則 NG（150V 超）、例外条件充足時のみ許容" },
-        { q: "「143 = ?」の暗記キーは？",                                              a: "「143 = 住宅 = 150V」。住宅以外の 300V（第142条）と区別" },
+        { q: "電技解釈第143条（住宅の対地電圧制限）の暗記キー「143 = ?」は？",        a: "「143 = 住宅 = 150V」。住宅以外の 300V（第142条）と区別" },
       ]} />
 
       <h2 id="related-laws">G. 関連法規(電圧区分の階層)</h2>
@@ -8168,7 +8545,7 @@ function JuutakuTaichiDenatsuPage({ onNav, data }) {
 function TeiatsuDensenroZetsuenPage({ onNav, data }) {
   return (
     <div>
-      {/* A. 全体像（denken-wiki 21条style の3層構造のA層・受験者指摘反映） */}
+      {/* A. 全体像（denken-wiki 21条style の3層構造のA層・監修者さん指摘反映） */}
       <div style={{
         background: 'var(--bg-elev)',
         border: '2px solid var(--accent)',
@@ -8391,7 +8768,7 @@ function TeiatsuDensenroZetsuenPage({ onNav, data }) {
         examType="B問題（計算）／A問題（空欄穴埋め）"
         targets="R4上期問11"
         tags={["絶縁性能","電線路","漏えい電流","1/2000","電技省令第22条"]}
-        lastChecked="2026-05-24"
+        lastChecked="2026-06-11"
       />
 
       <h2 id="exam-focus">3. 試験で問われること</h2>
@@ -8475,6 +8852,16 @@ function TeiatsuDensenroZetsuenPage({ onNav, data }) {
           ["範囲",     "電線↔大地・電線↔電線の両方", "電線↔大地（対地絶縁）"],
         ]}
         note="どちらも『絶縁性能』だが、第22条は『電流側』・解釈14条は『抵抗側』。実務では両方測定して両方合格する必要"
+      />
+
+      <MemTable
+        headers={["解釈 第14条 区分", "区分の判定軸", "絶縁抵抗値"]}
+        rows={[
+          ["低圧（使用電圧300V以下・対地電圧150V以下）", "対地電圧 150V 以下",         "0.1 MΩ 以上"],
+          ["低圧（使用電圧300V以下・対地電圧150V超）",   "対地電圧 150V 超 300V 以下", "0.2 MΩ 以上"],
+          ["低圧（使用電圧300V超）",                     "使用電圧 300V 超",           "0.4 MΩ 以上"],
+        ]}
+        note="頻出区分の正答率: 0.1MΩ=70%・0.2MΩ=63%・0.4MΩ=67%（解釈第14条）。150V境界は「対地電圧」／300V超だけ「使用電圧」で判定"
       />
 
       <h2 id="why-2000">6. 深掘り①：なぜ「1/2000」なのか</h2>
@@ -8887,8 +9274,7 @@ function TeiatsuDensenroZetsuenPage({ onNav, data }) {
           { q: "I_m を計算するときに使う電圧は線間か対地か？",     a: "線間電圧。対地電圧で割ると2倍誤になる（単3なら 50000/210 = 238A が正解）" },
           { q: "3線一括試験での総許容漏えい電流は？",              a: "1線当たり許容 × 3（中性線含む3線分の和）" },
           { q: "1線当たり最小絶縁抵抗 = ？",                         a: "試験電圧（対地電圧）÷ 1線当たり許容漏えい電流（総許容で割らない）" },
-          { q: "第22条と解釈第14条の違いは？",                      a: "第22条=電線路・漏えい電流（1/2000）／解釈14条=電路・絶縁抵抗（0.1/0.2/0.4MΩ）。別概念・両方満たす必要" },
-          { q: "第22条の対象範囲は『電線と大地』のみ？",            a: "いいえ。『電線と大地との間』＋『電線の線心相互間』の両方が対象" },
+          { q: "解釈第14条で使用電圧300V以下・対地電圧150V以下の低圧電路の絶縁抵抗値は？", a: "0.1 MΩ 以上（正答率70%）。対地150V超300V以下は 0.2 MΩ、使用電圧300V超は 0.4 MΩ（150V境界は対地電圧・300V超だけ使用電圧で判定）" },
         ]}
       />
 
@@ -8948,6 +9334,7 @@ function TeiatsuDensenroZetsuenPage({ onNav, data }) {
 
 
       <UpdateLog entries={[
+        { date: "2026-06-11", content: "第2/3ループ適用: 節5に解釈第14条の区分別MemTable（0.1/0.2/0.4 MΩ・判定軸付き・正答率70/63/67%）を追加（既存の1行集約の展開）。QuickReview 6件→5件に整理（slice(0,5)で非表示だった6件目を明示削除・抽象的な条文対比設問を区分数値の直接設問に差替）", reason: "hub-page-kakomon-update 第2/3ループ（第1ループ着眼点は2026-05-31適用済み）。区分別数値は頻出過去問が直接問う形なのに表では1行集約のみだったため" },
         { date: "2026-05-31", content: "ハブページ過去問完備化（rikkaku/setsuchi/kosakubutsu/shunin/hoan-kitei と同パターン横展★5・最小適用）: ConclusionBox 6 bullet に着眼点1行追記（第22条の主題は維持・bullet 3 で解釈第14条の絶縁抵抗値 0.1/0.2/0.4 MΩ の正答率70/63/67% を補助言及）。本ページは800行・19セクション構成で 0.1/0.2/0.4 MΩ は5箇所以上で既に完備のため MemTable/TrapTable/QuickReview は無変更", reason: "hub-page-kakomon-update Skill 適用5ページ目。第22条（漏えい電流・1/2000）が主題で解釈第14条（絶縁抵抗・MΩ）は補助扱いだが、ConclusionBox 着眼点パターンを統一適用" },
         { date: "2026-05-31", content: "v2.1: ユーザー第2次レビュー反映。5箇所修正：①Ω化け対策（ASCII図の接地記号を「(B種接地点)」テキストに置換・pre tagにfont-family fallback追加）／②I_m・I_g・V_L・V_E を主要可視箇所で下付き sub タグ化（DirectCheckMode formulaVars・5ステップカード formula/why・SVG R_g・本文JSX。string-prop内のSolveFlow/MemTable等は次フェーズで継続）／③ConclusionBox「電路とは別概念」を「電路（=機器側を含む広義の電気の通り道）」と肯定的に説明＋詳細リンク／④過去問R4(a)(b)・自己練習①②③ の SolveFlow と ExamAnswer を details で折り畳み（解き方/正解を任意展開・先に解いてから確認できる）／⑤ C層冒頭に「公式・直前確認 / 解説・深掘り / 過去問・練習問題」3ボタン jump nav 追加（sticky・簡易タブUX）。完全3-tab構造はPageTabs component (hoki-components.jsx 1.5節) を riron-wiki から移植済・次フェーズで真の3-tab化予定", reason: "5指摘のroot cause: 数値網羅・物理直感はv2.0で達成したが、視認性（化け・下付き表示）と学習動線（折り畳み・タブ）が未整備で『見た目で挫ける』状態。今回は最小コストの surgical 改修（既存セクション順序・構造は維持）。本格3-tab化はriron-3tab-migrationパターンの hoki 適用として別 PR で実施" },
         { date: "2026-05-31", content: "v2.0: ユーザー実誤答フィードバック反映拡充（R4上期問11復習）。5箇所追加：①死活5ステップ視覚化カード（DirectCheckMode直後・各ステップ「なぜ」付き）／②4.6節 深掘り「なぜ線間電圧で I_m を計算するか」（変圧器容量定義 P=V_L·I・対地電圧で2倍誤の物理的理由・単3巻線図）／③8節 並列地絡パス SVG 図（3線が大地に対して並列3抵抗→電流分流→I_g(total)=3·I_g(1)）／④10節 暗記フック節（1/2000の5覚え方）／⑤15.5節 自己練習3問（100kVA・三相非接地式・2線測定）。TrapTable +2件（線間電圧の物理的理由・三相も÷V_L 共通）", reason: "ユーザーが R4上期問11で①手順がわからない②1/2000忘れた③なぜ210Vを使うか不明④105VでNGの理由⑤3線一括の合算理由が不明 を全部訴え。既存ページは数値・手順は網羅していたが『なぜ』の物理直感が不足していたため、視覚化＋物理イメージ＋暗記フック＋反復練習の4経路で同時補強" },
@@ -9217,7 +9604,7 @@ function SetsuchiKojiPage({ onNav, data }) {
 
       <UpdateLog entries={[
         { date: "2026-05-08", content: "スタブ→暗記Hubページに昇格", reason: "S・必須テーマ。ELB緩和とB種倍々ルールを集約（setsuchi-ichiran と棲み分け）" },
-        { date: "2026-05-09", content: "B種倍々ルールの遮断時間を電技解釈第17条第2項の正規表現に修正（誤『1秒以内→300・0.5秒以内→600』→ 正『1秒超〜2秒以内→300・1秒以内→600』）。参照条文も第18条→第17条第2項に訂正", reason: "誤数値修正・受験者指摘" },
+        { date: "2026-05-09", content: "B種倍々ルールの遮断時間を電技解釈第17条第2項の正規表現に修正（誤『1秒以内→300・0.5秒以内→600』→ 正『1秒超〜2秒以内→300・1秒以内→600』）。参照条文も第18条→第17条第2項に訂正", reason: "誤数値修正・監修者さん指摘" },
         { date: "2026-05-24", content: "3層構造＋PDCAパイロット適用（v3.0）", reason: "第22条PR#29・denro-zetsuen PR#30 と整合する形で A層全体像・Plan・SectionCheck×4・D. Act パネルを追加。denken-wiki 解釈17/18/19条への3ボタン動線を完備" },
       ]} />
       <PageNav
@@ -10644,7 +11031,7 @@ function ShoreiD27YudoKandenBoushiPage({ onNav, data }) {
       <NextAction nextPageId="setsuchi-koji" nextPageTitle="接地工事（省令・解釈）" onNav={onNav} />
 
       <UpdateLog entries={[
-        { ver: "v1.0", date: "2026-05-31", content: "新規作成: 3層構造（A/B/C/D）＋PDCA動線・hoki-page-template Skill 適用・19セクション完備・SVG2枚（静電 容量結合 / 電磁 磁気結合）・R2問4(a)(b) 完成版解説・TrapTable 13項目（[①②⑥]ラベル）", reason: "受験者指示『重要度高で省令27条フルセクション』。R2問4 直接出題対応＋denken-wiki SOT 未整備のため hoki-wiki 側で当面の SOT を兼ねる構成" },
+        { ver: "v1.0", date: "2026-05-31", content: "新規作成: 3層構造（A/B/C/D）＋PDCA動線・hoki-page-template Skill 適用・19セクション完備・SVG2枚（静電 容量結合 / 電磁 磁気結合）・R2問4(a)(b) 完成版解説・TrapTable 13項目（[①②⑥]ラベル）", reason: "監修者さん指示『重要度高で省令27条フルセクション』。R2問4 直接出題対応＋denken-wiki SOT 未整備のため hoki-wiki 側で当面の SOT を兼ねる構成" },
       ]} />
 
       <PageNav onNav={onNav} prev="haisen-shiyou-densen" next="setsuchi-koji" />
@@ -11102,6 +11489,18 @@ function JuyoritsuKeisanPage({ onNav, data }) {
         </ul>
       </ConclusionBox>
 
+      <MinShortcutCard
+        title="📋 試験用 最短解法カード（変圧器容量・3率の使い分け）"
+        steps={[
+          <span><strong>何を聞かれたか確認</strong>：変圧器容量[kVA]か、合わせた需要率／総合負荷率か、月電力量かを最初に仕分ける</span>,
+          <span><strong>需要率で最大需要電力</strong>：最大需要電力 = 設備容量 × 需要率（分母は設備容量）</span>,
+          <span><strong>不等率で合成最大</strong>：不等率 = 各最大の合計 ÷ 合成最大需要電力（通常1以上）。合成最大 = 各最大の合計 ÷ 不等率</span>,
+          <span><strong>負荷率は平均/最大</strong>：負荷率 = 平均需要電力 ÷ 最大需要電力（分母は最大需要電力・定義上1以下）</span>,
+          <span><strong>変圧器容量[kVA]</strong>：kVA = 設備容量 × 需要率 ÷ (不等率 × 力率)。kWのままにせず力率でkVAに変換し、標準サイズへ選定</span>,
+        ]}
+        hint="ゴール問題：500 × 0.8 ÷ (1.25 × 0.9) = 400/1.125 ≈ 356 kVA → 標準400 kVAを選定（正解③）"
+      />
+
       <MetaStrip
         ch="CH04"
         category="01 B問題対策"
@@ -11110,7 +11509,7 @@ function JuyoritsuKeisanPage({ onNav, data }) {
         examType="B問題（計算）"
         targets="R05上・R04上・R03・H26"
         tags={["計算問題","需要率","変圧器容量","B問題","施設管理"]}
-        lastChecked="2026-05-08"
+        lastChecked="2026-06-11"
       />
 
       <h2 id="patterns">出題パターン4種</h2>
@@ -11209,6 +11608,7 @@ function JuyoritsuKeisanPage({ onNav, data }) {
       />
 
       <UpdateLog entries={[
+        { date: "2026-06-11", content: "試験用 最短解法カード（変圧器容量・3率の使い分け）をConclusionBox直後に追加。B問題対策章で唯一カード未装備だった点を解消（手順5段＋ゴール例356kVA→400kVA選定はページ内の既存数値と整合）", reason: "freq:maxの計算ページに他B問題ページ標準装備の最短解法カードが無かったため（既存9枚と同一構造）" },
         { date: "2026-05-31", content: "パターン④（単独×変圧器台数×月電力量・R04上問12型）追加。出題パターン3種→4種、ステップ早見表5段、TrapTableに『総合力率を忘れて kW のまま変圧器選定（560÷100=5.6→6台）』『月負荷率=特別な公式と誤解』『平均需要電力(kW)を 2倍する』を追加", reason: "ユーザーR04上問12誤答3点：総合力率未考慮・負荷率/月負荷率の違い・30分平均値の単位混同（feedback_calc_single_vs_composite.md と整合）" },
         { date: "2026-05-11", content: "Phase Hoki-B：『合算需要率＝各最大の合計÷設備容量合計』の誤公式を『合わせた需要率＝合成最大需要電力÷設備容量合計』に訂正（用語集 awaseta-juyoritsu と DemandKwhKisoPage R05上問11(a)解法と整合）", reason: "B2 不等率と合わせた需要率の分子混同による誤答誘発の遮断（feedback_calc_single_vs_composite.md）" },
         { date: "2026-05-08", content: "スタブ→計算問題Hubページに昇格", reason: "S・B問題max級。3パターンを集約・twin概念ページと棲み分け" },
@@ -11345,6 +11745,123 @@ function FuritsuPage({ onNav, data }) {
 }
 
 // ─────────────────────────────────────────────
+// 5-25b. FutoritoPage（不等率特化・施設管理・mid）
+//   juyoritsu-gainen（6.1 概念）との重複は定義1行+リンクに留め、
+//   不等率固有：①≥1が必然の理由 ②分子分母逆転ひっかけ ③変圧器容量への接続 に集中。
+// ─────────────────────────────────────────────
+function FutoritoPage({ onNav, data }) {
+  const navLink = (id, label) => (
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+  );
+  return (
+    <div>
+      <GoalQuestion
+        question="3工場の各最大需要電力の合計が120kW、同時刻で合算した合成最大需要電力が90kWのとき、不等率はいくらか"
+        choices={["0.75","1.0","1.33","1.5"]}
+        year="頻出（H23・R03）"
+        note="不等率 = 各最大の合計 ÷ 合成最大需要。分子と分母を逆にしない。読み終えたら戻って解こう"
+      />
+
+      <ConclusionBox>
+        <ul>
+          <li><strong>不等率 = 各需要家の最大需要電力の合計 ÷ 合成最大需要電力</strong>（無次元）</li>
+          <li>各ピークは<strong>時刻がズレる</strong>ため「各最大の合計 ≧ 合成最大需要」→ <strong>不等率は定義上1以上が必然</strong></li>
+          <li><strong>分子＝各最大の合計</strong>（時刻無視の単純合計）、<strong>分母＝合成最大需要</strong>（同時刻の最大）。逆転が最頻ひっかけ</li>
+          <li>変圧器容量算定では <strong>合成最大需要 = 各最大の合計 ÷ 不等率</strong> として効く（不等率が大きいほど設備は小さくできる）</li>
+          <li>3率の定義・分子分母の一覧は {navLink('juyoritsu-gainen', '需要率・負荷率・不等率（概念）')} を参照</li>
+        </ul>
+      </ConclusionBox>
+
+      <MetaStrip
+        ch="CH06"
+        category="06 施設管理"
+        importance="A"
+        freq="mid"
+        examType="A問題（概念）・B問題（計算）"
+        targets="R03・H23"
+        tags={["不等率","ピーク分散","合成最大需要","施設管理","計算"]}
+        lastChecked="2026-06-11"
+      />
+
+      <h2 id="why-ge1">1. なぜ不等率は1以上が必然か</h2>
+      <SectionCheck pageId="futorito" sectionId="why-ge1" />
+      <PlainExplain>
+        <p>不等率の分子「各最大の合計」は、各需要家が<strong>記録したピークを時刻を無視してそのまま足した値</strong>。分母「合成最大需要電力」は、<strong>全需要家を同じ瞬間で合算した中での最大値</strong>。</p>
+        <p>現実には各需要家のピーク時刻はバラつく（朝の事務所・昼の工場・夜の倉庫）。同じ瞬間に全員が同時にピークを迎えることは無いので、<strong>各最大の合計 ≧ 合成最大需要</strong> が必ず成り立つ。したがって不等率（＝分子÷分母）は<strong>定義上つねに1以上</strong>。1未満が出たら分子・分母の取り違えか計算ミスを疑う。</p>
+        <p>全員のピークが完全に同時刻なら「各最大の合計＝合成最大需要」で不等率＝1（下限・等号）。ズレが大きいほど不等率は大きくなる。</p>
+      </PlainExplain>
+      <MemTable
+        headers={["量","定義","具体値（3工場例）"]}
+        rows={[
+          ["各最大の合計（分子）", "各需要家の実ピークを時刻無視で単純合計", "40 + 50 + 30 = 120 kW"],
+          ["合成最大需要（分母）", "全需要家を同時刻で合算した最大値", "昼12時の同時値 = 90 kW"],
+          ["不等率",             "各最大の合計 ÷ 合成最大需要",     "120 ÷ 90 ≈ 1.33（≧1）"],
+        ]}
+        note="数値例は概念ページ（200→120→90 kW）と同一。ピーク時刻がズレる分だけ分子 > 分母 になる"
+      />
+
+      <h2 id="transformer">2. 変圧器容量算定への接続</h2>
+      <SectionCheck pageId="futorito" sectionId="transformer" />
+      <ConclusionBox>
+        <ul>
+          <li>変圧器に実際に流れる最大は<strong>合成最大需要電力</strong>。これを不等率から逆算する：<strong>合成最大需要 = 各最大の合計 ÷ 不等率</strong></li>
+          <li>容量式に組み込むと <strong>変圧器容量 [kVA] = 設備容量 × 需要率 ÷ (不等率 × 力率)</strong>。不等率は<strong>分母</strong>に入る</li>
+          <li>そのため<strong>不等率が大きいほど必要な変圧器容量は小さくなる</strong>（ピーク分散で設備を効率化できる）</li>
+          <li>計算手順・標準サイズ選定の詳細は {navLink('hensyatsuki-yoryo', '変圧器容量（6.4）')} と {navLink('juyoritsu-keisan', '需要率・負荷率・不等率（計算）')} を参照</li>
+        </ul>
+      </ConclusionBox>
+      <MemTable
+        headers={["条件","計算","結果"]}
+        rows={[
+          ["各最大の合計120kW・不等率1.33",          "120 ÷ 1.33", "≈ 90 kW（合成最大需要）"],
+          ["設備500kW・需要0.8・不等1.25・力率0.9", "500 × 0.8 ÷ (1.25 × 0.9) = 400 ÷ 1.125", "≈ 356 kVA → 400 kVA選定"],
+        ]}
+        note="不等率は分母。同じ条件で不等率だけ大きくすると kVA は下がる（設備を小さくできる）"
+      />
+
+      <h2 id="traps">3. よくあるひっかけ</h2>
+      <SectionCheck pageId="futorito" sectionId="traps" />
+      <TrapTable traps={[
+        { wrong: "不等率 = 合成最大需要 ÷ 各最大の合計", correct: "分子と分母が逆。不等率 = 各最大の合計 ÷ 合成最大需要（だから1以上）" },
+        { wrong: "不等率は1以下になることがある",        correct: "定義上つねに1以上（各最大の合計 ≧ 合成最大需要）。下限は全ピーク同時刻のとき1" },
+        { wrong: "不等率が大きいほど設備効率が悪い",    correct: "逆。不等率が大きい＝ピーク分散＝合成最大需要が小さく、変圧器を小さくできる" },
+        { wrong: "変圧器容量の式で不等率は分子に入る",  correct: "分母に入る（÷不等率）。不等率が大きいほど容量[kVA]は下がる" },
+        { wrong: "不等率の分子は設備容量の合計",        correct: "分子は『各需要家の最大需要電力の合計』。設備容量は需要率の分母（別概念）" },
+      ]} />
+
+      <h2 id="quick-review">4. 1分復習</h2>
+      <SectionCheck pageId="futorito" sectionId="quick-review" />
+      <QuickReview
+        pageId="futorito"
+        items={[
+          { q: "不等率の公式は？", a: "各需要家の最大需要電力の合計 ÷ 合成最大需要電力" },
+          { q: "不等率が定義上1以上になるのはなぜか？", a: "各需要家のピーク時刻はズレるため、各最大の合計 ≧ 合成最大需要 が必ず成り立つから" },
+          { q: "各最大の合計120kW・合成最大需要90kWのときの不等率は？", a: "120 ÷ 90 ≈ 1.33" },
+          { q: "変圧器容量の式で不等率はどこに入るか？", a: "分母（変圧器容量 = 設備容量 × 需要率 ÷ (不等率 × 力率)）。大きいほど容量は小さくなる" },
+          { q: "不等率が1.0になるのはどんな場合か？", a: "全需要家のピークが完全に同時刻のとき（各最大の合計＝合成最大需要・下限）" },
+        ]}
+      />
+
+      <DenkenWikiCTA
+        url="https://kfurufuru.github.io/denken-wiki/themes/juyoritsu-fukaritsu/?h=%E4%B8%8D%E7%AD%89%E7%8E%87"
+        label="denken-wiki「需要率・負荷率・不等率」を開く"
+        note="不等率の経済的意義・過去問解説の詳細は denken-wiki が SOT。"
+      />
+
+      <UpdateLog entries={[
+        { date: "2026-06-11", content: "v1.0: StubPage から本実装へ昇格。不等率固有の論点（≥1が必然の理由・分子分母逆転ひっかけ・変圧器容量への接続=合成最大需要÷不等率）に集中。3率の定義一覧は juyoritsu-gainen へ送客し重複は定義1行に圧縮", reason: "AI社員諮問（design-learning pool 2-1→統合）の設計方針：独立ページ化するが概念ページとの重複は最小化し、不等率固有の急所に絞る" },
+      ]} />
+
+      <PageNav
+        prevId="furitsu"           prevTitle="負荷率"
+        nextId="hensyatsuki-yoryo" nextTitle="変圧器容量"
+        onNav={onNav}
+      />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
 // 5-26. HensyatsukiYoryoPage（変圧器容量算定・A）
 // ─────────────────────────────────────────────
 function HensyatsukiYoryoPage({ onNav, data }) {
@@ -11436,8 +11953,8 @@ function HensyatsukiYoryoPage({ onNav, data }) {
         { date: "2026-05-08", content: "スタブ→暗記Hubページに昇格", reason: "A・変圧器容量算定の計算問題対策。標準サイズ選定込み" },
       ]} />
       <PageNav
-        prevId="haiden-kanri"      prevTitle="配電管理"
-        nextId="juden-setsubi-kanri" nextTitle="受電設備管理"
+        prevId="futorito"          prevTitle="不等率"
+        nextId="haiden-kanri"      nextTitle="配電管理"
         onNav={onNav}
       />
     </div>
@@ -11763,6 +12280,7 @@ function HogoKyochoDgrPage({ onNav, data }) {
       </ConclusionBox>
 
       <MinShortcutCard
+        title="📋 試験用 最短解法カード（DGR動作・協調判定）"
         steps={[
           <span><strong>系統図確認</strong>：主CB（上位）とフィーダーCB（下位）の関係、地絡点の場所を把握する</span>,
           <span><strong>継電器選択</strong>：フィーダーが複数 → 方向を識別できるDGRが必要（GRでは全フィーダーが動作）</span>,
@@ -11916,8 +12434,8 @@ function HogoKyochoDgrPage({ onNav, data }) {
           );})}
           <path d="M 90 428 C 150 350 210 130 276 80 C 380 60 460 180 524 207 C 600 235 660 260 710 270"
                 fill="none" stroke="#d33" strokeWidth="3"/>
-          <text x="155" y="290" fontSize="13" fill="#d33" fontWeight="700">主OCR</text>
-          <text x="155" y="307" fontSize="11" fill="#d33">（TMS大・動作が遅い）</text>
+          <text x="230" y="332" fontSize="13" fill="#d33" fontWeight="700">主OCR</text>
+          <text x="230" y="349" fontSize="11" fill="#d33">（TMS大・動作が遅い）</text>
           <path d="M 90 428 C 160 425 220 360 276 212 C 380 300 460 330 524 339 C 600 360 660 385 710 402"
                 fill="none" stroke="#27c" strokeWidth="3"/>
           <text x="560" y="312" fontSize="13" fill="#27c" fontWeight="700">フィーダーOCR</text>
@@ -11960,8 +12478,8 @@ function HogoKyochoDgrPage({ onNav, data }) {
           <line x1="75" y1="200" x2="335" y2="200" stroke="#ddd" strokeWidth="1"/>
           <line x1="205" y1="70" x2="205" y2="330" stroke="#ddd" strokeWidth="1"/>
           <line x1="205" y1="200" x2="205" y2="78" stroke="#27c" strokeWidth="3" markerEnd="url(#dgVecBlue)"/>
-          <text x="216" y="108" fontSize="13" fill="#27c" fontWeight="700">V₀</text>
-          <text x="216" y="123" fontSize="11" fill="#27c">零相電圧</text>
+          <text x="196" y="108" textAnchor="end" fontSize="13" fill="#27c" fontWeight="700">V₀</text>
+          <text x="196" y="123" textAnchor="end" fontSize="11" fill="#27c">零相電圧</text>
           <line x1="205" y1="200" x2="313" y2="290" stroke="#a06" strokeWidth="3" markerEnd="url(#dgVecPurple)"/>
           <text x="300" y="278" fontSize="13" fill="#a06" fontWeight="700">I₀</text>
           <text x="285" y="293" fontSize="11" fill="#a06">零相電流</text>
@@ -12223,8 +12741,8 @@ function HogoKyochoDgrPage({ onNav, data }) {
       <PageNav
         prevId="zerosou-henryuki"
         prevTitle="1.9 零相変流器（ZCT）"
-        nextId="setsuchi-ichiran"
-        nextTitle="2.1 接地工事一覧表"
+        nextId="densen-tarumi"
+        nextTitle="1.11 架空電線のたるみ・張力・実長"
         onNav={onNav}
       />
 
@@ -12232,6 +12750,613 @@ function HogoKyochoDgrPage({ onNav, data }) {
         <strong>UpdateLog</strong><br/>
         v1.0 (2026-05-07) 初版作成 — 19セクション構成・SVG4枚・R5下13 (a)(b)解法フロー完成
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// 1.11 DensenTarumiPage（架空電線のたるみ・張力・実長 計算・B・必須）
+// ─────────────────────────────────────────────
+function DensenTarumiPage({ onNav, data }) {
+  return (
+    <div>
+      {/* A. 全体像 */}
+      <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+          🗺️ A. 全体像（30秒で位置づけ把握）
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
+          本ページは「<strong>計算B問題・直前確認・解法フロー</strong>」（C層）特化。架空電線の <strong>許容張力 → 合成荷重 → たるみ → 実長 → 温度補正</strong> を1本の処理順で通す。<strong>たるみ D は径間 S の2乗に比例</strong>・<strong>許容張力は引張強さ÷安全率</strong> の2点を外さなければ大半が取れる。条文の全体像は denken-wiki が SOT。
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+          <tbody>
+            <tr>
+              <td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', width: 84, fontWeight: 600 }}>テーマ</td>
+              <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>架空電線のたるみ（弛度）D・水平張力 T・許容張力・電線実長 L・温度変化・合成荷重・風圧荷重の計算</td>
+            </tr>
+            <tr>
+              <td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', fontWeight: 600 }}>核心</td>
+              <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>D = WS²/(8T)（S²比例）／ T = Tₙ/f（引張強さ÷安全率）／ L = S + 8D²/(3S)</td>
+            </tr>
+            <tr>
+              <td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', fontWeight: 600 }}>条文</td>
+              <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>解釈第58条（風圧荷重 甲/乙/丙）・第59条（支持物の強度）・第66条（低高圧架空電線の安全率：硬銅線2.2/その他2.5）</td>
+            </tr>
+            <tr>
+              <td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', fontWeight: 600 }}>位置</td>
+              <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>法規 施設管理のB問題（計算）。支線の引張強さ（1.3）・電線路の高さ/風圧（3.4）と一体</td>
+            </tr>
+            <tr>
+              <td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', fontWeight: 600 }}>出題</td>
+              <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>計算B問題（たるみ・実長・許容張力・温度変化・風圧荷重。H22問13/H26問11/H30問11/R5上問13 ほか）</td>
+            </tr>
+            <tr>
+              <td style={{ padding: '6px 10px', background: 'var(--bg-2)', fontWeight: 600 }}>頻出罠</td>
+              <td style={{ padding: '6px 10px' }}>① たるみで S を2乗し忘れ／② 許容張力で安全率を「掛ける」（正：割る）／③ 合成荷重を単純加算（正：√(垂直²+風圧²)）／④ 単位を N と m に統一しない</td>
+            </tr>
+          </tbody>
+        </table>
+        <a href="https://kfurufuru.github.io/denken-wiki/themes/kachiku-densen/" target="_blank" rel="noopener noreferrer"
+          style={{ display: 'inline-block', marginTop: 10, padding: '8px 14px', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius)', textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>
+          🔗 denken-wiki「架空電線路」（全体像・条文）を開く →
+        </a>
+      </div>
+
+      {/* Plan */}
+      <div style={{ background: 'var(--bg-elev)', border: '1px dashed var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>📅 Plan（今日の学習目標）</div>
+        <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
+          <li>核心式 <strong>D = WS²/(8T)</strong>・<strong>T = Tₙ/f</strong>・<strong>L = S + 8D²/(3S)</strong> を5秒で唱える</li>
+          <li>「許容張力 → たるみ → 実長」の頻出パターンを自力で <strong>D=3.75m・L=100.38m</strong> まで到達</li>
+          <li>温度上昇でたるみが増える理由（実長↑）を説明でき、D₂≒2.39m を出せる</li>
+        </ul>
+        <div style={{ fontSize: 11, color: 'var(--ink-3)', padding: '8px 12px', background: 'var(--bg-2)', borderRadius: 4 }}>
+          🔄 <strong>PDCAサイクル動線</strong>: ① <strong>Plan</strong>: ここで目標確認 → ② <strong>Do</strong>: 各セクションの理解度ボタンで進捗管理 → ③ <strong>Check</strong>: 過去問・ひっかけ・1分復習 → ④ <strong>Act</strong>: 末尾「弱点セクション一覧」から再読
+        </div>
+      </div>
+
+      {/* 3-button nav */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', position: 'sticky', top: 0, background: 'var(--bg-1)', padding: '8px 0', zIndex: 5, borderBottom: '1px solid var(--line)' }}>
+        <button onClick={() => document.getElementById('overview-c')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          style={{ padding: '8px 16px', background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+          📐 公式・直前確認
+        </button>
+        <button onClick={() => document.getElementById('deep-tarumi')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          style={{ padding: '8px 16px', background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+          📖 解説・深掘り
+        </button>
+        <button onClick={() => document.getElementById('exam-1')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          style={{ padding: '8px 16px', background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+          📝 過去問・練習問題
+        </button>
+      </div>
+
+      <h2 id="overview-c">⚡ C. 電験で問われているところ（直前確認モード）</h2>
+
+      <DirectCheckMode
+        pageId="densen-tarumi"
+        formula={<>D = WS²/(8T)　／　T = Tₙ/f　／　L = S + 8D²/(3S)</>}
+        formulaVars={[
+          { sym: "D", desc: "たるみ（弛度）[m]" },
+          { sym: "W", desc: "電線1mあたりの合成荷重 [N/m]（自重+氷雪+風圧の合成）" },
+          { sym: "S", desc: "径間（支持物間の距離）[m]" },
+          { sym: "T", desc: "電線の水平張力 [N]（許容張力 = Tₙ ÷ f）" },
+          { sym: "Tₙ", desc: "電線の引張強さ [N]" },
+          { sym: "f", desc: "安全率（硬銅線・耐熱銅合金線2.2 / その他2.5）" },
+          { sym: "L", desc: "電線の実長 [m]" },
+        ]}
+        warningRed="たるみ D は径間 S の2乗に比例（D = WS²/8T）。S の2乗を忘れると致命的。許容張力は引張強さ÷安全率（掛けない）。kN は ×1000 して N、長さは m に統一"
+        trapsTop3={[
+          "[④計算順] たるみ D は S² に比例。径間が2倍ならたるみは4倍。S を2乗し忘れない",
+          "[①数値] 許容張力 T = 引張強さ Tₙ ÷ 安全率 f（割る）。安全率を掛けるのは誤り",
+          "[①数値] 合成荷重 W = √(垂直荷重² + 風圧荷重²)。自重と風圧の単純な足し算ではない",
+        ]}
+        jumps={[
+          { id: "exam-1", label: "過去問・練習へ →", primary: true },
+          { id: "deep-tarumi", label: "たるみの図解 →" },
+          { id: "quick-review", label: "1分復習 →" },
+        ]}
+      />
+
+      {/* 死活5ステップ */}
+      <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: 20 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 12 }}>
+          🎯 死活5ステップ・フロー（許容張力 → 合成荷重 → たるみ → 実長 → 温度補正）
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(165px, 1fr))', gap: 10, marginBottom: 12 }}>
+          {[
+            { n: '①', title: '許容張力 T', color: '#0a7d50', formula: <>T = Tₙ / f</>, why: <>引張強さ Tₙ を安全率 f で<strong>割る</strong>。f は硬銅線2.2／その他2.5（解釈第66条）。<strong>掛けるのは誤り</strong></> },
+            { n: '②', title: '合成荷重 W', color: '#0a7d50', formula: <>W = √(W<sub>v</sub>² + W<sub>w</sub>²)</>, why: <>垂直 W<sub>v</sub>=自重+氷雪、水平 W<sub>w</sub>=風圧。<strong>ベクトル合成</strong>（単純加算でない）。風圧・氷雪が無ければ自重そのもの</> },
+            { n: '③', title: 'たるみ D', color: '#1a73e8', formula: <>D = WS²/(8T)</>, why: <><strong>S² に比例</strong>。径間2倍でたるみ4倍。W と T は N、S は m に単位を統一してから代入</> },
+            { n: '④', title: '実長 L', color: '#0a7d50', formula: <>L = S + 8D²/(3S)</>, why: <>径間 S に<strong>微小増分</strong> 8D²/(3S) を足す。D をそのまま足さない。径間より少しだけ長い</> },
+            { n: '⑤', title: '温度補正', color: 'var(--ink-2)', formula: <>L₂ = L₁(1+αΔt)</>, why: <>温度↑ → 実長 L↑ → <strong>たるみ D↑</strong>（張力は緩む）。D₂ = √(3S(L₂−S)/8) で逆算</> },
+          ].map((step, i) => (
+            <div key={i} style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderLeft: `4px solid ${step.color}`, borderRadius: 6, padding: '8px 10px', fontSize: 11.5, lineHeight: 1.55 }}>
+              <div style={{ fontWeight: 700, color: step.color, fontSize: 12.5, marginBottom: 4 }}>{step.n} {step.title}</div>
+              <div style={{ fontFamily: 'monospace', background: 'var(--bg-3)', padding: '3px 6px', borderRadius: 3, marginBottom: 6, fontSize: 11, color: 'var(--ink-1)' }}>{step.formula}</div>
+              <div style={{ fontSize: 10.5, color: 'var(--ink-3)', lineHeight: 1.5 }}><strong style={{ color: 'var(--warn)' }}>なぜ:</strong> {step.why}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ padding: '10px 12px', background: 'var(--bg-2)', borderRadius: 6, fontSize: 12, lineHeight: 1.7, color: 'var(--ink-2)' }}>
+          <strong>数値例（Tₙ=22kN・f=2.2・S=100m・W=30N/m）</strong>：
+          <span style={{ fontFamily: 'monospace', marginLeft: 6 }}>
+            ① T=22/2.2=<strong>10kN</strong> → ③ D=30×100²/(8×10000)=<strong>3.75m</strong> → ④ L=100+8×3.75²/(3×100)=<strong>100.38m</strong>
+          </span>
+        </div>
+        <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(255,193,7,0.08)', borderLeft: '3px solid var(--warn)', borderRadius: 4, fontSize: 11.5, lineHeight: 1.7 }}>
+          <strong style={{ color: 'var(--warn)' }}>⚠ 3大ミス</strong>：
+          (1) たるみで S の2乗を忘れる／
+          (2) 許容張力で安全率を掛ける（正：割る）／
+          (3) 合成荷重を自重+風圧の単純加算にする（正：√(垂直²+風圧²)）
+        </div>
+      </div>
+
+      <GoalQuestion
+        question="径間S=100m、電線1mあたりの合成荷重W=30N/m、電線の引張強さ22kN、安全率2.2で施設する架空電線のたるみD[m]は約いくらか？"
+        choices={["0.77", "1.88", "3.75", "7.50"]}
+        year="頻出パターン（許容張力→たるみ）"
+        note="まず許容張力 T = 22/2.2 = 10kN。次に D = WS²/(8T)。読み終えたら戻って解こう"
+      />
+
+      <ConclusionBox>
+        <ul>
+          <li><strong>許容張力</strong>: T = Tₙ / f（引張強さ÷安全率）。安全率は硬銅線・耐熱銅合金線 <strong>2.2以上</strong>／その他 <strong>2.5以上</strong>（解釈第66条）</li>
+          <li><strong>たるみ（弛度）</strong>: D = WS²/(8T)。<strong>径間 S の2乗に比例</strong>（径間2倍でたるみ4倍）</li>
+          <li><strong>電線の実長</strong>: L = S + 8D²/(3S)。径間に微小増分を足す（D を直接足さない）</li>
+          <li><strong>合成荷重</strong>: W = √(垂直荷重² + 風圧荷重²)。垂直=自重+氷雪、水平=風圧</li>
+          <li><strong>温度変化</strong>: L₂ = L₁(1+αΔt) で実長を伸ばし、D₂ = √(3S(L₂−S)/8) で逆算。温度↑でたるみ↑</li>
+          <li><strong>風圧荷重</strong>（解釈第58条）: 甲種980Pa／乙種490Pa（厚6mm・比重0.9の氷雪付着）／丙種=甲種の1/2</li>
+        </ul>
+      </ConclusionBox>
+
+      <MinShortcutCard
+        title="📋 試験用 最短解法カード（たるみ・張力・実長）"
+        steps={[
+          <span><strong>単位をそろえる</strong>：張力は N（kN は×1000）、長さは m。最初に統一すると桁ミスが消える</span>,
+          <span><strong>許容張力 T</strong>：T = Tₙ / f（÷安全率）。安全率は硬銅2.2／その他2.5</span>,
+          <span><strong>合成荷重 W</strong>：W = √(垂直² + 風圧²)。風圧・氷雪が無ければ自重そのまま</span>,
+          <span><strong>たるみ D</strong>：D = WS²/(8T)。<strong>S を2乗</strong>するのを忘れない</span>,
+          <span><strong>実長 L</strong>：L = S + 8D²/(3S)。温度変化なら L₂=L₁(1+αΔt) → D₂=√(3S(L₂−S)/8)</span>,
+        ]}
+        hint="頻出: Tₙ=22kN,f=2.2,S=100m,W=30N/m → T=10kN, D=3.75m, L=100.38m"
+      />
+
+      <MetaStrip
+        ch="CH04"
+        category="01 B問題・計算問題対策"
+        importance="A"
+        freq="high"
+        examType="B問題（たるみ・張力・実長・温度変化・風圧荷重）"
+        targets="H22問13・H26問11・H30問11・R5上問13 ほか（施設管理の計算）"
+        tags={["たるみ", "弛度", "許容張力", "安全率", "実長", "合成荷重", "風圧荷重", "解釈第58・59・66条"]}
+        lastChecked="2026-06-07"
+      />
+
+      <h2 id="exam-focus">3. 試験で問われること</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="exam-focus" />
+      <ExamFocus items={[
+        { label: "たるみ D", value: "D = WS²/(8T)。径間 S の2乗に比例。径間2倍でたるみ4倍" },
+        { label: "許容張力 T", value: "T = Tₙ/f（引張強さ÷安全率）。安全率は硬銅2.2／その他2.5（解釈第66条）" },
+        { label: "電線実長 L", value: "L = S + 8D²/(3S)。径間より微小に長い。D を直接足さない" },
+        { label: "温度変化", value: "L₂=L₁(1+αΔt)。温度↑で実長↑→たるみ↑（張力は緩む）" },
+        { label: "合成荷重 W", value: "√(垂直荷重² + 風圧荷重²)。垂直=自重+氷雪、水平=風圧" },
+        { label: "風圧荷重", value: "甲種980Pa／乙種490Pa(氷雪6mm)／丙種=甲種1/2（解釈第58条）" },
+        { label: "径間変化", value: "同一 W・T ならたるみは径間²に比例（D₂=D₁(S₂/S₁)²）" },
+      ]} />
+
+      <h2 id="formula-list">4. 公式・記号の一覧</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="formula-list" />
+      <MemTable
+        headers={["求めるもの", "公式", "ポイント"]}
+        rows={[
+          [<strong>許容張力 T</strong>, "T = Tₙ / f", "引張強さ÷安全率。f=硬銅2.2／その他2.5"],
+          [<strong>たるみ D</strong>, "D = WS²/(8T)", "S² に比例。W・T は N、S は m"],
+          [<strong>実長 L</strong>, "L = S + 8D²/(3S)", "径間に微小増分を加算"],
+          [<strong>合成荷重 W</strong>, "W = √(W_v² + W_w²)", "垂直(自重+氷雪)と水平(風圧)の合成"],
+          [<strong>温度後の実長</strong>, "L₂ = L₁(1+αΔt)", "α=線膨張係数、Δt=温度差"],
+          [<strong>温度後のたるみ</strong>, "D₂ = √(3S(L₂−S)/8)", "実長の式を D について解いた形"],
+          [<strong>風圧荷重(甲)</strong>, "W_w = 980 × d × 10⁻³", "d=電線外径[mm]、結果[N/m]"],
+        ]}
+        note="単位は N と m に統一してから代入する（kN は×1000）。W は1mあたりの荷重[N/m]"
+      />
+
+      <div style={{ background: 'var(--bg-elev)', borderLeft: '3px solid var(--warn)', borderRadius: 4, padding: '12px 16px', marginBottom: 24, fontSize: 13, lineHeight: 1.8 }}>
+        <strong style={{ color: 'var(--warn)' }}>⚠ 前提・注意（断定回避）</strong>
+        <ul style={{ margin: '8px 0 0', paddingLeft: 18 }}>
+          <li>たるみ式 D = WS²/(8T) は「<strong>両端の支持点が同じ高さ・電線が一様</strong>」を前提とした放物線近似。高低差がある径間では別式になる</li>
+          <li>T は<strong>水平方向の張力</strong>。最低点では張力＝水平張力 T、支持点ではわずかに大きい（通常は T で計算）</li>
+          <li>「合成荷重」は問題により<strong>自重のみ</strong>のこともある。風圧・氷雪の有無を必ず確認する</li>
+          <li>最大たるみは「<strong>高温季</strong>（電線が伸びる）」または「<strong>氷雪付着時</strong>（荷重が増える）」のどちらか厳しい方で生じる</li>
+        </ul>
+      </div>
+
+      <h2 id="safety-table">5. 安全率の数値比較（混同注意）</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="safety-table" />
+      <MemTable
+        headers={["対象", "安全率", "条文"]}
+        rows={[
+          [<span>硬銅線・耐熱銅合金線</span>, <strong>2.2 以上</strong>, "解釈第66条"],
+          [<span>その他の電線（鋼心アルミより線等）</span>, <strong>2.5 以上</strong>, "解釈第66条"],
+          [<span>鉄柱・鉄筋コンクリート柱</span>, <strong>2.0 以上</strong>, "解釈第59条"],
+          [<span>支線</span>, <strong>1.5 以上</strong>, "解釈第61条・第62条"],
+        ]}
+        note="「硬銅2.2 ＜ その他2.5」「柱2.0」「支線1.5」と数値の大小で覚える。許容張力＝引張強さ÷この安全率"
+      />
+
+      <h2 id="deep-tarumi">6. なぜ D = WS²/(8T) か（深掘り①・たるみの物理）</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="deep-tarumi" />
+      <PlainExplain>
+        <p>電線は自分の重さ（と風圧・氷雪）で垂れ下がる。1mあたり W[N] の荷重が一様にかかると、電線は<strong>放物線</strong>を描く。中央のたるみ D は「荷重 W が大きいほど深く」「径間 S が長いほど急激に（2乗で）深く」「張力 T で強く引くほど浅く」なる。これを式にしたものが <strong>D = WS²/(8T)</strong>。</p>
+        <p><strong>S が2乗で効く</strong>のが最重要。径間を2倍にすると、同じ張力ならたるみは <strong>4倍</strong>になる。試験では「径間だけ変えてたるみを問う」形が頻出で、S² を忘れると一発で外す。</p>
+      </PlainExplain>
+      <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 16, marginBottom: 24 }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ たるみの幾何：径間 S・たるみ D・水平張力 T・合成荷重 W[N/m]</div>
+        <svg viewBox="0 0 760 300" width="100%" style={{ display: 'block', maxWidth: 760, margin: '0 auto', background: '#fff' }} role="img" aria-label="架空電線のたるみ。径間S、中央のたるみD、水平張力T、1mあたり合成荷重W。D=WS²/8T。">
+          <defs>
+            <marker id="ah-d-purple" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#a06" /></marker>
+            <marker id="ah-d-gray" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#555" /></marker>
+            <marker id="ah-d-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#0a7d50" /></marker>
+          </defs>
+          {/* 支持物 */}
+          <line x1="100" y1="50" x2="100" y2="250" stroke="#666" strokeWidth="5" />
+          <line x1="660" y1="50" x2="660" y2="250" stroke="#666" strokeWidth="5" />
+          <line x1="70" y1="250" x2="690" y2="250" stroke="#999" strokeWidth="2" />
+          {/* 弦（同高さの支持点を結ぶ） */}
+          <line x1="100" y1="80" x2="660" y2="80" stroke="#bbb" strokeWidth="1.5" strokeDasharray="6 4" />
+          {/* 電線（放物線）：ラベルは曲線下の空白へ + リーダー */}
+          <path d="M 100 80 Q 380 230 660 80" fill="none" stroke="#d33" strokeWidth="3" />
+          <line x1="190" y1="148" x2="212" y2="122" stroke="#d33" strokeWidth="1" />
+          <text x="166" y="160" fontSize="13" fill="#d33" fontWeight="700">電線</text>
+          {/* 径間 S */}
+          <line x1="100" y1="62" x2="660" y2="62" stroke="#555" strokeWidth="1.5" markerStart="url(#ah-d-gray)" markerEnd="url(#ah-d-gray)" />
+          <text x="380" y="56" textAnchor="middle" fontSize="14" fill="#555" fontWeight="700">径間 S</text>
+          {/* たるみ D */}
+          <line x1="380" y1="80" x2="380" y2="227" stroke="#a06" strokeWidth="2" markerStart="url(#ah-d-purple)" markerEnd="url(#ah-d-purple)" />
+          <text x="392" y="120" fontSize="14" fill="#a06" fontWeight="700">たるみ D</text>
+          {/* 水平張力 T：弦と径間線の間の空白に配置（支柱・曲線を避ける） */}
+          <line x1="100" y1="80" x2="165" y2="80" stroke="#0a7d50" strokeWidth="2.5" markerEnd="url(#ah-d-green)" />
+          <text x="118" y="76" fontSize="13" fill="#0a7d50" fontWeight="700">張力 T</text>
+          {/* 合成荷重 W 下向き小矢印 */}
+          {[230, 300, 450, 520].map((x, i) => (
+            <line key={i} x1={x} y1={84 + (i===1||i===2?60:30)} x2={x} y2={104 + (i===1||i===2?60:30)} stroke="#27c" strokeWidth="1.6" markerEnd="url(#ah-d-purple)" />
+          ))}
+          <text x="540" y="150" fontSize="12" fill="#27c" fontWeight="700">W [N/m]</text>
+          {/* 式 */}
+          <text x="380" y="285" textAnchor="middle" fontSize="15" fill="#111" fontWeight="700">D = W S² / ( 8 T )</text>
+        </svg>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 8 }}>※ 両端が同じ高さ・電線が一様な場合の放物線近似。W は1mあたりの合成荷重[N/m]、T は水平張力[N]。</div>
+      </div>
+
+      <h2 id="deep-goseika">7. 合成荷重はベクトル合成（深掘り②）</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="deep-goseika" />
+      <PlainExplain>
+        <p>電線にかかる荷重は2方向ある。<strong>垂直方向</strong>（下向き）は電線の自重と氷雪荷重、<strong>水平方向</strong>（横向き）は風圧荷重。たるみ式の W はこの2つを<strong>直角三角形の斜辺</strong>として合成した値 <strong>W = √(垂直² + 水平²)</strong> を使う。自重と風圧を単純に足すと過大になる。</p>
+        <p>例：自重 20N/m、風圧 15N/m（氷雪なし）なら W = √(20² + 15²) = √625 = <span className="marker">25N/m</span>。20+15=35 ではない。</p>
+      </PlainExplain>
+      <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 16, marginBottom: 24 }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ 合成荷重のベクトル合成（垂直＝自重+氷雪、水平＝風圧）</div>
+        <svg viewBox="0 0 760 300" width="100%" style={{ display: 'block', maxWidth: 760, margin: '0 auto', background: '#fff' }} role="img" aria-label="合成荷重のベクトル合成。垂直荷重と水平風圧荷重を直角三角形の斜辺として合成。例20と15で25。">
+          <defs>
+            <marker id="ah-g-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#27c" /></marker>
+            <marker id="ah-g-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#0a7d50" /></marker>
+            <marker id="ah-g-red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#d33" /></marker>
+          </defs>
+          {/* 電線断面 */}
+          <circle cx="230" cy="90" r="16" fill="#fff" stroke="#333" strokeWidth="2" />
+          <text x="230" y="70" textAnchor="middle" fontSize="12" fill="#333" fontWeight="700">電線</text>
+          {/* 垂直荷重 */}
+          <line x1="230" y1="106" x2="230" y2="220" stroke="#27c" strokeWidth="2.5" markerEnd="url(#ah-g-blue)" />
+          <text x="150" y="180" fontSize="13" fill="#27c" fontWeight="700">垂直 W_v</text>
+          <text x="150" y="198" fontSize="11" fill="#27c">(自重+氷雪)</text>
+          {/* 水平風圧 */}
+          <line x1="246" y1="90" x2="360" y2="90" stroke="#0a7d50" strokeWidth="2.5" markerEnd="url(#ah-g-green)" />
+          <text x="300" y="80" textAnchor="middle" fontSize="13" fill="#0a7d50" fontWeight="700">水平 W_w (風圧)</text>
+          {/* 合成（斜辺）：ラベルは線上を避け右側へ + リーダー */}
+          <line x1="230" y1="90" x2="360" y2="220" stroke="#d33" strokeWidth="3" markerEnd="url(#ah-g-red)" />
+          <line x1="376" y1="172" x2="344" y2="196" stroke="#d33" strokeWidth="1" />
+          <text x="380" y="170" fontSize="14" fill="#d33" fontWeight="700">合成 W</text>
+          {/* 直角記号 */}
+          <path d="M 230 106 L 244 106 L 244 90" fill="none" stroke="#999" strokeWidth="1.2" />
+          {/* 数値例 */}
+          <text x="470" y="80" fontSize="14" fill="#111" fontWeight="700">数値例</text>
+          <text x="470" y="110" fontSize="13" fill="#27c">垂直 = 20 N/m</text>
+          <text x="470" y="134" fontSize="13" fill="#0a7d50">水平 = 15 N/m</text>
+          <line x1="470" y1="146" x2="700" y2="146" stroke="#ccc" strokeWidth="1" />
+          <text x="470" y="172" fontSize="14" fill="#d33" fontWeight="700">W = √(20² + 15²)</text>
+          <text x="470" y="198" fontSize="14" fill="#d33" fontWeight="700">= √625 = 25 N/m</text>
+          <text x="470" y="230" fontSize="12" fill="#999">（20 + 15 = 35 ではない）</text>
+        </svg>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 8 }}>※ 風圧・氷雪が無ければ合成荷重＝自重そのもの。問題文の条件を必ず確認する。</div>
+      </div>
+
+      <h2 id="deep-fuatsu">8. 風圧荷重 甲・乙・丙（深掘り③・解釈第58条）</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="deep-fuatsu" />
+      <PlainExplain>
+        <p>風圧荷重は電線の<strong>垂直投影面積</strong>（横から見た面積）に圧力をかけたもの。電線1mあたりの投影面積は「外径 d[m] × 1m」。圧力は3種類（解釈第58条）。</p>
+        <ul>
+          <li><strong>甲種</strong>：高温季。氷雪なし。電線は1m²あたり <strong>980Pa</strong>。W_w = 980 × d[mm] × 10⁻³ [N/m]</li>
+          <li><strong>乙種</strong>：低温季。厚さ6mm・比重0.9の氷雪が付着 → 外径が <strong>d+12mm</strong>（両側6mm）。圧力は <strong>490Pa</strong>。W_w = 490 × (d+12) × 10⁻³</li>
+          <li><strong>丙種</strong>：高温季・人家密集地など。氷雪なし。圧力は甲種の1/2＝<strong>490Pa</strong>。W_w = 490 × d × 10⁻³</li>
+        </ul>
+        <p>例：外径 d=15mm の電線 → 甲種 = 980×0.015 = <span className="marker">14.7N/m</span>、乙種 = 490×(15+12)×10⁻³ = 490×0.027 = <span className="marker">13.23N/m</span>。</p>
+      </PlainExplain>
+      <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 16, marginBottom: 24 }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ 風圧荷重 甲・乙・丙の投影幅と圧力の違い</div>
+        <svg viewBox="0 0 760 300" width="100%" style={{ display: 'block', maxWidth: 760, margin: '0 auto', background: '#fff' }} role="img" aria-label="風圧荷重 甲乙丙の比較。甲種980Pa裸電線、乙種490Pa氷雪付着で外径+12mm、丙種490Pa裸電線。">
+          {/* 甲種 */}
+          <text x="150" y="40" textAnchor="middle" fontSize="14" fill="#111" fontWeight="700">甲種（高温季）</text>
+          <circle cx="150" cy="120" r="34" fill="#fde" stroke="#d33" strokeWidth="2" />
+          <text x="150" y="125" textAnchor="middle" fontSize="12" fill="#d33" fontWeight="700">d</text>
+          <text x="150" y="200" textAnchor="middle" fontSize="14" fill="#d33" fontWeight="700">980 Pa</text>
+          <text x="150" y="222" textAnchor="middle" fontSize="11" fill="#666">氷雪なし</text>
+          <text x="150" y="250" textAnchor="middle" fontSize="11.5" fill="#333">980×d×10⁻³</text>
+          {/* 乙種 */}
+          <text x="380" y="40" textAnchor="middle" fontSize="14" fill="#111" fontWeight="700">乙種（低温季）</text>
+          <circle cx="380" cy="120" r="50" fill="#e8f0ff" stroke="#27c" strokeWidth="2" strokeDasharray="5 3" />
+          <circle cx="380" cy="120" r="34" fill="#fff" stroke="#999" strokeWidth="1.5" />
+          <text x="380" y="125" textAnchor="middle" fontSize="11" fill="#666" fontWeight="700">d</text>
+          <text x="380" y="200" textAnchor="middle" fontSize="14" fill="#27c" fontWeight="700">490 Pa</text>
+          <text x="380" y="222" textAnchor="middle" fontSize="11" fill="#27c">氷雪6mm付着→d+12</text>
+          <text x="380" y="250" textAnchor="middle" fontSize="11.5" fill="#333">490×(d+12)×10⁻³</text>
+          {/* 丙種 */}
+          <text x="610" y="40" textAnchor="middle" fontSize="14" fill="#111" fontWeight="700">丙種（人家密集等）</text>
+          <circle cx="610" cy="120" r="34" fill="#eef" stroke="#73c" strokeWidth="2" />
+          <text x="610" y="125" textAnchor="middle" fontSize="12" fill="#73c" fontWeight="700">d</text>
+          <text x="610" y="200" textAnchor="middle" fontSize="14" fill="#73c" fontWeight="700">490 Pa</text>
+          <text x="610" y="222" textAnchor="middle" fontSize="11" fill="#666">甲種の1/2・氷雪なし</text>
+          <text x="610" y="250" textAnchor="middle" fontSize="11.5" fill="#333">490×d×10⁻³</text>
+        </svg>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 8 }}>※ 乙種は圧力が甲種の半分でも、氷雪付着で投影幅(d+12)が増えるため、地域によっては乙種が最大荷重になる。</div>
+      </div>
+
+      <h2 id="deep-ondo">9. 温度変化と実長（深掘り④）</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="deep-ondo" />
+      <PlainExplain>
+        <p>金属は温度が上がると伸びる。電線の実長 L が伸びれば、同じ径間 S では<strong>たるみ D が大きくなる</strong>（深く垂れる）。手順は次の通り。</p>
+        <ol>
+          <li>もとの温度でのたるみ D₁ から実長 L₁ = S + 8D₁²/(3S) を出す</li>
+          <li>温度変化分だけ伸ばす：L₂ = L₁(1 + αΔt)（α=線膨張係数、Δt=温度差）</li>
+          <li>伸びた実長 L₂ からたるみを逆算：D₂ = √(3S(L₂−S)/8)</li>
+        </ol>
+        <p>例：S=100m、30℃でD₁=2.0m、α=1.5×10⁻⁵、60℃へ。L₁=100.107m → L₂=100.107×(1+1.5×10⁻⁵×30)=100.152m → D₂=√(3×100×0.152/8)≒<span className="marker">2.39m</span>。30℃上昇で約0.39m深くなる。</p>
+      </PlainExplain>
+      <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 16, marginBottom: 24 }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ 温度が上がると実長が伸び、たるみが深くなる</div>
+        <svg viewBox="0 0 760 300" width="100%" style={{ display: 'block', maxWidth: 760, margin: '0 auto', background: '#fff' }} role="img" aria-label="温度上昇でたるみが増える。低温は浅いたるみ、高温は深いたるみ。径間は同じ。">
+          {/* 上部サマリ（弦より上の空白に配置） */}
+          <text x="380" y="40" textAnchor="middle" fontSize="13" fill="#111" fontWeight="700">温度↑ → 実長 L↑ → たるみ D↑（張力は緩む）</text>
+          {/* 支持物・地面 */}
+          <line x1="110" y1="60" x2="110" y2="245" stroke="#666" strokeWidth="5" />
+          <line x1="650" y1="60" x2="650" y2="245" stroke="#666" strokeWidth="5" />
+          <line x1="80" y1="245" x2="680" y2="245" stroke="#999" strokeWidth="2" />
+          {/* 弦 */}
+          <line x1="110" y1="82" x2="650" y2="82" stroke="#bbb" strokeWidth="1.2" strokeDasharray="6 4" />
+          {/* 低温（浅い・青）／高温（深い・赤）：曲線上に文字を載せない */}
+          <path d="M 110 82 Q 380 152 650 82" fill="none" stroke="#27c" strokeWidth="3" />
+          <path d="M 110 82 Q 380 212 650 82" fill="none" stroke="#d33" strokeWidth="3" />
+          {/* たるみ増加分（青底〜赤底の差）をリーダーで空白へ引き出す */}
+          <line x1="380" y1="117" x2="380" y2="147" stroke="#a06" strokeWidth="2" strokeDasharray="3 2" />
+          <line x1="432" y1="172" x2="386" y2="132" stroke="#a06" strokeWidth="1" />
+          <text x="436" y="176" fontSize="12" fill="#a06" fontWeight="700">たるみ増加分</text>
+          {/* 凡例（下帯に分離） */}
+          <rect x="150" y="270" width="30" height="3" fill="#27c" />
+          <text x="188" y="276" fontSize="12.5" fill="#27c" fontWeight="700">低温時：浅い D₁</text>
+          <rect x="430" y="270" width="30" height="3" fill="#d33" />
+          <text x="468" y="276" fontSize="12.5" fill="#d33" fontWeight="700">高温時：深い D₂</text>
+        </svg>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 8 }}>※ 径間 S は不変。夏季の高温時に最もたるみが大きくなり、最低高さ（解釈第68条）を侵さないか確認する。</div>
+      </div>
+
+      <h2 id="deep-span">10. 径間が変わるとどうなるか（深掘り⑤）</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="deep-span" />
+      <PlainExplain>
+        <p>荷重 W と張力 T が同じなら、D = WS²/(8T) より <strong>たるみは径間の2乗に比例</strong>する。よって径間が S₁→S₂ に変わると、たるみは <strong>D₂ = D₁ × (S₂/S₁)²</strong>。</p>
+        <p>例：S₁=200m でD₁=3.0m、同じ条件で S₂=240m にすると D₂ = 3.0×(240/200)² = 3.0×1.44 = <span className="marker">4.32m</span>。実長は L₂ = 240 + 8×4.32²/(3×240) ≒ 240.21m。</p>
+      </PlainExplain>
+
+      <h2 id="solveflow">11. 解き方・処理順カード（計算系・必須）</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="solveflow" />
+      <SolveFlow type="たるみ・張力・実長の処理順" steps={[
+        "① 単位をそろえる：張力 kN→N（×1000）、長さは m。最初にやると桁ミスが消える",
+        "② 許容張力 T を出す：T = Tₙ / f（÷安全率）。問題が「張力T」を直接与えていればこの手順は不要",
+        "③ 合成荷重 W を出す：風圧・氷雪があれば W = √(垂直² + 風圧²)。なければ自重そのまま",
+        "④ たるみ D：D = WS²/(8T)。S を2乗するのを忘れない",
+        "⑤ 実長 L：L = S + 8D²/(3S)。温度変化があれば L₂=L₁(1+αΔt) → D₂=√(3S(L₂−S)/8)",
+        "⑥ 検算：たるみは径間の数%程度・実長は径間より少しだけ長い、という大きさ感で確かめる",
+      ]} />
+      <div style={{ background: 'var(--bg-elev)', borderLeft: '3px solid var(--accent)', borderRadius: 4, padding: '10px 14px', marginBottom: 24, fontSize: 12.5, lineHeight: 1.8 }}>
+        <strong style={{ color: 'var(--accent)' }}>何を先に求めるか</strong>：張力が与えられていなければ「① 許容張力 T」が起点。T が決まらないと D も L も出ない。風圧荷重を問う問題は「投影面積 → 圧力（甲乙丙）→ W_w」の順。
+      </div>
+
+      <h2 id="memory">12. 暗記ポイント</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="memory" />
+      <MemTable
+        headers={["項目", "覚え方"]}
+        rows={[
+          ["たるみ D = WS²/(8T)", "「ワット・エス2乗・8で割る」。S は2乗、分母は8T"],
+          ["実長 L = S + 8D²/(3S)", "「径間＋8D²÷3S」。分子は8、分母は3S"],
+          ["許容張力 T = Tₙ/f", "引張強さを安全率で割る（掛けない）"],
+          ["安全率", "硬銅2.2／その他2.5／柱2.0／支線1.5（大小で記憶）"],
+          ["風圧荷重", "甲980／乙490(氷雪6mm・d+12)／丙490（甲の半分）"],
+          ["温度", "温度↑→L↑→D↑。D₂=√(3S(L₂−S)/8)"],
+        ]}
+        note="式の「8」と「3」を取り違えやすい。たるみは8T、実長は3S が分母"
+      />
+
+      <h2 id="traps">13. よくあるひっかけ</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="traps" />
+      <TrapTable traps={[
+        { wrong: "[④計算順] たるみ D = WS/(8T)（S は1乗）", correct: "D = WS²/(8T)。径間 S は2乗。径間2倍でたるみ4倍" },
+        { wrong: "[①数値] 許容張力 T = 引張強さ × 安全率", correct: "T = 引張強さ Tₙ ÷ 安全率 f。割る。22kN÷2.2=10kN" },
+        { wrong: "[①数値] 合成荷重 = 自重 + 風圧（単純加算）", correct: "W = √(垂直² + 風圧²)。20と15なら35でなく25" },
+        { wrong: "[①数値] 実長 L = S + 8D²/(8S)", correct: "L = S + 8D²/(3S)。分母は3S（たるみの8Tと混同しない）" },
+        { wrong: "[④計算順] 実長 L = 径間 S + たるみ D", correct: "D をそのまま足さない。微小増分 8D²/(3S) を足す（L はSより少しだけ長い）" },
+        { wrong: "[①数値] kN のまま D = WS²/(8T) に代入", correct: "張力は N に直す（kN×1000）。単位を N・m に統一してから代入" },
+        { wrong: "[④計算順] 温度上昇でたるみは小さくなる", correct: "温度↑→電線が伸びる→実長↑→たるみは大きくなる（張力は緩む）" },
+        { wrong: "[①数値] 温度変化で D₂ = D₁(1+αΔt)（たるみに直接α）", correct: "α は実長にかける：L₂=L₁(1+αΔt)。その後 D₂=√(3S(L₂−S)/8) で逆算" },
+        { wrong: "[⑥例外] 乙種は圧力が甲種の半分だから常に小さい", correct: "氷雪付着で投影幅 d+12 が増え、地域によっては乙種が最大荷重になる" },
+        { wrong: "[①数値] 風圧荷重で投影面積に外径の半径を使う", correct: "投影面積は外径 d×長さ。直径（外径）を使う。半径ではない" },
+        { wrong: "[⑥例外] 安全率はどの電線も一律2.2", correct: "硬銅線・耐熱銅合金線が2.2、その他の電線は2.5（解釈第66条）" },
+        { wrong: "[④計算順] 径間2倍でたるみも2倍", correct: "D は S² に比例。径間2倍ならたるみは4倍（2²）" },
+      ]} />
+
+      <h2 id="exam-1">14. 過去問・練習問題（解法フロー付き）</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="exam-1" />
+
+      <ExamQuestion
+        year="頻出計算パターン①（許容張力→たるみ→実長）"
+        qNum="練習1"
+        question="径間S=100m、電線1mあたりの合成荷重W=30N/m、電線の引張強さ22kN、安全率2.2で施設する。たるみD[m]と電線の実長L[m]の組合せとして最も近いものはどれか。"
+        choices={[
+          "D=0.77, L=100.02",
+          "D=3.75, L=100.19",
+          "D=3.75, L=100.38",
+          "D=3.75, L=103.75",
+        ]}
+        note="まず許容張力 T=Tₙ/f を出してから D=WS²/(8T)、最後に L=S+8D²/(3S)"
+      />
+      <SolveFlow type="練習1の解法" steps={[
+        "① 単位統一：引張強さ 22kN = 22000N、安全率 f=2.2",
+        "② 許容張力 T = 22000 / 2.2 = 10000N（=10kN）",
+        "③ たるみ D = 30 × 100² / (8 × 10000) = 300000 / 80000 = 3.75m",
+        "④ 実長 L = 100 + 8 × 3.75² / (3 × 100) = 100 + 112.5/300 = 100.375 ≒ 100.38m",
+      ]} />
+      <ExamAnswer correct="(3) D=3.75 m, L=100.38 m" explanations={[
+        { choice: "(1)", mark: "×", reason: "許容張力で安全率を掛けて T=48.4kN とした誤り。正しくは ÷2.2 で 10kN、D=3.75m" },
+        { choice: "(2)", mark: "×", reason: "実長の係数誤り。8D²/(3S) を 4D²/(3S) などにすると 100.19。正しい係数は 8" },
+        { choice: "(3)", mark: "○", reason: "T=10kN → D=3.75m → L=100.38m。許容張力・たるみ・実長の3手順が正しい" },
+        { choice: "(4)", mark: "×", reason: "実長にたるみ D を直接足した誤り（L=S+D=103.75）。実長は微小増分 8D²/(3S) を足す" },
+      ]} />
+
+      <ExamQuestion
+        year="頻出計算パターン②（温度変化による弛度）"
+        qNum="練習2"
+        question="径間100m、気温30℃のときのたるみが2.0mであった。気温が60℃に上昇したときのたるみ[m]に最も近いものはどれか。電線の線膨張係数を1.5×10⁻⁵/℃とする。"
+        choices={[
+          "1.30",
+          "2.00",
+          "2.39",
+          "2.72",
+        ]}
+        note="温度はたるみD に直接かけない。まず実長を伸ばしてから D を逆算する"
+      />
+      <SolveFlow type="練習2の解法" steps={[
+        "① 30℃の実長 L₁ = 100 + 8×2.0²/(3×100) = 100 + 32/300 = 100.107m",
+        "② 温度差 Δt = 60 − 30 = 30℃。伸びた実長 L₂ = 100.107 × (1 + 1.5×10⁻⁵×30) = 100.107×1.00045 ≒ 100.152m",
+        "③ たるみ逆算 D₂ = √(3×100×(100.152−100)/8) = √(3×100×0.152/8) = √5.69 ≒ 2.39m",
+      ]} />
+      <ExamAnswer correct="(3) 2.39 m" explanations={[
+        { choice: "(1)", mark: "×", reason: "もとのたるみの寄与を忘れ、伸び分だけで逆算 √(3S・ΔL/8)≒1.30 とした誤り。D₁² を足す必要がある" },
+        { choice: "(2)", mark: "×", reason: "温度変化を無視（たるみは変わらないと誤解）。実長が伸びる分たるみは増える" },
+        { choice: "(3)", mark: "○", reason: "L₁=100.107 → L₂=100.152 → D₂=√(3×100×0.152/8)≒2.39m。30℃上昇で約0.39m深くなる" },
+        { choice: "(4)", mark: "×", reason: "温度差を60℃（30→60の差でなく60そのもの）と取り違えた誤り。Δt=30℃が正しい" },
+      ]} />
+
+      <PlainExplain>
+        <p><strong>出題実績（風圧荷重・たるみ系の法規B問題）</strong></p>
+        <ol>
+          <li>H22 問13・H26 問11・H30 問11・R5上 問13 … 風圧荷重（甲乙丙の判定・1mあたり荷重・乙種適用の外径条件）</li>
+          <li>たるみ・実長・許容張力・温度変化は、法規の施設管理と電力科目の双方で繰り返し出題</li>
+          <li>解説の参考：電験超入門部（denken.joho.info/hoki/dengi-6-keisan）・電験王（denken-ou.com）。条文・数値は解釈第58/59/66条の一次情報で確認</li>
+        </ol>
+      </PlainExplain>
+
+      <h2 id="ruidai">15. 類題対応シナリオ</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="ruidai" />
+      <MemTable
+        headers={["問われ方", "対応"]}
+        rows={[
+          ["張力 T が直接与えられている", "許容張力の手順は飛ばし、すぐ D=WS²/(8T)"],
+          ["引張強さと安全率だけ与えられている", "先に T=Tₙ/f を出してから D へ"],
+          ["径間だけ変えてたるみを問う", "D₂=D₁(S₂/S₁)²（S² 比例）"],
+          ["温度が変わってたるみを問う", "L₂=L₁(1+αΔt)→D₂=√(3S(L₂−S)/8)"],
+          ["風圧荷重を求めさせる", "投影面積 d×1m →甲980/乙490(d+12)/丙490 で W_w"],
+          ["氷雪・風圧つきの合成荷重", "W=√(垂直² + 風圧²) を先に作ってから D へ"],
+        ]}
+        note="起点は「張力が分かっているか」。分からなければ許容張力 T=Tₙ/f から始める"
+      />
+
+      <h2 id="related-law">17. 関連法規（条文との対応）</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="related-law" />
+      <MemTable
+        headers={["階層", "法規・条文", "本ページとの関係"]}
+        rows={[
+          [<span>🟨 省令</span>, <span><strong>電気設備技術基準</strong><br/>第6条 電線等の断線の防止</span>, "断線しない強度（張力・安全率）の根拠"],
+          [<span>🟨 省令</span>, <span><strong>電気設備技術基準</strong><br/>第32条 支持物の倒壊の防止</span>, "風速40m/s相当の風圧荷重等に耐える（風圧荷重の根拠）"],
+          [<span>🟩 解釈</span>, <span><strong>電技解釈</strong><br/>第58条 架空電線路の強度計算</span>, "甲種980Pa/乙種490Pa(氷雪6mm)/丙種=甲種1/2 の風圧荷重"],
+          [<span>🟩 解釈</span>, <span><strong>電技解釈</strong><br/>第59条 架空電線路の支持物の強度</span>, "支持物の安全率（鉄柱・コンクリート柱2.0等）"],
+          [<span>🟩 解釈</span>, <span><strong>電技解釈</strong><br/>第66条 低高圧架空電線の安全率</span>, "硬銅線・耐熱銅合金線2.2以上／その他2.5以上（許容張力の根拠）"],
+          [<span>🟩 解釈</span>, <span><strong>電技解釈</strong><br/>第61条・第62条 支線</span>, "支線の安全率1.5（→1.3 支線の引張強さ）"],
+          [<span>🟩 解釈</span>, <span><strong>電技解釈</strong><br/>第68条 高圧架空電線等の高さ</span>, "たるみが大きいと最低高さを侵す（たるみ計算の目的）"],
+        ]}
+        note="法規B問題では条文番号と内容の組合せが問われる。風圧=第58条、電線安全率=第66条、支持物=第59条を区別"
+      />
+
+      <h2 id="quick-review">18. 1分復習</h2>
+      <SectionCheck pageId="densen-tarumi" sectionId="quick-review" />
+      <QuickReview pageId="densen-tarumi" items={[
+        { q: "たるみ D の公式は？", a: "D = WS²/(8T)。径間 S の2乗に比例（径間2倍でたるみ4倍）" },
+        { q: "許容張力の出し方は？", a: "T = 引張強さ Tₙ ÷ 安全率 f。割る（掛けない）。硬銅線は f=2.2" },
+        { q: "電線の実長 L は？", a: "L = S + 8D²/(3S)。径間に微小増分を足す（D を直接足さない）" },
+        { q: "温度が上がるとたるみは？", a: "大きくなる。L₂=L₁(1+αΔt) で実長を伸ばし D₂=√(3S(L₂−S)/8) で逆算" },
+        { q: "合成荷重の作り方は？", a: "W=√(垂直² + 風圧²)。垂直=自重+氷雪、水平=風圧。単純加算ではない" },
+      ]} />
+
+      <h2 id="crossref">19. 掛け算出題パターン</h2>
+      <CrossRef patterns={[
+        { a: "たるみ", b: "支線の引張強さ（1.3）", result: "電線張力 → 支線が支える水平力 F → 支線張力を問う複合問題" },
+        { a: "たるみ", b: "電線路の高さ（3.4）", result: "高温時の最大たるみで最低高さ（解釈第68条）を満たすか判定" },
+        { a: "風圧荷重", b: "支持物の強度（解釈第59条）", result: "合成荷重 → 支持物が倒壊しない強度・安全率を問う" },
+        { a: "安全率", b: "電線サイズ（2.6）", result: "引張強さと安全率から許容張力 → 必要な電線太さを選ぶ" },
+      ]} />
+
+      <h2 id="act-section">🔄 D. Act（振り返り・次のアクション）</h2>
+      <SectionCheckSummary
+        pageId="densen-tarumi"
+        sections={[
+          { id: "exam-focus",   label: "3節 試験で問われること" },
+          { id: "formula-list", label: "4節 公式・記号の一覧" },
+          { id: "safety-table", label: "5節 安全率の数値比較" },
+          { id: "deep-tarumi",  label: "6節 たるみの物理" },
+          { id: "deep-goseika", label: "7節 合成荷重" },
+          { id: "deep-fuatsu",  label: "8節 風圧荷重 甲乙丙" },
+          { id: "deep-ondo",    label: "9節 温度変化と実長" },
+          { id: "deep-span",    label: "10節 径間変化" },
+          { id: "solveflow",    label: "11節 解き方・処理順" },
+          { id: "memory",       label: "12節 暗記ポイント" },
+          { id: "traps",        label: "13節 よくあるひっかけ" },
+          { id: "exam-1",       label: "14節 過去問・練習" },
+          { id: "ruidai",       label: "15節 類題対応シナリオ" },
+          { id: "related-law",  label: "17節 関連法規" },
+          { id: "quick-review", label: "18節 1分復習" },
+        ]}
+        onJump={(id) => { location.hash = id; }}
+      />
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: 24 }}>
+        <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 8 }}>🎯 次の学習推奨（次回 Plan へ）</div>
+        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.9 }}>
+          <li><strong>支線の引張強さ（1.3）</strong>: 電線張力から支線張力 T=F/sinθ・必要素線条数へつながる複合問題</li>
+          <li><strong>電線路（3.4）</strong>: 高さ・風圧荷重・離隔の暗記Hub。たるみが最低高さに与える影響を確認</li>
+          <li><strong>denken-wiki 解釈第58条・第66条</strong>: 風圧荷重・電線安全率の条文全体像を再確認</li>
+        </ul>
+      </div>
+
+      <DenkenWikiCTA
+        url="https://kfurufuru.github.io/denken-wiki/themes/kachiku-densen/"
+        label="denken-wiki「架空電線路」を開く"
+        note="支持物の種類別規定・電線太さの選定・条文の全体像は denken-wiki が SOT。"
+      />
+
+      <UpdateLog entries={[
+        { date: "2026-06-07", content: "新規作成 v1.0 — 架空電線のたるみ・許容張力・実長・温度変化・合成荷重・風圧荷重・径間変化の全8類型。SVG4枚・死活5ステップ・処理順カード・頻出計算パターン2問", reason: "架空電線の張力・安全係数の計算B問題対策（参照: 電験超入門部 dengi-6-keisan）。sec01の欠落ページを補完" },
+      ]} />
+
+      <PageNav
+        prevId="hogokyo-dgr" prevTitle="1.10 保護協調・DGR"
+        nextId="setsuchi-ichiran" nextTitle="2.1 接地工事一覧表"
+        onNav={onNav}
+      />
     </div>
   );
 }
@@ -12494,7 +13619,7 @@ function DemandKanriPage({ onNav, data }) {
           <text x="297" y="249" fontSize="12" fill="#c33" fontWeight="700" textAnchor="middle">310×20 = 6,200 kW·分</text>
           <rect x="525" y="234" width="224" height="22" fill="#e8f5e9" opacity="0.6"/>
           <text x="637" y="249" fontSize="12" fill="#2a8" fontWeight="700" textAnchor="middle">278×10 = 2,780 kW·分</text>
-          <text x="410" y="272" fontSize="12" fill="#333" textAnchor="middle">合計 8,980 kW·分 ÷ 30 = 299.3kW &lt; 300 ✓</text>
+          <text x="410" y="145" fontSize="12" fill="#333" textAnchor="middle">合計 8,980 kW·分 ÷ 30 = 299.3kW &lt; 300 ✓</text>
         </svg>
         <div style={{fontSize:12, color:'var(--ink-3)', marginTop:8}}>※ ファン4台(22kW) + 他10kW = 32kW停止 → 310−32 = 278kW。278 &lt; 280 ✓ 条件達成。</div>
       </div>
@@ -12908,7 +14033,7 @@ function DemandKwhKisoPage({ onNav, data }) {
           {/* 30分平均ラベル（ブロック直下に配置） */}
           <text x="330" y="74" fontSize="10" textAnchor="middle" fill="#d95454">30分平均</text>
           {/* 面積ラベル（曲線下の中央寄り低い位置） */}
-          <text x="180" y="245" fontSize="13" textAnchor="middle" fill="#2a6db6" fontWeight="700">面積 = 1日の総kWh</text>
+          <text x="210" y="245" fontSize="13" textAnchor="middle" fill="#2a6db6" fontWeight="700">面積 = 1日の総kWh</text>
         </svg>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 8, textAlign: 'center' }}>
           青の曲線=瞬時電力。曲線下の面積=その日の総kWh。30分ブロックの平均値の最大=その日の最大デマンド値。
@@ -13746,6 +14871,399 @@ function FuryokuGijutsukijunPage({ onNav }) {
   );
 }
 
+// ─────────────────────────────────────────────
+// 6-5. HaidenKanriPage（配電管理・6.5 施設管理）
+//   計算詳細は ryokuritsu-kaizen / hensyatsuki-yoryo / demand-kanri 等へ分離。
+//   本ページは「どの対策がどの目的に効くか」の対応関係の俯瞰に特化。
+// ─────────────────────────────────────────────
+function HaidenKanriPage({ onNav, data }) {
+  const navLink = (id, label) => (
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+  );
+  return (
+    <div>
+      <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
+          本ページは「<strong>配電線路の電気的管理</strong>」（C層・施設管理）の見取り図。<strong>電圧降下対策・損失低減・高調波/フリッカ・負荷バランス</strong>を1枚で俯瞰する。個々の計算（力率改善コンデンサ容量・変圧器容量・需要率/負荷率・デマンド）は各専用ページに分離しているので、本ページは<strong>「どの対策がどの目的に効くか」の対応関係</strong>を押さえる。
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+          <tbody>
+            <tr><td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', width: 90, fontWeight: 600 }}>テーマ</td><td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>配電線路の電気的管理（電圧降下・損失・高調波・フリッカ・負荷平衡）</td></tr>
+            <tr><td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', fontWeight: 600 }}>核心</td><td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>線路損失は I²R に比例 → 電流 I を減らす（力率改善・負荷平衡）か抵抗 R を減らす（太い電線）。電圧降下は ΔV ≒ I(R cosθ + X sinθ)</td></tr>
+            <tr><td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', fontWeight: 600 }}>出題</td><td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>B問題（電圧降下・力率改善・高調波の計算）＋A問題（配電用遮断器/開閉器の役割）。施設管理として頻出</td></tr>
+            <tr><td style={{ padding: '6px 10px', background: 'var(--bg-2)', fontWeight: 600 }}>頻出罠</td><td style={{ padding: '6px 10px' }}>① 損失は電流の2乗に比例（1乗ではない）／② 単相3線式の中性線欠相で過電圧／③ 高調波は次数の高い電流が問題（第5・第7調波）</td></tr>
+          </tbody>
+        </table>
+        <a href="https://kfurufuru.github.io/denken-wiki/" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: 10, padding: '8px 14px', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius)', textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>🔗 denken-wiki を開く →</a>
+      </div>
+
+      <ConclusionBox>
+        <ul>
+          <li><strong>損失低減</strong>：配電線路の電力損失は <strong>I²R に比例</strong>。電流 I を減らす（<strong>力率改善・負荷平衡</strong>）か、抵抗 R を減らす（<strong>太い電線・こう長短縮</strong>）</li>
+          <li><strong>電圧降下対策</strong>：ΔV ≒ I(R cosθ + X sinθ)。対策は<strong>昇圧（変圧器タップ・SVR）・力率改善・太い電線・負荷分散</strong></li>
+          <li><strong>力率改善</strong>：進相コンデンサで電流を減らし、<strong>損失減・電圧降下減・力率割引</strong>を同時に得る（計算は{navLink('ryokuritsu-kaizen', '力率改善')}）</li>
+          <li><strong>高調波・フリッカ</strong>：発生源（整流器・アーク炉等）と対策（フィルタ・専用線・連系点強化）を<strong>対応で覚える</strong></li>
+          <li><strong>単相3線式の負荷バランス</strong>：両側負荷を均等に。<strong>中性線が欠相すると軽負荷側が過電圧</strong>になり機器を焼く（バランサで平衡を保つ）</li>
+        </ul>
+      </ConclusionBox>
+
+      <MetaStrip
+        ch="CH06"
+        category="06 電気施設管理（配電管理）"
+        importance="B"
+        freq="mid"
+        examType="B問題（計算）＋A問題（論説）"
+        targets="H30・R01・R02・R06上（電圧降下/力率改善/高調波/配電用遮断器）"
+        tags={["配電管理", "電圧降下", "線路損失", "力率改善", "高調波", "負荷平衡"]}
+        lastChecked="2026-06-11"
+      />
+
+      <h2 id="exam-focus">1. 試験で問われること</h2>
+      <SectionCheck pageId="haiden-kanri" sectionId="exam-focus" />
+      <ExamFocus items={[
+        { label: "電圧降下", value: "ΔV ≒ I(R cosθ + X sinθ)。対策は昇圧・力率改善・太い電線（H30 問12・R06上 問11）" },
+        { label: "損失低減", value: "線路損失は I²R に比例。電流を減らす（力率改善・負荷平衡）か抵抗を減らす" },
+        { label: "力率改善", value: "進相コンデンサで電流減→損失減・電圧降下減・力率割引（R01 問12・R05下 問12）" },
+        { label: "高調波", value: "整流器等が発生源。第5・第7調波が問題（R02 問13・R07上 問12）" },
+        { label: "保護・開閉", value: "配電用遮断器と需要家開閉器の役割分担（R06上 問10）" },
+        { label: "負荷平衡", value: "単相3線式は両側負荷を均等に。中性線欠相で過電圧（概念問題で問われやすい）" },
+      ]} />
+
+      <h2 id="loss">2. 損失低減（I²R が出発点）</h2>
+      <SectionCheck pageId="haiden-kanri" sectionId="loss" />
+      <PlainExplain>
+        <p><strong>なぜ電流の2乗か</strong>：配電線路の抵抗を R、流れる電流を I とすると、線路で熱として失われる電力（電力損失）は <strong>I²R</strong>。電流が2倍になれば損失は4倍。だから損失低減の王道は「<strong>電流 I を減らす</strong>」こと。</p>
+        <p><strong>電流を減らす2本柱</strong>：（1）<strong>力率改善</strong>＝同じ有効電力 P でも力率 cosθ が大きいほど電流 I = P/(√3·V·cosθ) は小さい。（2）<strong>負荷平衡</strong>＝相間・線間の電流アンバランスをなくし、特定の線に電流が偏らないようにする。</p>
+        <p><strong>抵抗を減らす</strong>：（3）<strong>太い電線</strong>（断面積を大きく）で R を下げる、（4）<strong>こう長を短く</strong>する（配電用変電所や変圧器を負荷に近づける）。電圧を上げる（昇圧）と同じ電力を小さい電流で送れるため損失も減る。</p>
+      </PlainExplain>
+      <MemTable
+        headers={["対策", "効くしくみ", "主な効果"]}
+        rows={[
+          ["力率改善（進相コンデンサ）", "無効電流を打ち消し電流 I を減らす", "損失減・電圧降下減・力率割引"],
+          ["負荷平衡（相/線の均等化）", "電流の偏りをなくす", "損失減・中性線電流減"],
+          ["太い電線", "抵抗 R を下げる", "損失減・電圧降下減"],
+          ["昇圧（高い電圧で送る）", "同じ電力を小さい I で送る", "損失減・電圧降下減"],
+        ]}
+        note="損失は I²R。電流側（力率改善・負荷平衡）と抵抗側（太い電線・昇圧）の両面で攻める"
+      />
+
+      <h2 id="voltage-drop">3. 電圧降下対策（昇圧・SVR・バランサ）</h2>
+      <SectionCheck pageId="haiden-kanri" sectionId="voltage-drop" />
+      <PlainExplain>
+        <p><strong>電圧降下の式</strong>：1線あたりの電圧降下は近似で <strong>ΔV ≒ I(R cosθ + X sinθ)</strong>（R＝抵抗、X＝リアクタンス、θ＝力率角）。電流が大きいほど、力率が悪いほど降下は大きい。配電末端では電圧が下がりすぎ、軽負荷時は上がりすぎることがある。</p>
+        <p><strong>主な対策</strong>：（1）<strong>変圧器タップ調整</strong>で送り出し電圧を変える、（2）<strong>SVR（線路用ステップ式自動電圧調整器）</strong>を線路途中に置いて電圧を持ち上げる、（3）<strong>力率改善</strong>で電流を減らし降下そのものを小さくする、（4）<strong>太い電線・負荷分散</strong>。</p>
+        <p><strong>需要家側の維持義務との関係</strong>：電気事業者が需要家に供給すべき電圧（標準100 V で101 V±6 V＝95〜107 V 等）は別途定められている（{navLink('kyokyu-denatsu-iji', '供給電圧・周波数の維持')}）。本ページは「その範囲に収めるための<strong>線路側の調整手段</strong>」を扱う。</p>
+      </PlainExplain>
+
+      <h2 id="harmonics">4. 高調波・フリッカの管理（発生源と対策の対応）</h2>
+      <SectionCheck pageId="haiden-kanri" sectionId="harmonics" />
+      <PlainExplain>
+        <p><strong>高調波</strong>：基本波（50/60 Hz）の整数倍の周波数成分。<strong>整流器・インバータ・アーク炉</strong>などの非線形負荷が発生源。配電系統では<strong>第5調波・第7調波</strong>など次数の高い電流が機器の過熱・コンデンサの焼損・誤動作を招く。対策は<strong>高調波フィルタ（同調リアクトル付きコンデンサ等）・直列リアクトル・連系点の強化</strong>。経済産業省の「高圧又は特別高圧で受電する需要家の高調波抑制対策ガイドライン」が抑制の目安を示す（条文番号で定める性質のものではない）。</p>
+        <p><strong>フリッカ</strong>：アーク炉・溶接機など<strong>急変する大きな負荷</strong>が電圧を細かく変動させ、照明のちらつきとして現れる現象。対策は<strong>専用線・専用変圧器での分離、SVC（無効電力補償装置）での電圧変動吸収、連系点の短絡容量を大きくする</strong>。</p>
+      </PlainExplain>
+      <MemTable
+        headers={["現象", "主な発生源", "代表的な対策"]}
+        rows={[
+          ["高調波", "整流器・インバータ・アーク炉（非線形負荷）", "高調波フィルタ・直列リアクトル・連系点強化"],
+          ["フリッカ（電圧フリッカ）", "アーク炉・溶接機（急変する大負荷）", "専用線/専用変圧器・SVC・短絡容量増大"],
+        ]}
+        note="「発生源＝何が出すか」と「対策＝どう抑えるか」を対で覚える。高調波は次数（第5・第7）、フリッカは電圧の急変が鍵"
+      />
+
+      <h2 id="balance">5. 単相3線式の負荷バランス（中性線欠相の危険）</h2>
+      <SectionCheck pageId="haiden-kanri" sectionId="balance" />
+      <PlainExplain>
+        <p><strong>単相3線式とは</strong>：2本の電圧線と1本の中性線で、100 V（電圧線−中性線）と200 V（電圧線−電圧線）を取り出す方式。両側（L1−N と L2−N）の負荷が<strong>平衡していれば中性線には電流がほとんど流れない</strong>（差分だけ流れる）。</p>
+        <p><strong>中性線欠相の危険</strong>：中性線が断線（欠相）すると、両側の負荷が直列に200 Vへつながった形になり、<strong>軽負荷側に過大な電圧がかかって機器を焼損</strong>する。だから単相3線式では<strong>負荷をできるだけ均等に配分</strong>し、<strong>中性線に過電流遮断器を入れない</strong>のが原則。</p>
+        <p><strong>バランサ</strong>：両側の負荷が不平衡な配電線で、<strong>巻数比1：1の単巻変圧器（バランサ）</strong>を末端に接続すると、両側電流を平衡化し中性線電流と電圧の偏りを抑えられる。</p>
+      </PlainExplain>
+      <TrapTable traps={[
+        { wrong: "[①数値] 配電線路の電力損失は電流に比例する", correct: "損失は I²R で電流の2乗に比例。電流2倍で損失4倍" },
+        { wrong: "[②主語] 力率改善は電気料金の割引だけが目的", correct: "電流が減るので損失減・電圧降下減も同時に得られる（多目的）" },
+        { wrong: "[⑥例外] 単相3線式は負荷の偏りがあっても問題ない", correct: "中性線が欠相すると軽負荷側が過電圧で焼損。均等配分が原則" },
+        { wrong: "[②主語] 単相3線式の中性線に過電流遮断器を入れて保護する", correct: "中性線には過電流遮断器を入れない（切れると過電圧になる）" },
+        { wrong: "[①数値] 高調波は基本波より低い周波数成分が問題", correct: "高調波は整数倍の高い周波数。配電では第5・第7調波が代表" },
+        { wrong: "[②主語] 電圧降下対策は太い電線にすることだけ", correct: "昇圧（タップ・SVR）・力率改善・負荷分散も有効。電流側と抵抗側の両面" },
+      ]} />
+
+      <h2 id="exam-past">6. 過去問形式演習</h2>
+      <SectionCheck pageId="haiden-kanri" sectionId="exam-past" />
+      <ExamQuestion
+        year="頻出パターン（論説・施設管理）"
+        qNum="配電線路の損失低減"
+        question="配電線路の電力損失を低減する対策として、最も適切でないものはどれか。"
+        choices={["進相コンデンサを設置して力率を改善する", "電線を太いものに張り替える", "負荷の三相不平衡を大きくする", "配電電圧を高くして同じ電力を小さい電流で送る"]}
+        note="損失は I²R。電流を減らす・抵抗を減らす方向が正。不平衡を大きくするのは逆効果"
+      />
+      <details style={{ margin: '8px 0', border: '1px solid var(--line)', borderRadius: 4, padding: '4px 0' }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 600, padding: '6px 12px', background: 'var(--bg-2)', borderRadius: 3, fontSize: 13 }}>✅ 正解と解説</summary>
+        <div style={{ padding: '8px 12px' }}>
+          <ExamAnswer correct="③ 負荷の三相不平衡を大きくする" explanations={[
+            { choice: "①", mark: "○", reason: "力率改善で無効電流が減り、電流 I が小さくなる→ I²R 損失が減る（正しい対策）" },
+            { choice: "②", mark: "○", reason: "電線を太くすると抵抗 R が下がる→損失減（正しい対策）" },
+            { choice: "③", mark: "×", reason: "不平衡を大きくすると特定の線に電流が偏り損失は増える。低減には平衡化が正しい（これが不適切＝答え）" },
+            { choice: "④", mark: "○", reason: "昇圧すれば同じ電力 P を小さい電流で送れる（I = P/(√3·V·cosθ)）→損失減（正しい対策）" },
+          ]} />
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 8 }}>関連出題：H30 問12（送電線の電圧降下・計算）／R01 問12・R05下 問12（力率改善・計算）／R02 問13・R07上 問12（高調波電流・計算）／R06上 問10（配電用遮断器の役割・論説）。計算の解き方は {navLink('ryokuritsu-kaizen', '力率改善')} を参照。</div>
+        </div>
+      </details>
+
+      <h2 id="quick-review">7. 1分復習</h2>
+      <SectionCheck pageId="haiden-kanri" sectionId="quick-review" />
+      <QuickReview
+        pageId="haiden-kanri"
+        items={[
+          { q: "配電線路の電力損失は電流とどんな関係か？", a: "I²R に比例（電流の2乗）。電流2倍で損失4倍" },
+          { q: "配電線路で電流を減らして損失を下げる代表的な2手法は？", a: "力率改善（進相コンデンサ）と負荷平衡" },
+          { q: "配電線路の1線あたりの電圧降下の近似式は？", a: "ΔV ≒ I(R cosθ + X sinθ)" },
+          { q: "配電系統で問題になる高調波の代表的な次数は？", a: "第5調波・第7調波（整流器等が発生源）" },
+          { q: "単相3線式で中性線が欠相すると何が起きるか？", a: "両側が直列200 Vにつながり、軽負荷側が過電圧になって機器を焼損する" },
+        ]}
+      />
+
+      <h2 id="related-law">8. 関連ページ・関連法規</h2>
+      <SectionCheck pageId="haiden-kanri" sectionId="related-law" />
+      <MemTable
+        headers={["階層", "ページ・法令", "関係"]}
+        rows={[
+          [<span>🟥 関連</span>, <span>{navLink('ryokuritsu-kaizen', '力率改善（1.5）')}</span>, "進相コンデンサ容量 Qc = P(tanθ1 − tanθ2) の計算"],
+          [<span>🟥 関連</span>, <span>{navLink('kyokyu-denatsu-iji', '供給電圧・周波数の維持')}</span>, "需要家に供給すべき電圧範囲（101 V±6 V 等）"],
+          [<span>🟥 関連</span>, <span>{navLink('hensyatsuki-yoryo', '変圧器容量（6.4）')}</span>, "kVA 容量の選定（kW÷力率）"],
+          [<span>🟥 関連</span>, <span>{navLink('demand-kanri', 'デマンド制御（6.7）')}</span>, "最大需要電力（30分平均）の管理"],
+          [<span>🟦 目安</span>, <span><strong>高調波抑制対策ガイドライン（経済産業省）</strong></span>, "高圧/特別高圧需要家の高調波の抑制目安（条文番号で定めるものではない）"],
+        ]}
+        note="計算は各専用ページに分離。本ページは『どの対策がどの目的に効くか』の対応を押さえる"
+      />
+
+      <h2 id="act-section">🔄 D. Act（振り返り・次のアクション）</h2>
+      <SectionCheckSummary
+        pageId="haiden-kanri"
+        sections={[
+          { id: "exam-focus",   label: "1節 試験で問われること" },
+          { id: "loss",         label: "2節 損失低減（I²R）" },
+          { id: "voltage-drop", label: "3節 電圧降下対策" },
+          { id: "harmonics",    label: "4節 高調波・フリッカ" },
+          { id: "balance",      label: "5節 単相3線式の負荷バランス" },
+          { id: "exam-past",    label: "6節 過去問演習" },
+          { id: "quick-review", label: "7節 1分復習" },
+          { id: "related-law",  label: "8節 関連ページ・関連法規" },
+        ]}
+        onJump={(id) => { location.hash = id; }}
+      />
+
+      <UpdateLog entries={[
+        { date: "2026-06-11", content: "v1.0: StubPage から本実装へ昇格。配電線路の電気的管理（損失 I²R・電圧降下 ΔV≒I(Rcosθ+Xsinθ)・高調波/フリッカ・単相3線式の負荷バランス）を施設管理の俯瞰として整備。物理式と単相3線式中性線欠相の挙動は電験標準理論で確認。計算詳細は力率改善/変圧器容量/デマンド各ページに分離（重複回避）。条文番号で定めない高調波はガイドライン名のみ記載し番号は付さない", reason: "6.5 配電管理が空Stubで施設管理章の俯瞰が欠落。kakomon.yml の施設管理出題（H30 問12 電圧降下/R01・R05下 力率改善/R02・R07上 高調波/R06上 問10 配電用遮断器）を出題実態として反映。電圧維持101±6Vは kyokyu-denatsu-iji、デマンドは demand-kanri が主題のため参照リンクに留めた" },
+      ]} />
+
+      <PageNav prevId="hensyatsuki-yoryo" prevTitle="変圧器容量" nextId="juden-setsubi-kanri" nextTitle="受電設備管理" onNav={onNav} />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// 6-6. JudenSetsubiKanriPage（受電設備管理・6.6 施設管理）
+//   自家用高圧受電設備（キュービクル等）の構成機器と管理実務に特化。
+//   点検頻度の法定運用は hoan-kitei、使用前自主検査は shiyo-jishu-kensa、
+//   主任技術者の外部委託は shunin-gijutsusya、保護協調(DGR)は hogokyo-dgr へ参照リンク。
+// ─────────────────────────────────────────────
+function JudenSetsubiKanriPage({ onNav, data }) {
+  const navLink = (id, label) => (
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+  );
+  return (
+    <div>
+      <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
+          本ページは「<strong>試験対策・直前確認</strong>」（C層）特化。自家用の<strong>高圧受電設備（キュービクル等）</strong>の構成機器と管理実務に絞る。試験では<strong>主遮断装置の形式（CB形／PF・S形）</strong>・<strong>区分開閉器（PAS／UGS）と波及事故防止</strong>・<strong>単線結線図の機器名</strong>が頻出。点検頻度の法定運用・保護協調・主任技術者制度は各専門ページへ。
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+          <tbody>
+            <tr><td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', width: 90, fontWeight: 600 }}>位置</td><td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>電気施設管理（問10〜13）。実務知識中心で、計算より機器の役割・単線結線図の用語が問われる</td></tr>
+            <tr><td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', fontWeight: 600 }}>核心</td><td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>主遮断装置（CB形／PF・S形）＋区分開閉器（PAS／UGS・SOG機能）＋VCT・避雷器・変圧器・コンデンサの役割。波及事故を構内側で食い止める</td></tr>
+            <tr><td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', fontWeight: 600 }}>規格</td><td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>高圧受電設備規程（JEAC 9701）＝実務規格（適合義務はなし）。キュービクルはJIS C 4620</td></tr>
+            <tr><td style={{ padding: '6px 10px', background: 'var(--bg-2)', fontWeight: 600 }}>頻出罠</td><td style={{ padding: '6px 10px' }}>① CB形とPF・S形の取り違え／② PAS（気中）とUGS（地中）の混同／③ 点検頻度を一律の固定値と誤解（頻度は保安規程で定める）</td></tr>
+          </tbody>
+        </table>
+        <a href="https://kfurufuru.github.io/denken-wiki/" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: 10, padding: '8px 14px', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius)', textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>🔗 denken-wiki を開く →</a>
+      </div>
+
+      <ConclusionBox>
+        <ul>
+          <li><strong>主遮断装置</strong>：受電用の主たる遮断装置。<strong>CB形</strong>（遮断器CBと過電流継電器OCR等の組合せ）と<strong>PF・S形</strong>（高圧限流ヒューズPFと高圧交流負荷開閉器LBSの組合せ）がある</li>
+          <li><strong>区分開閉器</strong>：保安上の責任分界点付近に設ける<strong>PAS（気中）／UGS（地中線用）</strong>。<strong>SOG機能</strong>（地絡は即時開放・過電流は蓄勢し無電圧後に自動開放）で構内事故を切り離し<strong>波及事故</strong>を防ぐ</li>
+          <li><strong>VCT</strong>＝計器用変圧変流器（電力量計量用）、<strong>避雷器（LA）</strong>＝雷サージから機器を保護、<strong>変圧器</strong>＝6.6kVを低圧へ降圧、<strong>高圧進相コンデンサ（SC）</strong>＝力率改善</li>
+          <li><strong>点検頻度の固定値は保安規程による</strong>。日常巡視・月次点検・年次点検の区分はあるが、各事業場の<strong>保安規程で定める</strong>のが正しい（一律の法定値として暗記しない）</li>
+        </ul>
+      </ConclusionBox>
+
+      <MetaStrip ch="CH06" category="06 電気施設管理" importance="A" freq="mid" examType="A問題（穴埋め・論説）" targets="高圧受電設備の機器・主遮断装置・波及事故（H23/R07上/R07下 ほか）" tags={["キュービクル", "主遮断装置", "PAS", "区分開閉器", "波及事故"]} lastChecked="2026-06-11" />
+
+      <h2 id="exam-focus">1. 試験で問われること</h2>
+      <SectionCheck pageId="juden-setsubi-kanri" sectionId="exam-focus" />
+      <ExamFocus items={[
+        { label: "主遮断装置", value: "CB形（CB＋OCR）／PF・S形（PF＋LBS）の形式と適用容量の目安" },
+        { label: "区分開閉器", value: "PAS（気中）／UGS（地中線用）。SOG機能で波及事故を防止" },
+        { label: "単線結線図", value: "VCT・LA（避雷器）・DS／LBS・CB・変圧器・SC（コンデンサ）の記号と役割" },
+        { label: "波及事故防止", value: "構内の地絡・短絡を区分開閉器・主遮断装置で切り離し、上位への波及を防ぐ" },
+        { label: "管理実務", value: "日常巡視・月次・年次点検の代表項目（絶縁抵抗・接地抵抗・継電器試験等）" },
+      ]} />
+
+      <h2 id="main-cb">2. 主遮断装置（CB形とPF・S形）</h2>
+      <SectionCheck pageId="juden-setsubi-kanri" sectionId="main-cb" />
+      <MemTable
+        headers={["形式", "構成", "適用容量の目安（高圧受電設備規程による）"]}
+        rows={[
+          ["CB形", "遮断器（CB）＋過電流継電器（OCR）等。短絡・過負荷を遮断器で遮断", "容量制限なく適用可（大容量に対応）"],
+          ["PF・S形", "高圧限流ヒューズ（PF）＋高圧交流負荷開閉器（LBS）の組合せ", "受電設備容量の小さい設備向け（目安として300kVA以下）"],
+        ]}
+        note="目安値は高圧受電設備規程（JEAC 9701）による実務基準で、法令の適合義務ではない。大容量はCB形、小容量はPF・S形が一般的、という方向で押さえる"
+      />
+      <PlainExplain>
+        <p><strong>CB形</strong>：遮断器（CB＝Circuit Breaker）が短絡電流・過負荷電流を遮断する。事故電流の検出は<strong>過電流継電器（OCR）</strong>が担い、CBへ引外し指令を出す。容量の大きい受電設備に向く。</p>
+        <p><strong>PF・S形</strong>：<strong>高圧限流ヒューズ（PF）</strong>が短絡電流を限流遮断し、<strong>高圧交流負荷開閉器（LBS）</strong>が通常の負荷電流の開閉を担う。機器が小型・安価で、受電設備容量の小さい設備に向く。</p>
+        <p><strong>取り違え注意</strong>：「PF・S形＝ヒューズと負荷開閉器」「CB形＝遮断器と継電器」。LBSは<strong>遮断器ではない</strong>（短絡遮断はPFが担う）点が核心。</p>
+      </PlainExplain>
+
+      <h2 id="kubun-sw">3. 区分開閉器（PAS／UGS）と波及事故防止</h2>
+      <SectionCheck pageId="juden-setsubi-kanri" sectionId="kubun-sw" />
+      <PlainExplain>
+        <p><strong>区分開閉器</strong>：保安上の責任分界点付近（引込の最初）に設ける開閉器。架空引込は<strong>PAS（気中負荷開閉器）</strong>、地中引込は<strong>UGS（地中線用ガス開閉器等）</strong>を用いる。</p>
+        <p><strong>SOG機能</strong>：SO＝過電流蓄勢トリップ・G＝地絡トリップ。<strong>地絡（G）</strong>は構内側で検出して即時開放し、配電用変電所の遮断より先に切り離す。<strong>短絡（過電流）</strong>は負荷開閉器では遮断できないため、検出して蓄勢（SO）しておき、上位の遮断で<strong>無電圧になってから自動開放</strong>する。いずれも事故設備を切り離した状態で再送電でき、他の需要家を巻き込む<strong>波及事故</strong>を防ぐ。</p>
+        <p><strong>波及事故の向き</strong>：自家用設備の事故が原因で、一般送配電事業者等への<strong>供給支障</strong>を引き起こすのが波及事故。これを構内側の保護で食い止めるのが受電設備管理の要点。詳しい保護協調・地絡方向継電器（DGR）の整定は {navLink('hogokyo-dgr', '保護協調・DGR（1.10）')} へ。</p>
+      </PlainExplain>
+
+      <h2 id="single-line">4. 単線結線図の主要機器</h2>
+      <SectionCheck pageId="juden-setsubi-kanri" sectionId="single-line" />
+      <MemTable
+        headers={["機器", "略号", "役割"]}
+        rows={[
+          ["区分開閉器（気中／地中）", "PAS／UGS", "責任分界点付近で構内を区分。SOGで波及事故防止"],
+          ["計器用変圧変流器", "VCT", "電力量計（取引計量）用に電圧・電流を変成する"],
+          ["避雷器", "LA", "雷サージ・開閉サージから機器を保護（接地が必須）"],
+          ["断路器／負荷開閉器", "DS／LBS", "点検時の区分・無負荷開閉（DS）、負荷電流の開閉（LBS）"],
+          ["遮断器", "CB", "短絡・過負荷電流を遮断（CB形主遮断装置の中核）"],
+          ["変圧器", "T", "6.6kVを低圧（200V／100V等）へ降圧する"],
+          ["高圧進相コンデンサ", "SC", "力率改善（直列リアクトルSRと組み合わせる）"],
+        ]}
+        note="DS（断路器）は負荷電流を開閉してはいけない（無負荷で開閉）。負荷電流の開閉はLBS、事故電流の遮断はCB／PF、という役割分担が頻出"
+      />
+
+      <h2 id="traps">5. ひっかけポイント</h2>
+      <SectionCheck pageId="juden-setsubi-kanri" sectionId="traps" />
+      <TrapTable traps={[
+        { wrong: "[②主語] PF・S形は遮断器（CB）と過電流継電器の組合せ", correct: "PF・S形は高圧限流ヒューズ（PF）と高圧交流負荷開閉器（LBS）の組合せ。CB形がCB＋OCR" },
+        { wrong: "[②主語] PASは地中引込用、UGSは架空引込用", correct: "PAS＝気中（架空引込）、UGS＝地中引込用。逆に覚えない" },
+        { wrong: "[⑥例外] 断路器（DS）は負荷電流を開閉してよい", correct: "DSは無負荷で開閉する区分用。負荷電流の開閉はLBS、事故電流の遮断はCB／PF" },
+        { wrong: "[②主語] 区分開閉器のSOGは短絡電流もその場で遮断する", correct: "負荷開閉器は短絡電流を遮断できない。過電流は蓄勢（SO）し、上位遮断による無電圧後に自動開放。即時開放は地絡（G）のみ" },
+        { wrong: "[①数値] 月次・年次点検の頻度は電気事業法で一律に定められた固定値", correct: "点検頻度は各事業場の保安規程で定める。一律の法定固定値として暗記しない" },
+        { wrong: "[②主語] VCTは力率改善のための機器", correct: "VCTは電力量計量用の計器用変成器。力率改善は高圧進相コンデンサ（SC）" },
+      ]} />
+
+      <h2 id="maintenance">6. 日常巡視・月次・年次点検の代表項目</h2>
+      <SectionCheck pageId="juden-setsubi-kanri" sectionId="maintenance" />
+      <MemTable
+        headers={["区分", "代表的な内容", "特徴"]}
+        rows={[
+          ["日常巡視", "外観・異音・異臭・変色・油漏れ・計器指示の確認", "停電せず運転状態で実施"],
+          ["月次点検", "外観・各部温度・絶縁監視装置の指示・動作確認等", "原則として停電せず実施"],
+          ["年次点検", "停電して絶縁抵抗測定・接地抵抗測定・継電器試験・絶縁油試験等", "停電を伴う精密点検"],
+        ]}
+        note="頻度の固定値（◯月に1回 等）は各事業場の保安規程で定める。外部委託承認制度では一定要件下で月次が緩和され得る。法定運用の詳細は保安規程ページへ"
+      />
+      <PlainExplain>
+        <p><strong>年次点検の代表項目</strong>：（1）<strong>絶縁抵抗測定</strong>（絶縁抵抗計で電路・機器の絶縁劣化を確認）、（2）<strong>接地抵抗測定</strong>（接地工事の良否確認）、（3）<strong>継電器試験</strong>（OCR・DGR等の動作特性・整定値確認）、（4）<strong>絶縁油試験</strong>（変圧器等の油の絶縁破壊電圧・劣化確認）。いずれも<strong>停電</strong>して行うのが基本。</p>
+        <p><strong>注意</strong>：点検の<strong>頻度・周期</strong>は法令が一律の固定値を与えるのではなく、<strong>各事業場の保安規程</strong>で定める。点検の法的根拠・外部委託の頻度緩和は {navLink('hoan-kitei', '保安規程（4.3）')} を参照。</p>
+      </PlainExplain>
+
+      <h2 id="related-ref">7. 制度面の関連（参照リンク）</h2>
+      <SectionCheck pageId="juden-setsubi-kanri" sectionId="related-ref" />
+      <MemTable
+        headers={["論点", "本ページでの扱い", "詳細ページ"]}
+        rows={[
+          ["点検頻度・保安規程", "頻度は保安規程で定める旨のみ", <span>{navLink('hoan-kitei', '保安規程（4.3）')}</span>],
+          ["使用前の検査", "受電前の確認があることのみ", <span>{navLink('shiyo-jishu-kensa', '使用前自主検査（4.4）')}</span>],
+          ["主任技術者・外部委託", "選任・外部委託の枠組みのみ", <span>{navLink('shunin-gijutsusya', '主任技術者（4.2）')}</span>],
+          ["保護協調・DGR整定", "波及事故防止の方向性のみ", <span>{navLink('hogokyo-dgr', '保護協調・DGR（1.10）')}</span>],
+        ]}
+        note="本ページは受電設備の機器構成と管理実務に特化。制度・頻度・整定の詳細は重複を避け各ページへ集約している"
+      />
+
+      <h2 id="exam-past">8. 過去問形式演習</h2>
+      <SectionCheck pageId="juden-setsubi-kanri" sectionId="exam-past" />
+      <ExamQuestion
+        year="頻出パターン（穴埋め・論説）"
+        qNum="主遮断装置の形式"
+        question="キュービクル式高圧受電設備の主遮断装置のうち、「高圧限流ヒューズ（PF）と高圧交流負荷開閉器（LBS）を組み合わせた形式」を何形というか。"
+        choices={["CB形", "PF・S形", "GR付PAS形", "VCB形"]}
+        note="PF・S形＝PF＋LBS。CB形は遮断器（CB）と過電流継電器（OCR）の組合せ"
+      />
+      <details style={{ margin: '8px 0', border: '1px solid var(--line)', borderRadius: 4, padding: '4px 0' }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 600, padding: '6px 12px', background: 'var(--bg-2)', borderRadius: 3, fontSize: 13 }}>✅ 正解と解説</summary>
+        <div style={{ padding: '8px 12px' }}>
+          <ExamAnswer correct="② PF・S形" explanations={[
+            { choice: "②", mark: "○", reason: "PF・S形＝高圧限流ヒューズ（PF）＋高圧交流負荷開閉器（LBS）。受電設備容量の小さい設備向け（目安300kVA以下・高圧受電設備規程による）" },
+            { choice: "①", mark: "×", reason: "CB形は遮断器（CB）＋過電流継電器（OCR）の組合せで、容量制限なく適用できる（本問の形式ではない）" },
+            { choice: "③", mark: "×", reason: "GR付PASは区分開閉器（責任分界点側）であり、主遮断装置の形式区分の呼称ではない" },
+            { choice: "④", mark: "×", reason: "VCB（真空遮断器）は遮断器の一種であり、形式区分の呼称ではない（ひっかけ）" },
+          ]} />
+        </div>
+      </details>
+
+      <h2 id="quick-review">9. 1分復習</h2>
+      <SectionCheck pageId="juden-setsubi-kanri" sectionId="quick-review" />
+      <QuickReview
+        pageId="juden-setsubi-kanri"
+        items={[
+          { q: "主遮断装置のCB形とPF・S形の構成の違いは？", a: "CB形＝遮断器（CB）＋過電流継電器（OCR）／PF・S形＝高圧限流ヒューズ（PF）＋高圧交流負荷開閉器（LBS）" },
+          { q: "区分開閉器のPASとUGSはそれぞれどの引込に使うか？", a: "PAS＝気中（架空引込）、UGS＝地中引込用。SOG機能で波及事故を防ぐ" },
+          { q: "受電設備の区分開閉器のSOG機能はどう波及事故を防ぐか？", a: "地絡（G）は即時開放。過電流（SO）は開閉器では遮断せず検出・蓄勢し、上位遮断による無電圧後に自動開放して事故設備を切り離す" },
+          { q: "断路器（DS）で開閉してはいけない電流は？", a: "負荷電流。DSは無負荷で開閉する区分用。負荷電流はLBS、事故電流はCB／PFが担う" },
+          { q: "受電設備の点検頻度の固定値は何で定めるか？", a: "各事業場の保安規程で定める。電気事業法が一律の固定値を与えるわけではない" },
+        ]}
+      />
+
+      <h2 id="related-law">10. 関連法規・規格</h2>
+      <SectionCheck pageId="juden-setsubi-kanri" sectionId="related-law" />
+      <MemTable
+        headers={["階層", "条文・規格", "関係"]}
+        rows={[
+          [<span>🟥 法律</span>, <span><strong>電気事業法 第39条・第42条</strong></span>, "事業用電気工作物の技術基準適合維持・保安規程の根拠"],
+          [<span>🟦 規格</span>, <span><strong>高圧受電設備規程（JEAC 9701）</strong></span>, "主遮断装置の形式・容量目安等の実務基準（適合義務はなし）"],
+          [<span>🟦 規格</span>, <span><strong>JIS C 4620（キュービクル式高圧受電設備）</strong></span>, "キュービクルの構造・形式の規格"],
+          [<span>🟩 関連</span>, <span>{navLink('hogokyo-dgr', '保護協調・DGR（1.10）')}</span>, "区分開閉器・継電器の整定と保護協調"],
+        ]}
+        note="主遮断装置の容量目安は高圧受電設備規程（実務規格）であり、法令の適合義務ではない点に注意"
+      />
+
+      <h2 id="act-section">🔄 D. Act（振り返り・次のアクション）</h2>
+      <SectionCheckSummary
+        pageId="juden-setsubi-kanri"
+        sections={[
+          { id: "exam-focus",   label: "1節 試験で問われること" },
+          { id: "main-cb",      label: "2節 主遮断装置（CB形／PF・S形）" },
+          { id: "kubun-sw",     label: "3節 区分開閉器と波及事故防止" },
+          { id: "single-line",  label: "4節 単線結線図の主要機器" },
+          { id: "traps",        label: "5節 ひっかけ" },
+          { id: "maintenance",  label: "6節 巡視・月次・年次点検" },
+          { id: "related-ref",  label: "7節 制度面の関連" },
+          { id: "exam-past",    label: "8節 過去問演習" },
+          { id: "quick-review", label: "9節 1分復習" },
+          { id: "related-law",  label: "10節 関連法規・規格" },
+        ]}
+        onJump={(id) => { location.hash = id; }}
+      />
+
+      <UpdateLog entries={[
+        { date: "2026-06-11", content: "v1.0: StubPage から本実装へ昇格。主遮断装置（CB形／PF・S形）・区分開閉器（PAS／UGS・SOG動作はG即時開放/SO蓄勢・無電圧後開放で正確表記）・単線結線図機器・波及事故防止・巡視/月次/年次点検の代表項目。容量目安は高圧受電設備規程（JEAC 9701）による旨を明記し条文番号の捏造を回避。点検頻度は保安規程で定める旨を正確化。点検頻度法定運用は hoan-kitei、使用前検査は shiyo-jishu-kensa、外部委託は shunin-gijutsusya、保護協調は hogokyo-dgr へ参照集約", reason: "受電設備管理は電気施設管理（問10〜13・毎年出題）の機器構成論点として頻出だが本実装が空Stubだったため（H23問10・R07上問10・R07下問10 等で機器・主遮断装置・単線結線図を直接出題）" },
+      ]} />
+
+      <PageNav prevId="haiden-kanri" prevTitle="配電管理" nextId="demand-kanri" nextTitle="デマンド制御・最大需要電力管理" onNav={onNav} />
+    </div>
+  );
+}
+
 function HoreiKaiseiPage({ onNav }) {
   const navLink = (id, label) => (
     <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
@@ -13975,6 +15493,130 @@ function TokutenSenryakuPage({ onNav }) {
       </div>
 
       <PageNav prevId="top" prevTitle="法規の学習マップ" nextId="yomikata-kata" nextTitle="法規の読み方の型（5W）" onNav={onNav} />
+    </div>
+  );
+}
+
+function ExamOverviewPage({ onNav }) {
+  const navLink = (id, label) => (
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+  );
+  const extLink = (href, label) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>{label}</a>
+  );
+  return (
+    <div>
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 6 }}>はじめに</div>
+        <h1 style={{ margin: 0, fontSize: 23, fontWeight: 800 }}>試験概要・受験案内（科目・配点・CBT）</h1>
+        <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span className="tag">制度ノート</span>
+          <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>「いつ・何科目・何点で・どう申し込むか」を最初に押さえる</span>
+        </div>
+      </div>
+
+      <ConclusionBox>
+        電験三種は<strong>理論・電力・機械・法規の4科目</strong>を科目別に受験。各科目<strong>100点満点・原則60点で合格</strong>。
+        1科目でも合格すれば<strong>科目合格</strong>となり、最初に合格した試験以降、申請により<strong>原則として連続5回まで免除</strong>される（年2回実施でおよそ2年半・現行制度。正確な回数・期間は公式の受験案内で確認）。
+        解答は<strong>五肢択一</strong>で、<strong>CBT方式（パソコン）</strong>か<strong>筆記方式（マークシート）</strong>を選ぶ。法規だけ試験時間が<strong>65分</strong>（他3科目は90分）。
+      </ConclusionBox>
+
+      <MetaStrip
+        category="00 はじめに"
+        freq="—（全科目共通の制度情報）"
+        examType="五肢択一（CBT／筆記）・年2回"
+        targets="電験三種 全科目共通"
+        tags={["試験制度", "科目別合格制度", "CBT", "受験申込", "受験手数料"]}
+        lastChecked="2026-06-07"
+      />
+
+      <h2 id="kamoku">1. 4科目と試験時間</h2>
+      <MemTable
+        headers={["科目", "主な内容", "試験時間"]}
+        rows={[
+          ["理論", "電気理論・電子理論・電気計測", "90分"],
+          ["電力", "発電・変電・送配電・電気材料", "90分"],
+          ["機械", "回転機・変圧器・パワエレ・制御・電気応用", "90分"],
+          [<strong>法規</strong>, "電気事業法・電気設備技術基準・電気施設管理", <strong>65分</strong>],
+        ]}
+        note="4科目すべて100点満点・原則60点で合格。法規だけ65分と短く、時間配分の対策が要る。"
+      />
+
+      <h2 id="goukaku">2. 合格基準と出題方式</h2>
+      <MemTable
+        headers={["項目", "内容"]}
+        rows={[
+          ["合格基準", "各科目 原則60点以上（難しい年は合格点が下方調整されることがある）"],
+          ["出題方式", "五肢択一方式（5つの選択肢から1つを選ぶ）"],
+          ["解答手段", "CBT方式（パソコン）または筆記方式（マークシート）"],
+          ["実施回数", "年2回（上期・下期）"],
+        ]}
+        note="法規の配点内訳（A問題60点＋B問題40点）と時間配分の詳細は得点戦略ページにある。"
+      />
+      <PlainExplain>
+        4科目を一度に全部そろえる必要はない。<strong>1科目ずつでも合格を積み上げられる</strong>のが電験三種の大きな特徴で、これが次の「科目別合格制度」につながる。
+      </PlainExplain>
+
+      <h2 id="kamoku-goukaku">3. 科目別合格制度（最重要）</h2>
+      <MemTable
+        headers={["論点", "内容"]}
+        rows={[
+          ["科目合格とは", "4科目のうち合格した科目だけを「合格」として残せる制度"],
+          ["免除される範囲", "最初に合格した試験以降、申請により 連続して5回まで その科目の試験が免除"],
+          ["期間の目安", "試験は年2回（上期・下期）実施のため、5回はおおむね2年半に相当"],
+          ["全科目合格", "免除期間内に残りの科目に合格すれば、第三種電気主任技術者試験の合格"],
+        ]}
+        note="⚠ 年1回時代の「翌年度・翌々年度（3回）」とは異なり、年2回化に伴い『連続5回まで』に変わった（現行制度）。免除の正確な回数・期間は最新の公式受験案内で必ず確認すること（公式FAQも受験案内を参照と案内）。出典: 電気技術者試験センター。"
+      />
+      <PlainExplain>
+        この制度のおかげで<strong>「1年で4科目すべて」より「2〜2年半で計画的に科目合格を積む」戦略</strong>が成り立つ。
+        得意科目・受かりやすい科目から確実に取り、免除を使って残りに集中するのが王道。
+      </PlainExplain>
+
+      <h2 id="houshiki">4. 受験方式（CBT と 筆記）</h2>
+      <MemTable
+        headers={["方式", "解答方法", "日程の特徴"]}
+        rows={[
+          ["CBT方式", "テストセンターのパソコンで解答", "試験期間内で日時・会場を自分で予約（受験票の発送はなく、マイページで確認）"],
+          ["筆記方式", "問題用紙＋マークシート", "指定された1日に会場で受験"],
+        ]}
+        note="同じ期では、申込時に CBT か筆記のどちらかを選ぶ。マークシートは部分点がなく空欄は0点なので、最後は必ず全問マークする。"
+      />
+
+      <h2 id="tesuryo">5. 受験手数料</h2>
+      <MemTable
+        headers={["申込方法", "受験手数料（非課税）"]}
+        rows={[
+          ["インターネット申込", "7,700円"],
+          ["郵便（書面）申込", "8,100円"],
+        ]}
+        note="出典: 電気技術者試験センター（2026年6月確認）。手数料・申込期間は変わることがあるため、出願前に公式の受験案内で必ず確認すること。"
+      />
+
+      <h2 id="moushikomi">6. 受験申込の流れ</h2>
+      <PlainExplain>
+        おおまかな流れは <strong>マイページ登録 → 申込（科目・受験方式の選択／手数料の支払い）→ 試験（CBTは期間内に予約・筆記は指定日）→ 結果発表</strong>。
+        申込はインターネットが基本。<strong>申込期間・試験日は年度・期ごとに変わる</strong>ため、ここでは具体的な日付は載せない。
+        最新の日程は {extLink('https://www.shiken.or.jp/chief/third/', '電気技術者試験センターの公式案内')} で必ず確認すること。
+      </PlainExplain>
+
+      <LawSource
+        title="出典・一次情報（電気技術者試験センター）"
+        text={`・試験概要: https://www.shiken.or.jp/chief/third/overview/\n・科目別合格制度（よくあるご質問）: https://www.shiken.or.jp/shiken/faq/\n・受験手数料・試験案内: https://www.shiken.or.jp/chief/third/\n\n試験時間・配点・合格点・申込日程は年度や期によって変わることがある。出願前に必ず最新年度の公式「受験案内」で確認すること。`}
+        source="一般財団法人 電気技術者試験センター"
+        confirmedAt="2026-06-07"
+      />
+
+      <RelatedPages
+        items={[
+          { id: 'tokuten-senryaku', title: '得点戦略（配点・時間配分・捨て問）', relation: '法規の点の取り方' },
+          { id: 'top', title: '法規の学習マップ', relation: '全体像・ロードマップ' },
+          { id: 'hourei-kaisei', title: '法改正トラッキング', relation: '最新の改正論点' },
+        ]}
+        onNav={onNav}
+      />
+
+      <PageNav prevId="top" prevTitle="法規の学習マップ" nextId="tokuten-senryaku" nextTitle="得点戦略" onNav={onNav} />
     </div>
   );
 }
@@ -15048,18 +16690,20 @@ function ShisenHikisamaPage({ onNav, data }) {
           {/* T（支線方向・左下へ＝支線が引く向き） */}
           <line x1="120" y1="80" x2="240" y2="220" stroke="#0a7d50" strokeWidth="3.5" />
           <polygon points="234,212 244,224 228,222" fill="#0a7d50" />
-          <text x="200" y="180" fontSize="12" fill="#0a7d50" fontWeight="700">T（支線張力）</text>
+          <line x1="250" y1="206" x2="242" y2="217" stroke="#0a7d50" strokeWidth="1" />
+          <text x="252" y="205" fontSize="12" fill="#0a7d50" fontWeight="700">T（支線張力）</text>
           {/* T の水平成分 T sinθ */}
           <line x1="120" y1="80" x2="240" y2="80" stroke="#a06" strokeWidth="3" strokeDasharray="6,3" />
           <polygon points="240,74 252,80 240,86" fill="#a06" />
           <text x="150" y="72" fontSize="11" fill="#a06" fontWeight="700">T sin θ（水平成分）</text>
           {/* T の鉛直成分 T cosθ */}
           <line x1="240" y1="80" x2="240" y2="220" stroke="#27c" strokeWidth="2.5" strokeDasharray="4,3" />
-          <text x="248" y="160" fontSize="11" fill="#27c" fontWeight="600">T cos θ（鉛直成分）</text>
+          <text x="248" y="150" fontSize="11" fill="#27c" fontWeight="600">T cos θ（鉛直成分）</text>
           {/* F（反対向き＝電線が引く水平力） */}
           <line x1="120" y1="120" x2="240" y2="120" stroke="#d33" strokeWidth="3" />
           <polygon points="240,114 252,120 240,126" fill="#d33" />
-          <text x="150" y="138" fontSize="11" fill="#d33" fontWeight="700">F（電線の水平張力）</text>
+          <line x1="130" y1="238" x2="130" y2="122" stroke="#d33" strokeWidth="1" />
+          <text x="120" y="250" fontSize="11" fill="#d33" fontWeight="700">F（電線の水平張力）</text>
           {/* つり合い式 */}
           <text x="320" y="110" fontSize="13" fill="var(--ink-1)" fontWeight="700">水平: F = T sin θ</text>
           <text x="320" y="135" fontSize="12" fill="var(--ink-2)">→ T = F / sin θ</text>
@@ -16019,7 +17663,7 @@ function RyoritsuKaizenPage({ onNav, data }) {
         <div style={{ marginTop: 12, fontSize: 12, color: 'var(--ink-3)' }}>
           📖 <strong>力率改善の権威ある全体像・原文逐語</strong>は denken-wiki が SoT：
         </div>
-        <a href="https://kfurufuru.github.io/denken-wiki/themes/" target="_blank" rel="noopener noreferrer"
+        <a href="https://kfurufuru.github.io/denken-wiki/themes/ryokuritsu-kaizen/" target="_blank" rel="noopener noreferrer"
           style={{ display: 'inline-block', marginTop: 8, padding: '8px 14px', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius)', textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>
           🔗 denken-wiki「力率改善」を開く →
         </a>
@@ -16216,15 +17860,15 @@ function RyoritsuKaizenPage({ onNav, data }) {
           <line x1="240" y1="240" x2="240" y2="174" stroke="#1a73e8" strokeWidth="3" />
           <line x1="40" y1="240" x2="240" y2="174" stroke="var(--ink-2)" strokeWidth="2" strokeDasharray="4,3" opacity="0.5" />
           <text x="250" y="208" fontSize="11" fill="#1a73e8" fontWeight="600">Q<tspan baselineShift="sub" fontSize="9">2</tspan> = 33 kvar</text>
-          <text x="60" y="222" fontSize="10" fill="var(--ink-3)">θ<tspan baselineShift="sub" fontSize="8">2</tspan>=18°</text>
+          <text x="60" y="212" fontSize="10" fill="var(--ink-3)">θ<tspan baselineShift="sub" fontSize="8">2</tspan>=18°</text>
 
           {/* Q_c の表示（コンデンサが打ち消す部分） */}
           <line x1="270" y1="90" x2="270" y2="174" stroke="#ff9900" strokeWidth="4" />
-          <text x="280" y="135" fontSize="12" fill="#ff9900" fontWeight="700">Q<tspan baselineShift="sub" fontSize="9">c</tspan> = 42 kvar</text>
+          <text x="280" y="127" fontSize="12" fill="#ff9900" fontWeight="700">Q<tspan baselineShift="sub" fontSize="9">c</tspan> = 42 kvar</text>
           <text x="280" y="150" fontSize="10" fill="#ff9900">（コンデンサ）</text>
 
           {/* 注釈 */}
-          <text x="40" y="10" fontSize="11" fill="var(--ink-3)">P 一定（=100kW）/ Q を減らして S 短縮 / cos θ 改善</text>
+          <text x="75" y="10" fontSize="11" fill="var(--ink-3)">P 一定（=100kW）/ Q を減らして S 短縮 / cos θ 改善</text>
         </svg>
         <div style={{ marginTop: 10, fontSize: 11.5, lineHeight: 1.7, color: 'var(--ink-3)' }}>
           <strong>読み方</strong>：P=100kW を一定にして、改善前 Q<sub>1</sub>=75kvar（θ<sub>1</sub>=37°、cos=0.8）から改善後 Q<sub>2</sub>=33kvar（θ<sub>2</sub>=18°、cos=0.95）へ。<strong>差分 Q<sub>c</sub>=42kvar が必要なコンデンサ容量</strong>。Q が減ると皮相電力 S（斜辺）も短くなり、同じ P を流すのに必要な S（変圧器容量・線路容量）が削減できる。
@@ -16336,6 +17980,73 @@ function RyoritsuKaizenPage({ onNav, data }) {
           ]} />
         </div>
       </details>
+
+      {/* 令和6年度上期 問12 — 直列リアクトル付きコンデンサ（実際の過去問・発展） */}
+      <div style={{ marginTop: 20, marginBottom: 8, padding: '10px 14px', background: 'var(--bg-elev)', border: '1px solid var(--line)', borderLeft: '3px solid var(--accent)', borderRadius: 6, fontSize: 12.5, lineHeight: 1.7 }}>
+        <strong style={{ color: 'var(--accent)' }}>📘 令和6年度上期 問12（電気施設管理・発展）</strong><br />
+        基本の Q_c = P(tan θ_1 − tan θ_2) に <strong>直列リアクトル(SR)の補正</strong>が加わる実戦問題。SC の端子電圧の上昇（(a)）と、SR を見込んだ SC の容量（(b)）が問われた。最新年度の出題なので、基本パターンとセットで押さえる。
+      </div>
+
+      <ExamQuestion
+        year="令和6年度上期 問12(a)"
+        qNum="SR付きコンデンサの端子電圧"
+        question="三相3線式高圧電路（線間電圧6,600V）に直列リアクトルSR付きの三相コンデンサ設備を接続する。SRのリアクタンス X_L はコンデンサSCのリアクタンス X_C の6%（X_L=0.06X_C）である。コンデンサSCの端子電圧[V]に最も近いものはどれか。"
+        choices={["6,410 V", "6,795 V", "6,807 V", "6,995 V", "7,021 V"]}
+        note="SRとSCは直列。分圧でSC端子電圧は系統電圧より上がる"
+      />
+      <details style={{ margin: '8px 0', border: '1px solid var(--line)', borderRadius: 4, padding: '4px 0' }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 600, padding: '6px 12px', background: 'var(--bg-2)', borderRadius: 3, fontSize: 13 }}>📝 解き方の手順</summary>
+        <div style={{ padding: '8px 12px' }}>
+          <SolveFlow type="(a) 直列回路の分圧" steps={[
+            "①SR（誘導性 X_L）とSC（容量性 X_C）は直列。X_L=0.06X_C なので X_C が優勢＝正味は容量性",
+            "②SC端子電圧 V_C = X_C /(X_C − X_L) × 線間電圧（分圧の式）",
+            "③X_L=0.06X_C を代入 → V_C = 1 /(1 − 0.06) × 6,600 = 6,600 / 0.94",
+            "④V_C ≈ 7,021 V（系統電圧6,600Vより上昇する）",
+          ]} />
+        </div>
+      </details>
+      <details style={{ margin: '8px 0', border: '1px solid var(--line)', borderRadius: 4, padding: '4px 0' }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 600, padding: '6px 12px', background: 'var(--bg-2)', borderRadius: 3, fontSize: 13 }}>✅ 正解を表示</summary>
+        <div style={{ padding: '8px 12px' }}>
+          <ExamAnswer correct="⑤ 7,021 V" explanations={[
+            "V_C = 6,600 ÷ (1 − 0.06) = 6,600 ÷ 0.94 ≈ 7,021 V",
+            "直列リアクトルSRがSCの容量性リアクタンスを一部打ち消すため、SCにかかる電圧は系統電圧より高くなる",
+            "⚠ コンデンサSCの定格電圧はこの電圧上昇を見込んで選ぶ（直列リアクトル付きコンデンサ設計の要点）",
+          ]} />
+        </div>
+      </details>
+
+      <ExamQuestion
+        year="令和6年度上期 問12(b)"
+        qNum="SCの容量[kvar]"
+        question="同じ設備で、三相負荷300kW・遅れ力率0.6を遅れ力率0.8まで改善する。必要なコンデンサSCの容量[kvar]に最も近いものはどれか（SRのリアクタンスはSCの6%）。"
+        choices={["170 kvar", "180 kvar", "186 kvar", "192 kvar", "208 kvar"]}
+        note="基本の Q_c=P(tan θ_1 − tan θ_2) に、SR分の補正を加える"
+      />
+      <details style={{ margin: '8px 0', border: '1px solid var(--line)', borderRadius: 4, padding: '4px 0' }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 600, padding: '6px 12px', background: 'var(--bg-2)', borderRadius: 3, fontSize: 13 }}>📝 解き方の手順</summary>
+        <div style={{ padding: '8px 12px' }}>
+          <SolveFlow type="(b) 基本Q_c ＋ SR補正" steps={[
+            "①tan値: cos θ_1=0.6 → tan θ_1=0.8/0.6=1.333、cos θ_2=0.8 → tan θ_2=0.6/0.8=0.75",
+            "②バンク正味の進相無効電力 Q = P(tan θ_1 − tan θ_2) = 300×(1.333 − 0.75) = 175 kvar",
+            "③SR補正: 正味Q = SC − SR = (1 − 0.06)×Q_SC なので Q_SC = Q /(1 − 0.06)",
+            "④Q_SC = 175 / 0.94 ≈ 186 kvar",
+          ]} />
+        </div>
+      </details>
+      <details style={{ margin: '8px 0', border: '1px solid var(--line)', borderRadius: 4, padding: '4px 0' }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 600, padding: '6px 12px', background: 'var(--bg-2)', borderRadius: 3, fontSize: 13 }}>✅ 正解を表示</summary>
+        <div style={{ padding: '8px 12px' }}>
+          <ExamAnswer correct="③ 186 kvar" explanations={[
+            "SRがない場合の基本容量 Q = 300×(1.333 − 0.75) = 175 kvar",
+            "直列リアクトルSR（誘導性・6%）が無効電力を一部消費するため、SC本体はその分大きく必要 → Q_SC = 175 ÷ (1 − 0.06) ≈ 186 kvar",
+            "⚠ 175 kvar（基本値）で止めるとSR補正忘れの誤り。「SCの容量」を問われたら ÷(1−0.06) を忘れない",
+          ]} />
+        </div>
+      </details>
+      <div style={{ margin: '4px 0 8px', fontSize: 11, color: 'var(--ink-3)', lineHeight: 1.6 }}>
+        出典: 令和6年度上期 法規 問12（電気施設管理）。電気技術者試験センター公開問題。数値・正解は自前計算で検算済み（(a) 7,021V = 6,600÷0.94、(b) 186kvar = 175÷0.94）。
+      </div>
 
       <h2 id="practice">11.5 自己練習：手順定着のための3問</h2>
       <SectionCheck pageId="ryokuritsu-kaizen" sectionId="practice" />
@@ -16457,12 +18168,12 @@ function RyoritsuKaizenPage({ onNav, data }) {
         <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>🎯 次の学習推奨</div>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
           <li><strong>需要率・負荷率・不等率</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('juyoritsu-keisan');}} style={{color:'var(--accent)'}}>juyoritsu-keisan（1.6）</a> — デマンド・負荷管理と組み合わせ問題</li>
-          <li><strong>条文全体像・力率改善の系統的解説</strong>: <a href="https://kfurufuru.github.io/denken-wiki/themes/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki「力率改善」</a></li>
+          <li><strong>条文全体像・力率改善の系統的解説</strong>: <a href="https://kfurufuru.github.io/denken-wiki/themes/ryokuritsu-kaizen/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki「力率改善」</a></li>
         </ul>
       </div>
 
       <UpdateLog entries={[
-        { date: "2026-05-31", content: "v1.0: 新規ハブページ作成（teiatsu-densenro-zetsuen v2.0 / bshu-setsuchi v2.1 と同パターン）。物理直感WHY 4経路セット適用（5ステップ視覚化グリッドカード・なぜ力率改善が必要か・Q_c 式の導出・電力ベクトル図 SVG・暗記フック・自己練習3問）。AI社員諮問 unanimous=C横展開を採用し StubPage から昇格", reason: "AI諮問前提の N=4-6本既存ハブが実調査で B種接地1本のみだった（feedback_consultation_target_grep_verify 適用1件目）。受験者 D1 判断で新規ハブ作成を選択。freq=mid・rank=B（電力科目で頻出・法規でも料金/損失問題で出題）。q41 daily-pool（概念A問題）+ 自作計算B問題で過去問対応" },
+        { date: "2026-05-31", content: "v1.0: 新規ハブページ作成（teiatsu-densenro-zetsuen v2.0 / bshu-setsuchi v2.1 と同パターン）。物理直感WHY 4経路セット適用（5ステップ視覚化グリッドカード・なぜ力率改善が必要か・Q_c 式の導出・電力ベクトル図 SVG・暗記フック・自己練習3問）。AI社員諮問 unanimous=C横展開を採用し StubPage から昇格", reason: "AI諮問前提の N=4-6本既存ハブが実調査で B種接地1本のみだった（feedback_consultation_target_grep_verify 適用1件目）。監修者さん D1 判断で新規ハブ作成を選択。freq=mid・rank=B（電力科目で頻出・法規でも料金/損失問題で出題）。q41 daily-pool（概念A問題）+ 自作計算B問題で過去問対応" },
       ]} />
 
       <PageNav

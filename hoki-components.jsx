@@ -490,7 +490,74 @@ function SolveFlow({ type, steps }) {
   );
 }
 
+// TrapTable: よくあるひっかけ表。各行に per-item 理解度（✓理解 / ⚠要復習）を付与し、
+// ⚠要復習 を押すと間違いノート(MachigaiNotePage)へ JSON 記録として自動集約する。
+// payload schema は QuickReview / denken-wiki self-check.js と同期必須
+//   （denken_check::hoki_<slug>::<hash> に { status, articleUrl, itemTitle, ... } の JSON）。
+// status マッピング: ✓理解 → 'understood' / ⚠要復習 → 'review'（間違いノートの「要復習」タブに入る）。
+// キーは trap.wrong + trap.correct のハッシュで固定（行の並べ替えに強く・同文衝突も回避）。
+//   文言改訂時のみ旧記録が orphan する（QuickReview と同じ既知トレードオフ）。
 function TrapTable({ traps }) {
+  const slug = (typeof window !== 'undefined'
+    ? (window.location.hash.replace(/^#/, '').split(':')[0] || 'unknown')
+    : 'unknown');
+  const storageKey = (t) => `denken_check::hoki_${slug}::${qrDjb2('trap::' + t.wrong + '::' + t.correct)}`;
+
+  const TRAP_BTNS = [
+    { status: 'understood', label: '理解',   icon: '✓', color: '#22c55e' },
+    { status: 'review',     label: '要復習', icon: '⚠', color: '#f97316' },
+  ];
+
+  const loadAll = () => {
+    const r = {};
+    traps.forEach((t, i) => {
+      try { const v = localStorage.getItem(storageKey(t)); r[i] = v ? JSON.parse(v) : null; }
+      catch (e) { r[i] = null; }
+    });
+    return r;
+  };
+  const [records, setRecords] = React.useState(loadAll);
+
+  // WIKI_DATA からページ名を引く（間違いノートで記録元を明示するため）
+  const pageTitle = () => {
+    try {
+      const data = window.WIKI_DATA;
+      if (data && data.chapters) {
+        for (const ch of data.chapters) {
+          const p = (ch.pages || []).find(pp => pp.id === slug);
+          if (p) return p.title;
+        }
+      }
+    } catch (e) {}
+    return (typeof document !== 'undefined' ? document.title : '');
+  };
+
+  const setRecord = (i, t, status) => {
+    const cur = records[i];
+    let next;
+    if (cur && cur.status === status) {
+      // 同じボタン再押下でトグル解除 → 記録削除（間違いノートからも消える）
+      try { localStorage.removeItem(storageKey(t)); } catch (e) {}
+      next = null;
+    } else {
+      const nowIso = new Date().toISOString();
+      const payload = Object.assign({}, cur || {}, {
+        status,
+        updatedAt: nowIso,
+        articleUrl: typeof location !== 'undefined' ? (location.origin + location.pathname + '#' + slug) : '',
+        articleTitle: pageTitle() + ' — よくあるひっかけ',
+        itemTitle: '【ひっかけ】' + t.wrong,
+        itemType: 'trap',
+        memo: '正: ' + t.correct,
+        firstSeenAt: (cur && cur.firstSeenAt) || nowIso,
+        reviewCount: ((cur && cur.reviewCount) || 0) + 1,
+      });
+      try { localStorage.setItem(storageKey(t), JSON.stringify(payload)); } catch (e) {}
+      next = payload;
+    }
+    setRecords(prev => ({ ...prev, [i]: next }));
+  };
+
   return (
     <div style={{ marginBottom: '24px' }}>
       <div style={{ fontWeight: '700', fontSize: '12px', color: 'var(--warn)', marginBottom: '8px' }}>⚠ よくあるひっかけ</div>
@@ -503,17 +570,53 @@ function TrapTable({ traps }) {
             <th style={{ padding: '8px 12px', background: '#f0fff4', color: 'var(--good)', fontSize: '12px', textAlign: 'left', border: '1px solid var(--line)' }}>
               ○ 正しい
             </th>
+            <th style={{ padding: '8px 12px', background: 'var(--bg-2)', color: 'var(--ink-3)', fontSize: '12px', textAlign: 'center', border: '1px solid var(--line)', whiteSpace: 'nowrap' }}>
+              理解度
+            </th>
           </tr>
         </thead>
         <tbody>
-          {traps.map((trap, i) => (
-            <tr key={i}>
-              <td className="trap-wrong" style={{ border: '1px solid var(--line)' }}>{trap.wrong}</td>
-              <td className="trap-correct" style={{ border: '1px solid var(--line)' }}>{trap.correct}</td>
-            </tr>
-          ))}
+          {traps.map((trap, i) => {
+            const rec = records[i];
+            const status = rec ? rec.status : null;
+            return (
+              <tr key={i}>
+                <td className="trap-wrong" style={{ border: '1px solid var(--line)' }}>{trap.wrong}</td>
+                <td className="trap-correct" style={{ border: '1px solid var(--line)' }}>{trap.correct}</td>
+                <td style={{ border: '1px solid var(--line)', textAlign: 'center', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
+                  <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}>
+                    {TRAP_BTNS.map(b => {
+                      const active = status === b.status;
+                      return (
+                        <button
+                          key={b.status}
+                          type="button"
+                          onClick={() => setRecord(i, trap, b.status)}
+                          title={active ? 'もう一度押すと記録解除' : b.label + 'として記録（間違いノートへ）'}
+                          aria-label={b.label}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 3,
+                            padding: '3px 8px',
+                            border: `1.5px solid ${b.color}`,
+                            borderRadius: 6,
+                            background: active ? b.color : 'transparent',
+                            color: active ? '#fff' : b.color,
+                            cursor: 'pointer', fontSize: 11, fontWeight: 700, fontFamily: 'inherit',
+                            whiteSpace: 'nowrap', transition: 'all 0.12s',
+                          }}
+                        >{b.icon} {b.label}</button>
+                      );
+                    })}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
+      <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 6 }}>
+        理解度は<strong>このひっかけ1件ごと</strong>の手応え。<strong style={{ color: '#f97316' }}>⚠要復習</strong> を押すと <strong>間違いノート</strong> に集約されます（もう一度押すと解除）。
+      </div>
     </div>
   );
 }
@@ -656,6 +759,7 @@ function QuickReview({ items, pageId }) {
         articleTitle: typeof document !== 'undefined' ? document.title : '',
         itemTitle: 'Q' + (i + 1) + ': ' + limited[i].q,
         itemType: 'quickreview',
+        memo: 'A: ' + (limited[i].a || ''),
         firstSeenAt: (cur && cur.firstSeenAt) || nowIso,
         reviewCount: ((cur && cur.reviewCount) || 0) + 1,
       });

@@ -1091,9 +1091,15 @@ function ChokuzenYougoPage({ onNav }) {
   const [memoTermId, setMemoTermId] = React.useState(null);
   const fileInputRef = React.useRef(null);
 
-  const startSession = React.useCallback((m) => {
-    const pool = terms.slice().sort((a, b) => deck.priorityScore(b) - deck.priorityScore(a));
-    const size = Math.min(SESSION_SIZE, pool.length);
+  const startSession = React.useCallback((m, scopeIds) => {
+    // scopeIds（クラスタの members）があればその用語だけに出題を限定する
+    const scoped = (Array.isArray(scopeIds) && scopeIds.length)
+      ? terms.filter(t => scopeIds.indexOf(t.id) !== -1)
+      : [];
+    const useScope = scoped.length > 0;
+    const base = useScope ? scoped : terms;
+    const pool = base.slice().sort((a, b) => deck.priorityScore(b) - deck.priorityScore(a));
+    const size = useScope ? pool.length : Math.min(SESSION_SIZE, pool.length);
     setSession({
       mode: m,
       items: pool.slice(0, size),
@@ -1103,17 +1109,29 @@ function ChokuzenYougoPage({ onNav }) {
       locked: false,
       picked: null,
       choices: null,
+      scopeIds: useScope ? scopeIds : null,
     });
   }, [terms, deck]);
 
   const switchMode = (m) => {
-    if (m === mode) return;
+    if (m === mode) {
+      // スコープ付き（クラスタ起点）クイズ中に同じクイズタブを再クリック → 全語版に切替
+      if ((m === 'quiz-meaning' || m === 'quiz-term') && session && session.scopeIds) startSession(m);
+      return;
+    }
     setMode(m);
     if (m === 'quiz-meaning' || m === 'quiz-term') startSession(m);
     else setSession(null);
   };
 
-  const handleRestart = () => startSession(mode);
+  // 対比マップの「この差を4択で確認」→ そのクラスタの用語だけで単語当てクイズ
+  const startClusterQuiz = (cluster) => {
+    const ids = (cluster && Array.isArray(cluster.members)) ? cluster.members : [];
+    setMode('quiz-term');
+    startSession('quiz-term', ids);
+  };
+
+  const handleRestart = () => startSession(mode, session && session.scopeIds);
   const handleEndToList = () => { setMode('list'); setSession(null); };
 
   const handleExport = () => deck.exportProgress();
@@ -1216,7 +1234,7 @@ function ChokuzenYougoPage({ onNav }) {
       {/* Body */}
       <div style={{ marginBottom: 24 }}>
         {mode === 'matrix' && (
-          <MatrixMode clusters={clusters} onGoQuiz={() => switchMode('quiz-term')} />
+          <MatrixMode clusters={clusters} onGoQuiz={startClusterQuiz} />
         )}
         {mode === 'list' && (
           <ListMode terms={terms} deck={deck} onOpenMemo={setMemoTermId} />
