@@ -7882,45 +7882,6 @@ function MachigaiNotePage({ pageId, data, onNav }) {
                 )}
               </div>
               <div style={{ fontSize: 13, lineHeight: 1.55 }}>{r.itemTitle}</div>
-              {/* 📖 Wikiで復習・解説 — PDCAのAct導線。出典ページ（解説）へ誘導する */}
-              {r.articleUrl ? (
-                <div style={{ marginTop: 8 }}>
-                  <a
-                    href={r.articleUrl}
-                    target={(r.source === 'denken' || r.source === 'riron-daily') ? '_blank' : undefined}
-                    rel="noopener"
-                    onClick={(e) => {
-                      // 同一SPA内(hoki)は React ルーティングで遷移（hash 依存を避ける）
-                      if (r.source === 'hoki') {
-                        e.preventDefault();
-                        const sl = (r.articleUrl.split('#')[1] || '').split(':')[0];
-                        if (sl && onNav) onNav(sl);
-                      }
-                    }}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                      padding: '5px 12px',
-                      background: 'var(--accent)', color: '#fff',
-                      borderRadius: 6, fontSize: 12, fontWeight: 700,
-                      textDecoration: 'none', cursor: 'pointer',
-                    }}
-                  >📖 Wikiで復習・解説 →</a>
-                </div>
-              ) : r.source === 'daily' ? (
-                <div style={{ marginTop: 8 }}>
-                  <a
-                    href="#"
-                    onClick={(e) => { e.preventDefault(); if (onNav) onNav('top'); }}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                      padding: '5px 12px',
-                      background: 'var(--accent)', color: '#fff',
-                      borderRadius: 6, fontSize: 12, fontWeight: 700,
-                      textDecoration: 'none', cursor: 'pointer',
-                    }}
-                  >📖 今日の一問で復習 →</a>
-                </div>
-              ) : null}
               {/* 問題を見る — fetch して該当ブロックをインライン展開（同タブで完結） */}
               {r.source === 'denken' && r.articleUrl && (
                 <div style={{ marginTop: 8 }}>
@@ -8013,6 +7974,27 @@ function MachigaiNotePage({ pageId, data, onNav }) {
                   )}
                 </div>
               )}
+              {/* 答え（採点時に保存した正答）— 問題の直後に表示 */}
+              {r.memo && (
+                <div style={{
+                  fontSize: 13, marginTop: 8, padding: '8px 12px',
+                  background: '#f0fff4', borderLeft: '3px solid var(--good)',
+                  borderRadius: '0 6px 6px 0', whiteSpace: 'pre-wrap', lineHeight: 1.7,
+                }}>
+                  📝 {r.memo}
+                </div>
+              )}
+              {/* 📖 Wiki解説（別タブで開きノート保持・控えめ） */}
+              {(r.articleUrl || r.source === 'daily') && (
+                <div style={{ marginTop: 8 }}>
+                  <a
+                    href={r.articleUrl || ((typeof location !== 'undefined' ? location.origin + location.pathname : '') + '#top')}
+                    target="_blank"
+                    rel="noopener"
+                    style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}
+                  >📖 Wikiで詳しく見る ↗</a>
+                </div>
+              )}
               {/* 4ボタン理解度更新（feedback_self_check_4button_standard 準拠） */}
               <div style={{
                 display: 'flex', flexWrap: 'wrap', gap: 6,
@@ -8096,19 +8078,6 @@ function MachigaiNotePage({ pageId, data, onNav }) {
                   削除
                 </button>
               </div>
-              {r.memo && (
-                <div style={{
-                  fontSize: 12,
-                  marginTop: 8,
-                  padding: '6px 10px',
-                  borderLeft: '2px solid var(--line)',
-                  background: 'var(--bg-2)',
-                  whiteSpace: 'pre-wrap',
-                  borderRadius: '0 4px 4px 0',
-                }}>
-                  📝 {r.memo}
-                </div>
-              )}
             </div>
           );
         })
