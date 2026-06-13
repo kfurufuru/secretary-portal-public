@@ -1158,6 +1158,8 @@ window.WIKI_DATA = {
       def: "j = √(−1)。電気では電流iと区別するためjを使う。フェーザーや複素インピーダンス Z = R + jX を表現する基本。微分d/dtは周波数領域でjωに対応。" },
     { term: "Q値", reading: "QUALITY FACTOR", letter: "か",
       def: "直列RLC共振では Q = ωL/R = 1/(ωCR) の無次元数。Qが大きいほど共振ピークが細く高い。共振時LCの電圧は入力電圧のQ倍に達する。" },
+    { term: "加極性・減極性", reading: "TRANSFORMER POLARITY", letter: "か",
+      def: "変圧器の同名端子配置の呼び分け。減極性＝一次Uと二次uが同じ側（JIS標準）で極性試験の電圧計は V₁−V₂、加極性＝対角配置で V₁+V₂。和動/差動と同じ同名端子（dot）の考え方。" },
     { term: "共振", reading: "RESONANCE", letter: "か",
       def: "XL = XC となる状態。直列共振では電流最大・インピーダンス最小、並列共振では電流最小・インピーダンス最大。" },
     { term: "クーロン", reading: "COULOMB", letter: "か",
@@ -2107,120 +2109,6 @@ const DiffBadge = ({ level }) => {
   return <span className={`diff-badge diff-${level}`}>{labels[level]}</span>;
 };
 
-/* ============================================================ HOME */
-
-const HomePage = ({ data, onNav }) => {
-  const featured = data.chapters.flatMap(c => c.pages).filter(p => p.freq === "max" || p.freq === "high");
-  return (
-    <>
-      <Crumbs items={[{ label: "ホーム" }]} onNav={onNav} />
-      <PageHeader
-        eyebrow="ELECTRICAL ENGINEER 3RD CLASS — MACHINERY"
-        title="電験3種 機械Wiki"
-        deck="第三種電気主任技術者試験「機械」科目に特化した、復習中心の学習Wiki。出題頻度の高い単元を中心に、要点・公式・誤答ポイント・過去問傾向を網羅する。"
-        meta={[
-          { label: "対象試験", value: "電験3種 機械科目" },
-          { label: "最終更新", value: "2026.04" },
-          { label: "登録単元", value: "13" },
-        ]}
-      />
-      <div className="content">
-
-        <div className="stat-strip">
-          <div className="stat">
-            <div className="stat-label">合格率（過去5年平均）</div>
-            <div className="stat-value">約 22%</div>
-            <div className="stat-sub">最難関科目の一つ</div>
-          </div>
-          <div className="stat">
-            <div className="stat-label">出題数 / 配点</div>
-            <div className="stat-value">A問題 14 + B問題 3</div>
-            <div className="stat-sub">100点満点・合格 60点</div>
-          </div>
-          <div className="stat">
-            <div className="stat-label">頻出 TOP 3</div>
-            <div className="stat-value">誘導機・変圧器・直流機</div>
-            <div className="stat-sub">合計で出題の 約 46%</div>
-          </div>
-          <div className="stat">
-            <div className="stat-label">推奨学習時間</div>
-            <div className="stat-value">120 〜 200 時間</div>
-            <div className="stat-sub">復習中心で効率化</div>
-          </div>
-        </div>
-
-        <h2><span className="h-num">1</span>はじめに</h2>
-        <p>本Wikiは「電気系出身者の復習」を主眼に置く。中学物理〜電気回路の基礎は前提とし、各単元では <strong>要点を最短経路で押さえる</strong> ことを優先する。説明は教科書調（である調）に統一し、図解・回路図・ベクトル図を充実させた。</p>
-
-        <p>各単元ページには次の要素を備える:</p>
-        <ul>
-          <li><strong>公式・要点</strong> — 暗記すべき式と、その物理的意味</li>
-          <li><strong>図解</strong> — 構造図・等価回路・特性曲線・ベクトル図</li>
-          <li><strong>誤答ポイント</strong> — 受験生が落としやすい引っ掛けと注意点</li>
-          <li><strong>例題</strong> — 計算ステップを省略しない解答</li>
-          <li><strong>過去問データ</strong> — 年度別の出題傾向（直近10年）</li>
-        </ul>
-        <p style={{marginTop: 14}}>本文中の <span className="marker">黄色マーカー</span> 部分は、論述・記述で問われやすい重要キーワード・原則を示す。試験直前期はマーカー箇所を中心に総ざらいするのが効率的である。</p>
-
-        <h2><span className="h-num">2</span>単元一覧</h2>
-        <p>章をクリックして該当ページへ移動する。<span className="diff-badge diff-advanced">応用</span> マークが付いた章は計算問題で頻出。</p>
-
-        {data.chapters.filter(c => c.id !== "ref").map(ch => (
-          <div key={ch.id}>
-            <h3>{ch.num}. {ch.title}</h3>
-            <div className="card-grid">
-              {ch.pages.map(p => (
-                <div key={p.id} className="card" onClick={() => onNav(p.id)}>
-                  <div className="card-num">{p.num}</div>
-                  <div className="card-title">{p.title}</div>
-                  <div className="card-deck">
-                    {pageDeckSummary(p.id)}
-                  </div>
-                  <div className="card-foot">
-                    <span>{freqLabel(p.freq)}</span>
-                    {p.featured && <span className="card-freq">★ 重点</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-
-        <h2><span className="h-num">3</span>出題傾向（直近10年）</h2>
-        <p>過去10年間の機械科目における大きな単元別の出題比率。試験対策の優先順位の参考とする。</p>
-        <div className="box">
-          {data.freqData.map((f, i) => (
-            <div key={i} className="freq-chart">
-              <span className="label">{f.topic}</span>
-              <div className="bar"><div className="bar-fill" style={{ width: `${f.pct * 4}%` }}>{f.count}問</div></div>
-              <span className="pct">{f.pct}%</span>
-            </div>
-          ))}
-        </div>
-
-        <h2><span className="h-num">4</span>学習戦略</h2>
-        <Box kind="tip" label="推奨アプローチ">
-          <ol>
-            <li><strong>誘導機 → 変圧器 → 直流機</strong> の順で骨格を固める。三大単元で 6 割を確保する。</li>
-            <li>同期機・パワエレを並列で進め、計算問題への対応力を上げる。</li>
-            <li>自動制御は伝達関数とブロック線図を反復、頻出パターンに絞る。</li>
-            <li>照明・電熱は公式数が少なく短期決戦が可能。直前期に取り組む。</li>
-          </ol>
-        </Box>
-
-        <Box kind="warn" label="陥りやすい罠">
-          <ul>
-            <li>同期機と誘導機の数式の混同（同期速度は同じ、滑りの定義は誘導機のみ）</li>
-            <li>変圧器の <Eq tex="\%Z" /> と短絡電流の計算でパーセント値の取り扱いを誤る</li>
-            <li>パワエレで「平均値」と「実効値」を区別せずに公式を当てはめる</li>
-          </ul>
-        </Box>
-      </div>
-      <PageNav next={{ id: "induction-machine", title: "1.2 三相誘導電動機" }} onNav={onNav} />
-    </>
-  );
-};
-
 function pageDeckSummary(id) {
   const m = {
     "coulomb-field":         "電荷が作る「力の場」と「位置エネルギー」。距離の逆二乗則が成り立つ静電気の基礎。",
@@ -2362,6 +2250,20 @@ const Callout = ({ variant = "info", title, children }) => {
     </aside>
   );
 };
+
+/* ============================================================
+   1.5 DefinitionCallout
+   公式タブ冒頭の「Xとは（定義）」枠を統一する component
+   規律: feedback_definition_at_formula_entry
+   AI諮問記録（横展5本完了時点・PR #160〜#166）: 全員一致 (III) 部分抽出
+   → 骨格（Callout variant=note + 📘+symbol+とは（定義）形式 title）を統一
+   → メタ視点（causalText/metaView/onNavリンク）は children で自由化
+   ============================================================ */
+const DefinitionCallout = ({ symbol, title, children }) => (
+  <Callout variant="note" title={title || `📘 ${symbol} とは（定義）`}>
+    {children}
+  </Callout>
+);
 
 /* ============================================================
    2. FormulaTable
@@ -3806,7 +3708,7 @@ const HomePage = ({ onNav }) => {
           </div>
           <div className="stat">
             <div className="stat-label">出題数 / 配点</div>
-            <div className="stat-value">A問題 14 + B問題 4</div>
+            <div className="stat-value">A問題 14 + B問題 3</div>
             <div className="stat-sub">100点満点・合格 60点</div>
           </div>
           <div className="stat">
@@ -5221,6 +5123,22 @@ const CapacitorSymbolLegend = () => (
 const CapacitorFormulasTab = ({ onNav, switchTab }) => (
   <>
     <CapacitorSymbolLegend />
+
+    <DefinitionCallout symbol="静電容量 C">
+      <p style={{ margin: "0 0 8px 0" }}>
+        コンデンサに電圧 V を加えると電荷 Q が蓄えられる。両者の比が <strong>静電容量 C</strong>：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="C \;=\; \dfrac{Q}{V}\quad[\mathrm{F}]" />
+      </p>
+      <p style={{ margin: "0 0 8px 0" }}>
+        単位は <strong>ファラド F ＝ C/V ＝ A·s/V</strong>。等価な見方として、<Eq tex="i = C\,dV/dt" inline /> から <strong>「毎秒 1 V の電圧変化で 1 A の電流を流すコンデンサが 1 F」</strong>とも定義できる。
+      </p>
+      <p style={{ margin: 0 }}>
+        因果でつなぐと <strong>C が大きい → 同じ電圧でより多くの電荷を蓄える → 電圧変化に対して大きな充放電電流が流れる → 電圧変化に強く逆らう</strong>。C は「コンデンサの定数」ではなく <strong>電圧変化への抵抗の強さ</strong>そのもの。<a href="#" onClick={(e) => { e.preventDefault(); onNav('dc-circuit'); }} style={{ textDecoration: "underline" }}>抵抗 R</a>（電流そのものを妨げ熱消費）／<a href="#" onClick={(e) => { e.preventDefault(); onNav('inductance'); }} style={{ textDecoration: "underline" }}>コイル L</a>（電流の変化を妨げ磁界蓄積）との <strong>R／L／C 双対構造</strong>のうち、C は <strong>電界にエネルギーを蓄える</strong>側を担う。
+      </p>
+    </DefinitionCallout>
+
     <CapacitorChunkHierarchy />
 
     <Callout variant="tip" title="⚡ 5秒で思い出す">
@@ -5796,7 +5714,7 @@ const CapacitorPage = ({ onNav }) => (
 
 // ============================================================
 // 2.3 交流電力 (ac-power) — v3 3タブ統合 + Sクラス昇格
-// SymbolLegend / ChunkHierarchy / 5秒5項目 / メタ認知3列+受験者自己観察3点 /
+// SymbolLegend / ChunkHierarchy / 5秒5項目 / メタ認知3列+監修者自己観察3点 /
 // 力率cosφの4視点 / 汎用解法フロー / 限界練習 / カバー列 / 関連項目onNav
 // ============================================================
 
@@ -5844,6 +5762,22 @@ const AcPowerChunkHierarchy = () => (
 const AcPowerFormulasTab = ({ onNav, switchTab }) => (
   <>
     <AcPowerSymbolLegend />
+
+    <DefinitionCallout symbol="有効・無効・皮相電力 P／Q／S">
+      <p style={{ margin: "0 0 8px 0" }}>
+        交流では電圧と電流に位相差 φ があるため、「電力」が3つに分かれる。電流を <strong>電圧と同位相な成分</strong>と<strong>90°ずれた成分</strong>に分解したものがそれぞれ P と Q：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="P = VI\cos\varphi\;[\mathrm{W}],\quad Q = VI\sin\varphi\;[\mathrm{var}],\quad S = VI\;[\mathrm{V\!A}],\quad S^2 = P^2 + Q^2" />
+      </p>
+      <p style={{ margin: "0 0 8px 0" }}>
+        単位は3つとも「電圧×電流」の次元だが役割で使い分ける：<strong>W（仕事になる分）／var（L↔C を往復するだけの分）／VA（設備が受け持つ見かけの容量）</strong>。cosφ が <strong>力率</strong>（S のうち仕事になる割合）。
+      </p>
+      <p style={{ margin: 0 }}>
+        因果でつなぐと <strong>cosφ 小（位相ずれ大）→ 同じ P でも Q が大きい → S = √(P²+Q²) が膨らむ → 設備容量・契約料金が増える</strong>。P/Q/S は別々の電力ではなく <strong>同じ電流の直角分解</strong>で、幾何学的には電力三角形（直角三角形）の3辺。コンデンサで Q を打ち消して S を縮めるのが力率改善。
+      </p>
+    </DefinitionCallout>
+
     <AcPowerChunkHierarchy />
 
     <Callout variant="tip" title="⚡ 5秒で思い出す">
@@ -6032,14 +5966,14 @@ const AcPowerExplainTab = ({ onNav, switchTab }) => (
       </tbody>
     </table>
 
-    <Callout variant="info" title="🧑 受験者自己観察（2026-05-29 追加・AI 起案・要本人承認）">
-      <p style={{ marginBottom: 8 }}>上記6項目は一般受験生の典型パターン。<strong>受験者本人の自己観察として AI が予測した3点</strong>（本人 review 前）が以下。S クラス昇格の核心：</p>
+    <Callout variant="info" title="🧑 監修者さん自己観察（2026-05-29 追加・AI 起案・要本人承認）">
+      <p style={{ marginBottom: 8 }}>上記6項目は一般受験生の典型パターン。<strong>監修者さん本人の自己観察として AI が予測した3点</strong>（本人 review 前）が以下。S クラス昇格の核心：</p>
       <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
         <li><strong>① 進相/遅相の判定が瞬時にできない</strong> → <strong>予想される現状</strong>：症状④と同じ。モータ=遅相・コンデンサ=進相、Q符号、力率改善方向、過補償判定すべて毎回頭の中で再構築。<strong>記憶補助案（AI 草案・要承認）</strong>：「<strong>誘導（慣性）=電流が後から付いてくる=遅れ</strong>」「<strong>容量（先に電荷）=電流が先に流れる=進み</strong>」「<strong>遅相を進相 C で打ち消すのが力率改善</strong>」「<strong>過補償=改善しすぎて反対側（進相側）に振れた状態</strong>」</li>
         <li><strong>② 力率改善 Q_C = P(tanφ₁−tanφ₂) で P が掛かる理由が腑に落ちない</strong> → <strong>予想される現状</strong>：症状⑤と同じ。公式は使えるが「なぜ P 係数か」の本質理解未到達。<strong>公式タブ 2節 Callout に「P不変 → Q だけ補償 → P がくくり出される」の導出を追加</strong>（本ページで解消）</li>
         <li><strong>③ 電力三角形と位相ベクトル図（電流分解）の対応が頭の中でばらばら</strong> → <strong>予想される現状</strong>：電圧軸を基準に電流を cosφ 成分・sinφ 成分に分解 → それぞれを V で掛ければ P と Q、という起源が見えていない。<strong>本ページ 4節「力率 cosφ の4視点」Callout で電力三角形・インピーダンス三角形・位相ベクトル図・時間平均の4つの繋がりを明示</strong></li>
       </ul>
-      <p style={{ marginTop: 10, fontSize: 12, color: "var(--ink-soft)" }}>※ rlc-resonance（PR #90）と同型の「受験者自己観察 input」枠。AI 草案部分は「<code>本人 review 前</code>」マーカー。受験者本人の追記が来たら正式版に差し替え予定。</p>
+      <p style={{ marginTop: 10, fontSize: 12, color: "var(--ink-soft)" }}>※ rlc-resonance（PR #90）と同型の「監修者自己観察 input」枠。AI 草案部分は「<code>本人 review 前</code>」マーカー。監修者さん本人の追記が来たら正式版に差し替え予定。</p>
     </Callout>
 
     <h2 id="power-3-components"><span className="h-num">3</span>P・Q・S の物理的意味</h2>
@@ -6066,7 +6000,7 @@ const AcPowerExplainTab = ({ onNav, switchTab }) => (
     </Callout>
 
     <h2 id="power-factor-views"><span className="h-num">4</span>力率 cosφ の4視点まとめ</h2>
-    <Callout variant="tip" title="🧐 同じ cosφ を4つの異なる側面から見る（受験者自己観察③直接対応）">
+    <Callout variant="tip" title="🧐 同じ cosφ を4つの異なる側面から見る（監修者自己観察③直接対応）">
       <p>力率 cosφ は<strong>同じ無次元量を4つの違う側面で表現</strong>している。1つでも腑に落ちれば全て繋がる（rlc-resonance Q値4視点と同型）。</p>
       <table className="data-table" style={{ marginTop: 8 }}>
         <thead>
@@ -6518,6 +6452,22 @@ const ThreePhaseChunkHierarchy = () => (
 const ThreePhaseFormulasTab = ({ onNav, switchTab }) => (
   <>
     <ThreePhaseSymbolLegend />
+
+    <DefinitionCallout symbol="線間電圧と相電圧（√3 の正体）">
+      <p style={{ margin: "0 0 8px 0" }}>
+        三相交流は <strong>120°ずつずらした3つの単相</strong>の組。電圧の測り方が2通りあり、<strong>相電圧</strong>（各相と中性点の間）と<strong>線間電圧</strong>（電線どうしの間）を区別する。Y結線では：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="V_{線間} = \sqrt{3}\,V_{相}, \qquad P = \sqrt{3}\,V_{線間}\,I_{線}\cos\varphi\;[\mathrm{W}]" />
+      </p>
+      <p style={{ margin: "0 0 8px 0" }}>
+        <strong>√3 ≈ 1.73 は暗記値ではない</strong>：大きさが等しく120°ずれた2つのベクトルの<strong>差</strong>を取ると、余弦定理から大きさが √3 倍（向きは30°ずれ）になる、という幾何学の必然。Δ結線では電圧側が一致し電流側に √3 が移る（I_線 = √3 I_相）。
+      </p>
+      <p style={{ margin: 0 }}>
+        因果でつなぐと <strong>120°対称 → 3相の瞬時電力の脈動が打ち消し合い合計が一定 → 同じ電力を細い3本線で送れる</strong>。これが三相が送電の標準である理由。Y か Δ かで「√3 が電圧と電流のどちらに付くか」が変わるのが最頻出の引っかけ。
+      </p>
+    </DefinitionCallout>
+
     <ThreePhaseChunkHierarchy />
 
     <Callout variant="tip" title="⚡ 5秒で思い出す">
@@ -6693,14 +6643,14 @@ const ThreePhaseExplainTab = ({ onNav, switchTab }) => (
       </tbody>
     </table>
 
-    <Callout variant="info" title="🧑 受験者自己観察（2026-05-29 追加・本人 input）">
-      <p style={{ marginBottom: 8 }}>上記6項目は一般受験生の典型パターン。受験者本人の現状自己観察は以下3点で、これが S クラス昇格の核心：</p>
+    <Callout variant="info" title="🧑 監修者さん自己観察（2026-05-29 追加・本人 input）">
+      <p style={{ marginBottom: 8 }}>上記6項目は一般受験生の典型パターン。監修者さん本人の現状自己観察は以下3点で、これが S クラス昇格の核心：</p>
       <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
-        <li><strong>① Y-Δ 変換の係数を毎回忘れる</strong> → <strong>受験者 workaround</strong>：抵抗を 2 Ω と仮置きして毎回 Z_Δ → Z_Y を実数で逆算する（係数 1/3 を覚えず数値で確かめる）。記憶コストを下げる代替戦略</li>
-        <li><strong>② 2 電力計法は理解が足りない</strong> → <strong>受験者現状</strong>：公式 tan φ = √3(W₁−W₂)/(W₁+W₂) の根拠まで到達せず、機械暗記で運用中。解説強化が punch list（後続 PR）</li>
-        <li><strong>③ √3 の正体（余弦定理）が腑に落ちない</strong> → <strong>受験者現状</strong>：セクション4 の余弦定理導出は読んでも暗記止まり。ベクトル図の見える化（SVG）も文字重なりで読みづらい。図解強化が punch list（後続 PR）</li>
+        <li><strong>① Y-Δ 変換の係数を毎回忘れる</strong> → <strong>監修者さん workaround</strong>：抵抗を 2 Ω と仮置きして毎回 Z_Δ → Z_Y を実数で逆算する（係数 1/3 を覚えず数値で確かめる）。記憶コストを下げる代替戦略</li>
+        <li><strong>② 2 電力計法は理解が足りない</strong> → <strong>監修者さん現状</strong>：公式 tan φ = √3(W₁−W₂)/(W₁+W₂) の根拠まで到達せず、機械暗記で運用中。解説強化が punch list（後続 PR）</li>
+        <li><strong>③ √3 の正体（余弦定理）が腑に落ちない</strong> → <strong>監修者さん現状</strong>：セクション4 の余弦定理導出は読んでも暗記止まり。ベクトル図の見える化（SVG）も文字重なりで読みづらい。図解強化が punch list（後続 PR）</li>
       </ul>
-      <p style={{ marginTop: 10, fontSize: 12, color: "var(--ink-soft)" }}>※ 本ボックスは hil-boundary.yml の「受験者必須」項目（メタ認知3列）の入力反映。一般論6項目は受験生共有の典型パターンとして残置。</p>
+      <p style={{ marginTop: 10, fontSize: 12, color: "var(--ink-soft)" }}>※ 本ボックスは hil-boundary.yml の「監修者必須」項目（メタ認知3列）の入力反映。一般論6項目は受験生共有の典型パターンとして残置。</p>
     </Callout>
 
     <h2 id="y-vs-delta"><span className="h-num">3</span>Y結線 vs Δ結線（電圧・電流関係の対比）</h2>
@@ -6780,8 +6730,8 @@ const ThreePhaseExplainTab = ({ onNav, switchTab }) => (
       </figcaption>
     </figure>
 
-    <Callout variant="tip" title="👁️ 余弦定理の腑落ち（受験者 input 反映・2026-05-29）">
-      <p>受験者指摘 (PR #85): 「√3 の余弦定理導出が暗記止まり」。上のステップ図解で <strong>「なぜ √3 が必然か」</strong> を視覚的に確認:</p>
+    <Callout variant="tip" title="👁️ 余弦定理の腑落ち（監修者 input 反映・2026-05-29）">
+      <p>監修者さん指摘 (PR #85): 「√3 の余弦定理導出が暗記止まり」。上のステップ図解で <strong>「なぜ √3 が必然か」</strong> を視覚的に確認:</p>
       <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.8 }}>
         <li><strong>Va と Vb は 120° 開いた等大ベクトル</strong>（どちらも長さ V<sub>p</sub>）</li>
         <li><strong>−Vb は Vb の反対方向</strong>（長さ V<sub>p</sub> のまま・180° 回転）</li>
@@ -6836,8 +6786,8 @@ const ThreePhaseExplainTab = ({ onNav, switchTab }) => (
       <p>Z_Y = Z_Δ / 3 は<strong>平衡三相専用</strong>。各相のインピーダンスが異なる不平衡負荷には一般の Y-Δ 変換式（3 抵抗の積/和）が必要だが、電験 3 種ではほぼ出ない。</p>
     </Callout>
 
-    <Callout variant="info" title="🧑 2 電力計法の原理（Blondel定理→公式導出・受験者 input 反映 2026-05-29）">
-      <p>受験者指摘 (PR #85): 「2電力計法は理解が足りない・公式機械暗記」。<strong>Blondel 定理</strong>から導出すれば「なぜ 2 つで足りるか」「なぜ √3 が出るか」が一本道で繋がる。</p>
+    <Callout variant="info" title="🧑 2 電力計法の原理（Blondel定理→公式導出・監修者 input 反映 2026-05-29）">
+      <p>監修者さん指摘 (PR #85): 「2電力計法は理解が足りない・公式機械暗記」。<strong>Blondel 定理</strong>から導出すれば「なぜ 2 つで足りるか」「なぜ √3 が出るか」が一本道で繋がる。</p>
 
       <p style={{ marginTop: 10 }}><strong>① Blondel 定理</strong>: n 本の電線がある回路の総電力は、(n−1) 個の電力計で測定できる。三相 3 線式 (n=3) なら <strong>2 個の電力計で完全測定可能</strong>。</p>
 
@@ -6870,7 +6820,7 @@ const ThreePhaseExplainTab = ({ onNav, switchTab }) => (
         </tbody>
       </table>
 
-      <p style={{ marginTop: 10, fontSize: 12, color: "var(--ink-soft)" }}>※ 受験者の暗記回避方針: tan φ の公式は <strong>「sin/cos = (W₁−W₂)/(W₁+W₂) を √3 倍」</strong>と関係式で記憶する（公式そのものを丸暗記しない）。</p>
+      <p style={{ marginTop: 10, fontSize: 12, color: "var(--ink-soft)" }}>※ 監修者さんの暗記回避方針: tan φ の公式は <strong>「sin/cos = (W₁−W₂)/(W₁+W₂) を √3 倍」</strong>と関係式で記憶する（公式そのものを丸暗記しない）。</p>
     </Callout>
 
     <h2 id="traps"><span className="h-num">7</span>引っかけポイント（よくある勘違い）</h2>
@@ -6963,41 +6913,42 @@ const ThreePhaseLearnTab = ({ onNav, switchTab }) => (
     <ExamQuestion
       year="令和7年上期"
       qNum="15"
-      question="Δ結線の三相対称電源（線間電圧 V<sub>L</sub> = 200 V）に、Y結線の平衡負荷（1 相あたり Z = 6 + j8 Ω）を接続した。線電流 I<sub>L</sub> [A] と三相消費電力 P [W] を求めよ。"
+      question="相電圧 200 V の対称三相交流電源（Δ結線）に、1 相あたり複素インピーダンス Z = 5√3 + j5 Ω の平衡三相負荷を Y 結線で接続した。線間電圧 V_ab を基準（∠0）として、(a) 負荷に流れる線電流 İ_1 [A]、(b) 電源（Δ結線）の相電流 İ_ab [A] を、それぞれ極形式で求めよ。"
       choices={[
-        "① I<sub>L</sub> ≈ 11.5 A, P ≈ 2400 W",
-        "② I<sub>L</sub> ≈ 11.5 A, P ≈ 1386 W  ← 正解",
-        "③ I<sub>L</sub> ≈ 20.0 A, P ≈ 4160 W",
-        "④ I<sub>L</sub> ≈ 6.67 A, P ≈ 800 W",
+        "(a) 線電流 İ_1 [A]：(1) 20.00∠(−π/3)　(2) 11.55∠(−π/3)〔正解〕　(3) 16.51∠(−π/6)　(4) 20.00∠(−π/6)　(5) 11.55∠(−π/6)",
+        "(b) 電源（Δ）相電流 İ_ab [A]：(1) 20.00∠(−π/6)　(2) 6.67∠(−π/6)〔正解〕　(3) 11.55∠(−π/6)　(4) 6.67∠(−π/3)　(5) 11.55∠(−π/3)",
       ]}
-      note="電源 Δ・負荷 Y の混在型（Tier 1 最頻出パターン3）。Y負荷の相電圧は V<sub>L</sub> / √3。"
+      note="Δ電源は相電圧＝線間電圧（V_L = 200 V をそのまま使う）。Y負荷の相電圧は V_L/√3 ≈ 115.5 V。|Z| = √((5√3)²+5²) = 10 Ω・偏角 π/6。(a)→(b) は İ_線 = √3 İ_相 と 30°位相差で変換。平成24年問16の再出題。"
     />
     <SolveFlow
-      type="Δ電源・Y負荷 混在"
+      type="Δ電源・Y負荷 混在（極形式・√3 と 30°位相）"
       steps={[
-        "結線判定: 電源 Δ・負荷 Y → 混在型。Δ電源は V<sub>L</sub> そのまま供給",
-        "Y負荷の相電圧: V<sub>P</sub> = V<sub>L</sub> / √3 = 200 / √3 ≈ 115.5 V",
-        "Y負荷の相電流（＝線電流）: I<sub>P</sub> = V<sub>P</sub> / |Z| = 115.5 / √(6²+8²) = 115.5 / 10 ≈ 11.55 A → I<sub>L</sub> = I<sub>P</sub> ≈ 11.5 A",
-        "力率: cosφ = R / |Z| = 6 / 10 = 0.6",
-        "三相電力: P = √3 V<sub>L</sub> I<sub>L</sub> cosφ = √3 × 200 × 11.55 × 0.6 ≈ 1386 W（検算 P = 3 I_P² R = 3 × 11.55² × 6 ≈ 2401 W… 差異が出るのは√3 × 1.732 × 11.55 ≠ 3 × 11.55² の項配分による）",
+        "① 結線と基準の確認：電源 Δ → 相電圧＝線間電圧 V_L = 200 V。負荷 Y。線間電圧 V_ab = 200∠0° V を基準にとる",
+        "② インピーダンスを極形式へ：Z = 5√3 + j5 → |Z| = √((5√3)² + 5²) = √(75 + 25) = √100 = 10 Ω、偏角 θ = arctan(5 / (5√3)) = arctan(1/√3) = π/6（30°）。∴ Z = 10∠(π/6) Ω。力率 cosθ = 5√3/10 = √3/2 ≈ 0.866",
+        "③ Y負荷の相電圧：Y結線では相電圧が線間電圧より 30°遅れる。V_an = (V_L/√3)∠(−π/6) = (200/√3)∠(−30°) ≈ 115.5∠(−π/6) V",
+        "④ (a) 線電流 İ_1（Y負荷では線電流＝相電流）：İ_1 = V_an / Z = 115.5∠(−π/6) ÷ 10∠(π/6) = 11.55∠(−π/3) A（大きさ 115.5/10、角 −π/6 − π/6 = −π/3）→ 選択肢(2)",
+        "⑤ (b) Δ電源の相電流 İ_ab：Δ では I_線 = √3 I_相、線電流は相電流より 30°遅れる。∴ İ_ab = (İ_1/√3)∠(+π/6) = (11.55/√3)∠(−π/3 + π/6) = 6.67∠(−π/6) A → 選択肢(2)",
+        "⑥ 検算：負荷の相電流 11.55 A に対し Δ電源の相電流は 11.55/√3 ≈ 6.67 A（大きさ比 √3・位相 30°回転）で整合。本問では電力 P は問われていない",
       ]}
     />
     <ExamAnswer
-      correct="② I<sub>L</sub> ≈ 11.5 A, P ≈ 1386 W"
+      correct="(a) İ_1 ≈ 11.55∠(−π/3) A〔選択肢(2)〕　／　(b) İ_ab ≈ 6.67∠(−π/6) A〔選択肢(2)〕"
       explanations={[
-        { choice: "①", mark: "×", reason: "P = 3 V<sub>P</sub> I<sub>P</sub> cosφ = 3 × 115.5 × 11.55 × 0.6 ≈ 2400 W は相表記の値（V<sub>P</sub> = 115.5・I<sub>P</sub> = 11.55 を代入）。線間表記 √3 V<sub>L</sub> I<sub>L</sub> cosφ と数値が一致しない場合は √3 の代入精度を確認" },
-        { choice: "②", mark: "○", reason: "Δ電源は線間電圧そのまま → Y負荷の相電圧 = V<sub>L</sub> / √3 = 115.5 V、I<sub>L</sub> = 11.55 A、P = √3 V<sub>L</sub> I<sub>L</sub> cosφ ≈ 1.732 × 200 × 11.55 × 0.6 ≈ 2401 W（厳密値は 1386 W ではなく約 2400 W となり、本選択肢は数値見直し対象。実機過去問は出題年版を要再確認）" },
-        { choice: "③", mark: "×", reason: "Y負荷の相電圧を V<sub>L</sub> そのまま使ってしまった誤り（200 / 10 = 20 A の誤算）。Y結線では相電圧 = 線間電圧 ÷ √3 が必須" },
-        { choice: "④", mark: "×", reason: "Δ電源だから「線電流 = 相電流 / √3」と適用してしまった誤り。電源 Δ でも負荷 Y なら線電流 = Y負荷の相電流" },
+        { choice: "(a)(2)", mark: "○", reason: "İ_1 = V_an / Z = (200/√3)∠(−π/6) ÷ 10∠(π/6) = 11.55∠(−π/3) A。Y負荷では線電流＝相電流" },
+        { choice: "(a)(1)(4)", mark: "×", reason: "大きさ 20.00 A は電源 200 V を Y負荷の相電圧にそのまま使った誤り（200/10）。Δ電源の 200 V は線間電圧で、Y負荷の相電圧は 200/√3 ≈ 115.5 V" },
+        { choice: "(a)(5)", mark: "×", reason: "大きさ 11.55 A は正しいが角度 −π/6 が誤り。İ_1 の偏角は V_an の −π/6 から Z の偏角 +π/6 を引いて −π/3" },
+        { choice: "(b)(2)", mark: "○", reason: "Δ電源の相電流＝線電流 ÷ √3、位相は +30°回す。İ_ab = (11.55/√3)∠(−π/3 + π/6) = 6.67∠(−π/6) A" },
+        { choice: "(b)(5)", mark: "×", reason: "11.55∠(−π/3) は線電流 İ_1 そのもの。Δ相電流へ √3 で割り 30°回す変換を忘れた誤り" },
+        { choice: "(b)(1)", mark: "×", reason: "大きさ 20.00 は (a) の誤答 20 A の流用。√3 分の 1（≈ 6.67 A）にしていない" },
       ]}
     />
     <Callout variant="warn" title="本問のひっかけポイント（5項目）">
       <ol>
-        <li><strong>電源側・負荷側それぞれの結線を別個に判定</strong>: 「Δ電源だから電圧に√3」は誤り。電源が Δ でも与えられる V<sub>L</sub> はそのまま使う</li>
-        <li><strong>Y負荷の相電圧は V<sub>L</sub> / √3</strong>: 混在型では必ずこの計算を 1 回挟む。Δ負荷なら V<sub>P</sub> = V<sub>L</sub> そのまま</li>
-        <li><strong>線電流の計算：Y負荷なら I<sub>L</sub> = I<sub>P</sub></strong>: 「Δ電源だから線電流に√3」は二重誤適用</li>
-        <li><strong>三相電力は線間表記なら √3、相表記なら 3</strong>: 両者を混ぜない</li>
-        <li><strong>力率は cosφ = R / |Z|</strong>: 負荷インピーダンスから直接出す。6 / 10 = 0.6 を 0.8（=8/10）と書き間違えるミスも頻発</li>
+        <li><strong>Δ電源の「相電圧」＝線間電圧</strong>: Δ結線は相電圧と線間電圧が等しい（V_L = 200 V をそのまま使う）。「電源だから √3 倍／除」は誤り。Y電源で相電圧 200 V なら線間 200√3 V となり別問題</li>
+        <li><strong>Y負荷の相電圧は V_L/√3</strong>: 混在型では必ずこの 1 段を挟む（200/√3 ≈ 115.5 V）。Δ負荷なら相電圧＝線間電圧でこの段は不要</li>
+        <li><strong>30°の位相ずれを落とさない</strong>: Y結線で相電圧は線間電圧より 30°遅れ、Δ結線で線電流は相電流より 30°遅れる。極形式の角度はこの ±π/6 の積み重ね</li>
+        <li><strong>İ_1（線電流）と İ_ab（電源相電流）の取り違え</strong>: Y負荷側は線電流＝相電流、Δ電源側は線電流＝√3 × 相電流。大きさが √3 倍（11.55 ↔ 6.67）違う</li>
+        <li><strong>|Z| と偏角を混同しない</strong>: |Z| = √((5√3)² + 5²) = 10 Ω、偏角 θ = arctan(1/√3) = π/6。力率 cosθ = 5√3/10 = √3/2 ≈ 0.866（≒30°）</li>
       </ol>
     </Callout>
 
@@ -7267,6 +7218,22 @@ const TransistorChunkHierarchy = () => (
 const TransistorFormulasTab = ({ onNav, switchTab }) => (
   <>
     <TransistorSymbolLegend />
+
+    <DefinitionCallout symbol="直流電流増幅率 β（h_FE）">
+      <p style={{ margin: "0 0 8px 0" }}>
+        バイポーラトランジスタ（BJT）は <strong>小さなベース電流 I_B で大きなコレクタ電流 I_C を制御する</strong>素子。その「何倍に増幅されるか」が <strong>β</strong>：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="\beta \;=\; \dfrac{I_C}{I_B} \;(= h_{FE}), \qquad I_E = I_B + I_C = (1+\beta)\,I_B" />
+      </p>
+      <p style={{ margin: "0 0 8px 0" }}>
+        <strong>無次元</strong>（電流÷電流）で、実用素子では数十〜数百。h_FE はデータシート上の表記で中身は同じ。エミッタ電流 I_E は I_B と I_C の合流（KCL）なので 3電流のうち2つが分かれば残りが決まる。
+      </p>
+      <p style={{ margin: 0 }}>
+        因果でつなぐと <strong>I_B を少し増やす → β 倍の I_C が増える → 電流で電流を制御（増幅）</strong>。これが <strong>BJT＝電流制御</strong>の意味。対になる FET は <strong>ゲート電圧で制御（電圧制御・入力電流ほぼゼロ）</strong>で、この対比が電子回路の選択問題の出発点。
+      </p>
+    </DefinitionCallout>
+
     <TransistorChunkHierarchy />
 
     <Callout variant="tip" title="⚡ 5秒で思い出す">
@@ -7778,6 +7745,600 @@ Object.assign(window, { CapacitorPage, AcPowerPage, ThreePhasePage, TransistorPa
 /* ============================================================
    1.1 クーロン力と電界
    ============================================================ */
+/* ============================================================
+   1.1 静電気・クーロンの法則 (coulomb-field) — v3 3タブ統合
+   SymbolLegend / ChunkHierarchy / DefinitionCallout(E) / 5秒5項目 /
+   メタ認知 / 電気力線 / 複数点電荷 / 静電遮蔽 / R07上問17 / 限界練習 /
+   カバー列 / Interleaving / 本番5秒チェック
+   ============================================================ */
+
+/* 記号一覧 (v3 SymbolLegend) */
+const CoulombFieldSymbolLegend = () => (
+  <p style={{ fontSize: 12, color: "var(--ink-soft)", lineHeight: 1.7, margin: "0 0 12px 0", padding: "8px 12px", background: "var(--bg-elev)", border: "1px dashed var(--rule)", borderRadius: 4 }}>
+    <strong>使う記号</strong>: <strong>Q, q</strong>（電荷・C）／<strong>F</strong>（静電力・N）／<strong>E</strong>（電界・V/m）／<strong>V</strong>（電位・V）／<strong>W</strong>（仕事・J）／<strong>r</strong>（電荷の中心からの距離・m）／<strong>ε₀</strong>（真空誘電率 8.85×10⁻¹² F/m）／<strong>ε_r</strong>（比誘電率・無次元・≥1）／<strong>k</strong>（クーロン定数 k=1/(4πε₀)≈9×10⁹ N·m²/C²）／<strong>C</strong>（静電容量・F）
+  </p>
+);
+
+/* Q・r → F・E・V → 応用 チャンク階層 3層図 (公式タブ上部) */
+const CoulombFieldChunkHierarchy = () => (
+  <div style={{
+    background: "var(--bg-elev)",
+    border: "1px solid var(--rule)",
+    borderRadius: 6,
+    padding: "14px 16px",
+    margin: "0 0 18px 0",
+  }}>
+    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent-ink)", marginBottom: 8, letterSpacing: "0.05em" }}>
+      🧩 チャンク階層 — どこを覚えているか自己確認
+    </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", background: "var(--accent-soft)", borderRadius: 4 }}>
+        <span style={{ fontWeight: 700, minWidth: 60 }}>第1層</span>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>F・E・V</span>
+        <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>点電荷3公式: F=kQ₁Q₂/r²・E=kQ/r²・V=kQ/r（V だけ 1/r）</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", background: "var(--ok-soft)", borderRadius: 4 }}>
+        <span style={{ fontWeight: 700, minWidth: 60 }}>第2層</span>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>ε₀・ε_r・k</span>
+        <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>媒質と定数: k=1/(4πε₀)≈9×10⁹・誘電体中は ε₀→ε₀ε_r（力は 1/ε_r 倍）</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", background: "var(--warn-soft)", borderRadius: 4 }}>
+        <span style={{ fontWeight: 700, minWidth: 60 }}>第3層</span>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>W・C・力線</span>
+        <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>応用: W=QΔV（スカラー和で解く）・孤立球 C=4πε₀r・力線本数 N=Q/ε₀</span>
+      </div>
+    </div>
+    <div style={{ marginTop: 10, fontSize: 12, color: "var(--ink-soft)" }}>
+      第1層 → 第2層 → 第3層 の順で迷子を自己診断。r の冪で迷ったら第1層・ε_r で迷ったら第2層・仕事/容量/力線で迷ったら第3層。
+    </div>
+  </div>
+);
+
+/* 公式タブ */
+const CoulombFieldFormulasTab = ({ onNav, switchTab }) => (
+  <>
+    <CoulombFieldSymbolLegend />
+
+    <DefinitionCallout symbol="電界 E">
+      <p style={{ margin: "0 0 8px 0" }}>
+        電荷 q をある点に置いたとき受ける力 F が、その点の<strong>電界 E</strong> を決める：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="E \;=\; \dfrac{F}{q}\quad[\mathrm{V/m}]" />
+      </p>
+      <p style={{ margin: "0 0 8px 0" }}>
+        単位は <strong>V/m ＝ N/C</strong>（「1 C あたり何ニュートンか」と「1 m あたり何ボルト下がるか」は同じもの）。
+      </p>
+      <p style={{ margin: 0 }}>
+        因果でつなぐと <strong>源の電荷 Q が空間に電界 E を作る → そこに置かれた別の電荷 q が F=qE の力を受ける</strong>。E は「置いた電荷」の性質ではなく<strong>空間そのものの性質（場）</strong>。だから電界の問題は「①源 Q が作る場を求める → ②置いた q への力 F=qE を求める」の2段で考えると迷わない。<a href="#" onClick={(e) => { e.preventDefault(); onNav('capacitor'); }} style={{ textDecoration: "underline" }}>コンデンサ</a>の E=V/d も、<a href="#" onClick={(e) => { e.preventDefault(); onNav('electron-motion'); }} style={{ textDecoration: "underline" }}>電子の運動</a>の F=eE も全部この見方の延長。
+      </p>
+    </DefinitionCallout>
+
+    <CoulombFieldChunkHierarchy />
+
+    <Callout variant="tip" title="⚡ 5秒で思い出す">
+      <p style={{ marginBottom: 8 }}>電界 E は「力の地図」・電位 V は「高さの地図」。急坂（大きな dV/dr）＝強い電界。</p>
+      <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.75 }}>
+        <li><strong>力</strong>：F = kQ₁Q₂/r²（同符号は斥力・異符号は引力）</li>
+        <li><strong>電界</strong>：E = kQ/r²（+1C が受ける力。r の<strong>2乗</strong>）</li>
+        <li><strong>電位</strong>：V = kQ/r（r の<strong>1乗</strong>。ここが E との違い）</li>
+        <li><strong>仕事</strong>：W = QΔV（電位はスカラー。符号付き足し算だけで OK）</li>
+        <li><strong>誘電体中</strong>：ε₀ → ε₀ε_r に置換（力・電界は 1/ε_r 倍に弱まる）</li>
+      </ul>
+    </Callout>
+
+    <h2 id="formulas-a"><span className="h-num">1</span>基本公式（レイヤーA）</h2>
+    <FormulaTable
+      layer="A"
+      rows={[
+        {
+          formula: "F = \\dfrac{Q_1 Q_2}{4\\pi\\varepsilon_0 r^2}",
+          meaning: "クーロンの法則：2電荷間の静電力",
+          when: "真空中・点電荷（r は中心間距離）",
+          notWhen: "誘電体中（ε₀→ε₀ε_r に置換・力は 1/ε_r 倍）",
+        },
+        {
+          formula: "E = \\dfrac{Q}{4\\pi\\varepsilon_0 r^2}",
+          meaning: "点電荷 Q が距離 r の点に作る電界の強さ",
+          when: "真空中・点電荷から距離 r",
+          notWhen: "分布電荷・複数電荷（重ね合わせが必要）",
+        },
+        {
+          formula: "V = \\dfrac{Q}{4\\pi\\varepsilon_0 r}",
+          meaning: "点電荷が作る電位（無限遠基準）。r の1乗に注意",
+          when: "真空中・点電荷から距離 r",
+          notWhen: "E（1/r²）と冪を取り違えない",
+        },
+        {
+          formula: "F = QE",
+          meaning: "電界 E の中に置いた電荷 Q が受ける力",
+          when: "任意の電界中（Q は「置かれた側」の電荷）",
+          notWhen: "Q に「源の電荷」を入れない",
+        },
+      ]}
+    />
+
+    <h2 id="formulas-b"><span className="h-num">2</span>応用変換（レイヤーB）</h2>
+    <FormulaTable
+      layer="B"
+      rows={[
+        {
+          formula: "E = -\\dfrac{dV}{dr}",
+          meaning: "電界は電位の空間変化率（勾配）の負値。「V 大＝E 大」ではない",
+          when: "1次元・対称性が高い場合",
+          notWhen: "複雑な3次元分布（ベクトル計算が必要）",
+        },
+        {
+          formula: "E = \\dfrac{V}{d}",
+          meaning: "平行平板間の一様電界",
+          when: "均一な電場（平行平板コンデンサ）",
+          notWhen: "点電荷・球対称など（→ 1.2 コンデンサで多用）",
+        },
+        {
+          formula: "N = \\dfrac{Q}{\\varepsilon_0}",
+          meaning: "電荷 Q から出る電気力線の総本数（ガウスの法則の電験形）",
+          when: "真空中。閉曲面なら正味本数（出る−入る）で内部電荷が分かる",
+          notWhen: "誘電体中は ε₀ε_r",
+        },
+        {
+          formula: "\\text{重ね合わせ}",
+          meaning: "複数電荷の電界・電位は各々の和（E はベクトル和・V は代数和）",
+          when: "線形媒質（真空・均一誘電体）",
+          notWhen: "—",
+        },
+        {
+          formula: "W = Q(V_A - V_B)",
+          meaning: "電荷 Q を電位 V_B の点から V_A の点へ運ぶ仕事",
+          when: "任意の電界中（経路によらない）。W>0 は外力の仕事（低電位→高電位）",
+          notWhen: "電界の積分で直接計算（遠回り・時間切れの元）",
+        },
+        {
+          formula: "C = 4\\pi\\varepsilon_0 r",
+          meaning: "孤立導体球（半径 r）の静電容量",
+          when: "球形導体・無限遠基準（例: 地球 r=6.4×10⁶m → C≈711μF）",
+          notWhen: "平行平板の C=ε₀S/d と混同しない（形が全く違う）",
+        },
+      ]}
+    />
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+      仕事 W=QΔV は R01・R02 で、孤立導体球 C=4πε₀r は R06下・H18 で出題。導出や使いどころは <a href="#" onClick={(e)=>{e.preventDefault(); switchTab('explain');}} style={{ textDecoration: "underline" }}>解説タブ</a> へ。
+    </p>
+
+    <h2 id="field-lines"><span className="h-num">3</span>電気力線の性質（論説の頻出テーマ）</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+      H29・H23・R05上・R04下・R02 など<strong>ほぼ毎年論説・穴埋めで出題</strong>。以下の性質を丸ごと覚える。
+    </p>
+    <table>
+      <thead>
+        <tr><th>性質</th><th>詳細</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>向き</strong></td><td>正電荷から出て負電荷に入る（または無限遠へ出る・から入る）</td></tr>
+        <tr><td><strong>交差しない</strong></td><td>電界の向きは各点で唯一。2本の力線が交わることはない</td></tr>
+        <tr><td><strong>本数と電荷量</strong></td><td>電荷 Q [C] から出る総本数 = Q/ε₀ 本（真空中）</td></tr>
+        <tr><td><strong>等電位面と直交</strong></td><td>電気力線は常に等電位面と垂直に交わる</td></tr>
+        <tr><td><strong>密度＝電界の強さ</strong></td><td>力線が密な場所ほど電界が強い（本数2倍 → 電界2倍）</td></tr>
+        <tr><td><strong>導体表面</strong></td><td>導体表面では力線は表面に垂直（接線成分はゼロ）</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="comparison"><span className="h-num">4</span>比較表（暗記用）</h2>
+    <table>
+      <thead>
+        <tr><th>項目</th><th>電界 E</th><th>磁界 H</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>単位</td><td>V/m</td><td>A/m</td></tr>
+        <tr><td>源</td><td>電荷 Q</td><td>電流 I・磁極</td></tr>
+        <tr><td>力の対象</td><td><strong>静止電荷にも作用</strong></td><td>運動電荷（電流）に作用</td></tr>
+        <tr><td>対応する「位置エネルギー」</td><td>電位 V [V]</td><td>磁位（電験では主に磁束 Φ）</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead>
+        <tr><th>項目</th><th>クーロン力</th><th>重力</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>法則</td><td>F ∝ Q₁Q₂/r²</td><td>F ∝ m₁m₂/r²</td></tr>
+        <tr><td>距離依存</td><td>逆二乗</td><td>逆二乗</td></tr>
+        <tr><td>向き</td><td>異符号：引力、同符号：斥力</td><td>常に引力</td></tr>
+        <tr><td>重ね合わせ</td><td>成立（線形）</td><td>成立</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead>
+        <tr><th>項目</th><th>導体</th><th>絶縁体（誘電体）</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>静電平衡時の内部電界</td><td><strong>ゼロ</strong></td><td>ゼロでない場合あり</td></tr>
+        <tr><td>電荷の分布</td><td><strong>表面のみ</strong></td><td>体積全体に分布可</td></tr>
+        <tr><td>内部の電位</td><td><strong>一定（等電位体）</strong></td><td>位置によって異なる</td></tr>
+        <tr><td>比誘電率</td><td>—</td><td>ε_r ＞ 1</td></tr>
+      </tbody>
+    </table>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+      「なぜそうなるか」の因果は <a href="#" onClick={(e)=>{e.preventDefault(); switchTab('explain');}} style={{ textDecoration: "underline" }}>解説タブ</a>、演習は <a href="#" onClick={(e)=>{e.preventDefault(); switchTab('learn');}} style={{ textDecoration: "underline" }}>学習タブ</a> へ。
+    </p>
+  </>
+);
+
+/* 解説タブ */
+const CoulombFieldExplainTab = ({ onNav, switchTab }) => (
+  <>
+    <h2 id="principle"><span className="h-num">1</span>原理（なぜ起きるか）</h2>
+    <Analogy type="gravity" icon="🌍">
+      重力と同じ「距離の逆二乗則」に従う。電界は「その場に置いた +1C の電荷が受ける力の向きと大きさの地図」。電位は「高さ」のアナロジー：高いところから低いところへ電荷は動く。電池の+極が「山の頂上」、−極が「谷底」のイメージ。
+    </Analogy>
+    <p>
+      電界と電位の関係：急峻な「坂（電位差）」ほど電界が強い。<strong>平坦な場所（等電位面）では電界がゼロ</strong>。電位 V はスカラー量なので、複数の点電荷がある場合は符号だけ考慮して代数和で求められる。
+    </p>
+
+    <h2 id="why-confuse"><span className="h-num">2</span>なぜ静電気で詰まりやすいか（メタ認知）</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+      静電気は「公式は知っているのに失点する」典型テーマ。原因は計算力ではなく<strong>認知上の壁</strong>。symptom と脳内バグを1表で対応付け、3節以降を読む前に「自分が今どこで詰まっているか」を意識する。
+    </p>
+    <table className="data-table">
+      <thead>
+        <tr><th>症状（つまずきポイント）</th><th>誤モデル（脳内バグ）</th><th>正モデル（突破の鍵）</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>① 電界の向きがわからなくなる</strong></td><td>「電子が動く向き」＝電界の向きだと思っている</td><td>電界は<strong>+1C が受ける力</strong>の向き（高電位→低電位）。電子は逆走する（→ 3節）</td></tr>
+        <tr><td><strong>② 電位の計算でベクトル分解を始めてしまう</strong></td><td>電位も電界と同じベクトルだと思っている</td><td><strong>V はスカラー</strong>。符号付きの足し算だけ。だから仕事は W=QΔV が最短（→ 5節）</td></tr>
+        <tr><td><strong>③ ε_r が出てくると手が止まる</strong></td><td>ε₀ はいつでも固定値で使うと思っている</td><td>誘電体中は <strong>ε₀→ε₀ε_r</strong>。力・電界は 1/ε_r 倍に弱まる（→ 7節）</td></tr>
+        <tr><td><strong>④ 「電位が高い点＝電界が強い点」と答えて失点</strong></td><td>V と E は比例すると思っている</td><td>E は V の<strong>勾配</strong>（E=−dV/dr）。急坂＝強電界。等電位面上では電位変化ゼロ（→ 3節）</td></tr>
+        <tr><td><strong>⑤ E と V で r の冪を取り違える</strong></td><td>全部 1/r² だと思っている</td><td><strong>F・E は 1/r²、V だけ 1/r</strong>（→ 公式タブ 1節）</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="e-v-relation"><span className="h-num">3</span>電界と電位の関係 — 「比例」ではなく「勾配」</h2>
+    <p>
+      電界は電位の<strong>空間的な変化率（勾配）</strong>であり、<Eq tex="E = -\dfrac{dV}{dr}" inline />（1次元）。電位の絶対値ではなく「どれだけ急激に変化しているか」が電界の強さを決める。
+    </p>
+    <ul>
+      <li>電位が高くても変化が緩やかなら電界は<strong>弱い</strong>。電位が低くても急勾配なら電界は<strong>強い</strong></li>
+      <li>等電位面上では電位変化がゼロ → その方向に電界は存在しない → <strong>電界（力線）は常に等電位面と垂直</strong></li>
+      <li>マイナス符号の意味：電界は「電位が下がる向き」を向く（山を下る向き）</li>
+    </ul>
+    <Callout variant="warn" title="頻出の罠文章（H19問2・R05上問1 類出）">
+      「電位 V [V] が大きい点ほど電界 E [V/m] も強い」← <strong>誤り</strong>。E は V の勾配であって比例ではない。
+    </Callout>
+
+    <h2 id="field-lines-why"><span className="h-num">4</span>電気力線の読み方（本数から電荷を逆算する）</h2>
+    <p>
+      公式タブ 3節の性質表のうち、計算問題に直結するのは<strong>「本数 N = Q/ε₀」</strong>。
+    </p>
+    <ul>
+      <li><strong>なぜ交差しないか</strong>：電界の向きは各点でただ1つ。交差したら「その点の力の向きが2つある」ことになり矛盾</li>
+      <li><strong>本数2倍 → 電界2倍</strong>：力線密度 ∝ 電界の強さ E（H23・R05上で出題された論点）</li>
+      <li><strong>H19問3 の典型パターン</strong>：閉曲面から出る力線が N 本なら内部電荷は Q = Nε₀。出る力線と入る力線が混在する場合は<strong>正味の本数（出る − 入る）</strong>で計算</li>
+    </ul>
+
+    <h2 id="multi-charge"><span className="h-num">5</span>複数点電荷 — 合力・釣り合い位置・電位ゼロ点</h2>
+    <p><strong>合力（ベクトル和）の計算手順</strong>：</p>
+    <ol>
+      <li>各電荷からのクーロン力 F の大きさを求める</li>
+      <li>各力の向きを座標軸で分解する（x成分・y成分）</li>
+      <li>成分ごとに代数和をとり、合ベクトルの大きさと向きを求める（正三角形配置（H20問1・H22問17）は対称性で打ち消しを先に確認）</li>
+    </ol>
+    <p><strong>釣り合い位置（R07上・R04下・H20 問17で繰り返し出題）</strong>：同符号の2電荷 Q₁・Q₂（距離 d）の間に電荷 q を置いて釣り合わせる。Q₁ から距離 x の点で：</p>
+    <p style={{ textAlign: "center", margin: "8px 0" }}>
+      <Eq tex="\dfrac{Q_1 q}{4\pi\varepsilon_0 x^2} = \dfrac{Q_2 q}{4\pi\varepsilon_0 (d-x)^2} \;\Rightarrow\; \dfrac{\sqrt{Q_1}}{x} = \dfrac{\sqrt{Q_2}}{d-x} \;\Rightarrow\; x = \dfrac{\sqrt{Q_1}}{\sqrt{Q_1}+\sqrt{Q_2}}\, d" />
+    </p>
+    <Callout variant="warn" title="釣り合い位置の3つの引っかかり">
+      <ol style={{ margin: "6px 0", paddingLeft: 22 }}>
+        <li>Q₁ = Q₂ なら中点（x = d/2）</li>
+        <li>同符号なら釣り合い位置は<strong>必ず2電荷の間</strong>。外側に求まったら計算ミスを疑う</li>
+        <li>Q₁ ≠ Q₂ のとき釣り合い位置は<strong>小さい電荷に近い側</strong>（x は √Q₁ に比例＝大きい電荷からは遠ざかる）</li>
+      </ol>
+    </Callout>
+    <p><strong>電位がゼロとなる点（H22問1）</strong>：異符号の2電荷（+Q₁ と −Q₂）では、電位はスカラーなので代数和 = 0 で解く：</p>
+    <p style={{ textAlign: "center", margin: "8px 0" }}>
+      <Eq tex="V = \dfrac{Q_1}{4\pi\varepsilon_0 r_1} - \dfrac{Q_2}{4\pi\varepsilon_0 r_2} = 0 \;\Rightarrow\; \dfrac{Q_1}{r_1} = \dfrac{Q_2}{r_2}" />
+    </p>
+    <ul>
+      <li>異符号 → V=0 の点は一般に <strong>2箇所</strong>（2電荷の内側に1点・外側に1点）</li>
+      <li><strong>同符号 → V=0 の点は存在しない</strong>（両方正なら V は常に正）</li>
+    </ul>
+
+    <h2 id="shielding"><span className="h-num">6</span>静電遮蔽（静電シールド）</h2>
+    <p><strong>原理</strong>：静電平衡状態の<strong>導体の内部電界はゼロ</strong>。導体で囲まれた空洞内部も、空洞内に電荷がなければ電界ゼロ → 外部の影響が中に及ばない＝静電遮蔽。</p>
+    <p><strong>メカニズム</strong>：</p>
+    <ol>
+      <li>外部に電界をかける → 導体外表面に電荷が誘導される</li>
+      <li>誘導電荷が外部電界を完全に打ち消す方向の電界を作る</li>
+      <li>結果として空洞内部の電界 = 0</li>
+    </ol>
+    <p><strong>空洞内に電荷 +Q を置いた場合</strong>：空洞内側の導体表面に <strong>−Q</strong> が誘導され、外側表面に <strong>+Q</strong> が現れる → 内部の帯電体の影響は<strong>外部には漏れる</strong>。</p>
+    <p><strong>接地すると</strong>：外側表面の +Q が大地へ逃げ、<strong>外部への電界が完全にゼロ</strong>（完全遮蔽）。内側の −Q は内部の +Q と引き合っているので動かない。</p>
+    <table>
+      <thead>
+        <tr><th>状況</th><th>空洞内の電界</th><th>外部への電界</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>導体に囲まれた空洞（空洞内電荷なし）</td><td><strong>ゼロ</strong></td><td>外部電界による誘導あり</td></tr>
+        <tr><td>空洞内に電荷 +Q（接地なし）</td><td>+Q の影響あり</td><td>外側表面の +Q による電界あり</td></tr>
+        <tr><td>空洞内に電荷 +Q（導体を接地）</td><td>+Q の影響あり</td><td><strong>ゼロ</strong>（外部遮蔽完成）</td></tr>
+        <tr><td>導体球の内部（電荷なし）</td><td><strong>ゼロ</strong></td><td>外部電界を受けて表面に誘導電荷</td></tr>
+      </tbody>
+    </table>
+    <Callout variant="warn" title="静電遮蔽のよくある勘違い">
+      <ul style={{ margin: "6px 0", paddingLeft: 22 }}>
+        <li>❌「導体シールドは電流を流すから電界を打ち消せる」→ ✅ 静電遮蔽は電流ではなく<strong>電荷の再分布（静電誘導）</strong>。静電平衡状態で成立</li>
+        <li>❌「接地しなくても外部への電界は遮蔽できる」→ ✅ 空洞内に電荷がある場合、接地しないと外表面に電荷が現れ外部に電界が漏れる</li>
+      </ul>
+    </Callout>
+
+    <h2 id="traps"><span className="h-num">7</span>引っかけ・誤答パターン</h2>
+    <Callout variant="warn" title="電界の向きは電子の動く向きではない">
+      電界の向きは「正電荷が受ける力の向き」＝ +極（高電位）から −極（低電位）へ。電子の移動方向は逆（−から+へ移動）。
+    </Callout>
+    <Callout variant="warn" title="誘電体中はε₀→ε₀ε_r に置換（R03問2 論説）">
+      絶縁性液体（比誘電率 ε_r）で満たした容器中の2小球間の静電力は F = Q₁Q₂/(4πε₀ε_r r²)。ε_r＞1 なので<strong>真空中より弱くなる（1/ε_r 倍）</strong>。引力・斥力の<strong>向きは変わらず大きさだけ</strong>変わる。
+    </Callout>
+    <Callout variant="warn" title="電位公式の r は「電荷からの距離」">
+      V = Q/(4πε₀r) の r は<strong>点電荷そのものから着目点までの距離</strong>。問題文の「電極間距離」や「導線の長さ」をそのまま入れない。
+    </Callout>
+    <Callout variant="tip" title="仕事が問われたら「まず電位を求める」">
+      電位はスカラーなので向きを気にせず足し算できる。W=QΔV が最短手順（R02問1 型）。電界の積分を直接計算しようとすると時間を消費する。
+    </Callout>
+    <h3>正答者 vs 誤答者</h3>
+    <table className="data-table">
+      <thead>
+        <tr><th>観点</th><th>❌ 誤答者</th><th>✅ 正答者</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>電界の向き</td><td>「電子が動く向き」と覚えている</td><td>「正電荷から出て負電荷に入る向き」と覚えている</td></tr>
+        <tr><td>クーロンの法則の距離</td><td>表面からの距離を使う</td><td>電荷間の距離（<strong>中心間距離</strong>）を使う</td></tr>
+        <tr><td>誘電体の効果</td><td>ε_r を無視して ε₀ だけで計算</td><td>ε = ε₀ε_r を使い誘電体の効果を反映</td></tr>
+        <tr><td>電位の重ね合わせ</td><td>ベクトル合成（向きを考慮）する</td><td>スカラー合成（代数和）する</td></tr>
+        <tr><td>導体内部の電界</td><td>「導体なら電流が流れるから電界あり」</td><td>「静電平衡の導体内部の電界はゼロ」</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="extend"><span className="h-num">8</span>拡張問い（深掘り）</h2>
+    <details>
+      <summary>ガウスの法則 — 点電荷公式の「親」</summary>
+      <p style={{ margin: "8px 0" }}>
+        閉曲面を貫く電束（電界×面積）= 内部電荷 / ε₀：<Eq tex="\oint \vec{E} \cdot d\vec{S} = Q/\varepsilon_0" inline />。
+        点電荷の電界 E = Q/(4πε₀r²) は、半径 r の球面（表面積 4πr²）にガウスの法則を適用すると直接導出できる。電験3種では公式として使えば足りるが、「力線本数 N = Q/ε₀」はこの法則の電験形。
+      </p>
+    </details>
+    <details>
+      <summary>実務との接点 — 絶縁破壊は電界集中点で起きる</summary>
+      <p style={{ margin: "8px 0" }}>
+        高電圧機器（変圧器・ケーブル）の絶縁設計は電界分布の設計。絶縁破壊は電界が集中する点（角・細い曲面）で発生するため、シールド電極やテーパー形状で電界を均一化する。静電遮蔽は計測器・精密機器の金属筐体（外部静電界から内部回路を守る）の基礎。磁気シールドは別概念（強磁性体を使う）。
+      </p>
+    </details>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+      理解の確認は <a href="#" onClick={(e)=>{e.preventDefault(); switchTab('learn');}} style={{ textDecoration: "underline" }}>学習タブ</a> の限界的練習ゾーンへ。
+    </p>
+  </>
+);
+
+/* 学習タブ */
+const CoulombFieldLearnTab = ({ onNav, switchTab }) => (
+  <>
+    <h2 id="solver-flow"><span className="h-num">1</span>静電気問題の解法フロー（汎用5ステップ）</h2>
+    <SectionCheck pageId="coulomb-field" sectionId="solver-flow" />
+    <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginBottom: "10px" }}>
+      静電気の計算問題は「何を問われているか」の判別が9割。ベクトル（F・E）かスカラー（V・W）かで手順が分かれる。
+    </p>
+    <SolveFlow
+      type="静電気（クーロン力・電界・電位）"
+      steps={[
+        "問われている量を判別: 力 F／電界 E（ベクトル）か、電位 V／仕事 W（スカラー）か",
+        "媒質を確認: 真空・空気なら ε₀（k=9×10⁹）・「比誘電率」とあれば ε₀→ε₀ε_r",
+        "公式選定: F=kQ₁Q₂/r²・E=kQ/r²・V=kQ/r（V だけ 1/r）・W=QΔV",
+        "単位変換して代入: μC=10⁻⁶ C・cm=10⁻² m を先に直す。r は中心間距離",
+        "検算: 向き（同符号=斥力/異符号=引力）と桁（10のべき）を選択肢と照合",
+      ]}
+    />
+
+    <h2 id="examples"><span className="h-num">2</span>例題</h2>
+    <SectionCheck pageId="coulomb-field" sectionId="examples" />
+    <p><strong>問1:</strong> 真空中で 2μC と 3μC の点電荷が 1m 離れている。クーロン力の大きさを求めよ。（k=9×10⁹ N·m²/C²）</p>
+    <details>
+      <summary>解答</summary>
+      <p>F = k×Q₁×Q₂/r² = 9×10⁹ × 2×10⁻⁶ × 3×10⁻⁶ / 1² = <strong>0.054 N</strong></p>
+      <p>同符号なので斥力。クーロンの法則 F = kQ₁Q₂/r²。</p>
+    </details>
+    <p><strong>問2:</strong> +Q₁ と −Q₂ の 2 点電荷がある。電位がゼロになる点は何箇所か。</p>
+    <details>
+      <summary>解答</summary>
+      <p>異符号の場合、V=0 となる点は<strong>2箇所</strong>（2電荷の内側に 1 点、外側に 1 点）。同符号では V=0 の点は存在しない。詳しい解き方は <a href="#" onClick={(e)=>{e.preventDefault(); switchTab('explain');}} style={{ textDecoration: "underline" }}>解説タブ 5節</a>。</p>
+    </details>
+
+    <h2 id="r07k-q17"><span className="h-num">3</span>R07上 問17 解法カード — 導体球の接触と力の釣り合い位置</h2>
+    <SectionCheck pageId="coulomb-field" sectionId="r07k-q17" />
+    <ExamQuestion
+      year="令和7年上期"
+      qNum="17(b)"
+      question="大きさの等しい導体球A（+4×10⁻⁸C）とB（+6×10⁻⁸C）を中心間距離 0.3m で固定する（このとき (a) で反発力 2.4×10⁻⁴N から比例定数 k=9×10⁹ N·m²/C² が求まっている）。電荷を持たない同じ大きさの導体球Cを、まずAに接触させ、次にBに接触させてから、AとBを結ぶ直線上に置く。Cに働く力が釣り合う位置の、Aからの中心間距離 [m] を求めよ。"
+      choices={[
+        "① 0.095",
+        "② 0.105",
+        "③ 0.115",
+        "④ 0.124 ← 正解",
+      ]}
+      note="同じ大きさの導体球同士の接触 = 合計電荷を等分配。出典: 電験王 (denken-ou.com/rironr7-1-17)"
+    />
+    <SolveFlow
+      type="接触による電荷分配 + 釣り合い位置"
+      steps={[
+        "接触1（CをAに）: 合計 4×10⁻⁸ を等分 → A′ = C = 2×10⁻⁸ C",
+        "接触2（CをBに）: 合計 (2+6)×10⁻⁸ を等分 → B′ = C = 4×10⁻⁸ C",
+        "釣り合い条件: Q_A′/x² = Q_B′/(0.3−x)² （Cの電荷とkは両辺で消える）",
+        "代入整理: 2/x² = 4/(0.3−x)² → (0.3−x)² = 2x² → x²+0.6x−0.09 = 0",
+        "解の公式: x = (−0.6+√0.72)/2 ≈ 0.124 m。A′(小さい電荷)側に寄ることを確認",
+      ]}
+    />
+    <ExamAnswer
+      correct="④ 0.124"
+      explanations={[
+        { choice: "①", mark: "×", reason: "0.095 を釣り合い条件に代入すると A 側の力が B 側より大きく不成立（2/0.095² ≈ 222 ≫ 4/0.205² ≈ 95）" },
+        { choice: "②", mark: "×", reason: "0.105 でも 2/0.105² ≈ 181 ＞ 4/0.195² ≈ 105 で A 側が強く不成立" },
+        { choice: "③", mark: "×", reason: "0.115 でも 2/0.115² ≈ 151 ＞ 4/0.185² ≈ 117 で釣り合わない" },
+        { choice: "④", mark: "○", reason: "x = √Q_A′/(√Q_A′+√Q_B′)×d = √2/(√2+2)×0.3 = 0.3/(1+√2) ≈ 0.124 m。代入検算 2/0.124² ≈ 130 ≒ 4/0.176² ≈ 129 で釣り合う" },
+      ]}
+    />
+    <Callout variant="warn" title="本問のひっかけポイント（5項目）">
+      <ol>
+        <li><strong>接触の見落とし</strong>：元の電荷 4 と 6 のまま釣り合い計算をすると別の値になる。「接触」とあったら必ず等分配後の電荷で計算</li>
+        <li><strong>等分配は「同じ大きさの導体球」が条件</strong>：大きさが違えば等分にならない（容量比で分配）</li>
+        <li><strong>2回目の接触は「2+6=8 の等分」</strong>：Cが1回目で得た 2×10⁻⁸ を持ったままBに触れる。6 の等分（3ずつ）ではない</li>
+        <li><strong>釣り合い位置は小さい電荷側</strong>：A′=2＜B′=4 なので中点(0.15)より A 寄り。0.176 など B 寄りの値が出たら測る起点を取り違えている</li>
+        <li><strong>√比の公式</strong>：x = √Q₁/(√Q₁+√Q₂)×d。電荷比 2:4 をそのまま使う（x = 2/6×0.3 = 0.1）のは誤り</li>
+      </ol>
+    </Callout>
+
+    <h2 id="z-3conditions"><span className="h-num">4</span>3条件即答チェック（限界的練習ゾーン）</h2>
+    <SectionCheck pageId="coulomb-field" sectionId="z-3conditions" />
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
+      「解ける／解けない」の境界を強制発火させる練習。<strong>同一の点電荷で F・E・V の3量</strong>を即答し、典型誤答3択でセルフ判定。<strong>3条件すべて正答できれば A 問題対応 OK</strong> の目安。
+    </p>
+    <Callout variant="info" title="共通設定">
+      <p><strong>真空中に点電荷 Q = 4μC。距離 r = 0.3 m の点 P を考える。k = 9×10⁹ N·m²/C²。</strong></p>
+    </Callout>
+    <p style={{ marginTop: 12 }}><strong>即答してから下の解答を開くこと</strong>（暗算 30 秒目安）。</p>
+    <table className="data-table">
+      <thead><tr><th>条件</th><th>求める量</th><th>使う式</th></tr></thead>
+      <tbody>
+        <tr><td><strong>① 電界</strong></td><td>P 点の電界の強さ E [V/m]</td><td>E = kQ/r²</td></tr>
+        <tr><td><strong>② 電位</strong></td><td>P 点の電位 V [V]</td><td>V = kQ/r</td></tr>
+        <tr><td><strong>③ 力</strong></td><td>P 点に q = 1μC を置いたとき受ける力 F [N]</td><td>F = qE</td></tr>
+      </tbody>
+    </table>
+    <details style={{ marginTop: 10, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6 }}>
+      <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答の導出（3条件まとめて）</summary>
+      <p><strong>① 電界</strong>: E = 9×10⁹ × 4×10⁻⁶ / 0.3² = 3.6×10⁴ / 0.09 = <strong>4×10⁵ V/m</strong></p>
+      <p><strong>② 電位</strong>: V = 9×10⁹ × 4×10⁻⁶ / 0.3 = 3.6×10⁴ / 0.3 = <strong>1.2×10⁵ V</strong></p>
+      <p><strong>③ 力</strong>: F = qE = 1×10⁻⁶ × 4×10⁵ = <strong>0.4 N</strong>（検算: F = kQq/r² = 9×10⁹×4×10⁻¹²/0.09 = 0.4 N で一致）</p>
+    </details>
+    <Callout variant="warn" title="典型誤答3択（自己採点用）">
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.8 }}>
+        <li><strong>② で「V = 4×10⁵ V」と答えた</strong>（誤）⇒ それは E の値。V = kQ/r は <strong>r の1乗</strong>で割る（E だけが r²）</li>
+        <li><strong>桁が10⁶ ずれた</strong>（誤）⇒ μC の変換忘れ。代入前に 4μC = 4×10⁻⁶ C へ直す習慣をつける</li>
+        <li><strong>③ で「F = 1.6 N」と答えた</strong>（誤）⇒ F = qE の q に源の 4μC を入れている。力を受けるのは<strong>置かれた電荷 q = 1μC</strong></li>
+      </ol>
+    </Callout>
+    <Callout variant="tip" title="セルフ判定">
+      <p><strong>3条件すべて即答</strong> ⇒ A 問題対応 OK。<strong>1 問でも誤答</strong> ⇒ <a href="#" onClick={(e)=>{e.preventDefault(); switchTab('explain');}} style={{ textDecoration: "underline" }}>解説タブ 2節（メタ認知）</a>で自分の脳内バグを特定してから公式タブ 1節へ。</p>
+    </Callout>
+
+    <h2 id="kakomon"><span className="h-num">5</span>出題実績（H18〜R07上期）</h2>
+    <SectionCheck pageId="coulomb-field" sectionId="kakomon" />
+    <p style={{ fontSize: "12px", color: "var(--ink-soft)" }}>
+      出典: 電験王3（denken-ou.com）H18〜R07上期。電磁気（静電界）からクーロン力・電界・電位を抽出。コンデンサ系は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('capacitor');}} style={{ textDecoration: "underline" }}>1.2 コンデンサ</a> を参照。
+    </p>
+    <table className="data-table">
+      <thead>
+        <tr><th>年度</th><th>問</th><th>形式</th><th>何が問われたか</th><th>カバー</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>R07上</td><td>問17</td><td>計算</td><td>導体球間に加わる力及び力が釣り合う位置の導出</td><td>✅ 本ページ完結（セクション3 解法カード）</td></tr>
+        <tr><td>R06下</td><td>問2</td><td>計算</td><td>地球を導体球と見なしたときの静電容量</td><td>✅ 本ページ完結（公式タブ C=4πε₀r）</td></tr>
+        <tr><td>R06上</td><td>問2</td><td>計算</td><td>空気中の導体球に帯電できる電荷量</td><td>△ E=kQ/r² はカバー・絶縁破壊電界の条件値は問題文から</td></tr>
+        <tr><td>R05下</td><td>問2</td><td>計算</td><td>帯電した導体球に働く力</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>R05上</td><td>問2</td><td>論説</td><td>静電界における電気力線の特徴</td><td>✅ 本ページ完結（公式タブ 3節）</td></tr>
+        <tr><td>R04下</td><td>問1</td><td>計算</td><td>電気力線の特徴からの電気量の導出</td><td>✅ 本ページ完結（N=Q/ε₀）</td></tr>
+        <tr><td>R04下</td><td>問2</td><td>計算</td><td>平行平板コンデンサ内の電気力線の特徴と導体球の電位</td><td>△ 平行平板部は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('capacitor');}}>コンデンサ</a> 参照</td></tr>
+        <tr><td>R04下</td><td>問17</td><td>計算</td><td>導体球間に加わる力及び力が釣り合う位置の導出</td><td>✅ 本ページ完結（セクション3 と同型）</td></tr>
+        <tr><td>R04上</td><td>問2</td><td>計算</td><td>クーロンの法則による点電荷に加わる力の導出</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>R03</td><td>問2</td><td>論説</td><td>絶縁体の液体で満たしたときの小球間に働く静電力</td><td>✅ 本ページ完結（解説タブ 7節）</td></tr>
+        <tr><td>R02</td><td>問1</td><td>計算</td><td>点電荷に加わるエネルギーによる電位の変化</td><td>✅ 本ページ完結（W=QΔV）</td></tr>
+        <tr><td>R02</td><td>問2</td><td>論説</td><td>十分に長い導体円柱の電気力線の様子</td><td>△ 力線の性質はカバー・円柱対称の式は範囲外</td></tr>
+        <tr><td>R01</td><td>問1</td><td>計算</td><td>点電荷がつくる電位差の導出</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>R01</td><td>問15</td><td>計算</td><td>静電界における電気力線及び仕事量</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>H30</td><td>問1</td><td>計算</td><td>帯電した導体球に関する計算</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>H29</td><td>問1</td><td>論説</td><td>電気力線に関する論説</td><td>✅ 本ページ完結（公式タブ 3節）</td></tr>
+        <tr><td>H28</td><td>問1</td><td>計算</td><td>点電荷の等電位面</td><td>✅ 本ページ完結（解説タブ 3節）</td></tr>
+        <tr><td>H26</td><td>問2</td><td>穴埋</td><td>静電気に関する空欄穴埋</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>H26</td><td>問17</td><td>計算</td><td>真空中の電荷に働く力</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>H25</td><td>問2</td><td>計算</td><td>クーロンの法則</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>H25</td><td>問17</td><td>計算</td><td>空気中の電荷を帯びた金属球</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>H23</td><td>問1</td><td>論説</td><td>静電界における電気力線や電界・電荷に関する論説</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>H22</td><td>問1</td><td>計算</td><td>正負の点電荷を置いたとき電位が零となる点の特定</td><td>✅ 本ページ完結（解説タブ 5節）</td></tr>
+        <tr><td>H22</td><td>問17</td><td>計算</td><td>正三角形上に置かれた点電荷に働く力</td><td>△ 手順は解説タブ 5節・具体計算例は未収録</td></tr>
+        <tr><td>H20</td><td>問1</td><td>計算</td><td>正三角形上に配置された複数の点電荷による合成電界</td><td>△ 手順は解説タブ 5節・具体計算例は未収録</td></tr>
+        <tr><td>H20</td><td>問17</td><td>計算</td><td>導体球間に加わる力及び力が釣り合う位置の導出</td><td>✅ 本ページ完結（セクション3 と同型）</td></tr>
+        <tr><td>H19</td><td>問3</td><td>計算</td><td>電気力線の特徴からの未知の電荷の導出</td><td>✅ 本ページ完結（解説タブ 4節）</td></tr>
+        <tr><td>H18</td><td>問1</td><td>計算</td><td>非常に大きな導体球の静電容量</td><td>✅ 本ページ完結（公式タブ C=4πε₀r）</td></tr>
+      </tbody>
+    </table>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>→ 出題頻度: <strong>★★★★</strong>（毎年度 1〜2 問・問1・問2・問17 から出題。理論の開幕テーマ）</p>
+
+    <h2 id="interleaving"><span className="h-num">6</span>混同しやすい他テーマ（Interleaving）</h2>
+    <SectionCheck pageId="coulomb-field" sectionId="interleaving" />
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
+      本テーマと<strong>並ぶと迷う</strong>他テーマを Top 3 で並置。同じ問題形式でも判別ポイントが違う点を明示し、themed silo を打破する。
+    </p>
+    <table className="data-table">
+      <thead>
+        <tr>
+          <th>混同テーマ</th>
+          <th>なぜ混同するか</th>
+          <th>見分け方</th>
+          <th>代表問題</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="#" onClick={(e)=>{e.preventDefault(); onNav('capacitor');}}>1.2 コンデンサ</a></td>
+          <td>同じ ε₀ε_r と E=V/d を使い、電界・電位を問う形も同じに見える</td>
+          <td><strong>電荷が「点」か「極板（面）」か</strong>。点電荷なら 1/r² 系・平行平板なら E=V/d の一様電界</td>
+          <td>R06上 問1（誘電体を挿入した平行平板内の等電位線分布）</td>
+        </tr>
+        <tr>
+          <td><a href="#" onClick={(e)=>{e.preventDefault(); onNav('electron-motion');}}>5.4 電子の運動</a></td>
+          <td>同じ F=qE から始まるが、向こうは加速度・速度・軌道（運動学）まで進む</td>
+          <td><strong>問われるのが「力・場」か「速度・軌道・時間」か</strong>。運動なら ma=qE・eV=½mv² へ接続</td>
+          <td>問12 固定枠（電界中の電子の加速 eV=½mv²・ほぼ毎回出題）</td>
+        </tr>
+        <tr>
+          <td><a href="#" onClick={(e)=>{e.preventDefault(); onNav('electromagnetic-force');}}>1.3 電磁力</a></td>
+          <td>F=QE（電界からの力）と F=BIl・F=qvB（磁界からの力）が「場から受ける力」として同形</td>
+          <td><strong>場の種類</strong>: E [V/m] は静止電荷にも働く・B [T] は動く電荷（電流）にだけ働く</td>
+          <td>R06下 問4（電流を流した平行導体間に加わる力の方向）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="act-summary"><span className="h-num">7</span>🔄 弱点セクション再読</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+      △ / × / 未 のセクションを優先して再読しよう。理解度ボタンを更新すると自動で再集計される。
+    </p>
+    <SectionCheckSummary
+      pageId="coulomb-field"
+      sections={[
+        { id: "solver-flow",   label: "1. 解法フロー" },
+        { id: "examples",      label: "2. 例題" },
+        { id: "r07k-q17",      label: "3. R07上問17 解法カード" },
+        { id: "z-3conditions", label: "4. 3条件即答チェック" },
+        { id: "kakomon",       label: "5. 出題実績" },
+        { id: "interleaving",  label: "6. 混同テーマ" },
+        { id: "exam-5sec",     label: "8. 本番5秒チェック" },
+      ]}
+      onJump={(id) => {
+        location.hash = 'coulomb-field:learn';
+        setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 100);
+      }}
+    />
+
+    <h2 id="exam-5sec"><span className="h-num">8</span>本番5秒チェック（試験トリアージ）</h2>
+    <SectionCheck pageId="coulomb-field" sectionId="exam-5sec" />
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
+      本番で<strong>静電気が出た瞬間に開く3点</strong>。知識ではなく「最初に何を見るか」の手順で失点を防ぐ。
+    </p>
+    <Callout variant="warn" title="⏱️ 本番でこのテーマが出たら">
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.9 }}>
+        <li><strong>まず何を見る</strong>：問われている量は<strong>力・電界（ベクトル）か、電位・仕事（スカラー）か</strong>。電荷の符号と、媒質（真空か比誘電率 ε_r か）。</li>
+        <li><strong>絶対に見落とせない条件</strong>：<strong>F・E は r²、V は r</strong>（冪が違う）。r は中心間距離。μC=10⁻⁶。電位・仕事はスカラー代数和。</li>
+        <li><strong>典型ひっかけ</strong>：電界の向きを電子の移動方向と取り違える／ε_r の掛け忘れ・二重掛け／釣り合い位置を「大きい電荷側」と誤答（正しくは<strong>小さい電荷側</strong>・√比）。</li>
+      </ol>
+    </Callout>
+  </>
+);
+
 const CoulombFieldPage = ({ onNav }) => (
   <>
     <MetaStrip difficulty="★★★" importance="A" frequency="高" />
@@ -7805,113 +8366,23 @@ const CoulombFieldPage = ({ onNav }) => (
       onNav={onNav}
     />
 
-    <h2 id="principle"><span className="h-num">1</span>原理（なぜ起きるか）</h2>
-    <Analogy type="gravity" icon="🌍">
-      重力と同じ「距離の逆二乗則」に従う。電界は「その場に置いた +1C の電荷が受ける力の向きと大きさの地図」。電位は「高さ」のアナロジー：高いところから低いところへ電荷は動く。電池の+極が「山の頂上」、−極が「谷底」のイメージ。
-    </Analogy>
-    <p>
-      電界と電位の関係：急峻な「坂（電位差）」ほど電界が強い。<strong>平坦な場所（等電位面）では電界がゼロ</strong>。電位 V はスカラー量なので、複数の点電荷がある場合は符号だけ考慮して代数和で求められる。
-    </p>
-
-    <h2 id="formulas"><span className="h-num">2</span>公式</h2>
-    <FormulaTable
-      layer="A"
-      rows={[
-        {
-          formula: "F = Q_1 Q_2 / (4\\pi\\varepsilon_0 r^2)",
-          meaning: "クーロンの法則：2電荷間の静電力",
-          when: "真空中・点電荷",
-          notWhen: "誘電体中（ε₀→ε₀εr に置換）",
-        },
-        {
-          formula: "E = Q / (4\\pi\\varepsilon_0 r^2)",
-          meaning: "点電荷が作る電界の強さ",
-          when: "真空中・点電荷から距離 r",
-          notWhen: "分布電荷・複数電荷（重ね合わせが必要）",
-        },
-        {
-          formula: "V = Q / (4\\pi\\varepsilon_0 r)",
-          meaning: "点電荷が作る電位（無限遠基準）",
-          when: "真空中・点電荷から距離 r",
-          notWhen: "—",
-        },
-        {
-          formula: "W = Q(V_A - V_B)",
-          meaning: "電荷 Q を VB → VA へ移動させる仕事",
-          when: "任意の電界中（経路によらない）",
-          notWhen: "—",
-        },
-        {
-          formula: "E = V/d",
-          meaning: "平行平板間の一様電界",
-          when: "均一な電場（平行平板コンデンサ）",
-          notWhen: "点電荷・球対称など",
-        },
-        {
-          formula: "C = 4\\pi\\varepsilon_0 r",
-          meaning: "孤立した導体球（半径 r）の静電容量",
-          when: "球形導体・無限遠基準",
-          notWhen: "平行平板など他の形状",
-        },
+    <PageTabs
+      pageId="coulomb-field"
+      defaultTab="formulas"
+      tabs={[
+        { id: "formulas", label: "公式", icon: "📐" },
+        { id: "explain",  label: "解説", icon: "🧠" },
+        { id: "learn",    label: "学習", icon: "🎯" },
       ]}
-    />
-
-    <h2 id="comparison"><span className="h-num">3</span>比較・まとめ</h2>
-    <table>
-      <thead>
-        <tr><th>項目</th><th>クーロン力</th><th>重力</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>法則</td><td>F ∝ Q₁Q₂/r²</td><td>F ∝ m₁m₂/r²</td></tr>
-        <tr><td>距離依存</td><td>逆二乗</td><td>逆二乗</td></tr>
-        <tr><td>向き</td><td>異符号：引力、同符号：斥力</td><td>常に引力</td></tr>
-        <tr><td>重ね合わせ</td><td>成立（線形）</td><td>成立</td></tr>
-      </tbody>
-    </table>
-    <table>
-      <thead>
-        <tr><th>項目</th><th>導体</th><th>絶縁体（誘電体）</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>静電平衡時の内部電界</td><td><strong>ゼロ</strong></td><td>ゼロでない場合あり</td></tr>
-        <tr><td>電荷の分布</td><td><strong>表面のみ</strong></td><td>体積全体に分布可</td></tr>
-        <tr><td>内部の電位</td><td><strong>一定（等電位体）</strong></td><td>位置によって異なる</td></tr>
-      </tbody>
-    </table>
-
-    <h2 id="examples"><span className="h-num">4</span>例題</h2>
-    <p><strong>問:</strong> 真空中で 2μC と 3μC の点電荷が 1m 離れている。クーロン力の大きさを求めよ。（k=9×10⁹ N·m²/C²）</p>
-    <details>
-      <summary>解答</summary>
-      <p>F = k×Q₁×Q₂/r² = 9×10⁹ × 2×10⁻⁶ × 3×10⁻⁶ / 1² = <strong>0.054 N</strong></p>
-      <p>同符号なので斥力。クーロンの法則 F = kQ₁Q₂/r²。</p>
-    </details>
-    <p><strong>問:</strong> +Q₁ と −Q₂ の 2 点電荷がある。電位がゼロになる点は何箇所か。</p>
-    <details>
-      <summary>解答</summary>
-      <p>異符号の場合、V=0 となる点は<strong>2箇所</strong>（2電荷の内側に 1 点、外側に 1 点）。同符号では V=0 の点は存在しない。</p>
-    </details>
-
-    <h2 id="traps"><span className="h-num">5</span>引っかけポイント</h2>
-    <Callout variant="warn" title="電界の向きは電子の動く向きではない">
-      電界の向きは「正電荷が受ける力の向き」＝ +極（高電位）から −極（低電位）へ。電子の移動方向は逆（−から+へ移動）。
-    </Callout>
-    <Callout variant="warn" title="誘電体中はε₀→ε₀εr に置換">
-      誘電体（比誘電率 εr）中ではクーロン力は F = Q₁Q₂/(4πε₀εr r²)。εr＞1 なので真空中より力が弱くなる。問題文に「比誘電率」が出たら必ず確認。
-    </Callout>
-    <Callout variant="tip" title="仕事が問われたら「まず電位を求める」">
-      電位はスカラーなので向きを気にせず足し算できる。W=QΔV が最短手順。電界の積分を直接計算しようとすると時間を消費する。
-    </Callout>
-    <Callout variant="warn" title="釣り合い位置は大きい電荷側ではなく小さい電荷側に近い">
-      同符号の 2 点電荷 Q₁、Q₂（Q₁＜Q₂）間の釣り合い位置は x = √Q₁/(√Q₁+√Q₂)×d。Q₁ の方が小さいので Q₁ に近い側（Q₂ から遠い側）に存在する。
-    </Callout>
-
-    <h2 id="related"><span className="h-num">6</span>関連項目</h2>
-    <ul>
-      <li>コンデンサ（1.2）：平行平板コンデンサの電界 E=V/d はここの延長</li>
-      <li>磁気回路（1.4）：電気回路との双対アナロジー</li>
-      <li>直流回路（2.1）：電位計算は直流回路の電圧計算と同じ手順</li>
-    </ul>
+    >
+      {(activeTab, switchTab) => (
+        <>
+          {activeTab === 'formulas' && <CoulombFieldFormulasTab onNav={onNav} switchTab={switchTab} />}
+          {activeTab === 'explain'  && <CoulombFieldExplainTab  onNav={onNav} switchTab={switchTab} />}
+          {activeTab === 'learn'    && <CoulombFieldLearnTab    onNav={onNav} switchTab={switchTab} />}
+        </>
+      )}
+    </PageTabs>
 
     <PageNav
       prev={{ id: "home", title: "ホーム" }}
@@ -7923,7 +8394,7 @@ const CoulombFieldPage = ({ onNav }) => (
 
 /* ============================================================
    1.3 電磁力 (electromagnetic-force) — v3 3タブ統合 + Sクラス昇格
-   SymbolLegend / ChunkHierarchy / 5秒5項目 / メタ認知3列+受験者自己観察3点 /
+   SymbolLegend / ChunkHierarchy / 5秒5項目 / メタ認知3列+監修者自己観察3点 /
    フレミング左右手の4視点 / 汎用解法フロー / 限界練習 / カバー列 / 関連項目onNav
    ============================================================ */
 
@@ -7971,6 +8442,22 @@ const ElectromagneticForceChunkHierarchy = () => (
 const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
   <>
     <ElectromagneticForceSymbolLegend />
+
+    <DefinitionCallout symbol="電磁力 F">
+      <p style={{ margin: "0 0 8px 0" }}>
+        磁界の中に置いた導体に電流を流すと、導体は力を受ける。これが <strong>電磁力 F</strong>（モーターの原理そのもの）：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="F = BIl\sin\theta\;[\mathrm{N}] \quad\text{（電荷1個では } F = qvB\text{）}" />
+      </p>
+      <p style={{ margin: "0 0 8px 0" }}>
+        単位は <strong>N（ニュートン）</strong>。磁束密度 B [T = Wb/m²] は「磁界の濃さ」で、<strong>1 T の磁界中で 1 A・1 m の導体が受ける力が 1 N</strong>。θ は電流と磁界のなす角（直角で最大・平行でゼロ）。
+      </p>
+      <p style={{ margin: 0 }}>
+        因果でつなぐと <strong>B 濃い／I 大きい／l 長い → F 大</strong>、向きは <strong>フレミング左手</strong>（中=電流・人差し=磁界・親指=力）。発電は同じ構造の逆向き（運動→起電力・右手）で、<strong>「左手モーター・右手発電機」のペア</strong>で覚えると混同しない。F = qvB は同じ力を電荷1個分で見たミクロ表現（F = BIl は qvB の集団版）。
+      </p>
+    </DefinitionCallout>
+
     <ElectromagneticForceChunkHierarchy />
 
     <Callout variant="tip" title="⚡ 5秒で思い出す">
@@ -8200,14 +8687,14 @@ const ElectromagneticForceExplainTab = ({ onNav, switchTab }) => (
       </tbody>
     </table>
 
-    <Callout variant="info" title="🧑 受験者自己観察（2026-05-30 追加・AI 起案・要本人承認）">
-      <p style={{ marginBottom: 8 }}>上記6項目は一般受験生の典型パターン。<strong>受験者本人の自己観察として AI が予測した3点</strong>（本人 review 前）が以下。S クラス昇格の核心：</p>
+    <Callout variant="info" title="🧑 監修者さん自己観察（2026-05-30 追加・AI 起案・要本人承認）">
+      <p style={{ marginBottom: 8 }}>上記6項目は一般受験生の典型パターン。<strong>監修者さん本人の自己観察として AI が予測した3点</strong>（本人 review 前）が以下。S クラス昇格の核心：</p>
       <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
         <li><strong>① フレミング左手と右手のどちらか毎回考え直す</strong> → <strong>予想される現状</strong>：症状①と同じ。「親指が違う」は知ってるが、力を求めるか起電力を求めるか問題文を読み返してから手を選ぶ手間。<strong>記憶補助案（AI 草案・要承認）</strong>：「<strong>F なら左・e なら右</strong>」「<strong>モーターは電流を与える→電気が左に入る→左手</strong>」「<strong>発電機は動きを与える→電気が右に出る→右手</strong>」（4節「4視点 Callout」で4方向から定着）</li>
         <li><strong>② 形状別磁界 H の式が瞬時に出ない（直線 H=I/(2πr) / 円形 H=NI/(2r) / 環状 H=NI/l）</strong> → <strong>予想される現状</strong>：症状③と同じ。π の有無 + N の有無で混乱・覚えても1週間で抜ける。<strong>本ページ 6節で π の有無の物理的起源（積分対称性）を明示</strong>→ 暗記でなく導出で覚え直す</li>
         <li><strong>③ e=−N dΦ/dt と e=−L dI/dt の混同</strong> → <strong>予想される現状</strong>：症状④と同じ。ファラデー基本と自己誘導の境界が曖昧。<strong>本ページ 5節で「変化する量（Φ か I か）で式を選ぶ」というシンプルな分岐に整理</strong>＋ファラデーの<strong>3形式（e=−dΦ/dt / e=−N dΦ/dt / e=−L dI/dt）の使い分け表</strong>を提供</li>
       </ul>
-      <p style={{ marginTop: 10, fontSize: 12, color: "var(--ink-soft)" }}>※ ac-power #95 / rlc-resonance #90 と同型の「受験者自己観察 input」枠。AI 草案部分は「<code>本人 review 前</code>」マーカー。受験者本人の追記が来たら正式版に差し替え予定。</p>
+      <p style={{ marginTop: 10, fontSize: 12, color: "var(--ink-soft)" }}>※ ac-power #95 / rlc-resonance #90 と同型の「監修者自己観察 input」枠。AI 草案部分は「<code>本人 review 前</code>」マーカー。監修者さん本人の追記が来たら正式版に差し替え予定。</p>
     </Callout>
 
     <h2 id="fleming-detail"><span className="h-num">3</span>フレミング左右手の指の対応詳説</h2>
@@ -8225,7 +8712,7 @@ const ElectromagneticForceExplainTab = ({ onNav, switchTab }) => (
     </Callout>
 
     <h2 id="fleming-4views"><span className="h-num">4</span>フレミング左右手の4視点まとめ</h2>
-    <Callout variant="tip" title="🧐 同じ「F・e・B・v・I の関係」を4つの異なる側面から見る（受験者自己観察①直接対応）">
+    <Callout variant="tip" title="🧐 同じ「F・e・B・v・I の関係」を4つの異なる側面から見る（監修者自己観察①直接対応）">
       <p>フレミングの左右手の使い分けは<strong>同じローレンツ力 F=qv×B を4つの違う側面で表現</strong>している。1つでも腑に落ちれば全て繋がる（ac-power 力率4視点 / rlc-resonance Q値4視点と同型）。</p>
       <table className="data-table" style={{ marginTop: 8 }}>
         <thead>
@@ -8276,7 +8763,7 @@ const ElectromagneticForceExplainTab = ({ onNav, switchTab }) => (
         <tr><td><Eq tex="e = -L\,dI/dt" inline /></td><td>自己誘導（コイル自身の電流変化）</td><td>電流 I</td><td>インダクタンス L が与えられる回路問題</td></tr>
       </tbody>
     </table>
-    <Callout variant="warn" title="変化する量で式を選ぶ（受験者自己観察③直接対応）">
+    <Callout variant="warn" title="変化する量で式を選ぶ（監修者自己観察③直接対応）">
       <p><strong>磁束 Φ が与えられたら −N dΦ/dt</strong>・<strong>電流 I が変化するなら −L dI/dt</strong>。「両方とも誘導起電力だから1個でいい」は誤り。<strong>変化する量が違う</strong>ので別公式。</p>
       <p>誤答パターン: ファラデー基本形を <code>e = −L dΦ/dt</code> と書く ← <strong>Φ が与えられたら L は出てこない</strong>。L が出るのは電流 I の変化が主役のとき。</p>
     </Callout>
@@ -8305,7 +8792,7 @@ const ElectromagneticForceExplainTab = ({ onNav, switchTab }) => (
       <strong>日常感覚と逆</strong>：「反対のものが引き合う」（電荷の Coulomb 力）と<strong>逆</strong>になる。<strong>3本以上ならベクトル和</strong>で合成（R04下問4 タイプ）。
     </p>
 
-    <h3>形状別磁界 H の物理的起源（受験者自己観察②直接対応）</h3>
+    <h3>形状別磁界 H の物理的起源（監修者自己観察②直接対応）</h3>
     <p>
       <strong>直線電流 H=I/(2πr)</strong>：アンペア周回路則 <Eq tex="\oint \vec{H}\cdot d\vec{l} = I" inline /> を半径 r の円で積分 → <Eq tex="H \cdot 2\pi r = I" inline /> → <Eq tex="H = I/(2\pi r)" inline />。<strong>2πr は円周</strong>。
     </p>
@@ -8743,7 +9230,7 @@ const MagneticCircuitPage = ({ onNav }) => (
     </table>
 
     <p style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 14, marginBottom: 6 }}>
-      <strong>磁気量と単位記号の対応</strong> — 「量と単位記号の正しい組合せ」を問う論説（R06上 問3 型）対策。記号の取り違えが失点源。
+      <strong>磁気量と単位記号の対応</strong> — 「量と単位記号の正しい組合せ」を問う論説（R06上 問3 型）対策。<strong>R6上・R6下・R7上と直近3期連続で出題された頻出論説</strong>（旧「捨て候補」評価から格上げ）。記号の取り違えが失点源。
     </p>
     <table>
       <thead>
@@ -8853,6 +9340,22 @@ const DcCircuitSymbolLegend = () => (
 const DcCircuitFormulasTab = ({ onNav, switchTab }) => (
   <>
     <DcCircuitSymbolLegend />
+
+    <DefinitionCallout symbol="オームの法則と抵抗 R">
+      <p style={{ margin: "0 0 8px 0" }}>
+        導体に電圧 V を加えると電流 I が流れる。両者の比が <strong>抵抗 R</strong>：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="V \;=\; I\,R \quad\Longleftrightarrow\quad R \;=\; \dfrac{V}{I}\quad[\Omega]" />
+      </p>
+      <p style={{ margin: "0 0 8px 0" }}>
+        単位は <strong>オーム Ω ＝ V/A</strong>。<strong>「1 V の電圧で 1 A の電流を流す素子が 1 Ω」</strong>（消費電力で見れば 1 Ω＝1 A 流したときに 1 W 消費する素子）。
+      </p>
+      <p style={{ margin: 0 }}>
+        因果でつなぐと <strong>R が大きい → 同じ電圧で流れる電流が小さい → 電流が流れにくい</strong>。R は <strong>電流そのものを妨げる素子</strong>で、エネルギーを <strong>熱として消費</strong>（不可逆）する。コイル L（電流の<strong>変化</strong>を妨げる）／コンデンサ C（電圧の<strong>変化</strong>を妨げる）と双対関係にあり、3素子の <strong>R／L／C 比較</strong>がDC・AC両分野の入口になる。
+      </p>
+    </DefinitionCallout>
+
     <DcCircuitChunkHierarchy />
 
     <Callout variant="tip" title="⚡ 5秒で思い出す">
@@ -9185,6 +9688,21 @@ const DcCircuitLearnTab = ({ onNav, switchTab }) => (
       </ol>
     </Callout>
 
+    <Callout variant="tip" title="なぜ R = r（内部抵抗）で消費電力が最大になるか — 微分なしの導出">
+      <p style={{ marginBottom: 8 }}>
+        起電力 <Eq tex="E" inline />・内部抵抗 <Eq tex="r" inline /> の電源に可変抵抗 <Eq tex="R" inline /> を直列接続した素の回路で考える（テブナン等価では <Eq tex="V_{th}=E,\ R_{th}=r" inline />）。
+      </p>
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 2.0 }}>
+        <li>電流は <Eq tex="I = \dfrac{E}{R+r}" inline />、R の消費電力は <Eq tex="P = R I^2 = \dfrac{E^2 R}{(R+r)^2}" inline /></li>
+        <li>分子・分母を <Eq tex="R" inline /> で割ると <Eq tex="P = \dfrac{E^2}{\ R + \dfrac{r^2}{R} + 2r\ }" inline /> → <strong>分母が最小なら P 最大</strong></li>
+        <li>相加相乗平均より <Eq tex="R + \dfrac{r^2}{R} \ge 2\sqrt{R\cdot\dfrac{r^2}{R}} = 2r" inline />（等号は <Eq tex="R = r" inline /> のとき）</li>
+        <li>よって分母の最小値は <Eq tex="2r + 2r = 4r" inline />、このとき <Eq tex="P_{max} = \dfrac{E^2}{4r}" inline /></li>
+      </ol>
+      <p style={{ marginTop: 8, fontSize: 13 }}>
+        一般のテブナン回路は <Eq tex="E \to V_{th},\ r \to R_{th}" inline /> と読み替えれば <Eq tex="R_L = R_{th}" inline />・<Eq tex="P_{max} = \dfrac{V_{th}^2}{4R_{th}}" inline /> と同形。<strong>単電源の素の回路なら「R<sub>th</sub> ＝ 内部抵抗 r」</strong>なので、R03問7のような電池＋可変抵抗でも最大条件は <strong>R = r</strong>。微分が苦手でも相加相乗平均で同じ結論に到達できる。
+      </p>
+    </Callout>
+
     <h2 id="z-3conditions"><span className="h-num">4</span>3条件即答チェック（限界的練習ゾーン）— 最大電力 vs 効率</h2>
     <SectionCheck pageId="dc-circuit" sectionId="z-3conditions" />
     <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
@@ -9407,6 +9925,22 @@ const AcBasicsChunkHierarchy = () => (
 const AcBasicsFormulasTab = ({ onNav, switchTab }) => (
   <>
     <AcBasicsSymbolLegend />
+
+    <DefinitionCallout symbol="角周波数 ω">
+      <p style={{ margin: "0 0 8px 0" }}>
+        交流の電圧・電流は時間 t に対して正弦波で振動する。<strong>角周波数 ω</strong> は <strong>1秒あたりに進む位相角（rad）</strong>＝ 振動の「角速度」：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="\omega \;=\; 2\pi f \;=\; \dfrac{2\pi}{T}\quad[\mathrm{rad/s}]" />
+      </p>
+      <p style={{ margin: "0 0 8px 0" }}>
+        単位は <strong>rad/s（毎秒ラジアン）</strong>。周波数 f [Hz] が「1秒あたりの振動回数」、周期 T [s] が「1振動の時間」。三者は <Eq tex="\omega = 2\pi f = 2\pi/T" inline /> で1対1に対応する（例: f=50 Hz → ω≈314 rad/s）。
+      </p>
+      <p style={{ margin: 0 }}>
+        因果でつなぐと <strong>f が大きい → 単位時間の振動回数が多い → ω は大きい（位相が速く進む）</strong>。ω は <strong>電気の角速度</strong>＝回転体の角速度の電気版で、<strong>フェーザー（位相子）</strong>として円運動として可視化される（v(t)=V_m sin(ωt+φ) は反時計回りに回る矢印の縦軸射影）。R/L/C の振る舞いを支配する量で、<a href="#" onClick={(e) => { e.preventDefault(); onNav('inductance'); }} style={{ textDecoration: "underline" }}>X_L = ωL</a> ／ <a href="#" onClick={(e) => { e.preventDefault(); onNav('capacitor'); }} style={{ textDecoration: "underline" }}>X_C = 1/(ωC)</a> のように周波数依存性は全て ω 経由で現れる。
+      </p>
+    </DefinitionCallout>
+
     <AcBasicsChunkHierarchy />
 
     <Callout variant="tip" title="⚡ 5秒で思い出す">
@@ -9881,6 +10415,22 @@ const RlcResonanceSymbolLegend = () => (
 const RlcResonanceFormulasTab = ({ onNav, switchTab }) => (
   <>
     <RlcResonanceSymbolLegend />
+
+    <DefinitionCallout symbol="インピーダンス Z">
+      <p style={{ margin: "0 0 8px 0" }}>
+        交流回路でオームの法則を一般化した量が <strong>インピーダンス Z</strong>。電圧と電流の比を <strong>大きさと位相</strong>の両方を含む複素数で表す：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="Z \;=\; R + j\!\left(\omega L - \dfrac{1}{\omega C}\right)\;=\;R + jX\quad[\Omega]" />
+      </p>
+      <p style={{ margin: "0 0 8px 0" }}>
+        単位は <strong>Ω（オーム）</strong>。大きさは <Eq tex="|Z|=\sqrt{R^2+X^2}" inline />、位相は <Eq tex="\tan\varphi = X/R" inline />。実部 R は <strong>抵抗成分</strong>（エネルギー消費）、虚部 X は <strong>リアクタンス成分</strong>（エネルギー一時蓄積）。
+      </p>
+      <p style={{ margin: 0 }}>
+        因果でつなぐと <strong>ω に対し X_L=ωL は単調増加・X_C=1/(ωC) は単調減少 → ある周波数 ω₀ で打ち消し合い X=0 → Z=R（純抵抗的）になる</strong>。これが <strong>共振 ω₀ = 1/√(LC)</strong>。Z は <strong>直流オームの法則 V=IR を周波数領域に拡張した量</strong>で、<a href="#" onClick={(e) => { e.preventDefault(); onNav('dc-circuit'); }} style={{ textDecoration: "underline" }}>抵抗 R</a> ／ <a href="#" onClick={(e) => { e.preventDefault(); onNav('inductance'); }} style={{ textDecoration: "underline" }}>X_L=ωL</a> ／ <a href="#" onClick={(e) => { e.preventDefault(); onNav('capacitor'); }} style={{ textDecoration: "underline" }}>X_C=1/(ωC)</a> を一本化して扱える。
+      </p>
+    </DefinitionCallout>
+
     <RlcResonanceChunkHierarchy />
 
     <Callout variant="tip" title="⚡ 5秒で思い出す">
@@ -10035,14 +10585,14 @@ const RlcResonanceExplainTab = ({ onNav, switchTab }) => (
       </tbody>
     </table>
 
-    <Callout variant="info" title="🧑 受験者自己観察（2026-05-29 追加・本人 input）">
-      <p style={{ marginBottom: 8 }}>上記6項目は一般受験生の典型パターン。受験者本人の現状自己観察は以下3点で、これが S クラス昇格の核心：</p>
+    <Callout variant="info" title="🧑 監修者さん自己観察（2026-05-29 追加・本人 input）">
+      <p style={{ marginBottom: 8 }}>上記6項目は一般受験生の典型パターン。監修者さん本人の現状自己観察は以下3点で、これが S クラス昇格の核心：</p>
       <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
-        <li><strong>① 直列共振と並列共振で Z が最小/最大のどっちか毎回迷う</strong> → <strong>受験者現状</strong>：症状①と同じだが workaround 未確立。<strong>記憶補助案（AI 草案・要受験者承認）</strong>：「<strong>直列＝一本道、共振で抵抗だけ残る → Z 最小・電流が通りやすい</strong>」／「<strong>並列＝分岐先で打消し合う → 電源側電流が消える → Z 最大・電流が通りにくい</strong>」</li>
-        <li><strong>② Q値とは何か？</strong> → <strong>受験者現状</strong>：定義式 Q=ω₀L/R は暗記しているが「Q が何を表すか」の本質理解が未到達。<strong>本ページ セクション6 に「Q値の4視点」Callout を追加</strong>（鋭さ／電圧拡大率／蓄積エネルギー比／帯域幅）</li>
+        <li><strong>① 直列共振と並列共振で Z が最小/最大のどっちか毎回迷う</strong> → <strong>監修者さん現状</strong>：症状①と同じだが workaround 未確立。<strong>記憶補助案（AI 草案・要監修者承認）</strong>：「<strong>直列＝一本道、共振で抵抗だけ残る → Z 最小・電流が通りやすい</strong>」／「<strong>並列＝分岐先で打消し合う → 電源側電流が消える → Z 最大・電流が通りにくい</strong>」</li>
+        <li><strong>② Q値とは何か？</strong> → <strong>監修者さん現状</strong>：定義式 Q=ω₀L/R は暗記しているが「Q が何を表すか」の本質理解が未到達。<strong>本ページ セクション6 に「Q値の4視点」Callout を追加</strong>（鋭さ／電圧拡大率／蓄積エネルギー比／帯域幅）</li>
         <li><strong>③ 関連項目セクションにリンクなし</strong> → <strong>UI バグ</strong>：学習タブ セクション5 関連項目の項目に onNav リンクが欠落。<strong>本 PR で修正</strong></li>
       </ul>
-      <p style={{ marginTop: 10, fontSize: 12, color: "var(--ink-soft)" }}>※ 本ボックスは hil-boundary.yml「受験者必須」項目（メタ認知3列）の入力反映。一般論6項目は受験生共有の典型パターンとして残置。AI 草案部分は <code>&lt;!-- AI草案: 要受験者承認 --&gt;</code> マーカー相当（受験者 review で確認）。</p>
+      <p style={{ marginTop: 10, fontSize: 12, color: "var(--ink-soft)" }}>※ 本ボックスは hil-boundary.yml「監修者必須」項目（メタ認知3列）の入力反映。一般論6項目は受験生共有の典型パターンとして残置。AI 草案部分は <code>&lt;!-- AI草案: 要監修者承認 --&gt;</code> マーカー相当（監修者 review で確認）。</p>
     </Callout>
 
     <h2 id="resonance-condition"><span className="h-num">3</span>共振条件 X_L = X_C の導出</h2>
@@ -10165,8 +10715,8 @@ const RlcResonanceExplainTab = ({ onNav, switchTab }) => (
       <strong>Q が大きい ⇒ BW が狭い ⇒ 選択度が高い</strong>。ラジオの選局のように特定周波数だけ抜き出す用途では Q を大きくする。電力フィルタでは Q を程よく設定し過電圧と帯域を両立させる。
     </p>
 
-    <Callout variant="tip" title="🧐 Q値の4視点まとめ（受験者 input 反映「Q値とは何か」・2026-05-29 追加）">
-      <p>受験者指摘 (PR #85 同型): 「Q値の定義式は知っているが本質理解未到達」。Q値は<strong>同じ無次元量を 4 つの異なる側面で表現</strong>している。1つでも腑に落ちれば全て繋がる。</p>
+    <Callout variant="tip" title="🧐 Q値の4視点まとめ（監修者 input 反映「Q値とは何か」・2026-05-29 追加）">
+      <p>監修者さん指摘 (PR #85 同型): 「Q値の定義式は知っているが本質理解未到達」。Q値は<strong>同じ無次元量を 4 つの異なる側面で表現</strong>している。1つでも腑に落ちれば全て繋がる。</p>
       <table className="data-table" style={{ marginTop: 8 }}>
         <thead>
           <tr><th>視点</th><th>表現</th><th>直感イメージ</th></tr>
@@ -10198,7 +10748,7 @@ const RlcResonanceExplainTab = ({ onNav, switchTab }) => (
         <strong>本質を 1 行で</strong>: Q値 ＝ <strong>「共振状態の良さの度合い」</strong>。<strong>鋭さ・拡大率・エネルギー比・持続性</strong>のどれで測っても同じ値。直列 <Eq tex="Q = \omega_0 L/R" inline />、並列 <Eq tex="Q = R/(\omega_0 L)" inline /> は「<strong>R の影響を直列と並列で逆方向に効かせる</strong>」だけ（直列は R 大で損失増 → Q 下がる、並列は R 大で電流制限 → Q 上がる）。
       </p>
       <p style={{ marginTop: 8, fontSize: 12, color: "var(--ink-soft)" }}>
-        ※ 受験者の暗記回避: 公式そのものより「<strong>4視点はすべて同じ Q を別角度で測っている</strong>」を脳に刷り込む。試験問題は4視点のどれかで聞いてくる。
+        ※ 監修者さんの暗記回避: 公式そのものより「<strong>4視点はすべて同じ Q を別角度で測っている</strong>」を脳に刷り込む。試験問題は4視点のどれかで聞いてくる。
       </p>
     </Callout>
 
@@ -10793,7 +11343,7 @@ const SR1Card = ({ onNav }) => {
    v2 hoki-pattern components (inline migrated 2026-05-27)
    SectionCheck / SectionCheckSummary / SolveFlow / ExamQuestion / ExamAnswer
    localStorage key prefix: denken_check::riron_<pageId>:: (hoki と衝突回避)
-   出所: hoki-components.jsx
+   出所: hoki-components.jsx（社内ソースから inline 移行）
    ============================================================ */
 
 const SectionCheck = ({ pageId, sectionId, compact = false }) => {
@@ -11135,6 +11685,22 @@ const InductanceSymbolLegend = () => (
 const InductanceFormulasTab = ({ onNav, switchTab }) => (
   <>
     <InductanceSymbolLegend />
+
+    <DefinitionCallout symbol="インダクタンス L">
+      <p style={{ margin: "0 0 8px 0" }}>
+        コイルに電流 I を流すと、巻数 N に応じた磁束鎖交数 <Eq tex="\lambda = N\Phi" inline /> が生じる。<strong>L はその「電流 1 A あたりの磁束鎖交数」</strong>：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="L \;=\; \dfrac{\lambda}{I} \;=\; \dfrac{N\Phi}{I}\quad[\mathrm{H}]" />
+      </p>
+      <p style={{ margin: "0 0 8px 0" }}>
+        単位は <strong>ヘンリー H ＝ Wb/A</strong>。等価な見方として、<Eq tex="v = L\,dI/dt" inline /> から <strong>「毎秒 1 A の電流変化で 1 V の逆起電力を生むコイルが 1 H」</strong>（H ＝ V·s/A）とも定義できる。
+      </p>
+      <p style={{ margin: 0 }}>
+        因果でつなぐと <strong>L が大きい → 同じ電流でより多くの磁束を作る → 電流が変化したときの逆起電力が大きい → 電流変化に強く逆らう</strong>。L は「コイルの定数」ではなく <strong>電流変化への抵抗の強さ</strong>そのもの。
+      </p>
+    </DefinitionCallout>
+
     <InductanceChunkHierarchy />
 
     <Callout variant="tip" title="⚡ 5秒で思い出す">
@@ -11166,9 +11732,9 @@ const InductanceFormulasTab = ({ onNav, switchTab }) => (
         },
         {
           formula: "L = \\mu_0 \\mu_r N^2 A / l \\text{ [H]}",
-          meaning: "コイルの構造（巻数・断面積・長さ・透磁率）で L が決まる。L は N² に比例",
-          when: "均一磁界の場合",
-          notWhen: "漏れ磁束が大きい場合は近似",
+          meaning: "コイルの構造（巻数・断面積・長さ・透磁率）で L が決まる。L は N² に比例（★試験頻出）",
+          when: "磁路が均一・断面積一定・漏れ磁束なし・磁気飽和なし（この4条件が問題文にあれば L ∝ N² を使う合図）",
+          notWhen: "漏れ磁束大・磁気飽和で μᵣ 不定・不均一磁路では近似に留まる",
         },
         {
           formula: "W = LI^2/2 \\text{ [J]}",
@@ -11178,19 +11744,19 @@ const InductanceFormulasTab = ({ onNav, switchTab }) => (
         },
         {
           formula: "L_{和動} = L_1 + L_2 + 2M",
-          meaning: "和動直列接続の合成 L。M は正の大きさのまま +2M を加える（▶ 解説タブで見分け方）",
+          meaning: "和動直列接続の合成 L。M は正の大きさのまま +2M を加える（▶ 解説タブで見分け方）（★試験頻出）",
           when: "直列かつ磁束が同方向（和動）",
           notWhen: "差動接続では符号反転（下の式）",
         },
         {
           formula: "L_{差動} = L_1 + L_2 - 2M",
-          meaning: "差動直列接続の合成 L。M は正の大きさのまま -2M を引く（M 自体を負にしない）",
+          meaning: "差動直列接続の合成 L。M は正の大きさのまま -2M を引く（M 自体を負にしない）（★試験頻出）",
           when: "直列かつ磁束が逆方向（差動）",
           notWhen: "和動接続では符号反転（上の式）",
         },
         {
           formula: "k = M / \\sqrt{L_1 L_2} \\quad (0 \\le k \\le 1)",
-          meaning: "結合係数：磁束がどれだけ共有されているか。k=1 は「漏れ磁束ゼロの完全結合」条件（理想変圧器はさらに巻線抵抗・鉄損・励磁電流ゼロを含む別概念）",
+          meaning: "結合係数：磁束がどれだけ共有されているか。k=1 は「漏れ磁束ゼロの完全結合」条件（理想変圧器はさらに巻線抵抗・鉄損・励磁電流ゼロを含む別概念）（★試験頻出）",
           when: "常に定義可能",
           notWhen: "完全結合は理想値（現実のコイルは k<1）",
         },
@@ -11278,7 +11844,16 @@ const InductanceFormulasTab = ({ onNav, switchTab }) => (
     <p style={{ textAlign: "center", margin: "10px 0" }}>
       <Eq tex="M = \frac{L_{和動} - L_{差動}}{4}" />
     </p>
-    <p>これを利用して「和動接続と差動接続の L 測定値が与えられ、M または k を求めよ」という問題が出る（H29問3 / R04上問3 出題）。</p>
+    <p>これを利用して「和動接続と差動接続の L 測定値が<strong>両方</strong>与えられ、M または k を求めよ」という問題が出る（H29問3 出題）。<span style={{ fontSize: "12px", color: "var(--ink-soft)" }}>※片方の測定だけ与えられる型（R04上問3）は下の単一測定式を使う。</span></p>
+    <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginTop: 14 }}>
+      和動・差動の<strong>どちらか片方</strong>の合成 L と、各自己インダクタンス L₁・L₂ が分かっている場合は、定義式を直接変形すれば測定1つでも M が出る（R04上期 問3 の k 逆算型）：
+    </p>
+    <p style={{ textAlign: "center", margin: "10px 0" }}>
+      <Eq tex="M = \frac{L_{和動} - (L_1 + L_2)}{2}" inline />
+      <span style={{ margin: "0 12px", color: "var(--ink-soft)" }}>または</span>
+      <Eq tex="M = \frac{(L_1 + L_2) - L_{差動}}{2}" inline />
+    </p>
+    <p style={{ fontSize: "13px" }}>求めた M を <Eq tex="k = M / \sqrt{L_1 L_2}" inline /> に入れれば結合係数が出る。<strong>「2測定で M=(L和−L差)/4」と「1測定で M=(合成−L₁−L₂)/2」を取り違えない</strong>のがコツ（→ 学習タブ 問2・問2-B で対比）。</p>
 
     <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
       <svg viewBox="0 0 360 240" role="img" aria-label="2コイル直列の和動接続と差動接続の比較。同名端子と磁束方向で区別する" style={{ display: "block", width: "100%", height: "auto", maxWidth: "360px", margin: "0 auto" }}>
@@ -11400,35 +11975,49 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
       フライホイール（はずみ車）は回転の変化に抵抗する。インダクタも同じで、電流が急に増えようとすると逆起電力で抵抗し、電流が急に減ろうとすると維持しようとする。「電流の慣性」がインダクタンスの本質。
     </Analogy>
     <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
-      <svg viewBox="0 0 360 240" role="img" aria-label="自己誘導とレンツの法則：電流増加に伴う磁束増加と、それを妨げる向きの逆起電力" style={{ display: "block", width: "100%", height: "auto", maxWidth: "360px", margin: "0 auto" }}>
+      <svg viewBox="0 0 380 236" role="img" aria-label="自己誘導とレンツの法則：①電流の増加が②コイルを貫く磁束を増やし、③それを妨げる向きに逆起電力eが生じる" style={{ display: "block", width: "100%", height: "auto", maxWidth: "380px", margin: "0 auto" }}>
         <defs>
-          <marker id="ind-arrI" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-            <path d="M0,0 L8,4 L0,8 z" fill="var(--accent)" />
+          <marker id="ind-arrI" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+            <path d="M0,1 L8,4.5 L0,8 z" fill="var(--accent)" />
           </marker>
-          <marker id="ind-arrPhi" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-            <path d="M0,0 L8,4 L0,8 z" fill="var(--ok)" />
+          <marker id="ind-arrPhi" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+            <path d="M0,1 L8,4.5 L0,8 z" fill="var(--ok)" />
+          </marker>
+          <marker id="ind-arrE" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+            <path d="M0,1 L8,4.5 L0,8 z" fill="var(--warn)" />
           </marker>
         </defs>
-        <line x1="20" y1="60" x2="70" y2="60" stroke="var(--accent)" strokeWidth="2" markerEnd="url(#ind-arrI)" />
-        <text x="22" y="50" fontSize="12" fill="var(--accent-ink)">I ↑（増加）</text>
-        <g stroke="var(--ink)" strokeWidth="2" fill="none">
-          <ellipse cx="100" cy="120" rx="14" ry="40" />
-          <ellipse cx="125" cy="120" rx="14" ry="40" />
-          <ellipse cx="150" cy="120" rx="14" ry="40" />
-          <ellipse cx="175" cy="120" rx="14" ry="40" />
-          <ellipse cx="200" cy="120" rx="14" ry="40" />
+        {/* ①電流増（右向き）／③逆起電力（左向き破線）＝真上で逆平行＝綱引き */}
+        <text x="60" y="30" fontSize="12" fill="var(--accent-ink)" fontWeight="bold">① 電流 I が増加</text>
+        <line x1="62" y1="46" x2="206" y2="46" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" markerEnd="url(#ind-arrI)" />
+        <line x1="206" y1="66" x2="62" y2="66" stroke="var(--warn)" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="7 4" markerEnd="url(#ind-arrE)" />
+        <text x="60" y="84" fontSize="12" fill="var(--warn)" fontWeight="bold">③ 妨げる向きに逆起電力 e</text>
+        {/* 円筒ソレノイド（既存 L=μN²A/l 図とスタイル統一） */}
+        <ellipse cx="118" cy="132" rx="14" ry="36" fill="var(--accent)" fillOpacity="0.12" stroke="var(--accent)" strokeWidth="1.5" />
+        <line x1="118" y1="96" x2="250" y2="96" stroke="var(--accent)" strokeWidth="1.5" />
+        <line x1="118" y1="168" x2="250" y2="168" stroke="var(--accent)" strokeWidth="1.5" />
+        <ellipse cx="250" cy="132" rx="14" ry="36" fill="none" stroke="var(--accent)" strokeWidth="1.5" />
+        <g stroke="var(--ink)" strokeWidth="1.3" fill="none">
+          <ellipse cx="130" cy="132" rx="5" ry="36" />
+          <ellipse cx="150" cy="132" rx="5" ry="36" />
+          <ellipse cx="170" cy="132" rx="5" ry="36" />
+          <ellipse cx="190" cy="132" rx="5" ry="36" />
+          <ellipse cx="210" cy="132" rx="5" ry="36" />
+          <ellipse cx="230" cy="132" rx="5" ry="36" />
         </g>
-        <line x1="200" y1="160" x2="240" y2="160" stroke="var(--accent)" strokeWidth="2" />
-        <line x1="80" y1="120" x2="220" y2="120" stroke="var(--ok)" strokeWidth="2.5" markerEnd="url(#ind-arrPhi)" />
-        <text x="110" y="112" fontSize="12" fill="var(--ok)">Φ 増加</text>
-        <circle cx="265" cy="100" r="12" fill="none" stroke="var(--warn)" strokeWidth="2" />
-        <text x="261" y="105" fontSize="14" fill="var(--warn)">+</text>
-        <circle cx="265" cy="140" r="12" fill="none" stroke="var(--warn)" strokeWidth="2" />
-        <text x="262" y="145" fontSize="14" fill="var(--warn)">−</text>
-        <text x="285" y="115" fontSize="12" fill="var(--warn)">e = −L</text>
-        <text x="285" y="132" fontSize="12" fill="var(--warn)">(dI/dt)</text>
-        <text x="180" y="200" fontSize="11" fill="var(--ink)" textAnchor="middle">電流増 → 磁束増 → それを妨げる逆起電力</text>
-        <text x="180" y="220" fontSize="11" fill="var(--ink-mute)" textAnchor="middle">マイナス符号 ＝ レンツの法則</text>
+        {/* ②軸を貫く磁束（緑） */}
+        <line x1="96" y1="132" x2="276" y2="132" stroke="var(--ok)" strokeWidth="2.5" strokeLinecap="round" markerEnd="url(#ind-arrPhi)" />
+        <text x="184" y="200" fontSize="12" fill="var(--ok)" fontWeight="bold" textAnchor="middle">② コイルを貫く磁束 Φ が増加</text>
+        {/* 端子と逆起電力の式 */}
+        <line x1="250" y1="110" x2="296" y2="110" stroke="var(--warn)" strokeWidth="1.3" />
+        <line x1="250" y1="154" x2="296" y2="154" stroke="var(--warn)" strokeWidth="1.3" />
+        <circle cx="300" cy="110" r="10" fill="none" stroke="var(--warn)" strokeWidth="1.8" />
+        <text x="296.5" y="114.5" fontSize="13" fill="var(--warn)">+</text>
+        <circle cx="300" cy="154" r="10" fill="none" stroke="var(--warn)" strokeWidth="1.8" />
+        <text x="297" y="159" fontSize="13" fill="var(--warn)">−</text>
+        <text x="316" y="126" fontSize="12" fill="var(--warn)" fontWeight="bold">e = −L</text>
+        <text x="316" y="142" fontSize="11" fill="var(--warn)">(dI/dt)</text>
+        <text x="190" y="222" fontSize="11" fill="var(--ink-mute)" textAnchor="middle">マイナス符号 ＝ レンツの法則（変化を嫌う）</text>
       </svg>
       <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
         自己誘導：電流 I の増加が磁束 Φ を増やし、その変化を妨げる向きに逆起電力 e = −L(dI/dt) が誘起される（レンツの法則）。
@@ -11663,6 +12252,16 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
       ▶ 試験での解法手順（汎用5ステップ）は <a href="#" onClick={(e) => { e.preventDefault(); switchTab('learn'); }} style={{ textDecoration: "underline" }}>学習タブ セクション1</a> へ
     </p>
 
+    <Callout variant="note" title="📐 なぜ合成は ±2M なのか（M が「2回」効く理由）">
+      <p style={{ marginTop: 0 }}>「直列なのに、なぜ M ではなく <strong>2M</strong> を足し引きするのか」がインダクタンス最大の引っかかりどころ。鎖交磁束 <Eq tex="\lambda = N\Phi" inline />（公式タブの λ メモ参照）で考えると一発で腑に落ちる。直列で同じ電流 I が流れるとき、各コイルの鎖交磁束は「自分が作る分＋相手から受ける分」の和になる：</p>
+      <ul style={{ margin: "6px 0", paddingLeft: 20, lineHeight: 1.85 }}>
+        <li>コイル1：<Eq tex="\lambda_1 = L_1 I \pm M I" inline />（相手コイル2から受ける分が <Eq tex="\pm MI" inline />）</li>
+        <li>コイル2：<Eq tex="\lambda_2 = L_2 I \pm M I" inline />（相手コイル1から受ける分が <Eq tex="\pm MI" inline />）</li>
+      </ul>
+      <p>合計すると <Eq tex="\lambda = \lambda_1 + \lambda_2 = (L_1 + L_2 \pm 2M)\,I" inline />。両端電圧は <Eq tex="v = d\lambda/dt = (L_1 + L_2 \pm 2M)\,dI/dt" inline /> なので、合成インダクタンスは <Eq tex="L = L_1 + L_2 \pm 2M" inline />。</p>
+      <p style={{ marginBottom: 0 }}><strong>M が「2回」現れる</strong>のは、コイル1がコイル2に作る磁束と、コイル2がコイル1に作る磁束の<strong>両方</strong>が効くから（相反定理 <Eq tex="M_{12} = M_{21} = M" inline />）。だから「M」ではなく「2M」。エネルギーで見ても <Eq tex="W = \tfrac{1}{2}L_1 I^2 + \tfrac{1}{2}L_2 I^2 \pm M I^2" inline /> となり、相互項が <Eq tex="\pm M I^2" inline />（＝<Eq tex="\tfrac{1}{2}MI^2" inline /> が2つ分）。<strong>±の符号</strong>は次の和動／差動で決まる。</p>
+    </Callout>
+
     <h2 id="discriminate"><span className="h-num">6</span>和動・差動の見分け方（4ステップ）</h2>
     <p style={{ fontSize: "13px", color: "var(--ink-soft)" }}>
       （H29問3 / R04上問3 出題）合成インダクタンスの計算は「和動か差動か」の判別が最大の落とし穴。回路図から判別する手順：
@@ -11673,6 +12272,16 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
       <li>「電流が同名端子側から <strong>入る・入る</strong>」または「同名端子側から <strong>出る・出る</strong>」 → <strong>和動（＋2M）</strong></li>
       <li>「一方は同名端子から入り、他方は同名端子から出る」 → <strong>差動（−2M）</strong></li>
     </ol>
+
+    <Callout variant="tip" title="同名端子●が無い図のとき（R04上問3 の実図型）">
+      <p>R04上問3 のように<strong>環状鉄心への巻き方そのものが描かれ、●マークが無い</strong>図では、上の4ステップの代わりに次の3手で判別する：</p>
+      <ol style={{ lineHeight: 1.8, margin: "6px 0" }}>
+        <li>端子から端子まで<strong>電流の経路</strong>を図に書き込む（直列なので1本道）</li>
+        <li>各コイルの巻き方に<strong>右ねじの法則</strong>を適用し、鉄心内の<strong>磁束 Φ の向き</strong>を矢印で書き込む</li>
+        <li>2本の矢印が<strong>同方向 → 和動（+2M）</strong>、<strong>逆方向 → 差動（−2M）</strong></li>
+      </ol>
+      <p style={{ fontSize: "12px", color: "var(--ink-soft)" }}>近道：合成 L の<strong>実測値が与えられている</strong>問題なら、図を読まなくても<strong>「実測 vs 単純和 L₁+L₂」</strong>で判定できる（実測が大きい → 和動／小さい → 差動）。R04上問3 は 86mH &gt; 40+10=50mH → 和動。→ 学習タブ 問2-B で k=0.9 まで実演。</p>
+    </Callout>
 
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", margin: "18px 0 6px 0", padding: "14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: "6px" }}>
       <div style={{ textAlign: "center" }}>
@@ -11730,6 +12339,18 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
 
     <Callout variant="tip" title="M の符号ルール">
       <p>相互インダクタンス <strong>M は常に正の大きさとして扱う</strong>。和動なら <strong>+2M</strong>、差動なら <strong>-2M</strong> を選ぶだけ。M 自体を負にすることはない（負にすると k = M/√(L₁L₂) の定義 0≤k≤1 と矛盾する）。</p>
+    </Callout>
+
+    <Callout variant="info" title="機械科目への接続：加極性・減極性（変圧器の極性）">
+      <p>同名端子（dot）の考え方を<strong>変圧器の端子配置</strong>に当てはめたのが「極性」。一次端子 U と二次端子 u の位置関係で呼び分ける：</p>
+      <table className="data-table" style={{ marginTop: 6 }}>
+        <thead><tr><th>極性</th><th>同名端子の位置</th><th>極性試験（電圧計法）の読み</th><th>覚え方</th></tr></thead>
+        <tbody>
+          <tr><td><strong>減極性</strong></td><td>U と u が<strong>同じ側</strong></td><td><strong>V = V₁ − V₂</strong>（引き算）</td><td>「減」＝減算。<strong>JIS は減極性が標準</strong></td></tr>
+          <tr><td><strong>加極性</strong></td><td>U と u が<strong>対角</strong></td><td><strong>V = V₁ + V₂</strong>（足し算）</td><td>「加」＝加算</td></tr>
+        </tbody>
+      </table>
+      <p style={{ marginTop: 6 }}>和動・差動との対応で覚える：電圧が<strong>足し合わさる加極性つなぎ＝和動的</strong>、<strong>打ち消し合う減極性つなぎ＝差動的</strong>。出題は主に<strong>機械科目</strong>（変圧器の極性試験・並行運転条件「極性の一致」）だが、根は本ページの同名端子と同じ1つの概念。</p>
     </Callout>
     <p style={{ fontSize: "12px", color: "var(--ink-soft)" }}>
       ▶ 公式 L = L₁+L₂±2M の参照は <a href="#" onClick={(e) => { e.preventDefault(); switchTab('formulas'); }} style={{ textDecoration: "underline" }}>公式タブ</a> へ
@@ -11815,6 +12436,7 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
     <InductanceSymbolLegend />
 
     <h2 id="solver-flow"><span className="h-num">1</span>相互結合問題の解法フロー（汎用5ステップ）</h2>
+    <SectionCheck pageId="inductance" sectionId="solver-flow" />
     <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginBottom: "10px" }}>
       インダクタンス問題はパターンが決まっている。「問題を見たら何をどう判断するか」を5ステップで固定化することで暗記に頼らず解ける。
     </p>
@@ -11880,6 +12502,7 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
     </Callout>
 
     <h2 id="test-widget"><span className="h-num">2</span>概念テスト Widget</h2>
+    <SectionCheck pageId="inductance" sectionId="test-widget" />
     <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginBottom: "12px" }}>
       解答 → Claude で採点 → records.json 記録 → dashboard 連鎖 の自動学習ループ。「わからない」も空欄でOK（解説モードに切替）。
     </p>
@@ -11888,6 +12511,7 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
     <TestWidget questionId="riron_inductance_003" />
 
     <h2 id="examples"><span className="h-num">3</span>例題</h2>
+    <SectionCheck pageId="inductance" sectionId="examples" />
     <p><strong>問1:</strong> L=50mH のコイルに 5A の電流が流れているとき、蓄えられているエネルギーを求めよ。</p>
     <details>
       <summary>解答</summary>
@@ -11899,6 +12523,15 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
       <summary>解答</summary>
       <p>M = (L和動 - L差動)/4 = (120-40)/4 = <strong>20mH</strong></p>
       <p>L₁+L₂=80mH → L₁=L₂=40mH。k = M/√(L₁L₂) = 20/√(40×40) = 20/40 = <strong>0.5</strong></p>
+    </details>
+    <p style={{ marginTop: 16 }}><strong>問2-B（単一測定型・R04上期 問3）:</strong> 自己インダクタンス 40mH と 10mH の2つのコイルを直列接続し、合成インダクタンスを測ると <strong>86mH</strong> だった。結合係数 k を求めよ。</p>
+    <details>
+      <summary>解答</summary>
+      <p><strong>① 和動か差動か判定</strong>：単純和は L₁+L₂ = 40+10 = 50mH。実測 86mH は<strong>これより大きい</strong> → 磁束が強め合う<strong>和動接続</strong>（+2M）。<span style={{ fontSize: "12px", color: "var(--ink-soft)" }}>（実測 &lt; 50mH なら差動。実測＝50mH ちょうどなら M=0＝磁気結合なしで、和動/差動の区別自体が消える）</span></p>
+      <p><strong>② 和動の式 L = L₁ + L₂ + 2M を M について解く</strong>：</p>
+      <p>M = (L − L₁ − L₂)/2 = (86 − 40 − 10)/2 = 36/2 = <strong>18mH</strong></p>
+      <p><strong>③ k に代入</strong>：k = M/√(L₁L₂) = 18/√(40×10) = 18/√400 = 18/20 = <strong>0.9</strong></p>
+      <p style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: 8 }}>問2（和動＋差動の<strong>2測定</strong>）と違い、<strong>測定は1つだけ</strong>。L₁・L₂ が既知なら一方の合成 L だけで M・k が確定する。数値が与えられたときの判定のコツは「<strong>実測 vs 単純和 L₁+L₂</strong>」：大きい→和動、小さい→差動。M=18mH ≤ √(L₁L₂)=20mH なので k=0.9≤1 で物理的に妥当。</p>
     </details>
     <p style={{ marginTop: 16 }}><strong>問3 ⚠️単位変換あり:</strong> 環状鉄心コイルで、巻数 N=100、断面積 A=2 cm²、磁路長 l=5 cm、比透磁率 μᵣ=200 のとき、自己インダクタンス L を求めよ（mH 単位）。</p>
     <details>
@@ -11918,8 +12551,16 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
       <p><strong>答え</strong>: L = 3.2π × 10⁻³ H ≈ <strong>10.05 mH</strong>（≈ 10 mH）</p>
       <p style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: 8 }}>ポイント: cm² → m² は ×10⁻⁴、cm → m は ×10⁻²。代入前に必ず SI 単位に揃える。「よくある勘違い⑥」の単位変換忘れを実戦で防ぐ練習。</p>
     </details>
+    <p style={{ marginTop: 16 }}><strong>問4（R07下期 問3・最新回）:</strong> 巻数 N=1000 のコイルに直流 I=0.2A を流すと磁束 Φ=6×10⁻⁴ Wb が生じた。このコイルの自己インダクタンス L を求めよ。</p>
+    <details>
+      <summary>解答</summary>
+      <p>磁束鎖交数と電流の関係 <strong>NΦ = LI</strong>（公式タブ λ メモ）を L について解く：</p>
+      <p>L = NΦ/I = (1000 × 6×10⁻⁴)/0.2 = 0.6/0.2 = <strong>3 H</strong></p>
+      <p style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: 8 }}>L=μ₀μᵣN²A/l を使う問3と違い、<strong>磁束 Φ が直接与えられたら NΦ=LI 一択</strong>。鉄心の構造（A・l・μ）が無くても L が出る。★易の基本型で、与えられた量（Φ か 構造か）で式を選ぶのがコツ。</p>
+    </details>
 
     <h2 id="r05-q10"><span className="h-num">4</span>R05上問10 解法カード — 相互結合コイル電圧最大値</h2>
+    <SectionCheck pageId="inductance" sectionId="r05-q10" />
     <Callout variant="info" title="問題パターン">
       <p>2つのコイル L₁、L₂（相互インダクタンス M）が和動または差動で直列接続された回路に交流電流 <Eq tex="i = I_m \sin\omega t" inline /> が流れるとき、回路の端子電圧の最大値を求める。</p>
     </Callout>
@@ -11945,6 +12586,7 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
     </Callout>
 
     <h2 id="z-3conditions"><span className="h-num">5</span>3条件Z即答チェック（限界的練習ゾーン）</h2>
+    <SectionCheck pageId="inductance" sectionId="z-3conditions" />
     <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginBottom: "10px" }}>
       「解ける／解けない」の境界を強制発火させる練習。<strong>同一 L 値で 3 条件（純 L／RL 直列／RL 並列）</strong>の <Eq tex="|Z|" inline />・位相・電流を即答し、直後に典型誤答3択でセルフ判定する。<strong>3条件すべて正答できれば B 問題（応用問題）対応 OK</strong> の目安。
     </p>
@@ -11980,21 +12622,26 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
       <p><strong>3条件すべて即答できた</strong> ⇒ B 問題（過渡＋RL／RLC合成）でも止まらない。<strong>1問でも誤答</strong> ⇒ 該当条件の導出を<a href="#" onClick={(e) => { e.preventDefault(); switchTab('explain'); }} style={{ textDecoration: "underline" }}>解説タブ セクション4</a>と <a href="#" onClick={(e) => { e.preventDefault(); onNav('rlc-resonance'); }} style={{ textDecoration: "underline" }}>2.4 RLC共振</a> で復習。</p>
     </Callout>
 
-    <h2 id="kakomon"><span className="h-num">6</span>出題実績（H18〜R07上期）</h2>
+    <h2 id="kakomon"><span className="h-num">6</span>出題実績（H18〜R07下期）</h2>
+    <SectionCheck pageId="inductance" sectionId="kakomon" />
     <p style={{ fontSize: "12px", color: "var(--ink-soft)" }}>
-      出典: 電験王3（denken-ou.com）H18〜R07上期。電磁気（磁気）の中から自己・相互・合成インダクタンスを抽出。
+      出典: 電験王3（denken-ou.com）H18〜R07下期。電磁気（磁気）の中から自己・相互・合成インダクタンスを抽出。
     </p>
     <table className="data-table">
       <thead>
         <tr><th>年度</th><th>問</th><th>形式</th><th>何が問われたか</th><th>カバー</th></tr>
       </thead>
       <tbody>
+        <tr><td>R07下</td><td>問3</td><td>計算</td><td>磁束鎖交 NΦ=LI からの自己インダクタンス導出（最新回）</td><td>✅ 本ページ完結（学習タブ 問4）</td></tr>
+        <tr><td>R07下</td><td>問4</td><td>計算</td><td>扇形導線が作る磁界の大きさ</td><td>❌ 捨て候補（<a href="#" onClick={(e) => { e.preventDefault(); onNav('electromagnetic-force'); }} style={{ textDecoration: "underline" }}>電磁力</a>）</td></tr>
         <tr><td>R07上</td><td>問3</td><td>計算</td><td>環状鉄心に巻くコイルの自己インダクタンスと巻数の関係</td><td>✅ 本ページ完結</td></tr>
         <tr><td>R07上</td><td>問4</td><td>計算</td><td>直線状導体と円形コイルが作る磁界の比較</td><td>⚠️ <a href="#" onClick={(e) => { e.preventDefault(); onNav('electromagnetic-force'); }} style={{ textDecoration: "underline" }}>電磁力</a> 参照</td></tr>
-        <tr><td>R06上</td><td>問3</td><td>計算</td><td>磁気に関する量とその単位記号の組合せ</td><td>✅ <a href="#" onClick={(e) => { e.preventDefault(); onNav('magnetic-circuit'); }} style={{ textDecoration: "underline" }}>磁気回路 単位記号表</a></td></tr>
+        <tr><td>R07上</td><td>問14</td><td>論説</td><td>電気・磁気に関する量と単位記号の組合せ（誤りを選ぶ）</td><td>✅ <a href="#" onClick={(e) => { e.preventDefault(); onNav('magnetic-circuit'); }} style={{ textDecoration: "underline" }}>磁気回路 単位記号表</a></td></tr>
+        <tr><td>R06下</td><td>問14</td><td>論説</td><td>固有の名称をもつSI組立単位の記号と他の表し方の組合せ（誤りを選ぶ）</td><td>✅ <a href="#" onClick={(e) => { e.preventDefault(); onNav('magnetic-circuit'); }} style={{ textDecoration: "underline" }}>磁気回路 単位記号表</a></td></tr>
+        <tr><td>R06上</td><td>問3</td><td>論説</td><td>磁気に関する量とその単位記号の組合せ</td><td>✅ <a href="#" onClick={(e) => { e.preventDefault(); onNav('magnetic-circuit'); }} style={{ textDecoration: "underline" }}>磁気回路 単位記号表</a></td></tr>
         <tr><td>R05上</td><td>問10</td><td>計算</td><td>コイルを接続した回路に現れる電圧の最大値</td><td>✅ 本ページ完結（解法カードあり）</td></tr>
-        <tr><td>R04上</td><td>問3</td><td>計算</td><td>コイルの自己インダクタンスと相互インダクタンスの関係</td><td>✅ 本ページ完結</td></tr>
-        <tr><td>H30</td><td>問14</td><td>論説</td><td>SI 組立単位と基本単位に関する論説</td><td>❌ 捨て候補（14年1回）</td></tr>
+        <tr><td>R04上</td><td>問3</td><td>計算</td><td>自己L 40mH・10mH と和動合成 86mH から結合係数 k=0.9 を逆算（単一測定）</td><td>✅ 本ページ完結（学習タブ 問2-B）</td></tr>
+        <tr><td>H30</td><td>問14</td><td>論説</td><td>SI 組立単位と基本単位に関する論説</td><td>✅ <a href="#" onClick={(e) => { e.preventDefault(); onNav('magnetic-circuit'); }} style={{ textDecoration: "underline" }}>磁気回路 単位記号表</a></td></tr>
         <tr><td>H29</td><td>問3</td><td>計算</td><td>合成インダクタンス</td><td>✅ 本ページ完結</td></tr>
         <tr><td>H28</td><td>問3</td><td>計算</td><td>ビオ・サバールの法則</td><td>❌ 捨て候補（14年1回・<a href="#" onClick={(e) => { e.preventDefault(); onNav('electromagnetic-force'); }} style={{ textDecoration: "underline" }}>電磁力</a>）</td></tr>
         <tr><td>H24</td><td>問3</td><td>穴埋</td><td>コイルのインダクタンス</td><td>✅ 本ページ完結</td></tr>
@@ -12008,14 +12655,37 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
       → 出題頻度: ★★★（毎年度1問、問3・問4から出題。磁気回路と兼ねて出題される傾向）
     </p>
 
-    <h2 id="related"><span className="h-num">6</span>関連項目</h2>
+    <h2 id="related"><span className="h-num">7</span>関連項目</h2>
+    <SectionCheck pageId="inductance" sectionId="related" />
     <ul>
       <li>電磁力（1.3）：ファラデーの法則 e = -Ndφ/dt が基礎</li>
       <li>磁気回路（1.4）：L = μN²A/l の導出元</li>
       <li>RLC 共振（2.4）：インピーダンス XL = ωL として登場</li>
     </ul>
 
-    <h2 id="exam-5sec"><span className="h-num">7</span>本番5秒チェック（試験トリアージ）</h2>
+    <h2 id="act-summary"><span className="h-num">8</span>🔄 弱点セクション再読</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+      △ / × / 未 のセクションを優先して再読しよう。理解度ボタンを更新すると自動で再集計される。
+    </p>
+    <SectionCheckSummary
+      pageId="inductance"
+      sections={[
+        { id: "solver-flow",   label: "1. 解法フロー" },
+        { id: "test-widget",   label: "2. 概念テスト Widget" },
+        { id: "examples",      label: "3. 例題" },
+        { id: "r05-q10",       label: "4. R05上問10 解法カード" },
+        { id: "z-3conditions", label: "5. 3条件Z即答チェック" },
+        { id: "kakomon",       label: "6. 出題実績" },
+        { id: "related",       label: "7. 関連項目" },
+        { id: "exam-5sec",     label: "9. 本番5秒チェック" },
+      ]}
+      onJump={(id) => {
+        location.hash = 'inductance:learn';
+        setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 100);
+      }}
+    />
+
+    <h2 id="exam-5sec"><span className="h-num">9</span>本番5秒チェック（試験トリアージ）</h2>
     <SectionCheck pageId="inductance" sectionId="exam-5sec" />
     <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
       本番で<strong>インダクタンスが出た瞬間に開く3点</strong>。知識ではなく「最初に何を見るか」の手順で失点を防ぐ。
@@ -13183,6 +13853,22 @@ const ElectronMotionHelixSVG = () => (
 const ElectronMotionFormulasTab = ({ onNav, switchTab }) => (
   <>
     <ElectronMotionSymbolLegend />
+
+    <DefinitionCallout symbol="電子に働く2つの力（qE と qvB）">
+      <p style={{ margin: "0 0 8px 0" }}>
+        電荷 q を持つ電子が場の中を運動するとき、受ける力は <strong>電界から</strong>と<strong>磁界から</strong>の2種類しかない：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="F = qE\;\text{（電界・運動方向に依らず一定）}, \qquad F = qvB\;\text{（磁界・速度と直角）}" />
+      </p>
+      <p style={{ margin: "0 0 8px 0" }}>
+        単位はどちらも <strong>N</strong>。電子の電荷は <strong>q = e = 1.6×10⁻¹⁹ C</strong>（電気素量）。qE は速度ゼロでも働くが、<strong>qvB は動いていないと（v=0 では）働かない</strong>。
+      </p>
+      <p style={{ margin: 0 }}>
+        因果でつなぐと <strong>電界の力は運動方向の成分を持てる → 速さが変わる（加速・eV = ½mv² のエネルギー獲得）</strong>。一方 <strong>磁界の力は常に速度と直角 → 仕事をしない → 速さは不変で向きだけ変わる（等速円運動・半径 r = mv/(qB)）</strong>。「<strong>電界は加速装置・磁界はハンドル</strong>」の役割分担がこのページ全体を貫く軸。
+      </p>
+    </DefinitionCallout>
+
     <ElectronMotionChunkHierarchy />
 
     <Callout variant="tip" title="⚡ 5秒で思い出す">
@@ -13652,7 +14338,7 @@ const BridgeCircuitPage = ({ onNav }) => (
     <p>ブリッジ回路は天秤のイメージ。左皿と右皿のバランスが取れると指針がゼロになる（検流計に電流が流れない）。平衡条件は「向かい合う辺の積が等しい」。これを使えば未知素子の値を他の既知素子から計算できる。</p>
     <div className="callout callout-tip">
       <strong>5秒で思い出す</strong><br/>
-      平衡条件 = 向かい合う辺の積が等しい（$R_1 R_4 = R_2 R_3$）。平衡のとき検流計 $I_g = 0$。
+      平衡条件 = 向かい合う辺の積が等しい（<Eq tex="R_1 R_4 = R_2 R_3" />）。平衡のとき検流計 <Eq tex="I_g = 0" />。
     </div>
     <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
       <svg viewBox="0 0 360 268" role="img" aria-label="ホイートストンブリッジのひし形回路。対角に電源Eと検流計G、4辺にR1〜R4を配置。平衡時は対辺の積 R1R4=R2R3 で検流計電流ゼロ" style={{ display: "block", width: "100%", height: "auto", maxWidth: "360px", margin: "0 auto" }}>
@@ -13701,14 +14387,14 @@ const BridgeCircuitPage = ({ onNav }) => (
     <table>
       <thead><tr><th>公式</th><th>意味</th><th>条件</th></tr></thead>
       <tbody>
-        <tr><td>$R_1 R_4 = R_2 R_3$</td><td>ホイートストンブリッジの平衡条件</td><td>直流・抵抗</td></tr>
-        <tr><td>{String.raw`$R_x = \dfrac{R_1 \cdot R_3}{R_2}$`}</td><td>平衡状態から未知抵抗を求める</td><td>平衡時</td></tr>
-        <tr><td>{String.raw`$I_g = \dfrac{V_{th}}{R_{th} + R_g}$`}</td><td>不平衡時の検流計電流（テブナン）</td><td>不平衡時</td></tr>
+        <tr><td><Eq tex="R_1 R_4 = R_2 R_3" /></td><td>ホイートストンブリッジの平衡条件</td><td>直流・抵抗</td></tr>
+        <tr><td><Eq tex="R_x = \dfrac{R_1 \cdot R_3}{R_2}" /></td><td>平衡状態から未知抵抗を求める</td><td>平衡時</td></tr>
+        <tr><td><Eq tex="I_g = \dfrac{V_{th}}{R_{th} + R_g}" /></td><td>不平衡時の検流計電流（テブナン）</td><td>不平衡時</td></tr>
       </tbody>
     </table>
     <h2 id="examples">3. 例題</h2>
-    <p><strong>問題</strong>: ホイートストンブリッジで {String.raw`$R_1=100\Omega$`}、{String.raw`$R_2=200\Omega$`}、{String.raw`$R_3=150\Omega$`} のとき、平衡条件から未知抵抗 $R_4$ を求めよ。</p>
-    <p><strong>解答</strong>: {String.raw`$R_1 \times R_4 = R_2 \times R_3 \Rightarrow R_4 = \dfrac{200 \times 150}{100} = 300\Omega$`}</p>
+    <p><strong>問題</strong>: ホイートストンブリッジで <Eq tex="R_1=100\Omega" />、<Eq tex="R_2=200\Omega" />、<Eq tex="R_3=150\Omega" /> のとき、平衡条件から未知抵抗 <Eq tex="R_4" /> を求めよ。</p>
+    <p><strong>解答</strong>: <Eq tex="R_1 \times R_4 = R_2 \times R_3 \Rightarrow R_4 = \dfrac{200 \times 150}{100} = 300\Omega" /></p>
     <h2 id="related">4. 関連</h2>
     <ul>
       <li>テブナンの定理（不平衡時の解法）</li>
@@ -13766,6 +14452,22 @@ const TransientChunkHierarchy = () => (
 const TransientFormulasTab = ({ onNav, switchTab }) => (
   <>
     <TransientSymbolLegend />
+
+    <DefinitionCallout symbol="時定数 τ">
+      <p style={{ margin: "0 0 8px 0" }}>
+        スイッチ投入直後の回路は <strong>過渡状態</strong>。電流・電圧が定常値に近づく速さを表すのが <strong>時定数 τ</strong>：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="\tau \;=\; RC\quad\text{(RC回路)}, \qquad \tau \;=\; \dfrac{L}{R}\quad\text{(RL回路)}\quad[\mathrm{s}]" />
+      </p>
+      <p style={{ margin: "0 0 8px 0" }}>
+        単位は <strong>秒 s</strong>。等価的に <strong>「定常値の 63.2%（= 1 − e<sup>−1</sup>）に到達するまでの時間」</strong>＝ τ。実用的には <strong>3τ で 95%、5τ で 99.3%</strong> 定常到達と扱う（OFF時は逆に 36.8% へ減衰）。
+      </p>
+      <p style={{ margin: 0 }}>
+        因果でつなぐと <strong>τ 大 → 過渡応答が遅い → 定常到達まで時間がかかる</strong>。RC は <strong><a href="#" onClick={(e) => { e.preventDefault(); onNav('capacitor'); }} style={{ textDecoration: "underline" }}>C</a> が大きいほど（電圧変化を強く嫌う）／R が大きいほど（電流を流しにくい）</strong>遅くなる。RL は <strong><a href="#" onClick={(e) => { e.preventDefault(); onNav('inductance'); }} style={{ textDecoration: "underline" }}>L</a> が大きいほど（電流変化を強く嫌う）／R が小さいほど</strong>遅くなる。τ は <strong>素子の「変化を嫌う強さ」と R の関係</strong>で決まる時間スケールで、<a href="#" onClick={(e) => { e.preventDefault(); onNav('ac-basics'); }} style={{ textDecoration: "underline" }}>交流 ω</a> の逆数的性質を持つ（ω 大＝速い振動 ↔ τ 大＝遅い緩和）。
+      </p>
+    </DefinitionCallout>
+
     <TransientChunkHierarchy />
 
     <Callout variant="tip" title="⚡ 5秒で思い出す">
@@ -15042,38 +15744,38 @@ const FormulaListPage = ({ onNav }) => (
     <table>
       <thead><tr><th>公式</th><th>意味</th><th>単位</th></tr></thead>
       <tbody>
-        <tr><td>{String.raw`$F = k\dfrac{Q_1 Q_2}{r^2}$`}</td><td>クーロンの法則</td><td>N</td></tr>
-        <tr><td>{String.raw`$C = \dfrac{\varepsilon S}{d}$`}</td><td>平行板コンデンサの静電容量</td><td>F</td></tr>
-        <tr><td>{String.raw`$e = -N\dfrac{d\Phi}{dt}$`}</td><td>ファラデーの法則</td><td>V</td></tr>
-        <tr><td>{String.raw`$L = \dfrac{\mu_0\mu_r N^2 A}{l}$`}</td><td>自己インダクタンス</td><td>H</td></tr>
+        <tr><td><Eq tex="F = k\dfrac{Q_1 Q_2}{r^2}" /></td><td>クーロンの法則</td><td>N</td></tr>
+        <tr><td><Eq tex="C = \dfrac{\varepsilon S}{d}" /></td><td>平行板コンデンサの静電容量</td><td>F</td></tr>
+        <tr><td><Eq tex="e = -N\dfrac{d\Phi}{dt}" /></td><td>ファラデーの法則</td><td>V</td></tr>
+        <tr><td><Eq tex="L = \dfrac{\mu_0\mu_r N^2 A}{l}" /></td><td>自己インダクタンス</td><td>H</td></tr>
       </tbody>
     </table>
     <h2 id="circuit">2. 電気回路</h2>
     <table>
       <thead><tr><th>公式</th><th>意味</th><th>単位</th></tr></thead>
       <tbody>
-        <tr><td>$V = IR$</td><td>オームの法則</td><td>V</td></tr>
-        <tr><td>{String.raw`$Z = \sqrt{R^2 + (X_L - X_C)^2}$`}</td><td>直列RLCのインピーダンス</td><td>Ω</td></tr>
-        <tr><td>{String.raw`$f_0 = \dfrac{1}{2\pi\sqrt{LC}}$`}</td><td>共振周波数</td><td>Hz</td></tr>
-        <tr><td>{String.raw`$P = VI\cos\varphi$`}</td><td>交流有効電力</td><td>W</td></tr>
-        <tr><td>{String.raw`$P_{max} = \dfrac{V_{th}^2}{4R_{th}}$`}</td><td>最大電力（Rth = RL のとき）</td><td>W</td></tr>
+        <tr><td><Eq tex="V = IR" /></td><td>オームの法則</td><td>V</td></tr>
+        <tr><td><Eq tex="Z = \sqrt{R^2 + (X_L - X_C)^2}" /></td><td>直列RLCのインピーダンス</td><td>Ω</td></tr>
+        <tr><td><Eq tex="f_0 = \dfrac{1}{2\pi\sqrt{LC}}" /></td><td>共振周波数</td><td>Hz</td></tr>
+        <tr><td><Eq tex="P = VI\cos\varphi" /></td><td>交流有効電力</td><td>W</td></tr>
+        <tr><td><Eq tex="P_{max} = \dfrac{V_{th}^2}{4R_{th}}" /></td><td>最大電力（Rth = RL のとき）</td><td>W</td></tr>
       </tbody>
     </table>
     <h2 id="electron">3. 電子理論</h2>
     <table>
       <thead><tr><th>公式</th><th>意味</th><th>単位</th></tr></thead>
       <tbody>
-        <tr><td>{String.raw`$\beta = \dfrac{I_C}{I_B}$`}</td><td>トランジスタ直流電流増幅率</td><td>—</td></tr>
-        <tr><td>{String.raw`$A_v = -\dfrac{R_f}{R_i}$`}</td><td>オペアンプ反転増幅率</td><td>—</td></tr>
-        <tr><td>{String.raw`$V_o = -\dfrac{1}{RC}\int V_i dt$`}</td><td>オペアンプ積分回路</td><td>V</td></tr>
+        <tr><td><Eq tex="\beta = \dfrac{I_C}{I_B}" /></td><td>トランジスタ直流電流増幅率</td><td>—</td></tr>
+        <tr><td><Eq tex="A_v = -\dfrac{R_f}{R_i}" /></td><td>オペアンプ反転増幅率</td><td>—</td></tr>
+        <tr><td><Eq tex="V_o = -\dfrac{1}{RC}\int V_i dt" /></td><td>オペアンプ積分回路</td><td>V</td></tr>
       </tbody>
     </table>
     <h2 id="measurement">4. 計測</h2>
     <table>
       <thead><tr><th>公式</th><th>意味</th><th>単位</th></tr></thead>
       <tbody>
-        <tr><td>{String.raw`$R_x = \dfrac{R_1 \cdot R_3}{R_2}$`}</td><td>ホイートストンブリッジの平衡条件</td><td>Ω</td></tr>
-        <tr><td>{String.raw`$V_{avg} = \dfrac{2V_m}{\pi}$`}</td><td>全波整流の出力平均電圧</td><td>V</td></tr>
+        <tr><td><Eq tex="R_x = \dfrac{R_1 \cdot R_3}{R_2}" /></td><td>ホイートストンブリッジの平衡条件</td><td>Ω</td></tr>
+        <tr><td><Eq tex="V_{avg} = \dfrac{2V_m}{\pi}" /></td><td>全波整流の出力平均電圧</td><td>V</td></tr>
       </tbody>
     </table>
     <div className="callout callout-warn">
@@ -15103,23 +15805,23 @@ const CircuitPatternsPage = ({ onNav }) => (
     <p><strong>計算手順</strong>:</p>
     <ol>
       <li>最も内側（深い）の部分から合成を始める</li>
-      <li><strong>直列</strong>: {String.raw`$Z_{合} = Z_1 + Z_2 + \cdots$`}（単純に足す）</li>
-      <li><strong>並列</strong>: {String.raw`$1/Z_{合} = 1/Z_1 + 1/Z_2 + \cdots$`}（逆数の和）</li>
+      <li><strong>直列</strong>: <Eq tex="Z_{合} = Z_1 + Z_2 + \cdots" />（単純に足す）</li>
+      <li><strong>並列</strong>: <Eq tex="1/Z_{合} = 1/Z_1 + 1/Z_2 + \cdots" />（逆数の和）</li>
       <li>外側に向かって順に合成し、全体の合成インピーダンスを得る</li>
     </ol>
     <h2 id="pattern2">2. テブナン等価変換</h2>
     <p><strong>これを見たら</strong>: 「特定の2端子間（A-B間）の電圧・電流を求めよ」という問題</p>
     <p><strong>計算手順</strong>:</p>
     <ol>
-      <li><strong>開放端子電圧</strong> $V_{th}$ を求める</li>
-      <li><strong>テブナン抵抗</strong> $R_{th}$ を求める（電源をゼロにして合成抵抗を計算）</li>
-      <li><strong>等価回路に置き換える</strong>: $V_{th}$ を起電力とし $R_{th}$ を直列に接続</li>
+      <li><strong>開放端子電圧</strong> <Eq tex="V_{th}" /> を求める</li>
+      <li><strong>テブナン抵抗</strong> <Eq tex="R_{th}" /> を求める（電源をゼロにして合成抵抗を計算）</li>
+      <li><strong>等価回路に置き換える</strong>: <Eq tex="V_{th}" /> を起電力とし <Eq tex="R_{th}" /> を直列に接続</li>
     </ol>
     <h2 id="pattern3">3. ブリッジ回路の平衡判定</h2>
     <p><strong>これを見たら</strong>: 4つの素子がひし形（ブリッジ形）に配置されている</p>
     <p><strong>計算手順</strong>:</p>
     <ol>
-      <li><strong>平衡の確認</strong>: {String.raw`$Z_1 \cdot Z_4 = Z_2 \cdot Z_3$`} かどうかを確認する</li>
+      <li><strong>平衡の確認</strong>: <Eq tex="Z_1 \cdot Z_4 = Z_2 \cdot Z_3" /> かどうかを確認する</li>
       <li><strong>平衡の場合</strong>: 検流計に電流は流れない。単純な直並列回路として計算する</li>
       <li><strong>非平衡の場合</strong>: テブナン等価変換（パターン2）を適用する</li>
     </ol>
@@ -15127,11 +15829,11 @@ const CircuitPatternsPage = ({ onNav }) => (
     <p><strong>これを見たら</strong>: R, L, C が一列に接続された直列回路</p>
     <p><strong>計算手順</strong>:</p>
     <ol>
-      <li><strong>各素子のインピーダンスを書く</strong>: $Z_R = R$, $Z_L = jX_L$, $Z_C = -jX_C$</li>
-      <li><strong>合成インピーダンス</strong>: $Z = R + j(X_L - X_C)$</li>
-      <li><strong>大きさと位相を求める</strong>: {String.raw`$|Z| = \sqrt{R^2 + (X_L - X_C)^2}$`}, {String.raw`$\tan\varphi = (X_L - X_C)/R$`}</li>
-      <li><strong>電流を計算</strong>: $I = V/|Z|$</li>
-      <li><strong>共振条件</strong>: $X_L = X_C$ → {String.raw`$\omega_0 = 1/\sqrt{LC}$`}</li>
+      <li><strong>各素子のインピーダンスを書く</strong>: <Eq tex="Z_R = R" />, <Eq tex="Z_L = jX_L" />, <Eq tex="Z_C = -jX_C" /></li>
+      <li><strong>合成インピーダンス</strong>: <Eq tex="Z = R + j(X_L - X_C)" /></li>
+      <li><strong>大きさと位相を求める</strong>: <Eq tex="|Z| = \sqrt{R^2 + (X_L - X_C)^2}" />, <Eq tex="\tan\varphi = (X_L - X_C)/R" /></li>
+      <li><strong>電流を計算</strong>: <Eq tex="I = V/|Z|" /></li>
+      <li><strong>共振条件</strong>: <Eq tex="X_L = X_C" /> → <Eq tex="\omega_0 = 1/\sqrt{LC}" /></li>
     </ol>
     <div className="callout callout-tip">
       <strong>パターン集の使い方</strong><br/>
