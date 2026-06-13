@@ -13759,6 +13759,14 @@ const OpAmpIntegratorSvg = () => (
 /* ============================ 公式タブ ============================ */
 const OpAmpFormulasTab = ({ onNav, switchTab }) => (
   <>
+    <Callout variant="warn" title="🎯 まずこれ：理想OPアンプの2原則（ここから全部解ける）">
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.85 }}>
+        <li><strong>入力端子に電流は流れ込まない</strong>（入力インピーダンス ≒ ∞）。だから Ri に流れた電流はそのまま Rf へ流れる。</li>
+        <li><strong>負帰還が成立しているとき V⁺ ≒ V⁻</strong>（イマジナリショート）。2つの入力はほぼ同電位になる。</li>
+      </ol>
+      <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--ink-soft)" }}>※ ②は<strong>実際に短絡しているわけではない</strong>（電位がほぼ等しいだけ）。<strong>負帰還が働く線形動作のときだけ</strong>使え、<strong>コンパレータや出力飽和時には使えない</strong>（→ <a onClick={() => switchTab('explain')} style={{ color: "var(--accent-ink)", cursor: "pointer", textDecoration: "underline" }}>解説3節</a>）。理想OPは入力インピーダンス大・出力インピーダンス小。</p>
+    </Callout>
+
     <OpAmpSymbolLegend />
 
     <DefinitionCallout symbol="オペアンプ">
@@ -13869,6 +13877,16 @@ const OpAmpExplainTab = ({ onNav, switchTab }) => (
       仮想接地は「魔法」ではなく <strong>負帰還が v⁺−v⁻ を自動でゼロに調整した結果</strong>。A_OL が巨大なので、有限の出力（例 3V）を出すには差は限りなく 0 でなければならない。これが v⁺≈v⁻ の正体。
     </p>
     <OpAmpVirtualShortSvg />
+    <Callout variant="info" title="イマジナリショート と 仮想接地（バーチャルグラウンド）の違い">
+      <table className="data-table" style={{ margin: "4px 0" }}>
+        <thead><tr><th>用語</th><th>意味</th><th>成立条件</th></tr></thead>
+        <tbody>
+          <tr><td><strong>イマジナリショート</strong></td><td>V⁺ ≒ V⁻（2入力がほぼ同電位）</td><td>負帰還の線形動作時・一般</td></tr>
+          <tr><td><strong>仮想接地</strong></td><td>＋入力を接地して V⁺=0 → <span className="marker">V⁻ ≒ 0V</span> になる特殊ケース</td><td>反転増幅など＋入力がGNDのとき</td></tr>
+        </tbody>
+      </table>
+      <p style={{ margin: "6px 0 0", fontSize: 13 }}>仮想接地は<strong>イマジナリショートの特殊形</strong>（＋入力が 0V だから −入力も 0V に見える）。反転増幅で「V⁻=0」と置けるのはこの仕組み。どちらも<strong>負帰還の線形動作時だけ</strong>成立する。</p>
+    </Callout>
 
     <h2 id="why-confuse"><span className="h-num">2</span>なぜオペアンプで詰まるか（メタ認知）</h2>
     <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
@@ -13910,6 +13928,26 @@ const OpAmpExplainTab = ({ onNav, switchTab }) => (
       <li><strong>信号の入る端子を見る</strong>：−入力に信号＝反転（Av=−Rf/Ri）／＋入力に信号＝非反転（Av=1+Rf/Ri）。</li>
       <li><strong>Rf・Ri の有無を見る</strong>：Rf=0 かつ Ri=∞＝ボルテージフォロワ（Av=1）。−入力に複数入力＝加算回路。−入力に C＝積分回路。</li>
     </ol>
+
+    <h3>反転増幅回路の第一原理導出（暗記でなく原則で出す）</h3>
+    <ol style={{ lineHeight: 1.85 }}>
+      <li>入力は <strong>−端子</strong>、<strong>＋端子は接地</strong>（V⁺=0）。</li>
+      <li>負帰還だから V⁻ ≒ V⁺ = 0 → <strong>V⁻ は仮想接地（0V）</strong>。</li>
+      <li>入力端子に電流は流れ込まない → <span className="marker">Ri の電流 = Rf の電流</span>。</li>
+      <li>Ri を流れる電流 i = (Vi − 0)/Ri = Vi/Ri。これがそのまま Rf を通って出力へ。</li>
+      <li>Vo = 0 − i·Rf = <span className="marker">−(Rf/Ri)·Vi</span> → <strong>出力は逆相（マイナス）</strong>。</li>
+    </ol>
+    <h3>非反転増幅回路の第一原理導出</h3>
+    <ol style={{ lineHeight: 1.85 }}>
+      <li>入力は <strong>＋端子</strong>（V⁺ = Vi）。</li>
+      <li>負帰還だから <strong>V⁻ ≒ V⁺ = Vi</strong>。</li>
+      <li>出力 Vo を 帰還抵抗 Rf と 接地側抵抗 Rg（本ページの Ri と同じ役割）で分圧した点が V⁻ → V⁻ = Vo·Rg/(Rf+Rg)。</li>
+      <li>V⁻ = Vi と置く：Vi = Vo·Rg/(Rf+Rg)。</li>
+      <li>Vo について解く：<span className="marker">Vo = (1 + Rf/Rg)·Vi</span> → <strong>出力は同相（プラス・必ず1以上）</strong>。</li>
+    </ol>
+    <Callout variant="info" title="直流入力のときコンデンサは「開放」扱い">
+      <p style={{ margin: 0 }}>帰還や入力に<strong>コンデンサ</strong>がある回路で<strong>直流（定常）入力</strong>が来たら、C は電流を通さない＝<strong>開放</strong>として扱う（微分回路の入力 C は直流で開放→出力0、積分回路は直流を積分し続ける）。「C＝直流で開放・高周波で短絡」は <a onClick={() => onNav('capacitor')} style={{ color: "var(--accent-ink)", cursor: "pointer", textDecoration: "underline" }}>1.2 コンデンサ</a> と共通。</p>
+    </Callout>
 
     <h2 id="schmitt-deep"><span className="h-num">5</span>シュミットトリガ（正帰還）の深掘り</h2>
     <p>
@@ -13981,13 +14019,14 @@ const OpAmpLearnTab = ({ onNav, switchTab }) => (
   <>
     <h2 id="solver-flow"><span className="h-num">1</span>オペアンプ問題の解法フロー（汎用5ステップ）</h2>
     <SolveFlow
-      type="オペアンプ回路"
+      type="オペアンプ回路（第一原理6ステップ）"
       steps={[
-        "帰還の向きを確認：−入力＝負帰還（仮想接地OK）／＋入力＝正帰還（飽和・大小比較）",
-        "回路種別を判定：反転／非反転／フォロワ／加算／積分／コンパレータ",
-        "公式選定：反転 Av=−Rf/Ri ／ 非反転 Av=1+Rf/Ri ／ 積分 Vo=−(Vi/RC)t",
-        "代入：単位（kΩ・µF・ms）を SI に揃えてから計算",
-        "符号・飽和チェック：反転系はマイナス／飽和なら電源電圧で頭打ちを確認",
+        "入力端子を見る：信号が −端子＝反転／＋端子＝非反転",
+        "負帰還を確認：帰還が −入力に戻る → V⁺≒V⁻（イマジナリショート）が使える（＋入力に戻る正帰還なら使わず大小比較）",
+        "V⁺=V⁻ を置く：反転は＋端子接地で V⁻=0（仮想接地）／非反転は V⁻=Vi",
+        "入力電流0で電流を追う：入力端子に電流は流れ込まない → Ri の電流 = Rf の電流",
+        "オームの法則で出力電圧：各抵抗の電流×抵抗から Vo を組む（単位は SI に揃える）",
+        "符号を確認：反転は −（逆相）／非反転は ＋（同相・1以上）",
       ]}
     />
 
