@@ -11809,7 +11809,7 @@ const InductanceFormulasTab = ({ onNav, switchTab }) => (
         ))}
         <text x="150" y="114" textAnchor="middle" fontSize="12" fill="var(--ink-mute)">μ = μ₀μᵣ</text>
         <line x1="40" y1="80" x2="60" y2="100" stroke="var(--ink-mute)" strokeWidth="1" />
-        <text x="38" y="76" textAnchor="end" fontSize="12" fill="var(--accent-ink)" fontWeight="600">断面積 A</text>
+        <text x="48" y="76" textAnchor="end" fontSize="12" fill="var(--accent-ink)" fontWeight="600">断面積 A</text>
         <text x="150" y="60" textAnchor="middle" fontSize="12" fill="var(--accent-ink)" fontWeight="600">N 巻</text>
         <line x1="70" y1="180" x2="230" y2="180" stroke="var(--ink)" strokeWidth="1.2" markerStart="url(#ind-arrL)" markerEnd="url(#ind-arrR)" />
         <line x1="70" y1="172" x2="70" y2="188" stroke="var(--ink)" strokeWidth="1" />
@@ -12862,7 +12862,7 @@ const PhaseDifferencePage = ({ onNav }) => (
         <text x="600" y="26" textAnchor="middle" fontSize="13" fill="#555" fontWeight="600">時間波形（横軸 ωt）</text>
         <line x1="340" y1="80" x2="340" y2="320" stroke="#bbb" strokeWidth="1" />
         <line x1="340" y1="200" x2="840" y2="200" stroke="#bbb" strokeWidth="1" markerEnd="url(#phArrTip)" />
-        <text x="848" y="216" fontSize="13" fill="#555" fontStyle="italic">ωt</text>
+        <text x="836" y="216" fontSize="13" fill="#555" fontStyle="italic">ωt</text>
         <text x="332" y="86" textAnchor="end" fontSize="11" fill="#888">+Eₘ</text>
         <text x="332" y="320" textAnchor="end" fontSize="11" fill="#888">−Eₘ</text>
         {[0, 0.25, 0.5, 0.75, 1].map((f, i) => {
@@ -14381,6 +14381,32 @@ const BridgeCircuitPage = ({ onNav }) => (
       </svg>
       <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
         図：<strong style={{ color: "var(--accent-ink)" }}>同じ色は向かい合う対辺</strong>。平衡条件は<strong>隣り合う辺ではなく対辺の積</strong>（R₁·R₄ = R₂·R₃）。このとき検流計 G に電流は流れない。
+      </figcaption>
+    </figure>
+    <div className="callout callout-warn">
+      <strong>⚠️ よくある覚え違い：「縦（中央）の抵抗には電流が流れない」</strong><br/>
+      橋絡抵抗（検流計の位置にある辺）に電流が流れないのは <strong>図の向きとは無関係</strong>で、<strong>ブリッジが平衡しているときだけ</strong>。「縦の抵抗は流れない」と位置で覚えると、図の描き方を変えられたり橋絡抵抗が斜め・横に描かれた瞬間に見抜けなくなる（R04上のブリッジ問題で 2Ω を取り除けない原因がこれ）。覚えるべきは位置ではなく役割：<strong>「四角形の対角中点をつなぐ辺＝橋絡抵抗。平衡時のみ電流ゼロ」</strong>。
+    </div>
+    <div className="callout callout-tip">
+      <strong>取り除く前に必ず平衡チェック</strong><br/>
+      <strong>① 4辺の対角の積を比べる</strong>（<Eq tex="R_1 R_4 = R_2 R_3" />）→ <strong>② 平衡なら</strong>橋絡抵抗の両端は同電位なので、その辺は<strong>開放しても短絡しても結果は同じ</strong>。取り除いて単純な直並列に落とす → <strong>③ 不平衡なら</strong>取り除けない。Δ-Y変換・キルヒホッフ・テブナンで解く。
+    </div>
+    <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+      <svg viewBox="0 0 300 150" role="img" aria-label="ブリッジの見抜き方。四角形の4辺が比例4抵抗、対角線1本が橋絡抵抗。" style={{ display: "block", width: "100%", height: "auto", maxWidth: "300px", margin: "0 auto" }}>
+        {/* 四角形（4辺＝比例抵抗） */}
+        <rect x="70" y="30" width="160" height="90" fill="none" stroke="var(--ink)" strokeWidth="1.8" />
+        {/* 対角線＝橋絡抵抗（強調） */}
+        <line x1="70" y1="30" x2="230" y2="120" stroke="var(--warn, #d97706)" strokeWidth="2.6" />
+        <rect x="128" y="63" width="44" height="20" rx="3" fill="var(--warn-soft, #fef3c7)" stroke="var(--warn, #d97706)" strokeWidth="1.4" transform="rotate(29 150 73)" />
+        <text x="150" y="78" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--warn, #b45309)" transform="rotate(29 150 73)">橋絡</text>
+        {/* ノード */}
+        <circle cx="70" cy="30" r="3" fill="var(--ink)" />
+        <circle cx="230" cy="30" r="3" fill="var(--ink)" />
+        <circle cx="70" cy="120" r="3" fill="var(--ink)" />
+        <circle cx="230" cy="120" r="3" fill="var(--ink)" />
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+        図：ブリッジは「四角形＋対角線1本」。<strong>四角形の4辺</strong>が比例4抵抗、<strong>対角線（今回の2Ω）</strong>が橋絡抵抗。向きに惑わされず「対角線を探す」を最初の一手にする。
       </figcaption>
     </figure>
     <h2 id="formulas">2. 公式</h2>
