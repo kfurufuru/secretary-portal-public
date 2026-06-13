@@ -13529,6 +13529,673 @@ const InductancePage = ({ onNav }) => (
    5.3 演算増幅器（オペアンプ）
    ============================================================ */
 // last-updated: 2026-04-27 | v0.9 | RULE-02〜33全適用
+/* ============================================================
+   5.3 演算増幅器 (op-amp) — v3 3タブ統合 + Sクラス昇格
+   SymbolLegend / ChunkHierarchy / 5秒5項目 / メタ認知3列 /
+   仮想接地の谷山 / シュミットヒステリシス / 5 SVG図解 /
+   汎用解法フロー / 限界練習 / 過去問完全構造 / カバー列 /
+   Interleaving / 本番5秒チェック / SectionCheck×N + Summary
+   ============================================================ */
+
+const OpAmpSymbolLegend = () => (
+  <p style={{ fontSize: "12px", color: "var(--ink-soft)", lineHeight: 1.7, margin: "0 0 12px 0", padding: "8px 12px", background: "var(--bg-elev)", border: "1px dashed var(--rule)", borderRadius: "4px" }}>
+    <strong>使う記号</strong>: <strong>A_v</strong>（電圧利得・無次元）／<strong>A_OL</strong>（開ループ利得・10⁵〜）／<strong>R_i</strong>（入力抵抗・Ω）／<strong>R_f</strong>（帰還抵抗・Ω）／<strong>v⁺</strong>（非反転入力電圧・V）／<strong>v⁻</strong>（反転入力電圧・V）／<strong>V_i</strong>（入力電圧・V）／<strong>V_o</strong>（出力電圧・V）／<strong>V_sat</strong>（飽和電圧≒電源電圧・V）／<strong>RC</strong>（時定数・s）／<strong>τ</strong>（=RC・s）
+  </p>
+);
+
+const OpAmpChunkHierarchy = () => (
+  <div style={{ background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: "6px", padding: "14px 16px", margin: "0 0 18px 0" }}>
+    <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--accent-ink)", marginBottom: 8, letterSpacing: "0.05em" }}>
+      🧩 チャンク階層 — どこを覚えているか自己確認
+    </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "6px 10px", background: "var(--accent-soft)", borderRadius: "4px" }}>
+        <span style={{ fontWeight: 700, minWidth: 60 }}>第1層</span>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>帰還の向き</span>
+        <span style={{ fontSize: "13px", color: "var(--ink-soft)" }}>−入力へ戻る＝負帰還（仮想接地OK）／＋入力へ戻る＝正帰還（飽和2値・仮想接地NG）</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "6px 10px", background: "var(--ok-soft)", borderRadius: "4px" }}>
+        <span style={{ fontWeight: 700, minWidth: 60 }}>第2層</span>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>回路種別</span>
+        <span style={{ fontSize: "13px", color: "var(--ink-soft)" }}>反転・非反転・ボルテージフォロワ・加算・積分（＝負帰還）／コンパレータ・シュミット（＝正帰還）</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "6px 10px", background: "var(--warn-soft)", borderRadius: "4px" }}>
+        <span style={{ fontWeight: 700, minWidth: 60 }}>第3層</span>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>ゲイン公式</span>
+        <span style={{ fontSize: "13px", color: "var(--ink-soft)" }}>反転 Av=−Rf/Ri ／ 非反転 Av=1+Rf/Ri ／ フォロワ Av=1 ／ 積分 Vo=−(Vi/RC)t</span>
+      </div>
+    </div>
+    <div style={{ marginTop: 10, fontSize: "12px", color: "var(--ink-soft)" }}>
+      第1層（帰還の向き）→ 第2層（回路種別）→ 第3層（ゲイン公式）。迷ったら第1層に戻り「帰還は＋か−か」を確認。これで仮想接地の可否が決まる。
+    </div>
+  </div>
+);
+
+/* ---- SVG①：反転増幅回路 + 仮想接地の電流 ---- */
+const OpAmpInvertingSvg = () => (
+  <figure style={{ margin: "16px 0" }}>
+    <svg viewBox="0 0 480 240" role="img" aria-label="反転増幅回路。入力ViがRiを通り反転入力(仮想接地0V)へ、帰還抵抗Rfで出力Voへ。同じ電流iがRiとRfを流れVo=-Rf/Ri×Vi" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+      {/* op-amp triangle */}
+      <polygon points="250,70 250,170 340,120" fill="var(--accent-soft)" stroke="var(--ink)" strokeWidth="2" />
+      <text x="268" y="95" fontSize="13" fontWeight="700" fill="var(--ink)">−</text>
+      <text x="268" y="155" fontSize="13" fontWeight="700" fill="var(--ink)">＋</text>
+      {/* Vi source */}
+      <circle cx="35" cy="90" r="4" fill="var(--ink)" />
+      <text x="20" y="80" fontSize="12" fontWeight="700" fill="var(--accent-ink)">Vi</text>
+      {/* Ri */}
+      <line x1="35" y1="90" x2="95" y2="90" stroke="var(--ink)" strokeWidth="2" />
+      <rect x="95" y="80" width="60" height="20" fill="var(--bg-elev)" stroke="var(--ink)" strokeWidth="1.6" />
+      <text x="125" y="74" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">Ri</text>
+      <line x1="155" y1="90" x2="250" y2="90" stroke="var(--ink)" strokeWidth="2" />
+      {/* virtual ground node */}
+      <circle cx="200" cy="90" r="3.5" fill="var(--danger)" />
+      <text x="158" y="128" fontSize="11" fontWeight="700" fill="var(--danger)">v⁻ ≈ 0V（仮想接地）</text>
+      {/* + input to GND */}
+      <line x1="250" y1="150" x2="200" y2="150" stroke="var(--ink)" strokeWidth="2" />
+      <line x1="200" y1="150" x2="200" y2="195" stroke="var(--ink)" strokeWidth="2" />
+      <line x1="186" y1="195" x2="214" y2="195" stroke="var(--ink)" strokeWidth="2" />
+      <line x1="191" y1="201" x2="209" y2="201" stroke="var(--ink)" strokeWidth="1.5" />
+      <line x1="196" y1="207" x2="204" y2="207" stroke="var(--ink)" strokeWidth="1.2" />
+      {/* Rf feedback */}
+      <line x1="200" y1="90" x2="200" y2="40" stroke="var(--ink)" strokeWidth="2" />
+      <rect x="230" y="30" width="60" height="20" fill="var(--bg-elev)" stroke="var(--ink)" strokeWidth="1.6" />
+      <text x="260" y="24" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">Rf</text>
+      <line x1="200" y1="40" x2="230" y2="40" stroke="var(--ink)" strokeWidth="2" />
+      <line x1="290" y1="40" x2="380" y2="40" stroke="var(--ink)" strokeWidth="2" />
+      <line x1="380" y1="40" x2="380" y2="120" stroke="var(--ink)" strokeWidth="2" />
+      {/* output */}
+      <line x1="340" y1="120" x2="450" y2="120" stroke="var(--ink)" strokeWidth="2" />
+      <circle cx="450" cy="120" r="4" fill="var(--ink)" />
+      <text x="430" y="110" fontSize="12" fontWeight="700" fill="var(--ok)">Vo</text>
+      {/* current arrows */}
+      <polygon points="170,86 178,90 170,94" fill="var(--accent)" />
+      <text x="120" y="112" fontSize="11" fontWeight="700" fill="var(--accent)">i = Vi/Ri →</text>
+      <polygon points="245,44 237,40 245,36" fill="var(--accent)" />
+      <text x="300" y="62" fontSize="11" fontWeight="700" fill="var(--accent)">同じ i が Rf へ</text>
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      図①：<strong>反転増幅回路</strong>。負帰還で v⁻ が <strong>0V（仮想接地）</strong>に固定 → 入力電流 i=Vi/Ri が<strong>そのまま Rf を流れる</strong>（−入力に電流は入らない）→ Vo=−i·Rf=<strong>−(Rf/Ri)·Vi</strong>。マイナス＝位相反転。
+    </figcaption>
+  </figure>
+);
+
+/* ---- SVG②：非反転増幅回路 ---- */
+const OpAmpNonInvertingSvg = () => (
+  <figure style={{ margin: "16px 0" }}>
+    <svg viewBox="0 0 480 230" role="img" aria-label="非反転増幅回路。Viを＋入力へ。−入力はRiでGND・Rfで出力へ分圧。Av=1+Rf/Riで必ず1以上・同位相" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+      <polygon points="250,60 250,160 340,110" fill="var(--accent-soft)" stroke="var(--ink)" strokeWidth="2" />
+      <text x="268" y="85" fontSize="13" fontWeight="700" fill="var(--ink)">＋</text>
+      <text x="268" y="148" fontSize="13" fontWeight="700" fill="var(--ink)">−</text>
+      {/* Vi to + input */}
+      <circle cx="35" cy="80" r="4" fill="var(--ink)" />
+      <text x="20" y="70" fontSize="12" fontWeight="700" fill="var(--accent-ink)">Vi</text>
+      <line x1="35" y1="80" x2="250" y2="80" stroke="var(--ink)" strokeWidth="2" />
+      {/* - input node */}
+      <line x1="250" y1="140" x2="170" y2="140" stroke="var(--ink)" strokeWidth="2" />
+      <circle cx="170" cy="140" r="3.5" fill="var(--ink)" />
+      {/* Ri to GND */}
+      <rect x="140" y="170" width="60" height="20" fill="var(--bg-elev)" stroke="var(--ink)" strokeWidth="1.6" transform="rotate(90 170 180)" />
+      <text x="120" y="184" fontSize="12" fontWeight="700" fill="var(--ink)">Ri</text>
+      <line x1="170" y1="140" x2="170" y2="150" stroke="var(--ink)" strokeWidth="2" />
+      <line x1="170" y1="210" x2="170" y2="218" stroke="var(--ink)" strokeWidth="2" />
+      <line x1="156" y1="218" x2="184" y2="218" stroke="var(--ink)" strokeWidth="2" />
+      <line x1="161" y1="223" x2="179" y2="223" stroke="var(--ink)" strokeWidth="1.4" />
+      {/* Rf to output */}
+      <line x1="170" y1="140" x2="170" y2="45" stroke="var(--ink)" strokeWidth="2" />
+      <rect x="200" y="35" width="60" height="20" fill="var(--bg-elev)" stroke="var(--ink)" strokeWidth="1.6" />
+      <text x="230" y="29" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">Rf</text>
+      <line x1="170" y1="45" x2="200" y2="45" stroke="var(--ink)" strokeWidth="2" />
+      <line x1="260" y1="45" x2="385" y2="45" stroke="var(--ink)" strokeWidth="2" />
+      <line x1="385" y1="45" x2="385" y2="110" stroke="var(--ink)" strokeWidth="2" />
+      {/* output */}
+      <line x1="340" y1="110" x2="450" y2="110" stroke="var(--ink)" strokeWidth="2" />
+      <circle cx="450" cy="110" r="4" fill="var(--ink)" />
+      <text x="430" y="100" fontSize="12" fontWeight="700" fill="var(--ok)">Vo</text>
+      <text x="300" y="150" fontSize="12" fontWeight="700" fill="var(--accent-ink)">Av = 1 + Rf/Ri</text>
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      図②：<strong>非反転増幅回路</strong>。信号は<strong>＋入力</strong>へ。出力を Ri・Rf で分圧して −入力へ戻し v⁻=v⁺=Vi に保つ → Vo=(1+Rf/Ri)·Vi。<strong>必ず Av≥1・同位相</strong>。入力インピーダンスが高くセンサ向き。
+    </figcaption>
+  </figure>
+);
+
+/* ---- SVG③：仮想接地の安定性（谷＝負帰還／山＝正帰還） ---- */
+const OpAmpVirtualShortSvg = () => (
+  <figure style={{ margin: "16px 0" }}>
+    <svg viewBox="0 0 480 220" role="img" aria-label="負帰還は谷底のボールで安定しv+=v-(仮想接地)。正帰還は山頂のボールで不安定、出力は端(0Vか5V)に飽和" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+      {/* valley (left) */}
+      <path d="M30 60 Q120 200 210 60" fill="none" stroke="var(--ok)" strokeWidth="3" />
+      <circle cx="120" cy="158" r="11" fill="var(--ok)" stroke="var(--ink)" strokeWidth="1.5" />
+      <text x="120" y="35" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--ok)">負帰還＝谷底</text>
+      <text x="120" y="195" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">ズレても戻る＝安定</text>
+      <text x="120" y="210" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">v⁺ = v⁻（仮想接地）</text>
+      {/* arrows toward bottom */}
+      <polygon points="80,120 92,128 78,132" fill="var(--ink-soft)" />
+      <polygon points="160,120 148,128 162,132" fill="var(--ink-soft)" />
+      {/* hill (right) */}
+      <path d="M270 160 Q360 20 450 160" fill="none" stroke="var(--danger)" strokeWidth="3" />
+      <circle cx="360" cy="58" r="11" fill="var(--danger)" stroke="var(--ink)" strokeWidth="1.5" />
+      <text x="360" y="35" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--danger)">正帰還＝山頂</text>
+      <text x="360" y="195" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">ズレると転げ落ちる＝不安定</text>
+      <text x="360" y="210" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">出力は端（0V か 5V）に飽和</text>
+      {/* arrows away */}
+      <polygon points="320,95 308,88 322,84" fill="var(--danger)" />
+      <polygon points="400,95 412,88 398,84" fill="var(--danger)" />
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      図③：<strong>仮想接地が使える/使えない の本質</strong>。負帰還＝<strong>谷底のボール</strong>（ズレを打ち消し v⁺=v⁻ に落ち着く＝仮想接地）。正帰還＝<strong>山頂のボール</strong>（ズレが増幅され端まで転げ落ちる＝飽和）。だから正帰還（シュミット）に仮想接地は使えない。
+    </figcaption>
+  </figure>
+);
+
+/* ---- SVG④：シュミットトリガのヒステリシスループ ---- */
+const OpAmpSchmittSvg = () => (
+  <figure style={{ margin: "16px 0" }}>
+    <svg viewBox="0 0 460 280" role="img" aria-label="シュミットトリガのヒステリシス。vinが3Vを超えると出力5V→0V、vinが2Vを下回ると0V→5V。2V幅ののりしろ" style={{ display: "block", width: "100%", height: "auto", maxWidth: "460px", margin: "0 auto" }}>
+      {/* axes */}
+      <line x1="70" y1="230" x2="430" y2="230" stroke="var(--ink)" strokeWidth="1.6" />
+      <line x1="70" y1="40" x2="70" y2="230" stroke="var(--ink)" strokeWidth="1.6" />
+      <text x="438" y="234" fontSize="12" fontWeight="700" fill="var(--ink)">vin</text>
+      <text x="40" y="44" fontSize="12" fontWeight="700" fill="var(--ink)">vout</text>
+      <text x="48" y="74" fontSize="11" fill="var(--ink-soft)">5V</text>
+      <text x="48" y="214" fontSize="11" fill="var(--ink-soft)">0V</text>
+      {/* threshold guides */}
+      <line x1="210" y1="70" x2="210" y2="230" stroke="var(--ink-mute)" strokeWidth="1" strokeDasharray="4 3" />
+      <line x1="300" y1="70" x2="300" y2="230" stroke="var(--ink-mute)" strokeWidth="1" strokeDasharray="4 3" />
+      <text x="200" y="248" fontSize="11" fontWeight="700" fill="var(--ok)">2V</text>
+      <text x="292" y="248" fontSize="11" fontWeight="700" fill="var(--danger)">3V</text>
+      {/* high segment (vout=5V) until vin=3V */}
+      <line x1="110" y1="70" x2="300" y2="70" stroke="var(--accent)" strokeWidth="3" />
+      {/* drop at 3V */}
+      <line x1="300" y1="70" x2="300" y2="210" stroke="var(--danger)" strokeWidth="3" />
+      <polygon points="300,200 295,188 305,188" fill="var(--danger)" />
+      {/* low segment (vout=0V) until vin=2V */}
+      <line x1="210" y1="210" x2="390" y2="210" stroke="var(--accent)" strokeWidth="3" />
+      {/* rise at 2V */}
+      <line x1="210" y1="210" x2="210" y2="70" stroke="var(--ok)" strokeWidth="3" />
+      <polygon points="210,80 205,92 215,92" fill="var(--ok)" />
+      {/* direction arrows on horizontal */}
+      <polygon points="250,66 240,70 250,74" fill="var(--accent)" />
+      <text x="150" y="62" fontSize="10" fill="var(--accent)">上昇中 →</text>
+      <polygon points="300,214 310,210 300,206" fill="var(--accent)" />
+      <text x="330" y="226" fontSize="10" fill="var(--accent)">← 下降中</text>
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      図④：<strong>ヒステリシスループ</strong>。出力 HIGH のときは <strong>vin が 3V を超える</strong>まで落ちない／LOW のときは <strong>vin が 2V を下回る</strong>まで上がらない。上げ閾値(3V)と下げ閾値(2V)が <strong>2V ずれる＝のりしろ</strong>でノイズに強い。（R04上 問13）
+    </figcaption>
+  </figure>
+);
+
+/* ---- SVG⑤：積分回路の入出力波形 ---- */
+const OpAmpIntegratorSvg = () => (
+  <figure style={{ margin: "16px 0" }}>
+    <svg viewBox="0 0 460 240" role="img" aria-label="積分回路。一定のステップ入力Viに対し出力Voは時間に比例して負方向へ直線的に下がる傾き-Vi/RC" style={{ display: "block", width: "100%", height: "auto", maxWidth: "460px", margin: "0 auto" }}>
+      {/* input axes */}
+      <line x1="60" y1="70" x2="420" y2="70" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="60" y1="20" x2="60" y2="70" stroke="var(--ink)" strokeWidth="1.4" />
+      <text x="20" y="35" fontSize="11" fontWeight="700" fill="var(--accent-ink)">Vi</text>
+      {/* step input */}
+      <line x1="60" y1="60" x2="130" y2="60" stroke="var(--accent)" strokeWidth="2.5" />
+      <line x1="130" y1="60" x2="130" y2="32" stroke="var(--accent)" strokeWidth="2.5" />
+      <line x1="130" y1="32" x2="420" y2="32" stroke="var(--accent)" strokeWidth="2.5" />
+      <text x="300" y="26" fontSize="10" fill="var(--ink-soft)">一定電圧 Vi を加える</text>
+      {/* output axes */}
+      <line x1="60" y1="130" x2="420" y2="130" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="60" y1="130" x2="60" y2="225" stroke="var(--ink)" strokeWidth="1.4" />
+      <text x="20" y="135" fontSize="11" fontWeight="700" fill="var(--ok)">Vo</text>
+      <text x="68" y="126" fontSize="10" fill="var(--ink-soft)">0</text>
+      {/* ramp output (negative slope) */}
+      <line x1="60" y1="130" x2="130" y2="130" stroke="var(--ok)" strokeWidth="2.5" />
+      <line x1="130" y1="130" x2="400" y2="215" stroke="var(--ok)" strokeWidth="2.5" />
+      <polygon points="400,215 388,210 393,203" fill="var(--ok)" />
+      <text x="300" y="150" fontSize="11" fontWeight="700" fill="var(--ok)" transform="rotate(17 300 150)">傾き −Vi/RC</text>
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      図⑤：<strong>積分回路</strong>。一定の入力 Vi に対し、出力は<strong>時間に比例して負方向へ直線的に下がる</strong>（傾き −Vi/RC）。反転積分なので<strong>マイナス符号</strong>が付く。長時間で電源電圧に飽和する。
+    </figcaption>
+  </figure>
+);
+
+/* ============================ 公式タブ ============================ */
+const OpAmpFormulasTab = ({ onNav, switchTab }) => (
+  <>
+    <OpAmpSymbolLegend />
+
+    <DefinitionCallout symbol="オペアンプ">
+      <p style={{ margin: "0 0 8px 0" }}>
+        オペアンプは「2つの入力の差を巨大な利得 A_OL（10⁵以上）で増幅する素子」。そのままでは出力が飽和するため、出力の一部を <strong>−入力</strong> に戻す<strong>負帰還</strong>をかけて安定化する。
+      </p>
+      <p style={{ margin: 0 }}>
+        負帰還が働くと ＋入力 と −入力 の電圧差はほぼ 0（<strong>仮想接地 / イマジナリーショート</strong>）。計算は<strong>「仮想接地で電圧を決める → キルヒホッフで電流を追う → 出力電圧」</strong>の3ステップ。閉ループ利得は Rf/Ri の比だけで決まる。
+      </p>
+    </DefinitionCallout>
+
+    <OpAmpChunkHierarchy />
+
+    <Callout variant="tip" title="⚡ 5秒で思い出す">
+      <p style={{ marginBottom: 8 }}>オペアンプ ＝ <strong>差動増幅 ＋ 帰還</strong>。帰還が <strong>−入力なら負帰還（仮想接地が使える）</strong>、<strong>＋入力なら正帰還（出力は飽和・大小比較で解く）</strong>。</p>
+      <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.75 }}>
+        <li><strong>反転増幅</strong>：Av = −Rf/Ri（マイナス＝位相反転）</li>
+        <li><strong>非反転増幅</strong>：Av = 1 + Rf/Ri（必ず1以上・同位相）</li>
+        <li><strong>ボルテージフォロワ</strong>：Av = 1（インピーダンス変換）</li>
+        <li><strong>積分回路</strong>：Vo = −(Vi/RC)·t（反転・時間比例）</li>
+        <li><strong>仮想接地の条件</strong>：負帰還のときだけ v⁺=v⁻。正帰還は飽和（0V/5V）</li>
+      </ul>
+    </Callout>
+
+    <h2 id="formula"><span className="h-num">1</span>公式</h2>
+    <h3>レイヤーA：基本概念</h3>
+    <FormulaTable layer="A" rows={[
+      {
+        formula: "A_v = -R_f / R_i",
+        meaning: "反転増幅回路のゲイン。マイナスは位相反転を意味する",
+        when: "負帰還あり・理想オペアンプ・仮想接地が成立するとき",
+        notWhen: "負帰還なし（コンパレータ動作）→ 出力が電源電圧に飽和。仮想接地は使えない",
+      },
+      {
+        formula: "A_v = 1 + R_f / R_i",
+        meaning: "非反転増幅回路のゲイン。必ず1以上",
+        when: "負帰還あり・理想オペアンプ・＋入力に信号を入れるとき",
+        notWhen: "Rf=0 かつ Ri=∞ のときはボルテージフォロワ（Av=1）として扱う",
+      },
+      {
+        formula: "A_v = 1 \\text{（ボルテージフォロワ）}",
+        meaning: "Rf=0・Ri=∞ の非反転増幅。インピーダンス変換に使う",
+        when: "出力を入力に直結するとき（Rf=0）",
+        notWhen: "Rf {'>'} 0 なら非反転増幅（Av = 1 + Rf/Ri）として計算すること",
+      },
+    ]} />
+
+    <OpAmpInvertingSvg />
+    <OpAmpNonInvertingSvg />
+
+    <h3>レイヤーB：応用変換</h3>
+    <FormulaTable layer="B" rows={[
+      {
+        formula: "V_o = -(R_f/R_1 \\cdot V_1 + R_f/R_2 \\cdot V_2)",
+        meaning: "反転加算回路。複数入力を重みづけして加算し位相反転して出力",
+        when: "反転入力に複数入力を並列接続し、仮想接地が成立するとき",
+        notWhen: "非反転入力側に信号が入る場合は加算回路としての式が変わる",
+      },
+      {
+        formula: "V_o(t) = -(V_i / RC) \\cdot t",
+        meaning: "積分回路のステップ入力応答。出力が時間に比例して直線的に変化",
+        when: "一定電圧 Vi を加えたとき（t=0 で出力=0 を初期条件とする）",
+        notWhen: "直流入力を長時間加えると出力が電源電圧に到達し飽和 → 現実には初期化回路が必要",
+      },
+    ]} />
+
+    <h2 id="compare-amp"><span className="h-num">2</span>反転増幅 vs 非反転増幅 <span style={{fontSize:"0.8em", color:"var(--ok)"}}>★★★★★</span></h2>
+    <p style={{marginTop:"-0.5em", marginBottom:"1em", fontSize:"0.9em", color:"var(--ink-soft)"}}>→ ゲイン式の符号と入力端子の違いが毎年出題。詳しい見分け方は <a onClick={() => switchTab('explain')} style={{ cursor: "pointer", color: "var(--accent-ink)", fontWeight: 700 }}>▶ 解説タブ</a>。</p>
+    <table className="data-table">
+      <thead>
+        <tr><th>項目</th><th>反転増幅回路</th><th>非反転増幅回路</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>ゲイン公式</td><td><span className="marker">Av = -Rf/Ri（マイナス：位相反転）</span></td><td><span className="marker">Av = 1+Rf/Ri（必ず1以上）</span></td></tr>
+        <tr><td>位相</td><td><span className="marker">反転（180°ずれる）</span></td><td>同位相（ずれなし）</td></tr>
+        <tr><td>入力インピーダンス</td><td>Ri（比較的低い）</td><td><span className="marker">ほぼ無限大（高インピーダンス）</span></td></tr>
+        <tr><td>ゲイン範囲</td><td>|Av| は 0 以上（Rf=0 でゲイン0も可）</td><td>Av ≥ 1（1未満にできない）</td></tr>
+        <tr><td>信号入力端子</td><td>－入力（反転入力）</td><td>＋入力（非反転入力）</td></tr>
+        <tr><td colSpan={3} style={{backgroundColor:"var(--bg-elev)", fontSize:"0.9em"}}><strong>支配因子：</strong><span className="marker">Rf / Ri の比</span>がゲインを支配。Rf を2倍にするとゲインも2倍（線形比例）。仮想接地が成立するか（負帰還の有無）が計算前の最初の確認ステップ。</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="compare-ideal"><span className="h-num">3</span>理想オペアンプ vs 実際のオペアンプ <span style={{fontSize:"0.8em", color:"var(--ink-soft)"}}>★★★</span></h2>
+    <p style={{marginTop:"-0.5em", marginBottom:"1em", fontSize:"0.9em", color:"var(--ink-soft)"}}>→ 理想条件（∞ / 0）を問う穴埋め問題（H22 問18 類題）</p>
+    <table className="data-table">
+      <thead>
+        <tr><th>項目</th><th>理想オペアンプ</th><th>実際のオペアンプ</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>入力インピーダンス</td><td><span className="marker">∞（入力電流ゼロ）</span></td><td>有限（数MΩ〜GΩ）</td></tr>
+        <tr><td>出力インピーダンス</td><td><span className="marker">0</span></td><td>有限（数十Ω〜）</td></tr>
+        <tr><td>開ループゲイン</td><td><span className="marker">∞</span></td><td>有限（10⁵〜10⁶）</td></tr>
+        <tr><td>帯域幅</td><td>∞</td><td>有限（GB積で制限）</td></tr>
+        <tr><td colSpan={3} style={{backgroundColor:"var(--bg-elev)", fontSize:"0.9em"}}><strong>支配因子：</strong><span className="marker">開ループゲイン A_OL</span>が支配。A_OL→∞ のとき仮想接地が完全成立し閉ループゲインは Rf/Ri のみで決まる。</td></tr>
+      </tbody>
+    </table>
+  </>
+);
+
+/* ============================ 解説タブ ============================ */
+const OpAmpExplainTab = ({ onNav, switchTab }) => (
+  <>
+    <h2 id="principle"><span className="h-num">1</span>原理（なぜ仮想接地が成立するか）</h2>
+    <Analogy type="ideal-amplifier" icon="🔌">
+      オペアンプは「2つの入力の差を無限大に増幅する素子」。出力 vout = A_OL·(v⁺ − v⁻) で A_OL は超巨大。負帰還で出力の一部を −入力に戻すと、差がほぼ 0 の点で自動的に釣り合う（<strong>仮想接地</strong>）。
+    </Analogy>
+    <p>
+      仮想接地は「魔法」ではなく <strong>負帰還が v⁺−v⁻ を自動でゼロに調整した結果</strong>。A_OL が巨大なので、有限の出力（例 3V）を出すには差は限りなく 0 でなければならない。これが v⁺≈v⁻ の正体。
+    </p>
+    <OpAmpVirtualShortSvg />
+
+    <h2 id="why-confuse"><span className="h-num">2</span>なぜオペアンプで詰まるか（メタ認知）</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+      オペアンプは「公式は知っているのに失点する」典型。原因は計算ミスではなく<strong>認知上の壁</strong>。症状と誤モデルを1表で対応付け、以降を読む前に「自分が今どこで詰まっているか」を意識する。
+    </p>
+    <table className="data-table">
+      <thead>
+        <tr><th>症状（つまずきポイント）</th><th>誤モデル（脳内バグ）</th><th>正モデル（突破の鍵）</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>① 仮想接地をいつでも使う</strong></td><td>「オペアンプ＝v⁺=v⁻」が普遍法則だと思う</td><td>仮想接地は<strong>負帰還限定</strong>。帰還の向きを最初に見る（→ 1節・5節）</td></tr>
+        <tr><td><strong>② 反転のマイナスを落とす</strong></td><td>Av=Rf/Ri と暗記し符号を後付け</td><td>Av=<strong>−</strong>Rf/Ri と最初からマイナス込みで書く（→ 公式タブ）</td></tr>
+        <tr><td><strong>③ 非反転で 1 を足し忘れる</strong></td><td>反転と同じ Rf/Ri だと思う</td><td>＋入力信号＝非反転＝<strong>1+Rf/Ri</strong>（→ 4節）</td></tr>
+        <tr><td><strong>④ シュミットを積分やゲインで解く</strong></td><td>帰還があれば仮想接地/ゲイン式が使えると思う</td><td>正帰還＝飽和2値。<strong>＋入力分圧と vin の大小比較</strong>（→ 5節）</td></tr>
+        <tr><td><strong>⑤ 積分の符号を落とす</strong></td><td>Vo=Vi/RC·t と正で書く</td><td>反転積分なので<strong>マイナス</strong>（→ 公式タブ）</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="virtual-ground-cond"><span className="h-num">3</span>仮想接地が「使える/使えない」の判定</h2>
+    <p>
+      最初に見るのは <strong>「帰還がどちらの入力に戻っているか」</strong> だけ。これで回路の性格がすべて決まる。
+    </p>
+    <table className="data-table">
+      <thead>
+        <tr><th>帰還の向き</th><th>種類</th><th>出力</th><th>解き方</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>−入力（反転入力）へ</strong></td><td>負帰還</td><td>線形（中間値を取れる）</td><td><span className="marker">仮想接地 v⁺=v⁻ → KCL</span></td></tr>
+        <tr><td><strong>＋入力（非反転入力）へ</strong></td><td>正帰還</td><td><span className="marker">飽和（0V か 5V のみ）</span></td><td>＋入力の分圧と vin の大小比較</td></tr>
+      </tbody>
+    </table>
+    <Callout variant="warn" title="なぜ正帰還だと仮想接地が崩れるか（R04上 問13 の核心）">
+      <p>正帰還では出力が ＋入力に戻る。v⁺ が少し上がる→出力が上がる→その出力が v⁺ を<strong>さらに</strong>押し上げる、と雪だるま式に暴走。釣り合い点 v⁺=v⁻ は<strong>不安定</strong>で、出力は必ず電源の上限/下限（5V か 0V）に張り付く。線形領域を外れるので vout=A_OL·(v⁺−v⁻) の式が成り立たず、「差→0」の論理が消える＝<strong>仮想接地が使えない</strong>。上の図③（谷と山）がこの安定/不安定の対比。</p>
+    </Callout>
+
+    <h2 id="distinguish"><span className="h-num">4</span>反転・非反転・各回路の見分け方</h2>
+    <ol style={{ lineHeight: 1.9 }}>
+      <li><strong>帰還の向きを見る</strong>：−入力に戻る＝負帰還（仮想接地OK）／＋入力＝正帰還（飽和）。</li>
+      <li><strong>信号の入る端子を見る</strong>：−入力に信号＝反転（Av=−Rf/Ri）／＋入力に信号＝非反転（Av=1+Rf/Ri）。</li>
+      <li><strong>Rf・Ri の有無を見る</strong>：Rf=0 かつ Ri=∞＝ボルテージフォロワ（Av=1）。−入力に複数入力＝加算回路。−入力に C＝積分回路。</li>
+    </ol>
+
+    <h2 id="schmitt-deep"><span className="h-num">5</span>シュミットトリガ（正帰還）の深掘り</h2>
+    <p>
+      ＋入力に出力を戻した正帰還コンパレータ。出力は 0V か 5V のみ。＋入力電圧 v⁺ が<strong>出力に依存して動く</strong>ため、上げる時と下げる時で閾値がズレる（<strong>ヒステリシス</strong>）。
+    </p>
+    <OpAmpSchmittSvg />
+    <Callout variant="tip" title="谷と山 ＋ 閾値の重ね合わせ計算（R04上 問13）">
+      <p><strong>v⁺ は重ね合わせで計算</strong>（v⁺ 節点に 10kΩ→5V、10kΩ→GND、20kΩ→vout が接続）：</p>
+      <p style={{textAlign:"center"}}>v⁺ = (5/10 + vout/20) ÷ (1/10 + 1/10 + 1/20) = (0.5 + vout/20) ÷ 0.25</p>
+      <ul>
+        <li>出力 HIGH（vout=5V）：v⁺ = 0.75 ÷ 0.25 = <span className="marker">3V</span> → vin が 3V を超えた瞬間 LOW(0V) へ反転</li>
+        <li>出力 LOW（vout=0V）：v⁺ = 0.5 ÷ 0.25 = <span className="marker">2V</span> → vin が 2V を下回った瞬間 HIGH(5V) へ反転</li>
+      </ul>
+      <p>閾値が 2V と 3V でズレる＝<span className="marker">ヒステリシス</span>。この 2V 幅の「のりしろ」がノイズ耐性になる。（正答(5)：ア=2〜3／イ=3／ウ=2／エ=ヒステリシス）</p>
+    </Callout>
+
+    <h2 id="traps"><span className="h-num">6</span>引っかけポイント</h2>
+    <TrapBlock
+      correct="反転増幅のゲインは Av = −Rf/Ri。マイナス符号は必須で、出力電圧は入力と逆符号になる。"
+      trap="Av = Rf/Ri（マイナスなし）と計算し、出力電圧の符号を逆にしがち。"
+      cite="H25 問13・H27 問18 類題 [要確認]"
+      steps={[
+        "「反転増幅」という語を問題文で確認する",
+        "ゲイン式は Av = −Rf/Ri（マイナスを最初から書く）",
+        "Vo = Av × Vi を計算するとき、マイナス符号をそのまま掛ける",
+        "答えの符号が入力と逆になっているか最後に確認する",
+      ]}
+    />
+    <TrapBlock
+      correct="仮想接地（イマジナリーショート）は負帰還がかかっているときのみ有効。正帰還回路（シュミットトリガ等）には適用不可。"
+      trap="回路に帰還があれば仮想接地が使えると思い、シュミットトリガにも適用してしまう。"
+      cite="R04上 問13 出題"
+      steps={[
+        "出力から入力へのフィードバック経路を特定する",
+        "帰還が－入力（反転入力）に戻っているなら負帰還 → 仮想接地OK",
+        "帰還が＋入力（非反転入力）に戻っているなら正帰還 → 仮想接地NG → 分圧計算で判定する",
+      ]}
+    />
+    <TrapBlock
+      correct="非反転増幅のゲインは Av = 1 + Rf/Ri。信号が＋入力に入るので、ゲインに 1 が加算される。"
+      trap="非反転増幅でも Av = Rf/Ri と計算し、1 を足し忘れる（Av が 0.9 や 9 になる誤答が出る）。"
+      cite="H22 問18・H27 問18 類題 [要確認]"
+      steps={[
+        "信号がどちらの入力端子（＋か−か）に入力されているかを確認する",
+        "＋入力に信号 → 非反転増幅 → Av = 1 + Rf/Ri（1 を必ず足す）",
+        "－入力に信号 → 反転増幅 → Av = −Rf/Ri（マイナス付き・1 なし）",
+      ]}
+    />
+
+    <h2 id="practical"><span className="h-num">7</span>実務でどう活きる</h2>
+    <Callout variant="tip" title="プラント電気・計装での使われどころ">
+      オペアンプは計装システムの「信号処理心臓部」として、センサ出力の増幅・フィルタリング・加算・積分に使われる。4〜20mA 伝送の変換回路や差圧伝送器の内部増幅回路にも組み込まれている。
+    </Callout>
+    <table className="data-table">
+      <thead>
+        <tr><th>現場シーン</th><th>効いている物理</th><th>技術者の判断</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>熱電対の微小電圧（mV級）を制御器に伝送する増幅回路</td><td>非反転増幅（Av=1+Rf/Ri）で高インピーダンス入力のまま増幅</td><td>センサインピーダンスが高い場合は非反転を選ぶ。入力電流でセンサ出力を歪めないよう入力インピーダンスを確認</td></tr>
+        <tr><td>流量センサの複数チャンネルを1つのアナログ出力に合算</td><td>反転加算（Vo=−(Rf/R1·V1+Rf/R2·V2)）で重みつき加算と位相反転を同時実現</td><td>各チャンネルのゲイン（Rf/Rn）を保つため温度係数を揃えた精密抵抗を使用</td></tr>
+        <tr><td>PWM 信号を積分してアナログ制御電圧を生成</td><td>積分回路（Vo=−(Vi/RC)×t）でスイッチング信号を平滑化</td><td>RC が短すぎるとリプル大・長すぎると応答遅れ。制御周期との兼ね合いで R・C を決定</td></tr>
+      </tbody>
+    </table>
+  </>
+);
+
+/* ============================ 学習タブ ============================ */
+const OpAmpLearnTab = ({ onNav, switchTab }) => (
+  <>
+    <h2 id="solver-flow"><span className="h-num">1</span>オペアンプ問題の解法フロー（汎用5ステップ）</h2>
+    <SolveFlow
+      type="オペアンプ回路"
+      steps={[
+        "帰還の向きを確認：−入力＝負帰還（仮想接地OK）／＋入力＝正帰還（飽和・大小比較）",
+        "回路種別を判定：反転／非反転／フォロワ／加算／積分／コンパレータ",
+        "公式選定：反転 Av=−Rf/Ri ／ 非反転 Av=1+Rf/Ri ／ 積分 Vo=−(Vi/RC)t",
+        "代入：単位（kΩ・µF・ms）を SI に揃えてから計算",
+        "符号・飽和チェック：反転系はマイナス／飽和なら電源電圧で頭打ちを確認",
+      ]}
+    />
+
+    <h2 id="ex-inverting"><span className="h-num">2</span>例題1 — 反転増幅のゲインと出力電圧</h2>
+    <SectionCheck pageId="op-amp" sectionId="ex-inverting" />
+    <Callout variant="note" title="例題1（計算）">
+      反転増幅回路で Ri = 10 kΩ、Rf = 100 kΩ のとき、電圧利得 Av と入力電圧 Vi = 0.5 V に対する出力電圧 Vo を求めよ。
+    </Callout>
+    <details>
+      <summary>解答・解説</summary>
+      <p>Step①：仮想接地を確認（負帰還なので成立）</p>
+      <p>Step②：Av = −Rf/Ri = −100/10 = −10</p>
+      <p>Step③：Vo = Av × Vi = −10 × 0.5 = −5 V</p>
+      <p><strong>答え：Av = −10、Vo = −5 V（入力と逆位相）</strong></p>
+    </details>
+    <Callout variant="tip" title="この例題のツボ">
+      <span className="marker">Av = −Rf/Ri のマイナス符号</span>は位相反転。「−10 × 0.5 = −5」と符号ごと計算する。「+5V」と答えると失点。
+    </Callout>
+
+    <h2 id="ex-integrator"><span className="h-num">3</span>例題2 — 積分回路の出力電圧</h2>
+    <SectionCheck pageId="op-amp" sectionId="ex-integrator" />
+    <Callout variant="note" title="例題2（計算）">
+      積分回路で R = 10 kΩ、C = 1 μF のとき、Vi = 1 V のステップ入力を加えた 0.1 秒後の出力電圧 Vo を求めよ。
+    </Callout>
+    <OpAmpIntegratorSvg />
+    <details>
+      <summary>解答・解説</summary>
+      <p>Step①：τ = RC = 10×10³ × 1×10⁻⁶ = 0.01 s</p>
+      <p>Step②：Vo = −(Vi/RC)×t = −(1/0.01)×0.1 = −10 V</p>
+      <p><strong>答え：Vo = −10 V（位相反転あり）</strong></p>
+    </details>
+
+    <h2 id="r04-13"><span className="h-num">4</span>R04上 問13 解法カード — シュミットトリガ</h2>
+    <SectionCheck pageId="op-amp" sectionId="r04-13" />
+    <ExamQuestion
+      year="令和4年度上期"
+      qNum="13"
+      question="＋5V 単電源（出力 0〜5V）のオペアンプで、v⁺ 節点に 10kΩ→5V・10kΩ→GND・20kΩ→出力 を接続したシュミットトリガがある。vin（−入力）を上下させたときの閾値と特性を答えよ。"
+      choices={["① ア:1.25〜3.75／イ:3.75／ウ:1.25／エ:位相遅れ", "② ア:1.25〜3.75／イ:1.25／ウ:3.75／エ:ヒステリシス", "③ ア:2〜3／イ:2／ウ:3／エ:位相遅れ", "⑤ ア:2〜3／イ:3／ウ:2／エ:ヒステリシス ← 正解"]}
+      note="重ね合わせで v⁺ を求める。仮想接地は使えない（正帰還）。"
+    />
+    <SolveFlow
+      type="シュミットトリガ閾値"
+      steps={[
+        "帰還が＋入力 → 正帰還 → 仮想接地NG・出力は 0V か 5V に飽和",
+        "v⁺ を重ね合わせ：v⁺ = (5/10 + vout/20) ÷ (1/10+1/10+1/20) = (0.5 + vout/20) ÷ 0.25",
+        "出力HIGH(5V)：v⁺ = 0.75/0.25 = 3V → vin が 3V 超で LOW へ",
+        "出力LOW(0V)：v⁺ = 0.5/0.25 = 2V → vin が 2V 未満で HIGH へ",
+        "上げ3V・下げ2Vでズレる → ヒステリシス（のりしろ2V）",
+      ]}
+    />
+    <ExamAnswer
+      correct="⑤ ア:2〜3／イ:3／ウ:2／エ:ヒステリシス"
+      explanations={[
+        { choice: "①", mark: "×", reason: "1.25〜3.75 は分圧比の誤り。重ね合わせの分母（1/10+1/10+1/20=0.25）を取り違えている" },
+        { choice: "②", mark: "×", reason: "閾値の値が誤り。上げ・下げが逆かつ数値が違う" },
+        { choice: "③", mark: "×", reason: "範囲は正しいが上げ閾値(イ)と下げ閾値(ウ)が逆。エも位相遅れは誤り（コンパレータに位相遅れの概念はない）" },
+        { choice: "⑤", mark: "○", reason: "v⁺=2〜3V を遷移。上げ閾値3V・下げ閾値2V・特性はヒステリシス。すべて重ね合わせと整合" },
+      ]}
+    />
+    <Callout variant="warn" title="本問のひっかけポイント（5項目）">
+      <ol>
+        <li>正帰還なのに仮想接地で解こうとして破綻する（帰還が＋入力＝正帰還）</li>
+        <li>v⁺ を単純分圧で出し、出力からの 20kΩ の寄与を忘れる（重ね合わせ必須）</li>
+        <li>上げ閾値（3V）と下げ閾値（2V）を逆に答える</li>
+        <li>「ヒステリシス」を「位相遅れ」と取り違える</li>
+        <li>kΩ のまま計算してコンダクタンス合成（1/R の和）を誤る</li>
+      </ol>
+    </Callout>
+
+    <h2 id="z-3conditions"><span className="h-num">5</span>3条件即答チェック（限界的練習ゾーン）</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
+      「解ける／解けない」の境界を強制発火させる練習。<strong>同一の Ri=10kΩ・Vi=0.2V で Rf だけ3条件</strong>を即答し、典型誤答3択でセルフ判定。<strong>3条件すべて正答できれば反転/非反転の符号・1+ が定着</strong>の目安。
+    </p>
+    <Callout variant="info" title="共通設定">
+      <p><strong>Ri = 10 kΩ ／ Vi = 0.2 V（各条件で Rf と回路種別だけ変える）</strong></p>
+    </Callout>
+    <p style={{ marginTop: 12 }}><strong>即答してから下の解答を開くこと</strong>（暗算 30 秒目安）。</p>
+    <table className="data-table">
+      <thead><tr><th>条件</th><th>ゲイン Av</th><th>出力 Vo</th></tr></thead>
+      <tbody>
+        <tr><td><strong>① 反転・Rf=50kΩ</strong></td><td>?</td><td>?</td></tr>
+        <tr><td><strong>② 非反転・Rf=50kΩ</strong></td><td>?</td><td>?</td></tr>
+        <tr><td><strong>③ ボルテージフォロワ（Rf=0,Ri=∞）</strong></td><td>?</td><td>?</td></tr>
+      </tbody>
+    </table>
+    <details style={{ marginTop: 10, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6 }}>
+      <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答の導出（3条件まとめて）</summary>
+      <p><strong>① 反転</strong>：Av = −Rf/Ri = −50/10 = −5 → Vo = −5 × 0.2 = <strong>−1.0 V</strong></p>
+      <p><strong>② 非反転</strong>：Av = 1 + Rf/Ri = 1 + 5 = 6 → Vo = 6 × 0.2 = <strong>+1.2 V</strong></p>
+      <p><strong>③ フォロワ</strong>：Av = 1 → Vo = <strong>+0.2 V</strong>（入力と同じ・インピーダンス変換用）</p>
+    </details>
+    <Callout variant="warn" title="典型誤答3択（自己採点用）">
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.8 }}>
+        <li><strong>① を +1.0V</strong>（誤）⇒ 反転はマイナス。Vo=−1.0V</li>
+        <li><strong>② を Av=5（1足し忘れ）</strong>（誤）⇒ 非反転は 1+Rf/Ri=6。Vo=+1.2V</li>
+        <li><strong>③ を「増幅していないので0」</strong>（誤）⇒ Av=1 で入力をそのまま通す。用途はインピーダンス変換</li>
+      </ol>
+    </Callout>
+    <Callout variant="tip" title="セルフ判定">
+      <p><strong>3条件すべて即答</strong> ⇒ 反転/非反転の得点源化 OK。<strong>1問でも誤答</strong> ⇒ 該当条件を公式タブと解説タブ §4 で復習。</p>
+    </Callout>
+
+    <h2 id="exam-history"><span className="h-num">6</span>出題実績</h2>
+    <table className="data-table">
+      <thead>
+        <tr><th>年度</th><th>問</th><th>形式</th><th>何が問われたか</th><th>カバー</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>R06下</td><td>問18</td><td>論説・計算</td><td><span className="marker">演算増幅器の特徴と回路演算</span> [要確認]</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>R04上</td><td>問13</td><td>計算・論説</td><td><span className="marker">シュミットトリガ（正帰還）の閾値とヒステリシス</span></td><td>✅ 本ページ完結（4節）</td></tr>
+        <tr><td>R02</td><td>問13</td><td>論説</td><td>演算増幅器及び回路応用 [要確認]</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>H29</td><td>問18</td><td>計算</td><td>演算増幅器（反転・非反転増幅の計算） [要確認]</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>H27</td><td>問18</td><td>計算・穴埋</td><td><span className="marker">演算増幅器のゲイン計算</span> [要確認]</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>H26</td><td>問13</td><td>計算</td><td>演算増幅器（出力電圧計算） [要確認]</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>H22</td><td>問18</td><td>論説・計算</td><td><span className="marker">理想オペアンプの特性（∞・0）と出力電圧</span> [要確認]</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>H19</td><td>問12</td><td>論説</td><td>演算増幅器の特徴（入力インピーダンス・開ループゲイン） [要確認]</td><td>✅ 本ページ完結</td></tr>
+      </tbody>
+    </table>
+    <p>→ 出題頻度: ★★★（問13・問18 に集中。2〜3年に1回。反転増幅・仮想接地・シュミットトリガがパターン固定）</p>
+    <p style={{fontSize:"0.85em", color:"var(--ink-soft)"}}>※ 年度・問番号は旧wiki参照ベース。実出題は電験王3（https://denken-ou.com/）で確認すること。</p>
+
+    <h2 id="interleaving"><span className="h-num">7</span>混同しやすい他テーマ（Interleaving）</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
+      本テーマと<strong>並ぶと迷う</strong>他テーマを並置。同じ「回路＋増幅」でも判別ポイントが違う点を明示する。
+    </p>
+    <table className="data-table">
+      <thead>
+        <tr><th>混同テーマ</th><th>なぜ混同するか</th><th>見分け方</th><th>代表問題</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a onClick={() => onNav('transistor')} style={{ cursor: "pointer", color: "var(--accent-ink)" }}>5.2 トランジスタ</a></td>
+          <td>どちらも「増幅」素子で hFE と Av を混同</td>
+          <td><strong>能動素子単体（電流増幅 hFE）か、帰還回路全体（Rf/Ri で決まる）か</strong></td>
+          <td>H29 問18（トランジスタ増幅回路のバイアス）</td>
+        </tr>
+        <tr>
+          <td><a onClick={() => onNav('measurement')} style={{ cursor: "pointer", color: "var(--accent-ink)" }}>6.1 電気・電子計測</a></td>
+          <td>計装アンプ＝差動オペアンプで境界が曖昧</td>
+          <td><strong>素子の動作原理（本テーマ）か、測定誤差・指示値（計測）か</strong></td>
+          <td>R03 問16（ブリッジ＋計装アンプ）</td>
+        </tr>
+        <tr>
+          <td><a onClick={() => onNav('dc-circuit')} style={{ cursor: "pointer", color: "var(--accent-ink)" }}>2.1 直流回路</a></td>
+          <td>仮想接地後は結局 KVL/KCL で同じ手順</td>
+          <td><strong>仮想接地で電位が確定済み（本テーマ）か、純粋な抵抗網（直流回路）か</strong></td>
+          <td>R05 問6（抵抗分圧・キルヒホッフ）</td>
+        </tr>
+      </tbody>
+    </table>
+    <SectionCheck pageId="op-amp" sectionId="interleaving" />
+
+    <h2 id="correct-vs-wrong"><span className="h-num">8</span>正答者 vs 誤答者</h2>
+    <table className="data-table">
+      <thead>
+        <tr><th>観点</th><th>❌ 誤答者</th><th>✅ 正答者</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>反転増幅のゲイン符号</td><td>Av=Rf/Ri でマイナスを忘れ符号が逆になる</td><td>Av=−Rf/Ri を最初から書き符号込みで計算</td></tr>
+        <tr><td>仮想接地の適用条件</td><td>帰還があれば全て仮想接地が使えると思う</td><td>負帰還のみ成立、正帰還（シュミット）には使えないと区別</td></tr>
+        <tr><td>非反転の「1 +」</td><td>Av=Rf/Ri と暗記し 1 を忘れる</td><td>＋入力信号→非反転→Av=1+Rf/Ri と接続から導く</td></tr>
+        <tr><td>積分回路の符号</td><td>Vo=Vi/RC×t と正で答える</td><td>反転積分なので Vo=−(Vi/RC)×t</td></tr>
+        <tr><td>シュミットの判定</td><td>仮想接地で閾値を求め計算が破綻</td><td>＋入力分圧を先に求め vin との大小比較</td></tr>
+        <tr><td>ボルテージフォロワの用途</td><td>ゲイン1＝無意味と判断</td><td>高入力・低出力インピーダンスのインピーダンス変換に使う</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="exam-5sec"><span className="h-num">9</span>本番5秒チェック（試験トリアージ）</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
+      本番で<strong>オペアンプが出た瞬間に開く3点</strong>。知識ではなく「最初に何を見るか」で失点を防ぐ。
+    </p>
+    <Callout variant="warn" title="⏱️ 本番でこのテーマが出たら">
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.9 }}>
+        <li><strong>まず何を見る</strong>：帰還がどちらの入力に戻っているか（−＝負帰還で仮想接地／＋＝正帰還で飽和）。</li>
+        <li><strong>絶対に見落とせない条件</strong>：信号の入る端子（−＝反転 Av=−Rf/Ri／＋＝非反転 Av=1+Rf/Ri）。反転と積分はマイナス符号。</li>
+        <li><strong>典型ひっかけ</strong>：シュミット（正帰還）に仮想接地を使う／非反転で 1 を足し忘れる／反転のマイナスを落とす。</li>
+      </ol>
+    </Callout>
+    <SectionCheck pageId="op-amp" sectionId="exam-5sec" />
+
+    <h2 id="act-summary"><span className="h-num">10</span>🔄 弱点セクション再読</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>△ / × / 未 のセクションを優先して再読しよう。</p>
+    <SectionCheckSummary
+      pageId="op-amp"
+      sections={[
+        { id: "ex-inverting", label: "2. 例題1 反転増幅" },
+        { id: "ex-integrator", label: "3. 例題2 積分回路" },
+        { id: "r04-13", label: "4. R04上 問13 シュミット" },
+        { id: "z-3conditions", label: "5. 3条件即答" },
+        { id: "interleaving", label: "7. 混同テーマ" },
+        { id: "exam-5sec", label: "9. 本番5秒チェック" },
+      ]}
+      onJump={(id) => {
+        location.hash = 'op-amp:learn';
+        setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 100);
+      }}
+    />
+
+    <h2 id="related"><span className="h-num">11</span>関連項目</h2>
+    <ul>
+      <li><a onClick={() => onNav('dc-circuit')} style={{ cursor: "pointer", color: "var(--accent-ink)" }}>直流回路（2.1）</a>：仮想接地後の電流計算は KVL/KCL と同じ手順</li>
+      <li><a onClick={() => onNav('measurement')} style={{ cursor: "pointer", color: "var(--accent-ink)" }}>電気・電子計測（6.1）</a>：計装アンプ（差動増幅）として計測器に内蔵</li>
+      <li><a onClick={() => onNav('transistor')} style={{ cursor: "pointer", color: "var(--accent-ink)" }}>トランジスタ（5.2）</a>：オペアンプの内部素子。BJT 差動対が基本構成</li>
+    </ul>
+  </>
+);
+
 const OpAmpPage = ({ onNav }) => (
   <>
     <MetaStrip difficulty="★★★" importance="A" frequency="高" />
@@ -13556,411 +14223,23 @@ const OpAmpPage = ({ onNav }) => (
       onNav={onNav}
     />
 
-    <h2 id="principle"><span className="h-num">1</span>原理（なぜ起きるか）</h2>
-    <Analogy type="ideal-amplifier" icon="🔌">
-      オペアンプは「2つの入力の差を無限大に増幅する素子」。そのままでは出力が飽和するため、出力の一部を入力に戻す<strong>負帰還（フィードバック）</strong>をかけて安定した増幅回路を作る。
-    </Analogy>
-    <p>
-      負帰還が働くと、＋入力と－入力の電圧差はほぼゼロになる（<strong>仮想接地 / イマジナリーショート</strong>）。この近似がオペアンプ回路の計算を一気に簡単にする。計算の手順：「仮想接地で電圧を決める → キルヒホッフで電流を追う → 出力電圧を求める」の3ステップ。
-    </p>
-    <Callout variant="tip" title="5秒で思い出す">
-      オペアンプ ＝ 差動増幅 ＋ 負帰還。負帰還が働くと ＋入力 ＝ －入力（仮想接地）。ゲイン ＝ 帰還抵抗の比だけで決まる。
-    </Callout>
-
-    <h2 id="formula"><span className="h-num">2</span>公式</h2>
-    <h3>レイヤーA：基本概念</h3>
-    <FormulaTable layer="A" rows={[
-      {
-        formula: "A_v = -R_f / R_i",
-        meaning: "反転増幅回路のゲイン。マイナスは位相反転を意味する",
-        when: "負帰還あり・理想オペアンプ・仮想接地が成立するとき",
-        notWhen: "負帰還なし（コンパレータ動作）→ 出力が電源電圧に飽和。仮想接地は使えない",
-      },
-      {
-        formula: "A_v = 1 + R_f / R_i",
-        meaning: "非反転増幅回路のゲイン。必ず1以上",
-        when: "負帰還あり・理想オペアンプ・＋入力に信号を入れるとき",
-        notWhen: "Rf=0 かつ Ri=∞ のときはボルテージフォロワ（Av=1）として扱う",
-      },
-      {
-        formula: "A_v = 1 \\text{（ボルテージフォロワ）}",
-        meaning: "Rf=0・Ri=∞ の非反転増幅。インピーダンス変換に使う",
-        when: "出力を入力に直結するとき（Rf=0）",
-        notWhen: "Rf {'>'} 0 なら非反転増幅（Av = 1 + Rf/Ri）として計算すること",
-      },
-    ]} />
-
-    <h3>レイヤーB：応用変換</h3>
-    <FormulaTable layer="B" rows={[
-      {
-        formula: "V_o = -(R_f/R_1 \\cdot V_1 + R_f/R_2 \\cdot V_2)",
-        meaning: "反転加算回路。複数入力を重みづけして加算し位相反転して出力",
-        when: "反転入力に複数入力を並列接続し、仮想接地が成立するとき",
-        notWhen: "非反転入力側に信号が入る場合は加算回路としての式が変わる",
-      },
-      {
-        formula: "V_o(t) = -(V_i / RC) \\cdot t",
-        meaning: "積分回路のステップ入力応答。出力が時間に比例して直線的に変化",
-        when: "一定電圧 Vi を加えたとき（t=0 で出力=0 を初期条件とする）",
-        notWhen: "直流入力を長時間加えると出力が電源電圧に到達し飽和 → 現実には初期化回路が必要",
-      },
-    ]} />
-
-    <h2 id="comparison"><span className="h-num">3</span>比較</h2>
-
-    <h3>反転増幅 vs 非反転増幅 <span style={{fontSize:"0.8em", color:"var(--ok)"}}>★★★★★</span></h3>
-    <p style={{marginTop:"-0.5em", marginBottom:"1em", fontSize:"0.9em", color:"var(--ink-soft)"}}>→ ゲイン式の符号と入力端子の違いが毎年出題</p>
-    <table className="data-table">
-      <thead>
-        <tr>
-          <th>項目</th>
-          <th>反転増幅回路</th>
-          <th>非反転増幅回路</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>ゲイン公式</td>
-          <td><span className="marker">Av = -Rf/Ri（マイナス：位相反転）</span></td>
-          <td><span className="marker">Av = 1+Rf/Ri（必ず1以上）</span></td>
-        </tr>
-        <tr>
-          <td>位相</td>
-          <td><span className="marker">反転（180°ずれる）</span></td>
-          <td>同位相（ずれなし）</td>
-        </tr>
-        <tr>
-          <td>入力インピーダンス</td>
-          <td>Ri（比較的低い）</td>
-          <td><span className="marker">ほぼ無限大（高インピーダンス）</span></td>
-        </tr>
-        <tr>
-          <td>ゲイン範囲</td>
-          <td>|Av| は 0 以上（Rf=0 でゲイン0も可）</td>
-          <td>Av ≥ 1（1未満にできない）</td>
-        </tr>
-        <tr>
-          <td>信号入力端子</td>
-          <td>－入力（反転入力）</td>
-          <td>＋入力（非反転入力）</td>
-        </tr>
-        <tr>
-          <td colSpan={3} style={{backgroundColor:"var(--surface-2, #f5f5f5)", fontSize:"0.9em"}}>
-            <strong>支配因子：</strong><span className="marker">Rf / Ri の比</span>がゲインを支配。Rf を2倍にするとゲインも2倍（線形比例）。仮想接地が成立するかどうか（負帰還の有無）が計算前の最初の確認ステップ。
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h3>理想オペアンプ vs 実際のオペアンプ <span style={{fontSize:"0.8em", color:"var(--ink-soft)"}}>★★★</span></h3>
-    <p style={{marginTop:"-0.5em", marginBottom:"1em", fontSize:"0.9em", color:"var(--ink-soft)"}}>→ 理想条件（∞ / 0）を問う穴埋め問題（H22 問18 類題）</p>
-    <table className="data-table">
-      <thead>
-        <tr>
-          <th>項目</th>
-          <th>理想オペアンプ</th>
-          <th>実際のオペアンプ</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>入力インピーダンス</td>
-          <td><span className="marker">∞（入力電流ゼロ）</span></td>
-          <td>有限（数MΩ〜GΩ）</td>
-        </tr>
-        <tr>
-          <td>出力インピーダンス</td>
-          <td><span className="marker">0</span></td>
-          <td>有限（数十Ω〜）</td>
-        </tr>
-        <tr>
-          <td>開ループゲイン</td>
-          <td><span className="marker">∞</span></td>
-          <td>有限（10⁵〜10⁶）</td>
-        </tr>
-        <tr>
-          <td>帯域幅</td>
-          <td>∞</td>
-          <td>有限（GB積で制限）</td>
-        </tr>
-        <tr>
-          <td colSpan={3} style={{backgroundColor:"var(--surface-2, #f5f5f5)", fontSize:"0.9em"}}>
-            <strong>支配因子：</strong><span className="marker">開ループゲイン A_OL</span>が支配。A_OL→∞のとき仮想接地が完全成立し閉ループゲインはRf/Riのみで決まる。
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h2 id="practical"><span className="h-num">実務</span>実務でどう活きる</h2>
-    <Callout variant="tip" title="プラント電気・計装での使われどころ">
-      オペアンプは計装システムの「信号処理心臓部」として、センサ出力の増幅・フィルタリング・加算・積分に使われる。4〜20mA伝送の変換回路や差圧伝送器の内部増幅回路にも組み込まれている。
-    </Callout>
-    <table className="data-table">
-      <thead>
-        <tr>
-          <th>現場シーン</th>
-          <th>効いている物理</th>
-          <th>技術者の判断</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>熱電対の微小電圧（mV級）を制御器に伝送するための増幅回路</td>
-          <td>非反転増幅回路（Av = 1 + Rf/Ri）で高インピーダンス入力のまま信号を増幅</td>
-          <td>センサインピーダンスが高い場合は非反転を選ぶ。入力電流でセンサ出力を歪めないよう入力インピーダンスを確認する</td>
-        </tr>
-        <tr>
-          <td>流量センサの複数チャンネル信号を1つのアナログ出力に合算する回路</td>
-          <td>反転加算回路（Vo = -(Rf/R1・V1 + Rf/R2・V2)）で重みつき加算と位相反転を同時に実現</td>
-          <td>各チャンネルのゲイン（Rf/Rn）を設計値どおりに保つため、抵抗の温度係数を揃えた精密抵抗を使用する</td>
-        </tr>
-        <tr>
-          <td>パルス幅変調信号を積分してアナログ制御電圧を生成する回路</td>
-          <td>積分回路（Vo = -(Vi/RC)×t）でスイッチング信号を平滑化</td>
-          <td>RC 時定数が短すぎるとリプルが大きくなり、長すぎると応答が遅れる。制御周期との兼ね合いで R・C 値を決定する</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h2 id="examples"><span className="h-num">4</span>例題</h2>
-
-    <Callout variant="note" title="例題1：反転増幅回路のゲインと出力電圧（計算問題）">
-      反転増幅回路で Ri = 10 kΩ、Rf = 100 kΩ のとき、電圧利得 Av と入力電圧 Vi = 0.5 V に対する出力電圧 Vo を求めよ。
-    </Callout>
-    <details>
-      <summary>解答・解説</summary>
-      <p>Step①：仮想接地を確認する（負帰還回路なので成立）</p>
-      <p>Step②：Av = -Rf/Ri = -100/10 = -10</p>
-      <p>Step③：Vo = Av × Vi = -10 × 0.5 = -5 V</p>
-      <p><strong>答え：Av = −10、Vo = −5 V（入力と逆位相）</strong></p>
-    </details>
-    <Callout variant="tip" title="この例題のツボ">
-      <span className="marker">Av = -Rf/Ri のマイナス符号</span>は位相反転を意味する。「-10 × 0.5 = -5」と符号ごと計算するのが正解。「+5V」と答えると1点失う。
-    </Callout>
-    <Callout variant="note" title="極端条件チェック">
-      <p><strong>支配変数：Rf / Ri の比</strong></p>
-      <ul>
-        <li>Rf → 0（帰還抵抗なし・短絡）：Av = 0 → 出力はゼロ</li>
-        <li>Rf → ∞（帰還抵抗が開放）：負帰還が切れ、出力が電源電圧に飽和（コンパレータ動作）</li>
-      </ul>
-    </Callout>
-
-    <Callout variant="note" title="例題2：積分回路の出力電圧計算（計算問題）">
-      積分回路で R = 10 kΩ、C = 1 μF のとき、Vi = 1 V のステップ入力を加えた 0.1 秒後の出力電圧 Vo を求めよ。
-    </Callout>
-    <details>
-      <summary>解答・解説</summary>
-      <p>Step①：τ = RC = 10×10³ × 1×10⁻⁶ = 0.01 s</p>
-      <p>Step②：Vo = -(Vi/RC)×t = -(1/0.01)×0.1 = -10 V</p>
-      <p><strong>答え：Vo = −10 V（位相反転あり）</strong></p>
-    </details>
-    <Callout variant="tip" title="この例題のツボ">
-      積分回路も<span className="marker">出力にマイナスがつく（反転積分）</span>。RC = 0.01 s を先に計算してから t = 0.1 s を代入。0.1/0.01 = 10 を符号ごと適用して −10 V。
-    </Callout>
-    <Callout variant="note" title="極端条件チェック">
-      <p><strong>支配変数：RC（時定数）</strong></p>
-      <ul>
-        <li>RC → 0：出力変化速度が∞ → 瞬時に飽和電圧に到達</li>
-        <li>RC → ∞：出力はほぼ変化しない → 積分器として機能せず（バッファに近い動作）</li>
-      </ul>
-    </Callout>
-
-    <Callout variant="note" title="例題3：シュミットトリガの出力判定（論説・選択問題）">
-      <p>正帰還をかけたオペアンプ回路（シュミットトリガ）で、＋入力に R₁・R₂ の分圧を接続。Vi（−入力）が上昇するとき出力が反転するタイミングの判定方法として正しいものを選べ。</p>
-      <p>① 仮想接地を使い、＋入力と－入力の電圧差がゼロになる点を求める</p>
-      <p>② ＋入力の電圧（分圧）を計算し、Vi がその値を超えた瞬間に出力が反転する</p>
-      <p>③ 開ループゲインを使って出力電圧を計算する</p>
-      <p>④ RC 時定数で出力波形を積分して判定する</p>
-    </Callout>
-    <details>
-      <summary>解答・解説</summary>
-      <p>① ❌：正帰還のため仮想接地は成立しない</p>
-      <p>② ✅：＋入力の電圧 = Vout × R₁/(R₁+R₂)（分圧）を先に求め、Vi が上回った瞬間に反転</p>
-      <p>③ ❌：出力は常に飽和（+Vsat か −Vsat）</p>
-      <p>④ ❌：積分回路ではない</p>
-      <p><strong>答え：②</strong></p>
-    </details>
-    <Callout variant="tip" title="この例題のツボ">
-      シュミットトリガ ＝ 正帰還 ＝ <span className="marker">仮想接地不可</span>。＋入力の分圧と Vi の大小比較で出力を判定（R04上 問13 出題）。
-    </Callout>
-    <Callout variant="note" title="判断の視点チェック">
-      <p>選択肢を切る3ステップ：</p>
-      <ol>
-        <li>まず帰還の方向を確認（負帰還 → 仮想接地OK、正帰還 → 仮想接地NG）</li>
-        <li>仮想接地が使えない回路では出力は必ず飽和（+Vsat か −Vsat）と確認</li>
-        <li>正帰還回路の出力反転点は ＋入力の電圧と Vi の大小比較で決まることを確認</li>
-      </ol>
-    </Callout>
-
-    <Callout variant="warn" title="なぜシュミットトリガで仮想短絡が使えないのか（R04上 問13 の核心）">
-      <p><strong>仮想短絡は「負帰還のとき限定」の結論であって、オペアンプの普遍法則ではない。</strong>成立条件は次の2つ。</p>
-      <ol>
-        <li>帰還が <span className="marker">−入力</span> に戻っている（負帰還）</li>
-        <li>出力が飽和していない（線形領域＝0Vでも5Vでもない中間値を取れている）</li>
-      </ol>
-      <p><strong>負帰還で v⁺ ≈ v⁻ になる理由：</strong>出力は本来 vout = A·(v⁺ − v⁻)、A は約10万倍以上。負帰還だと v⁻ が少し下がる→出力が上がる→その出力が v⁻ を押し上げる、と<span className="marker">ズレを打ち消す</span>方向に働き、差がほぼ0の点で安定する。A が巨大なので有限の出力を出すには差→0。これが仮想短絡の正体。</p>
-      <p><strong>正帰還（今回）で崩れる理由：</strong>出力が <span className="marker">＋入力</span> に戻る。v⁺ が少し上がる→出力が上がる→その出力が v⁺ を<span className="marker">さらに</span>押し上げる、と雪だるま式に暴走。釣り合い点 v⁺=v⁻ は<span className="marker">不安定</span>で、出力は必ず電源の上限/下限（5V か 0V）に張り付く。線形領域を外れるので vout=A·(v⁺−v⁻) の式が成り立たず、「差→0」の論理が消える＝<span className="marker">仮想短絡が使えない</span>。</p>
-    </Callout>
-    <Callout variant="tip" title="谷と山のイメージ＋閾値の重ね合わせ計算">
-      <p><strong>負帰還＝谷底のボール</strong>（ズレても戻る→釣り合い点に落ち着く→仮想短絡）。<strong>正帰還＝山頂のボール</strong>（ズレると転げ落ちる→端＝飽和まで行く）。</p>
-      <p><strong>v⁺ は重ね合わせで計算</strong>（v⁺ 節点に 10kΩ→5V、10kΩ→GND、20kΩ→vout が接続）：</p>
-      <p style={{textAlign:"center"}}>v⁺ = (5/10 + vout/20) ÷ (1/10 + 1/10 + 1/20) = (0.5 + vout/20) ÷ 0.25</p>
-      <ul>
-        <li>出力 HIGH（vout=5V）：v⁺ = 0.75 ÷ 0.25 = <span className="marker">3V</span> → vin が 3V を超えた瞬間 LOW(0V) へ反転</li>
-        <li>出力 LOW（vout=0V）：v⁺ = 0.5 ÷ 0.25 = <span className="marker">2V</span> → vin が 2V を下回った瞬間 HIGH(5V) へ反転</li>
-      </ul>
-      <p>閾値が 2V と 3V でズレる＝<span className="marker">ヒステリシス</span>。この 2V 幅の「のりしろ」がノイズ耐性になる。（R04上 問13 正答(5)：ア=2〜3／イ=3／ウ=2／エ=ヒステリシス）</p>
-    </Callout>
-
-    <h2 id="traps"><span className="h-num">5</span>引っかけポイント</h2>
-
-    <TrapBlock
-      correct="反転増幅のゲインは Av = −Rf/Ri。マイナス符号は必須で、出力電圧は入力と逆符号になる。"
-      trap="Av = Rf/Ri（マイナスなし）と計算し、出力電圧の符号を逆にしがち。"
-      cite="H25 問13・H27 問18 類題 [要確認]"
-      steps={[
-        "「反転増幅」という語を問題文で確認する",
-        "ゲイン式は Av = −Rf/Ri（マイナスを最初から書く）",
-        "Vo = Av × Vi を計算するとき、マイナス符号をそのまま掛ける",
-        "答えの符号が入力と逆になっているか最後に確認する",
+    <PageTabs
+      pageId="op-amp"
+      defaultTab="formulas"
+      tabs={[
+        { id: "formulas", label: "公式", icon: "📐" },
+        { id: "explain",  label: "解説", icon: "🧠" },
+        { id: "learn",    label: "学習", icon: "🎯" },
       ]}
-    />
-
-    <TrapBlock
-      correct="仮想接地（イマジナリーショート）は負帰還がかかっているときのみ有効。正帰還回路（シュミットトリガ等）には適用不可。"
-      trap="回路に帰還があれば仮想接地が使えると思い、シュミットトリガにも適用してしまう。"
-      cite="R04上 問13 出題"
-      steps={[
-        "出力から入力へのフィードバック経路を特定する",
-        "帰還が－入力（反転入力）に戻っているなら負帰還 → 仮想接地OK",
-        "帰還が＋入力（非反転入力）に戻っているなら正帰還 → 仮想接地NG → 分圧計算で判定する",
-      ]}
-    />
-
-    <TrapBlock
-      correct="非反転増幅のゲインは Av = 1 + Rf/Ri。信号が＋入力に入るので、ゲインに 1 が加算される。"
-      trap="非反転増幅でも Av = Rf/Ri と計算し、1 を足し忘れる（Av が 0.9 や 9 になる誤答が出る）。"
-      cite="H22 問18・H27 問18 類題 [要確認]"
-      steps={[
-        "信号がどちらの入力端子（＋か－か）に入力されているかを確認する",
-        "＋入力に信号 → 非反転増幅 → Av = 1 + Rf/Ri（1 を必ず足す）",
-        "－入力に信号 → 反転増幅 → Av = −Rf/Ri（マイナス付き・1 なし）",
-      ]}
-    />
-
-    <h2 id="correct-vs-wrong"><span className="h-num">6</span>正答者 vs 誤答者</h2>
-    <table className="data-table">
-      <thead>
-        <tr>
-          <th>観点</th>
-          <th>❌ 誤答者</th>
-          <th>✅ 正答者</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>反転増幅のゲイン符号</td>
-          <td>Av = Rf/Ri でマイナスを忘れ、出力電圧の符号が逆になる</td>
-          <td>Av = −Rf/Ri を式として最初から書き、符号込みで Vo を計算する</td>
-        </tr>
-        <tr>
-          <td>仮想接地の適用条件</td>
-          <td>帰還があれば全て仮想接地が使えると思い、シュミットトリガにも適用する</td>
-          <td>負帰還のみで仮想接地が成立し、正帰還回路（シュミットトリガ）には使えないと区別している</td>
-        </tr>
-        <tr>
-          <td>非反転増幅の「1 +」</td>
-          <td>Av = Rf/Ri と暗記し、1 を忘れてゲインを1だけ小さく計算する</td>
-          <td>＋入力信号 → 非反転 → Av = 1 + Rf/Ri と接続から導ける</td>
-        </tr>
-        <tr>
-          <td>積分回路の符号</td>
-          <td>Vo = Vi/RC × t（マイナスなし）と計算し、正の出力を答える</td>
-          <td>積分回路も反転なので Vo = −(Vi/RC)×t。マイナスが付く前提で計算する</td>
-        </tr>
-        <tr>
-          <td>シュミットトリガの判定</td>
-          <td>仮想接地で閾値を求めようとして計算が破綻する</td>
-          <td>＋入力の分圧を先に求め、Vi との大小比較で出力を判定する正しい手順を知っている</td>
-        </tr>
-        <tr>
-          <td>ボルテージフォロワの用途</td>
-          <td>ゲイン1 = 増幅していないから意味がないと判断する</td>
-          <td>高入力・低出力インピーダンスで信号源に負荷をかけないインピーダンス変換に使うと理解している</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h2 id="exam-history"><span className="h-num">7</span>出題実績</h2>
-    <table className="data-table">
-      <thead>
-        <tr>
-          <th>年度</th>
-          <th>問</th>
-          <th>形式</th>
-          <th>何が問われたか</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>R06下</td>
-          <td>問18</td>
-          <td>論説・計算</td>
-          <td><span className="marker">演算増幅器の特徴と回路演算</span> [要確認]</td>
-        </tr>
-        <tr>
-          <td>R04上</td>
-          <td>問13</td>
-          <td>計算</td>
-          <td><span className="marker">シュミットトリガ（正帰還）の出力波形と閾値判定</span></td>
-        </tr>
-        <tr>
-          <td>R02</td>
-          <td>問13</td>
-          <td>論説</td>
-          <td>演算増幅器及び回路応用 [要確認]</td>
-        </tr>
-        <tr>
-          <td>H29</td>
-          <td>問18</td>
-          <td>計算</td>
-          <td>演算増幅器（反転・非反転増幅の計算） [要確認]</td>
-        </tr>
-        <tr>
-          <td>H27</td>
-          <td>問18</td>
-          <td>計算・穴埋</td>
-          <td><span className="marker">演算増幅器のゲイン計算</span> [要確認]</td>
-        </tr>
-        <tr>
-          <td>H26</td>
-          <td>問13</td>
-          <td>計算</td>
-          <td>演算増幅器（出力電圧計算） [要確認]</td>
-        </tr>
-        <tr>
-          <td>H22</td>
-          <td>問18</td>
-          <td>論説・計算</td>
-          <td><span className="marker">理想オペアンプの特性（∞・0）と出力電圧</span> [要確認]</td>
-        </tr>
-        <tr>
-          <td>H19</td>
-          <td>問12</td>
-          <td>論説</td>
-          <td>演算増幅器の特徴（入力インピーダンス・開ループゲイン） [要確認]</td>
-        </tr>
-      </tbody>
-    </table>
-    <p>→ 出題頻度: ★★★（問13・問18 に集中。2〜3年に1回。反転増幅・仮想接地・シュミットトリガがパターン固定）</p>
-    <p style={{fontSize:"0.85em", color:"var(--ink-soft)"}}>※ 上記年度・問番号は旧wiki参照ベース。実出題は電験王3（https://denken-ou.com/）で確認すること。</p>
-
-    <h2 id="related"><span className="h-num">8</span>関連項目</h2>
-    <ul>
-      <li>直流回路（2.1）：仮想接地後の電流計算は KVL/KCL と同じ手順</li>
-      <li>電気・電子計測（6.1）：計装アンプ（差動増幅）として計測器に内蔵</li>
-      <li>トランジスタ（5.2）：オペアンプの内部素子。BJT 差動対が基本構成</li>
-    </ul>
+    >
+      {(activeTab, switchTab) => (
+        <>
+          {activeTab === 'formulas' && <OpAmpFormulasTab onNav={onNav} switchTab={switchTab} />}
+          {activeTab === 'explain'  && <OpAmpExplainTab  onNav={onNav} switchTab={switchTab} />}
+          {activeTab === 'learn'    && <OpAmpLearnTab    onNav={onNav} switchTab={switchTab} />}
+        </>
+      )}
+    </PageTabs>
 
     <PageNav
       prev={{ id: "transistor", title: "5.2 トランジスタ" }}
@@ -13968,7 +14247,7 @@ const OpAmpPage = ({ onNav }) => (
       onNav={onNav}
     />
     <p style={{fontSize:"0.8em", color:"var(--ink-mute)", marginTop:"2rem"}}>
-      最終改定: 2026-04-27 | v0.9
+      最終改定: 2026-06-13 | v2.0（3タブ統合・SVG5図・Sクラス）
     </p>
   </>
 );
