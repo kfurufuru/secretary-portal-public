@@ -3699,6 +3699,7 @@ const HomePage = ({ onNav }) => {
 
         <SR1Card onNav={onNav} />
         <RironDailyQuestion onNav={onNav} />
+        <MixedQuiz onNav={onNav} />
 
         <div className="stat-strip">
           <div className="stat">
@@ -5480,6 +5481,8 @@ const CapacitorExplainTab = ({ onNav, switchTab }) => (
 /* 学習タブ */
 const CapacitorLearnTab = ({ onNav, switchTab }) => (
   <>
+    <ConceptQuiz pageId="capacitor" pageTitle="静電容量" />
+
     <h2 id="solver-flow"><span className="h-num">1</span>コンデンサ問題の解法フロー（汎用5ステップ）</h2>
     <SectionCheck pageId="capacitor" sectionId="solver-flow" />
     <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
@@ -6204,6 +6207,8 @@ const AcPowerExplainTab = ({ onNav, switchTab }) => (
 const AcPowerLearnTab = ({ onNav, switchTab }) => (
   <>
     <AcPowerSymbolLegend />
+
+    <ConceptQuiz pageId="ac-power" pageTitle="交流電力" />
 
     <h2 id="solver-flow"><span className="h-num">1</span>交流電力問題の解法フロー（汎用5ステップ）</h2>
     <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginBottom: "10px" }}>
@@ -6934,6 +6939,8 @@ const ThreePhaseExplainTab = ({ onNav, switchTab }) => (
 const ThreePhaseLearnTab = ({ onNav, switchTab }) => (
   <>
     <ThreePhaseSymbolLegend />
+
+    <ConceptQuiz pageId="three-phase" pageTitle="三相交流" />
 
     <h2 id="solver-flow"><span className="h-num">1</span>三相交流問題の解法フロー（汎用5ステップ）</h2>
     <SectionCheck pageId="three-phase" sectionId="solver-flow" />
@@ -8405,6 +8412,8 @@ const CoulombFieldExplainTab = ({ onNav, switchTab }) => (
 /* 学習タブ */
 const CoulombFieldLearnTab = ({ onNav, switchTab }) => (
   <>
+    <ConceptQuiz pageId="coulomb-field" pageTitle="静電気・クーロンの法則" />
+
     <h2 id="solver-flow"><span className="h-num">1</span>静電気問題の解法フロー（汎用5ステップ）</h2>
     <SectionCheck pageId="coulomb-field" sectionId="solver-flow" />
     <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginBottom: "10px" }}>
@@ -10017,6 +10026,8 @@ const DcCircuitExplainTab = ({ onNav, switchTab }) => (
 /* 学習タブ */
 const DcCircuitLearnTab = ({ onNav, switchTab }) => (
   <>
+    <ConceptQuiz pageId="dc-circuit" pageTitle="直流回路" />
+
     <h2 id="solver-flow"><span className="h-num">1</span>直流回路問題の解法フロー（汎用5ステップ）</h2>
     <SectionCheck pageId="dc-circuit" sectionId="solver-flow" />
     <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
@@ -11309,6 +11320,8 @@ const RlcResonanceLearnTab = ({ onNav, switchTab }) => (
   <>
     <RlcResonanceSymbolLegend />
 
+    <ConceptQuiz pageId="rlc-resonance" pageTitle="RLC共振" />
+
     <h2 id="solver-flow"><span className="h-num">1</span>RLC共振問題の解法フロー（汎用5ステップ）</h2>
     <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginBottom: "10px" }}>
       RLC共振問題はパターンが決まっている。「問題を見たら何をどう判断するか」を5ステップで固定化することで暗記に頼らず解ける。
@@ -11971,6 +11984,224 @@ const SectionCheckSummary = ({ pageId, sections, onJump }) => {
           ✨ すべてのセクションが ◎ または ○ です。お疲れさまでした！
         </div>
       )}
+    </div>
+  );
+};
+
+/* ============================================================
+   ConceptQuiz: テーマ章に検証済みプール問題を埋め込む確認問題ブロック
+   - 出題ソース: RIRON_DAILY_POOL を wikiPageId でフィルタ（捏造ゼロ・verified:'high'）
+   - rank 'A' = 必須（落とすと失点）/ rank 'B'以下 = 任意（理解が深まる）
+   - 回答 → 正誤判定 → denken_check::riron_<pageId>::quiz::<qid> 書込
+     status: understood(正)/wrong(誤) → hoki 間違いノート(MachigaiNotePage)に集約
+   ============================================================ */
+const ConceptQuizItem = ({ q, pageId, pageTitle, required }) => {
+  const key = `denken_check::riron_${pageId}::quiz::${q.id}`;
+  const [selected, setSelected] = React.useState(null);
+  const [revealed, setRevealed] = React.useState(false);
+  const [prev, setPrev] = React.useState(null);
+  const [confidence, setConfidence] = React.useState(null); // 'sure' | 'unsure' | null(スキップ可・自信度較正)
+  const [missed, setMissed] = React.useState(false); // 同一セッションで一度でも不正解したか（即時再正解を克服扱いしない）
+  const [recallNote, setRecallNote] = React.useState(''); // 不正解時「正しい考えを自分の言葉で1行」＝再生(retrieval)で丸暗記を矯正
+  const [errorTag, setErrorTag] = React.useState(null); // 不正解の原因タグ（公式忘れ/条件読み違い/計算ミス/概念不理解）=弱点類型の可視化
+  React.useEffect(() => {
+    try { const raw = localStorage.getItem(key); if (raw) setPrev(JSON.parse(raw)); } catch (e) {}
+  }, [key]);
+  const correctKey = (q.choices.find(c => c.correct) || {}).key;
+  const ERR_LABELS = { formula: '公式忘れ', condition: '条件読み違い', calc: '計算ミス', concept: '概念不理解' };
+  const fmtMemo = (b) => (b.memoBase || '') + (b.recallNote ? '・正答メモ:' + b.recallNote : '') + (ERR_LABELS[b.error_tag] ? '・原因:' + ERR_LABELS[b.error_tag] : '');
+  const choose = (k) => {
+    if (revealed) return;
+    setSelected(k);
+    setRevealed(true);
+    const isCorrect = k === correctKey;
+    const rescued = isCorrect && missed; // 同一セッションで不正解→再回答正解＝丸暗記の疑い・克服にしない
+    if (!isCorrect) setMissed(true);
+    // 遅延再生の原則: 即時リベンジ正解は understood にせず review(後日再提示)止まり。別の日に初回正解で初めて克服。
+    const status = isCorrect ? (missed ? 'review' : 'understood') : 'wrong';
+    const overconfident = confidence === 'sure' && !isCorrect; // 自信あり×不正解=過信
+    const memoBase = (required ? '必須' : '任意') + (overconfident ? '・⚠過信' : '') + (rescued ? '・⚠即時再正解(丸暗記疑い)' : '');
+    try {
+      const raw = localStorage.getItem(key);
+      const base = raw ? (JSON.parse(raw) || {}) : {};
+      const now = new Date().toISOString();
+      const rec = Object.assign({}, base, {
+        status: status,
+        updatedAt: now,
+        firstSeenAt: base.firstSeenAt || now,
+        reviewCount: (base.reviewCount || 0) + 1,
+        source: 'riron-concept',
+        itemType: 'concept-quiz',
+        articleTitle: '理論 確認問題 — ' + pageTitle,
+        itemTitle: (q.q.length > 44 ? q.q.slice(0, 44) + '…' : q.q),
+        articleUrl: 'denken3-riron-wiki.html#' + pageId,
+        confidence: confidence || 'skip',
+        overconfident: overconfident,
+        rescued: rescued,
+        memoBase: memoBase,
+        recallNote: base.recallNote || '',
+        error_tag: base.error_tag || null,
+        memo: fmtMemo({ memoBase: memoBase, recallNote: base.recallNote, error_tag: base.error_tag }),
+      });
+      localStorage.setItem(key, JSON.stringify(rec));
+      window.dispatchEvent(new CustomEvent('section-check-changed', { detail: { key, status } }));
+    } catch (e) {}
+  };
+  const saveRecall = (text) => {
+    const t = (text || '').replace(/\n+/g, ' ').trim().slice(0, 200);
+    try {
+      const raw = localStorage.getItem(key);
+      const base = raw ? (JSON.parse(raw) || {}) : {};
+      const rec = Object.assign({}, base, { recallNote: t, updatedAt: new Date().toISOString() });
+      rec.memo = fmtMemo(rec);
+      localStorage.setItem(key, JSON.stringify(rec));
+      window.dispatchEvent(new CustomEvent('section-check-changed', { detail: { key, status: base.status } }));
+    } catch (e) {}
+  };
+  const saveErrorTag = (tag) => {
+    try {
+      const raw = localStorage.getItem(key);
+      const base = raw ? (JSON.parse(raw) || {}) : {};
+      const rec = Object.assign({}, base, { error_tag: tag, updatedAt: new Date().toISOString() });
+      rec.memo = fmtMemo(rec);
+      localStorage.setItem(key, JSON.stringify(rec));
+      window.dispatchEvent(new CustomEvent('section-check-changed', { detail: { key, status: base.status } }));
+    } catch (e) {}
+  };
+  const retry = () => { setSelected(null); setRevealed(false); };
+  const isCorrect = revealed && selected === correctKey;
+  const rescuedView = isCorrect && missed; // 同一セッション再回答での正解＝克服ではない（表示用）
+  return (
+    <div style={{ border: '1px solid var(--rule)', borderRadius: 8, padding: '14px 16px', margin: '10px 0', background: 'var(--bg-elev)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, color: '#fff', background: required ? '#dc2626' : '#3b82f6' }}>{required ? '必須' : '任意'}</span>
+        {(q.tags || []).map(t => (<span key={t} style={{ fontSize: 11, color: 'var(--ink-soft)' }}>{t}</span>))}
+        {q.avgRate && (<span style={{ fontSize: 11, color: 'var(--ink-mute)' }}>正答率 {q.avgRate}</span>)}
+        {prev && (<span style={{ fontSize: 11, color: 'var(--ink-mute)' }}>· 前回: {prev.status === 'understood' ? '○正解' : '×不正解'}</span>)}
+      </div>
+      <p style={{ margin: '0 0 10px', lineHeight: 1.7 }}><strong>Q.</strong> {q.q}</p>
+      {!revealed && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 11, color: 'var(--ink-mute)' }}>答える前に（任意）:</span>
+          {[['sure', '💪 自信あり'], ['unsure', '🤔 自信なし']].map(([v, label]) => (
+            <button key={v} onClick={() => setConfidence(confidence === v ? null : v)}
+              style={{ padding: '2px 10px', fontSize: 11, borderRadius: 4, cursor: 'pointer',
+                background: confidence === v ? 'var(--accent)' : 'transparent',
+                color: confidence === v ? 'var(--bg)' : 'var(--ink-soft)',
+                border: confidence === v ? '1px solid var(--accent)' : '1px solid var(--rule)' }}>{label}</button>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {q.choices.map(c => {
+          let bg = 'transparent', bd = '1px solid var(--rule)';
+          if (revealed) {
+            if (c.correct) { bg = 'rgba(22,163,74,0.12)'; bd = '1px solid #16a34a'; }
+            else if (c.key === selected) { bg = 'rgba(220,38,38,0.12)'; bd = '1px solid #dc2626'; }
+          }
+          return (
+            <button key={c.key} onClick={() => choose(c.key)} disabled={revealed}
+              style={{ textAlign: 'left', padding: '8px 12px', background: bg, border: bd, color: 'var(--ink)', borderRadius: 6, cursor: revealed ? 'default' : 'pointer', fontSize: 14 }}>
+              <strong>{c.key}.</strong> {c.label}
+              {revealed && c.correct && <span style={{ color: '#16a34a', fontWeight: 700 }}> ← 正解</span>}
+            </button>
+          );
+        })}
+      </div>
+      {revealed && (
+        <div style={{ marginTop: 10, padding: '10px 12px', borderRadius: 6, background: 'var(--bg-sunken)', fontSize: 13, lineHeight: 1.7 }}>
+          <strong style={{ color: isCorrect ? (rescuedView ? '#d97706' : '#16a34a') : '#dc2626' }}>{isCorrect ? (rescuedView ? '△ 再回答で正解' : '◎ 正解') : '× 不正解'}</strong>
+          {!isCorrect && <span style={{ color: 'var(--ink-soft)' }}> → 間違いノートに記録しました</span>}
+          {rescuedView && <span style={{ color: '#d97706', fontWeight: 700 }}> → 初回不正解のため「要復習」。後日また出題します（その場の正解＝丸暗記の可能性）</span>}
+          {confidence === 'sure' && !isCorrect && <span style={{ color: '#dc2626', fontWeight: 700 }}> ⚠ 過信注意（自信ありで不正解）</span>}
+          {confidence === 'unsure' && isCorrect && !rescuedView && <span style={{ color: '#16a34a' }}> 💡 自信なしで正解＝実力は足りている</span>}
+          <p style={{ margin: '6px 0 0' }}>{q.explanation}</p>
+          {!isCorrect && (
+            <div style={{ marginTop: 10 }}>
+              <label style={{ fontSize: 12, color: 'var(--ink-soft)', display: 'block', marginBottom: 4 }}>✍ 正しい考えを自分の言葉で1行（任意・書くと定着が上がる＝丸暗記対策）</label>
+              <input type="text" defaultValue={recallNote} maxLength={120}
+                onBlur={(e) => { setRecallNote(e.target.value); saveRecall(e.target.value); }}
+                placeholder="例: マイナスはエネルギー保存の番人。消すと正帰還で発散"
+                style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--rule)', borderRadius: 4, fontSize: 12, fontFamily: 'inherit', boxSizing: 'border-box' }} />
+            </div>
+          )}
+          {!isCorrect && (
+            <div style={{ marginTop: 8 }}>
+              <span style={{ fontSize: 12, color: 'var(--ink-soft)', marginRight: 6 }}>原因（任意・1タップ）:</span>
+              {[['formula', '公式忘れ'], ['condition', '条件読み違い'], ['calc', '計算ミス'], ['concept', '概念不理解']].map(([k, label]) => (
+                <button key={k} onClick={() => { setErrorTag(k); saveErrorTag(k); }}
+                  style={{ padding: '3px 10px', fontSize: 11, borderRadius: 4, cursor: 'pointer', marginRight: 6, marginTop: 4,
+                    background: errorTag === k ? '#dc2626' : 'transparent',
+                    color: errorTag === k ? '#fff' : 'var(--ink-soft)',
+                    border: errorTag === k ? '1px solid #dc2626' : '1px solid var(--rule)' }}>{label}</button>
+              ))}
+            </div>
+          )}
+          <button onClick={retry} style={{ marginTop: 8, padding: '4px 10px', background: 'transparent', border: '1px solid var(--rule)', borderRadius: 4, cursor: 'pointer', fontSize: 12, color: 'var(--ink-soft)' }}>もう一度</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ConceptQuiz = ({ pageId, pageTitle }) => {
+  const pool = (RIRON_DAILY_POOL || []).filter(q => q.wikiPageId === pageId);
+  if (!pool.length) return null;
+  const required = pool.filter(q => q.rank === 'S' || q.rank === 'A');
+  const optional = pool.filter(q => q.rank !== 'S' && q.rank !== 'A');
+  return (
+    <div style={{ border: '2px solid var(--accent)', borderRadius: 12, padding: '16px 18px', margin: '0 0 24px', background: 'var(--bg)' }}>
+      <h3 style={{ margin: '0 0 4px', fontSize: 16 }}>🎯 確認問題（まず腕試し）</h3>
+      <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: '0 0 12px' }}>
+        <strong style={{ color: '#dc2626' }}>必須</strong>＝落とすと失点する頻出ポイント・<strong style={{ color: '#3b82f6' }}>任意</strong>＝解くと理解が深まる発展。間違えると<strong>間違いノート</strong>に自動集約され、後で弱点だけ復習できる。
+      </p>
+      <p style={{ fontSize: 12, margin: '0 0 14px' }}>
+        <a href="denken-hoki-wiki.html#chokuzen-machigai" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>
+          📕 間違えた問題・⚠過信した問題を「間違いノート」でまとめて復習 →
+        </a>
+      </p>
+      {required.map(q => (<ConceptQuizItem key={q.id} q={q} pageId={pageId} pageTitle={pageTitle} required={true} />))}
+      {optional.length > 0 && (
+        <details style={{ marginTop: 8 }}>
+          <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)' }}>＋ 任意問題（理解を深める {optional.length}問）</summary>
+          <div style={{ marginTop: 8 }}>
+            {optional.map(q => (<ConceptQuizItem key={q.id} q={q} pageId={pageId} pageTitle={pageTitle} required={false} />))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+};
+
+const MIXED_QUIZ_COUNT = 5;
+const MixedQuiz = ({ onNav }) => {
+  const [items, setItems] = React.useState([]);
+  const build = () => {
+    const pool = (RIRON_DAILY_POOL || []).filter(q => q.rank === 'S' || q.rank === 'A');
+    const sh = pool.slice();
+    for (let i = sh.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = sh[i]; sh[i] = sh[j]; sh[j] = t; }
+    const picked = []; const cnt = {};
+    for (const q of sh) { if (picked.length >= MIXED_QUIZ_COUNT) break; const c = cnt[q.wikiPageId] || 0; if (c >= 2) continue; picked.push(q); cnt[q.wikiPageId] = c + 1; }
+    if (picked.length < MIXED_QUIZ_COUNT) { for (const q of sh) { if (picked.length >= MIXED_QUIZ_COUNT) break; if (picked.indexOf(q) === -1) picked.push(q); } }
+    setItems(picked);
+  };
+  return (
+    <div style={{ border: '2px dashed var(--accent)', borderRadius: 12, padding: '16px 18px', margin: '0 0 24px', background: 'var(--bg)' }}>
+      <h3 style={{ margin: '0 0 4px', fontSize: 16 }}>🎲 ミックス確認（全テーマ横断）</h3>
+      <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: '0 0 12px' }}>
+        テーマをまたいで{MIXED_QUIZ_COUNT}問ランダム出題。本番はランダム順＝「どの解法を使うか」の判断力（転移）を鍛える（ブロック学習より転移に強い）。記録は各テーマの確認問題と共有され、間違いノートに集約される。
+      </p>
+      <button onClick={build} style={{ padding: '8px 16px', fontSize: 14, fontWeight: 600, borderRadius: 6, cursor: 'pointer', background: 'var(--accent)', color: 'var(--bg)', border: '1px solid var(--accent)' }}>
+        {items.length ? ('別の' + MIXED_QUIZ_COUNT + '問を引く') : (MIXED_QUIZ_COUNT + '問スタート')}
+      </button>
+      <div style={{ marginTop: 12 }}>
+        {items.map((q, i) => (
+          <div key={'mix-' + q.id + '-' + i}>
+            <div style={{ fontSize: 11, color: 'var(--ink-mute)', marginTop: 8 }}>{(i + 1) + ' / ' + items.length + '　テーマ: ' + q.topic}</div>
+            <ConceptQuizItem q={q} pageId={q.wikiPageId} pageTitle={q.topic} required={q.rank === 'S' || q.rank === 'A'} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -12936,6 +13167,8 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
   <>
     <InductanceSymbolLegend />
 
+    <ConceptQuiz pageId="inductance" pageTitle="インダクタンス" />
+
     <h2 id="solver-flow"><span className="h-num">1</span>相互結合問題の解法フロー（汎用5ステップ）</h2>
     <SectionCheck pageId="inductance" sectionId="solver-flow" />
     <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginBottom: "10px" }}>
@@ -13002,14 +13235,11 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
       <p>過去問の95%以上は「自己 L か相互 M か」「和動か差動か」「交流かエネルギーか」の <strong>3つの分岐</strong> で解ける。<strong>「公式を覚える」のではなく「分岐を覚える」</strong>と、新しい問題でも手が止まらない（R04上問3 / R05上問10 / R07上問3 で実証済み）。</p>
     </Callout>
 
-    <h2 id="test-widget"><span className="h-num">2</span>概念テスト Widget</h2>
+    <h2 id="test-widget"><span className="h-num">2</span>概念チェック</h2>
     <SectionCheck pageId="inductance" sectionId="test-widget" />
     <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginBottom: "12px" }}>
-      解答 → Claude で採点 → records.json 記録 → dashboard 連鎖 の自動学習ループ。「わからない」も空欄でOK（解説モードに切替）。
+      このページの確認問題は、冒頭の <strong>🎯 確認問題（まず腕試し）</strong> に統合しました。4択で腕試し → 間違えると間違いノートに自動集約されます。
     </p>
-    <TestWidget questionId="riron_inductance_001" />
-    <TestWidget questionId="riron_inductance_002" />
-    <TestWidget questionId="riron_inductance_003" />
 
     <h2 id="examples"><span className="h-num">3</span>例題</h2>
     <SectionCheck pageId="inductance" sectionId="examples" />
@@ -13172,7 +13402,7 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
       pageId="inductance"
       sections={[
         { id: "solver-flow",   label: "1. 解法フロー" },
-        { id: "test-widget",   label: "2. 概念テスト Widget" },
+        { id: "test-widget",   label: "2. 概念チェック（冒頭に統合）" },
         { id: "examples",      label: "3. 例題" },
         { id: "r05-q10",       label: "4. R05上問10 解法カード" },
         { id: "z-3conditions", label: "5. 3条件Z即答チェック" },
@@ -13691,7 +13921,7 @@ const OpAmpVirtualShortSvg = () => (
 /* ---- SVG④：シュミットトリガのヒステリシスループ ---- */
 const OpAmpSchmittSvg = () => (
   <figure style={{ margin: "16px 0" }}>
-    <svg viewBox="0 0 460 280" role="img" aria-label="シュミットトリガのヒステリシス。vinが3Vを超えると出力5V→0V、vinが2Vを下回ると0V→5V。2V幅ののりしろ" style={{ display: "block", width: "100%", height: "auto", maxWidth: "460px", margin: "0 auto" }}>
+    <svg viewBox="0 0 460 280" role="img" aria-label="シュミットトリガのヒステリシス。vinが3Vを超えると出力5V→0V、vinが2Vを下回ると0V→5V。1V幅ののりしろ" style={{ display: "block", width: "100%", height: "auto", maxWidth: "460px", margin: "0 auto" }}>
       {/* axes */}
       <line x1="70" y1="230" x2="430" y2="230" stroke="var(--ink)" strokeWidth="1.6" />
       <line x1="70" y1="40" x2="70" y2="230" stroke="var(--ink)" strokeWidth="1.6" />
@@ -13721,7 +13951,7 @@ const OpAmpSchmittSvg = () => (
       <text x="330" y="226" fontSize="10" fill="var(--accent)">← 下降中</text>
     </svg>
     <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
-      図④：<strong>ヒステリシスループ</strong>。出力 HIGH のときは <strong>vin が 3V を超える</strong>まで落ちない／LOW のときは <strong>vin が 2V を下回る</strong>まで上がらない。上げ閾値(3V)と下げ閾値(2V)が <strong>2V ずれる＝のりしろ</strong>でノイズに強い。（R04上 問13）
+      図④：<strong>ヒステリシスループ</strong>。出力 HIGH のときは <strong>vin が 3V を超える</strong>まで落ちない／LOW のときは <strong>vin が 2V を下回る</strong>まで上がらない。上げ閾値(3V)と下げ閾値(2V)が <strong>1V ずれる＝のりしろ</strong>でノイズに強い。（R04上 問13）
     </figcaption>
   </figure>
 );
@@ -13961,7 +14191,7 @@ const OpAmpExplainTab = ({ onNav, switchTab }) => (
         <li>出力 HIGH（vout=5V）：v⁺ = 0.75 ÷ 0.25 = <span className="marker">3V</span> → vin が 3V を超えた瞬間 LOW(0V) へ反転</li>
         <li>出力 LOW（vout=0V）：v⁺ = 0.5 ÷ 0.25 = <span className="marker">2V</span> → vin が 2V を下回った瞬間 HIGH(5V) へ反転</li>
       </ul>
-      <p>閾値が 2V と 3V でズレる＝<span className="marker">ヒステリシス</span>。この 2V 幅の「のりしろ」がノイズ耐性になる。（正答(5)：ア=2〜3／イ=3／ウ=2／エ=ヒステリシス）</p>
+      <p>閾値が 2V と 3V でズレる＝<span className="marker">ヒステリシス</span>。この 1V 幅の「のりしろ」がノイズ耐性になる。（正答(5)：ア=2〜3／イ=3／ウ=2／エ=ヒステリシス）</p>
     </Callout>
 
     <h2 id="traps"><span className="h-num">6</span>引っかけポイント</h2>
@@ -14075,7 +14305,7 @@ const OpAmpLearnTab = ({ onNav, switchTab }) => (
         "v⁺ を重ね合わせ：v⁺ = (5/10 + vout/20) ÷ (1/10+1/10+1/20) = (0.5 + vout/20) ÷ 0.25",
         "出力HIGH(5V)：v⁺ = 0.75/0.25 = 3V → vin が 3V 超で LOW へ",
         "出力LOW(0V)：v⁺ = 0.5/0.25 = 2V → vin が 2V 未満で HIGH へ",
-        "上げ3V・下げ2Vでズレる → ヒステリシス（のりしろ2V）",
+        "上げ3V・下げ2Vでズレる → ヒステリシス（のりしろ1V）",
       ]}
     />
     <ExamAnswer
@@ -14533,10 +14763,13 @@ const ElectronMotionContrastSVG = () => (
       <line x1="165" y1="36" x2="165" y2="54" stroke="var(--ink-mute)" strokeWidth="1.5" />
       <polygon points="165,57 161,49 169,49" fill="var(--ink-mute)" />
       <text x="188" y="48" fontSize="11" fill="var(--ink-mute)">E</text>
-      <path d="M30,68 Q120,78 196,158" fill="none" stroke="var(--accent-ink)" strokeWidth="2" />
-      <circle cx="30" cy="68" r="6" fill="var(--danger)" />
-      <text x="30" y="71" fontSize="8" fill="#fff" textAnchor="middle">e⁻</text>
-      <text x="105" y="196" fontSize="11" fill="var(--ink-soft)" textAnchor="middle">一定の力 → 放物線・加速</text>
+      <path d="M30,150 Q118,140 196,66" fill="none" stroke="var(--accent-ink)" strokeWidth="2" />
+      <circle cx="30" cy="150" r="6" fill="var(--danger)" />
+      <text x="30" y="153" fontSize="8" fill="#fff" textAnchor="middle">e⁻</text>
+      <line x1="113" y1="128" x2="113" y2="104" stroke="var(--danger)" strokeWidth="2" />
+      <polygon points="113,101 108,109 118,109" fill="var(--danger)" />
+      <text x="121" y="118" fontSize="10" fill="var(--danger)" fontWeight="700">F</text>
+      <text x="105" y="196" fontSize="11" fill="var(--ink-soft)" textAnchor="middle">力は E と反対(上) → 放物線・加速</text>
       <text x="332" y="22" fontSize="13" fontWeight="700" fill="var(--danger)" textAnchor="middle">磁界中</text>
       <text x="272" y="62" fontSize="11" fill="var(--ink-mute)" textAnchor="middle">×</text>
       <text x="392" y="62" fontSize="11" fill="var(--ink-mute)" textAnchor="middle">×</text>
@@ -14555,7 +14788,7 @@ const ElectronMotionContrastSVG = () => (
       <text x="332" y="196" fontSize="11" fill="var(--ink-soft)" textAnchor="middle">直角の力 → 円運動（速さ一定）</text>
     </svg>
     <div style={{ fontSize: "11px", color: "var(--ink-soft)", marginTop: 4 }}>
-      電子の運動の核心：<strong>電界＝一定方向の力で速さが変わる（放物線・加速）／磁界＝速度に直角の力で速さは不変（円）</strong>
+      電子の運動の核心：<strong>電界＝一定方向の力で速さが変わる（放物線・加速）／磁界＝速度に直角の力で速さは不変（円）</strong>。電子は負電荷なので<strong>電界中の力は E と反対向き</strong>（図は E が下向き → 電子は上へ曲がる）。
     </div>
   </div>
 );
@@ -15682,6 +15915,8 @@ const TransientExplainTab = ({ onNav, switchTab }) => (
 /* 学習タブ */
 const TransientLearnTab = ({ onNav, switchTab }) => (
   <>
+    <ConceptQuiz pageId="transient" pageTitle="過渡現象" />
+
     <h2 id="solver-flow"><span className="h-num">1</span>過渡現象問題の解法フロー（汎用5ステップ）</h2>
     <SectionCheck pageId="transient" sectionId="solver-flow" />
     <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
@@ -17421,6 +17656,155 @@ const RIRON_DAILY_POOL = [
     explanation:'電子が電圧 V で得るエネルギーは eV（=力 eE×距離 d）。これが運動エネルギー ½mv² に等しい → eV=½mv² → v=√(2eV/m)。力 eE とエネルギー eV の混同（B）が典型ミス。',
     evidence:['電界中のエネルギー保存 eV=½mv²'], verified:'high',
     wikiPageId:'electron-motion' },
+
+  // ─── ConceptQuiz 6テーマ展開 追加問（各ページ実内容に根拠・捏造なし） ───
+  // 三相交流 three-phase
+  { id:'tp1', topic:'three_phase', rank:'A',
+    q:'線間電圧 400 V、線電流 10 A、力率 0.8 の三相平衡負荷の三相有効電力 P はおよそいくらか。',
+    choices:[{key:'A',label:'約 5.54 kW',correct:true},{key:'B',label:'約 3.20 kW',correct:false},{key:'C',label:'約 6.40 kW',correct:false},{key:'D',label:'約 6.93 kW',correct:false}],
+    avgRate:'62%', tags:['#計算','#頻出A'],
+    explanation:'P = √3 V_L I_L cosφ = √3×400×10×0.8 ≈ 5543 W ≈ 5.54 kW（線間表記）。B(3.20kW)は√3を掛け忘れた最多ミス。C(6.40kW)は√3を2倍した誤り。D(6.93kW)はcosφを掛け忘れた皮相電力。',
+    evidence:['学習タブ 例題問3（P=√3×400×10×0.8≈5543W）','3条件P即答表の典型誤答3択'], verified:'high',
+    wikiPageId:'three-phase' },
+  { id:'tp2', topic:'three_phase', rank:'A',
+    q:'三相結線で √3 倍の関係が「電流側」に現れるのはどちらの結線か。',
+    choices:[{key:'A',label:'Y（スター）結線：I_line = √3 I_phase',correct:false},{key:'B',label:'Δ（デルタ）結線：I_line = √3 I_phase',correct:true},{key:'C',label:'Y結線・Δ結線とも電流側に √3 が出る',correct:false},{key:'D',label:'どちらの結線も電流側に √3 は出ない',correct:false}],
+    avgRate:'64%', tags:['#考え方','#頻出A','#ひっかけ注意'],
+    explanation:'Δ結線は線電流 I_line = √3 I_phase（電圧側は V_line = V_phase）。Y結線は逆で電圧側に √3（V_line = √3 V_phase, I_line = I_phase）。「Yは電圧に√3／Δは電流に√3」と役割が入れ替わる。',
+    evidence:['学習タブ 例題問1（Y結線 V_L=√3 V_P）','学習タブ 例題問2（Δ結線 I_L=√3 I_P）'], verified:'high',
+    wikiPageId:'three-phase' },
+  { id:'tp3', topic:'three_phase', rank:'B',
+    q:'Δ結線の平衡負荷（1相 Z_Δ）を等価な Y結線負荷（1相 Z_Y）に変換するとき、Z_Y はいくらか。',
+    choices:[{key:'A',label:'Z_Y = Z_Δ / 3',correct:true},{key:'B',label:'Z_Y = 3 Z_Δ',correct:false},{key:'C',label:'Z_Y = Z_Δ / √3',correct:false},{key:'D',label:'Z_Y = Z_Δ',correct:false}],
+    avgRate:'55%', tags:['#公式','#発展B'],
+    explanation:'平衡負荷の Δ→Y 変換は Z_Y = Z_Δ/3。逆に Y→Δ は Z_Δ = 3 Z_Y。√3 ではなく 3 倍である点に注意（インピーダンスは比なので √3 ではない）。',
+    evidence:['学習タブ interleaving表（Z_Y=Z_Δ/3）','解説タブ Y-Δ変換'], verified:'medium',
+    wikiPageId:'three-phase' },
+  // RLC共振 rlc-resonance
+  { id:'rl1', topic:'rlc', rank:'A',
+    q:'Q = 5 の RLC直列共振回路に実効値 V_s = 10 V を加えた。共振時にコイル両端に現れる電圧 V_L はおよそいくらか。',
+    choices:[{key:'A',label:'2 V',correct:false},{key:'B',label:'10 V',correct:false},{key:'C',label:'50 V',correct:true},{key:'D',label:'0 V',correct:false}],
+    avgRate:'55%', tags:['#公式','#頻出A'],
+    explanation:'直列共振では V_L = V_C = Q·V_s（電圧拡大）。V_L = 5 × 10 = 50 V。Z が R のみとなり電流 I = V_s/R が最大化、X_L が大きいため素子電圧が電源電圧の Q 倍に拡大する。コイル・コンデンサの耐圧に注意。',
+    evidence:['公式タブ FormulaTable: Q=ω₀L/R, V_L=V_C=QV_s','直列/並列比較表'], verified:'medium',
+    wikiPageId:'rlc-resonance' },
+  { id:'rl2', topic:'rlc', rank:'A',
+    q:'並列RLC回路が共振しているとき、電源から見たインピーダンスと電源電流の関係として正しいものはどれか。',
+    choices:[{key:'A',label:'インピーダンス最小・電源電流最大',correct:false},{key:'B',label:'インピーダンス最大・電源電流最小',correct:true},{key:'C',label:'インピーダンス最大・電源電流最大',correct:false},{key:'D',label:'インピーダンス最小・電源電流最小',correct:false}],
+    avgRate:'52%', tags:['#考え方','#頻出A'],
+    explanation:'並列共振（電圧共振）では合成インピーダンスが最大（≈R）となり、電源から流れる電流は最小になる。直列共振（電流共振：Z最小・I最大）と挙動が完全に逆になる点が頻出の引っかけ。',
+    evidence:['公式タブ 直列/並列比較表: 並列 共振時 Z最大・電流最小'], verified:'medium',
+    wikiPageId:'rlc-resonance' },
+  { id:'rl3', topic:'rlc', rank:'B',
+    q:'並列RLC共振回路のQ値の定義式として正しいものはどれか（ω₀ は共振角周波数）。',
+    choices:[{key:'A',label:'Q = ω₀L/R',correct:false},{key:'B',label:'Q = R/(ω₀L)',correct:true},{key:'C',label:'Q = R/(ω₀C)',correct:false},{key:'D',label:'Q = ω₀CR',correct:false}],
+    avgRate:'48%', tags:['#公式','#発展B'],
+    explanation:'直列共振の Q = ω₀L/R に対し、並列共振では Q = R/(ω₀L) と R の位置が逆転する。直列は「R が小さいほど鋭い共振」、並列は「R が大きいほど鋭い共振」。',
+    evidence:['公式タブ FormulaTable: 並列共振 Q=R/(ω₀L)'], verified:'medium',
+    wikiPageId:'rlc-resonance' },
+  // 過渡現象 transient
+  { id:'tr1', topic:'transient', rank:'A',
+    q:'RL直列回路（電源・抵抗R・インダクタL）の時定数 τ はどれか。',
+    choices:[{key:'A',label:'τ = RL',correct:false},{key:'B',label:'τ = L/R',correct:true},{key:'C',label:'τ = R/L',correct:false},{key:'D',label:'τ = L·R²',correct:false}],
+    avgRate:'60%', tags:['#公式','#頻出A'],
+    explanation:'RL回路の時定数は τ = L/R[s]（L[H]÷R[Ω]＝秒）。RC回路の τ=RC と混同しないこと。Rが分母にある点が要注意。',
+    evidence:['SolveFlow step2「τ=RC または L/R」'], verified:'medium',
+    wikiPageId:'transient' },
+  { id:'tr2', topic:'transient', rank:'A',
+    q:'初期電流0のインダクタLを含む回路にスイッチを入れた瞬間（t=0⁺）と、十分時間が経過した定常状態（t=∞）におけるLの等価的な扱いの組合せはどれか。',
+    choices:[{key:'A',label:'t=0⁺：短絡 ／ t=∞：開放',correct:false},{key:'B',label:'t=0⁺：開放 ／ t=∞：短絡',correct:true},{key:'C',label:'t=0⁺：開放 ／ t=∞：開放',correct:false},{key:'D',label:'t=0⁺：短絡 ／ t=∞：短絡',correct:false}],
+    avgRate:'55%', tags:['#考え方','#頻出A','#ひっかけ注意'],
+    explanation:'Lは電流が急変できない。初期電流0なら t=0⁺ で電流が流れず「開放」とみなす。定常では電流一定で逆起電力0となり「短絡」。コンデンサCはこの逆で t=0⁺短絡・t=∞開放。',
+    evidence:['SolveFlow step3「初期ゼロなら C短絡・L開放」','SolveFlow step4「t=∞: C開放・L短絡」'], verified:'medium',
+    wikiPageId:'transient' },
+  { id:'tr3', topic:'transient', rank:'A',
+    q:'初期電圧 E に充電されたコンデンサを抵抗で放電させたとき、時定数 τ 経過後のコンデンサ電圧は初期値 E の約何%になるか。',
+    choices:[{key:'A',label:'約 63.2 %',correct:false},{key:'B',label:'約 36.8 %',correct:true},{key:'C',label:'約 50.0 %',correct:false},{key:'D',label:'約 13.5 %',correct:false}],
+    avgRate:'57%', tags:['#考え方','#頻出A'],
+    explanation:'放電は v_C(t)=E·e^(−t/τ)。τ後は e⁻¹≒0.368 で初期値の約36.8%。充電側の63.2%（=1−e⁻¹）と表裏。2τで約13.5%、3τで約5%。',
+    evidence:['例題問1解答「τ後…約63.2%」','一般式 f(t)=f(∞)+[f(0)−f(∞)]e^(−t/τ)'], verified:'medium',
+    wikiPageId:'transient' },
+  // インダクタンス inductance
+  { id:'in1', topic:'inductance', rank:'A',
+    q:'コイルの自己誘導起電力 e = -L(dI/dt) における「マイナス符号」が表す物理的意味として正しいものはどれか。',
+    choices:[{key:'A',label:'起電力が電流の大きさに比例して減衰すること',correct:false},{key:'B',label:'起電力が電流の変化を妨げる向き（レンツの法則）に生じること',correct:true},{key:'C',label:'コイルが必ず電力を消費すること',correct:false},{key:'D',label:'インダクタンス L が負の値を取りうること',correct:false}],
+    avgRate:'61%', tags:['#考え方','#頻出A','#ひっかけ注意'],
+    explanation:'マイナスは「電流の変化を妨げる向きに起電力が生じる」というレンツの法則の表現。電流を増やそうとすると逆向きに、減らそうとすると順向きに起電力が立つ。L 自体は常に正で、コイルはエネルギーを蓄える（消費しない）。',
+    evidence:['e = -L dI/dt（自己誘導起電力）','レンツの法則'], verified:'high',
+    wikiPageId:'inductance' },
+  { id:'in2', topic:'inductance', rank:'A',
+    q:'自己インダクタンス L = μN²A/l のコイルで、巻数 N だけを 2 倍にした（μ・A・l は不変）。L は何倍になるか。',
+    choices:[{key:'A',label:'2倍',correct:false},{key:'B',label:'4倍',correct:true},{key:'C',label:'√2倍',correct:false},{key:'D',label:'変わらない',correct:false}],
+    avgRate:'58%', tags:['#公式','#頻出A','#ひっかけ注意'],
+    explanation:'L は巻数 N の2乗に比例する（L = μN²A/l）。N を 2 倍にすると 2² = 4 倍。物理的には、巻数を増やすと①自分が作る磁束が N に比例して増え、②その磁束を鎖交する巻数も N 倍になるため、合計で N² 倍になる。',
+    evidence:['L = μN²A/l（自己インダクタンス）'], verified:'high',
+    wikiPageId:'inductance' },
+  { id:'in3', topic:'inductance', rank:'B',
+    q:'相互インダクタンス M を持つ 2 つのコイルを直列接続したとき、合成インダクタンスが L₁+L₂-2M となるのはどの接続か。',
+    choices:[{key:'A',label:'和動接続（両コイルの磁束が助け合う向き）',correct:false},{key:'B',label:'差動接続（両コイルの磁束が打ち消し合う向き）',correct:true},{key:'C',label:'接続の向きによらず常にこの式になる',correct:false},{key:'D',label:'並列接続のとき',correct:false}],
+    avgRate:'54%', tags:['#公式','#発展B','#ひっかけ注意'],
+    explanation:'差動接続（磁束が打ち消し合う向き）では合成 L = L₁+L₂-2M、和動接続（磁束が助け合う向き）では L₁+L₂+2M。符号は巻き方（同名端子・ドットの向き）で決まり、「常に +2M」と思い込むのが典型的なひっかけ。M = k√(L₁L₂)。',
+    evidence:['和動 L₁+L₂+2M / 差動 L₁+L₂-2M','M = k√(L₁L₂)'], verified:'high',
+    wikiPageId:'inductance' },
+  // 静電容量 capacitor
+  { id:'cp1', topic:'capacitor', rank:'A',
+    q:'静電容量 C のコンデンサに電圧 V を加えたとき、蓄えられる電荷 Q を表す式はどれか。',
+    choices:[{key:'A',label:'Q = C/V',correct:false},{key:'B',label:'Q = CV',correct:true},{key:'C',label:'Q = V/C',correct:false},{key:'D',label:'Q = ½CV',correct:false}],
+    avgRate:'72%', tags:['#公式','#頻出A'],
+    explanation:'静電容量の定義 C = Q/V を変形して Q = CV。電荷は容量と電圧の積に比例する。',
+    evidence:['静電容量の定義 C=Q/V（公式タブ）'], verified:'medium',
+    wikiPageId:'capacitor' },
+  { id:'cp2', topic:'capacitor', rank:'B',
+    q:'電源を切り離した（電荷 Q が一定の）平行平板コンデンサに、比誘電率 εᵣ の誘電体を挿入した。蓄積エネルギー W はどう変化するか。',
+    choices:[{key:'A',label:'εᵣ 倍になる',correct:false},{key:'B',label:'1/εᵣ 倍になる',correct:true},{key:'C',label:'変化しない',correct:false},{key:'D',label:'εᵣ² 倍になる',correct:false}],
+    avgRate:'48%', tags:['#考え方','#ひっかけ注意','#発展B'],
+    explanation:'電荷一定なので W = Q²/(2C) を使う。誘電体挿入で C は εᵣ 倍になるため W は 1/εᵣ 倍に減少する。電圧一定（電源接続中）なら W=½CV² で εᵣ 倍に増えるので、接続状態の判別が必須（ひっかけ）。',
+    evidence:['SolveFlow step1 接続状態の判別','W=Q²/(2C)（公式タブ）'], verified:'medium',
+    wikiPageId:'capacitor' },
+  { id:'cp3', topic:'capacitor', rank:'A',
+    q:'直流回路が定常状態（十分に時間が経過した状態）に達したとき、コンデンサはどのように振る舞うか。',
+    choices:[{key:'A',label:'短絡（導線）とみなせ、電流が流れ続ける',correct:false},{key:'B',label:'開放（断線）とみなせ、電流は流れない',correct:true},{key:'C',label:'抵抗 1/(ωC) を持つ素子として電流を流す',correct:false},{key:'D',label:'電圧が 0 になる',correct:false}],
+    avgRate:'58%', tags:['#考え方','#頻出A'],
+    explanation:'直流定常では充電が完了し電流 i = C·dV/dt = 0。よってコンデンサは開放（断線）とみなせる。コイルが定常で短絡になるのと対の関係。交流の容量性リアクタンス 1/(ωC) は ω≠0 の話で定常直流とは別。',
+    evidence:['直流定常でコンデンサ開放','i = C·dV/dt'], verified:'medium',
+    wikiPageId:'capacitor' },
+  // 直流回路 dc-circuit
+  { id:'dc1', topic:'dc_circuit', rank:'A',
+    q:'内部抵抗（テブナン等価抵抗）R_th をもつ電源に負荷 R_L を接続するとき、R_L が消費する電力 P_L が最大になる条件はどれか。',
+    choices:[{key:'A',label:'R_L = 0（短絡）',correct:false},{key:'B',label:'R_L = R_th',correct:true},{key:'C',label:'R_L → ∞（開放）',correct:false},{key:'D',label:'R_L = 2 R_th',correct:false}],
+    avgRate:'58%', tags:['#公式','#頻出A','#ひっかけ注意'],
+    explanation:'最大電力供給条件は R_L = R_th（整合）。このとき効率 η は 50% で固定（電力最大≠効率最大）。R_L を大きくすると効率は上がるが P_L は R_L=R_th をピークに山形で減少する。',
+    evidence:['最大電力供給の定理 R_L=R_th（学習タブ セクション4）','効率 η=50% 固定'], verified:'medium',
+    wikiPageId:'dc-circuit' },
+  { id:'dc2', topic:'dc_circuit', rank:'A',
+    q:'電圧 V を抵抗 R₁ と R₂ の直列回路に加えたとき、R₂ にかかる電圧 V₂ はどれか。',
+    choices:[{key:'A',label:'V₂ = V · R₂/(R₁+R₂)',correct:true},{key:'B',label:'V₂ = V · R₁/(R₁+R₂)',correct:false},{key:'C',label:'V₂ = V · (R₁+R₂)/R₂',correct:false},{key:'D',label:'V₂ = V · R₁R₂/(R₁+R₂)',correct:false}],
+    avgRate:'70%', tags:['#公式','#頻出A','#ひっかけ注意'],
+    explanation:'直列分圧は「全電圧 × 着目抵抗 / 抵抗和」。R₂ にかかる電圧なら分子は R₂。同じ電流が流れるので V₂ = I·R₂、I = V/(R₁+R₂) から導出。分子に相手側 R₁ を置く誤りが定番。',
+    evidence:['分圧則 V_i=V·R_i/ΣR（学習タブ セクション1・3）','直列は同一電流'], verified:'medium',
+    wikiPageId:'dc-circuit' },
+  // 静電気・クーロン coulomb-field 追加問（ページ実内容に根拠・捏造なし）
+  { id:'cf1', topic:'electrostatics', rank:'A',
+    q:'点電荷 Q から距離 r の点での電界 E と電位 V は、距離 r に対してそれぞれどう変化するか。',
+    choices:[{key:'A',label:'E は r² に反比例・V は r に反比例',correct:true},{key:'B',label:'E は r に反比例・V は r² に反比例',correct:false},{key:'C',label:'E・V とも r² に反比例',correct:false},{key:'D',label:'E・V とも r に反比例',correct:false}],
+    avgRate:'60%', tags:['#考え方','#頻出A','#ひっかけ注意'],
+    explanation:'E=kQ/r²（2乗に反比例）に対し V=kQ/r（1乗に反比例）で、V だけ冪が1つ小さい。E=-dV/dr（電位を距離で微分すると電界）より V を微分すると r の冪が1つ下がるため。「F・E は r²、V は r」と冪を取り違えるのが最頻出ミス。',
+    evidence:['公式タブ FormulaTable レイヤーA（E=Q/4πε₀r²・V=Q/4πε₀r）','チャンク階層 第1層（V だけ 1/r）','本番5秒チェック（F・E は r²、V は r）'], verified:'high',
+    wikiPageId:'coulomb-field' },
+  { id:'cf2', topic:'electrostatics', rank:'A',
+    q:'真空中で大きさ F₀ のクーロン力で引き合う2点電荷を、距離を変えずに比誘電率 εᵣ=4 の誘電体中に置いた。働く力 F はいくらになるか。',
+    choices:[{key:'A',label:'F = F₀/4',correct:true},{key:'B',label:'F = 4 F₀',correct:false},{key:'C',label:'F = F₀（変わらない）',correct:false},{key:'D',label:'F = F₀/2',correct:false}],
+    avgRate:'56%', tags:['#公式','#頻出A','#ひっかけ注意'],
+    explanation:'誘電体中では ε₀→ε₀εᵣ に置換され F=Q₁Q₂/(4πε₀εᵣr²)。力・電界は 1/εᵣ 倍に弱まるので 1/4 になる。εᵣ を掛け忘れる／分子に掛けて逆に強めてしまうのが定番ミス。',
+    evidence:['公式タブ FormulaTable レイヤーA notWhen（誘電体中 ε₀→ε₀ε_r・力は 1/ε_r 倍）','チャンク階層 第2層','5秒で思い出す（誘電体中は力・電界が 1/ε_r 倍）'], verified:'high',
+    wikiPageId:'coulomb-field' },
+  { id:'cf3', topic:'electrostatics', rank:'A',
+    q:'大きさの異なる2つの正の点電荷 Q₁ > Q₂ を一直線上に置いた。その間で、別の電荷が両者から受ける力がつり合う（合力が0になる）点はどこか。',
+    choices:[{key:'A',label:'小さい電荷 Q₂ に近い側',correct:true},{key:'B',label:'大きい電荷 Q₁ に近い側',correct:false},{key:'C',label:'ちょうど2電荷の中点',correct:false},{key:'D',label:'2電荷を結ぶ線分の外側',correct:false}],
+    avgRate:'52%', tags:['#考え方','#頻出A','#ひっかけ注意'],
+    explanation:'つり合い点は2電荷の間にあり、各電荷からの距離の比が √(Q₁/Q₂) になる位置＝大きい電荷から遠い側＝小さい電荷に近い側。強い電荷から離れないと弱い電荷と釣り合えない。「大きい電荷側」と答えるのが典型ミス。',
+    evidence:['本番5秒チェック 典型ひっかけ（つり合い位置は小さい電荷側・√比）'], verified:'high',
+    wikiPageId:'coulomb-field' },
 ];
 
 const RIRON_DAILY_TOPIC_LABEL = {
