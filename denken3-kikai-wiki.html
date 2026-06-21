@@ -919,7 +919,7 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
   <details class="portal-back-pill" data-portal-back>
     <summary aria-label="他Wikiへ移動">↔ Wiki</summary>
     <nav class="portal-back-menu" aria-label="Wiki switcher">
-      <a href="index.html">🏠 Portal</a>
+      <a href="https://kfurufuru.github.io/secretary-portal-public/">🏠 Portal</a>
       <a href="denken3-riron-wiki.html">📘 理論Wiki(改)</a>
       <a href="https://kfurufuru.github.io/denken-wiki-riron/">📘 理論Wiki(旧)</a>
       <a href="https://kfurufuru.github.io/denken-wiki/">📗 法規Wiki(旧)</a>
@@ -1052,6 +1052,7 @@ window.WIKI_DATA = {
         { id: "trends",   num: "A",  title: "出題傾向データ", freq: null },
         { id: "glossary", num: "B",  title: "用語集・索引",   freq: null },
         { id: "guide",    num: "C",  title: "学習ガイド",     freq: null },
+        { id: "yougo-konzai", num: "D", title: "用語混同まとめ（横断ひっかけ）", freq: null },
       ],
     },
   ],
@@ -1685,7 +1686,7 @@ const TorqueSlipCurve = () => (
     <text x="170" y="216" textAnchor="middle" className="diagram-text-mono">sm</text>
 
     <circle cx="50" cy="160" r="4" className="diagram-warn" fill="var(--warn)" />
-    <text x="58" y="155" className="diagram-text" fontSize="11">始動トルク Ts</text>
+    <text x="58" y="180" className="diagram-text" fontSize="11">始動トルク Ts</text>
 
     <circle cx="350" cy="175" r="4" className="diagram-fill" />
     <text x="320" y="170" textAnchor="end" className="diagram-text" fontSize="11">定格点</text>
@@ -2051,6 +2052,7 @@ function pageDeckSummary(id) {
     "single-phase-im":   "分相始動・コンデンサ始動・くま取りコイル形の特徴。",
     "transformer":       "巻数比・電圧変動率・%Z・並列運転・損失と効率。",
     "keiki-yo-henseiki": "高圧の電流・電圧を安全に測る変成器。CT＝電流用・VT＝電圧用。二次側の禁則（CT開放厳禁/VT短絡厳禁）が頻出。",
+    "yougo-konzai":      "機械科目で取り違えやすい用語・条件を単元横断で集約。同期速度/すべり・直流機の速度特性・CT/VT禁則・Y-Δ始動1/3・変圧器の効率最大条件など。",
     "power-elec":        "整流回路・チョッパ・インバータ・PWM 制御の基礎。",
     "auto-control":      "伝達関数・ブロック線図・周波数応答・安定判別。",
     "info-elec":         "論理回路・基本演算・記憶素子・A/D 変換の概要。",
@@ -2247,6 +2249,15 @@ const InductionMachinePage = ({ data, onNav }) => (
         <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("power-elec"); }}>2.2 パワーエレクトロニクス</a> — V/f 制御の駆動回路として重要。</li>
         <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("drive-mech"); }}>4.4 電動機応用</a> — 負荷特性とのマッチング。</li>
       </ul>
+
+      <h2 id="quick-review"><span className="h-num">9.</span>1分復習（即答チェック）</h2>
+      <div className="box">
+        <details><summary>同期速度 N_s の式は？（4極・50Hz では？）</summary>N_s = 120f/p（120×50/4 = <strong>1500 min⁻¹</strong>）</details>
+        <details><summary>滑り s の定義は？</summary>s = (N_s − N) / N_s（電動機域は 0 &lt; s &lt; 1）</details>
+        <details><summary>回転子（二次）周波数 f₂ は？</summary>f₂ = s · f₁（滑り×一次周波数）</details>
+        <details><summary>二次入力 P₂ の電力配分比は？</summary>P₂ : P_c2 : P_m = <strong>1 : s : (1−s)</strong>（二次銅損は s 倍、機械出力は (1−s) 倍）</details>
+        <details><summary>Y-Δ 始動で始動電流・トルクは全電圧始動の何倍？</summary><strong>1/3</strong>（始動電流・始動トルクともに 1/3）</details>
+      </div>
     </div>
 
     <PageNav
@@ -2302,6 +2313,24 @@ const DCMachinePage = ({ onNav }) => (
         </table>
       </div>
 
+      <DiagramFrame caption="図1.1.1  直流電動機の速度-トルク特性（励磁方式の違い）" viewBox="0 0 480 250">
+        {/* 軸 */}
+        <line x1="60" y1="205" x2="450" y2="205" stroke="#555" strokeWidth="1.5" />
+        <line x1="60" y1="205" x2="60" y2="25" stroke="#555" strokeWidth="1.5" />
+        <polygon points="450,205 442,201 442,209" fill="#555" />
+        <polygon points="60,25 56,33 64,33" fill="#555" />
+        <text x="455" y="209" fontSize="12" fill="#333">T</text>
+        <text x="60" y="20" fontSize="12" fill="#333" textAnchor="middle">N</text>
+        {/* 分巻・他励: 定速度（ほぼ水平・わずかに下降） */}
+        <path d="M 80 90 Q 255 100 440 116" fill="none" stroke="#2471a3" strokeWidth="2.4" />
+        <text x="250" y="84" fontSize="11.5" fill="#2471a3" fontWeight="700" textAnchor="middle">分巻・他励（定速度）</text>
+        {/* 直巻: 無負荷で過速度（高トルクで急降下） */}
+        <path d="M 86 45 Q 180 165 440 185" fill="none" stroke="#c0392b" strokeWidth="2.4" />
+        <text x="150" y="150" fontSize="11.5" fill="#c0392b" fontWeight="700">直巻（過速度・始動トルク大）</text>
+        {/* 過速度の注記 */}
+        <text x="92" y="40" fontSize="10.5" fill="#888">T→0 で過速度（空車運転禁止）</text>
+      </DiagramFrame>
+
       <Box kind="mistake" label="陥りやすいポイント">
         <p><span className="marker">直巻電動機は無負荷で破壊する</span>: 負荷が軽いと電流が小さくなり磁束が減少、E = KφN を保つには N が無限大に発散する。空車運転禁止。</p>
       </Box>
@@ -2318,6 +2347,15 @@ const DCMachinePage = ({ onNav }) => (
         <Eq display tex="E = V - I_a R_a = 220 - 50 \times 0.20 = 210\;[\mathrm{V}]" />
         <Eq display tex="\dfrac{P_{cu}}{P_{in}} = \dfrac{I_a^2 R_a}{V I_a} = \dfrac{I_a R_a}{V} = \dfrac{10}{220} \approx 4.5\;\%" />
       </Box>
+
+      <h2 id="quick-review"><span className="h-num">5.</span>1分復習（即答チェック）</h2>
+      <div className="box">
+        <details><summary>直流機の誘導起電力 E とトルク T の式は？</summary>E = K·φ·N／T = K'·φ·I_a（トルクは磁束×電機子電流）</details>
+        <details><summary>直流電動機の端子電圧 V と E の関係は？</summary>V = E + I_a·R_a（発電機は V = E − I_a·R_a）</details>
+        <details><summary>直巻電動機を無負荷運転してはいけない理由は？</summary>軽負荷で I_a が小さくなり磁束 φ が減少 → E = KφN を保つため N が発散（過速度で破壊）</details>
+        <details><summary>直巻式の特徴と代表用途は？</summary>始動トルク大・無負荷で過速度。電車・クレーン</details>
+        <details><summary>定格以上の高速度域で使う速度制御は？</summary>界磁制御（弱め界磁＝磁束 φ を弱める）</details>
+      </div>
     </div>
     <PageNav prev={{ id: "home", title: "ホーム" }} next={{ id: "induction-machine", title: "1.2 三相誘導電動機" }} onNav={onNav} />
   </>
@@ -2344,6 +2382,28 @@ const SynchronousPage = ({ onNav }) => (
       <h2 id="vcurve"><span className="h-num">3.</span>V カーブと位相特性</h2>
       <p>同期電動機の <strong>V カーブ</strong> は界磁電流 If を横軸、電機子電流 Ia を縦軸にとった V 字曲線。底点で力率1（純抵抗負荷）、左側で遅れ・右側で進み力率となる。</p>
 
+      <DiagramFrame caption="図1.3.1  同期電動機の V カーブ（界磁電流 If と電機子電流 Ia の関係）" viewBox="0 0 480 250">
+        {/* 軸 */}
+        <line x1="60" y1="200" x2="450" y2="200" stroke="#555" strokeWidth="1.5" />
+        <line x1="60" y1="200" x2="60" y2="25" stroke="#555" strokeWidth="1.5" />
+        <polygon points="450,200 442,196 442,204" fill="#555" />
+        <polygon points="60,25 56,33 64,33" fill="#555" />
+        <text x="455" y="204" fontSize="12" fill="#333">If</text>
+        <text x="44" y="24" fontSize="12" fill="#333" textAnchor="middle">Ia</text>
+        {/* V 字曲線 */}
+        <path d="M 95 55 Q 255 250 415 55" fill="none" stroke="#2471a3" strokeWidth="2.4" />
+        {/* 底点（力率1） */}
+        <line x1="255" y1="152" x2="255" y2="200" stroke="#888" strokeWidth="1" strokeDasharray="4 3" />
+        <circle cx="255" cy="152" r="4.5" fill="#c0392b" />
+        <text x="255" y="142" fontSize="11.5" fill="#c0392b" fontWeight="700" textAnchor="middle">力率1（cosφ=1）</text>
+        <text x="255" y="218" fontSize="11" fill="#555" textAnchor="middle">最適励磁</text>
+        {/* 左右の領域ラベル */}
+        <text x="120" y="80" fontSize="11.5" fill="#8e44ad" fontWeight="700">遅れ力率</text>
+        <text x="120" y="96" fontSize="10.5" fill="#888">（不足励磁）</text>
+        <text x="392" y="80" fontSize="11.5" fill="#2e8b57" fontWeight="700" textAnchor="end">進み力率</text>
+        <text x="392" y="96" fontSize="10.5" fill="#888" textAnchor="end">（過励磁）</text>
+      </DiagramFrame>
+
       <Box kind="formula" label="主要公式">
         <FormulaCard num="01" name="同期発電機の起電力" eq="E = V + I(r_a + jx_s)" note="x_s: 同期リアクタンス" />
         <FormulaCard num="02" name="短絡比" eq="K_s = \dfrac{I_{f0}}{I_{fs}} = \dfrac{1}{x_s\,[\mathrm{p.u.}]}" note="短絡比大 ⇒ 安定度高・電圧変動小" />
@@ -2362,6 +2422,15 @@ const SynchronousPage = ({ onNav }) => (
         <li>波形が等しい</li>
         <li>相回転が同一</li>
       </ol>
+
+      <h2 id="quick-review"><span className="h-num">5.</span>1分復習（即答チェック）</h2>
+      <div className="box">
+        <details><summary>同期機の同期速度と滑りは？</summary>N_s = 120f/p。滑りはゼロ（誘導機と異なり常に同期速度で回る）</details>
+        <details><summary>電機子反作用：遅れ力率／進み力率の作用は？</summary>遅れ（誘導性）=減磁・電圧低下／進み（容量性）=増磁・電圧上昇／純抵抗=交差作用</details>
+        <details><summary>V カーブの底点は何力率？</summary>力率1（純抵抗負荷）。左側=遅れ・右側=進み力率</details>
+        <details><summary>短絡比 K_s は？大きいと何が良い？</summary>K_s = I_f0 / I_fs = 1 / x_s[p.u.]。大きいほど安定度が高く電圧変動が小さい</details>
+        <details><summary>円筒形同期機が最大出力となる内部相差角 δ は？</summary>δ = π/2（P = (E·V / x_s)·sinδ）</details>
+      </div>
     </div>
     <PageNav prev={{ id: "induction-machine", title: "1.2 三相誘導電動機" }} next={{ id: "single-phase-im", title: "1.4 単相誘導電動機" }} onNav={onNav} />
   </>
@@ -2400,6 +2469,17 @@ const TransformerPage = ({ onNav }) => (
       <FormulaCard num="01 / 05" name="巻数比と電圧・電流" eq="a = \dfrac{N_1}{N_2} = \dfrac{V_1}{V_2} = \dfrac{I_2}{I_1}" />
       <FormulaCard num="02 / 05" name="一次換算" eq="r_2' = a^2 r_2,\quad x_2' = a^2 x_2,\quad I_2' = I_2 / a" />
 
+      <Box kind="example" label="等価回路 — 理論「相互インダクタンス」とのつながり">
+        <p>一次換算（<Eq tex="r_2'=a^2 r_2,\ x_2'=a^2 x_2" />）で二次側を一次側に寄せると、変圧器は <strong>1つの簡易等価回路</strong> にまとまる：一次・二次の <strong>漏れリアクタンス</strong> <Eq tex="x_1, x_2'" /> が直列、<strong>励磁回路</strong>（鉄損 <Eq tex="r_0" /> と励磁リアクタンス <Eq tex="x_0" /> の並列）がその間に並列に入る。電圧変動率・効率・短絡電流はすべてこの回路から導かれる。</p>
+        <p>この回路の正体は、理論で学ぶ <strong>2つの結合コイルのT型等価回路</strong>（<Eq tex="L_1-M,\ L_2-M,\ M" /> の3インダクタ）そのもの。対応は次の通り：</p>
+        <ul>
+          <li><strong>励磁インダクタンス ↔ 相互インダクタンス <Eq tex="M" /></strong>（鉄心を共有し磁束を結合する分）</li>
+          <li><strong>漏れリアクタンス ↔ <Eq tex="L_1-M,\ L_2-M" /></strong>（相手と結合しない漏れ磁束の分）</li>
+        </ul>
+        <p>結合係数 <Eq tex="k=M/\sqrt{L_1 L_2}" /> が1に近いほど漏れが小さく、理想変圧器（<Eq tex="k=1" />・漏れゼロ）で <Eq tex="V_1/V_2=N_1/N_2" /> が厳密に成立する。「なぜ巻数比で電圧が変わるか」は、相互誘導 <Eq tex="V_2=-N_2(d\Phi/dt)" /> を二巻線が共有する磁束 <Eq tex="\Phi" /> で受けるからだと理論まで遡ると腑に落ちる。</p>
+        <p style={{margin:"8px 0 0"}}><a href="https://kfurufuru.github.io/secretary-portal-public/denken3-riron-wiki.html#inductance" target="_blank" rel="noopener">→ 理論Wiki「3.1 インダクタンス」で相互M・結合係数k・和動/差動を深掘り</a></p>
+      </Box>
+
       <h2 id="vreg"><span className="h-num">2.</span>電圧変動率</h2>
       <p>定格負荷時の電圧降下を百分率で表す。簡易式は次の通り（<Eq tex="\theta" />: 負荷力率角）:</p>
       <FormulaCard num="03 / 05" name="電圧変動率（簡易）" eq="\varepsilon \approx p\cos\theta + q\sin\theta\;[\%]"
@@ -2432,6 +2512,15 @@ const TransformerPage = ({ onNav }) => (
         <Eq display tex="I_n = \dfrac{500{\times}10^3}{\sqrt{3}\times 6600} \approx 43.7\;[\mathrm{A}]" />
         <Eq display tex="I_s = \dfrac{100}{4.0}\times 43.7 \approx 1.09\;[\mathrm{kA}]" />
       </Box>
+
+      <h2 id="quick-review"><span className="h-num">6.</span>1分復習（即答チェック）</h2>
+      <div className="box">
+        <details><summary>巻数比 a と電圧・電流の関係は？</summary>a = N₁/N₂ = V₁/V₂ = I₂/I₁（電流は巻数比の逆比）</details>
+        <details><summary>%Z = 5% のとき短絡電流は定格の何倍？</summary>20倍（I_s = (100/%Z)·I_n）</details>
+        <details><summary>変圧器の最高効率の条件は？</summary>鉄損 = 銅損（P_i = P_c）。そのときの負荷率 α = √(P_i / P_c,rated)</details>
+        <details><summary>全日効率で鉄損と銅損の発生時間の違いは？</summary>鉄損は負荷に依存せず24時間発生／銅損は負荷がかかる時間のみ発生</details>
+        <details><summary>電圧変動率の簡易式は？</summary>ε ≈ p·cosθ + q·sinθ（遅れ力率では sinθ が正）</details>
+      </div>
     </div>
     <PageNav prev={{ id: "single-phase-im", title: "1.4 単相誘導電動機" }} next={{ id: "power-elec", title: "2.2 パワーエレクトロニクス" }} onNav={onNav} />
   </>
@@ -2478,6 +2567,15 @@ const PowerElecPage = ({ onNav }) => (
           <li>チョッパは <strong>連続電流モード</strong> と不連続モードで挙動が異なる</li>
         </ul>
       </Box>
+
+      <h2 id="quick-review"><span className="h-num">5.</span>1分復習（即答チェック）</h2>
+      <div className="box">
+        <details><summary>4変換（整流・チョッパ・インバータ・サイクロコンバータ）の入出力は？</summary>整流=AC→DC／チョッパ=DC→DC／インバータ=DC→AC／サイクロコンバータ=AC→AC</details>
+        <details><summary>単相全波・三相全波整流の直流平均値は？</summary>単相全波 Vd ≈ 0.90·V／三相全波 Vd ≈ 1.35·V_L（V_L=線間電圧の実効値）</details>
+        <details><summary>降圧・昇圧チョッパの出力電圧は？（D=通流率）</summary>降圧 Vo = D·Vi／昇圧 Vo = Vi/(1−D)</details>
+        <details><summary>サイリスタ位相制御の出力電圧は制御角 α とどう関係？</summary>Vd = Vd0·cosα（制御角 α の余弦に比例）</details>
+        <details><summary>三相インバータの基本構成は？</summary>IGBT を 6 個ブリッジ接続し PWM で正弦波に近い出力を作る</details>
+      </div>
     </div>
     <PageNav prev={{ id: "transformer", title: "2.1 変圧器" }} next={{ id: "keiki-yo-henseiki", title: "2.3 計器用変成器（CT・VT）" }} onNav={onNav} />
   </>
@@ -2498,8 +2596,8 @@ const BHCurveSVG = () => (
     <path d="M 50 270 Q 130 268 200 230 Q 260 195 310 130 Q 360 80 430 70 Q 490 67 525 65"
           fill="none" stroke="#c33" strokeWidth="2.5"/>
     <line x1="50" y1="270" x2="200" y2="230" stroke="#27c" strokeWidth="1.2" strokeDasharray="4,3" opacity="0.6"/>
-    <text x="120" y="265" fontSize="11" fill="#27c">直線域（μ_r ≈ 数千）</text>
-    <text x="240" y="180" fontSize="11" fill="#a60">ニー（屈曲）</text>
+    <text x="58" y="205" fontSize="11" fill="#27c">直線域（μ_r ≈ 数千）</text>
+    <text x="240" y="112" fontSize="11" fill="#a60">ニー（屈曲）</text>
     <text x="400" y="55" fontSize="11" fill="#c33">飽和域（dB/dH 激減）</text>
     <line x1="430" y1="70" x2="430" y2="270" stroke="#999" strokeWidth="1" strokeDasharray="2,3"/>
     <text x="435" y="285" fontSize="10" fill="#999">H が増えても</text>
@@ -2688,6 +2786,80 @@ const KeikiYoHenseikiPage = ({ onNav }) => (
   </>
 );
 
+const YougoKonzaiPage = ({ onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "リファレンス" }, { label: "用語混同まとめ" }]} onNav={onNav} />
+    <PageHeader eyebrow="CROSS-TOPIC CONFUSIONS" title="用語混同まとめ（横断ひっかけ）"
+      deck="機械科目で受験者が取り違えやすい用語・条件を、単元をまたいで1ページに集約。各項目は「よくある誤り（✗）→正しい理解（○）」の形で、丸暗記ではなく『何が固定で何が変わるか』で判別できるよう整理する。"
+      meta={[{ label: "用途", value: "直前期の取りこぼし防止・横断復習" }, { label: "難易度", value: "★★☆☆☆" }]} />
+    <div className="content">
+
+      <Box kind="example" label="このページの使い方">
+        <p>各単元の詳細は元ページに譲り、ここでは<strong>「逆に覚えてしまう」典型ペア</strong>だけを並べる。✗の文がなぜ誤りかを、○の右の一言で再現できる状態を目指す。</p>
+      </Box>
+
+      <h2 id="slip"><span className="h-num">1.</span>同期速度とすべり（同期機 ⇄ 誘導機）</h2>
+      <Box kind="mistake" label="よくある誤り → 正しい理解">
+        <p>✗「三相誘導電動機の回転子は同期速度で回る」<br/>
+        ○ 回転子は同期速度より<strong>すべり s の分だけ遅い</strong>。同期速度で回る（s＝0）のは同期機。誘導機は必ず s＞0。</p>
+      </Box>
+      <Eq display tex="N_s = \dfrac{120 f}{p} \quad,\quad s = \dfrac{N_s - N}{N_s} \quad,\quad N = N_s(1-s)" />
+      <p><Eq tex="N_s" />（同期速度）は<strong>回転磁界そのものの速さ</strong>で、負荷によらず一定。実際に回る回転子の速度 <Eq tex="N" /> がすべり分だけ遅れる。「同期速度＝回転子の速度」と読み替えないこと。</p>
+
+      <h2 id="dc"><span className="h-num">2.</span>直流電動機の速度特性（他励・分巻・直巻）</h2>
+      <Box kind="mistake" label="よくある誤り → 正しい理解">
+        <p>✗「直巻電動機は速度がほぼ一定」<br/>
+        ○ ほぼ<strong>定速度なのは分巻</strong>（と他励）。<strong>直巻は負荷で速度が大きく変化</strong>し、無負荷では危険な高速（暴走）。</p>
+      </Box>
+      <p>始動トルクが大きいのは<strong>直巻</strong>（電車・クレーンなど）。負荷変動に対し速度を保ちたい用途は分巻。「定速度か／始動トルク大か」で結びつける。</p>
+
+      <h2 id="ctvt"><span className="h-num">3.</span>CT と VT の二次側の禁則</h2>
+      <Box kind="mistake" label="よくある誤り → 正しい理解">
+        <p>✗「CTは二次短絡厳禁・VTは二次開放厳禁」<br/>
+        ○ <strong>逆</strong>。<strong>CT＝二次開放厳禁</strong>（高電圧スパイクで絶縁破壊）、<strong>VT＝二次短絡厳禁</strong>（過電流で焼損）。</p>
+      </Box>
+      <p>CTは一次電流が磁束を強制する「電流源的」動作なので、二次を開くと磁束が飽和して高電圧が出る。VTは一次電圧が磁束を決める「電圧源的」動作なので、二次短絡で大電流が流れる。詳しい物理は <a href="#" onClick={(e) => { e.preventDefault(); onNav('keiki-yo-henseiki'); }}>計器用変成器（CT・VT）</a> を参照。</p>
+
+      <h2 id="ydelta"><span className="h-num">4.</span>Y-Δ始動の始動電流・始動トルク</h2>
+      <Box kind="mistake" label="よくある誤り → 正しい理解">
+        <p>✗「Y始動にすると始動電流は全電圧始動の 1/√3 になる」<br/>
+        ○ <strong>線電流・始動トルクとも 1/3</strong>。1/√3 は各相にかかる電圧（相電圧）の比。</p>
+      </Box>
+      <p>Y結線では各相の電圧が線間電圧の <Eq tex="1/\sqrt{3}" /> になる。始動トルクは電圧の2乗に比例するので <Eq tex="(1/\sqrt{3})^2 = 1/3" />。線電流も全電圧（Δ）始動の 1/3。「1/√3」で止めると誤答。</p>
+
+      <h2 id="eff"><span className="h-num">5.</span>変圧器の効率が最大になる条件</h2>
+      <Box kind="mistake" label="よくある誤り → 正しい理解">
+        <p>✗「変圧器の効率は定格負荷で最大」<br/>
+        ○ <strong>鉄損（無負荷損）＝銅損（負荷損）</strong>のとき最大。一般に<strong>定格より低い負荷率</strong>で効率がピークになる。</p>
+      </Box>
+      <Eq display tex="\alpha_{\max} = \sqrt{\dfrac{P_i}{P_c}}" />
+      <p>鉄損 <Eq tex="P_i" /> は負荷によらず一定、銅損は負荷率の2乗に比例（全負荷銅損 <Eq tex="P_c" />）。両者が等しくなる負荷率 <Eq tex="\alpha_{\max}" /> で効率が最大。</p>
+
+      <h2 id="rect"><span className="h-num">6.</span>整流回路の平均値と実効値</h2>
+      <Box kind="mistake" label="よくある誤り → 正しい理解">
+        <p>✗「整流した電圧は実効値で読む／実効値で直流分を計算する」<br/>
+        ○ <strong>直流分（直流電圧計の読み）は平均値</strong>、<strong>発熱・電力（I²R）は実効値</strong>。用途で使い分ける。</p>
+      </Box>
+      <Eq display tex="\text{単相全波（正弦波）:}\quad V_\text{平均} = \dfrac{2V_m}{\pi} \approx 0.637\,V_m \quad,\quad V_\text{実効} = \dfrac{V_m}{\sqrt{2}} \approx 0.707\,V_m" />
+      <p>平均値と実効値は別物。直流に変換した「大きさ」を問われたら平均値、抵抗の発熱や電流容量を問われたら実効値。「何を測る量か」で選ぶ。</p>
+
+      <h2 id="kr"><span className="h-num">7.</span>同期機の短絡比と同期インピーダンス</h2>
+      <Box kind="mistake" label="よくある誤り → 正しい理解">
+        <p>✗「短絡比が大きいほど同期インピーダンスも大きい」<br/>
+        ○ <strong>逆</strong>。短絡比 <Eq tex="K_s" /> はほぼ同期インピーダンス（p.u.）の逆数。<strong>短絡比 大 ⇄ 同期インピーダンス 小</strong>。</p>
+      </Box>
+      <Eq display tex="K_s \approx \dfrac{1}{Z_s\,[\text{p.u.}]}" />
+      <p>短絡比が大きい機械（鉄機械）は同期インピーダンスが小さく、<strong>電圧変動が小さく安定だが大型・高価</strong>。小さい機械（銅機械）はその逆。「大きい＝インピーダンスも大きい」と素直に対応させない。</p>
+
+      <Box kind="tip" label="横断のコツ">
+        <p>混同ペアは<strong>「何が固定で・何が変わるか」</strong>を1つ決めると解ける。同期速度＝固定／回転子＝変わる、鉄損＝固定／銅損＝変わる、CT＝電流固定／VT＝電圧固定。固定側を起点に再構成すれば毎回逆にならない。</p>
+      </Box>
+
+      <PageNav prev={{ id: "guide", title: "C 学習ガイド" }} next={{ id: "glossary", title: "B 用語集・索引" }} onNav={onNav} />
+    </div>
+  </>
+);
+
 const AutoControlPage = ({ onNav }) => (
   <>
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "3. 制御・応用" }, { label: "3.1 自動制御" }]} onNav={onNav} />
@@ -2716,6 +2888,15 @@ const AutoControlPage = ({ onNav }) => (
         <p><strong>位相余裕</strong>: ゲインが 0 dB となる周波数における位相 + 180°。</p>
         <p>実用上は <strong>位相余裕 30°〜60°</strong>、<strong>ゲイン余裕 6 dB 以上</strong> が目安。</p>
       </Box>
+
+      <h2 id="quick-review"><span className="h-num">4.</span>1分復習（即答チェック）</h2>
+      <div className="box">
+        <details><summary>一次遅れ系の伝達関数は？</summary>G(s) = K / (1 + Ts)（T:時定数, K:ゲイン。ステップ応答は指数的に立ち上がる）</details>
+        <details><summary>二次系の減衰係数 ζ による応答の違いは？</summary>ζ&lt;1 振動的／ζ=1 臨界制動／ζ&gt;1 過制動</details>
+        <details><summary>フィードバック結合の閉ループ伝達関数は？</summary>Y/R = G / (1 + GH)（単位フィードバックは H=1）</details>
+        <details><summary>3つの安定判別法は？</summary>ラウス・フルビッツ（係数から代数判定）／ナイキスト（−1+j0 を囲むか）／ボード線図（ゲイン余裕・位相余裕）</details>
+        <details><summary>安定度の実用的な目安は？</summary>位相余裕 30〜60°・ゲイン余裕 6 dB 以上</details>
+      </div>
     </div>
     <PageNav prev={{ id: "keiki-yo-henseiki", title: "2.3 計器用変成器（CT・VT）" }} next={{ id: "info-elec", title: "3.2 情報・電子回路" }} onNav={onNav} />
   </>
@@ -2790,6 +2971,13 @@ const LightingPage = ({ onNav }) => (
         <FormulaCard num="03" name="平均照度（屋内照明）" eq="E = \dfrac{F \cdot N \cdot U \cdot M}{A}"
           note="N:灯具数, U:照明率, M:保守率, A:被照面積" />
       </>},
+      { id: "quick-review", heading: "1分復習（即答チェック）", body: <>
+        <div className="box">
+          <details><summary>光束・光度・照度・輝度の単位は？</summary>光束=lm（ルーメン）／光度=cd（カンデラ）／照度=lx（ルクス）／輝度=cd/m²</details>
+          <details><summary>点光源・距離 r の面の照度（逆二乗の法則）は？</summary>E = I/r²（垂直入射）。傾き θ なら E = I·cosθ/r²（余弦の法則）</details>
+          <details><summary>屋内照明の平均照度の式は？</summary>E = F·N·U·M / A（N:灯具数, U:照明率, M:保守率, A:被照面積）</details>
+        </div>
+      </>},
     ]}
   />
 );
@@ -2815,6 +3003,13 @@ const HeatPage = ({ onNav }) => (
         <li><strong>誘電加熱</strong> — 高周波で誘電損失を利用（プラスチック溶接）</li>
         <li><strong>マイクロ波加熱</strong> — 数 GHz で水分子を励起（電子レンジ）</li>
       </ul>},
+      { id: "quick-review", heading: "1分復習（即答チェック）", body: <>
+        <div className="box">
+          <details><summary>ジュール熱の式は？</summary>Q = I²Rt = Pt [J]</details>
+          <details><summary>温度上昇の式は？</summary>Q = c·m·ΔT（c:比熱, m:質量, ΔT:温度差）</details>
+          <details><summary>IH調理器・焼入れの加熱方式は？電子レンジは？</summary>IH・焼入れ=誘導加熱（渦電流）／電子レンジ=マイクロ波加熱（誘電加熱の一種・水分子励起）</details>
+        </div>
+      </>},
     ]}
   />
 );
@@ -3225,6 +3420,7 @@ const App = () => {
       case 'transformer':       return <TransformerPage {...props} />;
       case 'power-elec':        return <PowerElecPage {...props} />;
       case 'keiki-yo-henseiki': return <KeikiYoHenseikiPage {...props} />;
+      case 'yougo-konzai':      return <YougoKonzaiPage {...props} />;
       case 'auto-control':      return <AutoControlPage {...props} />;
       case 'info-elec':         return <InfoElecPage {...props} />;
       case 'lighting':          return <LightingPage {...props} />;
