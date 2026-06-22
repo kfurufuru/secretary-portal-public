@@ -4309,19 +4309,14 @@ function TrapTable({ traps }) {
   // trap.wrong は常に誤りなので正しい判定は「誤」。'正'を選ぶ＝ひっかけを見抜けなかった(confident-but-wrong)。
   // 判定単独では localStorage に書かず、理解度押下時に lastAnswerCorrect として payload に畳み込む
   //（間違いノート集約=MachigaiNotePage の既存挙動を変えないため・追加フィールドは後方互換）。
-  const loadAnswered = () => {
-    const a = {};
-    traps.forEach((t, i) => {
-      const rec = records[i];
-      if (rec && typeof rec.lastAnswerCorrect === 'boolean') {
-        const isChoice = Array.isArray(t.choices) && t.choices.length > 0;
-        if (isChoice) a[i] = rec.lastAnswerCorrect ? t.answer : -1; // -1=誤答sentinel（reveal済・不正解）
-        else a[i] = rec.lastAnswerCorrect ? '誤' : '正';
-      }
-    });
-    return a;
-  };
-  const [answered, setAnswered] = React.useState(loadAnswered);
+  //
+  // 再挑戦モード: 再訪時は前回の判定結果で答えを自動展開せず、もう一度○×で解き直せるようにする
+  //（テスト効果の維持＝「解いたら前回が分かる」）。前回の記録は prevRef に mount 時スナップショットとして
+  // 凍結し「前回 ✓理解／⚠要復習」マークで提示する（今セッションの再記録で書き換わらない）。
+  // payload schema は不変なので QuickReview / self-check.js との同期は不要。
+  const prevRef = React.useRef(null);
+  if (prevRef.current === null) prevRef.current = records; // mount 時の記録＝「前回」
+  const [answered, setAnswered] = React.useState({});
   const judge = (i, choice) => setAnswered(prev => ({ ...prev, [i]: choice }));
 
   // WIKI_DATA からページ名を引く（間違いノートで記録元を明示するため）
@@ -4391,10 +4386,23 @@ function TrapTable({ traps }) {
           {traps.map((trap, i) => {
             const rec = records[i];
             const status = rec ? rec.status : null;
+            const prev = prevRef.current ? prevRef.current[i] : null; // 前回（前セッション）の記録スナップショット
             const isChoice = Array.isArray(trap.choices) && trap.choices.length > 0;
             const ans = answered[i];
             const revealed = ans !== undefined && ans !== null;
             const correct = isChoice ? (ans === trap.answer) : (ans === '誤'); // ○×は「誤」が正答 / choiceはanswer一致
+            // 前回マーク: 前回の理解度（✓理解／⚠要復習）＋前回の正誤。再訪時に「前回どうだったか」を提示。
+            const prevMark = prev ? (() => {
+              const ok = prev.status === 'understood';
+              const c = ok ? 'var(--good)' : '#f97316';
+              const aMark = (typeof prev.lastAnswerCorrect === 'boolean') ? (prev.lastAnswerCorrect ? '・○正解' : '・✗不正解') : '';
+              return {
+                color: c,
+                bg: ok ? 'rgba(34,197,94,0.10)' : 'rgba(249,115,22,0.10)',
+                text: '前回 ' + (ok ? '✓理解' : '⚠要復習') + aMark,
+                when: prev.updatedAt ? String(prev.updatedAt).slice(0, 10) : '',
+              };
+            })() : null;
             return (
               <tr key={i}>
                 <td style={{ border: '1px solid var(--line)', padding: '10px 12px', fontSize: 13, lineHeight: 1.7 }}>
@@ -4440,7 +4448,19 @@ function TrapTable({ traps }) {
                     </div>
                   )}
                 </td>
-                <td style={{ border: '1px solid var(--line)', textAlign: 'center', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
+                <td style={{ border: '1px solid var(--line)', textAlign: 'center', whiteSpace: 'nowrap', verticalAlign: 'middle', padding: '6px 8px' }}>
+                  {prevMark && (
+                    <div style={{ marginBottom: 6 }}>
+                      <span
+                        title={prevMark.when ? '前回の記録: ' + prevMark.when : '前回の記録'}
+                        style={{
+                          display: 'inline-block', padding: '2px 8px', borderRadius: 999,
+                          border: `1px solid ${prevMark.color}`, color: prevMark.color, background: prevMark.bg,
+                          fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', lineHeight: 1.5,
+                        }}
+                      >{prevMark.text}</span>
+                    </div>
+                  )}
                   {revealed ? (
                     <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}>
                       {TRAP_BTNS.map(b => {
@@ -4476,7 +4496,7 @@ function TrapTable({ traps }) {
         </tbody>
       </table>
       <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 6 }}>
-        <strong>答えを見る前に○✕を判定</strong>するのが定着のコツ（思い出す負荷＝テスト効果）。判定後に手応えを記録し、<strong style={{ color: '#f97316' }}>⚠要復習</strong> を押すと <strong>間違いノート</strong> に集約されます（もう一度押すと解除）。
+        <strong>答えを見る前に○✕を判定</strong>するのが定着のコツ（思い出す負荷＝テスト効果）。判定後に手応えを記録し、<strong style={{ color: '#f97316' }}>⚠要復習</strong> を押すと <strong>間違いノート</strong> に集約されます（もう一度押すと解除）。<strong>再訪時は答えが再び隠れて解き直せ</strong>、前回の手応え（<strong style={{ color: 'var(--good)' }}>✓理解</strong>／<strong style={{ color: '#f97316' }}>⚠要復習</strong>）がマークで出ます。
       </div>
     </div>
   );
@@ -12713,7 +12733,7 @@ function ChokuzenHikkakePage({ onNav, data }) {
         <div>
           本試験で<strong>毎年仕掛けられる誤選択肢パターン</strong>を分野別に集約。
           ⚠ 数値ペアは <a href="#" onClick={(e) => { e.preventDefault(); onNav('chokuzen-suuchi'); }} style={{ color: 'var(--accent)', textDecoration: 'underline' }}>数値だけ確認 Section 0</a> を参照（住み分け）。<br />
-          本ページは<strong>条文番号・手続き種別・用語ペア・電気工作物区分</strong>のひっかけが中心。
+          本ページは<strong>条文の中身・手続き種別・用語ペア・電気工作物区分</strong>のひっかけが中心。
         </div>
       </div>
 
@@ -12731,7 +12751,7 @@ function ChokuzenHikkakePage({ onNav, data }) {
       <ConclusionBox>
         <ul>
           <li><a href="#tA" style={{ color: 'var(--accent)' }}>A.</a> 手続き種別（届出 / 許可 / 承認）</li>
-          <li><a href="#tB" style={{ color: 'var(--accent)' }}>B.</a> 条文番号の入れ替え</li>
+          <li><a href="#tB" style={{ color: 'var(--accent)' }}>B.</a> 条文の中身の取り違え</li>
           <li><a href="#tC" style={{ color: 'var(--accent)' }}>C.</a> 数値境界（未満 / 以下 / 超 / 以上）</li>
           <li><a href="#tD" style={{ color: 'var(--accent)' }}>D.</a> 電気工作物 4 区分の用語</li>
           <li><a href="#tE" style={{ color: 'var(--accent)' }}>E.</a> 接地工事のひっかけ</li>
@@ -12751,15 +12771,17 @@ function ChokuzenHikkakePage({ onNav, data }) {
       ]} />
       {sec02Link("shunin-gijutsusya", "主任技術者の詳細")}
 
-      {/* B. 条文番号 */}
-      <h2 id="tB">B. 条文番号の入れ替え（電気事業法）</h2>
-      {/* SOT: ShuninGijutsusyaPage と同期（43 条整理、KosakubutsuBunrui も参照） */}
+      {/* B. 条文の中身（番号当てではなく主体・趣旨・義務者を問う＝本試験の出題形）。SOT: ShuninGijutsusyaPage と同期 */}
+      <h2 id="tB">B. 条文の中身の取り違え（自主保安体制）</h2>
+      <div style={{ margin: '4px 0 12px', fontSize: 13, color: 'var(--ink-3)', lineHeight: 1.7 }}>
+        本試験は「第何条か」という<strong>番号当ては問いません</strong>（番号は覚えなくてよい）。問われるのは <strong>誰が・何を・どうする</strong> という中身。番号は参考の補足に留めます。
+      </div>
       <TrapTable traps={[
-        { wrong: "保安規程は法 43 条",                                   correct: "保安規程は法 42 条。法 43 条は主任技術者" },
-        { wrong: "工事計画の届出は法 42 条",                             correct: "工事計画は法 48 条。法 42 条は保安規程" },
-        { wrong: "法 43 条 2 項は『選任の届出』",                        correct: "2 項は『許可選任』（免状なし）。3 項が『選任・解任の届出』" },
-        { wrong: "法 57 条は『主任技術者の誠実義務』",                   correct: "法 57 条は『電気事業者の定期調査』。43 条 4 項が主任技術者の誠実義務" },
-        { wrong: "電気工作物の区分は法 43 条",                           correct: "電気工作物の区分は法 38 条。法 43 条は主任技術者" },
+        { wrong: "保安規程は国（経済産業大臣）が作成し事業者に交付する",   correct: "事業者が自ら定めて国に届け出る（自主保安の原則・法 42 条）。国が作るのではない" },
+        { wrong: "保安規程を守る義務があるのは主任技術者だけ",            correct: "事業用電気工作物を設置する者及びその従業者が守る義務を負う（法 42 条）" },
+        { wrong: "工事計画を届け出れば直ちに工事に着手できる",            correct: "受理後 30 日を経過するまで工事できない（法 48 条）。事前届出＋待機が原則" },
+        { wrong: "主任技術者の保安上の指示に従うのは主任技術者本人",      correct: "工事・維持・運用に従事する者が、主任技術者の保安上の指示に従う（法 43 条）" },
+        { wrong: "事業用電気工作物の保安責任は国が負う",                  correct: "設置者が自主的に保安を確保する（自主保安体制）。国は規制・監督に回る" },
       ]} />
       {sec02Link("hoan-kitei", "保安規程・工事計画の条文")}
 
@@ -12804,6 +12826,7 @@ function ChokuzenHikkakePage({ onNav, data }) {
       {sec02Link("hokoku-todoke-kigen", "報告・届出期限の一覧")}
 
       <UpdateLog entries={[
+        { date: "2026-06-21", content: "Section B を『条文番号の入れ替え』→『条文の中身の取り違え』へ改修", reason: "本試験は条文番号の暗記（第何条か）を問わない。主体・趣旨・義務者を問う出題形に合わせ、保安規程／工事計画／主任技術者の中身ひっかけへ置換" },
         { date: "2026-05-16", content: "初版作成（条文・手続き・用語のひっかけ 25 組）", reason: "Stub→直前確認モード。chokuzen-suuchi Section 0（数値ペア）と住み分け" },
       ]} />
       <PageNav
