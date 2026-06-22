@@ -5235,8 +5235,122 @@ const CapacitorSymbolLegend = () => (
 );
 
 /* 公式タブ */
+const TREE_ROUTES = [
+  { cls: "r-seiden", c: "#378ADD", name: "静電気ルート",
+    flow: <>電荷 → クーロン力 F=kQq/r² → 電界 E=F/q → 電位・電圧 → <strong>コンデンサ</strong></>,
+    note: <>※ 電界の向きに進むと電位は下がる。一様電界では電位差の大きさ <strong>|V| = Ed</strong></> },
+  { cls: "r-kairo", c: "#185FA5", name: "回路ルート",
+    flow: <><strong>電位差</strong> → 導体・閉回路 → 電荷の移動 → <strong>電流 I</strong> → R・L・C → 直流 P=VI ／ 単相交流 P=VIcosθ ／ 三相交流 P=√3VIcosθ ／ ジュール熱 I²R</>,
+    note: <>※ 電荷だけでは流れない（電位差と閉回路が要る）。有効電力（消費・発熱）はこの本筋（cosθ＝力率）</> },
+  { cls: "r-denryoku", c: "#639922", name: "電力ルート（送電・無効電力）",
+    flow: <>送電線・ケーブルの<strong>静電容量</strong> → 充電電流・進み無効電力 → 軽負荷時の電圧上昇（<strong>フェランチ</strong>）／ 絶縁・耐圧</>,
+    note: <>※ 進相コンデンサ・力率改善は同じ“進み”を別目的で使う対策（遅れ負荷の補償）。線路の充電電流が力率改善するわけではない</> },
+  { cls: "r-kikai", c: "#BA7517", name: "機械ルート",
+    flow: <><strong>電流</strong> → 磁界 → 〔<span style={{ whiteSpace: "nowrap" }}>電磁力 F=BIL → <strong>モータ</strong></span> ／ <span style={{ whiteSpace: "nowrap" }}>電磁誘導 e=BLv → <strong>発電機</strong></span>〕</>,
+    note: <>※ モータ＝電気→力（左手）／発電機＝運動→起電力（右手・レンツ）。反転するのはエネルギー変換の向きで、力やEMFが空間的に逆という意味ではない。誘導起電力 e=-N·dΦ/dt は理論の頻出論点</> },
+  { cls: "r-houki", c: "#534AB7", name: "法規・実務ルート",
+    flow: <>感電・地絡<strong>リスク</strong> → 接地・絶縁（対策）→ 保護遮断 → 絶縁耐力・<strong>安全管理</strong></>,
+    note: null },
+];
+
+const TREE_CSS = `
+.cr-tree{position:relative;margin:4px 0 12px}
+.cr-root{display:inline-block;position:relative;margin-left:4px;background:var(--bg);border:2px solid #378ADD;border-radius:8px;padding:8px 22px;font-weight:700;font-size:17px;color:var(--ink)}
+.cr-root::after{content:"";position:absolute;left:40px;top:100%;width:2px;height:24px;background:var(--ink-mute)}
+.cr-rootcap{font-size:11px;color:var(--ink-mute);margin:6px 0 2px 92px;line-height:1.6}
+.cr-branches{position:relative;list-style:none;margin:0;padding:0 0 0 86px}
+.cr-b{position:relative;min-height:84px;box-sizing:border-box;margin-bottom:8px;background:var(--bg-elev);border:2px solid var(--rule);border-radius:8px;padding:9px 13px}
+.cr-b::before{content:"";position:absolute;left:-40px;top:22px;width:40px;height:2px;background:var(--ink-mute)}
+.cr-b::after{content:"";position:absolute;left:-40px;top:22px;width:2px;height:calc(100% + 12px);background:var(--ink-mute)}
+.cr-b:last-child::after{display:none}
+.cr-bt{font-weight:700;font-size:14px;display:flex;align-items:center;color:var(--ink)}
+.cr-bf{font-size:12px;color:var(--ink-soft);margin-top:5px;line-height:1.7}
+.cr-bn{font-size:11px;color:var(--ink-mute);margin-top:5px;line-height:1.6}
+.cr-chip{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:7px;flex:none}
+.r-seiden{border-color:#378ADD}.r-seiden .cr-chip{background:#378ADD}
+.r-kairo{border-color:#185FA5}.r-kairo .cr-chip{background:#185FA5}
+.r-denryoku{border-color:#639922}.r-denryoku .cr-chip{background:#639922}
+.r-kikai{border-color:#BA7517}.r-kikai .cr-chip{background:#BA7517}
+.r-houki{border-color:#534AB7}.r-houki .cr-chip{background:#534AB7}
+[data-theme="dark"] .r-kairo{border-color:#3D7FCB}[data-theme="dark"] .r-kairo .cr-chip{background:#3D7FCB}
+[data-theme="dark"] .r-houki{border-color:#7C72D6}[data-theme="dark"] .r-houki .cr-chip{background:#7C72D6}
+[data-theme="dark"] .cr-chip{outline:1px solid rgba(255,255,255,.28)}
+@media (max-width:480px){.cr-branches{padding:0 12px 0 54px}.cr-rootcap{margin-left:60px}.cr-b::before{left:-28px;width:28px}.cr-b::after{left:-28px}}
+`;
+
+const ChargeRootTree = () => (
+  <section style={{ margin: "8px 0 16px" }}>
+    <style>{TREE_CSS}</style>
+    <div style={{ border: "0.5px solid var(--rule)", borderRadius: 10, background: "var(--bg-elev)", padding: "12px 16px", marginBottom: 8 }}>
+      <div style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)" }}>電荷は電験の“根っこ”</div>
+      <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 6, lineHeight: 1.7 }}>
+        電荷は、電気現象すべての<strong style={{ color: "var(--ink)" }}>出発点となる基本量</strong>。ここから理論・回路・電力・機械・法規へと枝分かれしていく。
+      </div>
+    </div>
+    <div className="cr-tree" role="group" aria-label="電荷から5ルートへの枝分かれツリー">
+      <div className="cr-root">電荷</div>
+      <div className="cr-rootcap">電荷が場（電界・磁界）と電位差を生む → だから全ルートの根</div>
+      <ul className="cr-branches">
+        {TREE_ROUTES.map((r) => (
+          <li key={r.name} className={`cr-b ${r.cls}`}>
+            <div className="cr-bt"><span className="cr-chip" aria-hidden="true"></span>{r.name}</div>
+            <div className="cr-bf">{r.flow}</div>
+            {r.note && <div className="cr-bn">{r.note}</div>}
+          </li>
+        ))}
+      </ul>
+    </div>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 8, marginBottom: 10 }}>
+      <div style={{ border: "0.5px solid var(--rule)", background: "var(--bg)", borderRadius: 8, padding: "8px 12px" }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)" }}>橋① ミクロ → マクロ</div>
+        <div style={{ fontSize: 11, color: "var(--ink-mute)", marginTop: 3, lineHeight: 1.6 }}>電荷・分極・<strong>誘電率 ε</strong> が、電界・電位・静電容量 C の式につながる（電荷は素量 e の整数倍だが電験では連続量として扱う）</div>
+      </div>
+      <div style={{ border: "0.5px solid var(--rule)", background: "var(--bg)", borderRadius: 8, padding: "8px 12px" }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)" }}>橋② マクロ → 実務</div>
+        <div style={{ fontSize: 11, color: "var(--ink-mute)", marginTop: 3, lineHeight: 1.6 }}>電圧・電流・静電容量 C が、<strong>定格・耐圧・接地・充電電流・力率改善</strong>につながる</div>
+      </div>
+    </div>
+    <div style={{ textAlign: "center", background: "var(--accent-soft)", color: "var(--accent-ink)", borderRadius: 10, padding: "11px 16px", fontSize: 14, lineHeight: 1.8 }}>
+      <strong>電荷を理解する</strong> → 電気現象の“根っこ”が見える → <strong>理論・電力・機械・法規・実務が一本につながる</strong>
+    </div>
+    <div style={{ fontSize: 11, color: "var(--ink-mute)", marginTop: 6, lineHeight: 1.6, textAlign: "center" }}>
+      ※ この図は“つながり方”を示すもので、学ぶ順序や配点の重みではない。4科目の土台は理論（静電気・電磁気・回路）なので、まずここを固めるのが王道。
+    </div>
+  </section>
+);
+
+const CapacitorLayers = () => (
+  <>
+    <h2 id="layers"><span className="h-num">0</span>このページ（コンデンサ）をミクロ・マクロ・実務で見る</h2>
+    <table className="data-table">
+      <thead>
+        <tr><th>視点</th><th>何を見るか</th><th>代表する式・量</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>ミクロ</strong><br/>（なぜ）</td>
+          <td>極板に電荷が溜まり、誘電体の<strong>分子が分極</strong>して外部電界を打ち消す。だから同じ電圧でより多く溜まる</td>
+          <td>分極・内部電界の打ち消し</td>
+        </tr>
+        <tr>
+          <td><strong>マクロ</strong><br/>（解く）</td>
+          <td>電子1個ずつは追わず、<strong>測れる量</strong>で扱う。試験はここ</td>
+          <td><Eq tex="C = Q/V" inline />・<Eq tex="C = \varepsilon_0 \varepsilon_r \frac{S}{d}" inline />・<Eq tex="W = \frac{1}{2}CV^2" inline /></td>
+        </tr>
+        <tr>
+          <td><strong>実務</strong><br/>（意味づけ）</td>
+          <td>設備で何に化けるか。力率改善（進相）コンデンサ、ケーブル・送電線の<strong>充電電流</strong>、絶縁耐圧</td>
+          <td>進相コンデンサ・対地静電容量</td>
+        </tr>
+      </tbody>
+    </table>
+  </>
+);
+
 const CapacitorFormulasTab = ({ onNav, switchTab }) => (
   <>
+    <ChargeRootTree />
+    <CapacitorLayers />
     <CapacitorSymbolLegend />
 
     <DefinitionCallout symbol="静電容量 C">
@@ -8598,6 +8712,69 @@ const CoulombFieldLearnTab = ({ onNav, switchTab }) => (
       ]}
     />
 
+    <p style={{ fontSize: "13px", color: "var(--ink-soft)", margin: "10px 0 4px" }}>
+      静電気の「向き」も同じ判定フローで出せる。<strong>「何の向きか」</strong>を見分ければ、暗記に頼らず向きが決まる。
+    </p>
+    <figure style={{ margin: "6px 0 16px", background: "var(--bg-elev)", borderRadius: "8px", padding: "14px 8px 8px" }}>
+      <svg viewBox="0 0 760 366" role="img" aria-label="静電気『向き』判定フロー。何の向きを問われたかで3つに分岐する。2つの電荷の間の力は同符号で反発・異符号で吸引し2点を結ぶ線上に働く。電界E中の電荷の力はF=qEで正電荷はEと同じ向き・負電荷は逆向き。電界Eそのものの向きは正電荷が受ける力の向き＝プラスからマイナスへ（電子は逆向き）。最後に結ぶ線上かEと平行かで検算する決定木。" style={{ display: "block", width: "100%", height: "auto", maxWidth: "720px", margin: "0 auto" }}>
+        {/* ===== START ===== */}
+        <rect x="262" y="12" width="236" height="38" rx="19" fill="var(--accent-soft)" stroke="var(--accent-ink)" strokeWidth="1.2" />
+        <text x="380" y="36" textAnchor="middle" fontSize="14" fontWeight="600" fill="var(--ink)">「向き」を問われた（静電気）</text>
+        <line x1="380" y1="50" x2="380" y2="62" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="375,57 385,57 380,64" fill="var(--ink-mute)" />
+
+        {/* ===== ① decision diamond ===== */}
+        <polygon points="380,64 490,92 380,120 270,92" fill="var(--bg-elev)" stroke="var(--accent-ink)" strokeWidth="1.4" />
+        <text x="380" y="97" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--ink)">① 何の向きか</text>
+
+        {/* diamond → 3 cards (bus) */}
+        <line x1="380" y1="120" x2="380" y2="132" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="135" y1="132" x2="625" y2="132" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="135" y1="132" x2="135" y2="148" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="130,143 140,143 135,150" fill="var(--ink-mute)" />
+        <line x1="380" y1="132" x2="380" y2="148" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="375,143 385,143 380,150" fill="var(--ink-mute)" />
+        <line x1="625" y1="132" x2="625" y2="148" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="620,143 630,143 625,150" fill="var(--ink-mute)" />
+
+        {/* ===== Card A: 2電荷間の力 ===== */}
+        <rect x="20" y="150" width="230" height="130" rx="8" fill="var(--bg-elev)" stroke="var(--rule)" strokeWidth="1.2" />
+        <text x="135" y="176" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">2つの電荷の間の力</text>
+        <text x="135" y="203" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">同符号 → 反発</text>
+        <text x="135" y="223" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">異符号 → 吸引</text>
+        <text x="135" y="246" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">（2点を結ぶ線上）</text>
+
+        {/* ===== Card B: 電界中の電荷の力 ===== */}
+        <rect x="265" y="150" width="230" height="130" rx="8" fill="var(--bg-elev)" stroke="var(--rule)" strokeWidth="1.2" />
+        <text x="380" y="176" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">電界 E 中の電荷の力</text>
+        <text x="380" y="203" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">F ＝ qE</text>
+        <text x="380" y="227" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">正電荷 → E と同じ向き</text>
+        <text x="380" y="246" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">負電荷 → 逆向き</text>
+
+        {/* ===== Card C: 電界Eそのものの向き ===== */}
+        <rect x="510" y="150" width="230" height="130" rx="8" fill="var(--bg-elev)" stroke="var(--rule)" strokeWidth="1.2" />
+        <text x="625" y="176" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">電界 E そのものの向き</text>
+        <text x="625" y="203" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">＋が受ける力の向き</text>
+        <text x="625" y="227" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">＋ から － へ</text>
+        <text x="625" y="246" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">（電子は逆向き）</text>
+
+        {/* ===== converge → END ===== */}
+        <line x1="135" y1="280" x2="135" y2="300" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="380" y1="280" x2="380" y2="300" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="625" y1="280" x2="625" y2="300" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="135" y1="300" x2="625" y2="300" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="380" y1="300" x2="380" y2="314" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="375,309 385,309 380,316" fill="var(--ink-mute)" />
+
+        {/* ===== END ===== */}
+        <rect x="220" y="316" width="320" height="40" rx="20" fill="var(--accent-soft)" stroke="var(--accent-ink)" strokeWidth="1.2" />
+        <text x="380" y="341" textAnchor="middle" fontSize="12.5" fontWeight="600" fill="var(--ink)">検算：結ぶ線上か / E と平行か</text>
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+        図：<strong style={{ color: "var(--ink)" }}>「何の向きか」</strong>で3分岐。電磁力ページの判定フローと同じ形＝<strong style={{ color: "var(--ink)" }}>「向き」は入口を見分けてから法則を選ぶ</strong>のが共通の型。
+      </figcaption>
+    </figure>
+
     <h2 id="examples"><span className="h-num">2</span>例題</h2>
     <SectionCheck pageId="coulomb-field" sectionId="examples" />
     <p><strong>問1:</strong> 真空中で 2μC と 3μC の点電荷が 1m 離れている。クーロン力の大きさを求めよ。（k=9×10⁹ N·m²/C²）</p>
@@ -8905,8 +9082,38 @@ const ElectromagneticForceChunkHierarchy = () => (
 );
 
 /* 公式タブ */
+const ElectromagneticForceLayers = () => (
+  <>
+    <h2 id="layers"><span className="h-num">0</span>このページ（電磁力）をミクロ・マクロ・実務で見る</h2>
+    <table className="data-table">
+      <thead>
+        <tr><th>視点</th><th>何を見るか</th><th>代表する式・量</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>ミクロ</strong><br/>（なぜ）</td>
+          <td>動く電荷（電流）1個が磁界から<strong>ローレンツ力</strong>を受ける。導体中の電荷を足し合わせると導体全体の力になる</td>
+          <td><Eq tex="F = qvB" inline />（電荷1個）→ <Eq tex="F = BIl" inline />（導体）</td>
+        </tr>
+        <tr>
+          <td><strong>マクロ</strong><br/>（解く）</td>
+          <td>電子1個ずつは追わず<strong>測れる量</strong>で扱う。向きはフレミング左右手。試験はここ</td>
+          <td><Eq tex="F = BIl\sin\theta" inline />（力・モータ）・<Eq tex="e = Blv" inline />（起電力・発電機）</td>
+        </tr>
+        <tr>
+          <td><strong>実務</strong><br/>（意味づけ）</td>
+          <td>設備で何に化けるか。モータ・発電機・電磁石・電磁リレー、短絡時に導体間へ働く<strong>電磁力</strong>（短絡電磁力耐量）</td>
+          <td>トルク・短絡電磁力</td>
+        </tr>
+      </tbody>
+    </table>
+  </>
+);
+
 const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
   <>
+    <ChargeRootTree />
+    <ElectromagneticForceLayers />
     <ElectromagneticForceSymbolLegend />
 
     <DefinitionCallout symbol="電磁力 F">
@@ -9409,6 +9616,102 @@ const ElectromagneticForceLearnTab = ({ onNav, switchTab }) => (
       <p>過去問の大半は「<strong>力か起電力か（左手か右手か）</strong>」「<strong>形状はどれか（直線・円形・環状）</strong>」「<strong>平行導体の方向は同か逆か</strong>」の<strong>3つの分岐</strong>で解ける。<strong>「公式を覚える」のではなく「分岐を覚える」</strong>と新しい問題でも手が止まらない（R06下問4 / R06上問4 / R04下問4 で実証）。</p>
     </Callout>
 
+    <p style={{ fontSize: "13px", color: "var(--ink-soft)", margin: "10px 0 4px" }}>
+      上の「分岐」を一枚の判定フローにしたもの。<strong>「何の向きか」→「導体の配置」</strong>の2段で進めば、暗記に頼らず向きが出る。
+    </p>
+    <figure style={{ margin: "8px 0 16px", background: "var(--bg-elev)", borderRadius: "8px", padding: "14px 8px 8px" }}>
+      <svg viewBox="0 0 760 420" role="img" aria-label="電磁力『向き』判定フロー。まず力Fか起電力eかで左手系か右手系かを選び、力Fなら単独導体はフレミング左手・平行2導体は同方向で吸引/逆方向で反発、起電力eなら動く導体は右手・磁束変化はレンツの法則。最後に向きを座標に落として検算する2段分岐の決定木。" style={{ display: "block", width: "100%", height: "auto", maxWidth: "720px", margin: "0 auto" }}>
+        {/* ===== START ===== */}
+        <rect x="280" y="12" width="200" height="38" rx="19" fill="var(--accent-soft)" stroke="var(--accent-ink)" strokeWidth="1.2" />
+        <text x="380" y="36" textAnchor="middle" fontSize="14.5" fontWeight="600" fill="var(--ink)">「向き」を問われた</text>
+        <line x1="380" y1="50" x2="380" y2="62" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="375,57 385,57 380,64" fill="var(--ink-mute)" />
+
+        {/* ===== ① decision diamond ===== */}
+        <polygon points="380,64 510,94 380,124 250,94" fill="var(--bg-elev)" stroke="var(--accent-ink)" strokeWidth="1.4" />
+        <text x="380" y="91" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--ink)">① 求めるのは</text>
+        <text x="380" y="108" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--accent-ink)">力 F か 起電力 e か</text>
+
+        {/* diamond → two headers (bus) */}
+        <line x1="380" y1="124" x2="380" y2="138" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="190" y1="138" x2="570" y2="138" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="190" y1="138" x2="190" y2="148" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="185,143 195,143 190,150" fill="var(--ink-mute)" />
+        <line x1="570" y1="138" x2="570" y2="148" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="565,143 575,143 570,150" fill="var(--ink-mute)" />
+
+        {/* ===== LEFT header: 力 F ===== */}
+        <rect x="20" y="150" width="340" height="32" rx="6" fill="var(--accent-soft)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="190" y="171" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--accent-ink)">力 F ＝ 左手系（モーター）</text>
+        {/* ===== RIGHT header: 起電力 e ===== */}
+        <rect x="400" y="150" width="340" height="32" rx="6" fill="var(--accent-soft)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="570" y="171" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--accent-ink)">起電力 e ＝ 右手系（発電機）</text>
+
+        {/* left header → 2 cards (bus) */}
+        <line x1="190" y1="182" x2="190" y2="194" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="102" y1="194" x2="278" y2="194" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="102" y1="194" x2="102" y2="206" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="97,201 107,201 102,208" fill="var(--ink-mute)" />
+        <line x1="278" y1="194" x2="278" y2="206" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="273,201 283,201 278,208" fill="var(--ink-mute)" />
+        {/* right header → 2 cards (bus) */}
+        <line x1="570" y1="182" x2="570" y2="194" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="482" y1="194" x2="658" y2="194" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="482" y1="194" x2="482" y2="206" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="477,201 487,201 482,208" fill="var(--ink-mute)" />
+        <line x1="658" y1="194" x2="658" y2="206" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="653,201 663,201 658,208" fill="var(--ink-mute)" />
+
+        {/* ===== Card L1: 単独導体 ===== */}
+        <rect x="20" y="208" width="165" height="120" rx="8" fill="var(--bg-elev)" stroke="var(--rule)" strokeWidth="1.2" />
+        <text x="102" y="234" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">単独の導体</text>
+        <text x="102" y="262" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">フレミング左手</text>
+        <text x="102" y="286" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">中＝電流 I</text>
+        <text x="102" y="303" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">人＝磁界 B</text>
+        <text x="102" y="320" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">親＝力 F</text>
+
+        {/* ===== Card L2: 平行2導体（R6下問4・強調） ===== */}
+        <rect x="195" y="208" width="165" height="120" rx="8" fill="var(--bg-elev)" stroke="var(--warn)" strokeWidth="2" />
+        <text x="277" y="225" textAnchor="middle" fontSize="9.5" fontWeight="700" fill="var(--warn)">★ R6下 問4</text>
+        <text x="277" y="246" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">平行な2導体</text>
+        <text x="277" y="272" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">同方向 → 吸引</text>
+        <text x="277" y="292" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">逆方向 → 反発</text>
+        <text x="277" y="314" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">（直感と逆）</text>
+
+        {/* ===== Card R1: 導体が動く ===== */}
+        <rect x="400" y="208" width="165" height="120" rx="8" fill="var(--bg-elev)" stroke="var(--rule)" strokeWidth="1.2" />
+        <text x="482" y="234" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">導体が動く</text>
+        <text x="482" y="262" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">フレミング右手</text>
+        <text x="482" y="286" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">親＝速度 v</text>
+        <text x="482" y="303" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">人＝磁界 B</text>
+        <text x="482" y="320" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">中＝起電力 e</text>
+
+        {/* ===== Card R2: 磁束が変化 ===== */}
+        <rect x="575" y="208" width="165" height="120" rx="8" fill="var(--bg-elev)" stroke="var(--rule)" strokeWidth="1.2" />
+        <text x="657" y="234" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">磁束が変化</text>
+        <text x="657" y="262" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">レンツの法則</text>
+        <text x="657" y="288" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">変化を妨げる</text>
+        <text x="657" y="306" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">向きに起電力</text>
+
+        {/* ===== converge → END ===== */}
+        <line x1="102" y1="328" x2="102" y2="346" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="277" y1="328" x2="277" y2="346" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="482" y1="328" x2="482" y2="346" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="657" y1="328" x2="657" y2="346" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="102" y1="346" x2="657" y2="346" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <line x1="380" y1="346" x2="380" y2="360" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="375,355 385,355 380,362" fill="var(--ink-mute)" />
+
+        {/* ===== END ===== */}
+        <rect x="240" y="362" width="280" height="40" rx="20" fill="var(--accent-soft)" stroke="var(--accent-ink)" strokeWidth="1.2" />
+        <text x="380" y="387" textAnchor="middle" fontSize="12.5" fontWeight="600" fill="var(--ink)">検算：向きを座標へ（吸引？反発？回る？）</text>
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+        図：<strong style={{ color: "var(--ink)" }}>「力 F か 起電力 e か」→「単独か平行か」</strong>の2段分岐で向きが決まる。
+        <strong style={{ color: "var(--warn)" }}>R6下 問4 は 力F→平行2導体→同方向で吸引（黄枠）</strong>。
+      </figcaption>
+    </figure>
+
     <h2 id="examples"><span className="h-num">2</span>基本例題：F = BIL の典型</h2>
     <SectionCheck pageId="electromagnetic-force" sectionId="examples" />
     <p><strong>問:</strong> 磁束密度 B=0.5T 中で、有効長 L=0.2m の導体に電流 I=10A が流れている。B と I が直角のとき、電磁力 F を求めよ。</p>
@@ -9433,6 +9736,49 @@ const ElectromagneticForceLearnTab = ({ onNav, switchTab }) => (
       ]}
       note="同方向電流の平行導体は吸引。A と B は互いに引き合うので、A は B 側(+x)・B は A 側(−x)へ。"
     />
+    <p style={{ fontSize: "13px", color: "var(--ink-soft)", margin: "10px 0 4px" }}>
+      ステップに入る前に、<strong>配置と力の向きを図で先に掴む</strong>。電流は上向き(+y)、力は横向き(x)に出る。
+    </p>
+    <figure style={{ margin: "6px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+      <svg viewBox="0 0 440 244" role="img" aria-label="R6下問4の配置図。2本の平行導体AとBがx軸方向に並び（Aが左＝−x側、Bが右）、どちらも電流が上向き＝+y方向に流れる。同方向電流なので吸引し、導体Aは相手B側＝+x方向へ、導体Bは相手A側＝−x方向へ力を受ける。力は電流の向き(+y)ではなくx方向に生じる。" style={{ display: "block", width: "100%", height: "auto", maxWidth: "400px", margin: "0 auto" }}>
+        {/* ===== 座標キー ===== */}
+        <line x1="40" y1="210" x2="78" y2="210" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="70,206 70,214 78,210" fill="var(--ink-mute)" />
+        <text x="86" y="214" fontSize="11" fill="var(--ink-mute)">+x</text>
+        <line x1="40" y1="210" x2="40" y2="174" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        <polygon points="36,182 44,182 40,174" fill="var(--ink-mute)" />
+        <text x="32" y="168" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">+y</text>
+
+        {/* ===== 導体A（電流 +y） ===== */}
+        <line x1="150" y1="200" x2="150" y2="62" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" />
+        <polygon points="143,62 157,62 150,50" fill="var(--accent)" />
+        <text x="150" y="42" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">I（+y）</text>
+        <text x="150" y="224" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">導体A</text>
+
+        {/* ===== 導体B（電流 +y） ===== */}
+        <line x1="300" y1="200" x2="300" y2="62" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" />
+        <polygon points="293,62 307,62 300,50" fill="var(--accent)" />
+        <text x="300" y="42" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">I（+y）</text>
+        <text x="300" y="224" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">導体B</text>
+
+        {/* ===== 力 F_A（+x・B側へ） ===== */}
+        <text x="186" y="120" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--warn)">F（A）→ +x</text>
+        <line x1="158" y1="134" x2="214" y2="134" stroke="var(--warn)" strokeWidth="2.6" strokeLinecap="round" />
+        <polygon points="206,128 206,140 214,134" fill="var(--warn)" />
+
+        {/* ===== 力 F_B（−x・A側へ） ===== */}
+        <text x="264" y="120" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--warn)">F（B）→ −x</text>
+        <line x1="292" y1="134" x2="236" y2="134" stroke="var(--warn)" strokeWidth="2.6" strokeLinecap="round" />
+        <polygon points="244,128 244,140 236,134" fill="var(--warn)" />
+
+        {/* ===== 吸引ラベル ===== */}
+        <text x="225" y="160" textAnchor="middle" fontSize="11.5" fontWeight="700" fill="var(--warn)">引き合う（吸引）</text>
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+        図：同方向電流（ともに +y）は<strong style={{ color: "var(--ink)" }}>吸引</strong>。A は相手 B 側＝<strong style={{ color: "var(--warn)" }}>+x</strong>、B は相手 A 側＝<strong style={{ color: "var(--warn)" }}>−x</strong> へ → 答 ②。
+        <strong style={{ color: "var(--ink)" }}>力は電流方向(+y)でなく x 方向に出る</strong>のがカギ。
+      </figcaption>
+    </figure>
     <SolveFlow
       type="平行導体に働く力の向き（同方向＝吸引）"
       steps={[
