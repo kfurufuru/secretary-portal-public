@@ -6505,7 +6505,7 @@ const actionBtnStyle = {
 };
 
 // ===== Mode 2: Quiz Meaning =====
-function QuizMeaningMode({ session, setSession, deck, onOpenMemo, onRestart, onEndToList }) {
+function QuizMeaningMode({ session, setSession, deck, onOpenMemo, onRestart, onRetryWrong, onEndToList }) {
   const handleAction = React.useCallback((result) => {
     const t = session.items[session.index];
     deck.recordResult(t.id, result);
@@ -6548,7 +6548,7 @@ function QuizMeaningMode({ session, setSession, deck, onOpenMemo, onRestart, onE
     return <div style={emptyStyle}>用語が登録されていません。</div>;
   }
   if (session.index >= session.items.length) {
-    return <SessionEnd results={session.results} onRestart={onRestart} onEnd={onEndToList} />;
+    return <SessionEnd results={session.results} onRestart={onRestart} onRetryWrong={onRetryWrong} onEnd={onEndToList} />;
   }
   const t = session.items[session.index];
   return (
@@ -6661,7 +6661,7 @@ function buildChoices(t, allTerms) {
   return choices;
 }
 
-function QuizTermMode({ session, setSession, terms, deck, onRestart, onEndToList }) {
+function QuizTermMode({ session, setSession, terms, deck, onRestart, onRetryWrong, onEndToList }) {
   const t = session.items[session.index];
 
   // Lazily build choices on first access
@@ -6718,7 +6718,7 @@ function QuizTermMode({ session, setSession, terms, deck, onRestart, onEndToList
     return <div style={emptyStyle}>用語が登録されていません。</div>;
   }
   if (session.index >= session.items.length) {
-    return <SessionEnd results={session.results} onRestart={onRestart} onEnd={onEndToList} />;
+    return <SessionEnd results={session.results} onRestart={onRestart} onRetryWrong={onRetryWrong} onEnd={onEndToList} />;
   }
   if (!t) return null;
   const choices = session.choices || [];
@@ -6777,10 +6777,20 @@ function QuizTermMode({ session, setSession, terms, deck, onRestart, onEndToList
 }
 
 // ===== Session End =====
-function SessionEnd({ results, onRestart, onEnd }) {
+function SessionEnd({ results, onRestart, onRetryWrong, onEnd }) {
   const correct = results.filter(r => r.result === 'correct').length;
   const wrong = results.filter(r => r.result === 'wrong').length;
   const unsure = results.filter(r => r.result === 'unsure').length;
+  // 間違い・曖昧だった用語IDを重複なく集める（PDCAの Act＝その場で再学習する対象）
+  const retryIds = [];
+  const seen = {};
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    if ((r.result === 'wrong' || r.result === 'unsure') && !seen[r.id]) {
+      seen[r.id] = true;
+      retryIds.push(r.id);
+    }
+  }
   return (
     <div style={{
       background: 'var(--bg-elev)',
@@ -6795,8 +6805,22 @@ function SessionEnd({ results, onRestart, onEnd }) {
         <div><span style={{ fontSize: 22, fontWeight: 700, color: UNSURE_BADGE.color }}>△ {unsure}</span><div style={{ fontSize: 11, color: 'var(--ink-3)' }}>曖昧</div></div>
         <div><span style={{ fontSize: 22, fontWeight: 700, color: WRONG_BADGE.color }}>✕ {wrong}</span><div style={{ fontSize: 11, color: 'var(--ink-3)' }}>不明</div></div>
       </div>
+      {retryIds.length > 0 && onRetryWrong && (
+        <div style={{ fontSize: 12.5, color: 'var(--ink-2)', marginBottom: 12, lineHeight: 1.6 }}>
+          間違い・曖昧だった <strong>{retryIds.length}</strong> 問だけを今すぐ解き直して定着させましょう。
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-        <button className="btn primary" onClick={onRestart}>もう一周</button>
+        {retryIds.length > 0 && onRetryWrong && (
+          <button
+            className="btn primary"
+            onClick={() => onRetryWrong(retryIds)}
+            style={{ background: WRONG_BADGE.color, borderColor: WRONG_BADGE.color }}
+          >
+            ✕△ 間違い・曖昧だけ復習（{retryIds.length}問）
+          </button>
+        )}
+        <button className={retryIds.length > 0 ? 'btn secondary' : 'btn primary'} onClick={onRestart}>もう一周（全{results.length}問）</button>
         <button className="btn secondary" onClick={onEnd}>終了</button>
       </div>
     </div>
@@ -7086,6 +7110,8 @@ function ChokuzenYougoPage({ onNav }) {
   };
 
   const handleRestart = () => startSession(mode, session && session.scopeIds);
+  // PDCAの Act: 直前セッションで間違い・曖昧だった用語だけに絞って解き直す
+  const handleRetryWrong = (ids) => startSession(mode, ids);
   const handleEndToList = () => { setMode('list'); setSession(null); };
 
   const handleExport = () => deck.exportProgress();
@@ -7200,6 +7226,7 @@ function ChokuzenYougoPage({ onNav }) {
             deck={deck}
             onOpenMemo={setMemoTermId}
             onRestart={handleRestart}
+            onRetryWrong={handleRetryWrong}
             onEndToList={handleEndToList}
           />
         )}
@@ -7210,6 +7237,7 @@ function ChokuzenYougoPage({ onNav }) {
             terms={terms}
             deck={deck}
             onRestart={handleRestart}
+            onRetryWrong={handleRetryWrong}
             onEndToList={handleEndToList}
           />
         )}
