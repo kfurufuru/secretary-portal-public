@@ -6876,7 +6876,28 @@ function TriggerRule({ word, verdict }) {
   );
 }
 
-function ClusterCard({ cluster, onGoQuiz }) {
+// クラスタ見出しの理解度バッジ。並びが動く理由を可視化する（要復習＞未着手＞習得済み＞学習中）。
+function ClusterStatusBadge({ status }) {
+  if (!status || !status.total) return null;
+  let conf;
+  if (status.review > 0) {
+    conf = { label: '🔴 復習どき ' + status.review, bg: '#ffe0e0', color: '#a00018', border: '#e89090' };
+  } else if (status.untouched === status.total) {
+    conf = { label: '未着手', bg: '#eeeeee', color: '#777777', border: '#cccccc' };
+  } else if (status.mastered === status.total) {
+    conf = { label: '👑 習得 ✓', bg: '#d9c8f5', color: '#4a2780', border: '#a787da' };
+  } else {
+    conf = { label: '学習中', bg: '#e0eefc', color: '#26408b', border: '#b9ccf2' };
+  }
+  return (
+    <span style={{
+      fontSize: 11, fontWeight: 700, background: conf.bg, color: conf.color,
+      border: '1px solid ' + conf.border, borderRadius: 10, padding: '1px 8px', whiteSpace: 'nowrap',
+    }}>{conf.label}</span>
+  );
+}
+
+function ClusterCard({ cluster, status, onGoQuiz }) {
   const cols = cluster.columns || [];
   const rows = cluster.rows || [];
   return (
@@ -6890,6 +6911,7 @@ function ClusterCard({ cluster, onGoQuiz }) {
           {cluster.article && (
             <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent)', border: '1px solid var(--border)', borderRadius: 10, padding: '1px 8px' }}>第{cluster.article}条</span>
           )}
+          <ClusterStatusBadge status={status} />
         </div>
         {cluster.intro && <p style={{ margin: '4px 0 0', fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.6 }}>{cluster.intro}</p>}
         {cluster.axis && (
@@ -6949,16 +6971,17 @@ function ClusterCard({ cluster, onGoQuiz }) {
   );
 }
 
-function MatrixMode({ clusters, onGoQuiz }) {
+function MatrixMode({ clusters, statusOf, onGoQuiz }) {
   if (!clusters || clusters.length === 0) {
     return <div style={emptyStyle}>対比マップのデータがまだありません。</div>;
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div style={{ padding: '10px 12px', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.7 }}>
-        まず<strong>違い（地図）</strong>を見てから覚える。定義の丸暗記でなく、<strong>兄弟との差</strong>と<strong>1語トリガー</strong>で「区別ごと」頭に入れるのが最短。見たら下の「4択で確認」で軽くテスト → 数日後に間隔反復で戻ってくる。
+        まず<strong>違い（地図）</strong>を見てから覚える。定義の丸暗記でなく、<strong>兄弟との差</strong>と<strong>1語トリガー</strong>で「区別ごと」頭に入れるのが最短。見たら下の「4択で確認」で軽くテスト → 数日後に間隔反復で戻ってくる。<br />
+        並びは<strong>理解度が低い順</strong>（未着手・要復習が上、習得済みが下）。4択で確認するほど苦手なクラスタが上に浮く。
       </div>
-      {clusters.map(c => <ClusterCard key={c.id} cluster={c} onGoQuiz={onGoQuiz} />)}
+      {clusters.map(c => <ClusterCard key={c.id} cluster={c} status={statusOf ? statusOf(c) : null} onGoQuiz={onGoQuiz} />)}
     </div>
   );
 }
@@ -6970,6 +6993,53 @@ function ChokuzenYougoPage({ onNav }) {
 
   const deck = useFlashcardDeck(terms, STORAGE_KEY);
   const clusters = (data && Array.isArray(data.clusters)) ? data.clusters : [];
+
+  // 用語IDから用語オブジェクトを引くマップ（クラスタの理解度集計に使う）
+  const termById = React.useMemo(() => {
+    const m = {};
+    for (let i = 0; i < terms.length; i++) m[terms[i].id] = terms[i];
+    return m;
+  }, [terms]);
+
+  // クラスタの理解度サマリ。members の「理解度スコア」平均をソート用 score とし、
+  // 復習どき／習得済み／未着手の件数をバッジ表示に使う。
+  // 理解度スコアは priorityScore から addedDate（新規追加日）の加点を除いた純粋な習得シグナル：
+  // 間違い+100 / 曖昧+50 / 復習due+30 / 未習得(stage0)+80。
+  // recency を除くのは、未学習時に並びが追加日で揺れて「データ順維持」が崩れるのを防ぐため。
+  const clusterStatus = React.useCallback((cluster) => {
+    const ids = (cluster && Array.isArray(cluster.members)) ? cluster.members : [];
+    let review = 0, mastered = 0, untouched = 0, total = 0, scoreSum = 0;
+    for (let i = 0; i < ids.length; i++) {
+      const t = termById[ids[i]];
+      if (!t) continue;
+      total++;
+      const last = deck.getLastResult(t.id);
+      const due = deck.isNeedsReview(t.id);
+      const stage = deck.getStage(t.id);
+      let s = 0;
+      if (last === 'wrong') s += 100;
+      if (last === 'unsure') s += 50;
+      if (due) s += 30;
+      if (stage === 0) s += 80;
+      scoreSum += s;
+      const entry = deck.progress[t.id];
+      if (!entry) { untouched++; continue; }
+      if (due || last === 'wrong' || last === 'unsure') review++;
+      else if (stage >= 3) mastered++;
+    }
+    return { review, mastered, untouched, total, score: total ? scoreSum / total : 0 };
+  }, [termById, deck]);
+
+  // 理解度が低い順（理解度スコア平均が高い順）でクラスタを並べ替える。
+  // 同点は元のデータ順を保つ（安定ソート）。未学習の初期状態はデータ順のまま、
+  // 学習が進むと習得済みクラスタが下に沈み、苦手なクラスタが上に浮く＝並びに PDCA が反映される。
+  const sortedClusters = React.useMemo(() => {
+    return clusters
+      .map((c, i) => ({ c, i, s: clusterStatus(c).score }))
+      .sort((a, b) => (b.s - a.s) || (a.i - b.i))
+      .map(x => x.c);
+  }, [clusters, clusterStatus]);
+
   const [mode, setMode] = React.useState(clusters.length ? 'matrix' : 'list'); // 'matrix' | 'list' | 'quiz-meaning' | 'quiz-term'
   const [session, setSession] = React.useState(null);
   const [memoTermId, setMemoTermId] = React.useState(null);
@@ -7118,7 +7188,7 @@ function ChokuzenYougoPage({ onNav }) {
       {/* Body */}
       <div style={{ marginBottom: 24 }}>
         {mode === 'matrix' && (
-          <MatrixMode clusters={clusters} onGoQuiz={startClusterQuiz} />
+          <MatrixMode clusters={sortedClusters} statusOf={clusterStatus} onGoQuiz={startClusterQuiz} />
         )}
         {mode === 'list' && (
           <ListMode terms={terms} deck={deck} onOpenMemo={setMemoTermId} />
