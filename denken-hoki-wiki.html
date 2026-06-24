@@ -7046,6 +7046,54 @@ function MatrixMode({ clusters, statusOf, onGoQuiz }) {
   );
 }
 
+// ===== 全体理解度サマリ（PDCAのCheck＝現在地の可視化）=====
+// 各用語を 習得／学習中／苦手／未着手 に分類し、セグメントバー＋件数で到達度を一目で示す。
+function GlossaryProgressSummary({ terms, deck }) {
+  if (!terms || !terms.length) return null;
+  let mastered = 0, learning = 0, weak = 0, untouched = 0;
+  for (let i = 0; i < terms.length; i++) {
+    const id = terms[i].id;
+    const entry = deck.progress[id];
+    if (!entry) { untouched++; continue; }
+    const last = deck.getLastResult(id);
+    if (last === 'wrong' || last === 'unsure' || deck.isNeedsReview(id)) { weak++; continue; }
+    if (deck.getStage(id) >= 3) mastered++;
+    else learning++;
+  }
+  const total = terms.length;
+  const segs = [
+    { key: 'mastered', n: mastered, color: '#1a6e1a', bg: '#d8f4d8', label: '習得' },
+    { key: 'learning', n: learning, color: '#26408b', bg: '#e0eefc', label: '学習中' },
+    { key: 'weak', n: weak, color: WRONG_BADGE.color, bg: WRONG_BADGE.bg, label: '苦手' },
+    { key: 'untouched', n: untouched, color: '#777777', bg: '#eeeeee', label: '未着手' },
+  ];
+  const pct = (n) => total ? Math.round((n / total) * 100) : 0;
+  return (
+    <div style={{
+      border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+      background: 'var(--bg-elev)', padding: '12px 14px', marginBottom: 16,
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--ink-2)' }}>あなたの理解度（全{total}語）</span>
+        <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>習得 {pct(mastered)}%</span>
+      </div>
+      <div style={{ display: 'flex', height: 10, borderRadius: 5, overflow: 'hidden', background: '#eeeeee' }}>
+        {segs.map(s => s.n > 0 ? (
+          <div key={s.key} title={`${s.label} ${s.n}`} style={{ width: pct(s.n) + '%', background: s.color }} />
+        ) : null)}
+      </div>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8 }}>
+        {segs.map(s => (
+          <span key={s.key} style={{ fontSize: 11.5, color: 'var(--ink-2)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ width: 9, height: 9, borderRadius: 2, background: s.color, display: 'inline-block' }} />
+            {s.label} <strong>{s.n}</strong>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ===== Main Page =====
 function ChokuzenYougoPage({ onNav }) {
   const data = (typeof window !== 'undefined' && window.GLOSSARY_TERMS_V1) || null;
@@ -7234,6 +7282,8 @@ function ChokuzenYougoPage({ onNav }) {
       </div>
 
       <BackupBanner lastBackup={deck.lastBackup} onExport={handleExport} />
+
+      <GlossaryProgressSummary terms={terms} deck={deck} />
 
       {/* Tabs */}
       <div role="tablist" style={{
@@ -7860,6 +7910,18 @@ function MachigaiNotePage({ pageId, data, onNav }) {
             articleUrl = parsed.articleUrl || '';
             source = key.indexOf('::hoki_') >= 0 ? 'hoki' : 'denken';
           }
+          // 答えの解決: 保存済 memo を優先し、無ければ daily-pool から qid で正解＋解説を引く。
+          // これで memo 未保存の旧 daily 記録でも間違いノートに答えが表示される（display時lookup）。
+          let memo = parsed.memo || '';
+          if (isHokiDaily && !memo) {
+            const qid = key.split('::daily_')[1];
+            const pool = (typeof window !== 'undefined' && window.HOKI_DAILY_POOL) || [];
+            const pq = qid && pool.find(x => x.id === qid);
+            if (pq) {
+              const c = (pq.choices || []).find(ch => ch.correct);
+              memo = (c ? 'A: ' + c.label : '') + (pq.explanation ? ((c ? '\n' : '') + pq.explanation) : '');
+            }
+          }
           records.push({
             key,
             status: parsed.status,
@@ -7868,7 +7930,7 @@ function MachigaiNotePage({ pageId, data, onNav }) {
             articleTitle: articleTitle,
             itemTitle: itemTitle,
             itemType: parsed.itemType || (isDaily ? 'daily' : 'unknown'),
-            memo: parsed.memo || '',
+            memo: memo,
             // 新規フィールド（古い記録は未定義 → フォールバック）
             firstSeenAt: parsed.firstSeenAt || parsed.updatedAt || '',
             reviewCount: parsed.reviewCount || 0,
