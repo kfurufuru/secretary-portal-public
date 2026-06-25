@@ -3798,7 +3798,9 @@ window.HOKI_DAILY_TOPIC_LABEL = {
 // 1. テンプレートコンポーネント
 // ============================================================
 
-function GoalQuestion({ question, choices, year, note }) {
+function GoalQuestion({ question, choices, year, note, correctIndex }) {
+  const marks = ['①','②','③','④','⑤','⑥','⑦','⑧'];
+  const hasAns = Number.isInteger(correctIndex) && choices && choices[correctIndex] != null;
   return (
     <div className="goal-question">
       <div className="goal-label">🎯 ゴール問題 — このページを読み終えたらこの問題に戻ろう</div>
@@ -3812,6 +3814,14 @@ function GoalQuestion({ question, choices, year, note }) {
               <li key={i}>{c}</li>
             ))}
           </ol>
+        </details>
+      )}
+      {hasAns && (
+        <details className="goal-answer" style={{ marginTop: '6px' }}>
+          <summary style={{ cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: 'var(--accent)' }}>答え合わせ（自分で答えを決めてから開く）</summary>
+          <div style={{ marginTop: '6px', fontSize: '13px', padding: '6px 10px', background: 'var(--accent-soft)', borderRadius: '4px' }}>
+            正解: <strong>{marks[correctIndex] || (correctIndex + 1)} {choices[correctIndex]}</strong>
+          </div>
         </details>
       )}
       {note && <div style={{ fontSize: '12px', color: 'var(--ink-3)', marginTop: '8px' }}>{note}</div>}
@@ -10245,6 +10255,7 @@ function BshuSetsuchiPage({ onNav, data }) {
         choices={["10 Ω", "30 Ω", "60 Ω", "150 Ω"]}
         year="頻出パターン（解釈17条型）"
         note="読み終えたら戻って解こう。ヒント：R_B = 150/Ig"
+        correctIndex={1}
       />
 
       <ConclusionBox>
@@ -10465,21 +10476,21 @@ function BshuSetsuchiPage({ onNav, data }) {
         <div>
           <svg viewBox="0 0 480 200" width="100%" style={{ display: 'block', maxWidth: 480 }}>
             {/* 高圧側 */}
-            <rect x="10" y="30" width="100" height="50" rx="6" fill="none" stroke="#888" strokeWidth="1.5" />
-            <text x="60" y="52" textAnchor="middle" fontSize="11" fill="#555">高圧電路</text>
-            <text x="60" y="68" textAnchor="middle" fontSize="10" fill="#888">6.6 kV系</text>
+            <rect x="10" y="30" width="100" height="50" rx="6" fill="none" strokeWidth="1.5" style={{ stroke: 'var(--ink-3)' }} />
+            <text x="60" y="52" textAnchor="middle" fontSize="11" style={{ fill: 'var(--ink-2)' }}>高圧電路</text>
+            <text x="60" y="68" textAnchor="middle" fontSize="10" style={{ fill: 'var(--ink-3)' }}>6.6 kV系</text>
             {/* 変圧器 */}
             <rect x="170" y="20" width="80" height="90" rx="6" fill="none" stroke="#a06" strokeWidth="2" />
             <text x="210" y="55" textAnchor="middle" fontSize="11" fill="#a06" fontWeight="700">変圧器</text>
             <text x="210" y="72" textAnchor="middle" fontSize="10" fill="#a06">高→低</text>
-            <text x="210" y="88" textAnchor="middle" fontSize="10" fill="#888">混触リスク↑</text>
+            <text x="210" y="88" textAnchor="middle" fontSize="10" style={{ fill: 'var(--ink-3)' }}>混触リスク↑</text>
             {/* 低圧側 */}
-            <rect x="310" y="30" width="100" height="50" rx="6" fill="none" stroke="#888" strokeWidth="1.5" />
-            <text x="360" y="52" textAnchor="middle" fontSize="11" fill="#555">低圧電路</text>
-            <text x="360" y="68" textAnchor="middle" fontSize="10" fill="#888">200/100 V系</text>
+            <rect x="310" y="30" width="100" height="50" rx="6" fill="none" strokeWidth="1.5" style={{ stroke: 'var(--ink-3)' }} />
+            <text x="360" y="52" textAnchor="middle" fontSize="11" style={{ fill: 'var(--ink-2)' }}>低圧電路</text>
+            <text x="360" y="68" textAnchor="middle" fontSize="10" style={{ fill: 'var(--ink-3)' }}>200/100 V系</text>
             {/* 接続線 */}
-            <line x1="110" y1="55" x2="170" y2="55" stroke="#555" strokeWidth="1.5" />
-            <line x1="250" y1="55" x2="310" y2="55" stroke="#555" strokeWidth="1.5" />
+            <line x1="110" y1="55" x2="170" y2="55" strokeWidth="1.5" style={{ stroke: 'var(--ink-2)' }} />
+            <line x1="250" y1="55" x2="310" y2="55" strokeWidth="1.5" style={{ stroke: 'var(--ink-2)' }} />
             {/* 中性点 */}
             <circle cx="360" cy="110" r="5" fill="#a06" />
             <text x="375" y="114" fontSize="11" fill="#a06">中性点</text>
@@ -10495,7 +10506,7 @@ function BshuSetsuchiPage({ onNav, data }) {
             <text x="378" y="142" fontSize="10" fill="#396" fontWeight="700">R_B</text>
             {/* ラベル */}
             <text x="240" y="185" textAnchor="middle" fontSize="11" fill="#396" fontWeight="700">B種接地（大地へ）</text>
-            <text x="210" y="155" textAnchor="middle" fontSize="10" fill="#888">V_対地 = Ig × R_B ≤ 150V</text>
+            <text x="210" y="155" textAnchor="middle" fontSize="10" style={{ fill: 'var(--ink-3)' }}>V_対地 = Ig × R_B ≤ 150V</text>
             {/* 混触矢印 */}
             <line x1="210" y1="50" x2="210" y2="30" stroke="#c33" strokeWidth="1.5" strokeDasharray="3,2" />
             <text x="218" y="28" fontSize="9" fill="#c33">混触事故</text>
@@ -10510,8 +10521,31 @@ function BshuSetsuchiPage({ onNav, data }) {
           ["1秒超〜2秒以内に自動遮断",     "300 / Ig  [Ω]", "遮断が早いため緩和（実害が小さい）"],
           ["1秒以内に自動遮断",            "600 / Ig  [Ω]", "さらに緩和（瞬時遮断）"],
         ]}
-        note="Igが小さいほど R_B の上限が大きくなる（地絡電流が少ない = 被害が小さい = 接地抵抗を大きくしても許される）"
+        note="Igが小さいほど R_B の上限が大きくなる（地絡電流が少ない = 被害が小さい = 接地抵抗を大きくしても許される）。【一次照合】係数150/300/600と遮断時間帯（2秒超・1秒超〜2秒以内・1秒以内）は電技解釈第17条第2項（17-1表）に基づく。原文逐語は denken-wiki 解釈第17条を SoT として照合（最終確認 2026-06-11）"
       />
+
+      {/* 遮断時間→係数 段階図（速いほど緩和=係数大を視覚化） */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ 遮断時間が短いほど係数が大きい（緩和方向）— 時間軸と係数の対応</div>
+        <div>
+          <svg viewBox="0 0 480 200" width="100%" style={{ display: 'block', maxWidth: 480 }}>
+            <line x1="40" y1="170" x2="450" y2="170" strokeWidth="1.5" style={{ stroke: 'var(--ink-3)' }} />
+            <line x1="40" y1="30" x2="40" y2="170" strokeWidth="1.5" style={{ stroke: 'var(--ink-3)' }} />
+            <text x="245" y="192" textAnchor="middle" fontSize="10" style={{ fill: 'var(--ink-3)' }}>遮断時間（短いほど右）</text>
+            <text x="18" y="100" textAnchor="middle" fontSize="10" transform="rotate(-90 18 100)" style={{ fill: 'var(--ink-3)' }}>係数</text>
+            <rect x="60" y="120" width="100" height="50" rx="4" strokeWidth="1" style={{ fill: 'var(--bg-2)', stroke: 'var(--ink-3)' }} />
+            <text x="110" y="112" textAnchor="middle" fontSize="10" style={{ fill: 'var(--ink-2)' }}>2秒超 / 遮断なし</text>
+            <text x="110" y="150" textAnchor="middle" fontSize="15" fontWeight="700" style={{ fill: 'var(--ink-1)' }}>150</text>
+            <rect x="190" y="85" width="100" height="85" rx="4" strokeWidth="1" style={{ fill: 'var(--bg-2)', stroke: 'var(--ink-3)' }} />
+            <text x="240" y="77" textAnchor="middle" fontSize="10" style={{ fill: 'var(--ink-2)' }}>1秒超〜2秒以内</text>
+            <text x="240" y="135" textAnchor="middle" fontSize="15" fontWeight="700" style={{ fill: 'var(--ok)' }}>300</text>
+            <rect x="320" y="50" width="100" height="120" rx="4" strokeWidth="1" style={{ fill: 'var(--bg-2)', stroke: 'var(--ink-3)' }} />
+            <text x="370" y="42" textAnchor="middle" fontSize="10" style={{ fill: 'var(--ink-2)' }}>1秒以内</text>
+            <text x="370" y="118" textAnchor="middle" fontSize="15" fontWeight="700" style={{ fill: 'var(--ok)' }}>600</text>
+            <text x="245" y="22" textAnchor="middle" fontSize="10" fontWeight="700" style={{ fill: 'var(--accent)' }}>速いほど緩和（係数×2ずつ）→</text>
+          </svg>
+        </div>
+      </div>
 
       <h2 id="ig-reality">7. 1線地絡電流 Ig の実態</h2>
       <SectionCheck pageId="bshu-setsuchi" sectionId="ig-reality" />
@@ -10588,7 +10622,7 @@ function BshuSetsuchiPage({ onNav, data }) {
         qNum="B種接地抵抗の最大値"
         question="高圧電路と低圧電路を結合する変圧器において、高圧電路の1線地絡電流Igが5Aである。B種接地工事の接地抵抗の最大値は何Ωか。なお、高圧電路は1秒を超えて自動的に遮断されないものとする。"
         choices={["10 Ω", "30 Ω", "60 Ω", "150 Ω"]}
-        note="遮断時間1秒超→係数150を使用"
+        note="遮断時間1秒超→係数150を使用。本問はR06下・R05上・H28で頻出のB種接地計算の典型型。年度別の原文・解説は denken-wiki 解釈第17条（ページ上部の🔗リンク）および 4種別数値Hub setsuchi-ichiran（2.1）で確認できる"
       />
       <ExamAnswer
         correct="② 30 Ω"
@@ -10605,14 +10639,14 @@ function BshuSetsuchiPage({ onNav, data }) {
         qNum="遮断時間1秒以内"
         question="同条件で、高圧電路が1秒以内に自動的に遮断される場合、B種接地抵抗の最大値は何Ωか。Ig = 5A"
         choices={["30 Ω", "60 Ω", "90 Ω", "120 Ω"]}
-        note="遮断時間1秒以内→係数300"
+        note="遮断時間1秒以内→係数600（最も緩和。解釈第17条第2項）"
       />
       <ExamAnswer
-        correct="② 60 Ω"
+        correct="④ 120 Ω"
         explanations={[
-          "遮断時間1秒以内 → 係数は 300",
-          "R_B(max) = 300 / 5 = 60 [Ω]",
-          "パターンAの2倍（緩和されているため大きくなる）",
+          "遮断時間1秒以内 → 係数は 600（最速遮断＝最も緩和。1秒超〜2秒以内なら300）",
+          "R_B(max) = 600 / 5 = 120 [Ω]",
+          "パターンAの4倍（原則150→1秒以内600で4倍まで緩和）",
         ]}
       />
 
@@ -10708,8 +10742,8 @@ function BshuSetsuchiPage({ onNav, data }) {
         <summary style={{ cursor: 'pointer', fontWeight: 600, padding: '6px 12px', background: 'var(--bg-2)', borderRadius: 3, fontSize: 13 }}>✅ 正解を表示</summary>
         <div style={{ padding: '8px 12px' }}>
           <ExamAnswer correct="150 Ω（以下）" explanations={[
-            "R_B が 150Ω まで許容される＝Ig が小さい系統の特徴",
-            "係数300 と Ig=2A で計算。Ig × R_B = 2 × 150 = 300V？と思いきや、緩和係数300は「t ≤ 2秒で対地電圧 300V を超えない」設計",
+            "R_B が 150Ω まで許容される＝Ig が小さい・遮断が速い系統の特徴",
+            "係数300 と Ig=2A で R_B = 300 / 2 = 150Ω。緩和係数300は『高圧側電路が1秒を超え2秒以内に自動遮断される場合』の規定値（解釈第17条第2項）であり、『対地電圧の上限』という意味ではない",
             "Ig 小・遮断早い → R_B 大きく許容、が一貫した規則",
           ]} />
         </div>
@@ -10776,6 +10810,20 @@ function BshuSetsuchiPage({ onNav, data }) {
         { date: "2026-05-09", content: "v1.1: B種接地抵抗の遮断時間条件を電技解釈第17条第2項の正規表現に修正（誤『1秒以内→300・0.5秒以内→600』→ 正『1秒超〜2秒以内→300・1秒以内→600』）", reason: "誤数値修正・監修者さん指摘" },
         { date: "2026-05-07", content: "v1.0: 初版作成（直前確認モード・最短解法・深掘り解説・ひっかけ7項目・過去問2パターン）", reason: "stub解消・freq:max最優先タスク" },
       ]} />
+
+      <div style={{ margin: '16px 0', padding: '10px 12px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', fontSize: 13 }}>
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>📋 過去問の出題実績（法規・H23以降の出題SoT）</div>
+        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
+          <li>H24 問10 B種接地工事の接地抵抗値（解釈第17条・計算）</li>
+          <li>H25 問13 接地抵抗値（解釈第17条・計算）</li>
+          <li>R01 問13 B種接地工事（解釈第17条・計算）</li>
+          <li>R05上 問12 B種接地工事の抵抗値及び常時流れる電流（解釈第17条・計算）</li>
+          <li>R06上 問13 B種・D種接地抵抗値の計算（解釈第17条・計算）</li>
+          <li>R06下 問4 B種接地工事の接地抵抗値（解釈第17条・穴埋）</li>
+        </ul>
+        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-setsuchi')} style={{ color: 'var(--accent)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-setsuchi）で解く</a></div>
+        <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ink-3)' }}>出典: 法規過去問SoT kakomon.yml（電気技術者試験センター公表問題ベース・最終確認2026-06-25）</div>
+      </div>
 
       <PageNav
         prevId="juyoritsu-keisan"  prevTitle="需要率・負荷率・不等率"
@@ -12559,7 +12607,7 @@ function ChokuzenSuuchiPage({ onNav, data }) {
         headers={["種別", "対象", "接地抵抗値", "電線太さ"]}
         rows={[
           ["A種", "高圧・特高機器",  "10 Ω 以下",  "2.6 mm 以上"],
-          ["B種", "変圧器中性点",    "150 / Ig",   "原則4.0 mm（高圧結合は2.6 mm）以上"],
+          ["B種", "変圧器低圧側中性点", "150 / Ig [Ω]", "原則4.0 mm（高圧結合は2.6 mm）以上"],
           ["C種", "300V 超低圧",     "10 Ω 以下",  "1.6 mm 以上"],
           ["C種（地絡遮断0.5秒以内）", "C種の緩和規定", "500 Ω 以下", "—"],
           ["D種", "300V 以下低圧",   "100 Ω 以下", "1.6 mm 以上"],
@@ -13092,8 +13140,8 @@ function SetsuchiIchiranPage({ onNav, data }) {
 
       <ConclusionBox>
         <ul>
-          <li><strong>A種</strong>: 高圧・特高機器 → 10 Ω 以下 / 2.6 mm 以上<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 高圧機器外箱の基本（解釈第29条）。正答率74%</span></li>
-          <li><strong>B種</strong>: 変圧器中性点 → 150/Ig Ω / 4.0 mm 以上<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 固定値ではなく <strong>計算値</strong>（地絡電流Igで変動）。1秒超〜2秒以内遮断→300/Ig、1秒以内遮断→600/Ig に緩和（解釈第17条第2項）</span></li>
+          <li><strong>A種</strong>: 高圧・特高機器 → 10 Ω 以下 / 2.6 mm 以上<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 高圧機器外箱の基本（解釈第29条）。A種が最も厳しい（10Ω）のは<strong>高圧で地絡時の危険が大きい</strong>ため＝危険が大きいほど低い抵抗値を要求。正答率74%</span></li>
+          <li><strong>B種</strong>: 変圧器の低圧側中性点 → 150/Ig Ω / 4.0 mm 以上<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 固定値ではなく <strong>計算値</strong>（地絡電流Igで変動）。1秒超〜2秒以内遮断→300/Ig、1秒以内遮断→600/Ig に緩和（解釈第17条第2項）</span></li>
           <li><strong>C種</strong>: 300V 超低圧 → 10 Ω 以下 / 1.6 mm 以上<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 300V「超」がC種・「以下」がD種。境界の取り違えに注意。正答率66%</span></li>
           <li><strong>D種</strong>: 300V 以下低圧 → 100 Ω 以下 / 1.6 mm 以上<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: <strong>0.5秒以内動作の地絡遮断装置</strong>があれば 100Ω→<strong>500Ω まで緩和</strong>（C種も同様・解釈第17条第3項・第4項）。条件文を必ず読む。正答率58%（最難）</span></li>
         </ul>
@@ -13115,22 +13163,22 @@ function SetsuchiIchiranPage({ onNav, data }) {
         headers={["種別", "対象", "接地抵抗値", "電線太さ"]}
         rows={[
           ["A種", "高圧・特高機器",  "10 Ω 以下",  "2.6 mm 以上"],
-          ["B種", "変圧器中性点",    "150 / Ig",   "原則4.0 mm（高圧結合は2.6 mm）以上"],
+          ["B種", "変圧器低圧側中性点", "150 / Ig [Ω]", "原則4.0 mm（高圧結合は2.6 mm）以上"],
           ["C種", "300V 超低圧",     "10 Ω 以下",  "1.6 mm 以上"],
           ["C種（地絡遮断0.5秒以内）", "C種の緩和規定", "500 Ω 以下", "—"],
           ["D種", "300V 以下低圧",   "100 Ω 以下", "1.6 mm 以上"],
           ["D種（地絡遮断0.5秒以内）", "D種の緩和規定", "500 Ω 以下", "—"],
         ]}
-        note="B種の 150/Ig は「1秒超〜2秒以内に自動遮断→300/Ig、1秒以内に自動遮断→600/Ig」に緩和（解釈第17条第2項）。C種/D種は「0.5秒以内に動作する地絡遮断装置を施設すれば500Ωまで緩和」（解釈第17条第3項・第4項・正答率58%最難）。「—」は当該条文での該当規定なし"
+        note="B種の 150/Ig は「1秒超〜2秒以内に自動遮断→300/Ig、1秒以内に自動遮断→600/Ig」に緩和（解釈第17条第2項）。C種は第3項・D種は第4項で「0.5秒以内に動作する地絡遮断装置を施設すれば500Ωまで緩和」（正答率58%最難）。Ig=高圧電路の1線地絡電流[A]、150/Ig の単位は[Ω]。接地線の太さはB種が原則4.0mm以上（高圧電路との結合変圧器では2.6mm以上）でC/D種の1.6mmより太い。「—」は当該条文での該当規定なし。【一次照合】解釈第17条（電技解釈・告示）はリンク先 denken-wiki を一次SoTとして倍率・緩和係数・接地線太さを照合（最終確認2026-06-25・接地工事の倍率/係数に近年改正なし）"
       />
 
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ どの接地工事か（接地箇所・電圧で種別を判定）</div>
-        <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12 }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12 }}>
           <svg viewBox="0 0 820 340" width="100%" style={{ display: 'block', maxWidth: 820 }} role="img" aria-label="接地工事の種別判定フロー。高圧・特高機器の外箱はA種、変圧器低圧側中性点はB種、低圧機器の外箱は300V超でC種・300V以下でD種。C種D種のみ0.5秒以内動作の漏電遮断器で500Ωに緩和">
             {/* 起点 */}
-            <rect x="320" y="14" width="180" height="44" rx="8" fill="#eef2f7" stroke="#555" strokeWidth="1.6" />
-            <text x="410" y="41" textAnchor="middle" fontSize="13" fill="#333" fontWeight="700">接地する対象は？</text>
+            <rect x="320" y="14" width="180" height="44" rx="8" style={{ fill: 'var(--bg-2)' }} stroke="#555" strokeWidth="1.6" />
+            <text x="410" y="41" textAnchor="middle" fontSize="13" style={{ fill: 'var(--ink-1)' }} fontWeight="700">接地する対象は？</text>
             {/* 3分岐線 */}
             <line x1="410" y1="58" x2="410" y2="76" stroke="#555" strokeWidth="1.5" />
             <line x1="130" y1="76" x2="650" y2="76" stroke="#555" strokeWidth="1.5" />
@@ -13138,23 +13186,23 @@ function SetsuchiIchiranPage({ onNav, data }) {
             <line x1="410" y1="76" x2="410" y2="98" stroke="#555" strokeWidth="1.5" />
             <line x1="650" y1="76" x2="650" y2="98" stroke="#555" strokeWidth="1.5" />
             {/* 中段3カテゴリ */}
-            <rect x="40" y="98" width="180" height="48" rx="6" fill="#fff" stroke="#c0392b" strokeWidth="1.4" />
+            <rect x="40" y="98" width="180" height="48" rx="6" style={{ fill: 'var(--card)' }} stroke="#c0392b" strokeWidth="1.4" />
             <text x="130" y="120" textAnchor="middle" fontSize="12" fill="#c0392b" fontWeight="700">高圧・特高 機器の外箱</text>
-            <text x="130" y="137" textAnchor="middle" fontSize="10.5" fill="#888">高電圧側</text>
-            <rect x="320" y="98" width="180" height="48" rx="6" fill="#fff" stroke="#8e44ad" strokeWidth="1.4" />
+            <text x="130" y="137" textAnchor="middle" fontSize="10.5" style={{ fill: 'var(--ink-3)' }}>高電圧側</text>
+            <rect x="320" y="98" width="180" height="48" rx="6" style={{ fill: 'var(--card)' }} stroke="#8e44ad" strokeWidth="1.4" />
             <text x="410" y="120" textAnchor="middle" fontSize="12" fill="#8e44ad" fontWeight="700">変圧器 低圧側 中性点</text>
-            <text x="410" y="137" textAnchor="middle" fontSize="10.5" fill="#888">高低圧の混触保護</text>
-            <rect x="560" y="98" width="180" height="48" rx="6" fill="#fff" stroke="#2471a3" strokeWidth="1.4" />
+            <text x="410" y="137" textAnchor="middle" fontSize="10.5" style={{ fill: 'var(--ink-3)' }}>高低圧の混触保護</text>
+            <rect x="560" y="98" width="180" height="48" rx="6" style={{ fill: 'var(--card)' }} stroke="#2471a3" strokeWidth="1.4" />
             <text x="650" y="120" textAnchor="middle" fontSize="12" fill="#2471a3" fontWeight="700">低圧機器の外箱</text>
-            <text x="650" y="137" textAnchor="middle" fontSize="10.5" fill="#888">電圧でさらに分岐</text>
+            <text x="650" y="137" textAnchor="middle" fontSize="10.5" style={{ fill: 'var(--ink-3)' }}>電圧でさらに分岐</text>
             {/* A種 */}
             <line x1="130" y1="146" x2="130" y2="176" stroke="#555" strokeWidth="1.5" />
-            <rect x="40" y="176" width="180" height="58" rx="6" fill="#fdeaea" stroke="#c0392b" strokeWidth="1.6" />
+            <rect x="40" y="176" width="180" height="58" rx="6" style={{ fill: 'var(--card)' }} stroke="#c0392b" strokeWidth="1.6" />
             <text x="130" y="201" textAnchor="middle" fontSize="15" fill="#c0392b" fontWeight="700">A種</text>
             <text x="130" y="221" textAnchor="middle" fontSize="11" fill="#a33">10Ω以下 / 2.6mm</text>
             {/* B種 */}
             <line x1="410" y1="146" x2="410" y2="176" stroke="#555" strokeWidth="1.5" />
-            <rect x="320" y="176" width="180" height="58" rx="6" fill="#f3eafb" stroke="#8e44ad" strokeWidth="1.6" />
+            <rect x="320" y="176" width="180" height="58" rx="6" style={{ fill: 'var(--card)' }} stroke="#8e44ad" strokeWidth="1.6" />
             <text x="410" y="201" textAnchor="middle" fontSize="15" fill="#8e44ad" fontWeight="700">B種</text>
             <text x="410" y="221" textAnchor="middle" fontSize="11" fill="#8e44ad">150/Ig / 4.0mm</text>
             {/* 低圧 電圧分岐 */}
@@ -13165,11 +13213,11 @@ function SetsuchiIchiranPage({ onNav, data }) {
             <text x="552" y="178" textAnchor="end" fontSize="10.5" fill="#2471a3" fontWeight="700">300V超</text>
             <text x="748" y="178" textAnchor="start" fontSize="10.5" fill="#2e8b57" fontWeight="700">300V以下</text>
             {/* C種 */}
-            <rect x="490" y="186" width="140" height="58" rx="6" fill="#eaf2fb" stroke="#2471a3" strokeWidth="1.6" />
+            <rect x="490" y="186" width="140" height="58" rx="6" style={{ fill: 'var(--card)' }} stroke="#2471a3" strokeWidth="1.6" />
             <text x="560" y="211" textAnchor="middle" fontSize="15" fill="#2471a3" fontWeight="700">C種</text>
             <text x="560" y="231" textAnchor="middle" fontSize="11" fill="#2471a3">10Ω以下 / 1.6mm</text>
             {/* D種 */}
-            <rect x="670" y="186" width="140" height="58" rx="6" fill="#eaf6ef" stroke="#2e8b57" strokeWidth="1.6" />
+            <rect x="670" y="186" width="140" height="58" rx="6" style={{ fill: 'var(--card)' }} stroke="#2e8b57" strokeWidth="1.6" />
             <text x="740" y="211" textAnchor="middle" fontSize="15" fill="#2e8b57" fontWeight="700">D種</text>
             <text x="740" y="231" textAnchor="middle" fontSize="11" fill="#2e8b57">100Ω以下 / 1.6mm</text>
             {/* 緩和注記 */}
@@ -13195,13 +13243,31 @@ function SetsuchiIchiranPage({ onNav, data }) {
         { q: "C種接地工事が適用される電圧範囲は？",  a: "300V 超の低圧機器" },
         { q: "D種接地工事の接地抵抗値は？",          a: "100 Ω 以下" },
         { q: "D種で0.5秒以内に動作する地絡遮断装置がある時の接地抵抗値は？", a: "500 Ω 以下（C種も同様・解釈第17条第3項・第4項）" },
-      ]} />
+      ]} pageId="setsuchi-ichiran" />
 
       <UpdateLog entries={[
         { date: "2026-05-31", content: "ハブページ過去問完備化（rikkaku-ichiran と同パターン横展）: ConclusionBox 4 bullet に着眼点1行追記、MemTable に C種/D種 緩和2行追加（500Ω）、TrapTable に D種緩和+300V境界の2件追加、QuickReview ⑤を D種緩和論点で入替", reason: "AI諮問結論 F(横展)・memory feedback_hub_page_kakomon_completeness 初適用。D種+0.5秒遮断装置→500Ω緩和の論点（過去問正答率58%最難）が未反映だった" },
         { date: "2026-05-09", content: "B種接地のnote内記述を電技解釈第17条第2項の正規表現に修正（誤『1秒以内→300/Ig』→ 正『1秒超〜2秒以内→300/Ig、1秒以内→600/Ig』）", reason: "並列監査で発見・監修者さん指摘の波及修正" },
         { date: "2026-04-28", content: "初版作成", reason: "—" },
       ]} />
+      <div style={{ margin: '20px 0', padding: '12px 14px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)' }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 6 }}>🔗 関連ページ（一覧→個別で深掘り）</div>
+        <button style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: 13, padding: 0, marginRight: 16 }} onClick={() => onNav('bshu-setsuchi')}>B種接地抵抗値の計算（1.7）</button>
+        <button style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: 13, padding: 0 }} onClick={() => onNav('setsuchi-koji')}>接地工事の施工（3.3）</button>
+      </div>
+      <div style={{ margin: '16px 0', padding: '10px 12px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', fontSize: 13 }}>
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>📋 過去問の出題実績（法規・H23以降の出題SoT）</div>
+        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
+          <li>H24 問6 接地工事（解釈第17条）</li>
+          <li>H25 問4 金属製外箱の接地工事（解釈第29条）</li>
+          <li>H30 問5 接地工事の種類及び施工方法（解釈第17条）</li>
+          <li>R01 問6 接地工事の工事例（解釈第17条）</li>
+          <li>R04上 問3 高圧架空電線路の接地工事（解釈第17条）</li>
+          <li>R07下 問4 電気設備の接地（解釈第17条・第29条）</li>
+        </ul>
+        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-setsuchi')} style={{ color: 'var(--accent)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-setsuchi）で解く</a></div>
+        <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ink-3)' }}>出典: 法規過去問SoT kakomon.yml（電気技術者試験センター公表問題ベース・最終確認2026-06-25）</div>
+      </div>
       <PageNav
         prevId="top"            prevTitle="トップ"
         nextId="zetsuen-ichiran" nextTitle="絶縁耐力試験一覧"
@@ -13256,7 +13322,7 @@ function ZetsuenIchiranPage({ onNav, data }) {
           ["60kV超",                    "中性点直接接地式（下行を除く）",  "0.72 倍", "—"],
           ["170kV超",                   "中性点直接接地式（発電所・変電所等に施設）", "0.64 倍", "—"],
         ]}
-        note="解釈第15条15-1表の全区分。試験時間は全区分一律10分間。頻出は1.5倍（7kV以下）と1.25倍で、60kV超は接地方式で4分岐（『特高はその他すべて1.25倍』と覚えると1.1倍・0.72倍を取りこぼす）。区分軸は最大使用電圧（事業法の低圧=交流600V以下とは別軸）。「—」は当該区分での該当規定なし"
+        note="解釈第15条15-1表の全区分。試験時間は全区分一律10分間。頻出は1.5倍（7kV以下）と1.25倍で、60kV超は接地方式で4分岐（『特高はその他すべて1.25倍』と覚えると1.1倍・0.72倍を取りこぼす）。区分軸は最大使用電圧（事業法の低圧=交流600V以下とは別軸）。「—」は当該区分での該当規定なし。語呂: 7kV以下イチゴ（1.5）・60kV以下イチニーゴ（1.25）・170kV超直接接地は0.64。【一次照合】電技解釈第15条15-1表は告示（e-Gov法令APIの対象外）のため、denken-wiki（電技解釈第15条）をSoTとして全倍率・下限（0.92/1.1倍下限75,000V/0.72/0.64）を逐語照合済（denken-wiki照合・最終確認2026-06-25）。現行版で倍率変更なし。"
       />
 
       <h2 id="traps">よくあるひっかけ</h2>
@@ -13274,6 +13340,11 @@ function ZetsuenIchiranPage({ onNav, data }) {
         { q: "絶縁耐力試験の倍率が0.64倍になるのはどんな条件の電路？", a: "中性点直接接地式で最大使用電圧170kV超・発電所/変電所等に施設の場合（170kV以下の直接接地は0.72倍）" },
         { q: "絶縁耐力試験の区分軸は電気事業法の低圧・高圧と同じか？", a: "異なる。試験の区分軸は『最大使用電圧』（6.6kV受電は最大使用電圧6.9kV→7kV以下区分で1.5倍）" },
       ]} />
+
+      {/* Act導線（誤答→要復習への集約・cr14） */}
+      <div style={{ fontSize: 12, color: 'var(--ink-3)', margin: '8px 0 0' }}>
+        ⚠ ここで間違えた問題は理解度を「△」「×」に付けておくと、誤答ノート／要復習タブに自動集約され、後日まとめて再テスト（SR再出題）できます。
+      </div>
 
       {/* denken-wiki への逆リンク（条文ベース解説） */}
       <div style={{
@@ -13298,6 +13369,20 @@ function ZetsuenIchiranPage({ onNav, data }) {
         { date: "2026-05-31", content: "ハブページ過去問完備化（rikkaku/setsuchi/kosakubutsu/shunin/hoan-kitei/teiatsu-densenro-zetsuen と同パターン横展★7）: ConclusionBox 5 bullet に着眼点1行追記（最大使用電圧の区分軸明示・境界値ひっかけ判断・3 case 区別・10分一律・正答率69%）。MemTable/TrapTable/QuickReview は既に過去問完備のため無変更", reason: "hub-page-kakomon-update Skill 適用7ページ目。区分軸が事業法の電圧区分（低圧/高圧）と別の『最大使用電圧』ベースであることを着眼点で明示。本文ラベル『低圧（7kV以下）』は条文表現の精度確認後に別件で再検討" },
         { date: "2026-04-27", content: "初版作成", reason: "—" },
       ]} />
+      <div style={{ margin: '16px 0', padding: '10px 12px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', fontSize: 13 }}>
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>📋 過去問の出題実績（法規・H23以降の出題SoT）</div>
+        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
+          <li>H24 問11 高圧引込ケーブルの交流絶縁耐力試験（解釈第15条）</li>
+          <li>H28 問12 高圧ケーブルの交流絶縁耐力試験（解釈第15条）</li>
+          <li>R02 問12 変圧器の電路の絶縁耐力試験（解釈第15条・第16条）</li>
+          <li>R03 問12 高圧ケーブルの絶縁耐力試験の電圧と変圧器容量（解釈第15条）</li>
+          <li>R06下 問13 受電設備の高圧電路の絶縁耐力試験（解釈第15条）</li>
+          <li>R07下 問12 ケーブルの絶縁耐力試験（解釈第15条）</li>
+        </ul>
+        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-zetsuen')} style={{ color: 'var(--accent)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-zetsuen）で解く</a></div>
+        <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ink-3)' }}>出典: 法規過去問SoT kakomon.yml（電気技術者試験センター公表問題ベース・最終確認2026-06-25）</div>
+      </div>
+
       <PageNav
         prevId="setsuchi-ichiran"  prevTitle="接地工事一覧"
         nextId="rikkaku-ichiran"   nextTitle="離隔距離一覧"
@@ -13364,16 +13449,17 @@ function ZetsuenTairyokuPage({ onNav }) {
       />
 
       <GoalQuestion
-        question="公称電圧6,600Vの高圧電路（ケーブル以外）の絶縁耐力試験を交流で行う。試験電圧は何Vを連続何分間印加するか。"
-        choices={["6,900Vを10分", "9,000Vを10分", "10,350Vを10分", "10,350Vを1分"]}
-        year="頻出（計算型）"
-        note="ヒント：最大使用電圧 = 6600×1.15/1.1、倍率は7kV以下=1.5、時間は連続10分"
+        question="高圧ケーブルを直流で絶縁耐力試験する。直流試験電圧は交流試験電圧の何倍を、連続何分間印加するか。"
+        choices={["1.5倍を10分", "2倍を10分", "2倍を1分", "1.5倍を1分"]}
+        correctIndex={1}
+        year="頻出（論説型）"
+        note="ヒント：直流は交流試験電圧の2倍。時間は交流と同じ連続10分（節7の計算型ゴールと別角度）"
       />
 
       <ConclusionBox>
         <ul>
           <li><strong>試験電圧 = 最大使用電圧 × 倍率</strong>。倍率は最大使用電圧の区分で決まる（7kV以下=1.5・7kV超60kV以下=1.25・中性点直接接地170kV超=0.64）</li>
-          <li><strong>最大使用電圧 = 公称電圧 × 1.15/1.1</strong>（1000V超）。公称電圧にそのまま倍率を掛けない</li>
+          <li><strong>最大使用電圧 = 公称電圧 × 1.15/1.1</strong>（1000V超～500kV未満が適用域）。公称電圧にそのまま倍率を掛けない</li>
           <li>試験電圧を電路と大地の間に<strong>連続10分間</strong>印加し、絶縁破壊しなければ合格</li>
           <li>ケーブル等で<strong>直流試験</strong>を行う場合、試験電圧は<strong>交流試験電圧の2倍</strong>（時間は同じく10分）</li>
           <li>第15条＝<strong>電路</strong>、第16条＝<strong>機器</strong>（回転機・整流器・太陽電池等）。低圧の絶縁抵抗(第14条)とは別試験</li>
@@ -13438,16 +13524,16 @@ function ZetsuenTairyokuPage({ onNav }) {
       <SectionCheck pageId="zetsuen-tairyoku" sectionId="circuit" />
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ 絶縁耐力試験の実回路（R3問12の構成）— スライダックで0から昇圧し、試験用変圧器で試験電圧をつくる</div>
-        <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12 }}>
+        <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12 }}>
           <svg viewBox="0 0 920 300" width="100%" style={{ display: 'block', maxWidth: 920 }} role="img" aria-label="絶縁耐力試験の実回路。試験用電源AC100Vをスライダックで0から可変し、試験用変圧器で昇圧。電圧計で印加電圧、電流計で充電電流を監視し、3線一括した高圧CVTケーブルの心線と大地（接地した金属遮蔽層）の間に試験電圧を印加する。">
-            <text x="460" y="22" textAnchor="middle" fontSize="13" fill="#333" fontWeight="700">電源 → スライダックで0から昇圧 → 試験用変圧器 → A計で充電電流監視 → 3線一括で印加</text>
+            <text x="460" y="22" textAnchor="middle" fontSize="13" style={{fill:'var(--ink-1)'}} fontWeight="700">電源 → スライダックで0から昇圧 → 試験用変圧器 → A計で充電電流監視 → 3線一括で印加</text>
             <line x1="30" y1="252" x2="890" y2="252" stroke="#396" strokeWidth="2.5" />
             <text x="36" y="245" fontSize="11" fill="#396">大地（接地）</text>
             {/* 試験用電源 */}
-            <text x="78" y="50" textAnchor="middle" fontSize="11" fill="#555" fontWeight="700">試験用電源</text>
-            <text x="78" y="64" textAnchor="middle" fontSize="9.5" fill="#888">AC100V・50Hz</text>
+            <text x="78" y="50" textAnchor="middle" fontSize="11" style={{fill:'var(--ink-2)'}} fontWeight="700">試験用電源</text>
+            <text x="78" y="64" textAnchor="middle" fontSize="9.5" style={{fill:'var(--ink-3)'}}>AC100V・50Hz</text>
             <circle cx="78" cy="120" r="22" fill="#fff" stroke="#555" strokeWidth="1.8" />
-            <text x="78" y="126" textAnchor="middle" fontSize="16" fill="#555">∿</text>
+            <text x="78" y="126" textAnchor="middle" fontSize="16" style={{fill:'var(--ink-2)'}}>∿</text>
             <line x1="78" y1="98" x2="78" y2="82" stroke="#555" strokeWidth="1.5" />
             <line x1="78" y1="82" x2="162" y2="82" stroke="#555" strokeWidth="1.5" />
             <line x1="78" y1="142" x2="78" y2="252" stroke="#555" strokeWidth="1.5" />
@@ -13470,7 +13556,7 @@ function ZetsuenTairyokuPage({ onNav }) {
             <rect x="370" y="64" width="120" height="100" rx="6" fill="#f3eafb" stroke="#a06" strokeWidth="1.8" />
             <text x="430" y="96" textAnchor="middle" fontSize="10" fill="#a06">入力 0–120V</text>
             <text x="430" y="114" textAnchor="middle" fontSize="10" fill="#a06">出力 0–12000V</text>
-            <text x="430" y="132" textAnchor="middle" fontSize="9.5" fill="#888">50Hz</text>
+            <text x="430" y="132" textAnchor="middle" fontSize="9.5" style={{fill:'var(--ink-3)'}}>50Hz</text>
             <line x1="360" y1="82" x2="370" y2="82" stroke="#555" strokeWidth="1.5" />
             <line x1="390" y1="164" x2="390" y2="252" stroke="#555" strokeWidth="1.2" />
             {/* 高圧出力（試験電圧） */}
@@ -13502,7 +13588,8 @@ function ZetsuenTairyokuPage({ onNav }) {
       <SectionCheck pageId="zetsuen-tairyoku" sectionId="voltage" />
       <PlainExplain>
         <p><strong>手順は3段</strong>：①公称電圧から<strong>最大使用電圧</strong>を出す（1000V超は ×1.15/1.1）→ ②最大使用電圧の区分で<strong>倍率</strong>を選ぶ → ③掛けて試験電圧。倍率を<strong>公称電圧</strong>に掛けるのが最頻出ミス。</p>
-        <p>運転中に想定される最大電圧（最大使用電圧）より高い電圧を印加し、絶縁の余裕を確認する考え方。直流で試験する場合は交流の<strong>2倍</strong>の電圧（直流は絶縁への負担が交流より小さいため、同等の確認に高い電圧が必要）。</p>
+        <p><strong>×1.15/1.1 は最大使用電圧の定義値</strong>（解釈第1条）。1,000V超～500kV未満が ×1.15/1.1 の適用域で、それ以外（1,000V以下や500kV以上）は別の換算規定によるため、丸暗記せず「公称→最大」の換算だと理解しておく。</p>
+        <p>運転中に想定される最大電圧（最大使用電圧）より高い電圧を印加し、絶縁の余裕を確認する考え方。直流で試験する場合は交流の<strong>2倍</strong>の電圧（直流は一般に交流より絶縁への負担が小さいとされ、同等の確認に高い電圧が必要）。</p>
       </PlainExplain>
       <MemTable
         headers={["段", "内容", "例（公称6.6kV）"]}
@@ -13512,7 +13599,7 @@ function ZetsuenTairyokuPage({ onNav }) {
           ["③試験電圧", "最大使用電圧 × 倍率", "6,900 × 1.5 = 10,350 V"],
           ["④時間", "連続10分間（直流は電圧2倍・時間同じ）", "10分"],
         ]}
-        note="倍率の全区分（1.5/1.25/0.64）は zetsuen-ichiran（2.1）を参照。本ページは『組み立て方』に特化"
+        note="倍率の全区分（1.5/1.25/0.64）は zetsuen-ichiran（2.1）を参照。本ページは『組み立て方』に特化。暗記フック：『公称→最大（×1.15/1.1）→倍率→連続10分』／『7kV以下は1.5倍・170kV超の中性点直接接地は0.64倍』"
       />
       <div style={{ fontSize: 12, marginTop: 4, marginBottom: 12 }}>
         ▶ 倍率の全区分表（1.5/1.25/0.64）は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('zetsuen-ichiran');}} style={{ color: 'var(--accent)' }}>zetsuen-ichiran（2.1 絶縁耐力試験一覧）</a> へ
@@ -13570,9 +13657,9 @@ function ZetsuenTairyokuPage({ onNav }) {
 
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ なぜ「×3」か① — 高圧ケーブルの断面：心線と「接地した金属遮蔽層」の間が対地静電容量C</div>
-        <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12 }}>
+        <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12 }}>
           <svg viewBox="0 0 720 270" width="100%" style={{ display: 'block', maxWidth: 720 }} role="img" aria-label="高圧CVTケーブルの断面構造。中心から導体・絶縁体・金属遮蔽層・ケーブル外装の順。金属遮蔽層を接地すると、導体（心線）と遮蔽層の間が対地静電容量Cになる。CVT3心では3つのCが並列になる。">
-            <text x="360" y="22" textAnchor="middle" fontSize="13" fill="#333" fontWeight="700">高圧ケーブル断面 — 心線と「接地した金属遮蔽層」の間が対地静電容量C</text>
+            <text x="360" y="22" textAnchor="middle" fontSize="13" style={{fill:'var(--ink-1)'}} fontWeight="700">高圧ケーブル断面 — 心線と「接地した金属遮蔽層」の間が対地静電容量C</text>
             <circle cx="172" cy="142" r="78" fill="#1a1a1a" />
             <circle cx="172" cy="142" r="62" fill="#9aa0a6" />
             <circle cx="172" cy="142" r="46" fill="#f3e8d8" />
@@ -13584,7 +13671,7 @@ function ZetsuenTairyokuPage({ onNav }) {
             <line x1="210" y1="152" x2="300" y2="148" stroke="#888" strokeWidth="1" />
             <text x="305" y="152" fontSize="11" fill="#5a6066" fontWeight="700">金属遮蔽層（接地）</text>
             <line x1="200" y1="196" x2="300" y2="192" stroke="#888" strokeWidth="1" />
-            <text x="305" y="196" fontSize="11" fill="#333" fontWeight="700">ケーブル外装</text>
+            <text x="305" y="196" fontSize="11" style={{fill:'var(--ink-1)'}} fontWeight="700">ケーブル外装</text>
             <line x1="172" y1="204" x2="172" y2="240" stroke="#0a7d50" strokeWidth="2" />
             <line x1="158" y1="240" x2="186" y2="240" stroke="#0a7d50" strokeWidth="2" />
             <line x1="162" y1="246" x2="182" y2="246" stroke="#0a7d50" strokeWidth="1.5" />
@@ -13600,9 +13687,9 @@ function ZetsuenTairyokuPage({ onNav }) {
 
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ なぜ「×3」か② — 3線一括の等価回路：対地静電容量Cが3つ並列 → 合成3C</div>
-        <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12 }}>
+        <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12 }}>
           <svg viewBox="0 0 780 280" width="100%" style={{ display: 'block', maxWidth: 780 }} role="img" aria-label="3線一括試験の等価回路。3本の心線を一括して試験電圧Vを印加すると、各心線と接地された金属遮蔽層の間の対地静電容量Cが3つ並列になり、合成容量3C、充電電流は3かける2πfCVになる。">
-            <text x="390" y="22" textAnchor="middle" fontSize="13" fill="#333" fontWeight="700">3線一括 → 対地静電容量Cが3つ並列 → 合成3C → I ＝ 3×2πfC·V</text>
+            <text x="390" y="22" textAnchor="middle" fontSize="13" style={{fill:'var(--ink-1)'}} fontWeight="700">3線一括 → 対地静電容量Cが3つ並列 → 合成3C → I ＝ 3×2πfC·V</text>
             <text x="70" y="112" textAnchor="middle" fontSize="10.5" fill="#c0392b">試験電圧</text>
             <circle cx="70" cy="150" r="20" fill="#fff" stroke="#c0392b" strokeWidth="1.8" />
             <text x="70" y="156" textAnchor="middle" fontSize="13" fill="#c0392b" fontWeight="700">V</text>
@@ -13611,11 +13698,11 @@ function ZetsuenTairyokuPage({ onNav }) {
             <line x1="150" y1="70" x2="150" y2="208" stroke="#c0392b" strokeWidth="2" />
             <text x="150" y="58" textAnchor="middle" fontSize="10.5" fill="#c0392b" fontWeight="700">3線一括</text>
             <line x1="150" y1="80" x2="330" y2="80" stroke="#333" strokeWidth="1.6" />
-            <text x="250" y="74" textAnchor="middle" fontSize="10" fill="#666">心線1</text>
+            <text x="250" y="74" textAnchor="middle" fontSize="10" style={{fill:'var(--ink-2)'}}>心線1</text>
             <line x1="150" y1="135" x2="330" y2="135" stroke="#333" strokeWidth="1.6" />
-            <text x="250" y="129" textAnchor="middle" fontSize="10" fill="#666">心線2</text>
+            <text x="250" y="129" textAnchor="middle" fontSize="10" style={{fill:'var(--ink-2)'}}>心線2</text>
             <line x1="150" y1="190" x2="330" y2="190" stroke="#333" strokeWidth="1.6" />
-            <text x="250" y="184" textAnchor="middle" fontSize="10" fill="#666">心線3</text>
+            <text x="250" y="184" textAnchor="middle" fontSize="10" style={{fill:'var(--ink-2)'}}>心線3</text>
             <line x1="330" y1="80" x2="360" y2="80" stroke="#333" strokeWidth="1.6" />
             <line x1="360" y1="66" x2="360" y2="94" stroke="#2471a3" strokeWidth="2.4" />
             <line x1="372" y1="66" x2="372" y2="94" stroke="#2471a3" strokeWidth="2.4" />
@@ -13690,7 +13777,7 @@ function ZetsuenTairyokuPage({ onNav }) {
           [<span>🟩 解釈</span>, <span><strong>電技解釈 第16条</strong> 機器の絶縁性能</span>, "回転機・整流器・太陽電池・燃料電池等の機器"],
           [<span>🟩 解釈</span>, <span><strong>電技解釈 第14条</strong> 低圧電路の絶縁性能</span>, "低圧の絶縁抵抗(0.1/0.2/0.4MΩ)＝別試験。混同注意"],
         ]}
-        note="法規B問題では条文番号と内容の組合せが問われる。第15条=電路の耐力／第16条=機器／第14条=低圧の絶縁抵抗"
+        note="法規B問題では条文番号と内容の組合せが問われる。第15条=電路の耐力／第16条=機器／第14条=低圧の絶縁抵抗。【一次照合】委任元の電技省令第5条第1項『電路は、大地から絶縁しなければならない。』をe-Gov法令API（lawId 409M50000400052・2026-06-25取得）で逐語確認。解釈第15/16条（告示）はe-Gov API対象外のため denken-wiki をSoTとして照合（最終確認2026-06-25）。倍率区分の0.64倍/60kV超の接地別分岐の一次照合は zetsuen-ichiran に集約。"
       />
 
       <div style={{ background:'var(--bg-elev)', border:'1px solid var(--border)', borderLeft:'4px solid var(--accent)', borderRadius:'var(--radius)', padding:'12px 16px', margin:'14px 0', fontSize:13 }}>
@@ -13813,6 +13900,7 @@ function ZetsuenTairyokuPage({ onNav }) {
           <li><strong>倍率の全区分</strong>: <a href="#" onClick={(e)=>{e.preventDefault(); onNav('zetsuen-ichiran');}} style={{color:'var(--accent)'}}>zetsuen-ichiran（2.1 絶縁耐力試験一覧）</a></li>
           <li><strong>低圧の絶縁抵抗（別試験）</strong>: <a href="#" onClick={(e)=>{e.preventDefault(); onNav('denro-zetsuen');}} style={{color:'var(--accent)'}}>denro-zetsuen（電路の絶縁・第14条）</a></li>
           <li><strong>条文全体像</strong>: denken-wiki 電技解釈第15条 を再読</li>
+          <li><strong>復習ループ</strong>: 各節の理解度は上の D.Act（SectionCheckSummary）から再テスト。間違えた論点は誤答ノート／concept-grade学習窓口へ送り、SR（間隔反復）で再出題する</li>
         </ul>
       </div>
 
@@ -14585,6 +14673,7 @@ function KosakubutsuBunruiPage({ onNav, data }) {
       <GoalQuestion
         question="直流1,000Vの電路は低圧・高圧・特別高圧のどれか"
         choices={["低圧","高圧","特別高圧","区分外"]}
+        correctIndex={1}
         year="頻出"
         note="読み終えたら戻って解こう"
       />
@@ -14623,21 +14712,21 @@ function KosakubutsuBunruiPage({ onNav, data }) {
 
       <div style={{background:'var(--bg-elev)',border:'1px solid var(--line)',borderRadius:'var(--radius)',padding:16,marginBottom:16}}>
         <div style={{fontSize:13,fontWeight:600,color:'var(--ink-2)',marginBottom:8}}>📐 構内・構外と受電600V（赤＝「一般用から外れる」要因）</div>
-        <svg viewBox="0 0 820 330" style={{width:'100%',height:'auto',background:'#fff'}}>
+        <svg viewBox="0 0 820 330" style={{width:'100%',height:'auto',background:'var(--card)'}}>
           <defs>
             <marker id="kbA1g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
             <marker id="kbA1r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/></marker>
           </defs>
 
-          <text x="24" y="34" fontSize="13" fontWeight="700" fill="#667">構外（敷地の外）</text>
-          <text x="796" y="34" textAnchor="end" fontSize="13" fontWeight="700" fill="#667">構外</text>
+          <text x="24" y="34" fontSize="13" fontWeight="700" style={{fill:'var(--ink-2)'}}>構外（敷地の外）</text>
+          <text x="796" y="34" textAnchor="end" fontSize="13" fontWeight="700" style={{fill:'var(--ink-2)'}}>構外</text>
 
-          <rect x="160" y="52" width="500" height="236" rx="14" fill="#f8fafc" stroke="#8a93a0" strokeWidth="2" strokeDasharray="8 5"/>
-          <text x="180" y="80" fontSize="14" fontWeight="700" fill="#1f2d3d">構内（同一の敷地・1人の管理下で連続する区画）</text>
+          <rect x="160" y="52" width="500" height="236" rx="14" stroke="#8a93a0" strokeWidth="2" strokeDasharray="8 5" style={{fill:'var(--bg-2)'}}/>
+          <text x="180" y="80" fontSize="14" fontWeight="700" style={{fill:'var(--ink-1)'}}>構内（同一の敷地・1人の管理下で連続する区画）</text>
 
           <line x1="86" y1="116" x2="86" y2="214" stroke="#555" strokeWidth="2"/>
           <line x1="60" y1="128" x2="112" y2="128" stroke="#555" strokeWidth="2"/>
-          <text x="86" y="232" textAnchor="middle" fontSize="12" fill="#667">電力会社の配電線</text>
+          <text x="86" y="232" textAnchor="middle" fontSize="12" style={{fill:'var(--ink-2)'}}>電力会社の配電線</text>
 
           <line x1="112" y1="164" x2="156" y2="164" stroke="#555" strokeWidth="2" markerEnd="url(#kbA1g)"/>
           <g><circle cx="160" cy="164" r="11" fill="#c0392b"/><text x="160" y="168" textAnchor="middle" fontSize="12" fontWeight="700" fill="#fff">1</text></g>
@@ -14645,52 +14734,52 @@ function KosakubutsuBunruiPage({ onNav, data }) {
           <text x="120" y="190" textAnchor="middle" fontSize="12" fontWeight="700" fill="#c0392b">600Vが境目</text>
 
           <line x1="172" y1="164" x2="198" y2="164" stroke="#555" strokeWidth="2" markerEnd="url(#kbA1g)"/>
-          <rect x="200" y="138" width="120" height="52" rx="8" fill="#eef2f6" stroke="#9aa6b2" strokeWidth="1.5"/>
-          <text x="260" y="162" textAnchor="middle" fontSize="14" fontWeight="600" fill="#1f2d3d">受電設備</text>
-          <text x="260" y="180" textAnchor="middle" fontSize="10.5" fill="#667">（配電盤）</text>
+          <rect x="200" y="138" width="120" height="52" rx="8" stroke="#9aa6b2" strokeWidth="1.5" style={{fill:'var(--bg-elev)'}}/>
+          <text x="260" y="162" textAnchor="middle" fontSize="14" fontWeight="600" style={{fill:'var(--ink-1)'}}>受電設備</text>
+          <text x="260" y="180" textAnchor="middle" fontSize="10.5" style={{fill:'var(--ink-2)'}}>（配電盤）</text>
 
           <line x1="260" y1="190" x2="260" y2="212" stroke="#555" strokeWidth="2"/>
           <line x1="215" y1="212" x2="440" y2="212" stroke="#555" strokeWidth="2"/>
           <line x1="260" y1="212" x2="260" y2="234" stroke="#555" strokeWidth="2" markerEnd="url(#kbA1g)"/>
           <line x1="435" y1="212" x2="435" y2="234" stroke="#555" strokeWidth="2" markerEnd="url(#kbA1g)"/>
 
-          <rect x="200" y="236" width="120" height="48" rx="8" fill="#eef2f6" stroke="#9aa6b2" strokeWidth="1.5"/>
-          <text x="260" y="265" textAnchor="middle" fontSize="14" fontWeight="600" fill="#1f2d3d">負荷</text>
+          <rect x="200" y="236" width="120" height="48" rx="8" stroke="#9aa6b2" strokeWidth="1.5" style={{fill:'var(--bg-elev)'}}/>
+          <text x="260" y="265" textAnchor="middle" fontSize="14" fontWeight="600" style={{fill:'var(--ink-1)'}}>負荷</text>
 
-          <rect x="360" y="236" width="150" height="48" rx="8" fill="#eef2f6" stroke="#9aa6b2" strokeWidth="1.5"/>
-          <text x="435" y="258" textAnchor="middle" fontSize="14" fontWeight="600" fill="#1f2d3d">発電設備</text>
-          <text x="435" y="275" textAnchor="middle" fontSize="10.5" fill="#667">規模で区分（下表）</text>
+          <rect x="360" y="236" width="150" height="48" rx="8" stroke="#9aa6b2" strokeWidth="1.5" style={{fill:'var(--bg-elev)'}}/>
+          <text x="435" y="258" textAnchor="middle" fontSize="14" fontWeight="600" style={{fill:'var(--ink-1)'}}>発電設備</text>
+          <text x="435" y="275" textAnchor="middle" fontSize="10.5" style={{fill:'var(--ink-2)'}}>規模で区分（下表）</text>
           <g><circle cx="528" cy="240" r="11" fill="#c0392b"/><text x="528" y="244" textAnchor="middle" fontSize="12" fontWeight="700" fill="#fff">3</text></g>
 
-          <rect x="688" y="138" width="108" height="60" rx="8" fill="#eef2f6" stroke="#9aa6b2" strokeWidth="1.5"/>
-          <text x="742" y="164" textAnchor="middle" fontSize="12" fill="#1f2d3d">別の敷地の</text>
-          <text x="742" y="182" textAnchor="middle" fontSize="12" fill="#1f2d3d">電気工作物</text>
+          <rect x="688" y="138" width="108" height="60" rx="8" stroke="#9aa6b2" strokeWidth="1.5" style={{fill:'var(--bg-elev)'}}/>
+          <text x="742" y="164" textAnchor="middle" fontSize="12" style={{fill:'var(--ink-1)'}}>別の敷地の</text>
+          <text x="742" y="182" textAnchor="middle" fontSize="12" style={{fill:'var(--ink-1)'}}>電気工作物</text>
 
           <line x1="320" y1="164" x2="686" y2="164" stroke="#c0392b" strokeWidth="2" strokeDasharray="6 4" markerEnd="url(#kbA1r)"/>
           <g><circle cx="470" cy="148" r="11" fill="#c0392b"/><text x="470" y="152" textAnchor="middle" fontSize="12" fontWeight="700" fill="#fff">2</text></g>
           <text x="500" y="182" textAnchor="middle" fontSize="12" fontWeight="600" fill="#c0392b">構外にわたる電線路（受電線を除く）</text>
 
-          <text x="24" y="312" fontSize="12" fill="#1f2d3d"><tspan fontWeight="700" fill="#c0392b">赤①②③＝「一般用から外れる」要因</tspan>（①600V超受電 ②構外への電線路 ③同一構内の発電設備）。区分は下のフロー・出力閾値表で判定</text>
+          <text x="24" y="312" fontSize="12" style={{fill:'var(--ink-1)'}}><tspan fontWeight="700" fill="#c0392b">赤①②③＝「一般用から外れる」要因</tspan>（①600V超受電 ②構外への電線路 ③同一構内の発電設備）。区分は下のフロー・出力閾値表で判定</text>
         </svg>
       </div>
 
       <div style={{background:'var(--bg-elev)',border:'1px solid var(--line)',borderRadius:'var(--radius)',padding:16,marginBottom:24}}>
         <div style={{fontSize:13,fontWeight:600,color:'var(--ink-2)',marginBottom:8}}>🔀 一般用か否かの判定フロー（上から順に・1つでもYESなら一般用でない）</div>
-        <svg viewBox="0 0 820 340" style={{width:'100%',height:'auto',background:'#fff'}}>
+        <svg viewBox="0 0 820 340" style={{width:'100%',height:'auto',background:'var(--card)'}}>
           <defs>
             <marker id="kbA2g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
             <marker id="kbA2r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/></marker>
             <marker id="kbA2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#d49a2c"/></marker>
           </defs>
 
-          <rect x="30" y="24" width="470" height="50" rx="8" fill="#fff" stroke="#0e3a6e" strokeWidth="1.5"/>
-          <text x="265" y="54" textAnchor="middle" fontSize="14" fill="#1f2d3d">① 受電電圧が 600V を超える？</text>
+          <rect x="30" y="24" width="470" height="50" rx="8" stroke="#0e3a6e" strokeWidth="1.5" style={{fill:'var(--bg-elev)'}}/>
+          <text x="265" y="54" textAnchor="middle" fontSize="14" style={{fill:'var(--ink-1)'}}>① 受電電圧が 600V を超える？</text>
 
-          <rect x="30" y="104" width="470" height="50" rx="8" fill="#fff" stroke="#0e3a6e" strokeWidth="1.5"/>
-          <text x="265" y="134" textAnchor="middle" fontSize="14" fill="#1f2d3d">② 構外へわたる電線路がある？（受電用引込線を除く）</text>
+          <rect x="30" y="104" width="470" height="50" rx="8" stroke="#0e3a6e" strokeWidth="1.5" style={{fill:'var(--bg-elev)'}}/>
+          <text x="265" y="134" textAnchor="middle" fontSize="14" style={{fill:'var(--ink-1)'}}>② 構外へわたる電線路がある？（受電用引込線を除く）</text>
 
-          <rect x="30" y="184" width="470" height="50" rx="8" fill="#fff" stroke="#0e3a6e" strokeWidth="1.5"/>
-          <text x="265" y="214" textAnchor="middle" fontSize="14" fill="#1f2d3d">③ 同一構内に発電設備がある？</text>
+          <rect x="30" y="184" width="470" height="50" rx="8" stroke="#0e3a6e" strokeWidth="1.5" style={{fill:'var(--bg-elev)'}}/>
+          <text x="265" y="214" textAnchor="middle" fontSize="14" style={{fill:'var(--ink-1)'}}>③ 同一構内に発電設備がある？</text>
 
           <rect x="30" y="264" width="470" height="52" rx="10" fill="#e8f6ee" stroke="#1f8a4c" strokeWidth="2"/>
           <text x="265" y="286" textAnchor="middle" fontSize="15" fontWeight="700" fill="#1f8a4c">一般用電気工作物</text>
@@ -14706,11 +14795,11 @@ function KosakubutsuBunruiPage({ onNav, data }) {
           <text x="695" y="222" textAnchor="middle" fontSize="10.5" fill="#9a6a00">→ 下の出力閾値表</text>
 
           <line x1="265" y1="74" x2="265" y2="102" stroke="#555" strokeWidth="2" markerEnd="url(#kbA2g)"/>
-          <text x="278" y="93" fontSize="12" fontWeight="700" fill="#667">NO</text>
+          <text x="278" y="93" fontSize="12" fontWeight="700" style={{fill:'var(--ink-2)'}}>NO</text>
           <line x1="265" y1="154" x2="265" y2="182" stroke="#555" strokeWidth="2" markerEnd="url(#kbA2g)"/>
-          <text x="278" y="173" fontSize="12" fontWeight="700" fill="#667">NO</text>
+          <text x="278" y="173" fontSize="12" fontWeight="700" style={{fill:'var(--ink-2)'}}>NO</text>
           <line x1="265" y1="234" x2="265" y2="262" stroke="#555" strokeWidth="2" markerEnd="url(#kbA2g)"/>
-          <text x="278" y="253" fontSize="12" fontWeight="700" fill="#667">NO</text>
+          <text x="278" y="253" fontSize="12" fontWeight="700" style={{fill:'var(--ink-2)'}}>NO</text>
 
           <line x1="500" y1="49" x2="598" y2="49" stroke="#c0392b" strokeWidth="2" markerEnd="url(#kbA2r)"/>
           <text x="545" y="40" textAnchor="middle" fontSize="12" fontWeight="700" fill="#c0392b">YES</text>
@@ -14738,11 +14827,11 @@ function KosakubutsuBunruiPage({ onNav, data }) {
         rows={[
           ["太陽光",   "10 kW 未満",  "10 kW 以上 50 kW 未満"],
           ["風力",     "—",           "20 kW 未満"],
-          ["水力",     "20 kW 未満（ダム不要）", "—"],
+          ["水力",     "20 kW 未満かつ最大使用水量 1 m³/s 未満（ダム・堰なし）", "—"],
           ["内燃力",   "10 kW 未満",  "—"],
           ["燃料電池", "10 kW 未満",  "—"],
         ]}
-        note="2022年改正（令和5年3月20日施行）で太陽光の一般用上限が50kW未満→10kW未満に変更。10kW以上50kW未満は新設の「小規模事業用」に移行。なお旧用語は現行法に存在せず、現行は一般用も小規模事業用もどちらも「小規模発電設備」と呼び出力閾値で区分する。受電電圧については600V超（例：6.6kV受電のビル受変電設備）は自家用電気工作物に該当（正答率56%）"
+        note="2022年改正（令和5年3月20日施行）で太陽光の一般用上限が50kW未満→10kW未満に変更。10kW以上50kW未満は新設の「小規模事業用」に移行。風力は下限が0kW扱い（施行規則第48条第4項二号）のため0〜20kW未満が一律「小規模事業用」で、20kW以上は自家用。なお旧用語は現行法に存在せず、現行は一般用も小規模事業用もどちらも「小規模発電設備」と呼び出力閾値で区分する。受電電圧については600V超（例：6.6kV受電のビル受変電設備）は自家用電気工作物に該当（正答率56%）。出力閾値は電気事業法施行規則第48条第2項・第4項（e-Gov 2026-06-25取得・逐語照合済）"
       />
 
       <h2 id="four-bunrui">4区分の義務マトリクス（2022年改正後）</h2>
@@ -14750,13 +14839,13 @@ function KosakubutsuBunruiPage({ onNav, data }) {
         headers={["義務項目","一般用","小規模事業用","自家用","電力会社等"]}
         rows={[
           ["技術基準適合",   "不要",   "必要",   "必要",   "必要"],
-          ["基礎情報届出",   "不要",   "必要（新設）", "—",     "—"],
+          ["設置者の届出（法第46条）",   "不要",   "必要（新設）", "—",     "—"],
           ["使用前自己確認", "不要",   "必要（新設）", "—",     "—"],
           ["保安規程（第42条）", "不要", "不要",  "必要",   "必要"],
           ["主任技術者（第43条）","不要","不要",  "必要",   "必要"],
           ["定期調査（第57条）", "一般送配電事業者が4年に1回", "なし（自己確認のみ）", "自主保安", "国の検査"],
         ]}
-        note="小規模事業用は「事業用」だが保安規程・主任技術者は不要（中間カテゴリ）。「事業用 = 必ず主任技術者」は誤り"
+        note="小規模事業用は「事業用」だが保安規程・主任技術者は不要（中間カテゴリ）。「事業用 = 必ず主任技術者」は誤り。一般用の定期調査『4年に1回』は電気事業法第57条第1項・同法施行規則第96条第2項一号イ（e-Gov 2026-06-25取得・逐語照合済）。「設置者の届出」は法第46条第1項・施行規則第57条が根拠"
       />
 
       <h2 id="traps">よくあるひっかけ</h2>
@@ -14778,8 +14867,9 @@ function KosakubutsuBunruiPage({ onNav, data }) {
         { q: "高圧受電（6.6kV）のビル受変電設備の電気工作物区分は？", a: "自家用電気工作物（600V超受電・事業法第38条）" },
         { q: "一般用電気工作物の技術基準適合調査は誰が何年に1回？", a: "一般送配電事業者が4年に1回（電気事業法第57条・所有者ではない）" },
         { q: "太陽光50kW（境界以上）の電気工作物区分は？",       a: "自家用電気工作物（50kW以上は自家用。「未満／以上」に注意）" },
-        { q: "小規模事業用は主任技術者が必要？",  a: "不要。ただし基礎情報届出・使用前自己確認は必要（新設義務）" },
+        { q: "小規模事業用は主任技術者が必要？",  a: "不要。ただし設置者の届出（法第46条）・使用前自己確認は必要（新設義務）" },
       ]} />
+      <div style={{ fontSize: 12, color: 'var(--ink-3)', margin: '4px 0 24px' }}>📌 各問の⚠要復習は<strong>間違いノートの「要復習」タブ</strong>へ自動集約され、SR（間隔反復）で再出題されます。誤答は読み返し→再テストで定着を。</div>
 
       <DenkenWikiCTA
         url="https://kfurufuru.github.io/denken-wiki/articles/jigyoho/38/"
@@ -14800,6 +14890,17 @@ function KosakubutsuBunruiPage({ onNav, data }) {
         { date: "2026-05-11", content: "Phase Hoki-A 緊急修正：太陽光10kW境界（2022年改正反映）・「小出力発電設備」→「小規模発電設備」用語統一・4区分体系追加", reason: "G4監査で2022年改正前の旧基準のまま残存していたため現行法準拠に書き換え" },
         { date: "2026-05-08", content: "スタブ→暗記Hubページに昇格", reason: "S・必須テーマ。数値暗記を hoki-wiki に集約" },
       ]} />
+      <div style={{ margin: '16px 0', padding: '10px 12px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', fontSize: 13 }}>
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>📋 過去問の出題実績（法規・H23以降の出題SoT）</div>
+        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
+          <li>H27 問1 電気事業法に規定される自家用電気工作物（事業法第38条・施行規則第48条）</li>
+          <li>H30 問1 電気事業法における自家用電気工作物（事業法第38条）</li>
+          <li>H30 問2 太陽電池発電所等の設置に係る電気事業法の取扱い（事業法第38条）</li>
+          <li>R06下 問1 一般用電気工作物の定義（事業法第38条）</li>
+        </ul>
+
+        <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ink-3)' }}>出典: 法規過去問SoT kakomon.yml（電気技術者試験センター公表問題ベース・最終確認2026-06-25）</div>
+      </div>
       <PageNav
         prevId="hokoku-todoke-kigen" prevTitle="報告・届出期限"
         nextId="shunin-gijutsusya"   nextTitle="主任技術者"
@@ -14813,11 +14914,11 @@ function KosakubutsuBunruiPage({ onNav, data }) {
 // 5-8. ShuninGijutsusyaPage（主任技術者・S・必須）
 // ─────────────────────────────────────────────
 function ShuninGijutsusyaPage({ onNav, data }) {
-  const successBox = {margin: '14px 0 18px', padding: '14px 18px', background: '#e8f6e9', border: '1px solid #4a9f5a', borderLeft: '4px solid #2e7c3f', borderRadius: 8, fontSize: 14, lineHeight: 1.85};
-  const warningBox = {margin: '10px 0 14px', padding: '12px 16px', background: '#fff3e0', border: '1px solid #ff9f43', borderLeft: '4px solid #c95a00', borderRadius: 8, fontSize: 13, lineHeight: 1.75};
-  const noteBox    = {margin: '10px 0 14px', padding: '12px 16px', background: '#e7f3fb', border: '1px solid #4a7fb8', borderLeft: '4px solid #2c5d8c', borderRadius: 8, fontSize: 13, lineHeight: 1.75};
-  const tipBox     = {margin: '10px 0 14px', padding: '12px 16px', background: '#f3e8fb', border: '1px solid #8e44ad', borderLeft: '4px solid #6a3088', borderRadius: 8, fontSize: 13, lineHeight: 1.75};
-  const reformBox  = {margin: '10px 0 14px', padding: '12px 16px', background: '#fff8e6', border: '1px solid #e0b85a', borderLeft: '4px solid #d49a2c', borderRadius: 8, fontSize: 13, lineHeight: 1.75};
+  const successBox = {margin: '14px 0 18px', padding: '14px 18px', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderLeft: '4px solid #2e7c3f', borderRadius: 8, fontSize: 14, lineHeight: 1.85, color: 'var(--ink-1)'};
+  const warningBox = {margin: '10px 0 14px', padding: '12px 16px', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderLeft: '4px solid #c95a00', borderRadius: 8, fontSize: 13, lineHeight: 1.75, color: 'var(--ink-1)'};
+  const noteBox    = {margin: '10px 0 14px', padding: '12px 16px', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderLeft: '4px solid #2c5d8c', borderRadius: 8, fontSize: 13, lineHeight: 1.75, color: 'var(--ink-1)'};
+  const tipBox     = {margin: '10px 0 14px', padding: '12px 16px', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderLeft: '4px solid #6a3088', borderRadius: 8, fontSize: 13, lineHeight: 1.75, color: 'var(--ink-1)'};
+  const reformBox  = {margin: '10px 0 14px', padding: '12px 16px', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderLeft: '4px solid #d49a2c', borderRadius: 8, fontSize: 13, lineHeight: 1.75, color: 'var(--ink-1)'};
 
   return (
     <div>
@@ -14829,13 +14930,14 @@ function ShuninGijutsusyaPage({ onNav, data }) {
           "電圧 50,000 V 以下（出力制限なし）",
           "電圧 100,000 V 未満（出力 5,000 kW 以上を除く）"
         ]}
-        year="頻出"
+        correctIndex={1}
+        year="頻出（R07・R05 系統）"
         note="第三種は「電圧」と「発電所出力」の2軸で判定。読み終えたら戻って解こう"
       />
 
       <h2 id="must-know">1. 🔴 このページで取るべき3点</h2>
       <div style={successBox}>
-        <div style={{fontWeight: 700, color: '#1f5c2e', marginBottom: 8}}>✅ 最優先で覚える 3 点</div>
+        <div style={{fontWeight: 700, color: 'var(--ink-1)', marginBottom: 8}}>✅ 最優先で覚える 3 点</div>
         <ol style={{margin: 0, paddingLeft: 22, lineHeight: 1.95}}>
           <li><strong>第三種は「電圧 5 万 V 未満」だけで判断しない</strong>。<strong>出力 5,000 kW 以上の発電所</strong>は範囲から除外される（電圧＋発電所出力の 2 軸判定）</li>
           <li><strong>電気事業法 43 条は項番が問われる</strong>。<strong>1 項＝選任義務 / 2 項＝許可選任（自家用設置者に限る・小規模事業用を除く） / 3 項＝届出 / 4 項＝誠実義務 / 5 項＝従事者の指示遵守義務</strong>（特に 2 項と 3 項の入れ替えに注意）</li>
@@ -14871,6 +14973,9 @@ function ShuninGijutsusyaPage({ onNav, data }) {
       />
 
       <h2 id="why">2. 🔴 なぜ重要か</h2>
+      <div style={tipBox}>
+        <strong>💡 暗記フック</strong>：電圧の線引きは<strong>「1種なし・2種17（いちなな）・3種5（ご）万」</strong>で覚える。<strong>5万V／17万Vで段階を切るのは、電圧が高いほど事故時の影響と保安監督の難度が大きく、より上位の免状を要求する</strong>趣旨（数値は丸暗記でなく『高圧→上位免状』の因果で押さえる）。
+      </div>
       <PlainExplain>
         <p style={{margin: '0 0 8px'}}>主任技術者は<strong>毎年出題される最頻出テーマ</strong>。問われ方は概ね 4 系統に集約される。</p>
         <ul style={{margin: 0, paddingLeft: 20, lineHeight: 1.85}}>
@@ -14882,6 +14987,7 @@ function ShuninGijutsusyaPage({ onNav, data }) {
       </PlainExplain>
 
       <h2 id="article43">3. 🔴 電気事業法 43 条の項番整理</h2>
+      <SectionCheck pageId="shunin-gijutsusya" sectionId="kantoku-han-i" />
       <MemTable
         headers={["項","内容","試験での狙われ方"]}
         rows={[
@@ -14896,8 +15002,31 @@ function ShuninGijutsusyaPage({ onNav, data }) {
       <div style={warningBox}>
         <strong>⚠ 43 条 2 項は「許可選任」、3 項は「選任・解任の届出」</strong>。許可と届出を入れ替える問題は本試験で頻出。「許可がいるのは免状なしの選任のみ」「免状ありの選任・解任はあくまで届出」と覚える。
       </div>
+      <div style={noteBox}>
+        <strong>📌 一次照合の所在</strong>：本ページの根拠条文は <strong>電気事業法 第43条</strong>（選任・許可・届出・誠実義務）、<strong>同法施行規則 第56条</strong>（免状種別ごとの監督範囲）、<strong>第52条・第52条の2</strong>（兼任承認・外部委託承認）。条文の逐語原文と告示番号・最新改正の確認は <strong>denken-wiki を SOT</strong> とし照合する（最終確認 2026-06-11）。<strong>令和7年4月1日施行</strong>の月次点検3月特例は施行済（下記6-3）。<span style={{ color: 'var(--ink-3)' }}>※告示番号は確証のあるもの以外は記載しない方針</span>
+      </div>
 
       <h2 id="kantoku-han-i">4. 🔴 免状種別ごとの保安監督範囲</h2>
+      <div style={{margin: '12px 0 6px', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 8px'}}>
+        <svg viewBox="0 0 820 200" width="100%" style={{ display: 'block', maxWidth: 820 }} role="img" aria-label="主任技術者免状の監督範囲を電圧の数直線で図示。第三種は5万V未満かつ出力5000kW以上の発電所を除く、第二種は17万V未満、第一種は制限なし">
+          <line x1="60" y1="150" x2="790" y2="150" stroke="var(--border)" strokeWidth="2" />
+          <line x1="230" y1="60" x2="230" y2="160" stroke="var(--ink-3)" strokeWidth="1" strokeDasharray="4 3" />
+          <line x1="470" y1="60" x2="470" y2="160" stroke="var(--ink-3)" strokeWidth="1" strokeDasharray="4 3" />
+          <text x="230" y="178" textAnchor="middle" fontSize="12" style={{fill:'var(--ink-2)'}}>5万V</text>
+          <text x="470" y="178" textAnchor="middle" fontSize="12" style={{fill:'var(--ink-2)'}}>17万V</text>
+          <text x="60" y="178" textAnchor="middle" fontSize="12" style={{fill:'var(--ink-3)'}}>0V</text>
+          <text x="790" y="178" textAnchor="end" fontSize="12" style={{fill:'var(--ink-3)'}}>上限なし→</text>
+          <rect x="60" y="112" width="170" height="22" rx="4" fill="#2e7c3f" opacity="0.85" />
+          <text x="145" y="127" textAnchor="middle" fontSize="12" fill="#fff">第三種 5万V未満</text>
+          <rect x="60" y="86" width="410" height="22" rx="4" fill="#2c5d8c" opacity="0.85" />
+          <text x="265" y="101" textAnchor="middle" fontSize="12" fill="#fff">第二種 17万V未満</text>
+          <rect x="60" y="60" width="730" height="22" rx="4" fill="#6a3088" opacity="0.85" />
+          <text x="425" y="75" textAnchor="middle" fontSize="12" fill="#fff">第一種 制限なし（全範囲）</text>
+          <text x="60" y="32" fontSize="13" fontWeight="700" style={{fill:'var(--ink-1)'}}>監督範囲（電圧軸）</text>
+          <rect x="540" y="112" width="250" height="22" rx="4" fill="none" stroke="#c95a00" strokeWidth="1.5" strokeDasharray="5 3" />
+          <text x="665" y="127" textAnchor="middle" fontSize="11" style={{fill:'var(--ink-2)'}}>第三種は別軸で出力5,000kW以上の発電所を除く</text>
+        </svg>
+      </div>
       <MemTable
         headers={["種別","監督できる範囲","ひっかけポイント"]}
         rows={[
@@ -14911,6 +15040,7 @@ function ShuninGijutsusyaPage({ onNav, data }) {
         <strong>📌 表記統一</strong>：本ページでは <strong>「5 万 V 未満」「50,000 V 未満」「17 万 V 未満」</strong>で表記。「49,999 V 以下」のような表現は使わない（「未満」は『その値を含まない』を意味する境界表現で、本試験の正規表記）。
       </div>
 
+      <SectionCheck pageId="shunin-gijutsusya" sectionId="article43" />
       <h2 id="todoke-kyoka-shounin">5. 🟠 届出・許可・承認の違い（手続種別整理）</h2>
       <MemTable
         headers={["手続種別","内容（要点）","根拠"]}
@@ -14933,13 +15063,17 @@ function ShuninGijutsusyaPage({ onNav, data }) {
         ・<strong>外部委託承認</strong>を受ければ、主任技術者を<strong>選任しないこと</strong>ができる
       </div>
 
+      <SectionCheck pageId="shunin-gijutsusya" sectionId="todoke-kyoka-shounin" />
       <h2 id="gaibu-itaku">6. 🟠 外部委託承認制度</h2>
 
       <h3 style={{marginTop: 14, fontSize: 16, color: 'var(--ink-1)'}}>6-1. 🔴 まず覚える</h3>
+      <div style={noteBox}>
+        <strong>📌 用語</strong>：<strong>「小規模事業用電気工作物」</strong>とは、出力が比較的小さい太陽電池発電設備（10kW以上 50kW未満）や風力発電設備（20kW未満）などの小規模設備を指す（電気事業法上の区分）。43条2項・外部委託の条文で『小規模事業用を除く』が繰り返し登場するため、語義を先に押さえる。
+      </div>
       <ConclusionBox>
         <ul>
-          <li>外部委託承認は<strong>主任技術者を選任しないことができる</strong>制度（外部から選任する制度ではない）</li>
-          <li>代表例は<strong>7,000 V 以下で受電する需要設備</strong></li>
+          <li><strong>設置者は</strong>、外部委託承認を受ければ<strong>主任技術者を選任しないことができる</strong>（外部から選任する制度ではない）</li>
+          <li>対象設備（いずれも受電・出力が閾値以下）：<strong>受電電圧 7,000 V 以下の需要設備</strong>／<strong>太陽電池・蓄電所は出力 5,000 kW 未満</strong>／<strong>火力・水力・風力は出力 2,000 kW 未満</strong></li>
           <li>委託先は<strong>電気保安法人</strong>または<strong>電気管理技術者</strong>（資格要件あり）</li>
           <li>月次点検は<strong>原則 1 月に 1 回以上</strong></li>
         </ul>
@@ -14960,7 +15094,7 @@ function ShuninGijutsusyaPage({ onNav, data }) {
 
       <h2 id="kennin">7. 🟠 兼任承認</h2>
       <div style={tipBox}>
-        <div style={{fontWeight: 700, color: '#5e2076', marginBottom: 6}}>💡 兼任承認は「7・2・6・2」で覚える</div>
+        <div style={{fontWeight: 700, color: 'var(--ink-1)', marginBottom: 6}}>💡 兼任承認は「7・2・6・2」で覚える</div>
         <ul style={{margin: 0, paddingLeft: 22, lineHeight: 1.9}}>
           <li><strong>7</strong>,000 V 以下（受電電圧）</li>
           <li><strong>2</strong>,000 kW 未満（設備容量）</li>
@@ -14996,14 +15130,16 @@ function ShuninGijutsusyaPage({ onNav, data }) {
       />
 
       <h2 id="quick-review">10. 🔴 5 秒で思い出す</h2>
-      <QuickReview items={[
-        { q: "第三種の監督範囲は？",                              a: "電圧 5 万 V 未満（ただし出力 5,000 kW 以上の発電所を除く）" },
+      <QuickReview pageId="shunin-gijutsusya" items={[
+        { q: "第三種の監督範囲は？（第二種・第一種との違いも）",   a: "第三種＝電圧 5 万 V 未満（ただし出力 5,000 kW 以上の発電所を除く）／第二種＝17 万 V 未満／第一種＝制限なし。いずれも『以下』ではなく『未満』（正答率58〜69%）" },
         { q: "電気事業法 43 条 2 項は？",                         a: "自家用設置者（小規模事業用を除く）に限る、免状を持たない者の許可選任" },
         { q: "電気事業法 43 条 3 項は？",                         a: "主任技術者の選任・解任の届出（遅滞なく・正答率66%）" },
         { q: "主任技術者の兼任承認における要件4つの数字は？",     a: "7,000 V 以下 / 2,000 kW 未満 / 6 カ所以内 / 2 時間以内（承認・届出ではない）" },
         { q: "外部委託承認の対象範囲と制度趣旨は？",              a: "主任技術者を選任しないことができる制度（外部から選任ではない）。原則 受電電圧 7,000 V 以下の需要設備（正答率55%）" },
-        { q: "第二種の監督範囲は？",                              a: "電圧 17 万 V 未満（「以下」ではなく「未満」・正答率58%）" },
       ]} />
+      <div style={noteBox}>
+        <strong>📝 復習ループ</strong>：上の各問は理解度ボタンで記録され、<strong>「間違えた／要確認」に付けた問題は誤答ノートに自動集約</strong>される。あとで <strong>SR再出題</strong>として戻り、迷った節は下記 SectionCheck から再テストしよう。
+      </div>
 
       <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: '18px 0' }}>
         🔗 関連: <a onClick={() => onNav('tetsuzuki-yougo')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>手続き用語の区別（届出・許可・認可ほか）</a>（選任=届出／許可選任=許可／兼任・外部委託=承認 が錯綜する人向けの横断整理）・<a onClick={() => onNav('suuchi-kyoukai')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>数値境界の混同</a>（17万V「未満」など以下/未満の判定）
@@ -15016,6 +15152,17 @@ function ShuninGijutsusyaPage({ onNav, data }) {
         { date: "2026-05-09", content: "ChatGPT指摘に基づき大幅再構成：①重要度ラベル(🔴🟠🟡⚪)で優先度可視化 ②冒頭に「3点」success ③43条1〜5項の項番整理表+warning ④免状種別ごとの監督範囲表（電圧+出力2軸判定） ⑤届出/許可/承認の違いを5種一覧で整理 ⑥外部委託承認を3段階分割（まず覚える/正誤注意/令和7年改正） ⑦兼任承認7-2-6-2 tip+承認/届出warning ⑧原則/例外を note/warning で分離 ⑨ひっかけ拡充（7問） ⑩過去問演習要点表+QuickReview 11問", reason: "免状種別と手続が混在・外部委託の誤解・43条項番混乱・兼任承認の手続種別曖昧、を整理（ChatGPTレビュー）" },
         { date: "2026-05-08", content: "スタブ→暗記Hubページに昇格", reason: "S・必須テーマ。監督範囲の暗記を hoki-wiki に集約" }
       ]} />
+      <div style={{ margin: '16px 0', padding: '10px 12px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', fontSize: 13 }}>
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>📋 過去問の出題実績（法規・H23以降の出題SoT）</div>
+        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
+          <li>H23 問1：電気主任技術者の選任（事業法第43条・施行規則）</li>
+          <li>H25 問1：電気事業法における主任技術者（事業法第43条）</li>
+          <li>R02 問1：電気主任技術者の職務と監督範囲（第三種の適用範囲）（事業法第43条・施行規則第56条）</li>
+          <li>R05上 問1：電気事業法に基づく主任技術者（事業法第43条）</li>
+        </ul>
+        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-shunin')} style={{ color: 'var(--accent)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-shunin）で解く</a></div>
+        <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ink-3)' }}>出典: 法規過去問SoT kakomon.yml（電気技術者試験センター公表問題ベース・最終確認2026-06-25）</div>
+      </div>
       <PageNav
         prevId="kosakubutsu-bunrui" prevTitle="電気工作物の区分"
         nextId="hoan-kitei"          nextTitle="保安規程"
@@ -15034,8 +15181,9 @@ function HoanKiteiPage({ onNav, data }) {
       <GoalQuestion
         question="保安規程に必ず定めなければならない事項として、誤っているものはどれか"
         choices={["保安業務を管理する者の職務及び組織","保安教育","保守及び点検","電気料金の算定方法"]}
-        year="頻出"
-        note="保安規程は『安全確保のための社内ルール』。料金は対象外。"
+        year="R07・R04・H29（A問題頻出）"
+        correctIndex={3}
+        note="保安規程は『安全確保のための社内ルール』。料金は対象外（誤りの選択肢＝④電気料金の算定方法）。"
       />
 
       <ConclusionBox>
@@ -15043,8 +15191,8 @@ function HoanKiteiPage({ onNav, data }) {
           <li><strong>対象</strong>: <strong>事業用電気工作物（小規模事業用電気工作物を除く）を設置する者</strong>（電気事業法 第42条第1項）— 電気事業者の事業用設備 + 自家用電気工作物の双方が対象。「自家用のみ」と狭めない<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 作成・届出義務は <strong>設置者</strong>（主任技術者ではない・正答率67%）。一方 <strong>遵守義務は設置者「及び」従業者の双方</strong>（42条第4項・正答率56%最難）— 義務主体が2段階あることに注意</span></li>
           <li><strong>届出時期</strong>: 使用の開始<strong>前</strong>に届出<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 「30日前」「使用開始後遅滞なく」と紛らわしい。条文は <strong>「使用開始前」</strong>（時期指定なしの「前」）。正答率58%</span></li>
           <li><strong>変更時</strong>: <strong>遅滞なく</strong>届出（事前届出ではない）<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 新規届出は「使用開始前」／変更届出は「遅滞なく（事後）」— 時期が異なる（42条第2項・正答率60%）</span></li>
-          <li><strong>記載事項の核心</strong>（施行規則 第50条）: <strong>職務分掌・保安教育・巡視点検・運転操作・保全方法・非常時措置・記録</strong>（頭文字「職保巡措記」）<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 「電気料金の算定方法」は保安規程の事項<strong>ではない</strong>（料金は供給約款・正答率73%）。安全確保が目的</span></li>
-          <li><strong>KAISEI-2022-001</strong>: 2023年3月施行で<strong>小規模事業用電気工作物（10kW以上50kW未満太陽光・20kW未満風力等）は保安規程の対象外</strong><br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 小規模事業用は <strong>「基礎情報届出 + 使用前自己確認」</strong> で代替（保安規程・主任技術者ともに不要）。kosakubutsu-bunrui 4区分マトリクスと連動</span></li>
+          <li><strong>記載事項の核心</strong>（施行規則 第50条第3項）: <strong>職務分掌・保安教育・巡視点検・運転操作・非常時措置・記録</strong>（語呂「職保巡措記」＝この5語）＋<strong>保全方法</strong>（発電所・蓄電所の長期停止時の条件付き項目）<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 「電気料金の算定方法」は保安規程の事項<strong>ではない</strong>（料金は供給約款・正答率73%）。安全確保が目的。語呂は5語・表は7項目で数が違う点に注意</span></li>
+          <li><strong>KAISEI-2022-001</strong>: 2023年3月施行で<strong>小規模事業用電気工作物は保安規程の対象外</strong>（太陽光＝10kW以上50kW未満／風力＝20kW未満〔出力下限なし〕と区分ごとに閾値が異なる）<br /><span style={{ fontSize: 12, color: 'var(--ink-3)' }}>👁 <strong>着眼点</strong>: 小規模事業用は <strong>「基礎情報の届出 ＋ 使用前自己確認」</strong>で代替（何を＝基礎情報／誰が＝設置者／いつ＝使用前）。保安規程・主任技術者ともに不要。kosakubutsu-bunrui 4区分マトリクスと連動</span></li>
         </ul>
       </ConclusionBox>
 
@@ -15060,6 +15208,7 @@ function HoanKiteiPage({ onNav, data }) {
       />
 
       <h2 id="tables">保安規程の必要記載事項（電気事業法施行規則 第50条）</h2>
+      <SectionCheck pageId="hoan-kitei" sectionId="tables" />
       <MemTable
         headers={["核心7項目","内容","語呂"]}
         rows={[
@@ -15071,10 +15220,34 @@ function HoanKiteiPage({ onNav, data }) {
           ["非常時措置",   "災害その他非常の場合に採るべき措置",                 "措"],
           ["記録",         "保安についての記録",                                 "記"],
         ]}
-        note="頭文字「職保巡措記」で5語暗記。運転操作・保全方法は施設内容に応じ追加"
+        note="語呂「職保巡措記」が押さえるのは5項目（職務・保安教育・巡視点検・非常時措置・記録）。残る『運転操作』は常に必須、『保全方法』は発電所・蓄電所の長期運転停止時に必要な条件付き項目（施行規則第50条第3項第5号）。語呂＝5語、表＝7項目で数が一致しない点に注意"
       />
 
       <h2 id="todoke">届出・遵守義務の整理</h2>
+      <SectionCheck pageId="hoan-kitei" sectionId="todoke" />
+      <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 8, padding: '10px 8px', margin: '8px 0 16px' }}>
+        <svg viewBox="0 0 780 300" width="100%" style={{ display: 'block', maxWidth: 780 }} role="img" aria-label="保安規程の届出時期と義務主体。上段の時間軸では使用開始の前に新規届出、使用開始の後に変更届出を遅滞なく行う。下段では作成と届出の義務は設置者のみ、遵守義務は設置者と従業者の双方が負う。">
+          <text x="390" y="26" textAnchor="middle" fontSize="15" fontWeight="700" style={{ fill: 'var(--ink-1)' }}>届出のタイミング（新規は前・変更は後）</text>
+          <line x1="60" y1="86" x2="720" y2="86" strokeWidth="2.5" style={{ stroke: 'var(--ink-2)' }} />
+          <polygon points="720,86 706,80 706,92" style={{ fill: 'var(--ink-2)' }} />
+          <line x1="390" y1="66" x2="390" y2="106" strokeWidth="2.5" style={{ stroke: 'var(--accent)' }} />
+          <text x="390" y="122" textAnchor="middle" fontSize="13" fontWeight="700" style={{ fill: 'var(--accent)' }}>使用の開始</text>
+          <rect x="110" y="44" width="210" height="30" rx="4" style={{ fill: 'var(--bg-2)', stroke: 'var(--ink-3)' }} strokeWidth="1.2" />
+          <text x="215" y="64" textAnchor="middle" fontSize="13" fontWeight="700" style={{ fill: 'var(--ink-1)' }}>新規：使用開始『前』に届出</text>
+          <rect x="460" y="44" width="230" height="30" rx="4" style={{ fill: 'var(--bg-2)', stroke: 'var(--ink-3)' }} strokeWidth="1.2" />
+          <text x="575" y="64" textAnchor="middle" fontSize="13" fontWeight="700" style={{ fill: 'var(--ink-1)' }}>変更：変更後『遅滞なく』（事後）</text>
+          <text x="215" y="104" textAnchor="middle" fontSize="11" style={{ fill: 'var(--ink-3)' }}>法第42条第1項</text>
+          <text x="575" y="104" textAnchor="middle" fontSize="11" style={{ fill: 'var(--ink-3)' }}>法第42条第2項</text>
+          <text x="390" y="170" textAnchor="middle" fontSize="15" fontWeight="700" style={{ fill: 'var(--ink-1)' }}>義務主体は2段階（最頻出ひっかけ）</text>
+          <rect x="110" y="190" width="260" height="56" rx="6" style={{ fill: 'var(--bg-2)', stroke: 'var(--ink-3)' }} strokeWidth="1.4" />
+          <text x="240" y="214" textAnchor="middle" fontSize="13" fontWeight="700" style={{ fill: 'var(--ink-1)' }}>作成・届出</text>
+          <text x="240" y="234" textAnchor="middle" fontSize="13" fontWeight="700" style={{ fill: '#2e8b57' }}>設置者のみ</text>
+          <rect x="410" y="190" width="260" height="56" rx="6" style={{ fill: 'var(--bg-2)', stroke: 'var(--ink-3)' }} strokeWidth="1.4" />
+          <text x="540" y="214" textAnchor="middle" fontSize="13" fontWeight="700" style={{ fill: 'var(--ink-1)' }}>遵守</text>
+          <text x="540" y="234" textAnchor="middle" fontSize="13" fontWeight="700" style={{ fill: '#1a73e8' }}>設置者＋従業者の双方</text>
+          <text x="390" y="274" textAnchor="middle" fontSize="11" style={{ fill: 'var(--ink-3)' }}>遵守義務だけ従業者も含む（法第42条第4項・正答率56%最難）</text>
+        </svg>
+      </div>
       <MemTable
         headers={["項目","内容","根拠"]}
         rows={[
@@ -15082,8 +15255,9 @@ function HoanKiteiPage({ onNav, data }) {
           ["新規届出時期", "使用開始前（「30日前」「開始後」は誤・正答率58%）",      "法第42条第1項"],
           ["変更届出時期", "変更後、遅滞なく（事前届出ではない・正答率60%）",        "法第42条第2項"],
           ["遵守義務者",   "設置者及びその従業者（双方・正答率56%最難）",            "法第42条第4項"],
+          ["届出先",       "所轄産業保安監督部長（原則）。「経済産業大臣」「主任技術者」は誤", "施行規則第50条"],
         ]}
-        note="新規は『使用開始前』（事前）・変更は『遅滞なく』（事後）。この非対称が最頻出ひっかけ"
+        note="新規は『使用開始前』（事前）・変更は『遅滞なく』（事後）。この非対称が最頻出ひっかけ。【一次照合】届出義務＝電気事業法第42条／記載事項＝施行規則第50条第3項を e-Gov（施行規則lawId 407M50000400077）で2026-06-25逐語確認。変更命令は主務大臣（法第42条第3項）"
       />
 
       <h2 id="traps">よくあるひっかけ</h2>
@@ -15103,6 +15277,10 @@ function HoanKiteiPage({ onNav, data }) {
         { q: "保安規程に電気料金の算定方法は含まれるか？", a: "含まれない。保安規程は安全確保のための社内ルールで料金は対象外（正答率73%）" },
         { q: "保安規程の遵守義務を負うのは誰か？",        a: "設置者及びその従業者（双方・事業法第42条第4項・正答率56%最難）" },
       ]} />
+
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 8, padding: '10px 12px', margin: '12px 0', fontSize: 13, lineHeight: 1.7 }}>
+        <strong>🔁 復習ループ（PDCA）</strong>: 各節の△×は <strong>間違いノート</strong>に自動連結され、<strong>SR（間隔反復）で後日に再出題</strong>される。届出時期（新規=前／変更=後）と遵守義務者（設置者＋従業者）は正答率が低い頻出ひっかけ。間違えたら必ず誤答ノートで再確認しよう。
+      </div>
 
       <DenkenWikiCTA
         url="https://kfurufuru.github.io/denken-wiki/articles/jigyoho/42/"
@@ -16157,6 +16335,7 @@ function DenroZetsuenPage({ onNav, data }) {
       <GoalQuestion
         question="単相3線式100/200V電路の絶縁抵抗値はいくら以上必要か"
         choices={["0.1 MΩ以上","0.2 MΩ以上","0.4 MΩ以上","1.0 MΩ以上"]}
+        correctIndex={0}
         year="頻出"
         note="対地電圧で判断するのがコツ。読み終えたら戻って解こう"
       />
@@ -16179,8 +16358,11 @@ function DenroZetsuenPage({ onNav, data }) {
         examType="A問題・B問題"
         targets="R06・R04・H29"
         tags={["絶縁","低圧","表暗記","頻出S","電技解釈第14条"]}
-        lastChecked="2026-05-08"
+        lastChecked="2026-06-25"
       />
+      <div style={{ fontSize: 11, color: 'var(--ink-3)', margin: '-8px 0 18px', padding: '8px 12px', background: 'var(--bg-2)', borderRadius: 4, lineHeight: 1.7 }}>
+        🔎 <strong>一次照合</strong>：絶縁抵抗値（0.1/0.2/0.4 MΩ）と漏えい電流1mA以下の代替値は <strong>電技解釈 第14条第1項</strong>（電気設備の技術基準の解釈）。条文の逐語確認は SoT の <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/14/" target="_blank" rel="noopener" style={{ color: 'var(--accent)' }}>denken-wiki 解釈第14条</a>（最終確認 2026-06-25）。委任元の <strong>省令第58条</strong>（電気設備に関する技術基準を定める省令・lawId 409M50000400052）は e-Gov 法令検索で照合。
+      </div>
 
       <h2 id="zukai">条文を図で理解（第14条）</h2>
       <div style={{ background: 'var(--bg-2)', borderLeft: '3px solid var(--accent)', borderRadius: 4, padding: '12px 16px', marginBottom: 16, fontSize: 12.5, lineHeight: 1.9, color: 'var(--ink-2)' }}>
@@ -16190,21 +16372,21 @@ function DenroZetsuenPage({ onNav, data }) {
 
       {/* ── 図1: ① 何を測るか（電線相互間 と 電路-大地 の2経路） ── */}
       <div style={{ fontSize: 12.5, color: 'var(--ink-2)', fontWeight: 600, margin: '4px 0 8px' }}>① 何を測るか — 「電線相互間」と「電路と大地との間」の2か所</div>
-      <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12, marginBottom: 18 }}>
+      <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12, marginBottom: 18 }}>
         <svg viewBox="0 0 820 300" width="100%" style={{ display: 'block', maxWidth: 820 }} role="img" aria-label="低圧電路の絶縁抵抗を測る2つの経路。電源（分電盤）から負荷へL線とN線が伸びる。1つ目は電線相互間（L-N線間）の絶縁抵抗。2つ目は電路と大地との間（対地）の絶縁抵抗。絶縁抵抗計（メガー）でこの2か所を測定する。">
           {/* 電源側 */}
-          <rect x="28" y="96" width="92" height="94" rx="8" fill="#eef2f7" stroke="#555" strokeWidth="1.6" />
-          <text x="74" y="138" textAnchor="middle" fontSize="12" fill="#333" fontWeight="700">低圧電路</text>
-          <text x="74" y="156" textAnchor="middle" fontSize="10.5" fill="#888">（分電盤側）</text>
+          <rect x="28" y="96" width="92" height="94" rx="8" style={{ fill: 'var(--bg-2)', stroke: 'var(--ink-2)' }} strokeWidth="1.6" />
+          <text x="74" y="138" textAnchor="middle" fontSize="12" style={{ fill: 'var(--ink-1)' }} fontWeight="700">低圧電路</text>
+          <text x="74" y="156" textAnchor="middle" fontSize="10.5" style={{ fill: 'var(--ink-3)' }}>（分電盤側）</text>
           {/* L/N 線 */}
-          <line x1="120" y1="116" x2="632" y2="116" stroke="#222" strokeWidth="2.4" />
-          <line x1="120" y1="176" x2="632" y2="176" stroke="#222" strokeWidth="2.4" />
+          <line x1="120" y1="116" x2="632" y2="116" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2.4" />
+          <line x1="120" y1="176" x2="632" y2="176" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2.4" />
           <text x="132" y="108" textAnchor="start" fontSize="12" fill="#c0392b" fontWeight="700">L（電圧線）</text>
           <text x="132" y="196" textAnchor="start" fontSize="12" fill="#2471a3" fontWeight="700">N（中性線）</text>
           {/* 負荷 */}
-          <rect x="632" y="98" width="112" height="90" rx="8" fill="#f4f6f8" stroke="#555" strokeWidth="1.6" />
-          <text x="688" y="138" textAnchor="middle" fontSize="12" fill="#333" fontWeight="700">負荷</text>
-          <text x="688" y="156" textAnchor="middle" fontSize="10.5" fill="#888">（機器）</text>
+          <rect x="632" y="98" width="112" height="90" rx="8" style={{ fill: 'var(--bg-2)', stroke: 'var(--ink-2)' }} strokeWidth="1.6" />
+          <text x="688" y="138" textAnchor="middle" fontSize="12" style={{ fill: 'var(--ink-1)' }} fontWeight="700">負荷</text>
+          <text x="688" y="156" textAnchor="middle" fontSize="10.5" style={{ fill: 'var(--ink-3)' }}>（機器）</text>
           {/* ① 電線相互間（縦・赤） */}
           <line x1="372" y1="120" x2="372" y2="172" stroke="#c0392b" strokeWidth="2" strokeDasharray="5 4" />
           <polygon points="372,116 368,126 376,126" fill="#c0392b" />
@@ -16215,67 +16397,67 @@ function DenroZetsuenPage({ onNav, data }) {
           <line x1="232" y1="116" x2="232" y2="248" stroke="#2471a3" strokeWidth="2" strokeDasharray="5 4" />
           <polygon points="232,248 228,238 236,238" fill="#2471a3" />
           {/* 大地 */}
-          <line x1="120" y1="250" x2="720" y2="250" stroke="#222" strokeWidth="2.6" />
+          <line x1="120" y1="250" x2="720" y2="250" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2.6" />
           {/* 接地記号 */}
-          <line x1="232" y1="250" x2="232" y2="262" stroke="#222" strokeWidth="2" />
-          <line x1="214" y1="262" x2="250" y2="262" stroke="#222" strokeWidth="2" />
-          <line x1="220" y1="268" x2="244" y2="268" stroke="#222" strokeWidth="2" />
-          <line x1="226" y1="274" x2="238" y2="274" stroke="#222" strokeWidth="2" />
+          <line x1="232" y1="250" x2="232" y2="262" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2" />
+          <line x1="214" y1="262" x2="250" y2="262" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2" />
+          <line x1="220" y1="268" x2="244" y2="268" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2" />
+          <line x1="226" y1="274" x2="238" y2="274" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2" />
           <rect x="282" y="232" width="208" height="30" rx="6" fill="#eaf2fb" stroke="#2471a3" strokeWidth="1.3" />
           <text x="386" y="252" textAnchor="middle" fontSize="11.5" fill="#2471a3" fontWeight="700">② 電路と大地との間（対地）</text>
           {/* メガー注記 */}
-          <text x="688" y="232" textAnchor="middle" fontSize="11" fill="#555">絶縁抵抗計</text>
-          <text x="688" y="249" textAnchor="middle" fontSize="11" fill="#555">（メガー）で測定</text>
+          <text x="688" y="232" textAnchor="middle" fontSize="11" style={{ fill: 'var(--ink-2)' }}>絶縁抵抗計</text>
+          <text x="688" y="249" textAnchor="middle" fontSize="11" style={{ fill: 'var(--ink-2)' }}>（メガー）で測定</text>
         </svg>
       </div>
 
       {/* ── 図2: ② どの単位で（開閉器・過電流遮断器で区切れる電路ごと） ── */}
       <div style={{ fontSize: 12.5, color: 'var(--ink-2)', fontWeight: 600, margin: '4px 0 8px' }}>② どの単位で測るか — 開閉器・過電流遮断器で区切れる電路ごと</div>
-      <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12, marginBottom: 18 }}>
+      <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12, marginBottom: 18 }}>
         <svg viewBox="0 0 820 300" width="100%" style={{ display: 'block', maxWidth: 820 }} role="img" aria-label="分電盤の主開閉器（過電流遮断器）から母線が伸び、3つの分岐ブレーカーB1・B2・B3を経て各回路につながる。絶縁抵抗は、開閉器や過電流遮断器で切り離せる電路ごとに測定する。ブレーカーを開放すればその先の電路だけを他と切り離して測れる。">
           {/* 引込 */}
-          <line x1="20" y1="150" x2="60" y2="150" stroke="#222" strokeWidth="2.4" />
+          <line x1="20" y1="150" x2="60" y2="150" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2.4" />
           {/* 主開閉器 */}
           <rect x="60" y="120" width="120" height="60" rx="8" fill="#fff4e0" stroke="#d68910" strokeWidth="1.8" />
           <text x="120" y="146" textAnchor="middle" fontSize="12" fill="#b9770e" fontWeight="700">主開閉器</text>
           <text x="120" y="164" textAnchor="middle" fontSize="10.5" fill="#b9770e">(過電流遮断器)</text>
           {/* 母線 */}
-          <line x1="180" y1="150" x2="230" y2="150" stroke="#222" strokeWidth="2.4" />
-          <line x1="230" y1="70" x2="230" y2="246" stroke="#222" strokeWidth="2.6" />
+          <line x1="180" y1="150" x2="230" y2="150" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2.4" />
+          <line x1="230" y1="70" x2="230" y2="246" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2.6" />
           {/* 分岐1 */}
-          <line x1="230" y1="86" x2="270" y2="86" stroke="#222" strokeWidth="2" />
+          <line x1="230" y1="86" x2="270" y2="86" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2" />
           <rect x="270" y="68" width="64" height="36" rx="6" fill="#eaf6ef" stroke="#2e8b57" strokeWidth="1.6" />
           <text x="302" y="91" textAnchor="middle" fontSize="13" fill="#2e8b57" fontWeight="700">B1</text>
-          <line x1="334" y1="86" x2="470" y2="86" stroke="#222" strokeWidth="2" />
-          <rect x="470" y="70" width="96" height="34" rx="6" fill="#f4f6f8" stroke="#555" strokeWidth="1.4" />
-          <text x="518" y="92" textAnchor="middle" fontSize="11.5" fill="#333" fontWeight="700">回路1</text>
+          <line x1="334" y1="86" x2="470" y2="86" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2" />
+          <rect x="470" y="70" width="96" height="34" rx="6" style={{ fill: 'var(--bg-2)', stroke: 'var(--ink-2)' }} strokeWidth="1.4" />
+          <text x="518" y="92" textAnchor="middle" fontSize="11.5" style={{ fill: 'var(--ink-1)' }} fontWeight="700">回路1</text>
           <rect x="258" y="62" width="320" height="48" rx="8" fill="none" stroke="#2e8b57" strokeWidth="1.3" strokeDasharray="6 4" />
           {/* 分岐2 */}
-          <line x1="230" y1="150" x2="270" y2="150" stroke="#222" strokeWidth="2" />
+          <line x1="230" y1="150" x2="270" y2="150" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2" />
           <rect x="270" y="132" width="64" height="36" rx="6" fill="#fff4e0" stroke="#d68910" strokeWidth="1.6" />
           <text x="302" y="155" textAnchor="middle" fontSize="13" fill="#b9770e" fontWeight="700">B2</text>
-          <line x1="334" y1="150" x2="470" y2="150" stroke="#222" strokeWidth="2" />
-          <rect x="470" y="134" width="96" height="34" rx="6" fill="#f4f6f8" stroke="#555" strokeWidth="1.4" />
-          <text x="518" y="156" textAnchor="middle" fontSize="11.5" fill="#333" fontWeight="700">回路2</text>
+          <line x1="334" y1="150" x2="470" y2="150" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2" />
+          <rect x="470" y="134" width="96" height="34" rx="6" style={{ fill: 'var(--bg-2)', stroke: 'var(--ink-2)' }} strokeWidth="1.4" />
+          <text x="518" y="156" textAnchor="middle" fontSize="11.5" style={{ fill: 'var(--ink-1)' }} fontWeight="700">回路2</text>
           <rect x="258" y="126" width="320" height="48" rx="8" fill="none" stroke="#d68910" strokeWidth="1.3" strokeDasharray="6 4" />
           {/* 分岐3 */}
-          <line x1="230" y1="214" x2="270" y2="214" stroke="#222" strokeWidth="2" />
+          <line x1="230" y1="214" x2="270" y2="214" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2" />
           <rect x="270" y="196" width="64" height="36" rx="6" fill="#eaf2fb" stroke="#2471a3" strokeWidth="1.6" />
           <text x="302" y="219" textAnchor="middle" fontSize="13" fill="#2471a3" fontWeight="700">B3</text>
-          <line x1="334" y1="214" x2="470" y2="214" stroke="#222" strokeWidth="2" />
-          <rect x="470" y="198" width="96" height="34" rx="6" fill="#f4f6f8" stroke="#555" strokeWidth="1.4" />
-          <text x="518" y="220" textAnchor="middle" fontSize="11.5" fill="#333" fontWeight="700">回路3</text>
+          <line x1="334" y1="214" x2="470" y2="214" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2" />
+          <rect x="470" y="198" width="96" height="34" rx="6" style={{ fill: 'var(--bg-2)', stroke: 'var(--ink-2)' }} strokeWidth="1.4" />
+          <text x="518" y="220" textAnchor="middle" fontSize="11.5" style={{ fill: 'var(--ink-1)' }} fontWeight="700">回路3</text>
           <rect x="258" y="190" width="320" height="48" rx="8" fill="none" stroke="#2471a3" strokeWidth="1.3" strokeDasharray="6 4" />
           {/* 注記 */}
           <text x="600" y="90" textAnchor="start" fontSize="11" fill="#2e8b57" fontWeight="700">← この区切り</text>
           <text x="600" y="106" textAnchor="start" fontSize="11" fill="#2e8b57">　ごとに測定</text>
-          <text x="410" y="276" textAnchor="middle" fontSize="11" fill="#555">ブレーカーを開放 → その先の電路だけを切り離して測れる</text>
+          <text x="410" y="276" textAnchor="middle" fontSize="11" style={{ fill: 'var(--ink-2)' }}>ブレーカーを開放 → その先の電路だけを切り離して測れる</text>
         </svg>
       </div>
 
       {/* ── 図3: ③ いくつ以上（電圧で3段階・い に し） ── */}
       <div style={{ fontSize: 12.5, color: 'var(--ink-2)', fontWeight: 600, margin: '4px 0 8px' }}>③ いくつ以上か — 電圧で3段階（語呂「い・に・し」）</div>
-      <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12, marginBottom: 18 }}>
+      <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12, marginBottom: 18 }}>
         <svg viewBox="0 0 820 240" width="100%" style={{ display: 'block', maxWidth: 820 }} role="img" aria-label="低圧電路の絶縁抵抗値は電圧で3段階。対地電圧150V以下は0.1MΩ以上、対地電圧150V超300V以下は0.2MΩ以上、使用電圧300V超は0.4MΩ以上。語呂はい・に・し。150V境界は対地電圧、300V超は使用電圧で判定する。">
           {/* 3区間バー */}
           <rect x="70" y="70" width="220" height="60" fill="#eaf6ef" stroke="#2e8b57" strokeWidth="1.8" />
@@ -16290,21 +16472,24 @@ function DenroZetsuenPage({ onNav, data }) {
           <text x="400" y="120" textAnchor="middle" fontSize="13" fill="#b9770e" fontWeight="700">「に」</text>
           <text x="630" y="120" textAnchor="middle" fontSize="13" fill="#c0392b" fontWeight="700">「し」</text>
           {/* 数直線 */}
-          <line x1="70" y1="150" x2="760" y2="150" stroke="#222" strokeWidth="2" />
-          <polygon points="760,150 748,145 748,155" fill="#222" />
+          <line x1="70" y1="150" x2="760" y2="150" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2" />
+          <polygon points="760,150 748,145 748,155" style={{ fill: 'var(--ink-1)' }} />
           {/* 目盛 */}
-          <line x1="290" y1="144" x2="290" y2="156" stroke="#222" strokeWidth="2" />
-          <line x1="510" y1="144" x2="510" y2="156" stroke="#222" strokeWidth="2" />
-          <text x="70" y="174" textAnchor="middle" fontSize="12" fill="#888">0</text>
-          <text x="290" y="174" textAnchor="middle" fontSize="13" fill="#222" fontWeight="700">150V</text>
-          <text x="510" y="174" textAnchor="middle" fontSize="13" fill="#222" fontWeight="700">300V</text>
+          <line x1="290" y1="144" x2="290" y2="156" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2" />
+          <line x1="510" y1="144" x2="510" y2="156" style={{ stroke: 'var(--ink-1)' }} strokeWidth="2" />
+          <text x="70" y="174" textAnchor="middle" fontSize="12" style={{ fill: 'var(--ink-3)' }}>0</text>
+          <text x="290" y="174" textAnchor="middle" fontSize="13" style={{ fill: 'var(--ink-1)' }} fontWeight="700">150V</text>
+          <text x="510" y="174" textAnchor="middle" fontSize="13" style={{ fill: 'var(--ink-1)' }} fontWeight="700">300V</text>
           {/* 区分種別ラベル */}
-          <text x="180" y="196" textAnchor="middle" fontSize="11" fill="#555">対地電圧 150V以下</text>
-          <text x="400" y="196" textAnchor="middle" fontSize="11" fill="#555">対地電圧 150V超〜300V以下</text>
-          <text x="630" y="196" textAnchor="middle" fontSize="11" fill="#555">使用電圧 300V超</text>
+          <text x="180" y="196" textAnchor="middle" fontSize="11" style={{ fill: 'var(--ink-2)' }}>対地電圧 150V以下</text>
+          <text x="400" y="196" textAnchor="middle" fontSize="11" style={{ fill: 'var(--ink-2)' }}>対地電圧 150V超〜300V以下</text>
+          <text x="630" y="196" textAnchor="middle" fontSize="11" style={{ fill: 'var(--ink-2)' }}>使用電圧 300V超</text>
           {/* 罠注記 */}
           <text x="410" y="224" textAnchor="middle" fontSize="11" fill="#c0392b" fontWeight="700">※ 150V境界は「対地電圧」／ 300V超だけ「使用電圧」で判定</text>
         </svg>
+      </div>
+      <div style={{ background: 'var(--bg-2)', borderLeft: '3px solid var(--accent)', borderRadius: 4, padding: '10px 14px', marginBottom: 18, fontSize: 12, lineHeight: 1.8, color: 'var(--ink-2)' }}>
+        💡 <strong>なぜ電圧が高いほど高い絶縁抵抗を要求する？</strong>：漏れ電流 ＝ 対地電圧 ÷ 絶縁抵抗。電圧が高いほど同じ絶縁抵抗では漏れ電流が増え感電・火災リスクが上がるため、電圧区分が上がるほど高い絶縁抵抗（0.1→0.2→0.4 MΩ）を求める。
       </div>
 
       <h2 id="tables">絶縁抵抗値（電技解釈 第14条）</h2>
@@ -16328,7 +16513,7 @@ function DenroZetsuenPage({ onNav, data }) {
           ["三相3線式 200V（非接地式）","対地電圧 200V → 150V超300V以下",   "0.2 MΩ 以上"],
           ["三相4線式 400V",            "使用電圧 400V → 300V超",            "0.4 MΩ 以上"],
         ]}
-        note="非接地式は対地電圧＝線間電圧。接地式の三相3線200Vなら対地電圧は相電圧（約115V）→ 0.1MΩ"
+        note="非接地式は対地電圧＝線間電圧。接地式の三相3線200Vなら対地電圧は相電圧（約115V）→ 0.1MΩ。接地方式の判定方法は denken-wiki 解釈第14条・テーマページ参照（区切り単位と接地方式判定は別軸）"
       />
 
       <h2 id="traps">よくあるひっかけ</h2>
@@ -16344,7 +16529,7 @@ function DenroZetsuenPage({ onNav, data }) {
         { q: "単相3線式100/200V電路の絶縁抵抗値は？",  a: "0.1 MΩ 以上（対地電圧100V）" },
         { q: "三相4線式400V電路の絶縁抵抗値は？",      a: "0.4 MΩ 以上（使用電圧300V超）" },
         { q: "覚え方の語呂は？",                        a: "い・に・し（0.1→0.2→0.4）。境目は150Vと300V" },
-        { q: "絶縁抵抗0.1MΩの低圧電路に対地電圧150V印加時の漏れ電流は？",  a: "1.5 mA（150V ÷ 0.1MΩ）— 感電閾値以下" },
+        { q: "絶縁抵抗0.1MΩの低圧電路に対地電圧150V印加時の漏れ電流は？",  a: "1.5 mA（150V ÷ 0.1MΩ）。これは絶縁抵抗が0.1MΩちょうどの場合の計算値で、解釈第14条の漏えい電流許容値1mAを超える。実務では1mA以下となる十分な絶縁が必要（罠③「1.5mAは誤・本則1mA」と区別）" },
         { q: "絶縁抵抗と絶縁耐力試験の違いは？",        a: "絶縁抵抗=日常管理、耐力試験=竣工・改修時の強度確認" },
       ]} />
 
@@ -16389,6 +16574,18 @@ function DenroZetsuenPage({ onNav, data }) {
         { date: "2026-05-08", content: "スタブ→暗記Hubページに昇格", reason: "S・必須テーマ。絶縁抵抗値0.1/0.2/0.4MΩ暗記表を整備" },
         { date: "2026-05-24", content: "3層構造＋PDCAパイロット適用（v2.0）", reason: "監修者さん指摘の3層構造（A:全体像/B:詳細/C:試験対策/D:Act）と SectionCheck/SectionCheckSummary を導入。第22条ページ（teiatsu-densenro-zetsuen）と整合。冒頭でdenken-wiki 第58条/解釈第14条/第22条への3動線を明示" },
       ]} />
+      <div style={{ margin: '16px 0', padding: '10px 12px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', fontSize: 13 }}>
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>📋 過去問の出題実績（法規・H23以降の出題SoT）</div>
+        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
+          <li>H24 問5 ｜ 電気設備技術基準における電路の絶縁（省令第5条・解釈第13条）</li>
+          <li>H26 問6 ｜ 低圧の電路の絶縁性能（省令第58条・解釈第14条）</li>
+          <li>R05下 問3 ｜ 電路の絶縁の原則と例外（省令第5条）</li>
+          <li>R06上 問8 ｜ 低圧の電路の絶縁性能（省令第58条・解釈第14条）</li>
+          <li>R06下 問3 ｜ 電路の絶縁の原則と例外（省令第5条）</li>
+        </ul>
+        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-zetsuen')} style={{ color: 'var(--accent)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-zetsuen）で解く</a></div>
+        <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ink-3)' }}>出典: 法規過去問SoT kakomon.yml（電気技術者試験センター公表問題ベース・最終確認2026-06-25）</div>
+      </div>
       <PageNav
         prevId="hokoku-todoke-kigen"     prevTitle="報告・届出期限"
         nextId="teiatsu-densenro-zetsuen" nextTitle="低圧電線路の絶縁性能（省令第22条）"
@@ -17509,7 +17706,7 @@ function SetsuchiKojiPage({ onNav, data }) {
           <tbody>
             <tr>
               <td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', width: 100, fontWeight: 600 }}>主条文</td>
-              <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>電技省令 第10条・第11条／電技解釈 第17条（A/B種）・第18条（C種）・第19条（D種）</td>
+              <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--line)' }}>電技省令 第10条・第11条／電技解釈 第17条（A種=第1項・B種=第2項・C種=第3項・D種=第4項）</td>
             </tr>
             <tr>
               <td style={{ padding: '6px 10px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', fontWeight: 600 }}>核心</td>
@@ -17534,13 +17731,7 @@ function SetsuchiKojiPage({ onNav, data }) {
         </div>
         <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/17/" target="_blank" rel="noopener noreferrer" style={{ padding: '6px 12px', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius)', textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>
-            🔗 解釈第17条（A/B種）
-          </a>
-          <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/18/" target="_blank" rel="noopener noreferrer" style={{ padding: '6px 12px', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius)', textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>
-            🔗 解釈第18条（C種）
-          </a>
-          <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/19/" target="_blank" rel="noopener noreferrer" style={{ padding: '6px 12px', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius)', textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>
-            🔗 解釈第19条（D種）
+            🔗 解釈第17条（A・B・C・D種＝接地工事の種類・施設方法）
           </a>
         </div>
       </div>
@@ -17578,7 +17769,7 @@ function SetsuchiKojiPage({ onNav, data }) {
           <li>4種別の数値暗記表は<strong>「接地工事一覧表」（setsuchi-ichiran）</strong>で確認</li>
           <li><strong>ELB緩和</strong>: C種・D種のみ → <strong>500 Ω 以下</strong>（A種・B種には適用なし）</li>
           <li><strong>ELB条件</strong>: <strong>0.5秒以内</strong>に動作する漏電遮断器が施設されている</li>
-          <li><strong>B種倍々ルール</strong>: 原則<strong>150/Ig</strong> → 1秒超〜2秒以内<strong>300/Ig</strong> → 1秒以内<strong>600/Ig</strong></li>
+          <li><strong>B種倍々ルール</strong>: 原則<strong>150/Ig</strong> → 1秒超〜2秒以内<strong>300/Ig</strong> → 1秒以内<strong>600/Ig</strong>（Ig＝高圧側の1線地絡電流［A］）</li>
           <li><strong>接地線径</strong>: A種2.6mm／B種4mm／C・D種1.6mm（引張強さで規定）</li>
         </ul>
       </ConclusionBox>
@@ -17596,7 +17787,7 @@ function SetsuchiKojiPage({ onNav, data }) {
 
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ 4種接地は電力系統のどこに付くか（A種=高圧機器外箱／B種=変圧器中性点／C・D種=低圧機器外箱）</div>
-        <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12 }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12 }}>
           <svg viewBox="0 0 820 410" width="100%" style={{ display: 'block', maxWidth: 820 }} role="img" aria-label="4種接地工事の系統配置。高圧機器の外箱はA種10Ω以下、変圧器低圧側中性点はB種150割るIg、低圧機器外箱は300V超でC種10Ω以下・300V以下でD種100Ω以下">
             {/* 高圧配電線 */}
             <line x1="40" y1="48" x2="470" y2="48" stroke="#c0392b" strokeWidth="3" />
@@ -17605,7 +17796,7 @@ function SetsuchiKojiPage({ onNav, data }) {
             <line x1="120" y1="48" x2="120" y2="80" stroke="#c0392b" strokeWidth="2" />
             <rect x="62" y="80" width="116" height="58" rx="6" fill="#fdeaea" stroke="#c0392b" strokeWidth="1.6" />
             <text x="120" y="104" textAnchor="middle" fontSize="13" fill="#c0392b" fontWeight="700">高圧機器</text>
-            <text x="120" y="122" textAnchor="middle" fontSize="11" fill="#a33">外箱（PAS等）</text>
+            <text x="120" y="122" textAnchor="middle" fontSize="11" style={{fill:'var(--ink-3)'}}>外箱（PAS等）</text>
             {/* 変圧器 */}
             <line x1="360" y1="48" x2="360" y2="70" stroke="#c0392b" strokeWidth="2" />
             <rect x="300" y="70" width="120" height="86" rx="6" fill="#f3eafb" stroke="#8e44ad" strokeWidth="1.8" />
@@ -17634,33 +17825,33 @@ function SetsuchiKojiPage({ onNav, data }) {
             {/* A種接地 */}
             <line x1="120" y1="138" x2="120" y2="360" stroke="#396" strokeWidth="2" strokeDasharray="5,3" />
             <text x="120" y="382" textAnchor="middle" fontSize="12.5" fill="#396" fontWeight="700">A種 10Ω以下</text>
-            <text x="120" y="399" textAnchor="middle" fontSize="10.5" fill="#888">線径 2.6mm</text>
+            <text x="120" y="399" textAnchor="middle" fontSize="10.5" style={{fill:'var(--ink-3)'}}>線径 2.6mm</text>
             {/* B種接地（中性点） */}
             <line x1="430" y1="215" x2="430" y2="360" stroke="#396" strokeWidth="2" strokeDasharray="5,3" />
             <text x="430" y="382" textAnchor="middle" fontSize="12.5" fill="#396" fontWeight="700">B種 150/Ig</text>
-            <text x="430" y="399" textAnchor="middle" fontSize="10.5" fill="#888">線径 4.0mm</text>
+            <text x="430" y="399" textAnchor="middle" fontSize="10.5" style={{fill:'var(--ink-3)'}}>線径 4.0mm</text>
             {/* C種接地 */}
             <line x1="595" y1="294" x2="595" y2="360" stroke="#396" strokeWidth="2" strokeDasharray="5,3" />
             <text x="595" y="382" textAnchor="middle" fontSize="12.5" fill="#396" fontWeight="700">C種 10Ω以下</text>
-            <text x="595" y="399" textAnchor="middle" fontSize="10.5" fill="#888">線径 1.6mm</text>
+            <text x="595" y="399" textAnchor="middle" fontSize="10.5" style={{fill:'var(--ink-3)'}}>線径 1.6mm</text>
             {/* D種接地 */}
             <line x1="735" y1="294" x2="735" y2="360" stroke="#396" strokeWidth="2" strokeDasharray="5,3" />
             <text x="735" y="382" textAnchor="middle" fontSize="12.5" fill="#396" fontWeight="700">D種 100Ω以下</text>
-            <text x="735" y="399" textAnchor="middle" fontSize="10.5" fill="#888">線径 1.6mm</text>
+            <text x="735" y="399" textAnchor="middle" fontSize="10.5" style={{fill:'var(--ink-3)'}}>線径 1.6mm</text>
           </svg>
         </div>
       </div>
       <h2 id="elb">ELB（漏電遮断器）緩和まとめ</h2>
       <SectionCheck pageId="setsuchi-koji" sectionId="elb" />
       <MemTable
-        headers={["種別","ELB緩和","緩和後の抵抗値","条件"]}
+        headers={["種別","対象機器","ELB緩和","緩和後の抵抗値","条件"]}
         rows={[
-          ["A種","× なし",    "—",         "— （高圧・特別高圧機器は厳格に10Ω）"],
-          ["B種","× なし",    "—",         "B種は遮断時間で別途緩和あり（下表参照）"],
-          ["C種","○ あり",   "500 Ω 以下", "0.5秒以内に動作する漏電遮断器を施設"],
-          ["D種","○ あり",   "500 Ω 以下", "0.5秒以内に動作する漏電遮断器を施設"],
+          ["A種","高圧・特別高圧機器の外箱","× なし",    "—",         "高圧・特別高圧機器は厳格に10Ω"],
+          ["B種","変圧器 低圧側 中性点","× なし",    "—",         "B種は遮断時間で別途緩和あり（下表参照）"],
+          ["C種","低圧（300V 超）機器の外箱","○ あり",   "500 Ω 以下", "0.5秒以内に動作する漏電遮断器を施設"],
+          ["D種","低圧（300V 以下）機器の外箱","○ あり",   "500 Ω 以下", "0.5秒以内に動作する漏電遮断器を施設"],
         ]}
-        note="ELB（30mA・0.1秒）動作なら 500Ω×30mA=15V で接触電圧が安全レベル"
+        note="※ 30mA・0.1秒は接触電圧の計算例（500Ω×30mA=15V で安全レベル）。緩和の規制条件は『0.5秒以内に動作するELBの施設』であり、0.1秒は緩和の閾値ではない点に注意"
       />
 
       <h2 id="b-rule">B種接地工事の倍々ルール（解釈第17条第2項）</h2>
@@ -17672,7 +17863,7 @@ function SetsuchiKojiPage({ onNav, data }) {
           ["1秒超〜2秒以内に遮断",     "300 / Ig Ω 以下", "2倍"],
           ["1秒以内に遮断",            "600 / Ig Ω 以下", "4倍"],
         ]}
-        note="「遮断が速いほど係数2倍ずつ緩和」。Ig は高圧側の1線地絡電流"
+        note="暗記フック『速いほど倍々（1秒で4倍）』＝150→300→600 と2倍ずつ。Ig は高圧側の1線地絡電流［A］"
       />
 
       <h2 id="d-omit">D種接地工事の省略条件</h2>
@@ -17727,14 +17918,14 @@ function SetsuchiKojiPage({ onNav, data }) {
         <ul style={{ margin: 0, paddingLeft: 18 }}>
           <li><strong>4種別の数値暗記Hub</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-ichiran');}} style={{color:'var(--accent)'}}>setsuchi-ichiran（2.1 接地工事一覧表）</a> — 抵抗値・接地線径・接地箇所を表で総復習</li>
           <li><strong>B種計算の深掘り</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('bshu-setsuchi');}} style={{color:'var(--accent)'}}>bshu-setsuchi（1.7 B種接地抵抗値）</a> — Ig 計算・係数判定の具体例</li>
-          <li><strong>条文全体像の再確認</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/17/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki 解釈第17条（A/B種）</a> ／ <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/18/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>第18条（C種）</a> ／ <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/19/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>第19条（D種）</a></li>
+          <li><strong>条文全体像の再確認</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/17/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki 解釈第17条（A・B・C・D種＝接地工事の種類・施設方法。C種=第3項・D種=第4項）</a></li>
         </ul>
       </div>
 
       <DenkenWikiCTA
         url="https://kfurufuru.github.io/denken-wiki/themes/setsuchi/"
         label="denken-wiki「接地工事」を開く"
-        note="条文構造（法39条→電技10条→解釈17〜19条）と各種別の物理的根拠（接触電圧の抑制原理）は denken-wiki が SOT。"
+        note="条文構造（法39条→電技10条→解釈17〜19条）と各種別の物理的根拠（接触電圧の抑制原理）は denken-wiki が SOT。【一次照合】ELB緩和（C/D種・0.5秒以内動作で500Ω以下）と B種倍々（150/300/600÷Ig）は 解釈第17〜19条 で確認。解釈（告示）は e-Gov法令API対象外のため、上記 denken-wiki 解釈17/18/19条ページを SOT として逐語照合（最終確認 2026-06-25）。"
       />
 
       <UpdateLog entries={[
@@ -17742,6 +17933,19 @@ function SetsuchiKojiPage({ onNav, data }) {
         { date: "2026-05-09", content: "B種倍々ルールの遮断時間を電技解釈第17条第2項の正規表現に修正（誤『1秒以内→300・0.5秒以内→600』→ 正『1秒超〜2秒以内→300・1秒以内→600』）。参照条文も第18条→第17条第2項に訂正", reason: "誤数値修正・監修者さん指摘" },
         { date: "2026-05-24", content: "3層構造＋PDCAパイロット適用（v3.0）", reason: "第22条PR#29・denro-zetsuen PR#30 と整合する形で A層全体像・Plan・SectionCheck×4・D. Act パネルを追加。denken-wiki 解釈17/18/19条への3ボタン動線を完備" },
       ]} />
+      <div style={{ margin: '16px 0', padding: '10px 12px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', fontSize: 13 }}>
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>📋 過去問の出題実績（法規・H23以降の出題SoT）</div>
+        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
+          <li>H24 問6 接地工事（解釈第17条・論説）</li>
+          <li>H28 問2 接地工事（解釈第19条・第24条・第28条・穴埋）</li>
+          <li>H30 問5 接地工事の種類及び施工方法（解釈第17条・穴埋）</li>
+          <li>R01 問6 接地工事の工事例（解釈第17条・論説）</li>
+          <li>R04上 問3 高圧架空電線路の接地工事（解釈第17条・穴埋）</li>
+          <li>R07下 問4 電気設備の接地（解釈第17条・第29条・穴埋）</li>
+        </ul>
+        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-setsuchi')} style={{ color: 'var(--accent)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-setsuchi）で解く</a></div>
+        <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ink-3)' }}>出典: 法規過去問SoT kakomon.yml（電気技術者試験センター公表問題ベース・最終確認2026-06-25）</div>
+      </div>
       <PageNav
         prevId="teiatsu-densenro-zetsuen" prevTitle="低圧電線路の絶縁性能（省令第22条）"
         nextId="densenro"                  nextTitle="電線路（架空）"
@@ -19906,9 +20110,42 @@ function JuyoritsuKeisanPage({ onNav, data }) {
       <GoalQuestion
         question="設備容量500kW、需要率0.8、不等率1.25、力率0.9のとき、必要な変圧器容量[kVA]は約いくらか"
         choices={["約 200 kVA","約 280 kVA","約 356 kVA","約 444 kVA"]}
+        correctIndex={2}
         year="頻出"
         note="変圧器容量 [kVA] = 設備容量 × 需要率 ÷ (不等率 × 力率)。読み終えたら戻って解こう"
       />
+
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 8 }}>▼ 3率の関係と「合成最大（同時最大） vs 各最大の合計」</div>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 12 }}>
+          <svg viewBox="0 0 820 360" width="100%" style={{ display: 'block', maxWidth: 820 }} role="img" aria-label="上段は1本の電力曲線で需要率・負荷率を図示。設備容量を上限とし最大需要電力を需要率、平均需要電力を負荷率の基準とする。下段は2工場の負荷曲線でピーク時刻がずれるため合成最大は各最大の合計より小さくなり、不等率が1以上になることを示す">
+            <text x="16" y="24" fontSize="13" fontWeight="700" style={{ fill: 'var(--ink-1)' }}>① 1本の負荷曲線で見る 需要率・負荷率</text>
+            <line x1="60" y1="150" x2="760" y2="150" stroke="#c0392b" strokeWidth="1.4" strokeDasharray="5 4" />
+            <text x="764" y="154" fontSize="11" textAnchor="start" fill="#c0392b" fontWeight="700">設備容量</text>
+            <line x1="60" y1="90" x2="760" y2="90" stroke="#1a73e8" strokeWidth="1.2" strokeDasharray="5 4" />
+            <text x="764" y="94" fontSize="11" textAnchor="start" fill="#1a73e8" fontWeight="700">最大需要電力</text>
+            <line x1="60" y1="120" x2="760" y2="120" stroke="#2e8b57" strokeWidth="1.2" strokeDasharray="5 4" />
+            <text x="764" y="124" fontSize="11" textAnchor="start" fill="#2e8b57" fontWeight="700">平均需要電力</text>
+            <path d="M60 175 L140 140 L220 96 L300 105 L380 92 L460 130 L540 112 L620 150 L700 138 L760 160" fill="none" stroke="#555" strokeWidth="1.8" />
+            <line x1="60" y1="175" x2="60" y2="60" stroke="#999" strokeWidth="1" />
+            <line x1="60" y1="175" x2="760" y2="175" stroke="#999" strokeWidth="1" />
+            <text x="330" y="86" fontSize="10.5" textAnchor="middle" style={{ fill: 'var(--ink-3)' }}>需要率 = 最大需要 ÷ 設備容量</text>
+            <text x="330" y="137" fontSize="10.5" textAnchor="middle" style={{ fill: 'var(--ink-3)' }}>負荷率 = 平均需要 ÷ 最大需要</text>
+            <text x="16" y="218" fontSize="13" fontWeight="700" style={{ fill: 'var(--ink-1)' }}>② 2工場で見る 不等率（ピーク時刻のズレ）</text>
+            <line x1="60" y1="340" x2="480" y2="340" stroke="#999" strokeWidth="1" />
+            <line x1="60" y1="340" x2="60" y2="235" stroke="#999" strokeWidth="1" />
+            <path d="M60 330 L120 300 L180 252 L240 285 L300 320 L360 330 L420 332 L480 334" fill="none" stroke="#1a73e8" strokeWidth="1.8" />
+            <text x="186" y="246" fontSize="10" textAnchor="middle" fill="#1a73e8">A工場 最大</text>
+            <path d="M60 334 L120 330 L180 326 L240 318 L300 270 L360 250 L420 288 L480 330" fill="none" stroke="#8e44ad" strokeWidth="1.8" />
+            <text x="360" y="244" fontSize="10" textAnchor="middle" fill="#8e44ad">B工場 最大</text>
+            <rect x="520" y="244" width="284" height="96" rx="6" style={{ fill: 'var(--bg-2)' }} stroke="var(--line)" strokeWidth="1" />
+            <text x="534" y="266" fontSize="11" style={{ fill: 'var(--ink-1)' }} fontWeight="700">各最大の合計 ＞ 合成最大</text>
+            <text x="534" y="288" fontSize="10.5" style={{ fill: 'var(--ink-2)' }}>ピーク時刻がずれる</text>
+            <text x="534" y="306" fontSize="10.5" style={{ fill: 'var(--ink-2)' }}>→ 同時には重ならない</text>
+            <text x="534" y="328" fontSize="11" fill="#c0392b" fontWeight="700">不等率 = 各最大の合計 ÷ 合成最大 ≧ 1</text>
+          </svg>
+        </div>
+      </div>
 
       <ConclusionBox>
         <ul>
@@ -19999,6 +20236,7 @@ function JuyoritsuKeisanPage({ onNav, data }) {
           <li>例：500 × 0.8 ÷ (1.25 × 0.9) = 400 ÷ 1.125 ≈ <strong>356 kVA</strong></li>
           <li>標準サイズから選定（300・400・500・630・750 kVA等）→ <strong>400 kVA</strong> 選定</li>
           <li>注意：変圧器容量の単位は <strong>kVA</strong>（皮相電力）。kW を力率で割って変換</li>
+          <li>なぜ÷力率か：変圧器の容量は皮相電力 [kVA] で決まる。力率0.9とは有効電力が皮相の9割の意味なので、有効電力 [kW] を力率で割ると必要な皮相電力 [kVA] になる（kW ÷ 0.9 = kVA）</li>
         </ul>
       </ConclusionBox>
 
@@ -20013,15 +20251,15 @@ function JuyoritsuKeisanPage({ onNav, data }) {
       </ConclusionBox>
 
       <h2 id="pat4">パターン④: 単独×変圧器台数×月電力量（R04上 問12型）</h2>
-      <div style={{margin: '12px 0 16px', padding: '12px 16px', background: '#eef5fb', border: '1px solid #4a7fb8', borderLeft: '4px solid #0e3a6e', borderRadius: 8, fontSize: 13, lineHeight: 1.75}}>
-        <div style={{fontWeight: 700, color: '#0e3a6e', marginBottom: 6}}>📐 与条件（R04上 問12）</div>
+      <div style={{margin: '12px 0 16px', padding: '12px 16px', background: 'var(--bg-2)', border: '1px solid var(--accent)', borderLeft: '4px solid var(--accent)', borderRadius: 8, fontSize: 13, lineHeight: 1.75}}>
+        <div style={{fontWeight: 700, color: 'var(--accent)', marginBottom: 6}}>📐 与条件（R04上 問12）</div>
         <div>負荷設備容量 800 kW・需要率 70%・<strong>総合力率 90%</strong>・<strong>月負荷率 60%</strong>。100 kVA 変圧器を何台必要か、月間総消費電力量はいくらか。</div>
       </div>
 
       <ConclusionBox>
         <ul>
           <li><strong>(a) 変圧器台数</strong>：① 最大需要電力 = 設備 × 需要率 = 800 × 0.70 = <strong>560 kW</strong>　② 皮相電力 = 有効電力 ÷ <strong>総合力率</strong> = 560 ÷ 0.90 = <strong>622.2 kVA</strong>　③ 台数 = 622.2 ÷ 100 = 6.22 → <strong>7台（切上げ）</strong></li>
-          <li><strong>(b) 月間電力量</strong>：① 平均需要電力 = 最大 × <strong>月負荷率</strong> = 560 × 0.60 = <strong>336 kW</strong>　② 月間電力量 = 336 × 24h × 30日 = <strong>242,560 kWh ≈ 242 MWh</strong></li>
+          <li><strong>(b) 月間電力量</strong>：① 平均需要電力 = 最大 × <strong>月負荷率</strong> = 560 × 0.60 = <strong>336 kW</strong>　② 月間電力量 = 336 × 24h × 30日 = <strong>241,920 kWh ≈ 242 MWh</strong>（検算：336 × 24 = 8,064 kWh/日、×30日 = 241,920 kWh）</li>
           <li><strong>核心3つ</strong>：⑴ 変圧器選定は kW のまま割らず <strong>総合力率で kVA に変換</strong> ⑵ 月負荷率は「平均/最大」で日負荷率と同じ式・<strong>分母は最大需要電力</strong> ⑶ 平均需要電力は <strong>すでに kW 単位</strong>（30分平均でも kW・kWh ではない）→ 時間換算で 2倍しない</li>
         </ul>
       </ConclusionBox>
@@ -20034,7 +20272,7 @@ function JuyoritsuKeisanPage({ onNav, data }) {
           ["② 皮相電力 [kVA]",       "有効電力 ÷ 総合力率",              "560 ÷ 0.90 = 622.2 kVA",        "総合力率を忘れると 560÷100=5.6→6台で 1台少なく答える"],
           ["③ 変圧器台数 [台]",      "皮相電力 ÷ 1台容量（切上げ）",    "622.2 ÷ 100 = 6.22 → 7台",      "切捨てではなく切上げ。6台では 600 kVA で足りない"],
           ["④ 平均需要電力 [kW]",   "最大需要電力 × 月負荷率",          "560 × 0.60 = 336 kW",          "「月負荷率」も式は同じ（平均/最大）。期間が1か月になるだけ"],
-          ["⑤ 月間電力量 [kWh]",    "平均需要電力 × 24h × 日数",        "336 × 24 × 30 = 242,560 kWh",  "30分平均(kW) を 30分電力量(kWh) と混同して 2倍しない"],
+          ["⑤ 月間電力量 [kWh]",    "平均需要電力 × 24h × 日数",        "336 × 24 × 30 = 241,920 kWh",  "30分平均(kW) を 30分電力量(kWh) と混同して 2倍しない"],
         ]}
         note="①→②で総合力率を忘れる／④→⑤で kW を 2倍する、の2大ミス源を意識"
       />
@@ -20054,10 +20292,10 @@ function JuyoritsuKeisanPage({ onNav, data }) {
         { q: "変圧器容量の公式は？",                              a: "kVA = 設備容量 × 需要率 ÷ (不等率 × 力率)" },
         { q: "設備500kW・需要率0.8・不等率1.25・力率0.9 の容量は？", a: "約 356 kVA → 標準400kVA を選定" },
         { q: "総合負荷率の分母は？",                              a: "合成最大需要電力（同時最大）" },
-        { q: "不等率の検算ポイントは？",                          a: "通常1以上として検算（各需要家のピーク時刻はズレるため。合致しなければ計算ミスを疑う）" },
+        { q: "不等率の検算ポイントは？",                          a: "定義上1以上（各需要家のピーク時刻がズレる→各最大の合計 ≧ 合成最大ゆえ、不等率 = 各最大の合計 ÷ 合成最大 ≧ 1）。1未満なら計算ミスを疑う" },
         { q: "kW と kVA の変換は？",                              a: "kW ÷ 力率 = kVA（力率0.9なら kVA = kW/0.9）" },
         { q: "設備800kW・需要率0.70・総合力率0.90のとき100kVA変圧器は何台？", a: "800×0.70÷0.90=622.2kVA → 622.2÷100=6.22→7台（切上げ）。総合力率を忘れて 560÷100=5.6→6台 は誤答" },
-        { q: "最大需要560kW・月負荷率0.60 の月間電力量は？",       a: "平均需要 560×0.60=336kW → 336×24h×30日=242,560kWh ≈ 242MWh。kW を 2倍しない（平均需要電力はすでに kW 単位）" },
+        { q: "最大需要560kW・月負荷率0.60 の月間電力量は？",       a: "平均需要 560×0.60=336kW → 336×24h×30日=241,920kWh ≈ 242MWh。kW を 2倍しない（平均需要電力はすでに kW 単位）" },
       ]} />
 
       <h2 id="mnemonic">暗記フック：3率の分母と大小を試験本番で取り違えない覚え方</h2>
@@ -20199,7 +20437,7 @@ function FuritsuPage({ onNav, data }) {
           <li><strong>最大需要電力・平均需要電力はすべて kW（電力）単位</strong>。30分平均値・1時間平均値・1日平均値どれも単位は kW。</li>
           <li>「30分平均」とは <strong>30分間に流れた電力(kW)の平均値</strong> であって、<strong>30分間に消費した電力量(kWh)ではない</strong>。</li>
           <li>典型ミス：「平均需要電力は30分単位だから1時間あたりに換算するため 2倍する」→ <strong>誤り</strong>。すでに kW（時間平均）なのでそのまま時間でかけて kWh にする。</li>
-          <li>例：平均需要電力 336 kW × 24h × 30日 = 242,560 kWh（2倍しない）。もし 2倍すると 485,120 kWh ≈ 485MWh で誤答。</li>
+          <li>例：平均需要電力 336 kW × 24h × 30日 = 241,920 kWh（2倍しない）。もし 2倍すると 483,840 kWh ≈ 484MWh で誤答。</li>
         </ul>
       </div>
 
@@ -20212,7 +20450,7 @@ function FuritsuPage({ onNav, data }) {
         headers={["手順","式","数値"]}
         rows={[
           ["① 月負荷率の定義から平均需要電力を求める", "平均需要電力 = 最大需要電力 × 月負荷率",   "560 × 0.60 = 336 kW"],
-          ["② 平均需要電力を期間時間でかけて月電力量",  "月間電力量 = 平均需要電力 × 24h × 日数", "336 × 24 × 30 = 242,560 kWh ≈ 242 MWh"],
+          ["② 平均需要電力を期間時間でかけて月電力量",  "月間電力量 = 平均需要電力 × 24h × 日数", "336 × 24 × 30 = 241,920 kWh ≈ 242 MWh"],
         ]}
         note="月負荷率は日負荷率と同じ「平均/最大」の式。違うのは集計期間（24h→月の総時間）だけ"
       />
@@ -20237,7 +20475,7 @@ function FuritsuPage({ onNav, data }) {
         { wrong: "負荷率を高めるには設備を増やす",          correct: "負荷率は使い方の指標。設備を増やしても変わらない（平均利用を増やすのが正解）" },
         { wrong: "月負荷率と日負荷率は別公式",              correct: "式は同じ『平均/最大』。違うのは集計期間と総時間だけ（日=24h／月=720or744h／年=8760h）" },
         { wrong: "平均需要電力(kW) を時間換算で 2倍する",   correct: "平均需要電力はすでに kW（時間平均）。そのまま時間でかけて kWh にする。30分平均(kW)≠30分電力量(kWh)" },
-        { wrong: "最大需要×月負荷率×30 で月電力量[kWh]とする", correct: "最大×月負荷率=平均kW（まだ電力）。さらに ×24h×日数 で kWh になる。560×0.6=336kW → ×24×30=242,560kWh" },
+        { wrong: "最大需要×月負荷率×30 で月電力量[kWh]とする", correct: "最大×月負荷率=平均kW（まだ電力）。さらに ×24h×日数 で kWh になる。560×0.6=336kW → ×24×30=241,920kWh" },
       ]} />
 
       <h2 id="quick-review">1分復習</h2>
@@ -20248,7 +20486,7 @@ function FuritsuPage({ onNav, data }) {
         { q: "電力会社にとって望ましい顧客は？",        a: "高負荷率（設備効率がよい）" },
         { q: "年負荷率の分母の時間数は？",              a: "8760 h（24×365）" },
         { q: "月負荷率と日負荷率の違いは？",            a: "式は同じ『平均/最大』。違うのは集計期間（24h→30日なら720h）だけ。分母は常に『その期間の最大需要電力』" },
-        { q: "最大560kW・月負荷率0.60・30日の月間電力量は？", a: "平均=560×0.60=336kW → 336×24×30=242,560kWh ≈ 242MWh。30分単位と勘違いして 2倍してはいけない（kW単位はすでに時間平均）" },
+        { q: "最大560kW・月負荷率0.60・30日の月間電力量は？", a: "平均=560×0.60=336kW → 336×24×30=241,920kWh ≈ 242MWh。30分単位と勘違いして 2倍してはいけない（kW単位はすでに時間平均）" },
       ]} />
 
       <DenkenWikiCTA
@@ -21934,6 +22172,7 @@ function DemandKanriPage({ onNav, data }) {
         year="令和5年上期 法規 問10"
         question="ある工場では、換気用ファン（定格出力5.5kW）を最大8台まで停止できる。9:00〜9:20の平均使用電力は310kWであった。9:20〜9:30の間にファンを何台か停止させるとともに、その他の負荷10kW分を停止した。9:00〜9:30の最大需要電力を300kW未満に抑えるためには、ファンを最低何台停止させる必要があるか。"
         choices={["0台", "2台", "4台", "6台", "8台"]}
+        correctIndex={2}
         note="最大需要電力 = 30分間の平均使用電力[kW]。このページを読み終えたら戻って解いてみよう。"
       />
 
@@ -22001,9 +22240,9 @@ function DemandKanriPage({ onNav, data }) {
         headers={["年度・期", "問番号", "出題内容", "答え"]}
         rows={[
           ["R5上（2023）", "問10", "換気ファン5.5kW×台数 + 他10kW停止。9:20〜9:30の制御で300kW未満にする最小台数", "4台"],
-          ["CH06全体", "（参考）", "電気施設管理カテゴリ全体：過去10年で30問以上（Sランク）。デマンド計算・需要率・変圧器容量等を含む", "─"],
+          ["関連出題", "（参考）", "デマンド計算の単独出題はR5上 問10。最大需要電力を使う需要率・負荷率・不等率は別テーマ（1.6/6.1）で別途出題される", "─"],
         ]}
-        note="※ デマンド制御計算の単独集計。電気施設管理カテゴリ全体の出題は別途テーマランキングを参照"
+        note="※ デマンド制御計算そのものの単独出題はR5上 問10。関連する需要率等の計算は各テーマページを参照（過大な網羅感を出さない限定集計）"
       />
 
       {/* 5. 3. 試験で問われること */}
@@ -22067,7 +22306,7 @@ function DemandKanriPage({ onNav, data }) {
       </PlainExplain>
       <div style={{background:'var(--bg-elev)', border:'1px solid var(--line)', borderRadius:'var(--radius)', padding:16}}>
         <svg viewBox="0 0 820 320" style={{width:'100%', height:'auto', display:'block'}}>
-          <rect x="0" y="0" width="820" height="320" fill="#fff"/>
+          <rect x="0" y="0" width="820" height="320" style={{fill:'var(--bg-elev)'}}/>
           {[100,140,180,220,260].map(y => (
             <line key={y} x1="70" y1={y} x2="760" y2={y} stroke="#eee" strokeWidth="1"/>
           ))}
@@ -22078,13 +22317,13 @@ function DemandKanriPage({ onNav, data }) {
           {[["0分", 70], ["30分", 415], ["60分", 760]].map(([label, x]) => (
             <g key={label}>
               <line x1={x} y1="280" x2={x} y2="286" stroke="#666" strokeWidth="1.5"/>
-              <text x={x} y="300" fontSize="11" fill="#666" textAnchor="middle">{label}</text>
+              <text x={x} y="300" fontSize="11" style={{fill:'var(--ink-2)'}} textAnchor="middle">{label}</text>
             </g>
           ))}
           {[[400,60],[350,100],[300,180],[250,220],[200,260]].map(([label,y]) => (
-            <text key={label} x="62" y={y+4} fontSize="11" fill="#666" textAnchor="end">{label}</text>
+            <text key={label} x="62" y={y+4} fontSize="11" style={{fill:'var(--ink-2)'}} textAnchor="end">{label}</text>
           ))}
-          <text x="18" y="180" fontSize="12" fill="#666" transform="rotate(-90,18,180)">電力 [kW]</text>
+          <text x="18" y="180" fontSize="12" style={{fill:'var(--ink-2)'}} transform="rotate(-90,18,180)">電力 [kW]</text>
           <rect x="71" y="60" width="343" height="220" fill="#fde8e8" opacity="0.5"/>
           <line x1="71" y1="60" x2="413" y2="60" stroke="#d33" strokeWidth="2.5"/>
           <text x="242" y="52" fontSize="12" fill="#d33" fontWeight="700" textAnchor="middle">第1区間 380kW（目標超過）</text>
@@ -22092,7 +22331,7 @@ function DemandKanriPage({ onNav, data }) {
           <line x1="414" y1="196" x2="759" y2="196" stroke="#2a8" strokeWidth="2.5"/>
           <text x="587" y="240" fontSize="12" fill="#2a8" fontWeight="700" textAnchor="middle">第2区間 260kW（目標内）</text>
           <line x1="414" y1="40" x2="414" y2="280" stroke="#999" strokeWidth="1.5" strokeDasharray="4,3"/>
-          <text x="414" y="33" fontSize="11" fill="#999" textAnchor="middle">30分区切り</text>
+          <text x="414" y="33" fontSize="11" style={{fill:'var(--ink-3)'}} textAnchor="middle">30分区切り</text>
           <rect x="160" y="72" width="162" height="24" rx="4" fill="#c33" opacity="0.12"/>
           <text x="241" y="88" fontSize="12" fill="#c33" fontWeight="700" textAnchor="middle">← 最大需要電力</text>
           <defs>
@@ -22122,7 +22361,7 @@ function DemandKanriPage({ onNav, data }) {
       />
       <div style={{background:'var(--bg-elev)', border:'1px solid var(--line)', borderRadius:'var(--radius)', padding:16}}>
         <svg viewBox="0 0 820 300" style={{width:'100%', height:'auto', display:'block'}}>
-          <rect x="0" y="0" width="820" height="300" fill="#fff"/>
+          <rect x="0" y="0" width="820" height="300" style={{fill:'var(--bg-elev)'}}/>
           {[80,120,160,200,240].map(y => (
             <line key={y} x1="70" y1={y} x2="750" y2={y} stroke="#eee" strokeWidth="1"/>
           ))}
@@ -22135,11 +22374,11 @@ function DemandKanriPage({ onNav, data }) {
           {[["9:00",70],["9:10",297],["9:20",524],["9:30",750]].map(([label,x]) => (
             <g key={label}>
               <line x1={x} y1="262" x2={x} y2="268" stroke="#666" strokeWidth="1.5"/>
-              <text x={x} y="282" fontSize="11" fill="#444" textAnchor="middle">{label}</text>
+              <text x={x} y="282" fontSize="11" style={{fill:'var(--ink-2)'}} textAnchor="middle">{label}</text>
             </g>
           ))}
           {[[350,64],[320,92],[310,112],[300,160],[280,200],[260,240]].map(([label,y]) => (
-            <text key={label} x="62" y={y+4} fontSize="11" fill="#666" textAnchor="end">{label}</text>
+            <text key={label} x="62" y={y+4} fontSize="11" style={{fill:'var(--ink-2)'}} textAnchor="end">{label}</text>
           ))}
           <rect x="71" y="112" width="452" height="150" fill="#fde8e8" opacity="0.4"/>
           <line x1="71" y1="112" x2="523" y2="112" stroke="#d33" strokeWidth="3"/>
@@ -22155,7 +22394,7 @@ function DemandKanriPage({ onNav, data }) {
           <text x="297" y="249" fontSize="12" fill="#c33" fontWeight="700" textAnchor="middle">310×20 = 6,200 kW·分</text>
           <rect x="525" y="234" width="224" height="22" fill="#e8f5e9" opacity="0.6"/>
           <text x="637" y="249" fontSize="12" fill="#2a8" fontWeight="700" textAnchor="middle">278×10 = 2,780 kW·分</text>
-          <text x="410" y="145" fontSize="12" fill="#333" textAnchor="middle">合計 8,980 kW·分 ÷ 30 = 299.3kW &lt; 300 ✓</text>
+          <text x="410" y="145" fontSize="12" style={{fill:'var(--ink-1)'}} textAnchor="middle">合計 8,980 kW·分 ÷ 30 = 299.3kW &lt; 300 ✓</text>
         </svg>
         <div style={{fontSize:12, color:'var(--ink-3)', marginTop:8}}>※ ファン4台(22kW) + 他10kW = 32kW停止 → 310−32 = 278kW。278 &lt; 280 ✓ 条件達成。</div>
       </div>
@@ -22167,10 +22406,10 @@ function DemandKanriPage({ onNav, data }) {
       </PlainExplain>
       <div style={{background:'var(--bg-elev)', border:'1px solid var(--line)', borderRadius:'var(--radius)', padding:16}}>
         <svg viewBox="0 0 820 240" style={{width:'100%', height:'auto', display:'block'}}>
-          <rect x="0" y="0" width="820" height="240" fill="#fff"/>
+          <rect x="0" y="0" width="820" height="240" style={{fill:'var(--bg-elev)'}}/>
           <line x1="60" y1="200" x2="750" y2="200" stroke="#666" strokeWidth="1.5"/>
           <line x1="60" y1="40" x2="60" y2="200" stroke="#666" strokeWidth="1.5"/>
-          <rect x="61" y="50" width="689" height="150" fill="#f7f7f7" stroke="#ccc" strokeWidth="1"/>
+          <rect x="61" y="50" width="689" height="150" style={{fill:'var(--bg-2)',stroke:'var(--line)'}} strokeWidth="1"/>
           <rect x="61" y="50" width="459" height="150" fill="#fde8e8" stroke="#d33" strokeWidth="1.5"/>
           <text x="290" y="128" fontSize="15" fill="#d33" fontWeight="800" textAnchor="middle">310 × 20 = 6,200 kW·分</text>
           <text x="290" y="150" fontSize="13" fill="#d33" textAnchor="middle">（前半・確定値）</text>
@@ -22181,10 +22420,10 @@ function DemandKanriPage({ onNav, data }) {
           <text x="636" y="70" fontSize="12" fill="#e6a817" fontWeight="700" textAnchor="middle">残り許容枠: &lt;2,800 kW·分</text>
           <line x1="61" y1="50" x2="749" y2="50" stroke="#a06" strokeWidth="2" strokeDasharray="8,4"/>
           <text x="610" y="44" fontSize="12" fill="#a06" fontWeight="700">上限 9,000 kW·分（30×300）</text>
-          <text x="290" y="216" fontSize="12" fill="#666" textAnchor="middle">← 20分 →</text>
-          <text x="636" y="216" fontSize="12" fill="#666" textAnchor="middle">← 10分 →</text>
+          <text x="290" y="216" fontSize="12" style={{fill:'var(--ink-2)'}} textAnchor="middle">← 20分 →</text>
+          <text x="636" y="216" fontSize="12" style={{fill:'var(--ink-2)'}} textAnchor="middle">← 10分 →</text>
           <line x1="520" y1="50" x2="520" y2="200" stroke="#999" strokeWidth="1.5" strokeDasharray="3,2"/>
-          <text x="520" y="232" fontSize="11" fill="#555" textAnchor="middle">9:20</text>
+          <text x="520" y="232" fontSize="11" style={{fill:'var(--ink-2)'}} textAnchor="middle">9:20</text>
         </svg>
         <div style={{fontSize:12, color:'var(--ink-3)', marginTop:8}}>※ 前半面積(6,200) + 後半面積(10P) &lt; 上限(9,000) → P &lt; 280kW が条件。</div>
       </div>
@@ -22264,6 +22503,7 @@ function DemandKanriPage({ onNav, data }) {
           ["デマンド計算の基本式", "(P₁t₁ + P₂t₂) / 30 &lt; 目標値", "時間[分]で統一すること"],
           ["切り上げの理由", "台数は整数。小数以下切り捨てでは条件未達になる", "「4台」で条件達成できても「3.64→3台」は不足"],
           ["「未満」の境界値", "P &lt; 280 → P=280はNG、平均=300kWになり「未満」不成立", "「以下」と「未満」は別物"],
+          ["語呂で覚える", "「未満は超えず・端数は上げる」", "未満＝境界値NG／台数の端数は必ず切り上げ、をワンフレーズで結合"],
           ["需要率との関係", "需要率 = 最大需要電力 ÷ 設備容量 × 100%", "最大需要電力を下げると需要率も下がる"],
         ]}
         note="デマンド制御は「最大需要電力を下げて毎月の基本料金を削減する」経営的意義もある"
@@ -22272,7 +22512,7 @@ function DemandKanriPage({ onNav, data }) {
       {/* 13. ひっかけ表 */}
       <h2 id="traps">13. よくあるひっかけ（10項目）</h2>
       <TrapTable traps={[
-        { wrong: "「未満」を「以下」と読み間違え、後半P=300kWでも目標達成と考える", correct: "後半P=300の場合：平均=(310×20+300×10)/30=306.7kW>300で条件未達。「以下」でも「未満」でもP<280（または≤280）が必要" },
+        { wrong: "「未満」を「以下」と読み間違え、後半P=300kWでも目標達成と考える", correct: "後半P=300の場合：平均=(310×20+300×10)/30=306.7kW>300で条件未達。設問が「未満」ならP<280kW（P=280はちょうど平均300kWでNG）、仮に「以下」設問なら平均≤300の境界も可だが、いずれもP=300では達成できない" },
         { wrong: "X=3.64 → 切り捨てで3台と答える", correct: "3台ではP=283.5kW>280で条件未達。整数台しかないので切り上げ→4台" },
         { wrong: "その他停止負荷10kWを忘れる", correct: "停止電力 = 5.5X + 10。10kWを引いてからXを求める（必要ファン停止は20kW分）" },
         { wrong: "後半10分の計算を30分で割らない", correct: "P×10 が後半エネルギー。P×30 は誤り（10分しかない）" },
@@ -22366,9 +22606,9 @@ function DemandKanriPage({ onNav, data }) {
           [<span>🟥 法律</span>, <span><strong>電気事業法</strong><br/>第39条 事業用電気工作物の維持</span>, "事業用電気工作物を技術基準に適合するよう維持する義務。施設管理の法的根拠"],
           [<span>🟥 法律</span>, <span><strong>エネルギーの使用の合理化等に関する法律（省エネ法）</strong><br/>第3条・第5条</span>, "特定事業者のエネルギー管理義務。デマンド制御による省エネの法的背景"],
           [<span>🟨 省令</span>, <span><strong>電気設備技術基準</strong><br/>第1条 定義</span>, "最大需要電力の定義が使われる文脈（施設管理全般）"],
-          [<span>🟩 解釈</span>, <span><strong>電技解釈</strong><br/>第220条 電気施設管理</span>, "需要率・負荷率・不等率の概念（デマンド制御の基礎数値）"],
+          [<span>🟩 解釈</span>, <span><strong>電技解釈</strong><br/>第220条 分散型電源の系統連系設備に係る用語の定義</span>, "分散型電源（逆潮流・単独運転・解列等）の用語を定義。第19節「19. 掛け算出題パターン」で触れる太陽光自家消費によるデマンド低減の関連条文"],
         ]}
-        note="法規B問題（電気施設管理）は計算が中心。条文番号より概念と計算手順の理解が重要"
+        note="法規B問題（電気施設管理）は計算が中心。条文番号より概念と計算手順の理解が重要。なお需要率・負荷率・不等率は電気施設管理上の概念であり、特定の解釈条文に法定の定義があるわけではない。条文帰属はe-Govで確認（電技解釈第220条＝分散型電源の用語定義・2026-06-25確認）"
       />
 
       {/* 18. 1分復習 */}
@@ -22393,6 +22633,19 @@ function DemandKanriPage({ onNav, data }) {
           { a: "デマンドレスポンス", b: "分散型電源連系（3.7）", result: "太陽光自家消費によるデマンド低減と余剰電力逆潮流の問題" },
         ]}
       />
+
+      <div style={{ margin: '16px 0', padding: '10px 12px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', fontSize: 13 }}>
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>📋 過去問の出題実績（法規・H23以降の出題SoT）</div>
+        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
+          <li>H23 問12：日負荷曲線からの不等率及び力率の導出（計算）</li>
+          <li>H26 問12：需要率及び負荷率（計算）</li>
+          <li>H30 問10：電力の需給（穴埋）</li>
+          <li>R03 問13：需要家の需要率，不等率，負荷率（計算）</li>
+          <li>R05上 問10：最大需要電力を抑えるためのファン停止台数（計算）</li>
+          <li>R05上 問11：2つの工場を合わせた需要率及び総合負荷率（計算）</li>
+        </ul>
+        <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ink-3)' }}>出典: 法規過去問SoT kakomon.yml（電気技術者試験センター公表問題ベース・最終確認2026-06-25）</div>
+      </div>
 
       <PageNav
         prevId="juden-setsubi-kanri"
