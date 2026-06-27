@@ -3120,7 +3120,1276 @@ const ShinEnergyPage = ({ data, onNav }) => (
   </>
 );
 
-Object.assign(window, { StubPage, UnitStubPage, HaidenPage, KakuuSoudenPage, KaryokuPage, HenatsukiPage, SuiryokuPage, DenkiZairyouPage, GenshiryokuPage, ShinEnergyPage });
+/* ============================================================
+   2.2-2.6 変電サブ / 3.2 地中送電 / 5.2 電力系統 — 本文移植（残7テーマ完了）
+   出典: denken-wiki-denryoku/docs/themes/{henatsuki-loss,keiki-hensei,
+   shadanki,hogo-keiden,kaihei-hogo,chichuu-souden,denryoku-keitou}.md
+   ============================================================ */
+const HenatsukiLossPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "変圧器の損失・効率" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="2.2  TRANSFORMER LOSS & EFFICIENCY"
+      title="変圧器の損失・効率"
+      deck="鉄損は電圧があれば24h一定、銅損は負荷率の二乗で振れる。この2性質を24時間積分したのが全日効率、365日に拡張したのが年間損失電力量。更新で鉄損を半減できれば軽負荷の設備ほど年間効果が大きい——これが施設管理B問題（R04下問12）の核心。"
+      meta={[
+        { label: "出題頻度", value: "中〜高（電力＋法規B問題で年1回前後）" },
+        { label: "難易度", value: "★★★" },
+        { label: "出題形式", value: "計算（全日効率/年間損失/更新経済性）" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="intro"><span className="h-num">1.</span>直感的理解 — なぜ「全日効率」を別概念にするか</h2>
+      <p>瞬時効率 <Eq tex="\eta = P_{out}/(P_{out}+P_i+P_c)" /> は<strong>負荷率 α が固定</strong>の前提で、ある瞬間の効率を表す。実プラントの変圧器は昼夜・休日・季節で負荷率が大きく変動するため、<strong>24時間ぶん積分した「全日効率」</strong>で評価しないと設備設計や更新判断を誤る。</p>
+      <Box kind="tip" label="3行で本質">
+        <ul>
+          <li>鉄損 <Eq tex="P_i" /> は<strong>電圧があれば24hずっと一定</strong>（無負荷損）→ 1日で <Eq tex="24 P_i" /> [Wh]</li>
+          <li>銅損 <Eq tex="P_c" /> は<strong>負荷率の二乗</strong>に比例 → 時間別の負荷率パターンを掛けて積分</li>
+          <li>全日効率 ＝ 1日の出力電力量 ÷（1日の出力電力量 ＋ 1日の鉄損 ＋ 1日の銅損）</li>
+        </ul>
+      </Box>
+      <Box kind="warn" label="瞬時効率最大の負荷率 ≠ 全日効率最大の負荷率">
+        <p>瞬時効率は <Eq tex="P_i = \alpha^2 P_{c,full}" /> で最大化（鉄損＝銅損／基礎ハブの最大効率条件）。全日効率は24hの負荷パターンに依存するため、軽負荷時間が長い変圧器では<strong>鉄損を小さくした機種</strong>（アモルファスなど）が有利になる。この差異が出題の核心。</p>
+      </Box>
+
+      <h2 id="zenjitsu"><span className="h-num">2.</span>全日効率の本格計算</h2>
+      <FormulaCard num="01" name="全日効率（24h積分）" eq="\eta_{day} = \dfrac{\sum_k P_{out,k}\,t_k}{\sum_k P_{out,k}\,t_k + 24 P_i + \sum_k \alpha_k^2 P_{c,full}\,t_k} \times 100\,[\%]"
+        note="Pout,k=Sn·αk·cosθ（時間帯kの出力）、tk=時間帯kの時間[h]（Σtk=24h）、Pi=鉄損[W]（一定）、Pc,full=定格時の銅損[W]。" />
+      <Box kind="warn" label="負荷率は皮相 [kV·A] 基準">
+        <p>変圧器の定格は皮相電力 <Eq tex="S_n" /> [V·A] で与えられる。負荷率も皮相基準で、有効電力 <Eq tex="P_{out}" /> [W] から負荷率を出すときは<strong>力率で割って皮相に戻す</strong>：<Eq tex="\alpha = P_{out}/(S_n \cos\theta)" />。これを忘れて <Eq tex="P_{out}/S_n" /> で計算すると力率分だけズレる（このページの正誤判定 罠①参照）。</p>
+      </Box>
+      <Box kind="tip" label="解法フロー（5ステップ）">
+        <ul>
+          <li>① 時間別の負荷率と時間を表に整理</li>
+          <li>② 出力電力量 <Eq tex="\sum P_{out,k} t_k" /> を集計 [Wh]</li>
+          <li>③ 鉄損総量 <Eq tex="24 P_i" /> [Wh]（負荷率に依らず一定）</li>
+          <li>④ 銅損総量 <Eq tex="\sum \alpha_k^2 P_{c,full} t_k" /> [Wh]</li>
+          <li>⑤ 定義式に代入</li>
+        </ul>
+      </Box>
+      <Box kind="example" label="計算例: Sn=100kV·A・力率1.0・鉄損Pi=500W・定格銅損Pc,full=1500W">
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>時間帯</th><th>時間 tk [h]</th><th>負荷率 αk</th><th>出力 Pout,k [kW]</th></tr></thead>
+          <tbody>
+            <tr><td>深夜（軽負荷）</td><td>8</td><td>0.2</td><td>20</td></tr>
+            <tr><td>朝夕（中負荷）</td><td>10</td><td>0.6</td><td>60</td></tr>
+            <tr><td>昼間（重負荷）</td><td>6</td><td>1.0</td><td>100</td></tr>
+          </tbody>
+        </table></div>
+        <p>力率1.0のため <Eq tex="P_{out}=S_n \alpha" /> でWとV·Aが一致するケース。</p>
+        <p><strong>① 出力電力量</strong>：<Eq tex="20\times8 + 60\times10 + 100\times6 = 160+600+600 = 1360\,\text{kWh}" /></p>
+        <p><strong>② 鉄損総量</strong>：<Eq tex="24 P_i = 24\times500 = 12{,}000\,\text{Wh} = 12\,\text{kWh}" /></p>
+        <p><strong>③ 銅損総量</strong>：<Eq tex="(0.2^2\times8 + 0.6^2\times10 + 1.0^2\times6)\times1500 = (0.32+3.6+6.0)\times1500 = 9.92\times1500 = 14{,}880\,\text{Wh} \approx 14.88\,\text{kWh}" display /></p>
+        <p><strong>④ 全日効率</strong>：<Eq tex="\eta_{day} = \dfrac{1360}{1360+12+14.88}\times100 = \dfrac{1360}{1386.88}\times100 \approx 98.06\%" display /></p>
+      </Box>
+      <Box kind="tip" label="計算チェック">
+        <p>鉄損12kWhは時間が長い深夜帯にも一定で支配的になりがち。銅損14.88kWhは昼間6hで9kWhを稼ぐ（負荷率1.0×6h×1.5kW）。軽負荷の深夜が長い設備では鉄損比率が上がる → アモルファス変圧器の利得が大きい。</p>
+      </Box>
+
+      <h2 id="nenkan"><span className="h-num">3.</span>年間損失電力量と電気代換算</h2>
+      <FormulaCard num="02" name="年間損失電力量（季節変動なしの仮定）" eq="W_{loss,year} = (24 P_i + \sum \alpha_k^2 P_{c,full}\,t_k) \times 365\,[\mathrm{Wh/yr}]"
+        note="負荷パターンが季節で変わらないと仮定し、1日の損失を365倍する。" />
+      <FormulaCard num="03" name="年間損失額（電力量単価C [円/kWh]）" eq="\text{Cost} = W_{loss,year} \times C\,[\mathrm{JPY/yr}]"
+        note="Cは電力量単価。年間損失電力量に単価を掛けて円換算→更新経済性の判断材料。" />
+      <Box kind="example" label="例: 上記計算例（1日損失 12＋14.88＝26.88kWh）・単価20円/kWh">
+        <p>年間損失電力量：<Eq tex="W_{loss,year} = (12+14.88)\times365 = 9{,}811\,\mathrm{kWh/yr}" /></p>
+        <p>年間損失額：<Eq tex="9{,}811 \times 20 \approx 196{,}000\,\mathrm{JPY/yr}" /></p>
+      </Box>
+
+      <h2 id="koushin"><span className="h-num">4.</span>更新経済性評価（旧機→新機）</h2>
+      <FormulaCard num="04" name="更新による年間損失削減" eq="\Delta W_{year} = \{(24 P_{i,old} + \sum \alpha_k^2 P_{c,old}\,t_k) - (24 P_{i,new} + \sum \alpha_k^2 P_{c,new}\,t_k)\}\times365"
+        note="旧機（old）から新機（new）への更新で、年間損失電力量の差を取る。" />
+      <FormulaCard num="05" name="単純回収年（ペイバック）" eq="T_{\text{pb}} = \dfrac{I}{\Delta W_{year}\times C}\,[\mathrm{yr}]"
+        note="I=更新投資額[円]、ΔWyear×C=年間損失削減額[円/年]。" />
+      <Box kind="warn" label="鉄損改善は「24h × 365日」で効く">
+        <p>新機で鉄損が半分になれば、その効果は <Eq tex="\Delta P_i \times 8760" /> h（24h×365日）で年間に効く（負荷率に無関係）。軽負荷時間が長い変圧器ほど鉄損改善のインパクトが大きい。</p>
+      </Box>
+
+      <h2 id="amorphous"><span className="h-num">5.</span>アモルファス変圧器とトップランナー規制</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>項目</th><th>珪素鋼板（従来）</th><th>アモルファス</th></tr></thead>
+        <tbody>
+          <tr><td>結晶構造</td><td>結晶質（規則的に配列）</td><td>非晶質（ランダム配列・磁区転換が容易）</td></tr>
+          <tr><td>ヒステリシス損</td><td>基準（1.0）</td><td><strong>約1/3</strong>（軽負荷時間が長いほど効果絶大）</td></tr>
+          <tr><td>渦電流損</td><td>板厚0.35mm級で抑制</td><td>板厚25μm級でさらに抑制（薄帯製造）</td></tr>
+          <tr><td>製造コスト</td><td>標準</td><td>1.3〜1.5倍（鉄損削減で長期回収可）</td></tr>
+          <tr><td>騒音</td><td>標準</td><td>やや大きめ（磁歪が大きい）</td></tr>
+          <tr><td>主用途</td><td>産業用大型・特殊用途</td><td>配電用変圧器（柱上・地上）</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="example" label="なぜアモルファスは軽負荷で有利か（BH曲線のループ面積で理解）">
+        <p>ヒステリシス損は <Eq tex="W_h = \oint H\,dB" />（BH曲線ループ内側の面積）。アモルファスは磁区構造が非晶質で磁化方向の転換に要するエネルギーが小さく、ループが細長く狭くなる → ヒステリシス損が約1/3。軽負荷の長時間運転では銅損より鉄損が支配的になる（上の計算例でも鉄損12kWh／銅損14.88kWhと拮抗）ため、鉄損を1/3にできれば全日損失で大きな差が出る。逆に高負荷で24h稼働する産業用大型変圧器では銅損が支配的で、アモルファスの優位性は相対的に小さくなる。</p>
+      </Box>
+      <Box kind="tip" label="トップランナー規制の経緯（省エネ法）">
+        <ul>
+          <li><strong>2002年</strong>：省エネ法にトップランナー方式導入</li>
+          <li><strong>2006年</strong>：第1次判断基準（500kV·A以下の配電用油入変圧器が中心）</li>
+          <li><strong>2014年</strong>：第2次判断基準（モールド変圧器も対象に・効率基準を強化）</li>
+          <li><strong>R04下問12 出題当時（2022年）</strong>：第2次基準が適用中</li>
+          <li><strong>2026年度</strong>：第3次判断基準の目標年度（油入・モールド変圧器ともに移行・効率基準のさらなる強化）</li>
+        </ul>
+      </Box>
+      <Box kind="warn" label="基準負荷率は容量で分かれる（境界値「500kV·A」は「以下」に含まれる）">
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>定格容量</th><th>基準負荷率</th><th>評価式の銅損項</th></tr></thead>
+          <tbody>
+            <tr><td>500kV·A以下（500を含む）</td><td><strong>40%</strong></td><td><Eq tex="0.4^2 W_{c,full} = 0.16\,W_{c,full}" /></td></tr>
+            <tr><td>500kV·A超（501kV·A以上）</td><td><strong>50%</strong></td><td><Eq tex="0.5^2 W_{c,full} = 0.25\,W_{c,full}" /></td></tr>
+          </tbody>
+        </table></div>
+        <p>500kV·Aちょうどの機器は<strong>「以下」グループ＝負荷率40%評価</strong>。問題文に「○○kV·A以下／超／以上／未満」があったら境界値を含むか必ず判定する。規制値は施行年で変わるため、試験では問題文に明示された値（基準エネルギー消費効率・達成率）をそのまま使う。</p>
+      </Box>
+
+      <h2 id="r04"><span className="h-num">6.</span>R04下 問12 個別解説（施設管理B問題）</h2>
+      <Box kind="example" label="共通条件（500kV·A・更新前後）">
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>項目</th><th>旧変圧器</th><th>新変圧器</th></tr></thead>
+          <tbody>
+            <tr><td>定格容量</td><td>500kV·A</td><td>500kV·A</td></tr>
+            <tr><td>無負荷損 Wi</td><td>500W</td><td>150W</td></tr>
+            <tr><td>負荷損（定格通電時）Wc</td><td>6,700W</td><td>(a)で求める</td></tr>
+            <tr><td>省エネ基準達成率</td><td>—</td><td>140%</td></tr>
+            <tr><td>基準エネルギー消費効率</td><td>—</td><td>1,250W</td></tr>
+          </tbody>
+        </table></div>
+        <p>電圧・周波数は更新前後で同じ。電圧変動による無負荷損への影響は無視。</p>
+      </Box>
+      <Box kind="example" label="設問(a)：更新後の負荷損（定格通電時）→ 正答 (5) 4,640W">
+        <p><strong>① 省エネ基準達成率の定義式</strong>（負荷率40%時の損失で評価）：<Eq tex="\text{rate}[\%] = \dfrac{W_{\text{base}}}{W_i + W_{c40}}\times100" />、ここで <Eq tex="W_{c40}=0.16\,W_{c,full}" /></p>
+        <p><strong>② 140%・1,250Wを代入して逆算</strong>：<Eq tex="W_i + W_{c40} = \dfrac{1{,}250}{1.40} \approx 892.86\,\text{W}" /></p>
+        <p><strong>③ 新機 Wi=150W を引く</strong>：<Eq tex="W_{c40} = 892.86 - 150 = 742.86\,\text{W}" /></p>
+        <p><strong>④ 負荷率40%の二乗で定格戻し</strong>：<Eq tex="W_{c,full}' = \dfrac{742.86}{0.16} \approx 4{,}643\,\text{W} \to (5)\ 4{,}640\,\text{W}" display /></p>
+      </Box>
+      <Box kind="example" label="設問(b)：更新前後の損失比率 W2/W1（300kW・遅れ力率0.8）→ 正答 (3) 65%">
+        <p><strong>① 皮相電力に変換</strong>（負荷率は皮相基準）：<Eq tex="S = \dfrac{300}{0.8} = 375\,\mathrm{kV{\cdot}A}" /></p>
+        <p><strong>② 負荷率</strong>：<Eq tex="\alpha = \dfrac{375}{500} = 0.75" /></p>
+        <p><strong>③ 旧機の損失</strong>：<Eq tex="W_1 = 500 + 0.75^2\times6{,}700 = 500 + 0.5625\times6{,}700 = 4{,}268.75\,\text{W}" /></p>
+        <p><strong>④ 新機の損失</strong>（(a)の4,640Wを使用）：<Eq tex="W_2 = 150 + 0.75^2\times4{,}640 = 150 + 2{,}610 = 2{,}760\,\text{W}" /></p>
+        <p><strong>⑤ 比率</strong>：<Eq tex="\dfrac{W_2}{W_1} = \dfrac{2{,}760}{4{,}268.75} \approx 0.647 \to (3)\ 65\%" display /></p>
+        <p>出典区分：問題・選択肢は電気技術者試験センター公表問題が正本。正答(a)(5)・(b)(3) は電験王・やくとくの2解説サイトで一致確認済み。</p>
+      </Box>
+
+      <h2 id="trap"><span className="h-num">7.</span>引っかけ・誤答ポイント</h2>
+      <Box kind="warn" label="頻出トラップ">
+        <ul>
+          <li><strong>負荷率を「kW / 定格 kV·A」で計算する</strong> → 誤。負荷率は皮相基準。有効電力300kWは力率で割って皮相375kV·Aに直してから 500 で割る。kWのまま 300/500=0.6 は間違い。</li>
+          <li><strong>銅損を負荷率の一次（×α）で計算する</strong> → 誤。銅損は <Eq tex="\alpha^2 P_{c,full}" />。負荷率0.5のとき銅損は<strong>1/4</strong>（半分ではない）。0.75のとき0.5625倍。</li>
+          <li><strong>省エネ基準を「40%負荷時」評価と知らない</strong> → 誤。設問(a)の分母の <Eq tex="W_{c40}" /> は40%負荷時の銅損で、定格通電時とは違う。0.16を掛け／割り忘れると桁が違う。</li>
+          <li><strong>軽負荷時間が長いのに鉄損を軽視</strong> → 誤。鉄損は無負荷でもかかる。深夜・休日が長い設備で見落とすと年間損失の半分以上を取りこぼす。</li>
+          <li><strong>年間値を365倍するのを忘れる</strong> → 誤。1日の損失と年間損失で桁が2桁以上違う。</li>
+          <li><strong>瞬時効率最大の負荷率と全日効率最大の負荷パターンを混同</strong> → 誤。瞬時効率最大は <Eq tex="P_i=\alpha^2 P_c" />、全日効率最大は24hの負荷パターン全体で評価する別概念。</li>
+        </ul>
+      </Box>
+
+      <h2 id="seigo"><span className="h-num">8.</span>正誤判定の急所</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>命題</th><th>判定</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>鉄損は負荷率に依存しないので24h一定である</td><td><strong>正</strong></td><td>一次電圧・周波数で決まる磁束密度に起因（無負荷損）</td></tr>
+          <tr><td>銅損は負荷率に比例して増える</td><td><strong>誤</strong></td><td>I²R＝負荷率の二乗 α² に比例（0.5で1/4）</td></tr>
+          <tr><td>全日効率は瞬時効率最大の負荷率で常に最大になる</td><td><strong>誤</strong></td><td>全日効率は24hの負荷パターン全体で決まる別概念</td></tr>
+          <tr><td>変圧器の負荷率は有効電力 kW を定格 kV·A で割って求める</td><td><strong>誤</strong></td><td>皮相基準。力率で割って皮相に戻してから定格で割る</td></tr>
+          <tr><td>アモルファス変圧器は軽負荷時間が長い用途で有利</td><td><strong>正</strong></td><td>鉄損（ヒステリシス損 約1/3）が支配的な軽負荷で効果絶大</td></tr>
+          <tr><td>トップランナー基準で500kV·Aは「超」グループの50%評価</td><td><strong>誤</strong></td><td>500は「以下」に含まれる→40%評価（×0.16）</td></tr>
+          <tr><td>鉄損改善の年間効果は負荷率に比例する</td><td><strong>誤</strong></td><td>鉄損は24h×365日＝8760hで効き負荷率に無関係</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="kakomon"><span className="h-num">9.</span>出題実績（損失・効率・更新経済性 関連）</h2>
+      <p>鉄損材料（アモルファス）の論説と、全日効率・更新経済性の計算B問題が循環。R04下問12 が本ページの中心題。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>論点</th><th>年度</th><th>問</th><th>科目</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>鉄損材料</td><td>R05上</td><td>問14</td><td>電力</td><td>アモルファス鉄心の特徴</td></tr>
+          <tr><td>鉄損材料</td><td>H30</td><td>問14</td><td>電力</td><td>変圧器に使用される鉄心材料</td></tr>
+          <tr><td>鉄損材料</td><td>H27</td><td>問14</td><td>電力</td><td>鉄心材料の特徴</td></tr>
+          <tr><td>効率（瞬時）</td><td>H28</td><td>問6</td><td>電力</td><td>変圧器の容量・効率</td></tr>
+          <tr><td>経済性</td><td>R04下</td><td>問12</td><td>法規</td><td>変圧器更新による損失の変化（本ページ核心）</td></tr>
+          <tr><td>経済性</td><td>R04上</td><td>問12</td><td>法規</td><td>柱上変圧器・需要率と容量</td></tr>
+          <tr><td>経済性</td><td>H26</td><td>問12</td><td>法規</td><td>変圧器容量算定</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="R08予測">
+        <p>R03以降は変圧器の効率・最大効率の単独計算が少なく、関連計算は遮断器定格や並行運転に組み込まれる傾向（基礎ハブ参照）。R08では<strong>全日効率／年間損失／更新経済性</strong>の派生型が法規B問題で再出題される可能性が高い。</p>
+      </Box>
+
+    </div>
+    <PageNav
+      prev={{ id: "henatsuki", title: "2.1 変圧器（基礎ハブ）" }}
+      next={{ id: "keiki-hensei", title: "2.3 計器用変成器（VT・CT）" }}
+      onNav={onNav} />
+  </>
+);
+
+const KeikiHenseiPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "計器用変成器（VT・CT）" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="2.3  INSTRUMENT TRANSFORMERS (VT / CT)"
+      title="計器用変成器（VT・CT）"
+      deck="系統の大電流・高電圧を、計器・継電器で扱える小さな値（5 A・110 V）に縮小するセンサー。VT（計器用変圧器）と CT（変流器）の総称。CT は二次開放 NG・VT は二次短絡 NG という左右対称の禁則が最頻出。"
+      meta={[
+        { label: "出題頻度", value: "高（5年で3〜4問・問7枠の固定論点）" },
+        { label: "難易度", value: "★★☆" },
+        { label: "出題形式", value: "論説・穴埋（取扱注意）／計算（変流比・残留回路）" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="intro"><span className="h-num">1.</span>直感的理解 — なぜ「縮小」するか</h2>
+      <p>系統では電圧 6.6 kV〜500 kV、電流 数百〜数千 A が日常的に流れる。これを直接計器・継電器に入れると、<strong>電圧側は絶縁が破れ端子が高電圧化</strong>し、<strong>電流側は巻線が瞬時に焼損</strong>する。そこで「変圧器の原理で電圧を 110 V に下げる／電流を 5 A に下げる」器具が要る。これが計器用変成器。</p>
+      <Box kind="tip" label="用語の整理（総称と個別名）">
+        <ul>
+          <li><strong>計器用変成器</strong>＝<strong>VT と CT の総称</strong>。試験文ではこの言葉単独でも頻出（上位概念）。</li>
+          <li><strong>計器用変圧器（VT または PT）</strong>＝高電圧→110 V 等の電圧変成。電圧計・電力計・電圧継電器の入力。</li>
+          <li><strong>変流器（CT）</strong>＝大電流→5 A 等の電流変成。電流計・電力計・電流継電器の入力。</li>
+          <li><strong>VT と PT は同じもの</strong>。JIS では VT が正式表記だが現場では PT も併用。試験で「PT」「計器用変圧器」「VT」のどれが出ても同じ機器と判断してよい。</li>
+        </ul>
+      </Box>
+      <Box kind="tip" label="5秒で思い出す">
+        <p>VT ＝ 高電圧用センサー（<strong>並列</strong>・110 V 取出）／CT ＝ 大電流用センサー（<strong>直列</strong>・5 A 取出）。<strong>VT は短絡 NG・CT は開放 NG</strong>（左右対称で覚える）。</p>
+      </Box>
+
+      <h2 id="setsubi"><span className="h-num">2.</span>設備（構造と諸元）</h2>
+      <p>系統内では <strong>CT は主回路に直列挿入</strong>して大電流を 5 A に、<strong>VT は線間または対地に並列接続</strong>して高電圧を 110 V に縮小し、それぞれ電流計・OCR・電圧計・UVR・電力計へ渡す。</p>
+      <Box kind="tip" label="CT の一次巻線が「太く少巻数」な理由">
+        <p>CT の一次は<strong>系統の主回路そのもの</strong>を流す。数百〜数千 A が定常的に流れるため導体は太く、巻数は1ターン〜数ターンで済む（貫通形 CT は鉄心に電線を1回通すだけ＝1ターン）。二次は計器側で 5 A しか流さないため細く・多く巻ける。</p>
+      </Box>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>項目</th><th>CT（変流器）</th><th>VT（計器用変圧器）</th></tr></thead>
+        <tbody>
+          <tr><td>目的</td><td>大電流を計器用 5 A に変換</td><td>高電圧を計器用 110 V に変換</td></tr>
+          <tr><td>接続方式</td><td><strong>直列</strong>（主回路に挿入）</td><td><strong>並列</strong>（線間または対地）</td></tr>
+          <tr><td>一次側</td><td>大電流・低電圧（線路に直列）</td><td>高電圧・小電流（線路に並列）</td></tr>
+          <tr><td>二次定格</td><td>通常 <strong>5 A</strong>（一部 1 A）</td><td>通常 <strong>110 V</strong>（線間または相電圧 110/√3）</td></tr>
+          <tr><td>負荷側インピーダンス</td><td><strong>低い</strong>（電流計・OCR 内部抵抗）</td><td><strong>高い</strong>（電圧計・電圧コイル）</td></tr>
+          <tr><td>二次側の禁則</td><td><strong>開放 NG</strong>（異常高電圧・焼損）</td><td><strong>短絡 NG</strong>（過電流・焼損）</td></tr>
+          <tr><td>接地</td><td>二次側1点接地</td><td>二次側1点接地（人身保護）</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="shurui"><span className="h-num">3.</span>種類の比較（CT・VT の種別）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>CT 種別</th><th>構造</th><th>主用途</th><th>特記</th></tr></thead>
+        <tbody>
+          <tr><td>巻線形 CT</td><td>一次・二次とも巻線を巻く</td><td>一般配電・低電流用</td><td>巻数比で変流比を設計可能</td></tr>
+          <tr><td>貫通形 CT</td><td>鉄心に主回路導体を1回通す（一次1ターン）</td><td>大電流系統・主回路</td><td>構造が単純で堅牢</td></tr>
+          <tr><td>ブッシング CT</td><td>変圧器・遮断器のブッシング部に内蔵</td><td>主変圧器・GIS</td><td>設置スペース不要</td></tr>
+          <tr><td>零相変流器（ZCT）</td><td>三相一括で鉄心を通し和電流を検出</td><td>地絡保護（DGR / OCGR）</td><td>通常 ΣI≒0／地絡時 ΣI≠0</td></tr>
+        </tbody>
+      </table></div>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>VT 種別</th><th>構造</th><th>主用途</th><th>特記</th></tr></thead>
+        <tbody>
+          <tr><td>単相 VT</td><td>単相変圧器を1〜3台組合せ</td><td>一般配電・線間電圧測定</td><td>二相結線・三相結線で運用</td></tr>
+          <tr><td>三相 VT</td><td>三相変圧器を1台で構成</td><td>中電圧配電・経済性重視</td><td>単台で済む</td></tr>
+          <tr><td>コンデンサ形 VT（CVT）</td><td>コンデンサ分圧＋誘導性結合</td><td>超高圧（66 kV〜）</td><td>鉄心 VT より絶縁設計が容易</td></tr>
+          <tr><td>接地形計器用変圧器（EVT / GPT）</td><td>三相 VT の中性点接地で零相電圧検出</td><td>非接地系の地絡検出</td><td>一次は Y 接地・二次は開放Δで V0 出力</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="example" label="ZCT と EVT の関係（因果理解）">
+        <p><strong>ZCT</strong> は<strong>零相電流 I0</strong> を、<strong>EVT</strong> は<strong>零相電圧 V0</strong> を検出する。非接地系（高圧配電のΔ系）では地絡時に I0 と V0 が同時に発生するため、両者を組み合わせて方向判定（DGR）に使う。地絡方向継電器の入力は ZCT＋EVT のセットが定石。</p>
+      </Box>
+
+      <h2 id="formula"><span className="h-num">4.</span>公式マップ（変成比・誤差・残留回路）</h2>
+      <FormulaCard num="01" name="変流比（CT）" eq="K_n = \dfrac{I_1}{I_2} = \dfrac{N_2}{N_1}"
+        note="I1,I2=一次・二次電流、N1,N2=巻数。電流は巻数の逆比。CT は一次電流が大→一次巻数を少なく（N1<N2）。" />
+      <FormulaCard num="02" name="変圧比（VT）" eq="K_v = \dfrac{V_1}{V_2} = \dfrac{N_1}{N_2}"
+        note="V1,V2=一次・二次電圧。電圧は巻数の順比。VT は一次電圧が大→一次巻数を多く（N1>N2）。" />
+      <Box kind="tip" label="計器側からの一次値換算（試験頻出）">
+        <p>一次電流 <Eq tex="I_1 = I_2 \times K_n" />（例: 二次計器 4 A・変流比 200/5 なら <Eq tex="I_1 = 4 \times 40 = 160" /> A）。一次電圧 <Eq tex="V_1 = V_2 \times K_v" />（例: 二次計器 100 V・変圧比 6600/110 なら <Eq tex="V_1 = 100 \times 60 = 6000" /> V）。</p>
+      </Box>
+      <Box kind="warn" label="CT と VT で巻数比の向きが逆">
+        <p>CT は一次電流が大→一次巻数を<strong>少なく</strong>して二次に小電流を出す（<Eq tex="N_1 < N_2" />）。VT は一次電圧が大→一次巻数を<strong>多く</strong>して二次に低電圧を出す（<Eq tex="N_1 > N_2" />）。「電流は巻数の逆比・電圧は巻数の順比」という変圧器一般式そのもの。</p>
+      </Box>
+      <p><strong>接続方式（最頻出）</strong>：CT は主回路に<strong>直列</strong>・二次計器（電流計・電流コイル）にも<strong>直列</strong>で負荷は<strong>低インピーダンス</strong>。VT は主回路に<strong>並列</strong>・二次計器（電圧計・電圧コイル）にも<strong>並列</strong>で負荷は<strong>高インピーダンス</strong>。</p>
+      <Box kind="tip" label="極性記号 K-L / k-l">
+        <p>一次側端子 <strong>K（同極性）・L（反対側）</strong>、二次側端子 <strong>k（同極性）・l（反対側）</strong>。同時刻に <strong>K → 一次</strong> へ流れ込む電流方向と <strong>k → 二次</strong> から流れ出す電流方向が<strong>同じ向きの磁束</strong>を作る。電力計・差動継電器など<strong>方向を読む装置</strong>は極性を間違えると逆動作する。</p>
+      </Box>
+      <FormulaCard num="03" name="比誤差" eq="\varepsilon = \dfrac{K_n I_2 - I_1}{I_1} \times 100\,[\%]"
+        note="変成比のずれ。主な原因は励磁電流分の損失。位相誤差δは二次と一次の位相のずれ（鉄損・励磁電流が原因）。" />
+      <Box kind="warn" label="負担（burden）が大きいほど誤差が増える">
+        <p>二次側に接続する計器・継電器のインピーダンスを<strong>負担（burden）</strong>と呼ぶ［VA］。負担が大きい（多数の計器を接続）ほど二次電流による磁束減少が大きく<strong>誤差増大</strong>。負担が定格を超えると階級（精度等級）を保証できない。CT では OCR・電流計・電力計の多数接続で負担超過に注意し、さらに二次回路に絶対に<strong>開放部を作らない</strong>。</p>
+      </Box>
+      <FormulaCard num="04" name="残留回路（零相電流検出）" eq="I_{res} = I_a + I_b + I_c = 3 I_0"
+        note="3相の相CT二次をY結線して中性線を取り出すと、その線に3相の和電流=3I0（零相電流の3倍）が流れる。" />
+      <Box kind="example" label="残留回路の挙動と ZCT との違い">
+        <p><strong>平衡時</strong>：<Eq tex="I_a + I_b + I_c = 0" /> → 残留回路に電流流れず。<strong>地絡時</strong>：1相に地絡電流加算 → <Eq tex="I_a + I_b + I_c \neq 0" /> → 残留回路に <strong>3 I0</strong> が流れる。残留回路は<strong>3つの相 CT</strong>の二次を組み合わせて検出（既設の相 CT を利用でき経済的）。ZCT は<strong>三相一括で1個の鉄心</strong>を通して直接検出（精度が高く小電流地絡も検出可）。</p>
+      </Box>
+
+      <h2 id="kaiho"><span className="h-num">5.</span>解法パターン（例題つき）</h2>
+      <Box kind="example" label="① 変流比から一次電流を求める">
+        <p>変流比 400/5 の CT で二次電流計が 3.5 A を示した。一次電流は？</p>
+        <p><Eq tex="K_n = 400/5 = 80" /></p>
+        <p><Eq tex="I_1 = I_2 \times K_n = 3.5 \times 80 = 280\,\text{A}" display /></p>
+        <p>「比は一次/二次」を必ず確認。小数の掛け算で計算ミスが多い。</p>
+      </Box>
+      <Box kind="example" label="④ 残留回路から一線地絡電流を読む">
+        <p>3つの相 CT 二次を Y 結線した残留回路に 0.6 A が流れた。変流比 200/5 のとき地絡電流は？</p>
+        <p><Eq tex="I_0(\text{2nd}) = 0.6 / 3 = 0.2\,\text{A}" /></p>
+        <p><Eq tex="K_n = 200/5 = 40" /></p>
+        <p><Eq tex="I_0 = 0.2 \times 40 = 8\,\text{A}" /></p>
+        <p><Eq tex="I_g = 3 I_0 = 3 \times 8 = 24\,\text{A}" display /></p>
+        <p>「3で割って40倍して3倍する」と覚える（数学的には Kn 倍する＝二次の 3I0 を一次へ写し取る）。</p>
+      </Box>
+      <Box kind="example" label="② CT 二次回路を絶対に開放してはいけない（計器交換手順）">
+        <ul>
+          <li><strong>必ず二次端子を短絡してから</strong>計器を取り外す（CT には専用の短絡端子板がある）。</li>
+          <li>計器を交換した後、<strong>短絡を解除</strong>して通電状態に戻す。</li>
+          <li>短絡したまま放置しても<strong>過電流にはならない</strong>（むしろ安全側）。</li>
+        </ul>
+      </Box>
+      <Box kind="example" label="③ VT 二次回路を絶対に短絡してはいけない">
+        <ul>
+          <li><strong>一次側を停止</strong>してから二次を触る、または<strong>二次ヒューズを抜く</strong>。</li>
+          <li>通電中の VT 二次を短絡すると<strong>過大短絡電流</strong>で巻線焼損。</li>
+          <li>実機の VT 二次にはヒューズが入っており、万一短絡してもヒューズが先に切れて巻線を守る。CT の禁則（開放 NG）と左右対称で混同しやすい。</li>
+        </ul>
+      </Box>
+      <Box kind="tip" label="⑤ 取扱注意の総合判別／⑥ 極性ミスは逆動作">
+        <p>取扱注意問題は4基準で判別：VT 二次は<strong>並列・短絡 NG</strong>／CT 二次は<strong>直列・開放 NG</strong>／接地は<strong>二次側1点</strong>（多点接地は循環電流発生）／計器負担は定格 VA を超えない。1つでも違反する選択肢が「誤り」。極性は CT の K 端子と電力計の電流端子、VT の K 端子と電力計の電圧端子の極性側（±）を一致させる。逆だと電力指示が負・誤値になり、差動継電器（87）では誤動作につながる。</p>
+      </Box>
+
+      <h2 id="trap"><span className="h-num">6.</span>引っかけパターン</h2>
+      <Box kind="warn" label="頻出トラップ（左右対称・因果の取り違え）">
+        <ul>
+          <li><strong>接続方式の取り違え</strong> — 「CT は並列／VT は直列」は誤。正しくは <strong>CT 直列・VT 並列</strong>。</li>
+          <li><strong>二次禁則の左右対称取り違え</strong> — 「CT 二次は短絡してはならない」は誤（短絡してよい・むしろ安全）。「VT 二次は開放してはならない」も誤（開放してよい・短絡が NG）。</li>
+          <li><strong>CT 二次開放の害を「電流」と誤認</strong> — 開放すると過大<strong>電圧</strong>が発生して焼損（一次電流が全量励磁電流化→鉄心磁気飽和→二次に異常高電圧）。過大電流ではない。</li>
+          <li><strong>計器用変成器＝VT のみと誤認</strong> — VT と CT の<strong>総称</strong>。JIS では両方を含む上位概念。</li>
+          <li><strong>ZCT と CT の混同</strong> — ZCT は短絡電流ではなく<strong>零相電流（地絡電流）</strong>を検出する。</li>
+        </ul>
+      </Box>
+      <Box kind="warn" label="CT 二次開放がなぜ危険か（最頻出の因果）">
+        <p>通電中の CT 二次を不用意に開放すると、一次電流が全量励磁電流化して鉄心が磁気飽和し、<strong>数千 V の異常高電圧</strong>が二次に発生する。絶縁破壊・感電・焼損につながる。試験論点としても実務安全としても最頻出。</p>
+      </Box>
+
+      <h2 id="seigo"><span className="h-num">7.</span>正誤判定の急所</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>命題</th><th>判定</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>計器用変成器は VT と CT の総称である</td><td><strong>正</strong></td><td>JIS 用語。単独で出ても両者の話</td></tr>
+          <tr><td>VT は二次側を並列接続し、CT は二次側を直列接続する</td><td><strong>正</strong></td><td>二次側の計器接続も VT 並列／CT 直列</td></tr>
+          <tr><td>CT の二次側を開放しても問題ない</td><td><strong>誤</strong></td><td>鉄心磁気飽和で異常高電圧→焼損・感電</td></tr>
+          <tr><td>VT の二次側を短絡しても問題ない</td><td><strong>誤</strong></td><td>過大短絡電流で巻線焼損。CT と左右対称</td></tr>
+          <tr><td>CT は二次側に低インピーダンス負荷を接続する</td><td><strong>正</strong></td><td>電流計・電流コイル（内部抵抗小）</td></tr>
+          <tr><td>VT は二次側に高インピーダンス負荷を接続する</td><td><strong>正</strong></td><td>電圧計・電圧コイル（内部抵抗大）</td></tr>
+          <tr><td>3つの相 CT 二次を Y 結線した残留回路には常に零電流が流れる</td><td><strong>誤</strong></td><td>平衡時のみ零。地絡時は 3 I0 が流れる</td></tr>
+          <tr><td>ZCT は三相それぞれの相電流を個別に検出する</td><td><strong>誤</strong></td><td>三相一括で和電流（零相電流）を検出</td></tr>
+          <tr><td>CT の K 端子と二次の k 端子は同極性である</td><td><strong>正</strong></td><td>同方向の磁束を発生する同極性端子</td></tr>
+          <tr><td>計器用変成器の二次側は接地しない方が安全である</td><td><strong>誤</strong></td><td>二次側1点接地が原則（絶縁破壊時の人身保護）</td></tr>
+          <tr><td>CT 二次の計器交換時はそのまま端子を外してよい</td><td><strong>誤</strong></td><td>必ず二次端子を短絡してから取り外す</td></tr>
+          <tr><td>コンデンサ形 VT（CVT）は超高圧系統で使用される</td><td><strong>正</strong></td><td>66 kV〜で鉄心 VT より絶縁設計が容易</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="kakomon"><span className="h-num">8.</span>出題実績（5年で3〜4問）</h2>
+      <p>取扱注意（開放禁止／短絡禁止／接地）の穴埋・論説が中核。変流比・残留回路の計算も出る。問7枠の固定論点になりつつある。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>出題内容</th><th>形式</th></tr></thead>
+        <tbody>
+          <tr><td>R06下</td><td>問7</td><td>計器用変成器の取扱い上の注意点</td><td>穴埋</td></tr>
+          <tr><td>R05上</td><td>問7</td><td>変電所の計器用変成器</td><td>穴埋</td></tr>
+          <tr><td>R04下</td><td>問8</td><td>CT と VT の特徴と二次側開放禁止</td><td>論説</td></tr>
+          <tr><td>R03</td><td>問7</td><td>変電所の計器用変成器</td><td>穴埋</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="R08予測">
+        <p>R06下・R05上・R03 の継続出題実績から、計器用変成器は問7枠の固定論点。R08 でも取扱注意（開放禁止／短絡禁止／接地）の穴埋・論説が継続出題される見込み。</p>
+      </Box>
+
+    </div>
+    <PageNav
+      prev={{ id: "henatsuki-loss", title: "2.2 変圧器の損失・効率" }}
+      next={{ id: "shadanki", title: "2.4 遮断器・断路器（CB・DS）" }}
+      onNav={onNav} />
+  </>
+);
+
+const ShadankiPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "遮断器・断路器（CB・DS）" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="2.4  CIRCUIT BREAKER & DISCONNECTOR"
+      title="遮断器・断路器（CB・DS）"
+      deck="負荷電流・事故電流を実際に切るのが遮断器（CB）、無負荷時の電路分離専用が断路器（DS）。操作順序（入はDS→CB・切はCB→DS）と消弧媒体（OCB油/ABB空気/GCB・GISはSF6/VCBは真空）が問8の固定論点。"
+      meta={[
+        { label: "出題頻度", value: "高（変電・問8の固定論点）" },
+        { label: "難易度", value: "★★☆" },
+        { label: "出題形式", value: "論説・穴埋（操作順序/消弧媒体/遮断能力）" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="intro"><span className="h-num">1.</span>直感的理解 — CBは「切れる」DSは「切れない」</h2>
+      <p>遮断器の本質は、電力系統で<strong>電流を強制的に止める</strong>機器。負荷電流（正常）も事故電流（異常）も両方遮断できるのが<strong>遮断器（CB）</strong>、無負荷時の電路分離専用が<strong>断路器（DS）</strong>。DSは電流を切る能力を持たない点が、すべての論点の出発点になる。</p>
+      <Box kind="tip" label="役割分担をアナロジーで（最重要）">
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>機器</th><th>アナロジー</th><th>負荷電流遮断</th><th>事故電流遮断</th></tr></thead>
+          <tbody>
+            <tr><td><strong>断路器（DS）</strong></td><td>工事用バルブ（電気が来ていない確認用）</td><td>✕</td><td>✕</td></tr>
+            <tr><td><strong>遮断器（CB）</strong></td><td>高速シャッター（電気が流れていても切れる）</td><td>○</td><td>○</td></tr>
+            <tr><td><strong>負荷開閉器（LBS）</strong></td><td>通常用バルブ（事故時は使えない）</td><td>○</td><td>✕</td></tr>
+          </tbody>
+        </table></div>
+      </Box>
+      <Box kind="warn" label="操作順序（最頻出）— 入はD→C・切はC→D">
+        <ul>
+          <li><strong>投入時</strong>：<strong>DS → CB の順</strong>（先にDSを閉→その後CBを閉）</li>
+          <li><strong>開放時</strong>：<strong>CB → DS の順</strong>（先にCBを開→その後DSを開）</li>
+        </ul>
+        <p>断路器（DS）は<strong>電流遮断能力を持たない</strong>。DSの接触子はアーク消弧機能を持たないため、電流が流れた状態で開放するとアーク放電が持続し機器を破損する。投入時はまずDSを閉じて回路を形成し、その後CBを閉じる。電流はCBが入った瞬間から流れ始めるため、DSはゼロ電流の状態で操作できる。開放時は先にCBを開いて電流をゼロにしてからDSを開く。逆にするとDSがアーク電流を遮断しようとして焼損する。<strong>「入はD→C・切はC→D」</strong>と5秒で書き出してから選択肢と照合する。</p>
+      </Box>
+
+      <h2 id="haichi"><span className="h-num">2.</span>設備を歩く — 系統内の配置と物理構造</h2>
+      <p>CBの前後にDSを配置するのが標準。保守時にはCBを開放してから両端のDSを開き、保守区間を完全に系統から切り離す。系統側から「DS → CB → DS → 負荷側」と並び、OCR等の継電器がトリップ指令をCBに送る。</p>
+      <Box kind="tip" label="遮断器の共通動作（消弧で種類が決まる）">
+        <p>トリップ指令 → 操作機構（バネ／油圧／電磁）が動作 → 接触子が開離 → その瞬間に<strong>アーク</strong>が発生 → 消弧媒体（油／空気／SF6／真空）で消弧 → 電流遮断完了、という流れは全遮断器に共通。このアークを<strong>どう消弧するか</strong>で遮断器の種類が決まる。</p>
+      </Box>
+
+      <h2 id="kaihei"><span className="h-num">3.</span>開閉装置の比較表（最重要）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>機器</th><th>略称</th><th>負荷電流遮断</th><th>事故電流遮断</th><th>機能</th><th>用途・特記</th></tr></thead>
+        <tbody>
+          <tr><td><strong>断路器</strong></td><td>DS</td><td>×</td><td>×</td><td>無負荷時のみ開放可能</td><td>保守・点検時の電路分離</td></tr>
+          <tr><td><strong>遮断器</strong></td><td>CB</td><td>○</td><td>○</td><td>負荷電流・事故電流の両方遮断</td><td>系統保護の中心機器</td></tr>
+          <tr><td><strong>負荷開閉器</strong></td><td>LBS</td><td>○</td><td>×</td><td>負荷電流は開放可能</td><td>事故電流は遮断不可</td></tr>
+          <tr><td><strong>高圧交流負荷開閉器</strong></td><td>PAS</td><td>○</td><td>×</td><td>柱上設置</td><td>高圧需要家の引込口</td></tr>
+          <tr><td><strong>地絡継電器付き開閉器</strong></td><td>UGS</td><td>○</td><td>×</td><td>地絡検出機能内蔵</td><td>地中線引込・波及事故防止</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="warn" label="【頻出引っかけ】断路器（DS）の誤操作">
+        <p>「断路器は電流を遮断できる」→<strong>誤り</strong>。断路器には電流遮断能力がない。負荷電流が流れた状態でDSを開放するとアーク放電が発生し、機器破損・感電の危険がある。必ずCBで電流を遮断してからDSを操作すること。試験では「断路器で事故電流を遮断した」という記述は誤り。</p>
+      </Box>
+      <Box kind="tip" label="LBS・PAS・UGSは「事故電流は切れない」点で共通">
+        <p>LBS・PAS・UGSは<strong>負荷電流は開放できる</strong>が<strong>事故電流は遮断不可</strong>。事故電流はCBに任せる構成が前提。UGSは地絡検出機能を内蔵するが、検出後に遮断するのではなく<strong>波及事故防止のため自家用引込を切り離す</strong>役割（地絡電流そのものを切るのは系統側のCB）。</p>
+      </Box>
+
+      <h2 id="shurui"><span className="h-num">4.</span>遮断器の種類比較（消弧媒体）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>種類</th><th>略称</th><th>消弧媒体</th><th>特徴</th><th>主な用途</th><th>主流度</th></tr></thead>
+        <tbody>
+          <tr><td><strong>油遮断器</strong></td><td>OCB</td><td>絶縁油</td><td>旧来型・火災リスクあり</td><td>既存設備の一部に残存</td><td>× 旧式</td></tr>
+          <tr><td><strong>空気遮断器</strong></td><td>ABB / ACB</td><td>圧縮空気</td><td>騒音大・大型</td><td>大容量変電所（旧来型）</td><td>× 旧式</td></tr>
+          <tr><td><strong>ガス遮断器</strong></td><td>GCB / GIS</td><td>SF6ガス</td><td>絶縁性能が高い・小型化可能</td><td>都市型変電所・GIS</td><td>○ 主流</td></tr>
+          <tr><td><strong>真空遮断器</strong></td><td>VCB</td><td>真空</td><td>保守容易・環境負荷小・小型</td><td><strong>変電所・工場の主流</strong></td><td>◎ 主流</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="主流変遷の歴史（背景理解）">
+        <p>OCB（戦前〜1970年代）→ ABB（〜1980年代）→ GCB／VCB（1990年代〜現在）の順で主流が移行。理由は<strong>消弧性能・小型化・環境負荷</strong>の3軸。</p>
+      </Box>
+
+      <h2 id="shouko"><span className="h-num">5.</span>消弧物理（GIS・VCBが主流になった理由）</h2>
+      <Box kind="tip" label="VCB（真空遮断器）">
+        <p><strong>真空中では気体分子がないためアークを維持できず</strong>、電流がゼロになる瞬間に消弧する。保守が少なく、油も不要で環境負荷が小さい。接触子の摩耗も小さく、開閉寿命が長い。</p>
+      </Box>
+      <Box kind="tip" label="GIS（ガス絶縁開閉装置）">
+        <p>SF6ガスは空気の約<strong>3倍の絶縁耐力</strong>を持つ。高絶縁性により機器をコンパクト化でき、都市部の狭い敷地に建設できる。CB・DS・LA（避雷器）等を1つの金属容器に収めた<strong>一体型設備</strong>で、保守時の手間が大幅に削減される。</p>
+      </Box>
+      <Box kind="warn" label="【頻出引っかけ】GISの絶縁媒体（混同最多）">
+        <p>「GISは圧縮空気を絶縁媒体に使用する」→<strong>誤り</strong>。GISは<strong>SF6（六フッ化硫黄）ガス</strong>を使用。圧縮空気を使用するのは<strong>空気遮断器（ABB）</strong>。GISではSF6ガスが<strong>絶縁・消弧の両方</strong>を担う。</p>
+      </Box>
+      <Box kind="warn" label="SF6ガスの環境問題（近年論点）">
+        <p>SF6は<strong>温室効果がCO2の約23,900倍</strong>（IPCC第5次評価）と非常に高い。漏洩防止・回収・再使用の管理が国際的に厳格化されている。試験では直接問われにくいが、近年の論点として頭の片隅に。</p>
+      </Box>
+
+      <h2 id="kaiho"><span className="h-num">6.</span>解法パターン</h2>
+      <Box kind="example" label="① DSとCBの操作順序を選ぶ（R05下問8型）">
+        <p>典型問題：「GISに使用される断路器と遮断器について、停電作業時の操作順序として正しいものを選べ」。</p>
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>場面</th><th>正解</th><th>根拠</th></tr></thead>
+          <tbody>
+            <tr><td><strong>投入時</strong></td><td>DS → CB</td><td>DSが無電流で操作される（電流はCBが入った瞬間から流れる）</td></tr>
+            <tr><td><strong>開放時</strong></td><td>CB → DS</td><td>CBで電流ゼロにしてからDSを開く（DSはアーク消弧能力なし）</td></tr>
+          </tbody>
+        </table></div>
+        <p>「入はD→C・切はC→D」を書き出してから選択肢と照合。逆順序の選択肢は<strong>DS焼損</strong>につながるNGパターン。</p>
+      </Box>
+      <Box kind="example" label="② 遮断器の種類と消弧媒体を結びつける（R03問8・R06下問8型）">
+        <p>典型問題：「次の遮断器と消弧媒体の組合せのうち、誤っているものを選べ」。</p>
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>略称</th><th>消弧媒体</th><th>主流度</th><th>引っかけ筆頭</th></tr></thead>
+          <tbody>
+            <tr><td>OCB</td><td><strong>絶縁油</strong></td><td>× 旧式</td><td>「OCBは油で絶縁」→ 正（消弧も絶縁も油）</td></tr>
+            <tr><td>ABB</td><td><strong>圧縮空気</strong></td><td>× 旧式</td><td>「ABBはSF6」→ 誤（GCBと取り違え最多）</td></tr>
+            <tr><td>GCB / GIS</td><td><strong>SF6ガス</strong></td><td>○ 主流</td><td>「GISは圧縮空気で絶縁」→ 誤（ABBと取り違え）</td></tr>
+            <tr><td>VCB</td><td><strong>真空</strong></td><td>◎ 主流</td><td>「VCBはSF6で消弧」→ 誤（真空中で電流ゼロ点消弧）</td></tr>
+          </tbody>
+        </table></div>
+        <p>絶縁媒体と消弧媒体は同じか、という別軸の引っかけも頻出。GISはSF6ガスが絶縁・消弧の両方を担う。</p>
+      </Box>
+      <Box kind="example" label="③ 開閉機器の遮断能力を仕分ける（R02問8型）">
+        <p>典型問題：「次の開閉機器のうち、事故電流を遮断できるものを選べ」。</p>
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>機器</th><th>負荷電流遮断</th><th>事故電流遮断</th><th>用途の決め手</th></tr></thead>
+          <tbody>
+            <tr><td>DS</td><td>×</td><td>×</td><td>保守時の電路分離（無電流で操作）</td></tr>
+            <tr><td>CB</td><td>○</td><td>○</td><td>系統保護の中心（事故電流遮断が役割）</td></tr>
+            <tr><td>LBS</td><td>○</td><td>×</td><td>常時の負荷開閉のみ（事故時はCBに任せる）</td></tr>
+            <tr><td>PAS</td><td>○</td><td>×</td><td>高圧需要家引込（柱上設置）</td></tr>
+            <tr><td>UGS</td><td>○</td><td>×</td><td>地中線引込（地絡検出機能あり・遮断は系統側CB）</td></tr>
+          </tbody>
+        </table></div>
+        <p><strong>事故電流が切れるのはCBだけ</strong>。LBS／PAS／UGSは「負荷電流のみ」と即答できれば9割正解。</p>
+      </Box>
+      <Box kind="example" label="④ 変電所機器の特徴を総合判別（R07下問8・R05上問8型）">
+        <p>典型問題：「変電所で使用する機器の特徴に関する記述として、誤っているものを選べ」。次の4基準のいずれかに違反する選択肢が「誤り」。</p>
+        <ul>
+          <li><strong>遮断器</strong>＝負荷・事故電流の両方を切る／<strong>断路器</strong>＝無電流時のみ操作可能</li>
+          <li><strong>VCB</strong>＝真空中の電流ゼロ点消弧・保守容易／<strong>GIS</strong>＝SF6ガスでコンパクト化</li>
+          <li><strong>避雷器（LA）</strong>＝サージ電圧吸収・常時OFF（GISには内蔵される）</li>
+          <li><strong>計器用変成器</strong>＝CTは直列・VTは並列</li>
+        </ul>
+        <p><strong>操作順序の逆転</strong>と<strong>消弧媒体の取り違え</strong>が出題の7割。</p>
+      </Box>
+
+      <h2 id="trap"><span className="h-num">7.</span>引っかけパターン</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>論点</th><th>誤った記述</th><th>正しい記述</th></tr></thead>
+        <tbody>
+          <tr><td>断路器の遮断能力</td><td>「断路器は事故電流を遮断できる」</td><td><strong>誤</strong>：断路器には電流遮断能力なし</td></tr>
+          <tr><td>断路器の遮断能力</td><td>「保守時にまず断路器を開いてから遮断器を開く」</td><td><strong>誤</strong>：先にCBを開く（電流を切ってからDS）</td></tr>
+          <tr><td>操作順序（投入）</td><td>「投入時はCB → DSの順」</td><td><strong>誤</strong>：投入はDS → CB（DSがゼロ電流投入できない）</td></tr>
+          <tr><td>操作順序（開放）</td><td>「開放時はDS → CBの順」</td><td><strong>誤</strong>：開放はCB → DS（DSが事故電流を切ろうとして焼損）</td></tr>
+          <tr><td>GISの絶縁媒体</td><td>「GISは圧縮空気で絶縁する」</td><td><strong>誤</strong>：SF6ガスで絶縁。圧縮空気はABB</td></tr>
+          <tr><td>VCBの消弧媒体</td><td>「VCBはSF6ガスで消弧する」</td><td><strong>誤</strong>：真空で消弧。SF6ガスはGCB</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="seigo"><span className="h-num">8.</span>正誤判定の急所</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>命題</th><th>判定</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>断路器は事故電流を遮断できる</td><td><strong>誤</strong></td><td>断路器は電流遮断能力なし。遮断器（CB）が担当</td></tr>
+          <tr><td>真空遮断器の消弧媒体は真空である</td><td><strong>正</strong></td><td>VCBは真空中でアークを消弧</td></tr>
+          <tr><td>遮断器投入時はCB→DSの順で操作する</td><td><strong>誤</strong></td><td>投入時はDS→CB。開放時がCB→DS</td></tr>
+          <tr><td>GISは圧縮空気を絶縁媒体に使用する</td><td><strong>誤</strong></td><td>GISはSF6（六フッ化硫黄）ガスを使用</td></tr>
+          <tr><td>LBS（負荷開閉器）は事故電流も遮断できる</td><td><strong>誤</strong></td><td>負荷電流のみ。事故電流はCBが必要</td></tr>
+          <tr><td>PASは高圧需要家の引込口に設置される</td><td><strong>正</strong></td><td>柱上設置の高圧交流負荷開閉器</td></tr>
+          <tr><td>UGSは地絡電流そのものを系統から遮断する</td><td><strong>誤</strong></td><td>地絡検出機能内蔵だが、波及事故防止で自家用を切り離す役割</td></tr>
+          <tr><td>VCBは保守性が高く環境負荷が小さい</td><td><strong>正</strong></td><td>真空シール構造・油不要・SF6不要</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="kakomon"><span className="h-num">9.</span>出題実績（問8の固定論点）</h2>
+      <p>遮断器・断路器系は問8の固定論点。操作順序／GISの絶縁媒体／VCBの特徴／LBS・PASの遮断能力が穴埋・論説で繰り返し問われる。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>出題内容</th><th>形式</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>問8</td><td>変電所の機器に関する記述</td><td>論説</td></tr>
+          <tr><td>R07上</td><td>問8</td><td>変電所の遮断器・断路器・保護継電器</td><td>穴埋</td></tr>
+          <tr><td>R06下</td><td>問8</td><td>変電所における遮断器の種類と特徴</td><td>論説</td></tr>
+          <tr><td>R05下</td><td>問8</td><td>GISに使用される断路器と遮断器の操作順序</td><td>論説</td></tr>
+          <tr><td>R05上</td><td>問8</td><td>変電所で使用する機器の特徴</td><td>穴埋</td></tr>
+          <tr><td>R03</td><td>問8</td><td>真空遮断器とGIS（SF6）の特徴比較</td><td>穴埋</td></tr>
+          <tr><td>R02</td><td>問8</td><td>開閉機器の種類と特徴</td><td>論説</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="R08予測">
+        <p>R08でも操作順序／GISの絶縁媒体／VCBの特徴／LBS・PASの遮断能力のいずれかが穴埋・論説で継続出題見込み。</p>
+      </Box>
+
+    </div>
+    <PageNav
+      prev={{ id: "keiki-hensei", title: "2.3 計器用変成器（VT・CT）" }}
+      next={{ id: "hogo-keiden", title: "2.5 保護継電器" }}
+      onNav={onNav} />
+  </>
+);
+
+const HogoKeidenPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "保護継電器" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="2.5  PROTECTIVE RELAY"
+      title="保護継電器"
+      deck="系統の異常（短絡・地絡・過電圧・過電流）をCT・VT経由で検出し、遮断器（CB）に「切れ」の指令を出す系統保護の頭脳。略称・JIS番号・動作特性（定限時/反限時）・差動/距離/方向の原理が論説で頻出する。"
+      meta={[
+        { label: "出題頻度", value: "中（4-7年周期・問8枠で循環）" },
+        { label: "難易度", value: "★★★" },
+        { label: "出題形式", value: "論説・穴埋（種類/用途/動作原理）" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="intro"><span className="h-num">1.</span>直感的理解 — 検出して指令を出す装置</h2>
+      <p>保護継電器の本質は、系統の異常（短絡・地絡・過電圧・過電流等）を <strong>CT・VT 経由で検出</strong> し、<strong>遮断器（CB）に「切れ」の指令</strong> を出すこと。系統保護の頭脳であり、<strong>自身は電流を切らない</strong>（切るのは実行側の遮断器）。</p>
+      <Box kind="tip" label="信号フロー（5秒で思い出す）">
+        <p>系統の異常（大電流／高電圧）→ <strong>CT/VT</strong> が二次出力（5A／110V）に縮小 → <strong>保護継電器</strong> が整定値と比較 → 異常なら <strong>トリップ指令</strong> → <strong>遮断器 CB</strong> が事故区間を切り離す。継電器は「センサーが運んだ信号で判定し、CB に指令する」装置。</p>
+      </Box>
+      <Box kind="example" label="整定値（setting）という概念">
+        <p>継電器は「<strong>整定値</strong>」と呼ばれる動作の閾値を持つ。例えば OCR の整定値が二次 4 A なら、CT 二次に 4 A 以上流れた瞬間（または時限後）にトリップする。整定値は <strong>現場で調整可能</strong>で、系統条件・負荷変動・上下流継電器の協調を考えて設定する。</p>
+      </Box>
+
+      <h2 id="setsubi"><span className="h-num">2.</span>設備を歩く — CT/VT → 継電器 → CB</h2>
+      <p>複数の継電器が同じ CT・VT の二次出力を共有することが多い（OCR・差動・電力計が同一 CT を、UVR・電圧計が同一 VT を共有等）。接続継電器の合計 VA である <strong>CT 負担</strong>が定格を超えないよう注意する（詳細は計器用変成器ページ）。</p>
+      <Box kind="tip" label="入力源と継電器の対応">
+        <ul>
+          <li><strong>CT（電流センサー）</strong> → OCR(51) / OCGR(51G) / 差動(87) 等の電流系継電器</li>
+          <li><strong>VT（電圧センサー）</strong> → UVR(27) / OVR(59) 等の電圧系継電器、距離(21)は CT+VT 両方</li>
+          <li><strong>ZCT（零相電流）＋ EVT（零相電圧）</strong> → DGR(67G) の方向判定セット</li>
+        </ul>
+      </Box>
+
+      <h2 id="hikaku"><span className="h-num">3.</span>保護継電器の比較表（最重要）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>継電器</th><th>略称</th><th>JIS番号</th><th>検出対象</th><th>動作条件</th><th>主な用途</th></tr></thead>
+        <tbody>
+          <tr><td>過電流継電器</td><td><strong>OCR</strong></td><td>51</td><td>過電流（短絡等）</td><td>整定値以上の電流</td><td>線路・変圧器の短絡保護</td></tr>
+          <tr><td>地絡過電流継電器</td><td><strong>OCGR</strong></td><td>51G</td><td>地絡電流</td><td>地絡電流が整定値以上</td><td>非接地系の地絡保護</td></tr>
+          <tr><td>地絡方向継電器</td><td><strong>DGR</strong></td><td>67G</td><td>地絡の方向</td><td>地絡電流の流入方向判定</td><td>自家用構内の地絡・波及防止</td></tr>
+          <tr><td>不足電圧継電器</td><td><strong>UVR</strong></td><td>27</td><td>電圧低下</td><td>電圧が整定値以下</td><td>停電検出・系統解列</td></tr>
+          <tr><td>過電圧継電器</td><td><strong>OVR</strong></td><td>59</td><td>電圧上昇</td><td>電圧が整定値以上</td><td>単独運転防止・地絡検出（接地形 VT 経由）</td></tr>
+          <tr><td>差動継電器</td><td><strong>87</strong></td><td>87</td><td>変圧器・発電機内部故障</td><td>入出力電流の差</td><td>変圧器・発電機の内部保護</td></tr>
+          <tr><td>距離継電器</td><td><strong>21</strong></td><td>21</td><td>線路インピーダンス</td><td>インピーダンス整定値以下</td><td>長距離送電線の保護</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="JIS番号は ANSI/IEEE デバイス番号と共通">
+        <p>51（過電流）・87（差動）・21（距離）等の番号は <strong>米国 ANSI/IEEE C37.2</strong> のデバイス番号で国際標準。試験では番号と日本語名・略称を結びつけて問われる。<strong>51・87・21 の 3 つは暗記必須</strong>。</p>
+      </Box>
+
+      <h2 id="tokusei"><span className="h-num">4.</span>動作特性 — 定限時・反限時・差動・距離・方向</h2>
+      <h3 className="h-sub">定限時 vs 反限時（OCR）</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>特性</th><th>動作時間</th><th>採用理由</th></tr></thead>
+        <tbody>
+          <tr><td><strong>定限時特性</strong></td><td>整定値超の電流の大きさに関わらず <strong>一定の時限</strong> でトリップ</td><td>動作時間が読みやすい・上下流継電器の協調が容易</td></tr>
+          <tr><td><strong>反限時特性</strong></td><td>電流が大きいほど <strong>短い時間</strong> でトリップ（反比例的）</td><td>重大事故ほど早期遮断＝系統への影響を最小化</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="example" label="なぜ反限時特性が必要か（因果理解）">
+        <p>事故電流が大きい＝事故の深刻度が高い＝早期に遮断すべき、という論理に合致する動作特性。系統への影響が大きい事故ほど迅速に遮断できる。線路の OCR では反限時特性が一般的。</p>
+      </Box>
+
+      <h3 className="h-sub">差動継電器（87）の原理</h3>
+      <FormulaCard num="01" name="差動継電器の動作判定（入出力電流の差）" eq="|I_{in} - I_{out}| > I_{set} \;\Rightarrow\; \text{trip}"
+        note="入力電流 Iin（CT1）と出力電流 Iout（CT2）の差が整定値 Iset を超えるとトリップ。正常時は Iin≒Iout で差≒0＝不動作。内部故障時は Iin≠Iout で差が大きくなり動作する。" />
+      <Box kind="example" label="差動継電器が変圧器内部故障を検出できる理由">
+        <p>変圧器が正常動作している場合、一次側電流と二次側電流は変圧比に従って一定の比率を保つ。差動継電器は両者の差を監視しており、正常時は差≒0。内部故障（巻線間短絡・地絡等）が発生すると、故障電流の一部が変圧器内部を短絡経路で流れ、一次・二次の電流比が崩れる。この「差」を検出してトリップする。<strong>外部短絡では一次・二次の差が出ないため誤動作しない</strong>（保護範囲が変圧器内部に限定）。</p>
+      </Box>
+
+      <h3 className="h-sub">距離継電器（21）の原理</h3>
+      <FormulaCard num="02" name="距離継電器の動作判定（インピーダンス）" eq="Z = \dfrac{V}{I} \le Z_{set} \;\Rightarrow\; \text{trip}"
+        note="CT・VT の入力から Z=V/I を計算し、整定値 Zset 以下なら事故とみなしてトリップ。整定値は保護したい線路のインピーダンスに対応する値。物理的距離ではなくインピーダンスで判定する点が頻出ひっかけ。" />
+      <ul>
+        <li><strong>動作領域</strong>：通常 R-X 平面（インピーダンス図）上の円・四角形・多角形で表現</li>
+        <li><strong>段階保護</strong>：1 段（瞬時）・2 段（短時限）・3 段（長時限）の 3 段で広い範囲をカバー</li>
+      </ul>
+
+      <h3 className="h-sub">DGR（地絡方向継電器）の特殊性</h3>
+      <p>DGR は <strong>電流の大きさ＋方向（位相）</strong> の両方を判定する。これにより自構内/構外の地絡を仕分け、波及事故を防止する。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>地絡の場所</th><th>地絡電流の方向</th><th>DGRの動作</th></tr></thead>
+        <tbody>
+          <tr><td>自構内の地絡</td><td>「構内向き」</td><td><strong>動作</strong></td></tr>
+          <tr><td>隣接回路の地絡</td><td>「構外向き」</td><td><strong>不動作</strong>（波及防止）</td></tr>
+        </tbody>
+      </table></div>
+      <p>DGR の入力は <strong>ZCT（零相電流）＋ EVT（零相電圧）</strong> のセット（詳細は計器用変成器ページ）。</p>
+
+      <h2 id="seitei"><span className="h-num">5.</span>整定の考え方 — 時限協調・方向・比率差動</h2>
+      <h3 className="h-sub">OCR の整定（時限協調）</h3>
+      <p>直列に複数の OCR が並ぶ系統では、<strong>下流が先に動作・上流が後で動作</strong> する時限差をつける（<strong>時限協調</strong>）。下流の OCR が先にトリップして事故区間だけを切り離し、上流の健全区間は通電を継続。下流が動作失敗した場合のバックアップとして上流が動作する（例：上流 OCR 0.6s／下流 OCR 0.3s）。</p>
+      <Box kind="tip" label="DGR・差動の整定">
+        <ul>
+          <li><strong>DGR</strong>：電流整定＝地絡電流の最小予想値より小さく／方向整定＝自構内方向のみ動作するよう位相基準を設定／時限整定＝上位（系統側）の DGR と協調</li>
+          <li><strong>差動（87）</strong>：不平衡電流許容値＝CT 誤差・タップ位置による差を吸収する余裕／<strong>比率差動特性</strong>＝負荷電流に比例して動作感度を変え、外部事故時の誤動作を防止</li>
+        </ul>
+      </Box>
+
+      <h2 id="kaiho"><span className="h-num">6.</span>解法パターン</h2>
+      <Box kind="example" label="① 略称・JIS番号・用途を結びつける（R06上問8型）">
+        <p>「名称と JIS 番号の組合せのうち誤っているものを選べ」型。判別の核：<strong>OCR=51（過電流）／OCGR=51G（地絡の大きさのみ）／DGR=67G（地絡の大きさ＋方向）／UVR=27（不足電圧）／OVR=59（過電圧）／87（差動）／21（距離）</strong>。51・87・21 は暗記必須。</p>
+      </Box>
+      <Box kind="example" label="② 差動（87）と距離（21）の原理を判別（R04上問8型）">
+        <p>2 軸対比：差動は <strong>2 つの CT の電流の「差」</strong> で内部のみ保護（外部短絡で不動作）。距離は <strong>CT+VT の V/I＝インピーダンス</strong> で整定値以下区間を保護。決め手は「<strong>差で見る vs インピーダンスで見る</strong>」。</p>
+      </Box>
+      <Box kind="example" label="③ 定限時・反限時の判別（OCR論点）">
+        <p>「電流が大きいほど動作時間が短い特性は？」→ <strong>反限時</strong>。「電流に関わらず一定時間」→ <strong>定限時</strong>。「整定値超で即時」→ <strong>瞬時特性</strong>（大電流事故の高速遮断・87 と併用）。両者の取り違えが引っかけ筆頭。</p>
+      </Box>
+      <Box kind="example" label="④ 保護継電器方式の総合判別（R01問8型）">
+        <p>「誤っているものを選べ」型のチェックリスト：(1) OCR の時限協調＝下流先動作・上流バックアップ（下流時限＜上流時限）／(2) 87＝内部故障のみ動作／(3) 21＝インピーダンス（V/I）で判定・物理距離ではない／(4) DGR＝ZCT＋EVT で自構内/構外を仕分け／(5) 段階保護＝距離継電器は 1 段（瞬時）・2 段（短時限）・3 段（長時限）。<strong>保護範囲の誤認</strong>と <strong>方向判定の有無</strong>が出題の約7割。</p>
+      </Box>
+
+      <h2 id="trap"><span className="h-num">7.</span>引っかけパターン</h2>
+      <Box kind="warn" label="頻出トラップ TOP5">
+        <ul>
+          <li><strong>OCR と OCGR の混同</strong> — 「OCR は地絡電流を検出する」は誤。OCR は <strong>過電流</strong>（短絡等）。地絡は OCGR（51G）または DGR（67G）。</li>
+          <li><strong>DGR の動作条件</strong> — 「DGR は電流の大きさだけで地絡を判定する」は誤。大きさに加え <strong>方向（位相）</strong> も判定する。</li>
+          <li><strong>差動継電器の保護範囲</strong> — 「87 は変圧器の外部短絡でも動作する」は誤。<strong>内部故障のみ</strong>動作。外部短絡では一次・二次の差が出ない。</li>
+          <li><strong>距離継電器の動作</strong> — 「事故点までの物理的距離で動作する」は誤。<strong>インピーダンス（V/I）</strong>で動作する。</li>
+          <li><strong>反限時と定限時の取り違え</strong> — 「定限時は電流が大きいほど早く動作する」は誤。定限時は <strong>一定時間</strong>。電流が大きいほど早いのは <strong>反限時</strong>。</li>
+        </ul>
+      </Box>
+
+      <h2 id="seigo"><span className="h-num">8.</span>正誤判定の急所</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>命題</th><th>判定</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>差動継電器は変圧器の内部故障を検出する</td><td><strong>正</strong></td><td>87 が変圧器の巻線内部故障の主保護</td></tr>
+          <tr><td>OCR の反限時特性は電流が大きいほど短時間で動作する</td><td><strong>正</strong></td><td>重大事故ほど早期遮断の論理</td></tr>
+          <tr><td>距離継電器は事故点までのインピーダンスで動作する</td><td><strong>正</strong></td><td>事故点までの Z が整定値以下になると動作</td></tr>
+          <tr><td>地絡方向継電器（DGR）は電流の大きさだけで地絡を判定する</td><td><strong>誤</strong></td><td>大きさに加え方向（位相）も判定</td></tr>
+          <tr><td>OCR は地絡保護に用いる継電器である</td><td><strong>誤</strong></td><td>OCR は過電流（短絡）保護。地絡は OCGR / DGR</td></tr>
+          <tr><td>差動継電器は外部短絡でも誤動作する</td><td><strong>誤</strong></td><td>外部短絡では一次・二次の差が出ず誤動作しない</td></tr>
+          <tr><td>UVR は電圧が整定値以下になったとき動作する</td><td><strong>正</strong></td><td>不足電圧継電器（27）</td></tr>
+          <tr><td>OVR は電圧が整定値以上になったとき動作する</td><td><strong>正</strong></td><td>過電圧継電器（59）</td></tr>
+          <tr><td>定限時特性は電流が大きいほど早く動作する</td><td><strong>誤</strong></td><td>定限時は一定時間。反限時の説明と混同</td></tr>
+          <tr><td>JIS 番号 87 は差動継電器である</td><td><strong>正</strong></td><td>ANSI/IEEE C37.2 と共通の番号体系</td></tr>
+          <tr><td>DGR の入力には ZCT と EVT を用いる</td><td><strong>正</strong></td><td>零相電流と零相電圧の両方で方向判定</td></tr>
+          <tr><td>OCR は時限協調により上流より下流を早く動作させる</td><td><strong>正</strong></td><td>下流先動作・上流バックアップが時限協調の原則</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="kakomon"><span className="h-num">9.</span>出題実績</h2>
+      <p>論説（差動・距離の動作原理、保護継電器方式）と穴埋（種類・用途・JIS番号）が中心。OCR・OCGR は遮断器ページの問8枠にも頻出するため横断学習を推奨。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>出題内容</th><th>形式</th></tr></thead>
+        <tbody>
+          <tr><td>R06上</td><td>問8</td><td>保護継電器の種類と用途</td><td>穴埋</td></tr>
+          <tr><td>R04上</td><td>問8</td><td>距離継電器と差動継電器の動作原理</td><td>論説</td></tr>
+          <tr><td>R01</td><td>問8</td><td>保護継電器方式の種類</td><td>論説</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="R08予測">
+        <p>保護継電器単独の論点は <strong>4-7年周期</strong>の番外ポジション（R06上・R04上・R01）。R08 では DGR の方向判定／反限時特性／差動原理／距離継電器の段階保護のいずれかが論説で出る可能性。OCR・OCGR は遮断器ページの問8枠にも頻出するため横断学習を推奨。</p>
+      </Box>
+
+    </div>
+    <PageNav
+      prev={{ id: "shadanki", title: "2.4 遮断器・断路器（CB・DS）" }}
+      next={{ id: "kaihei-hogo", title: "2.6 開閉装置・保護継電器（hub）" }}
+      onNav={onNav} />
+  </>
+);
+
+const KaiheiHogoPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "開閉装置・保護継電器（hub）" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="2.6  SWITCHGEAR & PROTECTION (HUB)"
+      title="開閉装置・保護継電器（hub）"
+      deck="電力系統の「センサー → 判断 → 切る」3段を俯瞰するハブ。計器用変成器（VT・CT）・保護継電器・遮断器/断路器の繋がりを掴む。問8枠＋問7枠は毎年確実に出題され、電力科目の約3分の1を占める最重要領域。"
+      meta={[
+        { label: "出題頻度", value: "最頻出（5年で14問・問8/問7枠）" },
+        { label: "難易度", value: "★★☆" },
+        { label: "出題形式", value: "論説・穴埋め中心" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="intro"><span className="h-num">1.</span>直感的理解 — センサー → 判断 → 切る</h2>
+      <p>変電所の保護は <strong>「異常を測る → 異常か判断する → 実際に切る」</strong> の3段で動く。各段を別々の機器が担い、本ハブはその3者の役割分担と繋がりを俯瞰する。各機器の詳細は機能別の3ページに分離してある。</p>
+      <Box kind="tip" label="この3役割で全体を整理する">
+        <ul>
+          <li><strong>センサー（計器用変成器）</strong> — VT・CT が系統の高電圧・大電流を 110 V・5 A に縮小して取り出す</li>
+          <li><strong>判断装置（保護継電器）</strong> — OCR・DGR・差動(87)・距離(21) 等が異常を検出してトリップ指令を出す</li>
+          <li><strong>実行装置（遮断器・断路器）</strong> — CB が指令を受けて負荷電流・事故電流を実際に切る</li>
+        </ul>
+        <p>検出から遮断までは数十〜数百ミリ秒。継電器自身は電流を切らず、CB に「切れ」を指令するだけである点に注意。</p>
+      </Box>
+
+      <h2 id="bunpan"><span className="h-num">2.</span>3役割の分担表</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>役割</th><th>アナロジー</th><th>機能</th><th>代表機器</th><th>詳細ページ</th></tr></thead>
+        <tbody>
+          <tr><td><strong>センサー</strong></td><td>監視カメラ</td><td>系統の電流・電圧を計器用に縮小</td><td>CT・VT・ZCT・EVT</td><td>計器用変成器</td></tr>
+          <tr><td><strong>判断装置</strong></td><td>救急隊指令</td><td>異常を検出して「切れ」を指令</td><td>OCR・DGR・87・21 等</td><td>保護継電器</td></tr>
+          <tr><td><strong>実行装置</strong></td><td>高速シャッター</td><td>負荷電流・事故電流を実際に遮断</td><td>CB・DS・LBS 等</td><td>遮断器・断路器</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="warn" label="「継電器が電流を切る」と書いたら誤り">
+        <p>切るのは <strong>遮断器（CB）</strong>。継電器は CT・VT の二次信号を見て整定値と比較し、トリップ指令を出すだけ。「判断」と「実行」を必ず分けて読むこと。逆に断路器（DS）は判断も電流遮断もできず、無電流時の電路分離専用である。</p>
+      </Box>
+
+      <h2 id="setsubi"><span className="h-num">3.</span>機器の比較（センサー・判断・実行）</h2>
+      <p>ハブ視点で3役割の代表機器を一望する。各機器の深い動作原理は機能別ページへ。</p>
+
+      <h3 className="sub">センサー — 計器用変成器（VT・CT）</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>項目</th><th>CT（変流器）</th><th>VT（計器用変圧器）</th></tr></thead>
+        <tbody>
+          <tr><td>目的</td><td>大電流を計器用 5 A に変換</td><td>高電圧を計器用 110 V に変換</td></tr>
+          <tr><td>主回路への接続</td><td><strong>直列</strong>（主回路に挿入）</td><td><strong>並列</strong>（線間または対地）</td></tr>
+          <tr><td>二次負荷</td><td>低インピーダンス（電流コイル）</td><td>高インピーダンス（電圧コイル）</td></tr>
+          <tr><td>二次側の禁則</td><td><strong>開放 NG</strong>（異常高電圧）</td><td><strong>短絡 NG</strong>（過電流焼損）</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 className="sub">判断装置 — 保護継電器（略称・JIS番号・対象）</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>継電器</th><th>略称</th><th>JIS番号</th><th>検出対象</th></tr></thead>
+        <tbody>
+          <tr><td>過電流継電器</td><td>OCR</td><td>51</td><td>過電流（短絡等）</td></tr>
+          <tr><td>地絡過電流継電器</td><td>OCGR</td><td>51G</td><td>地絡電流の大きさ</td></tr>
+          <tr><td>地絡方向継電器</td><td>DGR</td><td>67G</td><td>地絡電流の大きさ＋方向</td></tr>
+          <tr><td>不足電圧継電器</td><td>UVR</td><td>27</td><td>電圧低下</td></tr>
+          <tr><td>過電圧継電器</td><td>OVR</td><td>59</td><td>電圧上昇</td></tr>
+          <tr><td>差動継電器</td><td>87</td><td>87</td><td>変圧器・発電機の内部故障</td></tr>
+          <tr><td>距離継電器</td><td>21</td><td>21</td><td>線路インピーダンス</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 className="sub">実行装置 — 開閉装置（負荷電流／事故電流の遮断可否）</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>機器</th><th>略称</th><th>負荷電流遮断</th><th>事故電流遮断</th><th>用途・特記</th></tr></thead>
+        <tbody>
+          <tr><td>断路器</td><td>DS</td><td>×</td><td>×</td><td>無電流時のみ開放可能（保守時の電路分離）</td></tr>
+          <tr><td>遮断器</td><td>CB</td><td>○</td><td>○</td><td>系統保護の中心機器</td></tr>
+          <tr><td>負荷開閉器</td><td>LBS</td><td>○</td><td>×</td><td>負荷電流のみ開放可能</td></tr>
+          <tr><td>高圧交流負荷開閉器</td><td>PAS</td><td>○</td><td>×</td><td>高圧需要家の引込口（柱上設置）</td></tr>
+          <tr><td>地絡継電器付き開閉器</td><td>UGS</td><td>○</td><td>×</td><td>地中線引込・波及事故防止（地絡検出機能内蔵）</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="遮断器の消弧媒体（種類比較・論説頻出）">
+        <ul>
+          <li><strong>OCB（油遮断器）</strong> — 絶縁油・旧式</li>
+          <li><strong>ABB（空気遮断器）</strong> — 圧縮空気・旧式</li>
+          <li><strong>GCB / GIS（ガス遮断器）</strong> — <strong>SF6 ガス</strong>・絶縁性能が高く小型化可能・都市型変電所の主流</li>
+          <li><strong>VCB（真空遮断器）</strong> — 真空・保守容易・環境負荷小・変電所/工場の主流</li>
+        </ul>
+        <p>GIS の絶縁・消弧媒体は <strong>SF6（六フッ化硫黄）ガス</strong>で、圧縮空気を使う ABB との取り違えが最多。VCB は真空中で気体分子がなくアークを維持できず、電流ゼロ点で消弧する。</p>
+      </Box>
+
+      <h2 id="formula"><span className="h-num">4.</span>公式マップ（センサーの換算）</h2>
+      <p>本ハブの計算はセンサー（計器用変成器）の換算が中心。「比は一次/二次」を必ず確認すること。</p>
+      <FormulaCard num="01" name="変流比・変圧比（一次値の換算）" eq="I_1 = I_2 \times K_n,\quad V_1 = V_2 \times K_v"
+        note="Kn=変流比（例 200/5=40）、Kv=変圧比（例 6600/110=60）。二次計器値に比を掛けて一次値を得る。CTは電流を巻数に反比例、VTは電圧を巻数に比例で縮小する。" />
+      <FormulaCard num="02" name="残留回路（零相電流の取り出し）" eq="I_{res} = 3 I_0\ (\text{2nd}),\quad I_g = 3 I_0\ (\text{1st})"
+        note="3つの相CT二次をY結線した残留回路には和電流=3I0が流れる。平衡時は0、地絡時のみ非0。二次の3I0を3で割り、変流比を掛けて一次零相電流に写し取る。" />
+      <Box kind="example" label="例題: 残留回路 0.6 A・変流比 200/5 → 一線地絡電流は？">
+        <p>① 残留回路電流 <Eq tex="= 3 I_0\,(\text{2nd}) = 0.6\,\text{A}" /> なので二次零相電流 <Eq tex="I_0(\text{2nd}) = 0.6 / 3 = 0.2\,\text{A}" /></p>
+        <p>② 変流比 <Eq tex="K_n = 200 / 5 = 40" /></p>
+        <p>③ 一次零相電流 <Eq tex="I_0 = 0.2 \times 40 = 8\,\text{A}" /></p>
+        <p>④ 一線地絡電流 <Eq tex="I_g = 3 I_0 = 3 \times 8 = 24\,\text{A}" display /></p>
+        <p>「3で割って 40倍して 3倍する」と覚える（数学的には二次の <Eq tex="3I_0" /> に変流比を掛けて一次へ写すのと同じ）。</p>
+      </Box>
+
+      <h2 id="kaiho"><span className="h-num">5.</span>解法パターン（学習ガイド）</h2>
+      <Box kind="tip" label="① 初学者向け（順序学習）">
+        <ol>
+          <li>本ハブで「センサー → 判断 → 切る」の全体フローを把握</li>
+          <li>計器用変成器でセンサー側（CT 二次開放禁止／VT 二次短絡禁止）</li>
+          <li>遮断器・断路器で実行側（DS→CB の操作順序／GIS の絶縁媒体）</li>
+          <li>保護継電器で判断側（定限時・反限時／差動原理／DGR の方向判定）</li>
+        </ol>
+      </Box>
+      <Box kind="tip" label="② 直前対策（頻出論点直撃）">
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>論点</th><th>頻度</th><th>該当ページ</th></tr></thead>
+          <tbody>
+            <tr><td>CT 二次開放禁止（異常高電圧）</td><td>★★★</td><td>計器用変成器</td></tr>
+            <tr><td>DS→CB の操作順序（入はD→C・切はC→D）</td><td>★★★</td><td>遮断器・断路器</td></tr>
+            <tr><td>GIS の絶縁媒体 = SF6</td><td>★★★</td><td>遮断器・断路器</td></tr>
+            <tr><td>DGR は大きさ＋方向（位相）も判定</td><td>★★☆</td><td>保護継電器</td></tr>
+            <tr><td>差動継電器(87)の保護範囲は内部のみ</td><td>★★☆</td><td>保護継電器</td></tr>
+          </tbody>
+        </table></div>
+      </Box>
+
+      <h2 id="trap"><span className="h-num">6.</span>引っかけ・誤答ポイント</h2>
+      <Box kind="warn" label="3役割を横断する頻出トラップ">
+        <ul>
+          <li><strong>CT 二次開放を「過大電流で焼損」と誤認</strong> — 正しくは過大「電圧」。一次電流が全量励磁電流化し鉄心が磁気飽和して二次に異常高電圧が発生する。CT の禁則は開放 NG、VT は短絡 NG（左右対称で混同最多）。</li>
+          <li><strong>断路器(DS)で事故電流を切れると誤認</strong> — DS はアーク消弧能力がなく、無電流時の電路分離専用。投入は DS→CB、開放は CB→DS の順を逆にすると DS が焼損する。</li>
+          <li><strong>GIS は圧縮空気で絶縁と誤認</strong> — GIS は SF6 ガス。圧縮空気を使うのは空気遮断器(ABB)。VCB は真空で消弧（SF6 ではない）。</li>
+          <li><strong>DGR を「大きさだけで判定」と誤認</strong> — DGR は大きさに加え方向（位相）も判定し、自構内向きのみ動作して波及事故を防ぐ。入力は ZCT（零相電流）＋EVT（零相電圧）のセット。</li>
+          <li><strong>差動継電器(87)が外部短絡でも動作と誤認</strong> — 87 は内部故障のみ動作。外部短絡では一次・二次の差が出ず誤動作しない（保護範囲が内部に限定）。</li>
+        </ul>
+      </Box>
+
+      <h2 id="seigo"><span className="h-num">7.</span>正誤判定の急所</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>命題</th><th>判定</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>計器用変成器は VT と CT の総称である</td><td><strong>正</strong></td><td>JIS 用語。VT・CT 両方を含む上位概念</td></tr>
+          <tr><td>CT の二次側を開放しても問題ない</td><td><strong>誤</strong></td><td>鉄心磁気飽和で異常高電圧が発生し焼損・感電</td></tr>
+          <tr><td>VT の二次側を短絡しても問題ない</td><td><strong>誤</strong></td><td>過大短絡電流で巻線焼損。CT と左右対称の禁則</td></tr>
+          <tr><td>断路器は事故電流を遮断できる</td><td><strong>誤</strong></td><td>DS は電流遮断能力なし。遮断は CB の役割</td></tr>
+          <tr><td>遮断器投入時は CB→DS の順で操作する</td><td><strong>誤</strong></td><td>投入は DS→CB。開放が CB→DS</td></tr>
+          <tr><td>GIS は圧縮空気を絶縁媒体に使用する</td><td><strong>誤</strong></td><td>SF6（六フッ化硫黄）ガス。圧縮空気は ABB</td></tr>
+          <tr><td>真空遮断器の消弧媒体は真空である</td><td><strong>正</strong></td><td>真空中はアークを維持できず電流ゼロ点で消弧</td></tr>
+          <tr><td>地絡方向継電器(DGR)は電流の大きさだけで判定する</td><td><strong>誤</strong></td><td>大きさに加え方向（位相）も判定</td></tr>
+          <tr><td>差動継電器(87)は変圧器の外部短絡でも動作する</td><td><strong>誤</strong></td><td>内部故障のみ動作。外部短絡では差が出ない</td></tr>
+          <tr><td>OCR の反限時特性は電流が大きいほど短時間で動作する</td><td><strong>正</strong></td><td>重大事故ほど早期遮断の論理</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="kakomon"><span className="h-num">8.</span>出題実績インデックス（5年で14問・科目の約1/3）</h2>
+      <p>問8枠（遮断器・継電器系）は毎年確実に出題。問7枠（計器用変成器）は R03・R05上・R06下と固定論点化。各機器の詳細・解説は機能別の3ページへ。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>出題内容</th><th>役割</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>問8</td><td>変電所の機器に関する記述</td><td>実行（遮断器）</td></tr>
+          <tr><td>R07上</td><td>問8</td><td>変電所の遮断器・断路器・保護継電器</td><td>実行＋判断</td></tr>
+          <tr><td>R06下</td><td>問8</td><td>変電所における遮断器の種類と特徴</td><td>実行（遮断器）</td></tr>
+          <tr><td>R06下</td><td>問7</td><td>計器用変成器の取扱い上の注意点</td><td>センサー</td></tr>
+          <tr><td>R06上</td><td>問8</td><td>保護継電器の種類と用途</td><td>判断（継電器）</td></tr>
+          <tr><td>R05下</td><td>問8</td><td>GIS の断路器と遮断器の操作順序</td><td>実行（遮断器）</td></tr>
+          <tr><td>R05上</td><td>問8</td><td>変電所で使用する機器の特徴</td><td>実行（遮断器）</td></tr>
+          <tr><td>R05上</td><td>問7</td><td>変電所の計器用変成器</td><td>センサー</td></tr>
+          <tr><td>R04下</td><td>問8</td><td>CT と VT の特徴と二次側開放禁止</td><td>センサー</td></tr>
+          <tr><td>R04上</td><td>問8</td><td>距離継電器と差動継電器の動作原理</td><td>判断（継電器）</td></tr>
+          <tr><td>R03</td><td>問8</td><td>真空遮断器と GIS（SF6）の特徴比較</td><td>実行（遮断器）</td></tr>
+          <tr><td>R03</td><td>問7</td><td>変電所の計器用変成器</td><td>センサー</td></tr>
+          <tr><td>R02</td><td>問8</td><td>開閉機器の種類と特徴</td><td>実行（遮断器）</td></tr>
+          <tr><td>R01</td><td>問8</td><td>保護継電器方式の種類</td><td>判断（継電器）</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="頻度サマリと R08 予測">
+        <p>問8枠（遮断器・継電器系）は R01〜R07 で 11 問、問7枠（計器用変成器）は R03・R05上・R06下の3年連続で固定論点化。合計14問/5年がこのハブ配下で、電力科目の約1/3を占める。R08 も操作順序／GIS の絶縁媒体／CT 二次開放禁止／DGR の方向判定のいずれかが穴埋・論説で継続出題濃厚。</p>
+      </Box>
+
+    </div>
+    <PageNav
+      prev={{ id: "hogo-keiden", title: "2.5 保護継電器" }}
+      next={{ id: "kakuu-souden", title: "3.1 架空送電線路" }}
+      onNav={onNav} />
+  </>
+);
+
+const ChichuuSoudenPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "地中送電・電力ケーブル" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="3.2  UNDERGROUND TRANSMISSION & CABLES"
+      title="地中送電・電力ケーブル"
+      deck="架空送電線を地中に埋めたもの。都市部・海底・景観保護で使われる。架空線との「L小・C大・フェランチ効果が起きやすい」の逆転と、CV／OFケーブルの誘電損・最高使用温度の比較が頻出。充電電流 Ic=ωCV の計算も問われる。"
+      meta={[
+        { label: "出題頻度", value: "高（毎年級・問9前後で循環出題）" },
+        { label: "難易度", value: "★★☆" },
+        { label: "出題形式", value: "論説・穴埋め・計算（充電電流/誘電損）" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="intro"><span className="h-num">1.</span>直感的理解 — 地中ケーブルの3大問題</h2>
+      <p>地中送電は<strong>架空送電線を地中に埋めたもの</strong>。都市部・海底・景観保護が必要な地域で使われ、雷・風雪・塩害の影響を受けにくく信頼性が高い。一方で、建設費が高い・放熱が困難・充電電流が大きいという課題がある。架空線が空気で放熱するのに対し、地中ケーブルは<strong>土に頼って放熱する</strong>ため放熱が難しい。</p>
+      <Box kind="tip" label="3大問題の「なぜ」をセットで覚える">
+        <ul>
+          <li><strong>コスト高</strong> — 掘削工事・専用管路・マンホール設置が必要。架空の5〜10倍以上。</li>
+          <li><strong>放熱困難</strong> — 大電流では土壌では放熱が追いつかず、許容電流が制限される。</li>
+          <li><strong>充電電流大</strong> — 導体と遮へい層の間隔が数mm〜数十mmと小さく、静電容量 C が架空線より桁違いに大きい。充電電流 <Eq tex="I_c = \omega C V" /> なので、C が大きいほど充電電流も大きく、長距離ほど顕著になる。</li>
+        </ul>
+      </Box>
+
+      <h2 id="setsubi"><span className="h-num">2.</span>設備を歩く — CVケーブルの断面構造</h2>
+      <p>主流の CV ケーブル（架橋ポリエチレン絶縁ビニルシース）は、内側から外側へ次の6層で構成される。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>層</th><th>名称</th><th>役割</th></tr></thead>
+        <tbody>
+          <tr><td>①</td><td>導体</td><td>電流を流す主体。銅またはアルミ</td></tr>
+          <tr><td>②</td><td>内部半導電層</td><td>導体表面の電界を均一化（電界集中を防ぐ）</td></tr>
+          <tr><td>③</td><td>絶縁体（XLPE）</td><td>電気絶縁の主体。架橋ポリエチレン</td></tr>
+          <tr><td>④</td><td>外部半導電層</td><td>絶縁体外面の電界を均一化</td></tr>
+          <tr><td>⑤</td><td>遮へい</td><td>漏れ電流・誘導電流を流す。接地する</td></tr>
+          <tr><td>⑥</td><td>シース</td><td>機械的保護・防水</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="example" label="半導電層が絶縁体の内外両側にある理由（因果理解）">
+        <p>導体の断面は完全な真円でなく表面に微小な凹凸があり、導体の角や凸部には電界が集中する（尖った導体ほど電荷密度が高くなるガウスの法則の帰結）。<strong>内部半導電層</strong>は導体と絶縁体の間に均一な電位面を作る緩衝層として働き、電界集中を防いで絶縁体への局所的なストレスを抑える。<strong>外部半導電層</strong>も絶縁体外面の電界を均一化し、遮へい層との界面での電界集中を防ぐ。両側に設けることで絶縁体全体に均一な電界が印加され、絶縁寿命が向上する。</p>
+      </Box>
+
+      <h2 id="hikaku"><span className="h-num">3.</span>架空送電 vs 地中送電 比較表（最重要）</h2>
+      <p>架空線と地中ケーブルで <strong>L・C・フェランチ効果のしやすさが逆転</strong>する点が試験の急所。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>項目</th><th>架空送電線</th><th>地中ケーブル</th></tr></thead>
+        <tbody>
+          <tr><td>建設費</td><td>低い</td><td>高い（5〜10倍以上）</td></tr>
+          <tr><td>保守費</td><td>中（定期点検・除草等）</td><td>低い（埋設後は手がかからない）</td></tr>
+          <tr><td>信頼性・事故頻度</td><td>低（雷・風雪・塩害の影響大）</td><td>高（外部環境の影響小）</td></tr>
+          <tr><td>事故復旧時間</td><td>短い（目視で発見しやすい）</td><td>長い（掘削が必要）</td></tr>
+          <tr><td>充電電流</td><td>小さい</td><td><strong>大きい</strong>（静電容量 C が大）</td></tr>
+          <tr><td>インダクタンス L</td><td>大きい</td><td><strong>小さい</strong>（導体間距離が小さい）</td></tr>
+          <tr><td>静電容量 C</td><td>小さい</td><td><strong>大きい</strong>（導体間距離が小さい）</td></tr>
+          <tr><td>フェランチ効果の発生しやすさ</td><td>比較的少ない</td><td><strong>発生しやすい</strong>（C が大のため）</td></tr>
+          <tr><td>熱放散</td><td>容易（空気冷却）</td><td>困難（土壌依存）</td></tr>
+          <tr><td>環境影響・景観</td><td>鉄塔が目立つ・土地が使えない</td><td>地中化で景観保護・土地は使える</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="cable"><span className="h-num">4.</span>ケーブルの種類比較（CV と OF）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>種類</th><th>絶縁材料</th><th>誘電正接 tanδ</th><th>最高使用温度</th><th>特徴</th></tr></thead>
+        <tbody>
+          <tr><td>OFケーブル（油浸紙絶縁油入）</td><td>浸油紙</td><td>大きい（0.002〜0.004）</td><td>75〜85℃</td><td>油圧管理が必要・漏油リスク</td></tr>
+          <tr><td>CVケーブル（XLPE絶縁ビニルシース）</td><td>XLPE</td><td><strong>小さい</strong>（0.0003〜0.001）</td><td><strong>90℃</strong></td><td>軽量・油不要・現在の主流</td></tr>
+          <tr><td>CVTケーブル</td><td>XLPE（単心3条）</td><td>小さい</td><td>90℃</td><td>単心ケーブルを3本撚り合わせ</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="example" label="CV が OF より誘電損が少ない理由（因果理解）">
+        <p>誘電損 <Eq tex="P_d = \omega C V^2 \tan\delta" /> から、絶縁材料の誘電正接 <Eq tex="\tan\delta" /> が誘電損を左右する。OFケーブルの絶縁体（浸油紙）は油を含む有機紙で、双極子（分子の正負の電荷の中心がずれた構造）が交番電界で向きを変えるたびにエネルギーを消費する。この分子レベルの摩擦が誘電損の正体。XLPE は分子構造が均一で双極子が少なく <Eq tex="\tan\delta" /> が桁違いに小さいため、同じ電圧・静電容量でも誘電損が OF の数分の一になる。最高使用温度も CV（90℃）が OF（75〜85℃）より高く、CV の方が許容電流を大きく取れる。</p>
+      </Box>
+
+      <h2 id="formula"><span className="h-num">5.</span>公式マップ（最重要）</h2>
+      <FormulaCard num="01" name="充電電流（ケーブルはコンデンサ）" eq="I_c = \omega C V = 2\pi f C V\,[\text{A}]"
+        note="ω=2πf（角周波数）、C=ケーブルの静電容量[F]、V=相電圧[V]（三相なら線間電圧÷√3）。ケーブルに交流を印加すると Q=CV が充電され、電流は電荷の時間微分で振幅 ωCV。" />
+      <FormulaCard num="02" name="誘電損（絶縁体の損失）" eq="P_d = \omega C V^2 \tan\delta\,[\text{W}]"
+        note="tanδ=誘電正接（絶縁材料の損失特性）。理想コンデンサは有効電力0だが、実際は損失角δだけ90°からずれ P=VI sinδ。δが小さく sinδ≈tanδ として整理。OFより CVの方が tanδ が小さく誘電損が少ない。" />
+      <FormulaCard num="03" name="ケーブルの静電容量（同軸構造）" eq="C = \dfrac{2\pi\varepsilon}{\ln(D/d)}\,[\text{F/m}]"
+        note="D=外側導体（遮へい）径、d=内側導体径。D/d が小さい（導体と遮へいが近い）ほど C が大きい。地中ケーブルは絶縁層が薄く C が大、架空線は導体間距離が大きく C が小。" />
+      <Box kind="tip" label="C が大きいか小さいかは「導体間距離」で決まる">
+        <p><strong>架空送電線</strong>は導体間（または導体と大地間）の距離が数m〜数十mと大きいので C は小さい。<strong>地中ケーブル</strong>は絶縁層が薄く導体と遮へい層の距離が数mm〜数十mmと小さいので C は大きい。この「距離が近い＝C大」が、充電電流大・フェランチ効果が起きやすいことの根本原因。</p>
+      </Box>
+
+      <h2 id="kaiho"><span className="h-num">6.</span>解法パターン（充電電流の計算）</h2>
+      <Box kind="tip" label="充電電流 Ic=ωCV の見分け方と手順">
+        <p><strong>見分け方</strong>：「地中ケーブル」「静電容量 ○ μF/km」「充電電流」のキーワードが揃っている。</p>
+        <ol>
+          <li><Eq tex="\omega = 2\pi f" /> を計算（f=50Hz なら ω=2π×50≈314 rad/s）</li>
+          <li>静電容量を F に換算（μF/km なら線路長[km]を掛けて全体の C[F] に）</li>
+          <li>三相なら相電圧 <Eq tex="V = V_L/\sqrt{3}" /> を使って <Eq tex="I_c = \omega C V" /> に代入</li>
+        </ol>
+      </Box>
+      <Box kind="example" label="例題: 線路長10km・静電容量0.2μF/km・66kV系統・f=50Hz の充電電流は？">
+        <p>① 全体の静電容量：</p>
+        <p><Eq tex="C = 0.2\times10^{-6}\times 10 = 2\times10^{-6}\,\text{F}" display /></p>
+        <p>② 角周波数：<Eq tex="\omega = 2\pi\times50 \approx 314\,\text{rad/s}" /></p>
+        <p>③ 三相なので相電圧を使う：<Eq tex="V = \dfrac{66{,}000}{\sqrt{3}} \approx 38{,}105\,\text{V}" /></p>
+        <p>④ 充電電流：</p>
+        <p><Eq tex="I_c = 314 \times 2\times10^{-6} \times 38{,}105 \approx 23.9\,\text{A}" display /></p>
+      </Box>
+
+      <h2 id="trap"><span className="h-num">7.</span>引っかけ・誤答ポイント</h2>
+      <Box kind="warn" label="【頻出1】L と C の大小が架空と逆">
+        <p>「地中ケーブルは架空送電線よりインダクタンス L が大きく、静電容量 C が小さい」→ <strong>誤り</strong>。導体間距離が小さいため <strong>L は小さく・C は大きい</strong>。架空線とまったく逆になる点が狙われる。</p>
+      </Box>
+      <Box kind="warn" label="【頻出2】フェランチ効果は地中ケーブルで起きやすい">
+        <p>「フェランチ効果は架空送電線の方が起きやすい」→ <strong>誤り</strong>。フェランチ効果（受電端電圧が送電端電圧より高くなる現象）は<strong>静電容量 C が大きいほど発生しやすい</strong>。地中ケーブルは C が桁違いに大きく、軽負荷・無負荷時に充電電流による進み無効電力が大きくなるため、フェランチ効果が顕著になる。</p>
+      </Box>
+      <Box kind="warn" label="【頻出3】CV と OF の最高使用温度">
+        <p>「CVケーブルの最高使用温度は OF ケーブルより低い」→ <strong>誤り</strong>。CV（XLPE絶縁）は <strong>90℃</strong>、OF（浸油紙絶縁）は75〜85℃。CV の方が高く、許容電流を大きく取れる。</p>
+      </Box>
+      <Box kind="warn" label="【頻出4】事故復旧時間は信頼性とは別の指標">
+        <p>「地中ケーブルの事故復旧は架空送電線より短時間で済む」→ <strong>誤り</strong>。事故<strong>頻度</strong>（信頼性）は地中の方が低い（高信頼）が、一度事故が起きると掘削が必要なため<strong>復旧時間は長い</strong>。信頼性と復旧時間を混同させる引っかけ。</p>
+      </Box>
+
+      <h2 id="seigo"><span className="h-num">8.</span>正誤判定の急所</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>命題</th><th>判定</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>地中ケーブルは架空送電線より静電容量が小さい</td><td><strong>誤</strong></td><td>導体間距離が小さく C は大きい</td></tr>
+          <tr><td>CVケーブルはOFケーブルより誘電正接が小さく誘電損が少ない</td><td><strong>正</strong></td><td>XLPEは浸油紙より tanδ が小さい</td></tr>
+          <tr><td>地中ケーブルの事故復旧は架空送電線より短時間で済む</td><td><strong>誤</strong></td><td>掘削が必要で時間がかかる</td></tr>
+          <tr><td>フェランチ効果は地中ケーブルで発生しやすい</td><td><strong>正</strong></td><td>C が大きく充電電流が多いため</td></tr>
+          <tr><td>CVケーブルの最高使用温度はOFケーブルより高い</td><td><strong>正</strong></td><td>CV=90℃、OF=75〜85℃</td></tr>
+          <tr><td>地中ケーブルはインダクタンスが架空送電線より大きい</td><td><strong>誤</strong></td><td>導体間距離が小さく L は小さい</td></tr>
+          <tr><td>地中送電は雷害や風雪の影響を受けにくく信頼性が高い</td><td><strong>正</strong></td><td>地中埋設で外部環境の影響が小</td></tr>
+          <tr><td>充電電流は静電容量と周波数に比例する</td><td><strong>正</strong></td><td>Ic=ωCV=2πfCV（f と C に比例）</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="kakomon"><span className="h-num">9.</span>出題実績</h2>
+      <p>架空送電線との比較（L大小・C大小・フェランチ効果）が頻出。CV と OF の tanδ・最高温度の比較も定番で、充電電流 <Eq tex="I_c = \omega C V" /> の数値計算も出題される。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>テーマ</th><th>形式</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>問9</td><td>地中送電線路の特徴と機材</td><td>論説</td></tr>
+          <tr><td>R07上</td><td>問9</td><td>CVケーブルとOFケーブルの特徴比較</td><td>穴埋</td></tr>
+          <tr><td>R06下</td><td>問9</td><td>地中ケーブルの誘電損・静電容量</td><td>計算</td></tr>
+          <tr><td>R06上</td><td>問9</td><td>地中送電線の充電電流計算</td><td>計算</td></tr>
+          <tr><td>R05下</td><td>問9</td><td>架空送電線と地中ケーブルの特性比較</td><td>論説</td></tr>
+          <tr><td>R05上</td><td>問9</td><td>CVケーブルとOFケーブルの特性比較（誘電損・最高使用温度）</td><td>穴埋</td></tr>
+          <tr><td>R04下</td><td>問9</td><td>地中ケーブルの充電電流計算（静電容量・線路長・電圧）</td><td>計算</td></tr>
+          <tr><td>R03</td><td>問9</td><td>架空送電線と地中ケーブルの特性比較（L・C・フェランチ効果）</td><td>穴埋</td></tr>
+          <tr><td>R02</td><td>問9</td><td>CVケーブルの構造（各層の名称と役割）</td><td>論説</td></tr>
+          <tr><td>R01</td><td>問8</td><td>地中送電の特徴（建設費・保守・事故復旧・充電電流の比較）</td><td>論説</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="R08予測">
+        <p>架空線との比較（L小・C大・フェランチ効果が起きやすい）と、CV・OF の誘電損／最高使用温度の比較が循環の本命。充電電流 <Eq tex="I_c = \omega C V" /> の計算は単位換算（μF/km→F、線間→相電圧）を確実に。フェランチ効果は「地中＞架空」の理由まで説明できるようにすること。</p>
+      </Box>
+
+    </div>
+    <PageNav
+      prev={{ id: "kakuu-souden", title: "3.1 架空送電線路" }}
+      next={{ id: "haiden", title: "4.1 配電線路" }}
+      onNav={onNav} />
+  </>
+);
+
+const DenryokuKeitouPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "電力系統・需給運用" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="5.2  POWER SYSTEM & SUPPLY-DEMAND"
+      title="電力系統・需給運用"
+      deck="発電した電力を「今この瞬間」需要と一致させ続ける仕組み。需給バランスが崩れると周波数が動く。論説中心だが、設備利用率・供給予備率の計算も出る。再エネ大量導入と系統連系は近年の頻出論点。"
+      meta={[
+        { label: "出題頻度", value: "高（毎年 問10 級で出題）" },
+        { label: "難易度", value: "★★☆" },
+        { label: "出題形式", value: "論説・穴埋め・計算（設備利用率/予備率）" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="intro"><span className="h-num">1.</span>直感的理解 — 需給バランスと周波数</h2>
+      <p>電力系統の本質は、発電した電力を <strong>今この瞬間に</strong> 需要と一致させ続けること。電力は在庫を持てない（大規模蓄電が普及する前の前提）。だから <strong>需給のバランスが崩れると周波数が変動する</strong>。周波数は全系統の同期発電機が一斉に同期しているため、ズレは瞬時に系統全体へ伝わる。つまり周波数は「電力系統の健康診断」として機能する。</p>
+      <Box kind="tip" label="周波数と需給バランスの因果（最重要）">
+        <ul>
+          <li><strong>需要 &gt; 供給</strong> — 発電機（回転体）に余分な負荷 → 回転子の運動エネルギーが奪われ回転数が低下 → <strong>周波数が低下</strong>（東日本なら50Hz以下）</li>
+          <li><strong>供給 &gt; 需要</strong> — 発電機が空回り → 回転子にエネルギーが蓄積され回転数が上昇 → <strong>周波数が上昇</strong></li>
+        </ul>
+      </Box>
+
+      <h2 id="zentaizou"><span className="h-num">2.</span>電力系統の全体像と電圧区分</h2>
+      <p>発電所の出力を昇圧変圧器で超高圧に上げ、送電・変電を経て段階的に降圧し、最後に需要家へ届ける。高電圧で送る理由は損失低減にある。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>区分</th><th>電圧レベル</th><th>主な用途</th></tr></thead>
+        <tbody>
+          <tr><td>超高圧送電</td><td>500kV、275kV</td><td>長距離・大容量幹線送電</td></tr>
+          <tr><td>高圧送電</td><td>154kV、66kV</td><td>地域幹線送電</td></tr>
+          <tr><td>特別高圧配電</td><td>33kV、22kV</td><td>大規模工場・地域変電所</td></tr>
+          <tr><td>高圧配電</td><td>6.6kV</td><td>一般配電線路</td></tr>
+          <tr><td>低圧</td><td>100V / 200V</td><td>家庭・小規模商業</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="example" label="なぜ高電圧で長距離送電するのか">
+        <p>送電線の電力損失は <Eq tex="P_{\text{loss}} = I^2 R" />。同じ電力 <Eq tex="P = VI" /> を送るとき、電圧 V を高くすると電流 <Eq tex="I = P/V" /> が小さくなり、線路抵抗による損失 <Eq tex="I^2 R" /> が電流の2乗で大幅に減る。さらに電流が小さければ電線も細くでき材料コストも下がる。これが超高圧送電のねらい。</p>
+      </Box>
+
+      <h2 id="jukyu"><span className="h-num">3.</span>需給運用の仕組み</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>制御</th><th>略称</th><th>目的・内容</th><th>応答速度</th></tr></thead>
+        <tbody>
+          <tr><td>負荷追従制御</td><td>LFC</td><td>系統周波数を定格（50/60Hz）に維持。周波数偏差を検出し発電機出力を自動調整（ガバナ＝速度調定）</td><td>秒〜分</td></tr>
+          <tr><td>経済負荷配分</td><td>EDC</td><td>複数発電所を最も経済的に配分。限界コストの安い発電所から優先起動。送電ロスも考慮し燃料費を最小化</td><td>分〜時間</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="warn" label="EDC の優先順位（頻出引っかけ）">
+        <p>「経済負荷配分（EDC）は限界コストの<strong>高い</strong>発電所から優先的に起動する」→ <strong>誤り</strong>。コストが<strong>低い（安い）</strong>発電所から優先起動する。目的は系統全体の燃料費最小化。コストの高い発電所は最後に起動するピーク対応電源。</p>
+      </Box>
+      <Box kind="example" label="揚水発電による需給調整（昼夜の向きに注意）">
+        <p>揚水発電所はポンプ水車と同期電動機/発電機を兼ねる可逆設備。<strong>夜間（需要谷）</strong>は系統の余剰電力でポンプ水車を駆動し、下池の水を上池へ汲み上げて位置エネルギーとして蓄える（電力を消費）。<strong>昼間（需要ピーク）</strong>は上池から放水して発電する（電力を供給）。揚水効率は約70〜80%で、20〜30%は損失だが、出力調整が難しい夜間の余剰電力を活かせる大規模貯蔵手段として価値が高い。</p>
+      </Box>
+
+      <h2 id="anteido"><span className="h-num">4.</span>系統安定度</h2>
+      <p>同期発電機は系統全体で同じ速度で回転している。安定度とは「外乱（負荷急変・短絡等）が起きても同期を失わず（脱調せず）元の運転状態に戻れるか」の指標。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>種類</th><th>定義</th><th>対策</th></tr></thead>
+        <tbody>
+          <tr><td>定態安定度</td><td>定常状態で小さな擾乱に対して安定を保てる限界</td><td>送電線を並列化・電圧維持</td></tr>
+          <tr><td>動態安定度</td><td>自動制御（AVR・PSS等）を含む動的安定性</td><td>自動電圧調整器（AVR）の整定</td></tr>
+          <tr><td>過渡安定度</td><td>短絡・地絡などの大きな擾乱後に同期を保てるか</td><td>高速遮断・系統連系強化</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="定態 vs 過渡（因果で覚える）">
+        <p><strong>定態安定度</strong>は小さな負荷変動に対する復元力。送電電力の上限（定態安定限界）を超えて運用しなければよい。<strong>過渡安定度</strong>は短絡事故のような大きな擾乱で、発電機が加速して他機との位相差が急拡大する前に素早く遮断（高速遮断）し、位相差が大きくなる前に系統を切り離して脱調を防ぐ。</p>
+      </Box>
+
+      <h2 id="hinshitsu"><span className="h-num">5.</span>電力品質の管理基準（数値は暗記）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>指標</th><th>管理目標</th><th>外れたときの影響</th></tr></thead>
+        <tbody>
+          <tr><td>周波数（東日本）</td><td><strong>50Hz ± 0.2Hz</strong></td><td>同期発電機が脱調・機器誤動作</td></tr>
+          <tr><td>電圧（低圧100V系）</td><td><strong>101V ± 6V</strong>（95〜107V）</td><td>低→機器故障、高→絶縁破壊</td></tr>
+          <tr><td>電圧（高圧6.6kV系）</td><td><strong>6,600V ± 600V</strong>（6,000〜7,200V）</td><td>電動機の効率低下・過熱</td></tr>
+          <tr><td>総合高調波電圧歪率</td><td><strong>5%以下</strong></td><td>機器過熱・通信障害・継電器誤動作</td></tr>
+          <tr><td>電圧不平衡率</td><td><strong>3%以下</strong></td><td>誘導電動機の効率低下・過熱</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="warn" label="低圧100V系の適正範囲（頻出引っかけ）">
+        <p>「低圧100V系の適正範囲は100V±10Vである」→ <strong>誤り</strong>。適正範囲は <strong>101V±6V</strong>（95〜107V）。基準値が100Vではなく<strong>101V</strong>であること、幅が±10Vではなく±6Vであることをセットで覚える。</p>
+      </Box>
+
+      <h2 id="renkei"><span className="h-num">6.</span>系統連系と単独運転防止</h2>
+      <p>太陽光・風力・小水力等の分散型電源を系統につなぐには、系統連系規程（JEAG 9701）に沿った要件を満たす必要がある。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>要件</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>単独運転防止</td><td>系統停電時に分散型電源が単独で運転（アイランディング）しないこと</td></tr>
+          <tr><td>逆潮流</td><td>余剰電力を系統に逆流させること。大部分の分散型電源で認められている</td></tr>
+          <tr><td>保護協調</td><td>系統の保護システムと連系点の保護装置を協調させること</td></tr>
+          <tr><td>電圧変動</td><td>連系により配電線の電圧が許容範囲を超えないこと</td></tr>
+          <tr><td>高調波</td><td>インバータから発生する高調波が規制値以下であること</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="example" label="単独運転防止（アイランディング防止）が必要な理由">
+        <p>系統停電時に分散型電源が単独で電圧を供給し続けると、（1）需要家側に電圧が印加されたまま残り作業員の感電リスクが生じ、（2）系統復旧時の位相不一致で機器が損傷する。<strong>検出方法</strong>は、周波数・電圧に意図的な変動を与えて検出する<strong>能動的方式</strong>と、周波数・電圧の急変を検出する<strong>受動的方式</strong>。<strong>対策</strong>は、系統停電を検出したら自動的に解列（連系点遮断）すること。</p>
+      </Box>
+      <Box kind="warn" label="再エネ大量導入と系統の慣性力（頻出引っかけ）">
+        <p>「太陽光発電を大量に系統連系すると系統の慣性力が増す」→ <strong>誤り</strong>。太陽光発電はインバータ（直流→交流変換器）経由で接続されるため、同期発電機の回転体がもつ慣性力（イナーシャ）に相当するものがない。太陽光比率が上がると系統全体の慣性力が<strong>低下</strong>し、周波数が変動しやすくなる。対策は蓄電池（BESS）・揚水との組み合わせ、需要側制御（DR）。</p>
+      </Box>
+
+      <h2 id="formula"><span className="h-num">7.</span>公式マップと負荷持続曲線</h2>
+      <FormulaCard num="01" name="設備利用率" eq="U = \dfrac{W}{P \times 8760} \times 100\,[\%]"
+        note="U=設備利用率、W=年間発電電力量[kWh]、P=設備容量[kW]、8760=1年の時間[h]。高いほど設備を有効活用。太陽光は約12〜18%、火力は約50〜80%。" />
+      <FormulaCard num="02" name="供給予備率" eq="R = \dfrac{P_s - P_d}{P_d} \times 100\,[\%]"
+        note="R=供給予備率、Ps=供給力、Pd=最大需要電力。高いほど安定供給しやすいが設備コストは増える。一般に8〜10%以上を目標とすることが多い。" />
+      <Box kind="example" label="例題①: 容量100kWの太陽光が年間140,000kWh発電 → 設備利用率は？">
+        <p>設備利用率 U は次式で求まる。</p>
+        <p><Eq tex="U = \dfrac{140{,}000}{100 \times 8760} \times 100 = \dfrac{140{,}000}{876{,}000} \times 100 \approx 16.0\,\%" display /></p>
+        <p>太陽光の目安（12〜18%）の範囲に収まる。</p>
+      </Box>
+      <Box kind="example" label="例題②: 供給力1,100万kW・最大需要1,000万kW → 供給予備率は？">
+        <p>供給予備率 R は次式で求まる。</p>
+        <p><Eq tex="R = \dfrac{1100 - 1000}{1000} \times 100 = 10.0\,\%" display /></p>
+        <p>目標の8〜10%以上を満たす水準。</p>
+      </Box>
+      <Box kind="tip" label="負荷持続曲線とベース・ミドル・ピーク">
+        <p><strong>負荷持続曲線</strong>は、年間8760時間を通じて各負荷レベルが何時間持続するかを表したグラフ。これを使って電源を割り当てる。</p>
+        <ul>
+          <li><strong>ベース負荷</strong> — 年間ほぼ常時必要な最低限の電力。原子力・石炭火力・大型水力で賄う</li>
+          <li><strong>ミドル負荷</strong> — 昼間・平日に追加的に必要。LNG・石油火力で対応</li>
+          <li><strong>ピーク負荷</strong> — 夏の猛暑日・冬の厳寒日など年間数十〜数百時間のみ。揚水・ガスタービンで対応</li>
+        </ul>
+      </Box>
+
+      <h2 id="trap"><span className="h-num">8.</span>引っかけ・誤答ポイント</h2>
+      <Box kind="warn" label="頻出の4トラップ">
+        <ul>
+          <li><strong>周波数低下の原因を逆に理解</strong> — 周波数低下＝<strong>需要が供給を上回る（需要過多）</strong>。供給過多のサインではない。</li>
+          <li><strong>揚水の昼夜を逆に覚える</strong> — 揚水（汲み上げ・電力消費）は<strong>夜間</strong>、放水・発電（ピーク対応）は<strong>昼間</strong>。向きが逆の出題が頻出。</li>
+          <li><strong>供給予備率は小さい方がよいと誤解</strong> — 予備率が<strong>高い</strong>ほど安定供給に有利（安全マージン大）。ただし設備コストは増える。</li>
+          <li><strong>低圧100V系を100V±10Vと誤認</strong> — 正しくは<strong>101V±6V</strong>（95〜107V）。</li>
+        </ul>
+      </Box>
+
+      <h2 id="seigo"><span className="h-num">9.</span>正誤判定の急所</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>命題</th><th>判定</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>系統周波数が低下するのは需要が供給を上回っている状態である</td><td><strong>正</strong></td><td>発電機の回転数（周波数）が需要増で低下</td></tr>
+          <tr><td>揚水発電所は電力需要の多い昼間に揚水を行う</td><td><strong>誤</strong></td><td>揚水は夜間（余剰電力）。昼間は放水・発電</td></tr>
+          <tr><td>設備利用率が高いほど発電設備を有効活用している</td><td><strong>正</strong></td><td>実際の発電量 / 最大可能発電量</td></tr>
+          <tr><td>低圧100V系の電圧の適正範囲は100V±10Vである</td><td><strong>誤</strong></td><td>適正範囲は101V±6V（95〜107V）</td></tr>
+          <tr><td>太陽光発電を大量に系統連系すると系統の慣性力が増す</td><td><strong>誤</strong></td><td>インバータ連系では慣性力は低下する</td></tr>
+          <tr><td>単独運転防止は系統停電時に分散型電源を自動解列させる技術である</td><td><strong>正</strong></td><td>感電リスク・位相不一致を防ぐ</td></tr>
+          <tr><td>経済負荷配分（EDC）は限界コストの高い発電所から優先的に起動する</td><td><strong>誤</strong></td><td>限界コストの低い（安い）発電所から優先</td></tr>
+          <tr><td>供給予備率が高いほど電力供給の安定性が高い</td><td><strong>正</strong></td><td>需要変動・設備故障に対応しやすい</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="kakomon"><span className="h-num">10.</span>出題実績（毎年 問10 級で出題）</h2>
+      <p>「周波数低下＝需要過多」の因果は毎回のように確認される。揚水の昼夜、設備利用率・供給予備率の計算、系統連系・単独運転防止が循環的に出題される。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>テーマ</th><th>形式</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>問10</td><td>電力系統の周波数制御と需給調整</td><td>論説</td></tr>
+          <tr><td>R07上</td><td>問10</td><td>電力系統の需給バランスと揚水発電の役割</td><td>穴埋</td></tr>
+          <tr><td>R06下</td><td>問10</td><td>設備利用率と供給予備率の計算</td><td>計算</td></tr>
+          <tr><td>R06上</td><td>問10</td><td>系統連系規程（単独運転防止・逆潮流）</td><td>論説</td></tr>
+          <tr><td>R05下</td><td>問10</td><td>系統周波数と需給バランスの関係</td><td>論説</td></tr>
+          <tr><td>R05上</td><td>問10</td><td>揚水発電の仕組みと需給調整への活用</td><td>穴埋</td></tr>
+          <tr><td>R04下</td><td>問10</td><td>負荷持続曲線とベース・ピーク負荷</td><td>論説</td></tr>
+          <tr><td>R03</td><td>問10</td><td>電力系統の安定度と系統連系</td><td>論説</td></tr>
+          <tr><td>R02</td><td>問10</td><td>系統連系規程（単独運転防止・逆潮流の正誤）</td><td>論説</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="R08予測">
+        <p>「周波数低下＝需要過多」の因果と揚水の昼夜は最優先で固める。再エネ普及を背景に系統連系・単独運転防止・慣性力低下の論説が増加傾向。設備利用率・供給予備率は計算で出る可能性があるので公式を即出せるように。</p>
+      </Box>
+
+    </div>
+    <PageNav
+      prev={{ id: "denki-zairyou", title: "5.1 電気材料" }}
+      next={null}
+      onNav={onNav} />
+  </>
+);
+
+Object.assign(window, { StubPage, UnitStubPage, HaidenPage, KakuuSoudenPage, KaryokuPage, HenatsukiPage, SuiryokuPage, DenkiZairyouPage, GenshiryokuPage, ShinEnergyPage, HenatsukiLossPage, KeikiHenseiPage, ShadankiPage, HogoKeidenPage, KaiheiHogoPage, ChichuuSoudenPage, DenryokuKeitouPage });
 
 </script>
 <script type="text/babel">
@@ -3338,6 +4607,13 @@ const App = () => {
     if (page === 'denki-zairyou') return <DenkiZairyouPage {...props} />;
     if (page === 'genshiryoku')   return <GenshiryokuPage {...props} />;
     if (page === 'shin-energy')   return <ShinEnergyPage {...props} />;
+    if (page === 'henatsuki-loss') return <HenatsukiLossPage {...props} />;
+    if (page === 'keiki-hensei')   return <KeikiHenseiPage {...props} />;
+    if (page === 'shadanki')       return <ShadankiPage {...props} />;
+    if (page === 'hogo-keiden')    return <HogoKeidenPage {...props} />;
+    if (page === 'kaihei-hogo')    return <KaiheiHogoPage {...props} />;
+    if (page === 'chichuu-souden') return <ChichuuSoudenPage {...props} />;
+    if (page === 'denryoku-keitou') return <DenryokuKeitouPage {...props} />;
     // 移行シェル: 未移植の単元は UnitStubPage（準備中）。本文移植時はここに
     // 専用 component の if を追加する（例: if (page === 'karyoku') return <KaryokuPage {...props} />;）。
     return <UnitStubPage id={page} data={data} onNav={navigate} />;
