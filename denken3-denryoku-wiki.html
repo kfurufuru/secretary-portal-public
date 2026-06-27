@@ -355,6 +355,21 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   color: var(--accent-ink);
   margin-bottom: 8px;
 }
+.migrated-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ok);
+  border: 1px solid color-mix(in oklch, var(--ok) 45%, transparent);
+  background: color-mix(in oklch, var(--ok) 12%, transparent);
+  padding: 2px 9px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
 .page-title {
   font-family: var(--font-serif);
   font-size: 36px;
@@ -1851,8 +1866,9 @@ const Eq = ({ tex, display }) => {
 
 /* ============================================================ Page chrome */
 
-const PageHeader = ({ eyebrow, title, deck, meta }) => (
+const PageHeader = ({ eyebrow, title, deck, meta, migrated = true }) => (
   <header className="page-header">
+    {migrated && <div className="migrated-badge" title="旧MkDocs版から本SPAへ本文移植済み">✓ 移行済</div>}
     {eyebrow && <div className="page-eyebrow">{eyebrow}</div>}
     <h1 className="page-title">{title}</h1>
     {deck && <p className="page-deck">{deck}</p>}
@@ -1921,6 +1937,7 @@ const HomePage = ({ data, onNav }) => {
     <>
       <Crumbs items={[{ label: "ホーム" }]} onNav={onNav} />
       <PageHeader
+        migrated={false}
         eyebrow="ELECTRICAL ENGINEER 3RD CLASS — POWER"
         title="電験3種 電力Wiki"
         deck="第三種電気主任技術者試験「電力」科目に特化した、設備×公式×過去問のクロスリファレンス。発電所→変電所→送電→配電という系統の流れに沿い、設備が「なぜその構造なのか」から計算問題・知識問題を最短経路で攻略する。"
@@ -4389,7 +4406,1767 @@ const DenryokuKeitouPage = ({ data, onNav }) => (
   </>
 );
 
-Object.assign(window, { StubPage, UnitStubPage, HaidenPage, KakuuSoudenPage, KaryokuPage, HenatsukiPage, SuiryokuPage, DenkiZairyouPage, GenshiryokuPage, ShinEnergyPage, HenatsukiLossPage, KeikiHenseiPage, ShadankiPage, HogoKeidenPage, KaiheiHogoPage, ChichuuSoudenPage, DenryokuKeitouPage });
+
+/* ============================================================
+   K1 年度別一覧 — 本文移植済み（過去問マッピング）
+   出典: denken-wiki-denryoku/docs/kakomon/by-year.md
+   ============================================================ */
+const KakomonByYearPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "年度別一覧" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="K1 · PAST EXAMS BY YEAR"
+      title="年度別一覧"
+      deck="電験3種「電力」科目の年度別出題テーマ一覧。各セルは「テーマ略称（問題タイプ）」で表示し、R07〜R01の令和時代と H30〜H23の平成時代（参考）をマッピングする。出典は電験王。"
+      meta={[
+        { label: "種別", value: "過去問マッピング" },
+        { label: "使い方", value: "年度ごとの頻出テーマ把握" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="ryakusho"><span className="h-num">1.</span>テーマ略称</h2>
+      <p>各セルは「テーマ略称（問題タイプ）」で表示する。略称の対応は以下のとおり。</p>
+      <Box kind="tip" label="テーマ略称">
+        <p>水=水力, 火=火力, 原=原子力, 新=新エネ, 変=変圧器, 開=開閉保護, 架=架空送電, 地=地中送電, 配=配電, 系=電力系統, 材=電気材料</p>
+      </Box>
+
+      <h2 id="reiwa"><span className="h-num">2.</span>R07〜R01（令和時代）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問1</th><th>問2</th><th>問3</th><th>問4</th><th>問5</th><th>問6</th><th>問7</th><th>問8</th><th>問9</th><th>問10</th><th>問11〜15</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>水（穴埋）</td><td>水（計算）</td><td>火（論説）</td><td>原（論説）</td><td>新（論説）</td><td>変（論説）</td><td>配（論説）</td><td>開（論説）/ 架（論説）</td><td>架（論説）/ 地（論説）</td><td>系（論説）</td><td>問11:架（論説） 問12:配（計算） 問14:材（論説） 問15:火（計算）</td></tr>
+          <tr><td>R07上</td><td>水（穴埋）</td><td>火（計算）</td><td>火（論説）</td><td>原（穴埋）</td><td>新（穴埋）</td><td>変（論説）</td><td>変（論説）</td><td>開（穴埋）/ 架（論説）</td><td>架（論説）/ 地（穴埋）</td><td>系（穴埋）</td><td>問11:配（論説） 問13:配（計算） 問14:材（論説） 問15:水（計算） 問17:配（計算）</td></tr>
+          <tr><td>R06下</td><td>水（論説）</td><td>火（論説）</td><td>火（穴埋）</td><td>原（論説）</td><td>新（穴埋）</td><td>変（論説）</td><td>変（論説）</td><td>開（論説）/ 架（論説）</td><td>架（論説）/ 地（計算）</td><td>系（計算）</td><td>問11:配（論説） 問14:材（論説） 問15:火（計算）</td></tr>
+          <tr><td>R06上</td><td>水（論説）</td><td>水（計算）</td><td>火（論説）</td><td>原（計算）</td><td>新（論説）</td><td>変（計算）</td><td>変（論説）</td><td>開（穴埋）/ 架（論説）</td><td>架（論説）/ 地（計算）</td><td>系（論説）</td><td>問14:材（論説） 問15:水（計算） 問16:変（計算） 問17:配（計算）</td></tr>
+          <tr><td>R05下</td><td>水（穴埋）</td><td>火（計算）</td><td>火（穴埋）</td><td>原（論説）</td><td>新（論説）</td><td>変（論説）</td><td>配（論説）</td><td>開（論説）/ 架（論説）</td><td>架（論説）/ 地（論説）</td><td>系（論説）</td><td>問13:配（計算） 問14:材（論説） 問15:水（計算）</td></tr>
+          <tr><td>R05上</td><td>水（穴埋）</td><td>火（論説）</td><td>火（穴埋）</td><td>原（計算）</td><td>新（論説）</td><td>配（論説）</td><td>変（論説）</td><td>開（穴埋）/ 架（論説）</td><td>架（論説）/ 地（穴埋）</td><td>系（穴埋）</td><td>問13:変（計算） 問14:材（論説） 問16:変（計算）</td></tr>
+          <tr><td>R04下</td><td>水（論説）</td><td>水（穴埋）</td><td>火（論説）</td><td>原（穴埋）</td><td>新（論説）</td><td>変（計算）</td><td>変（論説）</td><td>開（論説）/ 架（論説）</td><td>地（計算）</td><td>系（論説）</td><td>問13:配（論説） 問14:材（穴埋）</td></tr>
+          <tr><td>R04上</td><td>—</td><td>火（穴埋）</td><td>火（計算）</td><td>原（論説）</td><td>新（穴埋）</td><td>—</td><td>—</td><td>開（論説）/ 架（論説）</td><td>—</td><td>系（穴埋）</td><td>問10:架（論説） 問14:材（論説） 問16:変（計算）</td></tr>
+          <tr><td>R03</td><td>—</td><td>水（計算）</td><td>—</td><td>火（穴埋）</td><td>原（論説）</td><td>新（論説）</td><td>変（論説）</td><td>開（穴埋）/ 架（穴埋）</td><td>変（計算）/ 地（穴埋）</td><td>系（論説）</td><td>問10:架（論説） 問12:配（論説） 問13:配（穴埋） 問14:材（論説）</td></tr>
+          <tr><td>R02</td><td>水（論説）</td><td>—</td><td>—</td><td>原（穴埋）</td><td>新（穴埋）</td><td>架（論説）</td><td>変（論説）</td><td>開（論説）</td><td>地（論説）</td><td>系（論説）</td><td>問10:架（論説）/ 系（論説） 問12:配（論説） 問13:配（穴埋） 問14:材（論説）</td></tr>
+          <tr><td>R01</td><td>水（論説）</td><td>—</td><td>—</td><td>原（計算）</td><td>火（論説）</td><td>—</td><td>—</td><td>開（計算）/ 地（論説）</td><td>架（論説）</td><td>系（論説）</td><td>問10:架（論説） 問12:配（論説） 問14:材（論説）</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="heisei"><span className="h-num">3.</span>H30〜H23（平成時代・参考）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問1〜5（発電系）</th><th>問6〜9（変電・送電系）</th><th>問10〜14（配電・材料系）</th></tr></thead>
+        <tbody>
+          <tr><td>H30</td><td>問5:新（計算）</td><td>問7:変（論説） 問9:架（論説） 問12:変（計算）</td><td>問14:材（論説）</td></tr>
+          <tr><td>H29</td><td>問5:新（穴埋）</td><td>—</td><td>問14:材（論説）</td></tr>
+          <tr><td>H28</td><td>—</td><td>問8:架（論説） 問16:変（計算）</td><td>問14:材（論説）</td></tr>
+          <tr><td>H27</td><td>—</td><td>—</td><td>問14:材（論説）</td></tr>
+          <tr><td>H26</td><td>—</td><td>問6:変（計算） 問8:架（論説）</td><td>問14:材（論説）</td></tr>
+          <tr><td>H25</td><td>—</td><td>問8:架（論説）</td><td>—</td></tr>
+          <tr><td>H24</td><td>—</td><td>—</td><td>問4:原（計算）</td></tr>
+          <tr><td>H23</td><td>—</td><td>—</td><td>問4:原（計算）</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="hanrei"><span className="h-num">4.</span>凡例・補足</h2>
+      <h3>テーマ略称と主な出題問番号</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>略称</th><th>テーマ名</th><th>主な出題問番号</th></tr></thead>
+        <tbody>
+          <tr><td>水</td><td>水力発電</td><td>問1〜2, 問15</td></tr>
+          <tr><td>火</td><td>火力発電</td><td>問2〜3, 問15</td></tr>
+          <tr><td>原</td><td>原子力発電</td><td>問4</td></tr>
+          <tr><td>新</td><td>新エネルギー</td><td>問5</td></tr>
+          <tr><td>変</td><td>変圧器・変電設備</td><td>問6〜7, 問16</td></tr>
+          <tr><td>開</td><td>開閉装置・保護継電器</td><td>問8</td></tr>
+          <tr><td>架</td><td>架空送電</td><td>問7〜9, 問11</td></tr>
+          <tr><td>地</td><td>地中送電</td><td>問9</td></tr>
+          <tr><td>配</td><td>配電線路</td><td>問7, 問10〜13, 問16〜17</td></tr>
+          <tr><td>系</td><td>電力系統・需給運用</td><td>問10</td></tr>
+          <tr><td>材</td><td>電気材料</td><td>問14</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>問題タイプ</h3>
+      <ul>
+        <li><strong>論説</strong>: 空欄なし・論述形式（選択問題含む）</li>
+        <li><strong>穴埋</strong>: 文中の空欄に語句・数値を埋める形式</li>
+        <li><strong>計算</strong>: 数値計算を要する形式</li>
+      </ul>
+
+      <Box kind="warn" label="年度区分の注意事項">
+        <ul>
+          <li>R04上以前の年度は年1回試験（上期/下期の区別なし）</li>
+          <li>R05〜以降は年2回試験（上期=CBT方式、下期=筆記方式）</li>
+          <li>「—」は当該テーマからの出題実績データなし（他テーマが出題されている可能性あり）</li>
+          <li>1セルに複数テーマ記載は「同問番号に複数テーマ記事が記録していた場合」（テーマ記事の分類の重複による）</li>
+        </ul>
+      </Box>
+
+      <Box kind="tip" label="出典">
+        <p>出典: 電験王（denken-ou.com/denryoku/）</p>
+      </Box>
+
+    </div>
+    <PageNav prev={{ id: "denryoku-keitou", title: "5.2 電力系統・需給運用" }} next={{ id: "kakomon-by-field", title: "K2 分野別一覧" }} onNav={onNav} />
+  </>
+);
+
+
+/* ============================================================
+   K2 分野別一覧 — 本文移植済み（過去問マッピング）
+   出典: denken-wiki-denryoku/docs/kakomon/by-field.md
+   ============================================================ */
+const KakomonByFieldPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "分野別一覧" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="K2 · PAST EXAMS BY FIELD"
+      title="分野別一覧"
+      deck="電力科目の過去問を分野別に整理。発電（水力・火力・原子力・新エネルギー）から変電・送電・配電・電気材料・送配電線路まで、9分野ごとに年度・問・タイトル・問題タイプ・難易度を一覧化したクロスリファレンス。出典は電験王（denken-ou.com）。"
+      meta={[
+        { label: "種別", value: "過去問マッピング" },
+        { label: "使い方", value: "弱点分野の出題傾向と頻度を把握" },
+      ]}
+    />
+    <div className="content">
+
+      <Box kind="tip" label="難易度の凡例">
+        <p>★☆☆☆☆=易 / ★★☆☆☆=やや易 / ★★★☆☆=標準 / ★★★★☆=やや難 / ★★★★★=難</p>
+      </Box>
+
+      <h2 id="suiryoku"><span className="h-num">1.</span>水力発電（37問）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>タイトル</th><th>問題タイプ</th><th>難易度</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>問1</td><td>水力発電所の落差分類</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>R07下</td><td>問2</td><td>単位体積当たりの水の運動エネルギー</td><td>計算</td><td>★★☆☆☆</td></tr>
+          <tr><td>R07上</td><td>問1</td><td>水力発電所の理論出力と各単位</td><td>穴埋</td><td>★☆☆☆☆</td></tr>
+          <tr><td>R07上</td><td>問15</td><td>調整池式水力発電所の使用水量と有効貯水容量</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R06下</td><td>問1</td><td>水力発電の水車・発電機・主変圧器の特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06上</td><td>問1</td><td>衝動水車を中心とした水力発電所</td><td>論説</td><td>★★★★☆</td></tr>
+          <tr><td>R06上</td><td>問2</td><td>揚水発電所の電動機入力と発電機出力</td><td>計算</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06上</td><td>問15</td><td>水車の回転速度と比速度および水車の種類</td><td>計算</td><td>★★★★★</td></tr>
+          <tr><td>R05下</td><td>問1</td><td>水力発電所の落差と理論式</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>R05下</td><td>問15</td><td>水力発電所の発電電力量と汽力発電所の重油使用量</td><td>計算</td><td>★★★★☆</td></tr>
+          <tr><td>R05上</td><td>問1</td><td>水車の比速度の定義と特徴</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04下</td><td>問1</td><td>水力発電の特徴や現在の概況</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R04下</td><td>問2</td><td>水力発電で使用される水車の特徴</td><td>穴埋</td><td>★★★☆☆</td></tr>
+          <tr><td>R04上</td><td>問1</td><td>水力発電所における水車の特徴及び監視制御方式</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R04上</td><td>問15</td><td>揚水発電所の揚水運転時の必要電力量及び流量</td><td>計算</td><td>★★★★☆</td></tr>
+          <tr><td>R03</td><td>問1</td><td>水力発電所の落差を得る方法や流量調整による分類</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R03</td><td>問2</td><td>連続の定理及びベルヌーイの定理</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R02</td><td>問1</td><td>ダム水路式発電所における水撃作用及びサージタンク</td><td>論説</td><td>★★★★☆</td></tr>
+          <tr><td>R02</td><td>問15</td><td>貯水池を有する水力発電所の発電計画</td><td>計算</td><td>★★★★☆</td></tr>
+          <tr><td>R01</td><td>問1</td><td>水力発電所の水車及び発電機</td><td>論説</td><td>★★★☆☆</td></tr>
+        </tbody>
+      </table></div>
+      <p>R01〜R07でR系20問出題（H30以前含む計37問）。</p>
+
+      <h2 id="karyoku"><span className="h-num">2.</span>火力発電（60問）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>タイトル</th><th>問題タイプ</th><th>難易度</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>問3</td><td>汽力発電所で使用される保護装置</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R07下</td><td>問15</td><td>重油専焼火力発電所の熱効率と二酸化炭素発生量</td><td>計算</td><td>★★★★☆</td></tr>
+          <tr><td>R07上</td><td>問2</td><td>タービン効率と使用蒸気量の関係</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R07上</td><td>問3</td><td>水と蒸気及び燃焼ガスの通過する順序</td><td>論説</td><td>★★★★☆</td></tr>
+          <tr><td>R06下</td><td>問2</td><td>汽力発電における熱効率向上対策</td><td>論説</td><td>★★★★☆</td></tr>
+          <tr><td>R06下</td><td>問3</td><td>衝動タービンと反動タービンの比較</td><td>穴埋</td><td>★★★★★</td></tr>
+          <tr><td>R06下</td><td>問15</td><td>重油消費量と二酸化炭素排出量</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R06上</td><td>問3</td><td>コンバインドサイクル発電と汽力発電の比較</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R05下</td><td>問2</td><td>速度調定率の異なる発電機の出力変化</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R05下</td><td>問3</td><td>復水器の特徴</td><td>穴埋</td><td>★★★☆☆</td></tr>
+          <tr><td>R05上</td><td>問2</td><td>熱回収コンバインドサイクル発電の特徴</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R05上</td><td>問3</td><td>火力発電所の煙風道系統</td><td>穴埋</td><td>★★★☆☆</td></tr>
+          <tr><td>R04下</td><td>問3</td><td>コンバインドサイクル発電方式の特徴</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R04上</td><td>問2</td><td>火力発電所のタービン発電機</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04上</td><td>問3</td><td>汽力発電設備のタービン効率</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R03</td><td>問4</td><td>電気集じん装置のメカニズム</td><td>穴埋</td><td>★★★★★</td></tr>
+          <tr><td>R01</td><td>問5</td><td>コンバインドサイクル発電</td><td>論説</td><td>★☆☆☆☆</td></tr>
+        </tbody>
+      </table></div>
+      <p>R01〜R07でR系17問出題（H30以前含む計60問）。</p>
+
+      <h2 id="genshiryoku"><span className="h-num">3.</span>原子力発電（26問）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>タイトル</th><th>問題タイプ</th><th>難易度</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>問4</td><td>将来に向けた新型炉の検討</td><td>論説</td><td>★★★★☆</td></tr>
+          <tr><td>R07上</td><td>問4</td><td>原子力発電における核燃料サイクル</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06下</td><td>問4</td><td>原子力発電で使用される燃料と原理</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06上</td><td>問4</td><td>ウランの核分裂エネルギーと石炭の発熱量の比較</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R05下</td><td>問4</td><td>軽水炉で使用される原子燃料</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R05上</td><td>問4</td><td>ウランの発生エネルギーと重油量の比較</td><td>計算</td><td>★★★★☆</td></tr>
+          <tr><td>R04下</td><td>問4</td><td>日本で採用されている原子炉の型と特性</td><td>穴埋</td><td>★★★☆☆</td></tr>
+          <tr><td>R04上</td><td>問4</td><td>沸騰水型原子炉（BWR）の特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R03</td><td>問5</td><td>日本で使用されている原子力発電の構造や特徴</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R02</td><td>問4</td><td>ウラン235など原子燃料に使用される物質</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>R01</td><td>問4</td><td>ウランと石炭の燃料消費量の違い</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>H30</td><td>問4</td><td>原子力発電所の蒸気タービンの特徴</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>H29</td><td>問4</td><td>原子力発電所の電力による揚水発電量</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>H28</td><td>問4</td><td>原子力発電における核燃料サイクル</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>H27</td><td>問4</td><td>原子炉の加圧水型と沸騰水型の比較</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>H26</td><td>問4</td><td>原子力発電</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>H25</td><td>問4</td><td>原子力発電所の軽水炉</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>H24</td><td>問4</td><td>ウランと重油の燃料消費量の違い</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>H23</td><td>問4</td><td>ウラン235が核分裂により発生するエネルギー</td><td>計算</td><td>★★★☆☆</td></tr>
+        </tbody>
+      </table></div>
+      <p>R01〜R07でR系11問出題（H23〜H30含む計19問・残は未収録）。</p>
+
+      <h2 id="shin-energy"><span className="h-num">4.</span>新エネルギー発電（24問）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>タイトル</th><th>問題タイプ</th><th>難易度</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>問5</td><td>水力・風力発電用誘導発電機の特徴</td><td>論説</td><td>★★★★☆</td></tr>
+          <tr><td>R07上</td><td>問5</td><td>バイオマス発電の特徴や性質</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06下</td><td>問5</td><td>地熱発電及びバイオマス発電</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06上</td><td>問5</td><td>燃料電池の原理や特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R05下</td><td>問5</td><td>さまざまな分散型電源の特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R05上</td><td>問5</td><td>風力発電の特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04下</td><td>問5</td><td>各新エネルギー発電の得失</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04上</td><td>問5</td><td>風力発電の構造と特徴</td><td>穴埋</td><td>★★★☆☆</td></tr>
+          <tr><td>R03</td><td>問6</td><td>分散型電源として設置される新エネルギー発電の特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R02</td><td>問5</td><td>太陽光発電設備の構成及び特徴</td><td>穴埋</td><td>★★★☆☆</td></tr>
+          <tr><td>H30</td><td>問5</td><td>風力発電所の軸出力</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>H29</td><td>問5</td><td>地熱発電及びバイオマス発電</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+        </tbody>
+      </table></div>
+      <p>R02〜R07でR系10問出題（H29・H30含む計12問・残は未収録）。</p>
+
+      <h2 id="henatsuki"><span className="h-num">5.</span>変電（変圧器・開閉装置）（54問）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>タイトル</th><th>問題タイプ</th><th>難易度</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>問6</td><td>避雷器に使用される素子とその特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R07上</td><td>問6</td><td>ガス絶縁開閉装置の特徴</td><td>論説</td><td>★☆☆☆☆</td></tr>
+          <tr><td>R06下</td><td>問6</td><td>調相設備接続による無効電力の調整</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06下</td><td>問7</td><td>計器用変成器の取扱い上の注意点</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06上</td><td>問6</td><td>ガス絶縁開閉装置（GIS）</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06上</td><td>問16</td><td>変圧器に設置する遮断器の定格遮断電流と負荷分担</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R05下</td><td>問6</td><td>変圧器のY-Y結線の特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R05上</td><td>問7</td><td>変電所の計器用変成器</td><td>論説</td><td>★☆☆☆☆</td></tr>
+          <tr><td>R05上</td><td>問13</td><td>変圧器並行運転時の過負荷容量</td><td>計算</td><td>★★☆☆☆</td></tr>
+          <tr><td>R05上</td><td>問16</td><td>三相変圧器二次側の遮断器定格遮断電流</td><td>計算</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04下</td><td>問6</td><td>三相変圧器の百分率リアクタンス導出</td><td>計算</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04下</td><td>問7</td><td>変圧器の結線方式の違いと特性</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04上</td><td>問7</td><td>過電流継電器の限時特性</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04上</td><td>問16</td><td>変圧器に設置する遮断器の定格遮断電流</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R03</td><td>問7</td><td>変電所の計器用変成器</td><td>論説</td><td>★☆☆☆☆</td></tr>
+          <tr><td>R03</td><td>問8</td><td>変電所で使用される断路器</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R03</td><td>問9</td><td>変圧器故障時の過負荷運転</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R02</td><td>問7</td><td>真空遮断器の特徴及び動作メカニズム</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R02</td><td>問9</td><td>避雷器に使用される物質とその特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R01</td><td>問6</td><td>ガス絶縁開閉装置</td><td>論説</td><td>★☆☆☆☆</td></tr>
+          <tr><td>R01</td><td>問7</td><td>変電所の主な役割と用途上の分類</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R01</td><td>問8</td><td>保護継電器の動作時間</td><td>計算</td><td>★★★★★</td></tr>
+          <tr><td>H30</td><td>問7</td><td>変圧器の保全・診断</td><td>論説</td><td>★★★★☆</td></tr>
+          <tr><td>H30</td><td>問12</td><td>変圧器のV結線方式</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>H29</td><td>問7</td><td>変圧器のY-Y結線方式の特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>H28</td><td>問6</td><td>変圧器の容量</td><td>計算</td><td>★★☆☆☆</td></tr>
+          <tr><td>H28</td><td>問7</td><td>遮断器</td><td>論説</td><td>★☆☆☆☆</td></tr>
+          <tr><td>H28</td><td>問16</td><td>事故時に流れる電流</td><td>計算</td><td>★★★★☆</td></tr>
+          <tr><td>H27</td><td>問7</td><td>避雷器</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>H26</td><td>問6</td><td>配電用変電所の容量</td><td>計算</td><td>★★★★☆</td></tr>
+        </tbody>
+      </table></div>
+      <p>R01〜R07でR系22問出題（H26〜H30含む計30問・残は未収録）。</p>
+
+      <h2 id="kakuu-souden"><span className="h-num">6.</span>送電（68問）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>タイトル</th><th>問題タイプ</th><th>難易度</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>問8</td><td>架空送電線路の振動及び落雷に関連する設備</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R07下</td><td>問9</td><td>架空送電線路の雷による過電圧とその対策</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R07下</td><td>問11</td><td>直流送電の交流送電と比較した特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R07上</td><td>問8</td><td>架空送電線路の構成部品</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R07上</td><td>問9</td><td>架空送電線路に発生する誘導障害</td><td>論説</td><td>★☆☆☆☆</td></tr>
+          <tr><td>R06下</td><td>問8</td><td>がいしの塩害とその対策</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R06上</td><td>問8</td><td>送電線に発生する振動とその対策</td><td>論説</td><td>★★★★☆</td></tr>
+          <tr><td>R06上</td><td>問9</td><td>電力系統に現れる過電圧の種類と対策</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R05下</td><td>問8</td><td>架空送電線路の構成要素</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R05下</td><td>問9</td><td>送電線路に施設する架空地線</td><td>論説</td><td>★☆☆☆☆</td></tr>
+          <tr><td>R05上</td><td>問9</td><td>送電線に発生するコロナ損</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04下</td><td>問8</td><td>架空送電線路の構成要素</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04上</td><td>問6</td><td>電力系統の電圧調整及び力率調整</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R04上</td><td>問10</td><td>送電線の各振動の発生原因と名称</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R03</td><td>問10</td><td>架空送電線のがいしの塩害及びその対策</td><td>論説</td><td>★☆☆☆☆</td></tr>
+          <tr><td>R02</td><td>問6</td><td>架空送電線路における振動及び落雷対策</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R02</td><td>問10</td><td>架空送電線路の線路定数とその考え方</td><td>論説</td><td>★★★★☆</td></tr>
+          <tr><td>R01</td><td>問9</td><td>架空送電線の構成部品</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R01</td><td>問10</td><td>コロナ放電によるコロナ損</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>H30</td><td>問6</td><td>保護リレー</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>H30</td><td>問9</td><td>架空送電線の多導体方式</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>H30</td><td>問10</td><td>送配電系統における過電圧の特徴</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>H29</td><td>問9</td><td>架空送電に関する知識</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>H28</td><td>問8</td><td>誘導障害</td><td>論説</td><td>★★★★☆</td></tr>
+          <tr><td>H27</td><td>問8</td><td>架空送電線の振動</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>H27</td><td>問9</td><td>がいしの塩害現象及びその対策</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>H26</td><td>問8</td><td>架空送電線路の雷害対策</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>H26</td><td>問9</td><td>架空送電線路におけるコロナ放電及び障害</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>H25</td><td>問8</td><td>架空送電線路の構成要素</td><td>論説</td><td>★★★★☆</td></tr>
+          <tr><td>H24</td><td>問7</td><td>送電線の送電容量</td><td>論説</td><td>★★☆☆☆</td></tr>
+        </tbody>
+      </table></div>
+      <p>R01〜R07でR系19問出題（H24〜H30含む計30問・残は未収録）。</p>
+
+      <h2 id="haiden"><span className="h-num">7.</span>配電（85問）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>タイトル</th><th>問題タイプ</th><th>難易度</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>問7</td><td>6.6kV非接地方式配電線及び高圧受電設備の保護</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R07下</td><td>問12</td><td>三相変圧器二次側遮断器の定格遮断電流</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R07下</td><td>問13</td><td>増設可能な負荷の皮相電力</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R07下</td><td>問16</td><td>配電線の電圧降下と負荷電力の関係</td><td>計算</td><td>★★★★☆</td></tr>
+          <tr><td>R07下</td><td>問17</td><td>力率の異なる負荷接続時の線路電流と電圧降下</td><td>計算</td><td>★★★★☆</td></tr>
+          <tr><td>R07上</td><td>問7</td><td>分散型電源の配電系統連系</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R07上</td><td>問11</td><td>単相3線式配電方式の特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R07上</td><td>問13</td><td>力率変化に伴う配電線の負荷電力の変化</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R07上</td><td>問16</td><td>三相短絡事故発生時の事故電流と電圧変化</td><td>計算</td><td>★★★★☆</td></tr>
+          <tr><td>R07上</td><td>問17</td><td>負荷追加した変圧器の過負荷運転防止</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R06下</td><td>問9</td><td>高低圧配電系統における保護</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06下</td><td>問10</td><td>三相3線式地中電線路の無負荷充電容量</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R06下</td><td>問11</td><td>高圧受電設備を構成する機器</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06上</td><td>問7</td><td>配電線路の電圧維持対策</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06上</td><td>問11</td><td>交流三相方式の送配電方式</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06上</td><td>問17</td><td>三相3線式ループ配電線路の電圧降下</td><td>計算</td><td>★★★★☆</td></tr>
+          <tr><td>R05下</td><td>問7</td><td>配電線路の電圧調整</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R05下</td><td>問13</td><td>単相2線式及び単相3線式線路での電力損失</td><td>計算</td><td>★★★☆☆</td></tr>
+          <tr><td>R05上</td><td>問6</td><td>配電線路に設置される開閉器類</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R05上</td><td>問8</td><td>配電用機材と関連語句の選択</td><td>選択</td><td>★★☆☆☆</td></tr>
+          <tr><td>R05上</td><td>問11</td><td>22(33)kV配電系統と6.6kV配電系統の比較</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04下</td><td>問12</td><td>配電線路の電圧を適正範囲に維持するための調整</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04下</td><td>問13</td><td>低圧ネットワーク方式の特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04上</td><td>問12</td><td>柱上変圧器</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04上</td><td>問13</td><td>高圧配電線路構成機材の用語選択</td><td>選択</td><td>★★☆☆☆</td></tr>
+          <tr><td>R03</td><td>問12</td><td>単相3線式配電方式の特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R03</td><td>問13</td><td>高低圧配電系統における保護</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>R02</td><td>問12</td><td>高圧架空配電線路の構成機材</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R02</td><td>問13</td><td>スポットネットワーク方式</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>R01</td><td>問12</td><td>配電線路の電気方式</td><td>論説</td><td>★★☆☆☆</td></tr>
+        </tbody>
+      </table></div>
+      <p>R01〜R07でR系30問出題（H30以前含む計85問）。</p>
+
+      <h2 id="denki-zairyou"><span className="h-num">8.</span>電気材料（36問）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>タイトル</th><th>問題タイプ</th><th>難易度</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>問14</td><td>磁性材料の種類と損失</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R07上</td><td>問14</td><td>六ふっ化硫黄ガスの特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06下</td><td>問14</td><td>導電材料として利用される銅</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R06上</td><td>問14</td><td>気体絶縁材料及び固体絶縁材料の一般的な性質</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R05下</td><td>問14</td><td>電線の導体に使用される材料</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R05上</td><td>問14</td><td>アモルファス鉄心材料を使用した柱上変圧器の特徴</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04下</td><td>問14</td><td>電気機器に使用される絶縁油に求められる特性</td><td>穴埋</td><td>★★☆☆☆</td></tr>
+          <tr><td>R04上</td><td>問14</td><td>電力用設備に使用される六フッ化硫黄ガス</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R03</td><td>問14</td><td>送電線路に用いられる導体</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R02</td><td>問14</td><td>電力ケーブル・変圧器等に使用される絶縁油</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>R01</td><td>問14</td><td>電気絶縁材料</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>H30</td><td>問14</td><td>変圧器に使用される鉄心材料</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>H29</td><td>問14</td><td>電気絶縁材料</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>H28</td><td>問14</td><td>送電線路に用いられる導体</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>H27</td><td>問14</td><td>変圧器の鉄心に使用されている鉄心材料</td><td>論説</td><td>★★☆☆☆</td></tr>
+          <tr><td>H26</td><td>問14</td><td>六ふっ化硫黄</td><td>論説</td><td>★★☆☆☆</td></tr>
+        </tbody>
+      </table></div>
+      <p>R01〜R07でR系11問出題（H26〜H30含む計16問・残は未収録）。</p>
+
+      <h2 id="soushaiden-senro"><span className="h-num">9.</span>送配電線路（問10枠・11問）</h2>
+      <Box kind="tip" label="問10枠の傾向">
+        <p>令和時代の問10枠は「電力系統運用」ではなく<strong>送配電線路の物理・構造系</strong>（地中ケーブル／架空線路／故障点標定）で占められている。電験王3にて全11問の実題を照合し、タイトル・形式を確定。</p>
+      </Box>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>タイトル</th><th>問題タイプ</th><th>難易度</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>問10</td><td>地中ケーブルの付設方法の違いと特徴</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R07上</td><td>問10</td><td>地中送電線路に使用される各種電力ケーブル</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R06下</td><td>問10</td><td>三相3線式地中電線路の無負荷充電容量</td><td>計算</td><td>★★★★☆</td></tr>
+          <tr><td>R06上</td><td>問10</td><td>マーレーループ法による故障点位置標定</td><td>穴埋</td><td>★★★☆☆</td></tr>
+          <tr><td>R05下</td><td>問10</td><td>地中送電線路の特徴や布設方法</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R05上</td><td>問10</td><td>地中送電線路の線路定数</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R04下</td><td>問10</td><td>地中送配電線の各布設方式の特徴</td><td>論説</td><td>★★★☆☆</td></tr>
+          <tr><td>R04上</td><td>問10</td><td>送電線の各振動の発生原因と名称</td><td>穴埋</td><td>★★★☆☆</td></tr>
+          <tr><td>R03</td><td>問10</td><td>架空送電線のがいしの塩害及びその対策</td><td>穴埋</td><td>★★★☆☆</td></tr>
+          <tr><td>R02</td><td>問10</td><td>架空送電線路の線路定数とその考え方</td><td>穴埋</td><td>★★★☆☆</td></tr>
+          <tr><td>R01</td><td>問10</td><td>コロナ放電によるコロナ損</td><td>穴埋</td><td>★★★☆☆</td></tr>
+        </tbody>
+      </table></div>
+      <p>R01〜R07で11問出題（令和時代に毎年1問・問10に集中）。内訳: 地中送電線路 6問／架空送電線路（線路定数・振動・コロナ・がいし）4問／故障点標定 1問。</p>
+      <Box kind="tip" label="R08予測">
+        <p>地中送電線路は6年連続出題の頻出枠。架空送電線路の振動・コロナ・がいしも R01〜R04 で既出のため、R08 も問10で<strong>地中or架空いずれか</strong>の論説・穴埋が継続する見込み。</p>
+      </Box>
+
+      <Box kind="example" label="出典">
+        <p>電験王3（https://denken-ou.com/denryoku/）各問ページ。</p>
+      </Box>
+
+    </div>
+    <PageNav
+      prev={{ id: "kakomon-by-year", title: "K1 年度別一覧" }}
+      next={{ id: "kakomon-wave", title: "K3 出題波予測（周期性分析）" }}
+      onNav={onNav} />
+  </>
+);
+
+
+/* ============================================================
+   K3 出題波予測（周期性分析）— 本文移植済み（過去問マッピング）
+   出典: denken-wiki-denryoku/docs/kakomon/wave-analysis.md
+   ============================================================ */
+const KakomonWavePage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "出題波予測（周期性分析）" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="K3 · EXAM CYCLE FORECAST"
+      title="出題波予測（周期性分析）"
+      deck="電力科目は「出題テーマが固定された試験」。問1〜10はA問題（各テーマ1問担当）、問11〜17はB問題（計算5問選択）という構造が R01〜R07全回で不変。R08（2026年8月）は配電計算・水力計算・火力熱効率計算（いずれも★★★）がB問題の最優先テーマ。"
+      meta={[
+        { label: "種別", value: "過去問マッピング" },
+        { label: "使い方", value: "R08の高確率テーマを逆算し直前対策の優先順位を決める" },
+      ]}
+    />
+    <div className="content">
+
+      <Box kind="tip" label="結論（BLUF）">
+        <p>電力科目は「出題テーマが固定された試験」。問1〜10はA問題（各テーマ1問担当）、問11〜17はB問題（計算5問選択）という構造が R01〜R07全回で不変。R08（2026年8月）は <strong>配電計算（★★★）・水力計算（★★★）・火力熱効率計算（★★★）</strong> がB問題の最優先テーマ。A問題では <strong>架空送電の計算系論点・電力系統の安定度・新エネの計算問題</strong> の出題確率が高い。</p>
+        <p>R08対策テーマ整備状況: 配電線路（haiden）／水力発電（suiryoku）／火力発電（karyoku）／架空送電（kakuu-souden）／電力系統（denryoku-keitou）。</p>
+      </Box>
+
+      <h2 id="matrix"><span className="h-num">1.</span>出題周期性マトリクス</h2>
+      <p>R01〜R07下（全13回）のデータに基づく。◎=出題 ／ ─=未出題。</p>
+
+      <h3>A問題（問1〜10）</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>論点</th><th>R01</th><th>R02</th><th>R03</th><th>R04上</th><th>R04下</th><th>R05上</th><th>R05下</th><th>R06上</th><th>R06下</th><th>R07上</th><th>R07下</th></tr></thead>
+        <tbody>
+          <tr><td>水力 論説・穴埋（問1）</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td></tr>
+          <tr><td>水力 計算（問2・問15）</td><td>─</td><td>─</td><td>◎</td><td>─</td><td>─</td><td>─</td><td>─</td><td>◎</td><td>─</td><td>─</td><td>◎</td></tr>
+          <tr><td>火力 論説・穴埋（問2〜3）</td><td>◎</td><td>─</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td></tr>
+          <tr><td>火力 計算（問3・問15）</td><td>─</td><td>─</td><td>─</td><td>◎</td><td>─</td><td>─</td><td>◎</td><td>─</td><td>◎</td><td>◎</td><td>◎</td></tr>
+          <tr><td>原子力（問4）</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td></tr>
+          <tr><td>原子力 計算（ウランvs他燃料）</td><td>◎</td><td>─</td><td>─</td><td>─</td><td>─</td><td>◎</td><td>─</td><td>◎</td><td>─</td><td>─</td><td>─</td></tr>
+          <tr><td>新エネ 論説・穴埋（問5）</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td></tr>
+          <tr><td>新エネ 計算（風力出力等）</td><td>─</td><td>─</td><td>─</td><td>─</td><td>─</td><td>─</td><td>─</td><td>─</td><td>─</td><td>─</td><td>─</td></tr>
+          <tr><td>変圧器（問6〜7）</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td></tr>
+          <tr><td>開閉装置・保護継電器（問8）</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td></tr>
+          <tr><td>架空送電（問8〜9）</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td></tr>
+          <tr><td>地中送電（問9）</td><td>◎</td><td>◎</td><td>◎</td><td>─</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td></tr>
+          <tr><td>電力系統（問10）</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td></tr>
+          <tr><td>電力系統 計算型（問10）</td><td>─</td><td>─</td><td>─</td><td>─</td><td>─</td><td>─</td><td>─</td><td>─</td><td>◎</td><td>─</td><td>─</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="A問題の構造的特徴">
+        <p>問1〜10は毎年ほぼ1テーマ1問の固定配置。水力（問1）・原子力（問4）・新エネ（問5）・電力系統（問10）・電気材料（問14）は R01〜R07 で全回出題（13/13）。<strong>A問題は「落とさない」戦略が基本</strong> — テーマ全体をカバーすることで安定した得点源になる。</p>
+      </Box>
+
+      <h3>B問題（問11〜17から5問選択）</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>論点</th><th>R01</th><th>R02</th><th>R03</th><th>R04上</th><th>R04下</th><th>R05上</th><th>R05下</th><th>R06上</th><th>R06下</th><th>R07上</th><th>R07下</th></tr></thead>
+        <tbody>
+          <tr><td>配電 計算（電圧降下・損失）</td><td>─</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>─</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td></tr>
+          <tr><td>配電 計算（変圧器・遮断器）</td><td>─</td><td>─</td><td>─</td><td>─</td><td>─</td><td>◎</td><td>─</td><td>◎</td><td>─</td><td>◎</td><td>◎</td></tr>
+          <tr><td>水力 計算（揚水・出力計算）</td><td>─</td><td>◎</td><td>─</td><td>◎</td><td>─</td><td>─</td><td>◎</td><td>◎</td><td>─</td><td>◎</td><td>◎</td></tr>
+          <tr><td>火力 計算（熱効率・CO2）</td><td>─</td><td>─</td><td>─</td><td>◎</td><td>─</td><td>─</td><td>◎</td><td>─</td><td>◎</td><td>◎</td><td>◎</td></tr>
+          <tr><td>変圧器 計算（並行運転・定格）</td><td>─</td><td>─</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>─</td><td>◎</td><td>─</td><td>─</td><td>─</td></tr>
+          <tr><td>電気材料（論説・問14）</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td></tr>
+          <tr><td>架空送電 論説（直流・コロナ等）</td><td>◎</td><td>◎</td><td>◎</td><td>◎</td><td>─</td><td>─</td><td>─</td><td>─</td><td>─</td><td>◎</td><td>◎</td></tr>
+          <tr><td>地中送電 計算（充電電流等）</td><td>─</td><td>─</td><td>─</td><td>─</td><td>◎</td><td>─</td><td>─</td><td>◎</td><td>◎</td><td>─</td><td>─</td></tr>
+          <tr><td>原子力 計算（核エネルギー比較）</td><td>─</td><td>─</td><td>─</td><td>─</td><td>─</td><td>◎</td><td>─</td><td>◎</td><td>─</td><td>─</td><td>─</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="B問題の構造的特徴">
+        <p>電気材料（問14）は毎回出題で論説形式。配電計算と水力計算は最頻出でほぼ毎回出題。<strong>B問題は「配電・水力・火力の計算3本柱 + 電気材料の論説」で4問を確実に確保し、残り1問を状況で選ぶ戦略が最も安定する。</strong></p>
+      </Box>
+
+      <h2 id="pattern"><span className="h-num">2.</span>周期パターン分類</h2>
+
+      <h3>毎年型（13/13 または 12/13）</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>論点</th><th>出題回数</th><th>出題形式</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td><strong>水力発電 論説・穴埋（問1）</strong></td><td>11/11（R01〜R07全回）</td><td>穴埋・論説</td><td>問1は「水力の論説か穴埋」で固定。計算は問2または問15</td></tr>
+          <tr><td><strong>原子力発電（問4）</strong></td><td>11/11</td><td>論説・穴埋・計算ローテーション</td><td>計算（ウランvs燃料比較）は約2〜3回に1回</td></tr>
+          <tr><td><strong>新エネルギー発電（問5）</strong></td><td>11/11</td><td>論説・穴埋</td><td>計算問題は H30（風力出力計算）以降 R 系では未出題</td></tr>
+          <tr><td><strong>電力系統（問10）</strong></td><td>11/11</td><td>論説・穴埋が9割、計算は R06下のみ</td><td>需給バランス・安定度・周波数制御がローテーション</td></tr>
+          <tr><td><strong>電気材料（問14）</strong></td><td>11/11</td><td>論説</td><td>問14は固定。導体・絶縁体・磁性体・SF6ガスがローテーション</td></tr>
+          <tr><td><strong>配電 計算（B問題）</strong></td><td>9/11</td><td>計算</td><td>R01・R05上のみ欠落。電圧降下・損失・遮断器計算が交互</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="毎年型への対策方針">
+        <p>毎年型は「テーマを知っている前提で、どの角度で出るか」を読む問題。例えば電力系統（問10）は安定度・周波数制御・需給バランスの3テーマが交互に出ており、R07下が「周波数制御・需給運用」→ R08は「安定度または無効電力」の確率が高い。角度の読みまで踏み込んで対策する。</p>
+      </Box>
+
+      <h3>2〜3年周期型</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>論点</th><th>直近出題</th><th>前回出題</th><th>周期</th><th>R08予測</th></tr></thead>
+        <tbody>
+          <tr><td><strong>水力 計算（問2）</strong></td><td>R07下（2026/3）</td><td>R06上（2024/8）</td><td>1〜2年</td><td>中（R07下で計算済み、直後に再出題は薄い）</td></tr>
+          <tr><td><strong>水力 揚水計算（B問題）</strong></td><td>R07上（2025/8）</td><td>R06上（2024/8）</td><td>1年</td><td>中（隔回ペース）</td></tr>
+          <tr><td><strong>火力 熱効率計算（B問題）</strong></td><td>R07下（2026/3）</td><td>R07上（2025/8）</td><td>0.5年（同年連続）</td><td>高（R06上は未出題。計算パターン固定で出やすい）</td></tr>
+          <tr><td><strong>変圧器 計算（B問題）</strong></td><td>R06上（2024/8）</td><td>R05上（2023/8）</td><td>1年</td><td>高（R07は未出題。2年空白に近い）</td></tr>
+          <tr><td><strong>地中送電 計算（B問題）</strong></td><td>R06下（2025/3）</td><td>R06上（2024/8）</td><td>0.5年</td><td>低（R07未出題だが直前2回で連続出題）</td></tr>
+          <tr><td><strong>原子力 計算（問4）</strong></td><td>R06上（2024/8）</td><td>R05上（2023/8）</td><td>1年</td><td>中（R07は穴埋・論説で計算なし。3年周期なら R08は計算）</td></tr>
+          <tr><td><strong>架空送電 B問題論説</strong></td><td>R07下（2026/3）</td><td>R07上（2025/8）</td><td>0.5年</td><td>低（連続出題済み）</td></tr>
+          <tr><td><strong>電力系統 計算（問10）</strong></td><td>R06下（2025/3）</td><td>—</td><td>初</td><td>低〜中（形式変化は稀）</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="変圧器計算の空白">
+        <p>変圧器計算（B問題）は R05上・R06上の2回連続後、R07上・R07下で未出題。<strong>約2年の空白</strong>が生まれており、R08での再登場確率は高い。計算パターンは「並行運転時の過負荷容量」または「遮断器の定格遮断電流」の2択。</p>
+      </Box>
+
+      <h3>散発型（不定期出題）</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>論点</th><th>直近出題</th><th>特徴</th><th>R08注意点</th></tr></thead>
+        <tbody>
+          <tr><td><strong>新エネ 計算問題</strong></td><td>H30（2018/8）</td><td>R系（R01〜R07）では一度も計算問題なし</td><td>出題傾向が固まっていないが、近年の再エネ拡大で復活の可能性</td></tr>
+          <tr><td><strong>地中送電（A問題）</strong></td><td>R04上のみ欠落、R05以降全回</td><td>ほぼ毎回だが単独問題ではなく問9内に吸収</td><td>問9内の配分（架空 or 地中 or 両方）は毎回変動</td></tr>
+          <tr><td><strong>開閉装置 計算（問8）</strong></td><td>R01（保護継電器動作時間）</td><td>計算は R01 以降 R系では未出題</td><td>論説・穴埋が定常。GIS・遮断器・保護継電器の用語が頻出</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="forecast"><span className="h-num">3.</span>R08（2026年8月）出題予測</h2>
+      <p>基準: R08上期は 2026年8月実施予定（R07下=2026/3の直後）。</p>
+
+      <h3>高確率（★★★）</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>論点</th><th>根拠</th><th>対策</th></tr></thead>
+        <tbody>
+          <tr><td><strong>配電 計算（電圧降下・変圧器過負荷）</strong></td><td>R01以降ほぼ毎回。R07上・下とも計算出題済みで手法が固定されている</td><td>電圧降下公式・皮相電力→電流変換・変圧器並行容量の3パターンを完全習得</td></tr>
+          <tr><td><strong>水力 計算（揚水発電・比速度）</strong></td><td>R07上（問15:調整池計算）・R07下（問2:運動エネルギー）と連続。B問題の柱</td><td>揚水効率（モータ入力）・発電機出力・有効落差の計算フローを固める</td></tr>
+          <tr><td><strong>火力 熱効率計算（重油消費・CO2）</strong></td><td>R07上・R07下で連続出題（R06上は論説のみ）。直近2回連続はパターン固定の証拠</td><td>熱効率η＝出力/(燃料×発熱量)・CO2換算（炭素比）の2式を軸に計算フロー完成</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="example" label="B問題得点計画（R08版）">
+        <p>「配電計算・水力計算・火力計算（★★★）」の3問を確実に押さえると15点。電気材料（問14:論説）は毎年出題で5点確定。合計20点を最低ラインに設定し、残り5点を変圧器計算またはA問題の積み上げで稼ぐ。B問題は25点満点中20点以上が合格ラインの目安。</p>
+      </Box>
+
+      <h3>中確率（★★）</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>論点</th><th>根拠</th><th>対策優先度</th></tr></thead>
+        <tbody>
+          <tr><td><strong>変圧器 計算（B問題）</strong></td><td>R07上・下ともに未出題。R06上（2024/8）以来約2年の空白。「並行運転の過負荷容量」か「遮断器の定格遮断電流」が出題パターン</td><td>過負荷容量（並行容量配分）と遮断電流（短絡容量÷√3×定格電圧）の2式を再確認</td></tr>
+          <tr><td><strong>電力系統 安定度（問10）</strong></td><td>R07上が「安定度と送電容量」（穴埋）、R07下が「周波数制御・需給運用」（論説）。次は電圧安定性か中性点接地方式の確率高</td><td>R05上（電圧安定性）・R04下（中性点接地）のテーマで穴埋・論説対策</td></tr>
+          <tr><td><strong>原子力 計算（問4）</strong></td><td>R07上・下は「核燃料サイクル（穴埋）」「新型炉（論説）」で計算なし。R06上のウランエネルギー比較から2年経過</td><td>ウランvs重油の発熱量比較計算（質量×発熱量の単位換算）を固める</td></tr>
+          <tr><td><strong>新エネ 風力・バイオマス論説（問5）</strong></td><td>R07上バイオマス・R07下誘導発電機と2回連続。R08は太陽光または燃料電池への角度変換の可能性</td><td>太陽光（インバータ・系統連系）・燃料電池（電気化学反応）の基本を押さえる</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>低確率（★）</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>論点</th><th>根拠</th></tr></thead>
+        <tbody>
+          <tr><td><strong>地中送電 計算（B問題）</strong></td><td>R06上・下で2回出題後、R07では未出題。2年空白だが解答選択者が少なく得点効率が低い</td></tr>
+          <tr><td><strong>架空送電 B問題（直流送電論説等）</strong></td><td>R07上・下で連続出題済み。「振動・落雷・誘導障害」テーマはR07で消化済み</td></tr>
+          <tr><td><strong>開閉装置 計算（問8）</strong></td><td>計算型は R01 以来出題なし。論説・穴埋で安定しており急変する理由がない</td></tr>
+          <tr><td><strong>新エネ 計算問題（問5）</strong></td><td>R系13回で一度も出ていない。出る可能性は排除できないが対策優先度は最低</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="bmondai"><span className="h-num">4.</span>B問題（計算問題）出題傾向</h2>
+      <p>R04以降は上期（CBT）・下期（筆記）の年2回実施。B問題は問11〜17から5問を選択する。</p>
+
+      <h3>B問題の出題構造（R04〜R07）</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>回</th><th>配電計算</th><th>水力計算</th><th>火力計算</th><th>変圧器計算</th><th>電気材料</th><th>地中計算</th><th>架空論説</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>◎（問12〜13, 16〜17）</td><td>◎（問15）</td><td>◎（問15）</td><td>─</td><td>◎（問14）</td><td>─</td><td>◎（問11）</td></tr>
+          <tr><td>R07上</td><td>◎（問13, 16〜17）</td><td>◎（問15）</td><td>◎（問2計算）</td><td>─</td><td>◎（問14）</td><td>─</td><td>◎（問11）</td></tr>
+          <tr><td>R06下</td><td>◎（問11, 10）</td><td>─</td><td>◎（問15）</td><td>─</td><td>◎（問14）</td><td>◎（問10）</td><td>─</td></tr>
+          <tr><td>R06上</td><td>◎（問11, 17）</td><td>◎（問15）</td><td>─</td><td>◎（問16）</td><td>◎（問14）</td><td>◎（問9）</td><td>─</td></tr>
+          <tr><td>R05下</td><td>◎（問13）</td><td>◎（問15）</td><td>◎（問2計算）</td><td>─</td><td>◎（問14）</td><td>─</td><td>─</td></tr>
+          <tr><td>R05上</td><td>─</td><td>─</td><td>─</td><td>◎（問13, 16）</td><td>◎（問14）</td><td>─</td><td>─</td></tr>
+          <tr><td>R04下</td><td>─</td><td>─</td><td>─</td><td>◎（問6計算）</td><td>◎（問14穴埋）</td><td>◎（問9計算）</td><td>─</td></tr>
+          <tr><td>R04上</td><td>◎（問12〜13穴埋）</td><td>◎（問15）</td><td>◎（問3計算）</td><td>◎（問16）</td><td>◎（問14）</td><td>─</td><td>◎（問10）</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="example" label="B問題の選択戦略">
+        <p>R04〜R07の8回分で「電気材料（問14）」は8/8で出題。配電計算は6/8。水力計算は5/8。この3テーマは「必ず選ぶ」前提で準備する。変圧器計算は4/8で2年に1回ペースのため準備しておく価値あり。地中計算（充電電流）は2/8で解法は簡単だが出題頻度が低い。</p>
+      </Box>
+
+      <h3>計算問題の典型フロー</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>テーマ</th><th>出題パターン</th><th>使用公式</th></tr></thead>
+        <tbody>
+          <tr><td>配電 電圧降下</td><td>末端負荷型・集中負荷型・ループ配電</td><td><Eq tex="\Delta V \approx (PR + QX)/V" /> または <Eq tex="\sqrt{3}\,I(R\cos\theta + X\sin\theta)\,l" /></td></tr>
+          <tr><td>配電 変圧器容量</td><td>過負荷防止・並行運転・遮断器定格</td><td>並行容量比＝%Z逆比。遮断電流＝短絡容量/(√3・V)</td></tr>
+          <tr><td>水力 揚水</td><td>電動機入力・揚程・流量・効率</td><td><Eq tex="P_{\text{motor}} = \rho g Q H/(\eta_{\text{pump}}\,\eta_{\text{motor}})\times 10^{-3}\,[\text{kW}]" /></td></tr>
+          <tr><td>水力 発電</td><td>出力・使用水量・有効落差</td><td><Eq tex="P = 9.8\,\eta Q H\,[\text{kW}]" />、H=有効落差、η=総合効率</td></tr>
+          <tr><td>火力 熱効率</td><td>重油消費量・CO2排出量・発電電力量</td><td><Eq tex="\eta = \text{出力}/(\text{燃料量}\times\text{発熱量})" />。CO2 = 燃料量×C比×44/12</td></tr>
+          <tr><td>変圧器 並行</td><td>負荷分担・過負荷容量</td><td><Eq tex="P_1/P_2 = (\%Z_2\,S_1)/(\%Z_1\,S_2)" /></td></tr>
+          <tr><td>原子力 比較</td><td>ウランvs重油の等エネルギー質量比</td><td><Eq tex="m_{\text{ウラン}} = m_{\text{重油}}\times \text{発熱量}_{\text{重油}}/\text{発熱量}_{\text{ウラン}}" /></td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="nikai"><span className="h-num">5.</span>年2回実施（R04〜）が出題に与えた影響</h2>
+
+      <h3>出題ペースの変化</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>項目</th><th>R03以前（年1回）</th><th>R04以降（年2回）</th></tr></thead>
+        <tbody>
+          <tr><td>年間出題問数</td><td>A問題10問 + B問題5問 = 15問</td><td>30問/年（×2倍）</td></tr>
+          <tr><td>同テーマの再出題間隔</td><td>最短3〜4年</td><td>最短0.5年（上期と下期で同テーマ）</td></tr>
+          <tr><td>B問題の選択戦略</td><td>得意分野特化で5問選択</td><td>頻出計算3本柱を完全習得すれば均等選択不要</td></tr>
+          <tr><td>問題の難易度変化</td><td>やや高難度（1回しかない緊張感）</td><td>標準〜やや難。年2回でパターンが露出しやすい</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>上期・下期で角度を変えた実例</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>上期テーマ</th><th>下期テーマ</th><th>変化の読み方</th></tr></thead>
+        <tbody>
+          <tr><td>R07</td><td>火力 タービン効率計算</td><td>火力 熱効率・CO2計算</td><td>「効率の計算」→「熱効率・排出量の計算」と計算対象をシフト</td></tr>
+          <tr><td>R07</td><td>電力系統 安定度・送電容量（穴埋）</td><td>電力系統 周波数制御・需給運用（論説）</td><td>安定度→需給と角度を完全に変えて両方出題</td></tr>
+          <tr><td>R07</td><td>水力 理論出力と単位（穴埋）</td><td>水力 落差分類（穴埋）+ 運動エネルギー（計算）</td><td>穴埋→計算へ難度アップ</td></tr>
+          <tr><td>R06</td><td>水力 衝動水車・ペルトン（論説）</td><td>水力 水車・発電機・主変圧器の特徴（論説）</td><td>水車種類→設備構成と視点を変化</td></tr>
+          <tr><td>R05</td><td>火力 コンバインドサイクル特徴（論説）</td><td>火力 速度調定率と出力変化（計算）</td><td>定性→定量へ完全転換</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="上期・下期の角度読み方針">
+        <p>同テーマが上期・下期に連続出題されることは頻繁に起きる（R07火力・R07電力系統など）。「上期で出たから下期は出ない」という読みは電力科目では危険。ただし<strong>同一問題型（穴埋→穴埋）の連続は稀で、形式（論説→計算・計算→穴埋）を変えてくることが多い</strong>。R07下で計算型が多かった分野（配電・火力）はR08でも計算型継続の可能性が高い。</p>
+      </Box>
+
+      <h2 id="strategy"><span className="h-num">6.</span>攻略戦略まとめ</h2>
+
+      <h3>R08直前の優先順位</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>優先度</th><th>テーマ</th><th>期待点数</th><th>目標</th></tr></thead>
+        <tbody>
+          <tr><td><strong>P1（必須）</strong></td><td>配電計算（電圧降下・変圧器容量）</td><td>5点（B問題1問）</td><td>計算フロー3パターンを反射的に出せるまで</td></tr>
+          <tr><td><strong>P1（必須）</strong></td><td>水力計算（揚水・発電出力）</td><td>5点（B問題1問）</td><td>ηQH公式と揚水公式の単位換算まで完全習得</td></tr>
+          <tr><td><strong>P1（必須）</strong></td><td>火力計算（熱効率・CO2排出量）</td><td>5点（B問題1問）</td><td>η式とCO2換算（44/12係数）の2式固定</td></tr>
+          <tr><td><strong>P1（必須）</strong></td><td>電気材料（問14:論説）</td><td>5点（B問題1問）</td><td>導体・絶縁体・磁性体・SF6の基本特性を整理</td></tr>
+          <tr><td><strong>P2（準必須）</strong></td><td>変圧器計算（B問題）</td><td>5点（B問題1問）</td><td>並行運転の%Z比と遮断電流計算の2式</td></tr>
+          <tr><td><strong>P2（準必須）</strong></td><td>水力・火力・原子力（A問題穴埋）</td><td>各2〜5点</td><td>キーワード（比速度・コンバインド・軽水炉）定義の正確な理解</td></tr>
+          <tr><td><strong>P3（余裕があれば）</strong></td><td>架空送電・地中送電・開閉装置（A問題）</td><td>各5点</td><td>論説の定性理解。計算は出ても1問止まり</td></tr>
+          <tr><td><strong>P3（余裕があれば）</strong></td><td>電力系統（問10）</td><td>5点</td><td>安定度・需給・中性点接地の3テーマを網羅</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="warn" label="時間配分の優先判断">
+        <p>試験2週間前時点で P1（4テーマ）が完成していない場合、P3に着手するより P1の完成度を上げることを優先する。P1の4テーマだけで理論上20点が確保でき、A問題で6問正答すれば30点超（合格圏内）になる。</p>
+      </Box>
+
+      <h3>なぜ出題周期があるのか（因果説明）</h3>
+      <p>電力科目の周期性には3つの構造的理由がある。</p>
+      <ol>
+        <li><strong>問番号とテーマの固定配置</strong>: 問1=水力、問4=原子力、問14=電気材料という配置は制度的に固定されており、試験委員が自由にテーマを変えることができない。周期ではなく「テーマは固定・角度のみ変わる」という構造。</li>
+        <li><strong>B問題の選択制</strong>: 受験者が5問選択するB問題は「全員が解く問題」ではなく「有利な問題を選ぶ」設計。試験委員は受験者の典型的な選択行動（配電・水力・火力に集中）を把握した上で、難度を均等にする目的で各テーマを交互に出題する。これが「2年周期」の正体。</li>
+        <li><strong>出題委員の交代サイクル</strong>: 一般に技術系国家試験の出題委員は2〜3年任期。委員が交代すると「前任者が出したテーマ」は一定期間避けられ、その後復活する。架空送電や地中送電でみられる「2〜3年の空白→再出題」はこのサイクルを反映している可能性が高い。</li>
+      </ol>
+
+      <Box kind="tip" label="出典・関連">
+        <p>出典: 電験王（denken-ou.com/denryoku）。関連: 年度別一覧／分野別一覧／B問題得点戦略／試験直前3日チェックリスト／頻出計算パターン集。</p>
+      </Box>
+
+    </div>
+    <PageNav
+      prev={{ id: "kakomon-by-field", title: "K2 分野別一覧" }}
+      next={{ id: "strategy-last3days", title: "S1 試験直前3日チェックリスト" }}
+      onNav={onNav} />
+  </>
+);
+
+
+/* ============================================================
+   S1 試験直前3日チェックリスト — 本文移植済み（攻略戦略）
+   出典: denken-wiki-denryoku/docs/strategy/last-3days-checklist.md
+   ============================================================ */
+const StrategyLast3DaysPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "試験直前3日チェックリスト" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="S1 · FINAL 3-DAY CHECKLIST"
+      title="試験直前3日チェックリスト"
+      deck="電力科目で直前3日間に確認すべき最重要項目を Day 別に整理する。「知っているかどうか」ではなく「なぜその式になるか」を口に出して説明できるかを基準とする。"
+      meta={[
+        { label: "種別", value: "攻略戦略" },
+        { label: "使い方", value: "Day3→Day2→Day1→当日朝の順で口頭説明チェック" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="day3"><span className="h-num">1.</span>Day 3（試験3日前）— 数値と公式の因果確認</h2>
+
+      <h3>水力発電の出力公式</h3>
+      <Box kind="tip" label="P = 9.8QHη の根拠">
+        <p>水の密度 ρ = 1,000 kg/m³、重力加速度 g = 9.8 m/s²。水の質量流量 = ρQ [kg/s]、位置エネルギー = mgh なので、理論水力 <Eq tex="P_0 = \rho g Q H = 1000 \times 9.8 \times Q \times H\,[\text{W}] = 9.8QH\,[\text{kW}]" />。ηは水車・発電機の総合効率。9.8 は ρg を単位変換した係数であり、丸暗記ではなく物理量の積。</p>
+      </Box>
+      <p><strong>確認事項</strong>:</p>
+      <ul>
+        <li>Q[m³/s]、H[m]、η（小数）の単位を正しく代入できるか</li>
+        <li>「9.8 は ρg から導出される」と説明できるか</li>
+        <li>揚水時の所要電力 <Eq tex="P = 9.8QH / \eta" />（ηで割る）と発電時（ηを掛ける）を混同しないか</li>
+      </ul>
+
+      <h3>電圧降下式</h3>
+      <Box kind="tip" label="単相と三相で係数が異なる理由">
+        <p><strong>単相2線式</strong>: 往路・復路の2本分の抵抗・リアクタンスが直列に入るため、係数は2。<Eq tex="v = 2I(R\cos\phi + X\sin\phi)\,[\text{V}]" /></p>
+        <p><strong>三相3線式</strong>: 線電流は1本分だが、線間電圧は相電圧の√3倍。<Eq tex="v = \sqrt{3}\,I(R\cos\phi + X\sin\phi)\,[\text{V}]" /></p>
+        <p>「なぜ√3か」— 三相の1線あたりの電圧降下は <Eq tex="I(R\cos\phi + X\sin\phi)" /> だが、これは相電圧の降下。線間電圧は √3 倍なので全体も √3 倍になる。</p>
+      </Box>
+      <p><strong>確認事項</strong>:</p>
+      <ul>
+        <li>単相2線式の係数「2」の理由を説明できるか</li>
+        <li>三相3線式の係数「√3」の理由を説明できるか</li>
+        <li>R・X・Φの定義（R=抵抗、X=リアクタンス、Φ=力率角）を言えるか</li>
+      </ul>
+
+      <h3>電力損失式</h3>
+      <Box kind="tip" label="P_loss = 3I²R のI²とその意味">
+        <p>3本の電線それぞれでジュール熱が発生する。1本あたりの損失は <Eq tex="I^2R" />。3本分の合計が <Eq tex="3I^2R" />。</p>
+        <p><strong>I²になる理由</strong>: ジュール熱は電圧×電流 = (IR)×I = I²R。電圧に比例するのではなく、電流の2乗に比例する。これは銅損の本質。</p>
+      </Box>
+      <p><strong>確認事項</strong>:</p>
+      <ul>
+        <li>「なぜ I² か」をオームの法則から導けるか</li>
+        <li>3線分あるのに係数「3」と、三相の√3の混同をしていないか</li>
+      </ul>
+
+      <h3>力率改善（コンデンサ進相）</h3>
+      <Box kind="tip" label="コンデンサで線電流が減る理由">
+        <p>有効電力 <Eq tex="P = \sqrt{3}\,V I \cos\phi" /> が一定のとき、cosΦが上がると <Eq tex="I = P/(\sqrt{3}\,V\cos\phi)" /> は下がる。コンデンサは遅れ電流（誘導性負荷）に対して進み電流を供給し、電源から見た無効電流を相殺→合成電流（線電流）が減少する。</p>
+      </Box>
+      <p><strong>確認事項</strong>:</p>
+      <ul>
+        <li>コンデンサが「進み無効電力を供給する」ことを説明できるか</li>
+        <li>線電流が減ることで電圧降下・電力損失が同時に減る連鎖を説明できるか</li>
+      </ul>
+
+      <h2 id="day2"><span className="h-num">2.</span>Day 2（試験2日前）— 引っかけパターン復習</h2>
+
+      <h3>DS→CB操作順序</h3>
+      <Box kind="warn" label="操作順序の誤りは最頻出引っかけ">
+        <p><strong>投入時</strong>: DS（断路器）先投入 → CB（遮断器）後投入。<strong>開放時</strong>: CB先開放 → DS後開放。</p>
+        <p><strong>理由</strong>: DSはアーク消弧能力がない。負荷電流が流れている状態でDSを操作するとアークが発生し事故につながる。CBはアーク消弧機能を持つため、電流を切る操作は必ずCBで行う。</p>
+      </Box>
+      <p><strong>確認事項</strong>:</p>
+      <ul>
+        <li>「DSはアーク消弧できない→電流ゼロの状態でのみ操作」を言えるか</li>
+        <li>投入・開放それぞれの手順を、理由とセットで説明できるか</li>
+      </ul>
+
+      <h3>揚水発電の効率方向</h3>
+      <Box kind="warn" label="発電時と揚水時でηの使い方が逆">
+        <p><strong>発電時</strong>: <Eq tex="P_{\text{出力}} = 9.8QH\eta" />（η掛け → エネルギーが減る方向）。<strong>揚水時</strong>: <Eq tex="P_{\text{入力}} = 9.8QH / \eta" />（η割り → 入力エネルギーが増える方向）。</p>
+        <p><strong>理由</strong>: 発電時は水のエネルギーから損失を引いて電気出力を得る（出力 &lt; 理論値）。揚水時は必要な位置エネルギー以上のエネルギーを電力で投入しなければならない（入力 &gt; 理論値）。</p>
+      </Box>
+      <p><strong>確認事項</strong>:</p>
+      <ul>
+        <li>「入力=必要量/η、出力=投入量×η」という方向性を即答できるか</li>
+      </ul>
+
+      <h3>風力出力の風速指数</h3>
+      <Box kind="warn" label="v²ではなくv³">
+        <p>風力発電の出力 <Eq tex="P \propto v^3" />。</p>
+        <p><strong>理由</strong>: 風の運動エネルギー <Eq tex="E = \frac{1}{2}mv^2" />。風量（単位時間あたりの空気質量）は <Eq tex="m \propto Av" />（断面積×風速）。よって <Eq tex="P = E \times \text{流量} \propto v^2 \times v = v^3" />。</p>
+      </Box>
+      <p><strong>確認事項</strong>:</p>
+      <ul>
+        <li>「質量流量がvに比例するため、指数が2から3になる」を説明できるか</li>
+        <li>風速が2倍になると出力は8倍（2³）になることを即答できるか</li>
+      </ul>
+
+      <h3>変圧器並行運転条件</h3>
+      <Box kind="tip" label="並行運転の3条件">
+        <ol>
+          <li><strong>巻数比（変圧比）が等しい</strong>: 異なると循環電流が流れ、無駄な損失が発生する</li>
+          <li><strong>極性が等しい</strong>: 異なると電圧が打ち消しあい短絡状態になる</li>
+          <li><strong>百分率インピーダンスが等しい</strong>: 異なると負荷分担が変圧器容量に比例しない</li>
+        </ol>
+      </Box>
+      <p><strong>確認事項</strong>:</p>
+      <ul>
+        <li>3条件それぞれの理由（満たさないと何が起きるか）を説明できるか</li>
+        <li>「容量に反比例して電流分担→インピーダンスが小さい方に過電流」を言えるか</li>
+      </ul>
+
+      <h2 id="day1"><span className="h-num">3.</span>Day 1（試験前日）— B問題計算の最終確認</h2>
+
+      <h3>送電線路の計算手順</h3>
+      <Box kind="tip" label="電圧降下・電力損失の計算ステップ">
+        <ol>
+          <li>負荷電流 I を求める: <Eq tex="I = P / (\sqrt{3}\,V\cos\phi)" /></li>
+          <li>電圧降下 <Eq tex="v = \sqrt{3}\,I(R\cos\phi + X\sin\phi)" /> を計算</li>
+          <li>電力損失 <Eq tex="P_{\text{loss}} = 3I^2R" /> を計算</li>
+          <li>送電端電圧 <Eq tex="V_s = V_r + v" />（受電端基準の場合）</li>
+        </ol>
+        <p><strong>ミスしやすい点</strong>:</p>
+        <ul>
+          <li>IはP[W]・V[V]で計算→[A]になっているか単位確認</li>
+          <li><Eq tex="\sin\phi = \sqrt{1 - \cos^2\phi}" /> を計算し忘れる</li>
+          <li>受電端電圧Vrか送電端電圧Vsか問題文をよく読む</li>
+        </ul>
+      </Box>
+      <p><strong>確認事項</strong>:</p>
+      <ul>
+        <li>上記4ステップを見ずに再現できるか</li>
+        <li>sinΦの計算を素早く行えるか（cos=0.8→sin=0.6、cos=0.6→sin=0.8）</li>
+      </ul>
+
+      <h3>変圧器効率の最大条件</h3>
+      <Box kind="tip" label="鉄損 = 銅損のとき効率最大になる数学的根拠">
+        <p>効率 <Eq tex="\eta = P_{\text{out}} / (P_{\text{out}} + P_i + P_c)" /></p>
+        <ul>
+          <li><Eq tex="P_i" /> = 鉄損（負荷に無関係・一定）</li>
+          <li><Eq tex="P_c" /> = 銅損（負荷電流Iの2乗に比例: <Eq tex="P_c = P_{c0} \times (I/I_n)^2" />）</li>
+        </ul>
+        <p>合計損失 <Eq tex="P_i + P_c" /> を最小化する問題。微分法より <Eq tex="P_i = P_c" /> のとき。これは「和が一定」ではなく「積が最小になる条件」— AM-GM不等式の応用。</p>
+      </Box>
+      <p><strong>確認事項</strong>:</p>
+      <ul>
+        <li>「鉄損=銅損」が最小損失の必要条件であることを導けるか</li>
+        <li>最大効率時の負荷率 <Eq tex="m = \sqrt{P_i / P_{cn}}" /> を式から導けるか</li>
+      </ul>
+
+      <h3>B問題の配点と時間配分</h3>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>項目</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>選択数</td><td>問11〜17から5問選択（自由選択）</td></tr>
+          <tr><td>各問配点</td><td>6点（小問a・bの組合せ）</td></tr>
+          <tr><td>B問題合計</td><td>30点</td></tr>
+          <tr><td>推奨所要時間</td><td>1問15〜18分（5問で75〜90分）</td></tr>
+          <tr><td>残り時間活用</td><td>A問題見直し + 途中放棄問の再挑戦</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="asa"><span className="h-num">4.</span>当日朝 — 最重要10数値確認表</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>項目</th><th>数値・式</th></tr></thead>
+        <tbody>
+          <tr><td>水力出力</td><td><Eq tex="P = 9.8QH\eta\,[\text{kW}]" /></td></tr>
+          <tr><td>電圧降下（三相）</td><td><Eq tex="v = \sqrt{3}\,I(R\cos\phi + X\sin\phi)" /></td></tr>
+          <tr><td>電力損失</td><td><Eq tex="P_{\text{loss}} = 3I^2R" /></td></tr>
+          <tr><td>負荷電流（三相）</td><td><Eq tex="I = P/(\sqrt{3}\,V\cos\phi)" /></td></tr>
+          <tr><td>揚水時入力</td><td><Eq tex="P = 9.8QH/\eta" /></td></tr>
+          <tr><td>DS→CB投入順</td><td>DS先 → CB後</td></tr>
+          <tr><td>CB→DS開放順</td><td>CB先 → DS後</td></tr>
+          <tr><td>変圧器最大効率</td><td>鉄損 = 銅損のとき</td></tr>
+          <tr><td>風力出力比例</td><td><Eq tex="P \propto v^3" /></td></tr>
+          <tr><td>電線の許容電流</td><td>温度上昇→抵抗増→許容電流減</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="当日朝の使い方">
+        <p>試験会場入場前、この表を5分で黙読するだけでよい。新しい知識を詰め込もうとしない。確認のみ。</p>
+      </Box>
+
+      <h2 id="related"><span className="h-num">5.</span>関連ページ</h2>
+      <ul>
+        <li><strong>頻出数値暗記シート</strong> — 数値の完全リスト</li>
+        <li><strong>頻出計算パターン集</strong> — 計算テンプレート</li>
+        <li><strong>引っかけパターン集</strong> — 引っかけの総まとめ</li>
+        <li><strong>B問題得点戦略</strong> — 時間配分と計算手順</li>
+      </ul>
+
+    </div>
+    <PageNav
+      prev={{ id: "kakomon-wave", title: "K3 出題波予測（周期性分析）" }}
+      next={{ id: "strategy-bmondai", title: "S2 B問題得点戦略" }}
+      onNav={onNav} />
+  </>
+);
+
+/* ============================================================
+   S2 B問題得点戦略 — 本文移植済み（攻略戦略）
+   出典: denken-wiki-denryoku/docs/strategy/b-mondai-strategy.md
+   ============================================================ */
+const StrategyBMondaiPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "B問題得点戦略" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="S2 · B-PROBLEM STRATEGY"
+      title="B問題得点戦略"
+      deck="電力科目B問題（計算問題）の出題パターンと解法テンプレートをまとめる。本ページの目的は「手が動く」レベルまでパターンを定着させること。"
+      meta={[
+        { label: "種別", value: "攻略戦略" },
+        { label: "使い方", value: "出題パターンと解法テンプレを定着させる" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="kouzou"><span className="h-num">1.</span>B問題の基本構造</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>項目</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>問題番号</td><td>問11〜問17（7問出題）</td></tr>
+          <tr><td>選択数</td><td><strong>5問選択</strong>（2問は捨てられる）</td></tr>
+          <tr><td>各問配点</td><td>6点（小問a=2点、b=4点が多い）</td></tr>
+          <tr><td>B問題合計</td><td><strong>30点</strong></td></tr>
+          <tr><td>目標得点</td><td>18点（選択5問中3問完答＋2問部分点）</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="選択戦略">
+        <p>事前に「得意3問・許容2問・捨て2問」を決めておく。試験当日に悩む時間を消費しないことが重要。得意分野がない場合は、計算ステップ数が少ない問題を優先する。</p>
+      </Box>
+
+      <h2 id="theme"><span className="h-num">2.</span>最頻出テーマ別：出題傾向と配点</h2>
+
+      <h3>1位：配電線路（電圧降下・電力損失）</h3>
+      <p><strong>出題頻度</strong>：ほぼ毎年（R01〜R06全て出題）</p>
+      <p><strong>出題パターン</strong>：</p>
+      <ul>
+        <li>負荷が末端に集中している単純な系統</li>
+        <li>途中に分岐がある系統（合成抵抗・合成電流の計算）</li>
+        <li>力率改善前後の比較</li>
+      </ul>
+      <Box kind="example" label="計算テンプレート">
+        <p><strong>Step 1: 負荷電流を求める</strong></p>
+        <p><Eq tex="I = \dfrac{P}{\sqrt{3}\,V\cos\phi}" display /> （三相の場合）</p>
+        <p><Eq tex="I = \dfrac{P}{V\cos\phi}" display /> （単相の場合）</p>
+        <p><strong>Step 2: 電圧降下を求める</strong></p>
+        <p><Eq tex="v = \sqrt{3}\,I(R\cos\phi + X\sin\phi)" display /> （三相3線式）</p>
+        <p><Eq tex="v = 2I(R\cos\phi + X\sin\phi)" display /> （単相2線式）</p>
+        <p><strong>Step 3: 電力損失を求める</strong></p>
+        <p><Eq tex="P_{\text{loss}} = 3I^2R" display /> （三相）</p>
+        <p><Eq tex="P_{\text{loss}} = 2I^2R" display /> （単相2線）</p>
+        <p><strong>Step 4: 送電端電圧 or 受電端電圧を求める</strong></p>
+        <p><Eq tex="V_s = V_r + v" display /> （受電端基準）</p>
+        <p><Eq tex="V_r = V_s - v" display /> （送電端基準）</p>
+      </Box>
+      <Box kind="warn" label="よくある計算ミス">
+        <ul>
+          <li>sinΦの計算忘れ: cosΦ=0.8 → sinΦ=0.6、cosΦ=0.6 → sinΦ=0.8（3-4-5の直角三角形）</li>
+          <li>抵抗Rの単位: [Ω/km]なら線路長[km]を掛けることを忘れない</li>
+          <li>三相と単相の係数（√3 vs 2）を取り違える</li>
+        </ul>
+      </Box>
+
+      <h3>2位：変圧器（効率・負荷分担）</h3>
+      <p><strong>出題頻度</strong>：3年に2回程度</p>
+      <p><strong>出題パターン</strong>：</p>
+      <ul>
+        <li>全日負荷曲線による1日の効率・損失エネルギー計算</li>
+        <li>2台並行運転時の負荷分担</li>
+        <li>最大効率時の負荷率計算</li>
+      </ul>
+      <Box kind="example" label="計算テンプレート（効率）">
+        <p>全日効率 = 全日出力エネルギー / 全日入力エネルギー</p>
+        <p>全日出力エネルギー = Σ(P_出力 × 時間)</p>
+        <p>全日入力エネルギー = Σ(P_出力 × 時間) + 鉄損 × 24h + Σ(銅損 × 負荷率² × 時間)</p>
+        <p>最大効率条件: 鉄損 <Eq tex="P_i" /> = 銅損 <Eq tex="P_c" /></p>
+        <p>最大効率時の負荷率: <Eq tex="m = \sqrt{\dfrac{P_i}{P_{cn}}}" /></p>
+        <p>※ <Eq tex="P_{cn}" /> = 定格銅損（全負荷時の銅損）</p>
+      </Box>
+      <Box kind="example" label="計算テンプレート（並行運転負荷分担）">
+        <p>2台の変圧器A・Bが並行運転するとき:</p>
+        <p><Eq tex="I_A : I_B = \dfrac{1}{\%Z_A} : \dfrac{1}{\%Z_B} = \%Z_B : \%Z_A" display /></p>
+        <p>↑ インピーダンスが小さい方に多く電流が流れる</p>
+        <p>担当容量:</p>
+        <p><Eq tex="P_A = P_{\text{total}} \times \dfrac{\%Z_B}{\%Z_A + \%Z_B}" display /></p>
+      </Box>
+      <Box kind="warn" label="負荷分担の方向を間違えやすい">
+        <p>インピーダンスが<strong>小さい方が多く電流を引き受ける</strong>。直感と逆になりやすいので注意。理由：並列回路では抵抗が小さい方に電流が集まる。</p>
+      </Box>
+
+      <h3>3位：水力発電（出力計算・揚水）</h3>
+      <p><strong>出題頻度</strong>：2〜3年に1回</p>
+      <p><strong>出題パターン</strong>：</p>
+      <ul>
+        <li>発電出力・年間発電量の計算</li>
+        <li>揚水発電の総合効率計算</li>
+        <li>有効落差の変化に伴う出力変化</li>
+      </ul>
+      <Box kind="example" label="計算テンプレート">
+        <p>発電出力: <Eq tex="P = 9.8 \times Q \times H \times \eta\,[\text{kW}]" /></p>
+        <p>揚水入力: <Eq tex="P = 9.8 \times Q \times H / \eta\,[\text{kW}]" /></p>
+        <p>総合効率（発電+揚水サイクル）:</p>
+        <p><Eq tex="\eta_{\text{total}} = \eta_{\text{発電}} \times \eta_{\text{揚水}}" display /></p>
+        <p>年間発電量:</p>
+        <p><Eq tex="E = P \times \text{設備利用率} \times 8760\,[\text{kWh}]" display /></p>
+      </Box>
+      <Box kind="tip" label="有効落差Hの考え方">
+        <p>有効落差 = 総落差 - 損失落差（管路摩擦・弁損失など）。問題文に「損失水頭○m」とあれば総落差から引く。</p>
+      </Box>
+
+      <h3>4位：架空送電線路</h3>
+      <p><strong>出題頻度</strong>：2〜3年に1回</p>
+      <p><strong>出題パターン</strong>：</p>
+      <ul>
+        <li>電線のたるみ（弛度）計算</li>
+        <li>コロナ発生限界電圧</li>
+        <li>中性点接地方式と故障時電圧・電流</li>
+      </ul>
+      <Box kind="example" label="計算テンプレート（弛度）">
+        <p><Eq tex="D = \dfrac{wS^2}{8T}" display /></p>
+        <ul>
+          <li>w: 電線単位長さあたりの荷重 [N/m]</li>
+          <li>S: 径間 [m]</li>
+          <li>T: 電線の水平張力 [N]</li>
+        </ul>
+        <p>電線長 <Eq tex="L = S + \dfrac{8D^2}{3S}" />（近似式）</p>
+      </Box>
+
+      <h3>5位：保護継電器・開閉装置</h3>
+      <p><strong>出題頻度</strong>：不定期（2〜4年に1回）</p>
+      <p><strong>出題パターン</strong>：</p>
+      <ul>
+        <li>各継電器の役割と動作条件</li>
+        <li>CB・DSの操作手順</li>
+        <li>変流器（CT）・計器用変圧器（VT）の役割</li>
+      </ul>
+      <p>計算よりも<strong>知識問題に近い</strong>ため、B問題の中では得点しやすい部類。</p>
+
+      <h2 id="jikan"><span className="h-num">3.</span>時間配分</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>フェーズ</th><th>時間</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>問題選択</td><td>5分</td><td>7問を流し読みし、5問を選択</td></tr>
+          <tr><td>B問題解答</td><td>75〜85分</td><td>1問15〜17分</td></tr>
+          <tr><td>A問題見直し</td><td>残り時間</td><td>マークミス確認・未解答の再挑戦</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="1問の時間内訳（15分）">
+        <ul>
+          <li>問題読込・方針確認: 3分</li>
+          <li>計算実行: 8分</li>
+          <li>検算・単位確認: 4分</li>
+        </ul>
+      </Box>
+
+      <h2 id="sutemon"><span className="h-num">4.</span>捨て問の基準</h2>
+      <p>以下の条件が重なる問題は後回し・または捨てを検討する:</p>
+      <ol>
+        <li><strong>計算ステップが4段階以上</strong>かつ途中で条件変換が必要</li>
+        <li><strong>見慣れない系統構成</strong>（T分岐+ループなど複合系統）</li>
+        <li><strong>問題文が長く条件整理に5分以上かかりそう</strong></li>
+      </ol>
+      <p>捨て問を決めたら迷わず次の問題へ。取りにいって時間を溶かすのが最悪パターン。</p>
+
+      <h2 id="checklist"><span className="h-num">5.</span>計算ミス防止チェックリスト</h2>
+      <p>問題を解き終えたら、提出前に以下を確認する:</p>
+      <Box kind="warn" label="提出前チェック">
+        <ul>
+          <li>単位が揃っているか（[kW]・[W]の混在、[kV]・[V]の混在）</li>
+          <li>三相か単相かに応じた係数（√3 or 2）を使っているか</li>
+          <li>sinΦを正しく計算したか（cosΦとsinΦを取り違えていないか）</li>
+          <li>求めたのが「送電端」か「受電端」か問題と一致しているか</li>
+          <li>効率η: 出力側はηを掛け、入力側はηで割っているか</li>
+        </ul>
+      </Box>
+
+    </div>
+    <PageNav
+      prev={{ id: "strategy-last3days", title: "S1 試験直前3日チェックリスト" }}
+      next={{ id: "strategy-traps", title: "S3 引っかけパターン集" }}
+      onNav={onNav} />
+  </>
+);
+
+/* ============================================================
+   S3 引っかけパターン集 — 本文移植済み（攻略戦略）
+   出典: denken-wiki-denryoku/docs/strategy/trap-patterns.md
+   ============================================================ */
+const StrategyTrapsPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "引っかけパターン集" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="S3 · COMMON TRAPS"
+      title="引っかけパターン集"
+      deck="電力科目で頻出する引っかけパターンを因果説明付きでまとめる。「なぜ間違いか」を理解することで、同じ誤答を構造的に潰す。"
+      meta={[
+        { label: "種別", value: "攻略戦略" },
+        { label: "使い方", value: "各パターンの「理由」を自分の言葉で言えるか確認する" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="sousa"><span className="h-num">1.</span>操作・手順系</h2>
+      <Box kind="warn" label="パターン1：DS操作時に電流が流れていると誤答">
+        <p><strong>誤答</strong>：「断路器（DS）で負荷電流を開放できる」</p>
+        <p><strong>理由</strong>：DSはアーク消弧機能を持たない。負荷電流が流れた状態でDSを開放するとアークが継続・拡大し、絶縁破壊や事故に至る。</p>
+        <p><strong>正解</strong>：電流の開閉は必ず遮断器（CB）で行う。DSは電流ゼロの状態でのみ操作可能。</p>
+      </Box>
+      <Box kind="warn" label="パターン2：投入・開放の操作順序の逆転">
+        <p><strong>誤答</strong>：「投入時はCB→DS、開放時はDS→CB」</p>
+        <p><strong>理由</strong>：「CBで電流を制御し、DSは電流ゼロ時のみ」が原則。</p>
+        <ul>
+          <li>投入: DS先投入（電流未流通）→ CB投入（電流を流す）</li>
+          <li>開放: CB開放（電流を切る）→ DS開放（電流ゼロ状態で分離）</li>
+        </ul>
+        <p><strong>正解</strong>：投入は DS → CB、開放は CB → DS。</p>
+      </Box>
+      <Box kind="warn" label="パターン3：変圧器並行運転の負荷分担方向">
+        <p><strong>誤答</strong>：「%インピーダンスが大きい変圧器の方が多くの負荷を分担する」</p>
+        <p><strong>理由</strong>：並列回路の原理より、インピーダンスが小さい経路に電流が多く流れる。変圧器も同じく %Z が小さい方に電流が集中する。容量の大きな変圧器に合わせて %Z を設計するため「大容量 = 小%Z」になることが多い。</p>
+        <p><strong>正解</strong>：負荷分担比 = %Z_B : %Z_A（逆比）</p>
+      </Box>
+
+      <h2 id="kouritsu"><span className="h-num">2.</span>効率・エネルギー計算系</h2>
+      <Box kind="warn" label="パターン4：揚水時と発電時のηの使い方逆転">
+        <p><strong>誤答</strong>：「揚水時の電力 P = 9.8QHη」（発電時と同じ式を使う）</p>
+        <p><strong>理由</strong>：エネルギーの流れる方向で η の扱いが変わる。</p>
+        <ul>
+          <li>発電時: 水のエネルギー → 電気（損失で減る） → <Eq tex="P = 9.8QH\eta" />（掛ける）</li>
+          <li>揚水時: 電気 → 水のエネルギー（損失分だけ余計に必要） → <Eq tex="P = 9.8QH/\eta" />（割る）</li>
+        </ul>
+        <p><strong>正解</strong>：「欲しいエネルギーを得る側」はη掛け、「必要なエネルギーを供給する側」はη割り。</p>
+      </Box>
+      <Box kind="warn" label="パターン5：変圧器銅損が負荷電流に比例すると誤答">
+        <p><strong>誤答</strong>：「銅損は負荷電流に比例する」</p>
+        <p><strong>理由</strong>：銅損 = <Eq tex="3I^2r" />（ジュール熱）。<Eq tex="I^2" />に比例するのが正しい。負荷が半分（<Eq tex="I = 0.5 I_n" />）になると、銅損は <Eq tex="0.5^2 = 0.25" /> 倍（1/4）になる。</p>
+        <p><strong>正解</strong>：銅損 ∝ <Eq tex="I^2" />（電流の2乗に比例）。鉄損は負荷に無関係・一定。</p>
+      </Box>
+      <Box kind="warn" label="パターン6：最大効率条件を「鉄損 + 銅損が最小」と混同">
+        <p><strong>誤答</strong>：「変圧器効率が最大になるのは合計損失がゼロのとき」</p>
+        <p><strong>理由</strong>：損失ゼロは不可能。効率 <Eq tex="\eta = P_{out}/(P_{out} + P_i + P_c)" /> を最大化するには <Eq tex="P_c = P_i" /> のとき損失の和が最小になる（AM-GM不等式）。</p>
+        <p><strong>正解</strong>：鉄損（一定）= 銅損（負荷の2乗に比例）のとき効率最大。</p>
+      </Box>
+
+      <h2 id="shizen"><span className="h-num">3.</span>自然エネルギー系</h2>
+      <Box kind="warn" label="パターン7：風力出力が風速の2乗に比例すると誤答">
+        <p><strong>誤答</strong>：「風力発電の出力は風速の2乗に比例する（<Eq tex="P \propto v^2" />）」</p>
+        <p><strong>理由</strong>：出力 = 運動エネルギー × 流量 = <Eq tex="(\frac{1}{2}mv^2) \times (\rho Av) \propto v^3" />。質量流量 <Eq tex="m \propto v" /> なので、最終的に <Eq tex="v^2 \times v = v^3" /> になる。</p>
+        <p><strong>正解</strong>：<Eq tex="P \propto v^3" />。風速が2倍→出力は8倍（<Eq tex="2^3" />）。</p>
+      </Box>
+      <Box kind="warn" label="パターン8：太陽電池の温度上昇で出力が上がると誤答">
+        <p><strong>誤答</strong>：「温度が上がると太陽電池の発電量が増える」</p>
+        <p><strong>理由</strong>：太陽電池の開放電圧Voc は温度上昇で低下する（約 -0.4%/℃）。電流は温度上昇でわずかに増加するが、電圧低下の影響が支配的で出力（P=VI）は低下。夏に晴れていても、パネル自体の温度が高いと発電効率が下がる。</p>
+        <p><strong>正解</strong>：温度上昇 → 開放電圧低下 → 最大出力低下。</p>
+      </Box>
+
+      <h2 id="soudensei"><span className="h-num">4.</span>送配電・電圧系</h2>
+      <Box kind="warn" label="パターン9：フェランチ効果で送電端電圧が高いと誤答">
+        <p><strong>誤答</strong>：「フェランチ効果とは、送電端電圧が受電端電圧より高い現象」</p>
+        <p><strong>理由</strong>：フェランチ効果は「軽負荷時に受電端電圧が送電端電圧より<strong>高く</strong>なる」現象。充電電流（進み電流）が送電線のインダクタンスを通ることで電圧上昇が起きる。</p>
+        <p><strong>正解</strong>：フェランチ効果 → 受電端電圧 &gt; 送電端電圧（逆転）。長距離・ケーブル系統で顕著。</p>
+      </Box>
+      <Box kind="warn" label="パターン10：電圧降下式の係数（単相と三相の取り違え）">
+        <p><strong>誤答</strong>：「三相3線式の電圧降下 <Eq tex="v = 2I(R\cos\Phi + X\sin\Phi)" />」</p>
+        <p><strong>理由</strong>：係数「2」は単相2線式（往復2本分）のもの。三相は線電流1本分の電圧降下が相電圧降下であり、線間電圧に直すと √3 倍になる。</p>
+        <p><strong>正解</strong>：三相3線式 → <Eq tex="v = \sqrt{3}\,I(R\cos\Phi + X\sin\Phi)" />、単相2線式 → <Eq tex="v = 2I(R\cos\Phi + X\sin\Phi)" /></p>
+      </Box>
+      <Box kind="warn" label="パターン11：電力損失の係数（3と√3の混同）">
+        <p><strong>誤答</strong>：「三相の電力損失 <Eq tex="P_{loss} = \sqrt{3}\,I^2R" />」</p>
+        <p><strong>理由</strong>：電力損失はジュール熱の物理量。3本の電線それぞれで <Eq tex="I^2R" /> が発生する。合計は <Eq tex="3I^2R" />。√3 は電圧計算（線電圧と相電圧の関係）に使うもので、損失には使わない。</p>
+        <p><strong>正解</strong>：<Eq tex="P_{loss} = 3I^2R" /></p>
+      </Box>
+      <Box kind="warn" label="パターン12：受電端電力率と送電端力率の混同">
+        <p><strong>誤答</strong>：「送電線路の電力損失計算に受電端力率cosΦrを使う」と「送電端力率cosΦsを使う」の混乱</p>
+        <p><strong>理由</strong>：一般に負荷（受電端）の力率が与えられることが多く、線電流Iも <Eq tex="P/(\sqrt{3}\,V_r\cos\Phi_r)" /> で求める。問題文の「力率」がどこの点のものかを必ず確認する。</p>
+        <p><strong>正解</strong>：問題文を読み、力率の基準点（送電端か受電端か）を最初に確認する。</p>
+      </Box>
+
+      <h2 id="kiki"><span className="h-num">5.</span>機器特性系</h2>
+      <Box kind="warn" label="パターン13：変圧器の巻数比と電圧・電流の方向">
+        <p><strong>誤答</strong>：「巻数が多い側の電圧が低い」</p>
+        <p><strong>理由</strong>：変圧器は電圧が巻数に比例する（<Eq tex="V_1/V_2 = N_1/N_2" />）。巻数が多い＝電圧が高い（昇圧側）。電流は逆比（<Eq tex="N_1/N_2 = I_2/I_1" />）。</p>
+        <p><strong>正解</strong>：電圧は巻数に比例、電流は巻数に反比例。</p>
+      </Box>
+      <Box kind="warn" label="パターン14：コンデンサ（進み）と方向の混同">
+        <p><strong>誤答</strong>：「コンデンサは遅れ無効電力を供給する」</p>
+        <p><strong>理由</strong>：コンデンサは充放電により<strong>進み電流</strong>を流す → 進み無効電力（Q &lt; 0 の補償）を供給。誘導性負荷（モーター等）が消費する遅れ無効電力を打ち消す効果がある。</p>
+        <p><strong>正解</strong>：コンデンサ → 進み無効電力を供給 → 力率改善（遅れ力率を1に近づける）。</p>
+      </Box>
+      <Box kind="warn" label="パターン15：架空地線の役割を雷電流の導体と誤解">
+        <p><strong>誤答</strong>：「架空地線は雷電流を大地に流すためのもの」</p>
+        <p><strong>理由</strong>：架空地線の主な役割は「遮蔽（直撃雷から電力線を守る）」と「誘導雷サージの低減」。雷撃を受けた際の電流は鉄塔を通して大地に流れるが、架空地線そのものが雷電流を「流す管」として機能するわけではない。架空地線がなければ電力線に直撃雷が当たる。</p>
+        <p><strong>正解</strong>：架空地線の役割は「雷の直撃から電力線を保護する遮蔽」。逆フラッシオーバーには注意。</p>
+      </Box>
+      <Box kind="warn" label="パターン16：電線の弛度（たるみ）と張力の関係">
+        <p><strong>誤答</strong>：「温度上昇→電線が伸びる→弛度が大きくなる→張力が大きくなる」</p>
+        <p><strong>理由</strong>：電線が伸びると弛度（<Eq tex="D = wS^2/8T" />）は大きくなるが、張力Tは<strong>下がる</strong>。Dが増えるとTが減る（逆比関係）。また地絡故障の観点では弛度増大→地上高低下が問題。</p>
+        <p><strong>正解</strong>：温度上昇 → 電線伸長 → 弛度増大 → 張力<strong>低下</strong>（張力と弛度は逆の関係）。</p>
+      </Box>
+      <Box kind="warn" label="パターン17：中性点接地方式と地絡電流の大小">
+        <p><strong>誤答</strong>：「非接地方式では地絡電流が最大になる」</p>
+        <p><strong>理由</strong>：非接地方式では1線地絡時の地絡電流は対地静電容量を通じた充電電流のみで小さい。直接接地方式の方が地絡電流が大きく（大地を経由する低抵抗ループが形成される）、これに対応した保護継電器の高速動作が必要。</p>
+        <p><strong>正解</strong>：地絡電流の大小 → 直接接地 &gt; 抵抗接地 &gt; リアクトル接地 &gt; 非接地（小）</p>
+      </Box>
+
+      <h2 id="check"><span className="h-num">6.</span>総合チェック</h2>
+      <p>試験前にこのページを1周して、各パターンの「理由」部分を自分の言葉で言えるか確認する。再現できないパターンはテーマ別ページで因果を再確認すること。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>カテゴリ</th><th>収録数</th></tr></thead>
+        <tbody>
+          <tr><td>操作・手順系</td><td>3パターン</td></tr>
+          <tr><td>効率・エネルギー計算系</td><td>3パターン</td></tr>
+          <tr><td>自然エネルギー系</td><td>2パターン</td></tr>
+          <tr><td>送配電・電圧系</td><td>4パターン</td></tr>
+          <tr><td>機器特性系</td><td>5パターン</td></tr>
+          <tr><td><strong>合計</strong></td><td><strong>17パターン</strong></td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="関連ページ">
+        <ul>
+          <li><strong>試験直前3日チェックリスト</strong> — 引っかけを事前チェック</li>
+          <li><strong>B問題得点戦略</strong> — 計算問題の引っかけ対策</li>
+          <li><strong>頻出計算パターン集</strong> — 正しい計算の型</li>
+        </ul>
+      </Box>
+
+    </div>
+    <PageNav prev={{ id: "strategy-bmondai", title: "S2 B問題得点戦略" }} next={{ id: "calc-patterns", title: "R1 頻出計算パターン集" }} onNav={onNav} />
+  </>
+);
+
+
+/* ============================================================
+   R1 頻出計算パターン集 — 本文移植済み（リファレンス）
+   出典: denken-wiki-denryoku/docs/reference/calc-patterns.md
+   ============================================================ */
+const CalcPatternsPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "頻出計算パターン集" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="R1 · FREQUENT CALC PATTERNS"
+      title="頻出計算パターン集"
+      deck="電力科目で繰り返し出題される計算の「型」を6パターンで整理。各パターンの「公式」を覚え、「手順」通りに当てはめるだけで解け、「注意点」の落とし穴を押さえれば失点を防げる。"
+      meta={[
+        { label: "種別", value: "リファレンス" },
+        { label: "使い方", value: "公式→手順→注意点の順で型を当てはめる" },
+      ]}
+    />
+    <div className="content">
+
+      <Box kind="tip" label="使い方">
+        <p>各パターンの「公式」を覚え、「手順」通りに当てはめるだけで解ける。「注意点」は落とし穴なので必ず確認すること。</p>
+      </Box>
+
+      <h2 id="suiryoku"><span className="h-num">1.</span>水力発電の出力計算</h2>
+      <FormulaCard num="01" name="水力発電の出力" eq="P = 9.8 \times Q \times H \times \eta\,[\text{kW}]"
+        note="9.8 は重力加速度 g=9.8 m/s² × 水の密度 1000 kg/m³ × 単位換算の結果。暗記必須。" />
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>記号</th><th>意味</th><th>単位</th></tr></thead>
+        <tbody>
+          <tr><td>P</td><td>発電出力</td><td>kW</td></tr>
+          <tr><td>Q</td><td>流量</td><td>m³/s</td></tr>
+          <tr><td>H</td><td>有効落差</td><td>m</td></tr>
+          <tr><td>η</td><td>総合効率（水車効率×発電機効率）</td><td>—</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="手順">
+        <ol>
+          <li>有効落差 H を確認（総落差 − 損失水頭）</li>
+          <li>流量 Q を確認</li>
+          <li>効率 η が水車効率×発電機効率で与えられていれば掛け合わせる</li>
+          <li><Eq tex="P = 9.8\,QH\eta" /> に代入</li>
+        </ol>
+      </Box>
+      <Box kind="warn" label="落とし穴">
+        <ul>
+          <li><strong>9.8</strong> は重力加速度（g=9.8 m/s²）× 水の密度（1000 kg/m³）× 単位換算の結果。暗記必須</li>
+          <li>有効落差（H）であることに注意。総落差を使うと誤答</li>
+          <li>出力の単位は <strong>kW</strong>（Wではない）</li>
+        </ul>
+      </Box>
+      <Box kind="example" label="例題イメージ">
+        <p>有効落差 100 m、流量 10 m³/s、効率 0.85 の水力発電所の出力は?</p>
+        <p>P = 9.8 × 10 × 100 × 0.85 = <strong>8,330 kW</strong></p>
+      </Box>
+
+      <h2 id="karyoku"><span className="h-num">2.</span>火力発電の熱効率計算</h2>
+      <FormulaCard num="02" name="発電端熱効率（熱消費率から）" eq="\eta = \dfrac{3600}{H} \times 100\,[\%]"
+        note="3600 は 1 kWh = 3600 kJ の換算係数。熱消費率 H が小さいほど効率が良い。" />
+      <FormulaCard num="03" name="発電端熱効率（電力量／投入熱量から）" eq="\eta = \dfrac{P_{\text{out}}}{Q_{\text{in}}}\,[\text{小数}]"
+        note="低位発熱量を使う（高位発熱量と混同しない）。" />
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>記号</th><th>意味</th><th>単位</th></tr></thead>
+        <tbody>
+          <tr><td>η</td><td>発電端熱効率</td><td>%</td></tr>
+          <tr><td>H</td><td>熱消費率</td><td>kJ/kWh</td></tr>
+          <tr><td>P_out</td><td>発電電力量</td><td>kWh</td></tr>
+          <tr><td>Q_in</td><td>投入熱量</td><td>kJ</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="手順（熱消費率から求める場合）">
+        <ol>
+          <li>熱消費率 H [kJ/kWh] を確認</li>
+          <li><Eq tex="\eta = \dfrac{3600}{H} \times 100\,[\%]" /> に代入</li>
+        </ol>
+      </Box>
+      <Box kind="tip" label="手順（燃料消費量から求める場合）">
+        <ol>
+          <li>発電電力量 = 出力 × 時間</li>
+          <li>燃料消費量 × 低位発熱量 = 投入熱量</li>
+          <li>η = 発電電力量 [kJ] / 投入熱量 [kJ]</li>
+        </ol>
+      </Box>
+      <Box kind="warn" label="落とし穴">
+        <ul>
+          <li>3600 は 1 kWh = 3600 kJ の換算係数</li>
+          <li><strong>低位発熱量</strong>を使う（高位発熱量と混同しない）</li>
+          <li>熱消費率が小さいほど効率が良い（逆数の関係）</li>
+        </ul>
+      </Box>
+      <Box kind="example" label="例題イメージ">
+        <p>熱消費率 9000 kJ/kWh の火力発電所の熱効率は?</p>
+        <p>η = 3600 / 9000 × 100 = <strong>40%</strong></p>
+      </Box>
+
+      <h2 id="henatsuki"><span className="h-num">3.</span>変圧器の効率計算</h2>
+      <FormulaCard num="04" name="変圧器の効率（基本）" eq="\eta = \dfrac{P_{\text{out}}}{P_{\text{out}} + P_i + P_c}"
+        note="鉄損 Pi は一定、銅損 Pc は負荷電流の2乗に比例。" />
+      <FormulaCard num="05" name="変圧器の効率（負荷率 m を使う）" eq="\eta = \dfrac{m P_n \cos\phi}{m P_n \cos\phi + P_i + m^2 P_{cn}}"
+        note="出力は負荷率 m に比例、銅損は m² に比例することに注意。" />
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>記号</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><td>P_out</td><td>出力（有効電力）= P_n × m × cosφ</td></tr>
+          <tr><td>Pi</td><td>鉄損（一定）</td></tr>
+          <tr><td>Pc</td><td>銅損（負荷電流の2乗に比例）</td></tr>
+          <tr><td>P_n</td><td>定格容量</td></tr>
+          <tr><td>m</td><td>負荷率（実負荷/定格）</td></tr>
+          <tr><td>Pc_n</td><td>定格時の銅損</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="手順">
+        <ol>
+          <li>負荷率 m を確認</li>
+          <li>出力 = m × P_n × cosφ を計算</li>
+          <li>銅損 = m² × Pc_n（負荷率の2乗に比例することに注意）</li>
+          <li>η = 出力 / (出力 + 鉄損 + 銅損)</li>
+        </ol>
+      </Box>
+      <Box kind="warn" label="落とし穴">
+        <ul>
+          <li><strong>鉄損は一定</strong>、銅損は電流の2乗（≒負荷率の2乗）に比例</li>
+          <li>最大効率条件: <strong>鉄損 = 銅損</strong>（最大効率負荷率 <Eq tex="= \sqrt{P_i / P_{cn}}" />）</li>
+          <li>全日効率は「1日の出力電力量 / 1日の入力電力量」で計算</li>
+        </ul>
+      </Box>
+      <Box kind="example" label="例題イメージ">
+        <p>100 kVA、鉄損 500 W、定格銅損 1000 W、力率 0.8、負荷率 0.5 のとき効率は?</p>
+        <p>出力 = 0.5 × 100 × 0.8 = 40 kW</p>
+        <p>銅損 = 0.5² × 1000 = 250 W</p>
+        <p>η = 40000 / (40000 + 500 + 250) = <strong>98.2%</strong></p>
+      </Box>
+
+      <h2 id="souden-koka"><span className="h-num">4.</span>送電線の電圧降下計算</h2>
+      <FormulaCard num="06" name="電圧降下（三相3線式）" eq="e \approx \sqrt{3}\,I(R\cos\theta + X\sin\theta)\,[\text{V}]"
+        note="三相は √3 倍。R・X は1線分の値。" />
+      <FormulaCard num="07" name="電圧降下（単相2線式）" eq="e \approx 2\,I(R\cos\theta + X\sin\theta)\,[\text{V}]"
+        note="単相2線は2倍（単相3線は配線の状況次第）。" />
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>記号</th><th>意味</th><th>単位</th></tr></thead>
+        <tbody>
+          <tr><td>e</td><td>電圧降下（送電端−受電端）</td><td>V</td></tr>
+          <tr><td>I</td><td>線電流</td><td>A</td></tr>
+          <tr><td>R</td><td>1線の抵抗</td><td>Ω</td></tr>
+          <tr><td>X</td><td>1線のリアクタンス</td><td>Ω</td></tr>
+          <tr><td>cosθ</td><td>力率</td><td>—</td></tr>
+          <tr><td>sinθ</td><td>無効率 = √(1−cos²θ)</td><td>—</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="手順">
+        <ol>
+          <li>力率 cosθ から <Eq tex="\sin\theta = \sqrt{1-\cos^2\theta}" /> を計算</li>
+          <li>線電流 I を電力から算出（三相: <Eq tex="I = \dfrac{P}{\sqrt{3}\,V\cos\theta}" />）</li>
+          <li>公式に代入</li>
+        </ol>
+      </Box>
+      <Box kind="warn" label="落とし穴">
+        <ul>
+          <li>三相は <strong>√3 倍</strong>、単相2線は <strong>2倍</strong>（単相3線は配線の状況次第）</li>
+          <li>R, X は <strong>1線分</strong>の値（三相全体ではない）</li>
+          <li>電圧降下率 = e / V_s × 100 [%] で表す場合もある</li>
+        </ul>
+      </Box>
+      <Box kind="example" label="例題イメージ">
+        <p>三相3線式、R=2Ω、X=3Ω、I=100A、cosθ=0.8（sinθ=0.6）のとき電圧降下は?</p>
+        <p>e = √3 × 100 × (2×0.8 + 3×0.6) = 1.732 × 100 × 3.4 = <strong>589 V</strong></p>
+      </Box>
+
+      <h2 id="haiden-loss"><span className="h-num">5.</span>配電線の電力損失計算</h2>
+      <FormulaCard num="08" name="電力損失（三相3線式）" eq="P_{\text{loss}} = 3 I^2 R\,[\text{W}]"
+        note="三相は3本の線があるので係数は3。電流の2乗に比例。" />
+      <FormulaCard num="09" name="電力損失（単相2線式）" eq="P_{\text{loss}} = 2 I^2 R\,[\text{W}]"
+        note="往復2本分で係数2。電流が2倍になると損失は4倍。" />
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>記号</th><th>意味</th><th>単位</th></tr></thead>
+        <tbody>
+          <tr><td>P_loss</td><td>電力損失</td><td>W</td></tr>
+          <tr><td>I</td><td>線電流</td><td>A</td></tr>
+          <tr><td>R</td><td>1線の抵抗</td><td>Ω</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="手順">
+        <ol>
+          <li>線電流 I を確認（電力・電圧・力率から計算）</li>
+          <li>公式に代入</li>
+        </ol>
+      </Box>
+      <Box kind="warn" label="落とし穴">
+        <ul>
+          <li>三相は <strong>3本</strong>の線があるので係数は3</li>
+          <li>電流が2倍になると損失は <strong>4倍</strong>になる（電流の2乗に比例）</li>
+          <li><strong>力率改善の効果</strong>: cosθ が上がると電流 I が減り損失が大幅減</li>
+          <li>電圧を2倍にすると電流は半分になり損失は <strong>1/4</strong> になる</li>
+        </ul>
+      </Box>
+      <FormulaCard num="10" name="力率改善前後の損失比" eq="\dfrac{P_{\text{loss}2}}{P_{\text{loss}1}} = \left(\dfrac{\cos\theta_1}{\cos\theta_2}\right)^2"
+        note="力率 0.6 → 0.9 に改善すると損失は (0.6/0.9)² = 0.44倍（56%削減）。" />
+      <Box kind="example" label="例題イメージ">
+        <p>三相3線式、R=1Ω/線、負荷 100 kW、線間電圧 6600 V、cosθ=0.8 のとき電力損失は?</p>
+        <p>I = 100000 / (√3 × 6600 × 0.8) = 10.95 A</p>
+        <p>P_loss = 3 × 10.95² × 1 = <strong>360 W</strong></p>
+      </Box>
+
+      <h2 id="henatsuki-pz"><span className="h-num">6.</span>変圧器計算（%インピーダンス・短絡電流・並列運転）</h2>
+      <Box kind="warn" label="R08出題予測：★★（2年空白・番外P2）">
+        <p>変圧器計算は R06・R07 で<strong>2年連続出題されていない</strong>。波形分析上、R08 で復活する番外ポジション。効率計算（パターン3）とは別に、%インピーダンス系を押さえておくこと。</p>
+      </Box>
+      <FormulaCard num="11" name="%インピーダンス（単相ベース）" eq="\%Z = \dfrac{I_n Z}{V_n} \times 100\,[\%]"
+        note="基準容量・基準電圧を統一して計算する。" />
+      <FormulaCard num="12" name="短絡電流" eq="I_s = I_n \times \dfrac{100}{\%Z}\,[\text{A}]"
+        note="%Z が小さいほど短絡電流は大きい。" />
+      <FormulaCard num="13" name="短絡容量" eq="P_s = P_n \times \dfrac{100}{\%Z}\,[\text{VA}]"
+        note="遮断器の遮断容量は P_s 以上を選定する。" />
+      <FormulaCard num="14" name="基準容量換算（%Z合成）" eq="\%Z_{\text{新}} = \%Z_{\text{旧}} \times \dfrac{P_{\text{基準}}}{P_{\text{旧基準}}}"
+        note="異なる容量の機器の %Z を合成するときは同じ基準容量に換算してから加算する。" />
+      <FormulaCard num="15" name="並列運転の負荷分担" eq="\dfrac{P_a}{P_b} = \dfrac{P_{na}/\%Z_a}{P_{nb}/\%Z_b}"
+        note="負荷分担比は 定格容量 ÷ %Z の比で決まる。" />
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>記号</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><td>%Z</td><td>パーセントインピーダンス</td></tr>
+          <tr><td>I_n</td><td>定格電流</td></tr>
+          <tr><td>I_s</td><td>短絡電流</td></tr>
+          <tr><td>P_n</td><td>定格容量</td></tr>
+          <tr><td>P_s</td><td>短絡容量</td></tr>
+          <tr><td>V_n</td><td>定格電圧</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="手順（短絡電流・短絡容量問題）">
+        <ol>
+          <li>基準容量 P_n と %Z を確認（複数機器なら基準統一）</li>
+          <li>各要素の %Z を基準容量換算</li>
+          <li>合成 %Z を算出（直列: 加算／並列: 逆数和）</li>
+          <li>I_s = I_n × 100 / %Z または P_s = P_n × 100 / %Z で算出</li>
+        </ol>
+      </Box>
+      <Box kind="warn" label="落とし穴">
+        <ul>
+          <li><strong>基準容量の統一忘れ</strong>が最頻ミス。%Z は基準容量に比例する</li>
+          <li><strong>一次側と二次側</strong>どちらで計算してもよいが、%Z は変わらない（電流・インピーダンスは変わる）</li>
+          <li><strong>並列運転</strong>は %Z が等しい方が負荷分担が容量比通りになる。%Z が違うと小さい方が過負荷</li>
+          <li><strong>三相の場合</strong>: 線間電圧・三相容量で計算すれば単相式がそのまま使える（√3不要）</li>
+          <li>短絡容量の<strong>遮断容量選定</strong>: 実機の遮断器定格は P_s 以上を選ぶ</li>
+        </ul>
+      </Box>
+      <Box kind="example" label="例題イメージ（基準容量換算）">
+        <p>10 MVA 基準で変圧器 %Z=8%、系統側 %Z=2%。二次側短絡電流（定格電流の何倍か）は?</p>
+        <p>合成 %Z = 8 + 2 = 10%</p>
+        <p>I_s / I_n = 100 / 10 = <strong>10倍</strong></p>
+      </Box>
+      <Box kind="example" label="例題イメージ（並列運転）">
+        <p>変圧器A: 100 kVA, %Z=4%／B: 200 kVA, %Z=5%。合計負荷 240 kVA のとき各機分担は?</p>
+        <p>P_n/%Z 比: A = 100/4 = 25／B = 200/5 = 40</p>
+        <p>分担比 A:B = 25:40 = 5:8</p>
+        <p>A = 240 × 5/13 = <strong>92.3 kVA</strong></p>
+        <p>B = 240 × 8/13 = <strong>147.7 kVA</strong></p>
+      </Box>
+
+    </div>
+    <PageNav
+      prev={{ id: "strategy-traps", title: "S3 引っかけパターン集" }}
+      next={{ id: "numbers", title: "R2 頻出数値暗記シート" }}
+      onNav={onNav} />
+  </>
+);
+
+/* ============================================================
+   R2 頻出数値暗記シート — 本文移植済み（リファレンス）
+   出典: denken-wiki-denryoku/docs/reference/numbers.md
+   ============================================================ */
+const NumbersPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "頻出数値暗記シート" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="R2 · KEY NUMBERS CHEAT SHEET"
+      title="頻出数値暗記シート"
+      deck="試験に繰り返し出る数値を一覧化。スキマ時間に確認する用。水車の適用落差、送電電圧の区分、変圧器の主要数値、ケーブル比較、力率・効率の目標値、水力の定数、熱・エネルギー換算、出題比率まで、暗記すべき値を表でまとめた。"
+      meta={[
+        { label: "種別", value: "リファレンス" },
+        { label: "使い方", value: "直前暗記" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="suisha"><span className="h-num">1.</span>水車の適用落差範囲</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>水車の種類</th><th>適用落差</th><th>タイプ</th><th>特徴</th></tr></thead>
+        <tbody>
+          <tr><td>ペルトン水車</td><td>300 m 以上</td><td>衝動水車</td><td>高落差。ジェット水流でバケットを回す</td></tr>
+          <tr><td>フランシス水車</td><td>40〜600 m</td><td>反動水車</td><td>中落差。最も普及。混流型</td></tr>
+          <tr><td>カプラン水車</td><td>10〜60 m</td><td>反動水車（軸流）</td><td>低落差。羽根角が可変。大流量向け</td></tr>
+          <tr><td>プロペラ水車</td><td>5〜30 m</td><td>反動水車（軸流）</td><td>羽根固定。カプランより低コスト</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="水車タイプと落差の物理的対応">
+        <ul>
+          <li><strong>ペルトン（300 m 以上）</strong>: 衝動水車はノズルで高速ジェット水流を作り、バケットに当てて回転力を得る。落差が大きいほどポテンシャルエネルギー（mgh）が大きく、高速ジェットが得られるため高効率になる</li>
+          <li><strong>フランシス（40〜600 m）</strong>: 反動水車は水圧そのものを利用する。中落差域では圧力と流量のバランスが取りやすく、混流型ランナーで広い落差範囲に対応できる</li>
+          <li><strong>カプラン・プロペラ（5〜60 m）</strong>: 低落差では単位落差あたりの圧力が小さいため、大流量を通せる軸流型が有利。カプランは羽根角可変で流量変動に対応</li>
+        </ul>
+      </Box>
+
+      <h2 id="souden-voltage"><span className="h-num">2.</span>送電電圧の区分</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>区分</th><th>電圧範囲</th><th>根拠</th></tr></thead>
+        <tbody>
+          <tr><td>低圧(交流)</td><td>600 V 以下</td><td>電気設備の技術基準（電技）</td></tr>
+          <tr><td>高圧(交流)</td><td>600 V 超〜7000 V 以下</td><td>電技</td></tr>
+          <tr><td>特別高圧</td><td>7000 V 超</td><td>電技</td></tr>
+          <tr><td>超高圧送電</td><td>275 kV、500 kV 等</td><td>日本の幹線系統</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="電圧区分の設定根拠">
+        <ul>
+          <li><strong>600 V</strong>: 人体への危険度（感電致死リスク）が高まる閾値として電技が設定。600 V 以下は感電事故時の致死率が相対的に低く、一般者も扱える「低圧」と定義</li>
+          <li><strong>7000 V</strong>: 7 kV 超は特別な絶縁設備・有資格者による保守が必要な「特別高圧」。電力会社の配電系統（6.6 kV）がこの直下に収まるよう設計されている</li>
+          <li><strong>家庭用 100 V / 200 V</strong>: いずれも 600 V 以下であり低圧に分類される</li>
+        </ul>
+      </Box>
+
+      <h2 id="trans"><span className="h-num">3.</span>変圧器の主要数値</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>項目</th><th>数値</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>大型変圧器の効率</td><td>98〜99 %</td><td>一般的な目安</td></tr>
+          <tr><td>最大効率条件</td><td>鉄損 = 銅損</td><td>最大効率負荷率 = √(Pi/Pc_n)</td></tr>
+          <tr><td>パーセントインピーダンス（配電用）</td><td>4〜6 %</td><td>標準的な範囲</td></tr>
+          <tr><td>パーセントインピーダンス（大型）</td><td>10〜15 %</td><td>短絡電流制限のため大きく設定</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="cable"><span className="h-num">4.</span>電力ケーブル（XLPE vs OF）の特徴比較</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>項目</th><th>XLPEケーブル</th><th>OFケーブル</th></tr></thead>
+        <tbody>
+          <tr><td>絶縁材料</td><td>架橋ポリエチレン</td><td>絶縁油含浸紙</td></tr>
+          <tr><td>最高使用電圧</td><td>500 kV 以上対応</td><td>500 kV 対応</td></tr>
+          <tr><td>保守</td><td>簡単（油圧管理不要）</td><td>給油設備が必要</td></tr>
+          <tr><td>熱抵抗</td><td>小（許容電流大）</td><td>やや大</td></tr>
+          <tr><td>普及状況</td><td>現在の主流</td><td>旧来方式</td></tr>
+          <tr><td>誘電正接 tanδ</td><td>非常に小さい（約0.0003）</td><td>やや大きい（約0.003）</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="XLPEがOFに取って代わった理由">
+        <p>OFケーブルは絶縁油を含浸した紙を使用するため、経路全体に給油設備（油圧タンク・圧力管理装置）が必要でコストが高い。XLPEは架橋ポリエチレンが固体絶縁材料のため、油漏れリスクがなく保守が大幅に簡略化される。また誘電正接（tanδ）が OF の約1/10 と小さく、誘電体損失が少ないため発熱も少ない。これが現在 XLPE が主流となっている実質的な理由</p>
+      </Box>
+
+      <h2 id="rikiritsu"><span className="h-num">5.</span>力率・効率の目標値</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>項目</th><th>目標値</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>需要家の力率目標</td><td>0.9 以上</td><td>電気料金の力率割引条件</td></tr>
+          <tr><td>力率割増割引の基準</td><td>0.85</td><td>一般的な基準値（事業者により異なる）</td></tr>
+          <tr><td>送電効率の目安</td><td>95〜98 %</td><td>送電損失は数%</td></tr>
+          <tr><td>配電損失の目安</td><td>3〜5 %</td><td>低圧配電が多い</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="suiryoku-teisu"><span className="h-num">6.</span>水力発電の定数</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>定数</th><th>値</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><td>9.8</td><td>kW/(m³/s·m)</td><td>出力計算係数（g×ρ/1000）</td></tr>
+          <tr><td>g</td><td>9.8 m/s²</td><td>重力加速度</td></tr>
+          <tr><td>ρ</td><td>1000 kg/m³</td><td>水の密度</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="netsu-kanzan"><span className="h-num">7.</span>熱・エネルギー換算</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>換算</th><th>値</th></tr></thead>
+        <tbody>
+          <tr><td>1 kWh</td><td>= 3600 kJ</td></tr>
+          <tr><td>1 kWh</td><td>= 860 kcal</td></tr>
+          <tr><td>1 kcal</td><td>≒ 4.186 kJ</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="3600 kJ/kWh の物理的な意味">
+        <p>1 kWh = 1 kW × 3600 s = 3600 kJ（仕事量 = 電力 × 時間、W = J/s より）。熱消費率 H [kJ/kWh] は「1 kWh の電気を作るのに投入した熱量」なので、熱効率 = 出力（3600 kJ 相当）/ 入力（H kJ）= 3600/H となる。H が小さいほど少ない燃料で同じ電力を生み出せており効率が高い</p>
+      </Box>
+
+      <h2 id="hiritsu"><span className="h-num">8.</span>電験3種 電力科目 出題比率の目安</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>分野</th><th>出題割合</th><th>難易度</th></tr></thead>
+        <tbody>
+          <tr><td>配電</td><td>約25%</td><td>★★★</td></tr>
+          <tr><td>送電</td><td>約20%</td><td>★★★</td></tr>
+          <tr><td>火力発電</td><td>約18%</td><td>★★☆</td></tr>
+          <tr><td>水力発電</td><td>約11%</td><td>★★☆</td></tr>
+          <tr><td>変電</td><td>約16%</td><td>★★★</td></tr>
+          <tr><td>電気材料</td><td>約10%</td><td>★★☆</td></tr>
+        </tbody>
+      </table></div>
+      <p>出典: 電験王統計（H18〜R7下期、約22年分）より概算</p>
+
+    </div>
+    <PageNav
+      prev={{ id: "calc-patterns", title: "R1 頻出計算パターン集" }}
+      next={{ id: "glossary", title: "R3 用語集" }}
+      onNav={onNav} />
+  </>
+);
+
+/* ============================================================
+   R3 用語集 — 本文移植済み（リファレンス）
+   出典: denken-wiki-denryoku/docs/reference/glossary.md
+   ============================================================ */
+const GlossaryPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "用語集" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="R3 · GLOSSARY"
+      title="用語集"
+      deck="電験3種 電力科目の重要用語集。試験に頻出の用語を6カテゴリ（水力発電・火力発電・変電・送電・配電・電力系統/需給）で整理した。"
+      meta={[
+        { label: "種別", value: "リファレンス" },
+        { label: "使い方", value: "カテゴリ別に用語・読み・意味・関連テーマを一覧確認" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="suiryoku"><span className="h-num">1.</span>水力発電</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>用語</th><th>定義</th></tr></thead>
+        <tbody>
+          <tr><td><strong>有効落差</strong>（ゆうこうらくさ）</td><td>総落差から損失水頭を引いた実際に利用できる落差。関連テーマ: 水力発電</td></tr>
+          <tr><td><strong>流量</strong>（りゅうりょう）</td><td>単位時間当たりの水量 [m³/s]。関連テーマ: 水力発電</td></tr>
+          <tr><td><strong>ペルトン水車</strong>（ぺるとんすいしゃ）</td><td>高落差（300m以上）向けの衝動水車。バケットにジェット水流を当てる。関連テーマ: 水力発電</td></tr>
+          <tr><td><strong>フランシス水車</strong>（ふらんしすすいしゃ）</td><td>中落差（40〜600m）向けの反動水車。最も普及。関連テーマ: 水力発電</td></tr>
+          <tr><td><strong>カプラン水車</strong>（かぷらんすいしゃ）</td><td>低落差（10〜60m）向けのプロペラ型反動水車。羽根が可変。関連テーマ: 水力発電</td></tr>
+          <tr><td><strong>調速機</strong>（ちょうそくき）</td><td>水車の回転数を一定に保つ装置（ガバナ）。関連テーマ: 水力発電</td></tr>
+          <tr><td><strong>調圧水槽</strong>（ちょうあつすいそう）</td><td>負荷変動時の水圧変動を緩和するタンク。関連テーマ: 水力発電</td></tr>
+          <tr><td><strong>揚水発電</strong>（ようすいはつでん）</td><td>余剰電力で水を上部貯水池に揚げ、需要ピーク時に発電する方式。関連テーマ: 水力発電</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="karyoku"><span className="h-num">2.</span>火力発電</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>用語</th><th>定義</th></tr></thead>
+        <tbody>
+          <tr><td><strong>ランキンサイクル</strong>（らんきんさいくる）</td><td>蒸気タービン発電の基本熱サイクル（蒸発→膨張→凝縮→圧縮）。関連テーマ: 火力発電</td></tr>
+          <tr><td><strong>再熱サイクル</strong>（さいねつさいくる）</td><td>タービン中段で蒸気を再加熱して効率を高めるサイクル。関連テーマ: 火力発電</td></tr>
+          <tr><td><strong>再生サイクル</strong>（さいせいさいくる）</td><td>タービン抽気でボイラ給水を加熱するサイクル。関連テーマ: 火力発電</td></tr>
+          <tr><td><strong>コンバインドサイクル</strong>（こんばいんどさいくる）</td><td>ガスタービンと蒸気タービンを組み合わせた高効率発電方式。関連テーマ: 火力発電</td></tr>
+          <tr><td><strong>熱効率</strong>（ねつこうりつ）</td><td>発電に利用した熱量/投入した熱量。<Eq tex="\eta = \dfrac{3600}{H}\,[\text{kJ/kWh}]" />。関連テーマ: 火力発電</td></tr>
+          <tr><td><strong>低位発熱量</strong>（ていいはつねつりょう）</td><td>燃料の発熱量から水蒸気の蒸発潜熱を引いた値。関連テーマ: 火力発電</td></tr>
+          <tr><td><strong>ボイラ</strong>（ぼいら）</td><td>燃料を燃焼させて蒸気を生成する装置。関連テーマ: 火力発電</td></tr>
+          <tr><td><strong>脱硝装置</strong>（だっしょうそうち）</td><td>排煙中のNOxを除去する装置。関連テーマ: 火力発電</td></tr>
+          <tr><td><strong>脱硫装置</strong>（だつりゅうそうち）</td><td>排煙中のSOxを除去する装置。関連テーマ: 火力発電</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="henden"><span className="h-num">3.</span>変電</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>用語</th><th>定義</th></tr></thead>
+        <tbody>
+          <tr><td><strong>変圧器</strong>（へんあつき）</td><td>電圧を変換する機器。1次・2次の巻き数比で電圧が決まる。関連テーマ: 変圧器</td></tr>
+          <tr><td><strong>鉄損</strong>（てつそん）</td><td>磁束の変化により鉄心に生じる損失（ヒステリシス損＋渦電流損）。負荷に無関係。関連テーマ: 変圧器</td></tr>
+          <tr><td><strong>銅損</strong>（どうそん）</td><td>電流が巻き線の抵抗を流れることで生じる損失。負荷電流の2乗に比例。関連テーマ: 変圧器</td></tr>
+          <tr><td><strong>最大効率</strong>（さいだいこうりつ）</td><td>鉄損＝銅損となる負荷時に変圧器効率が最大になる。関連テーマ: 変圧器</td></tr>
+          <tr><td><strong>パーセントインピーダンス</strong>（ぱーせんといんぴーだんす）</td><td>定格電流を流したとき変圧器の内部インピーダンスによる電圧降下の定格電圧に対する比（%）。関連テーマ: 変圧器</td></tr>
+          <tr><td><strong>遮断器（CB）</strong>（しゃだんき）</td><td>事故時に回路を遮断する機器。アーク消弧能力が必要。関連テーマ: 開閉装置・保護継電器</td></tr>
+          <tr><td><strong>断路器（DS）</strong>（だんろき）</td><td>無電圧・無負荷状態で回路を開閉する機器。負荷電流の遮断不可。関連テーマ: 開閉装置・保護継電器</td></tr>
+          <tr><td><strong>過電流継電器（OCR）</strong>（かでんりゅうけいでんき）</td><td>設定値以上の電流が流れると動作して遮断器を制御する継電器。関連テーマ: 開閉装置・保護継電器</td></tr>
+          <tr><td><strong>地絡継電器（GR）</strong>（ちらくけいでんき）</td><td>地絡事故を検出する継電器。関連テーマ: 開閉装置・保護継電器</td></tr>
+          <tr><td><strong>GIS</strong>（じーあいえす）</td><td>ガス絶縁開閉装置。SF6ガスで絶縁・アーク消弧。小型化が可能。関連テーマ: 開閉装置・保護継電器</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="souden"><span className="h-num">4.</span>送電</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>用語</th><th>定義</th></tr></thead>
+        <tbody>
+          <tr><td><strong>電圧降下</strong>（でんあつこうか）</td><td>送電線のインピーダンスによる送電端と受電端の電圧差。関連テーマ: 架空送電線路</td></tr>
+          <tr><td><strong>電力損失</strong>（でんりょくそんしつ）</td><td>送電線の抵抗による発熱損失 <Eq tex="P = 3I^2R" />（三相）または <Eq tex="I^2R" />（単相）。関連テーマ: 架空送電線路</td></tr>
+          <tr><td><strong>力率改善</strong>（りきりつかいぜん）</td><td>進相コンデンサ等で力率を1に近づけ、無効電力を減らすこと。関連テーマ: 架空送電線路</td></tr>
+          <tr><td><strong>ACSR</strong>（えーしーえすあーる）</td><td>鋼心アルミより線。軽量で引張強度が高い送電線用電線。関連テーマ: 架空送電線路</td></tr>
+          <tr><td><strong>弛度（たるみ）</strong>（しど）</td><td>電線が自重でたわんだ量。温度上昇や着雪で増加。関連テーマ: 架空送電線路</td></tr>
+          <tr><td><strong>実効値</strong>（じっこうち）</td><td>交流の実効的な大きさ。最大値の1/√2。関連テーマ: 架空送電線路</td></tr>
+          <tr><td><strong>スキン効果</strong>（すきんこうか）</td><td>高周波では電流が導体表面に集中する現象。関連テーマ: 架空送電線路</td></tr>
+          <tr><td><strong>フェランチ効果</strong>（ふぇらんちこうか）</td><td>軽負荷・無負荷時に受電端電圧が送電端電圧より高くなる現象。関連テーマ: 架空送電線路</td></tr>
+          <tr><td><strong>XLPE</strong>（えっくすえるぴーいー）</td><td>架橋ポリエチレン絶縁。地中ケーブルの主流。耐熱性・絶縁性に優れる。関連テーマ: 地中送電</td></tr>
+          <tr><td><strong>OFケーブル</strong>（おいるふぃるどけーぶる）</td><td>絶縁油を充填した油浸紙絶縁ケーブル。高電圧対応。関連テーマ: 地中送電</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="haiden"><span className="h-num">5.</span>配電</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>用語</th><th>定義</th></tr></thead>
+        <tbody>
+          <tr><td><strong>樹枝状方式</strong>（じゅしじょうほうしき）</td><td>変電所から放射状に配電する最もシンプルな方式。関連テーマ: 配電線路</td></tr>
+          <tr><td><strong>ループ方式</strong>（るーぷほうしき）</td><td>配電線をリング状に結ぶ方式。信頼性が高い。関連テーマ: 配電線路</td></tr>
+          <tr><td><strong>スポットネットワーク方式</strong>（すぽっとねっとわーくほうしき）</td><td>複数回線から変圧器を並列に接続。大容量需要家向け。関連テーマ: 配電線路</td></tr>
+          <tr><td><strong>低圧バンキング方式</strong>（ていあつばんきんぐほうしき）</td><td>同一高圧線に接続した複数の変圧器の低圧側を並列接続。関連テーマ: 配電線路</td></tr>
+          <tr><td><strong>力率</strong>（りきりつ）</td><td>有効電力/皮相電力 = cosφ。1に近いほど効率が良い。関連テーマ: 配電線路</td></tr>
+          <tr><td><strong>進相コンデンサ</strong>（しんそうこんでんさ）</td><td>遅れ無効電力を補償して力率を改善するコンデンサ。関連テーマ: 配電線路</td></tr>
+          <tr><td><strong>変圧器タップ</strong>（へんあつきたっぷ）</td><td>変圧器の巻き数を切り替えて電圧を調整する端子。関連テーマ: 配電線路</td></tr>
+          <tr><td><strong>PAS</strong>（ぱす）</td><td>柱上気中開閉器。地絡電流を検出して自動開放する。関連テーマ: 配電線路</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="keitou"><span className="h-num">6.</span>電力系統・需給</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>用語</th><th>定義</th></tr></thead>
+        <tbody>
+          <tr><td><strong>周波数調整</strong>（しゅうはすうちょうせい）</td><td>発電と需要のバランスを保ち系統周波数を50/60Hzに維持すること。関連テーマ: 電力系統・需給運用</td></tr>
+          <tr><td><strong>負荷周波数制御（LFC）</strong>（ふかしゅうはすうせいぎょ）</td><td>系統周波数のズレを検出して発電機出力を自動制御する。関連テーマ: 電力系統・需給運用</td></tr>
+          <tr><td><strong>電力系統安定度</strong>（でんりょくけいとうあんていど）</td><td>擾乱後も同期運転を維持できる能力（定態・過渡・動態安定度）。関連テーマ: 電力系統・需給運用</td></tr>
+          <tr><td><strong>需給バランス</strong>（じゅきゅうばらんす）</td><td>発電量と消費量を常時一致させること（電気は貯蔵できない）。関連テーマ: 電力系統・需給運用</td></tr>
+          <tr><td><strong>ピーク負荷</strong>（ぴーくふか）</td><td>1日・1年の最大需要電力。ピーク対応に揚水発電等を活用。関連テーマ: 電力系統・需給運用</td></tr>
+          <tr><td><strong>自動周波数制御（AFC）</strong>（じどうしゅうはすうせいぎょ）</td><td>電力系統の周波数・潮流を自動的に制御するシステム。関連テーマ: 電力系統・需給運用</td></tr>
+          <tr><td><strong>SCADA</strong>（すかだ）</td><td>広域での発電・送電設備を監視・制御するシステム。関連テーマ: 電力系統・需給運用</td></tr>
+          <tr><td><strong>系統連系</strong>（けいとうれんけい）</td><td>太陽光等の分散型電源を電力系統に接続すること。関連テーマ: 電力系統・需給運用</td></tr>
+        </tbody>
+      </table></div>
+
+    </div>
+    <PageNav
+      prev={{ id: "numbers", title: "R2 頻出数値暗記シート" }}
+      next={{ id: "emoji-legend", title: "R4 絵文字マーカー凡例" }}
+      onNav={onNav} />
+  </>
+);
+
+/* ============================================================
+   R4 絵文字マーカー凡例 — 本文移植済み（リファレンス）
+   出典: denken-wiki-denryoku/docs/reference/emoji-legend.md
+   ============================================================ */
+const EmojiLegendPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "絵文字マーカー凡例" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="R4 · EMOJI MARKER LEGEND"
+      title="絵文字マーカー凡例"
+      deck="各ページの本文で使われる絵文字マーカーと、その意味・使用場面の一覧。マーカーを見ればそのブロックが「直感的理解」「解法パターン」「落とし穴」などのどれに当たるかを一目で判別できる。"
+      meta={[
+        { label: "種別", value: "リファレンス" },
+        { label: "使い方", value: "マーカーで本文ブロックの種類を判別" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="legend"><span className="h-num">1.</span>マーカー一覧</h2>
+      <p>本文中の見出しや囲み枠に付く絵文字は、そのブロックの役割を表す。意味と使用場面を以下にまとめる。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>マーカー</th><th>意味</th><th>使用場面</th></tr></thead>
+        <tbody>
+          <tr><td>🧠</td><td>直感的理解・アナロジー</td><td>「水流＝電流」のような比喩で掴む</td></tr>
+          <tr><td>🏭</td><td>設備を歩く（設備構成）</td><td>設備フロー図・主要機器の役割</td></tr>
+          <tr><td>⚖️</td><td>比較表</td><td>水車の種類比較、熱サイクル比較</td></tr>
+          <tr><td>🔍</td><td>公式の意味マップ</td><td>公式の意味・使える条件</td></tr>
+          <tr><td>🛤️</td><td>解法パターン</td><td>計算問題の「型」</td></tr>
+          <tr><td>🕳️</td><td>落とし穴・頻出ミス</td><td>間違えやすいポイント</td></tr>
+          <tr><td>📝</td><td>正誤判定の急所</td><td>正誤問題でよくある誤文パターン</td></tr>
+          <tr><td>🎯</td><td>重要ポイント</td><td>特に押さえるべき事項</td></tr>
+          <tr><td>⚡</td><td>5秒で思い出す</td><td>速攻暗記フレーズ</td></tr>
+          <tr><td>📊</td><td>出題実績</td><td>年度別の出題記録</td></tr>
+          <tr><td>😱💀🔥💥</td><td>事故・危険</td><td>安全に関わる重大事項</td></tr>
+          <tr><td>✅</td><td>確認済み</td><td>教科書と照合済み</td></tr>
+          <tr><td>⚠️</td><td>未確認</td><td>要検証</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="マーカーの読み方">
+        <p>マーカーは本文の内容そのものではなく「読み方の指示」。<strong>🛤️ なら解法の型として手を動かす、🕳️ なら自分の誤答パターンと照合する</strong>、というように学習の構えを切り替える目印として使う。</p>
+      </Box>
+
+    </div>
+    <PageNav prev={{ id: "glossary", title: "R3 用語集" }} next={null} onNav={onNav} />
+  </>
+);
+
+Object.assign(window, { StubPage, UnitStubPage, HaidenPage, KakuuSoudenPage, KaryokuPage, HenatsukiPage, SuiryokuPage, DenkiZairyouPage, GenshiryokuPage, ShinEnergyPage, HenatsukiLossPage, KeikiHenseiPage, ShadankiPage, HogoKeidenPage, KaiheiHogoPage, ChichuuSoudenPage, DenryokuKeitouPage, KakomonByYearPage, KakomonByFieldPage, KakomonWavePage, StrategyLast3DaysPage, StrategyBMondaiPage, StrategyTrapsPage, CalcPatternsPage, NumbersPage, GlossaryPage, EmojiLegendPage });
 
 </script>
 <script type="text/babel">
@@ -4614,6 +6391,16 @@ const App = () => {
     if (page === 'kaihei-hogo')    return <KaiheiHogoPage {...props} />;
     if (page === 'chichuu-souden') return <ChichuuSoudenPage {...props} />;
     if (page === 'denryoku-keitou') return <DenryokuKeitouPage {...props} />;
+    if (page === 'kakomon-by-year')  return <KakomonByYearPage {...props} />;
+    if (page === 'kakomon-by-field') return <KakomonByFieldPage {...props} />;
+    if (page === 'kakomon-wave')     return <KakomonWavePage {...props} />;
+    if (page === 'strategy-last3days') return <StrategyLast3DaysPage {...props} />;
+    if (page === 'strategy-bmondai')   return <StrategyBMondaiPage {...props} />;
+    if (page === 'strategy-traps')     return <StrategyTrapsPage {...props} />;
+    if (page === 'calc-patterns')    return <CalcPatternsPage {...props} />;
+    if (page === 'numbers')          return <NumbersPage {...props} />;
+    if (page === 'glossary')         return <GlossaryPage {...props} />;
+    if (page === 'emoji-legend')     return <EmojiLegendPage {...props} />;
     // 移行シェル: 未移植の単元は UnitStubPage（準備中）。本文移植時はここに
     // 専用 component の if を追加する（例: if (page === 'karyoku') return <KaryokuPage {...props} />;）。
     return <UnitStubPage id={page} data={data} onNav={navigate} />;
