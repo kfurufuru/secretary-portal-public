@@ -23,7 +23,7 @@
     --ink:       oklch(0.22 0.012 60);     /* 主文字 */
     --ink-1:     oklch(0.22 0.012 60);     /* --ink のエイリアス（コードベース全体で `var(--ink-1)` 参照あり） */
     --ink-2:     oklch(0.42 0.012 60);     /* 副文字 */
-    --ink-3:     oklch(0.48 0.012 60);     /* 補助 */
+    --ink-3:     oklch(0.39 0.012 60);     /* 補助（AA: 9.5px caption でも 4.5:1 確保のため darken） */
     --accent:    oklch(0.70 0.10 45);      /* テラコッタ（薄め・pastel／背景・塗り用は不変） */
     --accent-ink: color-mix(in oklch, var(--accent) 56%, #000); /* accentを「文字色」に使う時のAA確保用・暗色。各テーマの--accentに自動追従（同一:root要素で解決）。背景用var(--accent)は薄いまま維持 */
     --accent-2:  oklch(0.62 0.07 70);      /* ベージュブラウン */
@@ -125,7 +125,7 @@
     --ink:       oklch(0.92 0.008 70);
     --ink-1:     oklch(0.92 0.008 70);     /* --ink のエイリアス（dark） */
     --ink-2:     oklch(0.74 0.010 65);
-    --ink-3:     oklch(0.58 0.010 65);
+    --ink-3:     oklch(0.72 0.010 65);     /* dark: 補助テキストを暗背景・淡色カード上でもAA(4.5:1)まで明色化（旧0.58=3.8/0.67=3.9で不足） */
     --accent-ink: var(--accent);           /* dark: accentテキストは明色の--accentのまま（暗背景でAA確保） */
     --accent-soft: oklch(0.30 0.05 50);
     --rank-a-bg: oklch(0.34 0.06 55);
@@ -433,7 +433,7 @@
   }
   .btn:active { transform: translateY(1px); }
   .btn.primary {
-    background: var(--accent);
+    background: color-mix(in oklch, var(--accent) 66%, #000);  /* 白文字が両scheme でAA（accent-inkはdarkで明色化するので不可）*/
     color: var(--rank-s-fg);
   }
   .btn.primary:hover { background: oklch(0.58 0.14 45); }
@@ -7725,7 +7725,7 @@ function StubPage({ pageId, data, onNav }) {
           color: 'var(--ink-2)',
         }}>
           双子ページ: <button
-            style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', padding: 0, fontSize: 13 }}
+            style={{ background: 'none', border: 'none', color: 'var(--accent-ink)', cursor: 'pointer', padding: 0, fontSize: 13 }}
             onClick={() => onNav(pageInfo.twin)}
           >
             {pageInfo.twin} →
@@ -7748,7 +7748,7 @@ function StubPage({ pageId, data, onNav }) {
 
       <div style={{ marginTop: 24 }}>
         <button
-          style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: 13, padding: 0 }}
+          style={{ background: 'none', border: 'none', color: 'var(--accent-ink)', cursor: 'pointer', fontSize: 13, padding: 0 }}
           onClick={() => onNav('top')}
         >
           ← トップに戻る
@@ -8175,7 +8175,7 @@ function MachigaiNotePage({ pageId, data, onNav }) {
     { key: 'review',     label: '要確認',   color: STATUS_DEFS.review.color,     count: counts.review },
     { key: 'vague',      label: 'うる覚え', color: STATUS_DEFS.vague.color,      count: counts.vague },
     { key: 'understood', label: '理解した', color: STATUS_DEFS.understood.color, count: counts.understood },
-    { key: 'all',        label: 'すべて',   color: 'var(--accent)',              count: records.length },
+    { key: 'all',        label: 'すべて',   color: 'var(--accent-ink)',              count: records.length },
   ];
 
   return (
@@ -8343,7 +8343,7 @@ function MachigaiNotePage({ pageId, data, onNav }) {
                     style={{
                       fontSize: 13,
                       fontWeight: 700,
-                      color: 'var(--accent)',
+                      color: 'var(--accent-ink)',
                       textDecoration: 'none',
                     }}
                   >
@@ -8360,7 +8360,7 @@ function MachigaiNotePage({ pageId, data, onNav }) {
                       padding: 0,
                       fontSize: 13,
                       fontWeight: 700,
-                      color: 'var(--accent)',
+                      color: 'var(--accent-ink)',
                       cursor: 'pointer',
                       textAlign: 'left',
                       fontFamily: 'inherit',
@@ -8419,7 +8419,7 @@ function MachigaiNotePage({ pageId, data, onNav }) {
                       border: '1px solid var(--line-2)',
                       borderRadius: 6,
                       background: 'transparent',
-                      color: 'var(--accent)',
+                      color: 'var(--accent-ink)',
                       cursor: 'pointer',
                       fontSize: 11,
                       fontWeight: 700,
@@ -8434,14 +8434,14 @@ function MachigaiNotePage({ pageId, data, onNav }) {
                   {expanded[r.key] === 'error' && (
                     <React.Fragment>
                       <span style={{ marginLeft: 10, fontSize: 11, color: '#dc2626' }}>取得失敗</span>
-                      <a href={r.articleUrl} target="_blank" rel="noopener" style={{ marginLeft: 8, fontSize: 11, color: 'var(--accent)', textDecoration: 'underline' }}>記事を開く →</a>
+                      <a href={r.articleUrl} target="_blank" rel="noopener" style={{ marginLeft: 8, fontSize: 11, color: 'var(--accent-ink)', textDecoration: 'underline' }}>記事を開く →</a>
                       <button type="button" onClick={() => handleDelete(r.key)} style={{ marginLeft: 8, padding: '1px 8px', border: '1px solid var(--line)', borderRadius: 4, background: 'transparent', color: 'var(--ink-3)', cursor: 'pointer', fontSize: 11, fontFamily: 'inherit' }}>削除</button>
                     </React.Fragment>
                   )}
                   {expanded[r.key] === 'not-found' && (
                     <React.Fragment>
                       <span style={{ marginLeft: 10, fontSize: 11, color: '#f97316' }}>該当ブロック未検出</span>
-                      <a href={r.articleUrl} target="_blank" rel="noopener" style={{ marginLeft: 8, fontSize: 11, color: 'var(--accent)', textDecoration: 'underline' }}>記事を開く →</a>
+                      <a href={r.articleUrl} target="_blank" rel="noopener" style={{ marginLeft: 8, fontSize: 11, color: 'var(--accent-ink)', textDecoration: 'underline' }}>記事を開く →</a>
                       <button type="button" onClick={() => handleDelete(r.key)} style={{ marginLeft: 8, padding: '1px 8px', border: '1px solid var(--line)', borderRadius: 4, background: 'transparent', color: 'var(--ink-3)', cursor: 'pointer', fontSize: 11, fontFamily: 'inherit' }}>削除</button>
                       <div style={{ marginTop: 4, fontSize: 11, color: 'var(--ink-3)' }}>記事の問題が改訂・再構成された可能性があります。記事側で再記録するか、この記録を削除してください。</div>
                       {candidatesByKey[r.key] && candidatesByKey[r.key].length > 0 && (
@@ -8478,7 +8478,7 @@ function MachigaiNotePage({ pageId, data, onNav }) {
                   {expanded[r.key] === 'missing' && (
                     <React.Fragment>
                       <span style={{ marginLeft: 10, fontSize: 11, color: '#dc2626' }}>記事が見つかりません（404）</span>
-                      <a href={r.articleUrl} target="_blank" rel="noopener" style={{ marginLeft: 8, fontSize: 11, color: 'var(--accent)', textDecoration: 'underline' }}>記事を開く →</a>
+                      <a href={r.articleUrl} target="_blank" rel="noopener" style={{ marginLeft: 8, fontSize: 11, color: 'var(--accent-ink)', textDecoration: 'underline' }}>記事を開く →</a>
                       <button type="button" onClick={() => handleDelete(r.key)} style={{ marginLeft: 8, padding: '1px 8px', border: '1px solid var(--line)', borderRadius: 4, background: 'transparent', color: 'var(--ink-3)', cursor: 'pointer', fontSize: 11, fontFamily: 'inherit' }}>削除</button>
                       <div style={{ marginTop: 4, fontSize: 11, color: 'var(--ink-3)' }}>記事が削除・URLが変更された可能性があります。この記録を削除してください。</div>
                     </React.Fragment>
@@ -8508,7 +8508,7 @@ function MachigaiNotePage({ pageId, data, onNav }) {
                     onClick={() => revealAnswer(r.key)}
                     style={{
                       padding: '6px 14px', border: '1.5px solid var(--accent)', borderRadius: 6,
-                      background: 'var(--accent-soft)', color: 'var(--accent)', cursor: 'pointer',
+                      background: 'var(--accent-soft)', color: 'var(--accent-ink)', cursor: 'pointer',
                       fontSize: 12, fontWeight: 700, fontFamily: 'inherit',
                     }}
                   >
@@ -8533,7 +8533,7 @@ function MachigaiNotePage({ pageId, data, onNav }) {
                     href={r.articleUrl || ((typeof location !== 'undefined' ? location.origin + location.pathname : '') + '#top')}
                     target="_blank"
                     rel="noopener"
-                    style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}
+                    style={{ fontSize: 12, color: 'var(--accent-ink)', textDecoration: 'none', fontWeight: 600 }}
                   >📖 Wikiで詳しく見る ↗</a>
                 </div>
               )}
@@ -8627,7 +8627,7 @@ function MachigaiNotePage({ pageId, data, onNav }) {
 
       <div style={{ marginTop: 24 }}>
         <button
-          style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: 13, padding: 0 }}
+          style={{ background: 'none', border: 'none', color: 'var(--accent-ink)', cursor: 'pointer', fontSize: 13, padding: 0 }}
           onClick={() => onNav('top')}
         >
           ← トップに戻る
@@ -8681,7 +8681,7 @@ function ExamCountdownBanner() {
       </div>
     );
   }
-  const color = daysLeft <= 14 ? '#d95454' : daysLeft <= 30 ? '#e68b17' : daysLeft <= 60 ? '#e6a817' : 'var(--accent)';
+  const color = daysLeft <= 14 ? '#d95454' : daysLeft <= 30 ? '#e68b17' : daysLeft <= 60 ? '#e6a817' : 'var(--accent-ink)';
   // フェーズ定義（基礎固めは既習者前提で除外・109日時点は「過去問演習期」に再カリブレーション）
   // 境界日数の降順・タイムライン左から右の順
   const PHASES = [
@@ -9208,7 +9208,7 @@ function HomePage({ onNav, data }) {
         const daysLeft = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
         const WD = ['日','月','火','水','木','金','土'];
         const examLabel = (examDate.getMonth() + 1) + '/' + examDate.getDate() + '(' + WD[examDate.getDay()] + ')';
-        const color = daysLeft <= 14 ? '#d95454' : daysLeft <= 30 ? '#e68b17' : daysLeft <= 60 ? '#e6a817' : 'var(--accent)';
+        const color = daysLeft <= 14 ? '#d95454' : daysLeft <= 30 ? '#e68b17' : daysLeft <= 60 ? '#e6a817' : 'var(--accent-ink)';
         const handleEditDate = () => {
           const next = window.prompt('試験日を YYYY-MM-DD 形式で入力（空白でリセット）', examDateStr);
           if (next === null) return;
@@ -9318,7 +9318,7 @@ function HomePage({ onNav, data }) {
       {/* ====== Hero タイトル ====== */}
       <div style={{ marginBottom: 18 }}>
         <h1 style={{ margin: '0 0 6px', fontSize: 30, fontWeight: 800, lineHeight: 1.25 }}>
-          <em style={{ fontStyle: 'normal', color: 'var(--accent)' }}>B問題で点を取り、</em>表暗記でA問題を拾う。
+          <em style={{ fontStyle: 'normal', color: 'var(--accent-ink)' }}>B問題で点を取り、</em>表暗記でA問題を拾う。
         </h1>
       </div>
 
@@ -9334,7 +9334,7 @@ function HomePage({ onNav, data }) {
         lineHeight: 1.6,
         color: 'var(--ink-2)',
       }}>
-        🧭 <strong style={{ color: 'var(--ink-1)' }}>数値・暗記</strong>はこのHub、<strong style={{ color: 'var(--ink-1)' }}>条文・解説・"なぜ"</strong>は <a href="https://kfurufuru.github.io/denken-wiki/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>denken-wiki</a> へ。
+        🧭 <strong style={{ color: 'var(--ink-1)' }}>数値・暗記</strong>はこのHub、<strong style={{ color: 'var(--ink-1)' }}>条文・解説・"なぜ"</strong>は <a href="https://kfurufuru.github.io/denken-wiki/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-ink)', textDecoration: 'underline' }}>denken-wiki</a> へ。
       </div>
 
       {/* ====== 上段2カラム grid：前回のつづき大カード | STEP 1/2/3 縦積み ====== */}
@@ -9551,7 +9551,7 @@ function HomePage({ onNav, data }) {
           </div>
           <button
             onClick={() => setHistoryOpen(true)}
-            style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: 13, padding: 0 }}
+            style={{ background: 'none', border: 'none', color: 'var(--accent-ink)', cursor: 'pointer', fontSize: 13, padding: 0 }}
           >
             過去の一問 →
           </button>
@@ -9795,7 +9795,7 @@ function HomePage({ onNav, data }) {
           gap: 10,
         }}>
           {ROADMAP.map((s) => {
-            const stepNumColor = s.status === 'current' ? 'var(--accent)' : 'var(--ink-3)';
+            const stepNumColor = s.status === 'current' ? 'var(--accent-ink)' : 'var(--ink-3)';
             return (
               <div
                 key={s.step}
@@ -10165,11 +10165,11 @@ function BshuSetsuchiPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           🗺️ A. 全体像（30秒で位置づけ把握）
         </div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
-          本ページは「<strong>B種接地抵抗の計算（R_B = 係数/Ig）・B問題対策</strong>」（C層）特化。接地工事制度全体は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-koji');}} style={{color:'var(--accent)'}}>setsuchi-koji（3.3）</a>、4種別の数値暗記は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-ichiran');}} style={{color:'var(--accent)'}}>setsuchi-ichiran（2.1）</a>。
+          本ページは「<strong>B種接地抵抗の計算（R_B = 係数/Ig）・B問題対策</strong>」（C層）特化。接地工事制度全体は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-koji');}} style={{color:'var(--accent-ink)'}}>setsuchi-koji（3.3）</a>、4種別の数値暗記は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-ichiran');}} style={{color:'var(--accent-ink)'}}>setsuchi-ichiran（2.1）</a>。
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <tbody>
@@ -10219,7 +10219,7 @@ function BshuSetsuchiPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           📅 Plan（今日の学習目標）
         </div>
         <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
@@ -10290,7 +10290,7 @@ function BshuSetsuchiPage({ onNav, data }) {
         padding: '14px 16px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 12 }}>
           🎯 死活5ステップ・フロー（B種接地計算をミスゼロで通す設計図）
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 12 }}>
@@ -10583,7 +10583,7 @@ function BshuSetsuchiPage({ onNav, data }) {
       <h2 id="mnemonic">9.5. 暗記フック：150/300/600 と 4.0mm を試験本番で忘れない覚え方</h2>
       <SectionCheck pageId="bshu-setsuchi" sectionId="mnemonic" />
       <div style={{ padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)', borderLeft: '3px solid var(--accent)', marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
         <ol style={{ margin: 0, paddingLeft: 20, fontSize: 12.5, lineHeight: 1.9 }}>
           <li><strong>150 の物理的意味</strong>：「<strong>低圧側対地電圧を 150V 以下に抑える</strong>」という設計目標がそのまま係数になっている。<strong>150 = 安全電圧の上限</strong>と覚えれば「なぜ150か」が一発で出る</li>
           <li><strong>係数2倍ルール</strong>：遮断時間が <strong>速く</strong>なるたびに係数が <strong>2倍</strong>。2秒超=150 → 1秒超=300（×2）→ 1秒以内=600（×2×2）。「速いほど緩和・2倍ずつ」で機械的に出せる</li>
@@ -10800,10 +10800,10 @@ function BshuSetsuchiPage({ onNav, data }) {
       }}>
         <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>🎯 次の学習推奨（PDCAサイクルの次回 Plan へ）</div>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
-          <li><strong>接地工事制度全体</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-koji');}} style={{color:'var(--accent)'}}>setsuchi-koji（3.3 接地工事）</a> — ELB緩和・D種省略条件・4種の使い分け</li>
-          <li><strong>4種別数値暗記Hub</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-ichiran');}} style={{color:'var(--accent)'}}>setsuchi-ichiran（2.1 接地工事一覧表）</a></li>
-          <li><strong>対比：中性点非接地系の地絡保護</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('hichusei-jiraku');}} style={{color:'var(--accent)'}}>hichusei-jiraku（1.8）</a> — Ig発生原理（C経由）と保護動線（ZCT→GR→CB）</li>
-          <li><strong>条文全体像</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/17/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki 解釈第17条（B種詳細）</a></li>
+          <li><strong>接地工事制度全体</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-koji');}} style={{color:'var(--accent-ink)'}}>setsuchi-koji（3.3 接地工事）</a> — ELB緩和・D種省略条件・4種の使い分け</li>
+          <li><strong>4種別数値暗記Hub</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-ichiran');}} style={{color:'var(--accent-ink)'}}>setsuchi-ichiran（2.1 接地工事一覧表）</a></li>
+          <li><strong>対比：中性点非接地系の地絡保護</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('hichusei-jiraku');}} style={{color:'var(--accent-ink)'}}>hichusei-jiraku（1.8）</a> — Ig発生原理（C経由）と保護動線（ZCT→GR→CB）</li>
+          <li><strong>条文全体像</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/17/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>denken-wiki 解釈第17条（B種詳細）</a></li>
         </ul>
       </div>
 
@@ -10825,7 +10825,7 @@ function BshuSetsuchiPage({ onNav, data }) {
           <li>R06上 問13 B種・D種接地抵抗値の計算（解釈第17条・計算）</li>
           <li>R06下 問4 B種接地工事の接地抵抗値（解釈第17条・穴埋）</li>
         </ul>
-        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-setsuchi')} style={{ color: 'var(--accent)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-setsuchi）で解く</a></div>
+        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-setsuchi')} style={{ color: 'var(--accent-ink)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-setsuchi）で解く</a></div>
         <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ink-3)' }}>出典: 法規過去問SoT kakomon.yml（電気技術者試験センター公表問題ベース・最終確認2026-06-25）</div>
       </div>
 
@@ -10852,11 +10852,11 @@ function HichuseiJirakuPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           🗺️ A. 全体像（30秒で位置づけ把握）
         </div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
-          本ページは「<strong>中性点非接地系の地絡電流 I_g = 2√3πfV(C₁+C₂)・対地静電容量経由地絡保護</strong>」（C層）特化。対比のB種接地（接地系・混触防止）は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('bshu-setsuchi');}} style={{color:'var(--accent)'}}>bshu-setsuchi（1.7）</a>。ZCT物理構造は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('zerosou-henryuki');}} style={{color:'var(--accent)'}}>zerosou-henryuki（1.9）</a>。
+          本ページは「<strong>中性点非接地系の地絡電流 I_g = 2√3πfV(C₁+C₂)・対地静電容量経由地絡保護</strong>」（C層）特化。対比のB種接地（接地系・混触防止）は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('bshu-setsuchi');}} style={{color:'var(--accent-ink)'}}>bshu-setsuchi（1.7）</a>。ZCT物理構造は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('zerosou-henryuki');}} style={{color:'var(--accent-ink)'}}>zerosou-henryuki（1.9）</a>。
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <tbody>
@@ -10906,7 +10906,7 @@ function HichuseiJirakuPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           📅 Plan（今日の学習目標）
         </div>
         <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
@@ -10977,7 +10977,7 @@ function HichuseiJirakuPage({ onNav, data }) {
 
       {/* 🎯 5ステップ視覚化フローカード（teiatsu/bshu/ryokuritsu と同パターン横展開・物理直感WHY 4経路セットの①） */}
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 12 }}>
           🎯 死活5ステップ・フロー（I<sub>g</sub> = 2√3πfV(C₁+C₂) をミスゼロで通す設計図）
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 12 }}>
@@ -11065,7 +11065,7 @@ function HichuseiJirakuPage({ onNav, data }) {
       }}>
         <div style={{fontWeight: 700, fontSize: 13, color: 'var(--ink-2)', marginBottom: 8}}>⚠ ZCT検出電流の式は前提に依存</div>
         <ul style={{margin: 0, paddingLeft: 20, fontSize: 13, lineHeight: 1.9}}>
-          <li>ZCTは<strong>3線を一括して通し、零相電流（i_a+i_b+i_c）を検出</strong>する装置（構造原理は<a href="#" onClick={(e)=>{e.preventDefault();onNav('zerosou-henryuki');}} style={{color:'var(--accent)'}}>1.9 ZCTの仕組み</a>参照）</li>
+          <li>ZCTは<strong>3線を一括して通し、零相電流（i_a+i_b+i_c）を検出</strong>する装置（構造原理は<a href="#" onClick={(e)=>{e.preventDefault();onNav('zerosou-henryuki');}} style={{color:'var(--accent-ink)'}}>1.9 ZCTの仕組み</a>参照）</li>
           <li><strong>検出電流の式は事故点・ZCT位置・回路構成で変わる</strong></li>
           <li>R5下期問11(a) の問題図では <strong>I_zct = I_g</strong> として扱う（系統全体の Ig = 2√3πfV(C₁+C₂)）</li>
           <li>R5下期問11(b) のように「需要設備内ZCT・需要設備内地絡」が問われる場合、<strong>需要設備のC₂分のみ</strong>がZCTを貫通（86mAなど）</li>
@@ -11887,7 +11887,7 @@ function HichuseiJirakuPage({ onNav, data }) {
       <h2 id="mnemonic">12.5 暗記フック：2√3πf の係数と「非接地でも流れる」を忘れない覚え方</h2>
       <SectionCheck pageId="hichusei-jiraku" sectionId="mnemonic" />
       <div style={{ padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)', borderLeft: '3px solid var(--accent)', marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
         <ol style={{ margin: 0, paddingLeft: 20, fontSize: 12.5, lineHeight: 1.9 }}>
           <li><strong>係数 2√3π の分解</strong>：<strong>2π = ω/f（角周波数の素）</strong>・<strong>√3 = 三相＋対地変換</strong>。「<strong>ω(2πf) に √3 が掛かる</strong>」と分けて覚える。丸暗記値は <strong>2√3π ≒ 10.88</strong>（テン・ハチハチ）</li>
           <li><strong>√3 が立つ2つの理由</strong>：①対地電圧 V/√3（線間→対地）＋②健全相が地絡時 √3倍昇圧。<strong>1/√3 × √3 × √3 = √3</strong> が残る。「<strong>√3 は3回出て1個残る</strong>」</li>
@@ -12214,10 +12214,10 @@ function HichuseiJirakuPage({ onNav, data }) {
       }}>
         <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>🎯 次の学習推奨（PDCAサイクルの次回 Plan へ）</div>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
-          <li><strong>対比：B種接地（接地系の混触防止）</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('bshu-setsuchi');}} style={{color:'var(--accent)'}}>bshu-setsuchi（1.7）</a> — R_B = 150/Ig 計算と「接地系 vs 非接地系」の対比を強化</li>
-          <li><strong>ZCT物理構造の深掘り</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('zerosou-henryuki');}} style={{color:'var(--accent)'}}>zerosou-henryuki（1.9）</a> — 環状鉄心・3線一括貫通・磁束キャンセル原理</li>
-          <li><strong>保護協調・DGR詳細</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('hogokyo-dgr');}} style={{color:'var(--accent)'}}>hogokyo-dgr（1.10）</a> — 方向性継電器・選択遮断・整定協調</li>
-          <li><strong>条文全体像</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kijun/15/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki 省令第15条</a> ／ <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/36/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>解釈第36条</a></li>
+          <li><strong>対比：B種接地（接地系の混触防止）</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('bshu-setsuchi');}} style={{color:'var(--accent-ink)'}}>bshu-setsuchi（1.7）</a> — R_B = 150/Ig 計算と「接地系 vs 非接地系」の対比を強化</li>
+          <li><strong>ZCT物理構造の深掘り</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('zerosou-henryuki');}} style={{color:'var(--accent-ink)'}}>zerosou-henryuki（1.9）</a> — 環状鉄心・3線一括貫通・磁束キャンセル原理</li>
+          <li><strong>保護協調・DGR詳細</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('hogokyo-dgr');}} style={{color:'var(--accent-ink)'}}>hogokyo-dgr（1.10）</a> — 方向性継電器・選択遮断・整定協調</li>
+          <li><strong>条文全体像</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kijun/15/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>denken-wiki 省令第15条</a> ／ <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/36/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>解釈第36条</a></li>
         </ul>
       </div>
 
@@ -12532,12 +12532,12 @@ function ChokuzenSuuchiPage({ onNav, data }) {
   };
   const sectionRefLink = (href, label) => (
     <div style={{ margin: '4px 0 18px', fontSize: 13, color: 'var(--ink-3)' }}>
-      📚 詳しく → <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>{label}</a>
+      📚 詳しく → <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-ink)', textDecoration: 'underline' }}>{label}</a>
     </div>
   );
   const sec02Link = (pageId, label) => (
     <div style={{ margin: '4px 0 18px', fontSize: 13, color: 'var(--ink-3)' }}>
-      📚 詳しく → <a href="#" onClick={(e) => { e.preventDefault(); onNav(pageId); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+      📚 詳しく → <a href="#" onClick={(e) => { e.preventDefault(); onNav(pageId); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
     </div>
   );
 
@@ -12566,11 +12566,11 @@ function ChokuzenSuuchiPage({ onNav, data }) {
 
       <ConclusionBox>
         <ul>
-          <li><a href="#trap" style={{ color: 'var(--accent)' }}><strong>Section 0</strong></a>: 直前ひっかけ TOP10（混同ペア）</li>
-          <li><a href="#voltage" style={{ color: 'var(--accent)' }}>1.</a> 電圧区分 ／ <a href="#setsuchi" style={{ color: 'var(--accent)' }}>2.</a> 接地工事 A/B/C/D ／ <a href="#shunin" style={{ color: 'var(--accent)' }}>3.</a> 主任技術者免状</li>
-          <li><a href="#kosakubutsu" style={{ color: 'var(--accent)' }}>4.</a> 電気工作物 4 区分 ／ <a href="#kigen" style={{ color: 'var(--accent)' }}>5.</a> 届出期限 ／ <a href="#zetsuen-bairitsu" style={{ color: 'var(--accent)' }}>6.</a> 絶縁耐力倍率</li>
-          <li><a href="#zetsuen-teikou" style={{ color: 'var(--accent)' }}>7.</a> 低圧電路の絶縁抵抗 ／ <a href="#juyoritsu" style={{ color: 'var(--accent)' }}>8.</a> 需要率・負荷率・不等率</li>
-          <li><a href="#quick" style={{ color: 'var(--accent)' }}>30 秒スクロール復習</a>（15 項目）</li>
+          <li><a href="#trap" style={{ color: 'var(--accent-ink)' }}><strong>Section 0</strong></a>: 直前ひっかけ TOP10（混同ペア）</li>
+          <li><a href="#voltage" style={{ color: 'var(--accent-ink)' }}>1.</a> 電圧区分 ／ <a href="#setsuchi" style={{ color: 'var(--accent-ink)' }}>2.</a> 接地工事 A/B/C/D ／ <a href="#shunin" style={{ color: 'var(--accent-ink)' }}>3.</a> 主任技術者免状</li>
+          <li><a href="#kosakubutsu" style={{ color: 'var(--accent-ink)' }}>4.</a> 電気工作物 4 区分 ／ <a href="#kigen" style={{ color: 'var(--accent-ink)' }}>5.</a> 届出期限 ／ <a href="#zetsuen-bairitsu" style={{ color: 'var(--accent-ink)' }}>6.</a> 絶縁耐力倍率</li>
+          <li><a href="#zetsuen-teikou" style={{ color: 'var(--accent-ink)' }}>7.</a> 低圧電路の絶縁抵抗 ／ <a href="#juyoritsu" style={{ color: 'var(--accent-ink)' }}>8.</a> 需要率・負荷率・不等率</li>
+          <li><a href="#quick" style={{ color: 'var(--accent-ink)' }}>30 秒スクロール復習</a>（15 項目）</li>
         </ul>
       </ConclusionBox>
 
@@ -12779,12 +12779,12 @@ function ChokuzenFormulaPage({ onNav, data }) {
   };
   const sec02Link = (pageId, label) => (
     <div style={{ margin: '4px 0 18px', fontSize: 13, color: 'var(--ink-3)' }}>
-      📚 詳しく → <a href="#" onClick={(e) => { e.preventDefault(); onNav(pageId); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+      📚 詳しく → <a href="#" onClick={(e) => { e.preventDefault(); onNav(pageId); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
     </div>
   );
   const refLink = (href, label) => (
     <div style={{ margin: '4px 0 18px', fontSize: 13, color: 'var(--ink-3)' }}>
-      📚 詳しく → <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>{label}</a>
+      📚 詳しく → <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-ink)', textDecoration: 'underline' }}>{label}</a>
     </div>
   );
 
@@ -12796,7 +12796,7 @@ function ChokuzenFormulaPage({ onNav, data }) {
         <div>
           B 問題で出る計算公式の<strong>分子／分母／単位／適用条件</strong>だけを一気に流し読み。
           途中で詰まったら sec02 の各計算ページに飛ぶ。<br />
-          数値カンペは <a href="#" onClick={(e) => { e.preventDefault(); onNav('chokuzen-suuchi'); }} style={{ color: 'var(--accent)', textDecoration: 'underline' }}>数値だけ確認</a>、混同ペアは <a href="#" onClick={(e) => { e.preventDefault(); onNav('chokuzen-hikkake'); }} style={{ color: 'var(--accent)', textDecoration: 'underline' }}>ひっかけだけ確認</a> へ。
+          数値カンペは <a href="#" onClick={(e) => { e.preventDefault(); onNav('chokuzen-suuchi'); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline' }}>数値だけ確認</a>、混同ペアは <a href="#" onClick={(e) => { e.preventDefault(); onNav('chokuzen-hikkake'); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline' }}>ひっかけだけ確認</a> へ。
         </div>
       </div>
 
@@ -12813,10 +12813,10 @@ function ChokuzenFormulaPage({ onNav, data }) {
 
       <ConclusionBox>
         <ul>
-          <li><a href="#f1" style={{ color: 'var(--accent)' }}>1.</a> 需要率・負荷率・不等率 ／ <a href="#f2" style={{ color: 'var(--accent)' }}>2.</a> 合わせた需要率・総合負荷率</li>
-          <li><a href="#f3" style={{ color: 'var(--accent)' }}>3.</a> 変圧器容量 ／ <a href="#f4" style={{ color: 'var(--accent)' }}>4.</a> 三相電力 ／ <a href="#f5" style={{ color: 'var(--accent)' }}>5.</a> 電圧降下</li>
-          <li><a href="#f6" style={{ color: 'var(--accent)' }}>6.</a> 電力損失 ／ <a href="#f7" style={{ color: 'var(--accent)' }}>7.</a> 力率改善コンデンサ容量</li>
-          <li><a href="#f8" style={{ color: 'var(--accent)' }}>8.</a> パーセントインピーダンス ／ <a href="#f9" style={{ color: 'var(--accent)' }}>9.</a> 変圧器効率 ／ <a href="#f10" style={{ color: 'var(--accent)' }}>10.</a> B 種接地抵抗</li>
+          <li><a href="#f1" style={{ color: 'var(--accent-ink)' }}>1.</a> 需要率・負荷率・不等率 ／ <a href="#f2" style={{ color: 'var(--accent-ink)' }}>2.</a> 合わせた需要率・総合負荷率</li>
+          <li><a href="#f3" style={{ color: 'var(--accent-ink)' }}>3.</a> 変圧器容量 ／ <a href="#f4" style={{ color: 'var(--accent-ink)' }}>4.</a> 三相電力 ／ <a href="#f5" style={{ color: 'var(--accent-ink)' }}>5.</a> 電圧降下</li>
+          <li><a href="#f6" style={{ color: 'var(--accent-ink)' }}>6.</a> 電力損失 ／ <a href="#f7" style={{ color: 'var(--accent-ink)' }}>7.</a> 力率改善コンデンサ容量</li>
+          <li><a href="#f8" style={{ color: 'var(--accent-ink)' }}>8.</a> パーセントインピーダンス ／ <a href="#f9" style={{ color: 'var(--accent-ink)' }}>9.</a> 変圧器効率 ／ <a href="#f10" style={{ color: 'var(--accent-ink)' }}>10.</a> B 種接地抵抗</li>
         </ul>
       </ConclusionBox>
 
@@ -13009,7 +13009,7 @@ function ChokuzenHikkakePage({ onNav, data }) {
   };
   const sec02Link = (pageId, label) => (
     <div style={{ margin: '4px 0 18px', fontSize: 13, color: 'var(--ink-3)' }}>
-      📚 詳しく → <a href="#" onClick={(e) => { e.preventDefault(); onNav(pageId); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+      📚 詳しく → <a href="#" onClick={(e) => { e.preventDefault(); onNav(pageId); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
     </div>
   );
 
@@ -13020,7 +13020,7 @@ function ChokuzenHikkakePage({ onNav, data }) {
         <div style={{ fontWeight: 700, color: 'var(--ink-1)', marginBottom: 6 }}>⚡ 直前確認モード（条文・手続き・用語ひっかけ 25 組）</div>
         <div>
           本試験で<strong>毎年仕掛けられる誤選択肢パターン</strong>を分野別に集約。
-          ⚠ 数値ペアは <a href="#" onClick={(e) => { e.preventDefault(); onNav('chokuzen-suuchi'); }} style={{ color: 'var(--accent)', textDecoration: 'underline' }}>数値だけ確認 Section 0</a> を参照（住み分け）。<br />
+          ⚠ 数値ペアは <a href="#" onClick={(e) => { e.preventDefault(); onNav('chokuzen-suuchi'); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline' }}>数値だけ確認 Section 0</a> を参照（住み分け）。<br />
           本ページは<strong>条文の中身・手続き種別・用語ペア・電気工作物区分</strong>のひっかけが中心。
         </div>
       </div>
@@ -13038,12 +13038,12 @@ function ChokuzenHikkakePage({ onNav, data }) {
 
       <ConclusionBox>
         <ul>
-          <li><a href="#tA" style={{ color: 'var(--accent)' }}>A.</a> 手続き種別（届出 / 許可 / 承認）</li>
-          <li><a href="#tB" style={{ color: 'var(--accent)' }}>B.</a> 条文の中身の取り違え</li>
-          <li><a href="#tC" style={{ color: 'var(--accent)' }}>C.</a> 数値境界（未満 / 以下 / 超 / 以上）</li>
-          <li><a href="#tD" style={{ color: 'var(--accent)' }}>D.</a> 電気工作物 4 区分の用語</li>
-          <li><a href="#tE" style={{ color: 'var(--accent)' }}>E.</a> 接地工事のひっかけ</li>
-          <li><a href="#tF" style={{ color: 'var(--accent)' }}>F.</a> 報告・届出期限の混同</li>
+          <li><a href="#tA" style={{ color: 'var(--accent-ink)' }}>A.</a> 手続き種別（届出 / 許可 / 承認）</li>
+          <li><a href="#tB" style={{ color: 'var(--accent-ink)' }}>B.</a> 条文の中身の取り違え</li>
+          <li><a href="#tC" style={{ color: 'var(--accent-ink)' }}>C.</a> 数値境界（未満 / 以下 / 超 / 以上）</li>
+          <li><a href="#tD" style={{ color: 'var(--accent-ink)' }}>D.</a> 電気工作物 4 区分の用語</li>
+          <li><a href="#tE" style={{ color: 'var(--accent-ink)' }}>E.</a> 接地工事のひっかけ</li>
+          <li><a href="#tF" style={{ color: 'var(--accent-ink)' }}>F.</a> 報告・届出期限の混同</li>
         </ul>
       </ConclusionBox>
 
@@ -13256,8 +13256,8 @@ function SetsuchiIchiranPage({ onNav, data }) {
       ]} />
       <div style={{ margin: '20px 0', padding: '12px 14px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)' }}>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 6 }}>🔗 関連ページ（一覧→個別で深掘り）</div>
-        <button style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: 13, padding: 0, marginRight: 16 }} onClick={() => onNav('bshu-setsuchi')}>B種接地抵抗値の計算（1.7）</button>
-        <button style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: 13, padding: 0 }} onClick={() => onNav('setsuchi-koji')}>接地工事の施工（3.3）</button>
+        <button style={{ background: 'none', border: 'none', color: 'var(--accent-ink)', cursor: 'pointer', fontSize: 13, padding: 0, marginRight: 16 }} onClick={() => onNav('bshu-setsuchi')}>B種接地抵抗値の計算（1.7）</button>
+        <button style={{ background: 'none', border: 'none', color: 'var(--accent-ink)', cursor: 'pointer', fontSize: 13, padding: 0 }} onClick={() => onNav('setsuchi-koji')}>接地工事の施工（3.3）</button>
       </div>
       <div style={{ margin: '16px 0', padding: '10px 12px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', fontSize: 13 }}>
         <div style={{ fontWeight: 700, marginBottom: 6 }}>📋 過去問の出題実績（法規・H23以降の出題SoT）</div>
@@ -13269,7 +13269,7 @@ function SetsuchiIchiranPage({ onNav, data }) {
           <li>R04上 問3 高圧架空電線路の接地工事（解釈第17条）</li>
           <li>R07下 問4 電気設備の接地（解釈第17条・第29条）</li>
         </ul>
-        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-setsuchi')} style={{ color: 'var(--accent)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-setsuchi）で解く</a></div>
+        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-setsuchi')} style={{ color: 'var(--accent-ink)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-setsuchi）で解く</a></div>
         <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ink-3)' }}>出典: 法規過去問SoT kakomon.yml（電気技術者試験センター公表問題ベース・最終確認2026-06-25）</div>
       </div>
       <PageNav
@@ -13361,7 +13361,7 @@ function ZetsuenIchiranPage({ onNav, data }) {
         fontSize: 13
       }}>
         📚 <strong>じっくり理解したい時</strong> →{' '}
-        <a href="https://kfurufuru.github.io/denken-wiki/reference/grounding-comparison/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
+        <a href="https://kfurufuru.github.io/denken-wiki/reference/grounding-comparison/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-ink)', textDecoration: 'underline' }}>
           denken-wiki「接地工事種別比較表」
         </a>
         （条文ベース解説・ELB緩和・省略条件）
@@ -13383,7 +13383,7 @@ function ZetsuenIchiranPage({ onNav, data }) {
           <li>R06下 問13 受電設備の高圧電路の絶縁耐力試験（解釈第15条）</li>
           <li>R07下 問12 ケーブルの絶縁耐力試験（解釈第15条）</li>
         </ul>
-        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-zetsuen')} style={{ color: 'var(--accent)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-zetsuen）で解く</a></div>
+        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-zetsuen')} style={{ color: 'var(--accent-ink)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-zetsuen）で解く</a></div>
         <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ink-3)' }}>出典: 法規過去問SoT kakomon.yml（電気技術者試験センター公表問題ベース・最終確認2026-06-25）</div>
       </div>
 
@@ -13402,9 +13402,9 @@ function ZetsuenTairyokuPage({ onNav }) {
     <div>
       {/* A. 全体像 */}
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
-          本ページは「<strong>絶縁耐力試験の実施方法・回路・手順・判定</strong>」（C層）特化。<strong>倍率の数値表</strong>（1.5/1.25/0.64倍）は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('zetsuen-ichiran');}} style={{color:'var(--accent)'}}>zetsuen-ichiran（2.1 絶縁耐力試験一覧）</a> が担当。条文の全体像・逐語は denken-wiki が SOT。
+          本ページは「<strong>絶縁耐力試験の実施方法・回路・手順・判定</strong>」（C層）特化。<strong>倍率の数値表</strong>（1.5/1.25/0.64倍）は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('zetsuen-ichiran');}} style={{color:'var(--accent-ink)'}}>zetsuen-ichiran（2.1 絶縁耐力試験一覧）</a> が担当。条文の全体像・逐語は denken-wiki が SOT。
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <tbody>
@@ -13422,7 +13422,7 @@ function ZetsuenTairyokuPage({ onNav }) {
 
       {/* Plan */}
       <div style={{ background: 'var(--bg-elev)', border: '1px dashed var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 8 }}>📅 Plan（今日の学習目標）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 8 }}>📅 Plan（今日の学習目標）</div>
         <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
           <li>試験電圧の組み立て（<strong>公称電圧→最大使用電圧→試験電圧</strong>）を自力で計算できる</li>
           <li><strong>連続10分・直流は交流の2倍</strong>を即答できる</li>
@@ -13484,7 +13484,7 @@ function ZetsuenTairyokuPage({ onNav }) {
 
       {/* 🎯 死活5ステップ視覚化フローカード（物理直感WHYセットの①） */}
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 12 }}>
           🎯 死活5ステップ・フロー（試験電圧 → 充電電流 → 電源容量 をミスゼロで通す設計図）
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 12 }}>
@@ -13606,7 +13606,7 @@ function ZetsuenTairyokuPage({ onNav }) {
         note="倍率の全区分（1.5/1.25/0.64）は zetsuen-ichiran（2.1）を参照。本ページは『組み立て方』に特化。暗記フック：『公称→最大（×1.15/1.1）→倍率→連続10分』／『7kV以下は1.5倍・170kV超の中性点直接接地は0.64倍』"
       />
       <div style={{ fontSize: 12, marginTop: 4, marginBottom: 12 }}>
-        ▶ 倍率の全区分表（1.5/1.25/0.64）は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('zetsuen-ichiran');}} style={{ color: 'var(--accent)' }}>zetsuen-ichiran（2.1 絶縁耐力試験一覧）</a> へ
+        ▶ 倍率の全区分表（1.5/1.25/0.64）は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('zetsuen-ichiran');}} style={{ color: 'var(--accent-ink)' }}>zetsuen-ichiran（2.1 絶縁耐力試験一覧）</a> へ
       </div>
 
       <h2 id="traps">6. よくあるひっかけ</h2>
@@ -13806,7 +13806,7 @@ function ZetsuenTairyokuPage({ onNav }) {
       <h2 id="mnemonic">10.5 暗記フック：係数と計算チェーンを試験本番で忘れない覚え方</h2>
       <SectionCheck pageId="zetsuen-tairyoku" sectionId="mnemonic" />
       <div style={{ padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)', borderLeft: '3px solid var(--accent)', marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
         <ol style={{ margin: 0, paddingLeft: 20, fontSize: 12.5, lineHeight: 1.9 }}>
           <li><strong>係数の意味</strong>：交流試験電圧は最大使用電圧の<strong>1.5倍</strong>（運転電圧の5割増しで絶縁の余裕を確認）。<strong>直流は2倍</strong>（直流は絶縁への負担が小さいため高い電圧が要る）</li>
           <li><strong>充電電流の分解</strong>：<strong>I = 3 × 2πf C V</strong> ＝「3線(×3)」×「容量性(ωC＝2πfC)」×「試験電圧V」。容量は <strong>P = V·I</strong>（試験電圧×電流）</li>
@@ -13901,8 +13901,8 @@ function ZetsuenTairyokuPage({ onNav }) {
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: '12px 16px', marginTop: 12 }}>
         <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>🎯 次の学習推奨</div>
         <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
-          <li><strong>倍率の全区分</strong>: <a href="#" onClick={(e)=>{e.preventDefault(); onNav('zetsuen-ichiran');}} style={{color:'var(--accent)'}}>zetsuen-ichiran（2.1 絶縁耐力試験一覧）</a></li>
-          <li><strong>低圧の絶縁抵抗（別試験）</strong>: <a href="#" onClick={(e)=>{e.preventDefault(); onNav('denro-zetsuen');}} style={{color:'var(--accent)'}}>denro-zetsuen（電路の絶縁・第14条）</a></li>
+          <li><strong>倍率の全区分</strong>: <a href="#" onClick={(e)=>{e.preventDefault(); onNav('zetsuen-ichiran');}} style={{color:'var(--accent-ink)'}}>zetsuen-ichiran（2.1 絶縁耐力試験一覧）</a></li>
+          <li><strong>低圧の絶縁抵抗（別試験）</strong>: <a href="#" onClick={(e)=>{e.preventDefault(); onNav('denro-zetsuen');}} style={{color:'var(--accent-ink)'}}>denro-zetsuen（電路の絶縁・第14条）</a></li>
           <li><strong>条文全体像</strong>: denken-wiki 電技解釈第15条 を再読</li>
           <li><strong>復習ループ</strong>: 各節の理解度は上の D.Act（SectionCheckSummary）から再テスト。間違えた論点は誤答ノート／concept-grade学習窓口へ送り、SR（間隔反復）で再出題する</li>
         </ul>
@@ -14042,7 +14042,7 @@ function RikkakuIchiranPage({ onNav, data }) {
         fontSize: 13
       }}>
         📚 <strong>じっくり理解したい時</strong> →{' '}
-        <a href="https://kfurufuru.github.io/denken-wiki/reference/numbers/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
+        <a href="https://kfurufuru.github.io/denken-wiki/reference/numbers/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-ink)', textDecoration: 'underline' }}>
           denken-wiki「頻出数値一覧（離隔距離）」
         </a>
         （条文との対応・出題文脈）
@@ -14132,14 +14132,14 @@ function DenAtsuKubunPage({ onNav, data }) {
         fontSize: 13
       }}>
         📚 <strong>じっくり理解したい時</strong> →{' '}
-        <a href="https://kfurufuru.github.io/denken-wiki/reference/voltage-zones/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
+        <a href="https://kfurufuru.github.io/denken-wiki/reference/voltage-zones/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-ink)', textDecoration: 'underline' }}>
           denken-wiki「電圧区分早見表」
         </a>
         （条文ベース解説・出題文脈）
       </div>
 
       <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: '18px 0' }}>
-        🔗 関連: <a onClick={() => onNav('suuchi-kyoukai')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>数値境界の混同（以下・未満）</a>（低圧600V/750V・高圧7000V の「以下／超える」の判定。境界値が入るか入らないかの取り違え対策）
+        🔗 関連: <a onClick={() => onNav('suuchi-kyoukai')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>数値境界の混同（以下・未満）</a>（低圧600V/750V・高圧7000V の「以下／超える」の判定。境界値が入るか入らないかの取り違え対策）
       </p>
 
       <UpdateLog entries={[
@@ -14237,7 +14237,7 @@ function SuuchiKyoukaiPage({ onNav, data }) {
       ]} pageId="suuchi-kyoukai" />
 
       <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: '18px 0' }}>
-        🔗 関連: <a onClick={() => onNav('den-atsu-kubun')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>電圧区分一覧表</a>・<a onClick={() => onNav('hokoku-todoke-kigen')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>報告・届出期限一覧</a>（具体的な期限）
+        🔗 関連: <a onClick={() => onNav('den-atsu-kubun')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>電圧区分一覧表</a>・<a onClick={() => onNav('hokoku-todoke-kigen')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>報告・届出期限一覧</a>（具体的な期限）
       </p>
 
       <UpdateLog entries={[
@@ -14323,7 +14323,7 @@ function KyokyuDenatsuIjiPage({ onNav, data }) {
       ]} />
 
       <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: '18px 0' }}>
-        🔗 関連: <a onClick={() => onNav('den-atsu-kubun')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>電圧区分一覧表</a>（低圧／高圧／特別高圧の電圧種別・電技第2条）
+        🔗 関連: <a onClick={() => onNav('den-atsu-kubun')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>電圧区分一覧表</a>（低圧／高圧／特別高圧の電圧種別・電技第2条）
       </p>
 
       <UpdateLog entries={[
@@ -14426,7 +14426,7 @@ function DenkiJigyoushaKubunPage({ onNav, data }) {
       ]} pageId="denki-jigyousha-kubun" />
 
       <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: '18px 0' }}>
-        🔗 関連: <a onClick={() => onNav('hokoku-todoke-kigen')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>報告・届出期限一覧</a>。ここの「届出」は<strong>参入規制</strong>（事業を始める手続き）であり、保安分野の「届出／許可／認可／承認／報告」（主任技術者選任・保安規程など）とは別文脈。手続き用語の混同に注意
+        🔗 関連: <a onClick={() => onNav('hokoku-todoke-kigen')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>報告・届出期限一覧</a>。ここの「届出」は<strong>参入規制</strong>（事業を始める手続き）であり、保安分野の「届出／許可／認可／承認／報告」（主任技術者選任・保安規程など）とは別文脈。手続き用語の混同に注意
       </p>
 
       <UpdateLog entries={[
@@ -14508,7 +14508,7 @@ function TetsuzukiYougoPage({ onNav, data }) {
       ]} pageId="tetsuzuki-yougo" />
 
       <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: '18px 0' }}>
-        🔗 関連: <a onClick={() => onNav('denki-jigyousha-kubun')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>電気事業者の区分</a>（参入規制の登録／許可／届出）・<a onClick={() => onNav('hokoku-todoke-kigen')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>報告・届出期限一覧</a>（いつまでに）
+        🔗 関連: <a onClick={() => onNav('denki-jigyousha-kubun')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>電気事業者の区分</a>（参入規制の登録／許可／届出）・<a onClick={() => onNav('hokoku-todoke-kigen')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>報告・届出期限一覧</a>（いつまでに）
       </p>
 
       <UpdateLog entries={[
@@ -14642,7 +14642,7 @@ function DenkenWikiCTA({ url, label, note }) {
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <span style={{
-          color: 'var(--accent)',
+          color: 'var(--accent-ink)',
           fontSize: 15,
           fontWeight: 700,
           textDecoration: 'underline',
@@ -14882,7 +14882,7 @@ function KosakubutsuBunruiPage({ onNav, data }) {
       />
 
       <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: '18px 0' }}>
-        🔗 関連: <a onClick={() => onNav('denki-jigyousha-kubun')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>電気事業者の区分</a>（「電気工作物の区分」＝第38条 と「電気事業者の区分」＝第2条 は別物。主語の取り違えが定番ひっかけ）
+        🔗 関連: <a onClick={() => onNav('denki-jigyousha-kubun')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>電気事業者の区分</a>（「電気工作物の区分」＝第38条 と「電気事業者の区分」＝第2条 は別物。主語の取り違えが定番ひっかけ）
       </p>
 
       <UpdateLog entries={[
@@ -15146,7 +15146,7 @@ function ShuninGijutsusyaPage({ onNav, data }) {
       </div>
 
       <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: '18px 0' }}>
-        🔗 関連: <a onClick={() => onNav('tetsuzuki-yougo')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>手続き用語の区別（届出・許可・認可ほか）</a>（選任=届出／許可選任=許可／兼任・外部委託=承認 が錯綜する人向けの横断整理）・<a onClick={() => onNav('suuchi-kyoukai')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>数値境界の混同</a>（17万V「未満」など以下/未満の判定）
+        🔗 関連: <a onClick={() => onNav('tetsuzuki-yougo')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>手続き用語の区別（届出・許可・認可ほか）</a>（選任=届出／許可選任=許可／兼任・外部委託=承認 が錯綜する人向けの横断整理）・<a onClick={() => onNav('suuchi-kyoukai')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>数値境界の混同</a>（17万V「未満」など以下/未満の判定）
       </p>
 
       <UpdateLog entries={[
@@ -15164,7 +15164,7 @@ function ShuninGijutsusyaPage({ onNav, data }) {
           <li>R02 問1：電気主任技術者の職務と監督範囲（第三種の適用範囲）（事業法第43条・施行規則第56条）</li>
           <li>R05上 問1：電気事業法に基づく主任技術者（事業法第43条）</li>
         </ul>
-        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-shunin')} style={{ color: 'var(--accent)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-shunin）で解く</a></div>
+        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-shunin')} style={{ color: 'var(--accent-ink)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-shunin）で解く</a></div>
         <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ink-3)' }}>出典: 法規過去問SoT kakomon.yml（電気技術者試験センター公表問題ベース・最終確認2026-06-25）</div>
       </div>
       <PageNav
@@ -15293,7 +15293,7 @@ function HoanKiteiPage({ onNav, data }) {
       />
 
       <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: '18px 0' }}>
-        🔗 関連: <a onClick={() => onNav('tetsuzuki-yougo')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>手続き用語の区別（届出・許可・認可ほか）</a>（保安規程の手続きは「届出」＝第42条。許可・承認・認可と取り違えないための横断整理）
+        🔗 関連: <a onClick={() => onNav('tetsuzuki-yougo')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>手続き用語の区別（届出・許可・認可ほか）</a>（保安規程の手続きは「届出」＝第42条。許可・承認・認可と取り違えないための横断整理）
       </p>
 
       <UpdateLog entries={[
@@ -15384,7 +15384,7 @@ function JikoHokokuPage({ onNav, data }) {
       />
 
       <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: '18px 0' }}>
-        🔗 関連: <a onClick={() => onNav('suuchi-kyoukai')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>数値境界の混同（以下・未満）</a>（速報24時間以内・詳報30日以内の期限境界。速報と詳報の取り違え対策）
+        🔗 関連: <a onClick={() => onNav('suuchi-kyoukai')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>数値境界の混同（以下・未満）</a>（速報24時間以内・詳報30日以内の期限境界。速報と詳報の取り違え対策）
       </p>
 
       <UpdateLog entries={[
@@ -15806,11 +15806,11 @@ function Jigyou57ChousaPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           🗺️ A. 全体像（30秒で位置づけ把握）
         </div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
-          本ページは「<strong>電気事業法第57条 調査の義務・電線路維持運用者という条文用語</strong>」（C層 試験対策）特化。条文の<strong>全体像・原文逐語・かみ砕き解説・罰則条番号</strong>（A・B層）は denken-wiki <code>jigyoho/57.md</code> v1.2 が SoT。対比される一般用 vs 自家用の責任体制は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('kosakubutsu-bunrui');}} style={{color:'var(--accent)'}}>kosakubutsu-bunrui（4.1）</a>、主任技術者は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('shunin-gijutsusya');}} style={{color:'var(--accent)'}}>shunin-gijutsusya（4.2）</a>、保安規程は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('hoan-kitei');}} style={{color:'var(--accent)'}}>hoan-kitei（4.3）</a>。
+          本ページは「<strong>電気事業法第57条 調査の義務・電線路維持運用者という条文用語</strong>」（C層 試験対策）特化。条文の<strong>全体像・原文逐語・かみ砕き解説・罰則条番号</strong>（A・B層）は denken-wiki <code>jigyoho/57.md</code> v1.2 が SoT。対比される一般用 vs 自家用の責任体制は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('kosakubutsu-bunrui');}} style={{color:'var(--accent-ink)'}}>kosakubutsu-bunrui（4.1）</a>、主任技術者は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('shunin-gijutsusya');}} style={{color:'var(--accent-ink)'}}>shunin-gijutsusya（4.2）</a>、保安規程は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('hoan-kitei');}} style={{color:'var(--accent-ink)'}}>hoan-kitei（4.3）</a>。
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <tbody>
@@ -15857,7 +15857,7 @@ function Jigyou57ChousaPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           📅 Plan（今日の学習目標）
         </div>
         <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
@@ -15974,7 +15974,7 @@ function Jigyou57ChousaPage({ onNav, data }) {
       <MemTable
         headers={["区分", "代表例", "主任技術者選任（第43条）", "保安規程届出（第42条）", "第57条 定期調査"]}
         rows={[
-          ["一般用電気工作物",    "一般家庭・小規模ビル（600V以下）",       "不要", "不要", <strong style={{color:'var(--accent)'}}>あり（4年に1回・電線路維持運用者が実施）</strong>],
+          ["一般用電気工作物",    "一般家庭・小規模ビル（600V以下）",       "不要", "不要", <strong style={{color:'var(--accent-ink)'}}>あり（4年に1回・電線路維持運用者が実施）</strong>],
           ["小規模事業用電気工作物", "10kW以上50kW未満の太陽光・小型風力",   "不要", "不要", <span style={{color:'#c33'}}>対象外（使用前自己確認等の自主管理）</span>],
           ["自家用電気工作物",    "高圧受電ビル・工場（6.6kV）",           "必須", "必須", <span style={{color:'#c33'}}>対象外（自社で保安管理）</span>],
           ["電力会社等の電気工作物", "発電・送配電設備",                       "必須", "必須", <span style={{color:'#c33'}}>対象外（自社で保安管理）</span>],
@@ -16104,10 +16104,10 @@ function Jigyou57ChousaPage({ onNav, data }) {
       }}>
         <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>🎯 次の学習推奨（PDCAサイクルの次回 Plan へ）</div>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
-          <li><strong>電気工作物4区分（対比の起点）</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('kosakubutsu-bunrui');}} style={{color:'var(--accent)'}}>kosakubutsu-bunrui（4.1）</a> — 一般用・小規模事業用・自家用・電力会社等の4区分</li>
-          <li><strong>主任技術者（第43条・自家用責任体系）</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('shunin-gijutsusya');}} style={{color:'var(--accent)'}}>shunin-gijutsusya（4.2）</a> — 第57条と逆の体系（所有者が選任）</li>
-          <li><strong>保安規程（第42条・自家用責任体系）</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('hoan-kitei');}} style={{color:'var(--accent)'}}>hoan-kitei（4.3）</a> — 第57条と対比して理解する</li>
-          <li><strong>条文全体像・原文逐語・罰則条番号</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/jigyoho/57/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki 事業法第57条 v1.2</a></li>
+          <li><strong>電気工作物4区分（対比の起点）</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('kosakubutsu-bunrui');}} style={{color:'var(--accent-ink)'}}>kosakubutsu-bunrui（4.1）</a> — 一般用・小規模事業用・自家用・電力会社等の4区分</li>
+          <li><strong>主任技術者（第43条・自家用責任体系）</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('shunin-gijutsusya');}} style={{color:'var(--accent-ink)'}}>shunin-gijutsusya（4.2）</a> — 第57条と逆の体系（所有者が選任）</li>
+          <li><strong>保安規程（第42条・自家用責任体系）</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('hoan-kitei');}} style={{color:'var(--accent-ink)'}}>hoan-kitei（4.3）</a> — 第57条と対比して理解する</li>
+          <li><strong>条文全体像・原文逐語・罰則条番号</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/jigyoho/57/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>denken-wiki 事業法第57条 v1.2</a></li>
         </ul>
       </div>
 
@@ -16228,7 +16228,7 @@ function GijutsuKijunTekigouPage({ onNav, data }) {
       ]} />
 
       <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: '18px 0' }}>
-        🔗 関連: <a onClick={() => onNav('jigyou-57-chousa-gimu')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>調査の義務（第57条）</a>（一般用が対象・対比で理解）／ <a onClick={() => onNav('kosakubutsu-bunrui')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>電気工作物の区分</a>
+        🔗 関連: <a onClick={() => onNav('jigyou-57-chousa-gimu')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>調査の義務（第57条）</a>（一般用が対象・対比で理解）／ <a onClick={() => onNav('kosakubutsu-bunrui')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>電気工作物の区分</a>
       </p>
 
       <DenkenWikiCTA
@@ -16265,7 +16265,7 @@ function DenroZetsuenPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           🗺️ A. 全体像（30秒で位置づけ把握）
         </div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
@@ -16323,13 +16323,13 @@ function DenroZetsuenPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           📅 Plan（今日の学習目標）
         </div>
         <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
           <li>各セクション（絶縁抵抗値表／配線方式例／ひっかけ）の理解度ボタンで <strong>○ 以上</strong> を目指す</li>
           <li>単相3線・三相3線（非接地）・三相4線400V の3形態で <strong>0.1 / 0.2 / 0.4 MΩ</strong> を即答できる</li>
-          <li><strong>「電線路 vs 電路」</strong> の混同を <a href="https://kfurufuru.github.io/denken-wiki/articles/kijun/22/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki 第22条</a> と並べて整理</li>
+          <li><strong>「電線路 vs 電路」</strong> の混同を <a href="https://kfurufuru.github.io/denken-wiki/articles/kijun/22/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>denken-wiki 第22条</a> と並べて整理</li>
         </ul>
         <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 12, padding: '8px 12px', background: 'var(--bg-2)', borderRadius: 4, lineHeight: 1.7 }}>
           🔄 <strong>PDCAサイクル動線</strong>: ① <strong>Plan</strong>: 上の目標確認（いま）→ ② <strong>Do</strong>: 各セクションを読み4ボタンで進捗管理 → ③ <strong>Check</strong>: ひっかけ＋1分復習で確認 → ④ <strong>Act</strong>: 末尾「弱点セクション一覧」から再読
@@ -16365,7 +16365,7 @@ function DenroZetsuenPage({ onNav, data }) {
         lastChecked="2026-06-25"
       />
       <div style={{ fontSize: 11, color: 'var(--ink-3)', margin: '-8px 0 18px', padding: '8px 12px', background: 'var(--bg-2)', borderRadius: 4, lineHeight: 1.7 }}>
-        🔎 <strong>一次照合</strong>：絶縁抵抗値（0.1/0.2/0.4 MΩ）と漏えい電流1mA以下の代替値は <strong>電技解釈 第14条第1項</strong>（電気設備の技術基準の解釈）。条文の逐語確認は SoT の <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/14/" target="_blank" rel="noopener" style={{ color: 'var(--accent)' }}>denken-wiki 解釈第14条</a>（最終確認 2026-06-25）。委任元の <strong>省令第58条</strong>（電気設備に関する技術基準を定める省令・lawId 409M50000400052）は e-Gov 法令検索で照合。
+        🔎 <strong>一次照合</strong>：絶縁抵抗値（0.1/0.2/0.4 MΩ）と漏えい電流1mA以下の代替値は <strong>電技解釈 第14条第1項</strong>（電気設備の技術基準の解釈）。条文の逐語確認は SoT の <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/14/" target="_blank" rel="noopener" style={{ color: 'var(--accent-ink)' }}>denken-wiki 解釈第14条</a>（最終確認 2026-06-25）。委任元の <strong>省令第58条</strong>（電気設備に関する技術基準を定める省令・lawId 409M50000400052）は e-Gov 法令検索で照合。
       </div>
 
       <h2 id="zukai">条文を図で理解（第14条）</h2>
@@ -16558,9 +16558,9 @@ function DenroZetsuenPage({ onNav, data }) {
       }}>
         <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>🎯 次の学習推奨（PDCAサイクルの次回 Plan へ）</div>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
-          <li><strong>第22条「低圧電線路の絶縁性能」</strong>（漏えい電流 1/2000・電線路側）— hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('teiatsu-densenro-zetsuen');}} style={{color:'var(--accent)'}}>teiatsu-densenro-zetsuen</a> ／ denken-wiki <a href="https://kfurufuru.github.io/denken-wiki/articles/kijun/22/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>第22条</a>。「電線路 vs 電路」を対比で理解</li>
-          <li><strong>条文全体像の再確認</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kijun/58/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki 第58条（13セクション・S-rank）</a> の「★0 隣接条文クラスタマップ」「4節 かみ砕き解説」を再読</li>
-          <li><strong>測定方法の詳細</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/14/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki 解釈第14条</a> で 1mAルール・メガー印加電圧（直流500V）・1分以上測定 を確認</li>
+          <li><strong>第22条「低圧電線路の絶縁性能」</strong>（漏えい電流 1/2000・電線路側）— hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('teiatsu-densenro-zetsuen');}} style={{color:'var(--accent-ink)'}}>teiatsu-densenro-zetsuen</a> ／ denken-wiki <a href="https://kfurufuru.github.io/denken-wiki/articles/kijun/22/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>第22条</a>。「電線路 vs 電路」を対比で理解</li>
+          <li><strong>条文全体像の再確認</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kijun/58/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>denken-wiki 第58条（13セクション・S-rank）</a> の「★0 隣接条文クラスタマップ」「4節 かみ砕き解説」を再読</li>
+          <li><strong>測定方法の詳細</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/14/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>denken-wiki 解釈第14条</a> で 1mAルール・メガー印加電圧（直流500V）・1分以上測定 を確認</li>
         </ul>
       </div>
 
@@ -16571,7 +16571,7 @@ function DenroZetsuenPage({ onNav, data }) {
       />
 
       <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: '18px 0' }}>
-        🔗 関連: <a onClick={() => onNav('suuchi-kyoukai')} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>数値境界の混同（以下・未満）</a>（対地電圧150V/300Vの境界は「以下」＝その値を含む。0.1/0.2/0.4MΩの切り替え点の取り違え対策）
+        🔗 関連: <a onClick={() => onNav('suuchi-kyoukai')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', textDecoration: 'underline' }}>数値境界の混同（以下・未満）</a>（対地電圧150V/300Vの境界は「以下」＝その値を含む。0.1/0.2/0.4MΩの切り替え点の取り違え対策）
       </p>
 
       <UpdateLog entries={[
@@ -16587,7 +16587,7 @@ function DenroZetsuenPage({ onNav, data }) {
           <li>R06上 問8 ｜ 低圧の電路の絶縁性能（省令第58条・解釈第14条）</li>
           <li>R06下 問3 ｜ 電路の絶縁の原則と例外（省令第5条）</li>
         </ul>
-        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-zetsuen')} style={{ color: 'var(--accent)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-zetsuen）で解く</a></div>
+        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-zetsuen')} style={{ color: 'var(--accent-ink)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-zetsuen）で解く</a></div>
         <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ink-3)' }}>出典: 法規過去問SoT kakomon.yml（電気技術者試験センター公表問題ベース・最終確認2026-06-25）</div>
       </div>
       <PageNav
@@ -16613,7 +16613,7 @@ function JuutakuTaichiDenatsuPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           🗺️ A. 全体像（30秒で位置づけ把握）
         </div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
@@ -16671,7 +16671,7 @@ function JuutakuTaichiDenatsuPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           📅 Plan（今日の学習目標）
         </div>
         <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
@@ -16786,7 +16786,7 @@ function JuutakuTaichiDenatsuPage({ onNav, data }) {
           <li>例外条件の穴埋め：2kW以上／専用回路（専用の開閉器・過電流遮断器）／配線・機器の簡易接触防護／直接接続／地絡遮断装置（漏電遮断器）。※「接地工事」は143条の列挙要件ではない</li>
           <li>「150V 以下」「300V 以下」の不等号の向き・等号成立を確認（「未満」NG／「以下」OK）</li>
         </ol>
-        <p style={{fontSize: 11.5, color: 'var(--ink-3)', marginTop: 8}}>※ 本文・選択肢は kakomon.yml に未記録。実本文・正解は<a href="https://denken3.com/" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)'}}>電験王 等の過去問解説サイト</a>で「R05上 問9 解釈143条」を検索して照合推奨。</p>
+        <p style={{fontSize: 11.5, color: 'var(--ink-3)', marginTop: 8}}>※ 本文・選択肢は kakomon.yml に未記録。実本文・正解は<a href="https://denken3.com/" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent-ink)'}}>電験王 等の過去問解説サイト</a>で「R05上 問9 解釈143条」を検索して照合推奨。</p>
       </PlainExplain>
 
       <h2 id="exam-others">F. 過去問: R03 問8(論説)・H25 問8(穴埋)</h2>
@@ -16849,9 +16849,9 @@ function JuutakuTaichiDenatsuPage({ onNav, data }) {
       }}>
         <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>🎯 次の学習推奨（PDCAサイクルの次回 Plan へ）</div>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
-          <li><strong>解釈第14条（絶縁抵抗値の対地電圧区分）</strong>— hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('denro-zetsuen');}} style={{color:'var(--accent)'}}>denro-zetsuen（電路の絶縁）</a> ／ denken-wiki <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/14/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>解釈第14条</a>。同じ 150V／300V 境界が登場するため対比で覚える</li>
-          <li><strong>条文全体像の再確認</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/143/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki 解釈第143条（v2.0）</a> の「3. かみ砕き解説 — なぜ住宅だけ150Vか」「4. 例外条件の概要」を再読</li>
-          <li><strong>例外条件の一次照合（残課題）</strong>: <a href="https://www.meti.go.jp/policy/safety_security/industrial_safety/sangyo/electric/detail/setsubi_kijun.html" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>経産省公式の最新告示PDF</a>で容量しきい値・対象機器・配線方式の具体数値を確定（denken-wiki／本ページ共通の残課題）</li>
+          <li><strong>解釈第14条（絶縁抵抗値の対地電圧区分）</strong>— hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('denro-zetsuen');}} style={{color:'var(--accent-ink)'}}>denro-zetsuen（電路の絶縁）</a> ／ denken-wiki <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/14/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>解釈第14条</a>。同じ 150V／300V 境界が登場するため対比で覚える</li>
+          <li><strong>条文全体像の再確認</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/143/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>denken-wiki 解釈第143条（v2.0）</a> の「3. かみ砕き解説 — なぜ住宅だけ150Vか」「4. 例外条件の概要」を再読</li>
+          <li><strong>例外条件の一次照合（残課題）</strong>: <a href="https://www.meti.go.jp/policy/safety_security/industrial_safety/sangyo/electric/detail/setsubi_kijun.html" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>経産省公式の最新告示PDF</a>で容量しきい値・対象機器・配線方式の具体数値を確定（denken-wiki／本ページ共通の残課題）</li>
         </ul>
       </div>
 
@@ -16889,7 +16889,7 @@ function TeiatsuDensenroZetsuenPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           🗺️ A. 全体像（30秒で位置づけ把握）
         </div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
@@ -16957,7 +16957,7 @@ function TeiatsuDensenroZetsuenPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           📅 Plan（今日の学習目標）
         </div>
         <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
@@ -17056,7 +17056,7 @@ function TeiatsuDensenroZetsuenPage({ onNav, data }) {
         padding: '14px 16px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 12 }}>
           🎯 死活5ステップ・フロー（R4上期問11 を3分で再現する設計図）
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 12 }}>
@@ -17149,7 +17149,7 @@ function TeiatsuDensenroZetsuenPage({ onNav, data }) {
         <p><strong>結論</strong>：変圧器容量 P [VA] は <strong>「線間電圧 V<sub>L</sub> × 線電流 I」</strong> で定義されているから、容量から電流を逆算するときは <strong>必ず V<sub>L</sub> で割る</strong>。対地電圧 V<sub>E</sub> で割ると物理的に意味のない値（=2倍誤）になる。</p>
 
         <div style={{ margin: '12px 0', padding: '12px 14px', background: 'var(--bg-2)', borderRadius: 6, border: '1px solid var(--line)' }}>
-          <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 8, color: 'var(--accent)' }}>📐 単相3線式（100/200V系）の物理イメージ</div>
+          <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 8, color: 'var(--accent-ink)' }}>📐 単相3線式（100/200V系）の物理イメージ</div>
           <pre style={{ margin: 0, fontFamily: 'Consolas, "Yu Gothic Mono", "MS Gothic", monospace', fontSize: 11.5, lineHeight: 1.7, color: 'var(--ink-2)', whiteSpace: 'pre-wrap' }}>{`変圧器2次巻線（合計 210V タップ・中性点接地）
 
    外線L1 ────┬──── (100V巻線・105V) ────┐
@@ -17230,7 +17230,7 @@ function TeiatsuDensenroZetsuenPage({ onNav, data }) {
       </PlainExplain>
 
       <div style={{ margin: '12px 0 16px', padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)' }}>
-        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent)' }}>🔌 3線一括試験の電流経路図（並列地絡パス）</div>
+        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent-ink)' }}>🔌 3線一括試験の電流経路図（並列地絡パス）</div>
         <svg viewBox="0 0 560 280" style={{ width: '100%', maxWidth: 560, height: 'auto', display: 'block', margin: '0 auto', background: 'var(--bg-1)', borderRadius: 4 }}>
           {/* 変圧器2次側 */}
           <rect x="20" y="40" width="80" height="200" fill="none" stroke="var(--ink-2)" strokeWidth="2" />
@@ -17322,7 +17322,7 @@ function TeiatsuDensenroZetsuenPage({ onNav, data }) {
       <h2 id="mnemonic">10. 暗記フック：「1/2000」を試験本番で忘れない覚え方</h2>
       <SectionCheck pageId="teiatsu-densenro-zetsuen" sectionId="mnemonic" />
       <div style={{ padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)', borderLeft: '3px solid var(--accent)', marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
         <ol style={{ margin: 0, paddingLeft: 20, fontSize: 12.5, lineHeight: 1.9 }}>
           <li><strong>パーセント換算</strong>：1/2000 = <strong>0.05%</strong> = <strong>「コンマゼロゴ パーセント」</strong>。最大供給電流の "コンマゼロゴ" だけ漏えい OK</li>
           <li><strong>比率の語呂</strong>：「<strong>ニ・センブンノイチ</strong>」＝「2,000円のうち1円までは漏らしてよい」（電流を金額にたとえる）</li>
@@ -17662,9 +17662,9 @@ function TeiatsuDensenroZetsuenPage({ onNav, data }) {
       }}>
         <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>🎯 次の学習推奨（PDCAサイクルの次回 Plan へ）</div>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
-          <li><strong>第58条「低圧電路の絶縁性能」</strong>（類型・電路側） — denken-wiki <a href="https://kfurufuru.github.io/denken-wiki/articles/kijun/58/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>第58条（S-rank・13セクション）</a> ／ hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('denro-zetsuen');}} style={{color:'var(--accent)'}}>denro-zetsuen（数値暗記Hub・3層構造＋PDCA）</a>。「電線路 vs 電路」概念差の対比強化</li>
-          <li><strong>解釈第14条「低圧電路の絶縁抵抗値」</strong>（0.1/0.2/0.4 MΩ） — denken-wiki <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/14/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>解釈第14条</a>（測定方法・1mAルール・メガー直流500V）</li>
-          <li><strong>条文全体像の再確認</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kijun/22/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki 第22条（13セクション）</a> の「1節 全体像」「4節 かみ砕き解説」を再読</li>
+          <li><strong>第58条「低圧電路の絶縁性能」</strong>（類型・電路側） — denken-wiki <a href="https://kfurufuru.github.io/denken-wiki/articles/kijun/58/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>第58条（S-rank・13セクション）</a> ／ hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('denro-zetsuen');}} style={{color:'var(--accent-ink)'}}>denro-zetsuen（数値暗記Hub・3層構造＋PDCA）</a>。「電線路 vs 電路」概念差の対比強化</li>
+          <li><strong>解釈第14条「低圧電路の絶縁抵抗値」</strong>（0.1/0.2/0.4 MΩ） — denken-wiki <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/14/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>解釈第14条</a>（測定方法・1mAルール・メガー直流500V）</li>
+          <li><strong>条文全体像の再確認</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kijun/22/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>denken-wiki 第22条（13セクション）</a> の「1節 全体像」「4節 かみ砕き解説」を再読</li>
         </ul>
       </div>
 
@@ -17700,11 +17700,11 @@ function SetsuchiKojiPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           🗺️ A. 全体像（30秒で位置づけ把握）
         </div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
-          本ページは「<strong>接地工事の制度全体・ELB緩和・B種倍々ルール</strong>」（C層）特化。条文の<strong>全体像・原文逐語・かみ砕き解説</strong>（A・B層）は denken-wiki が SOT。数値暗記Hub（A/B/C/D種一覧）は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-ichiran');}} style={{color:'var(--accent)'}}>setsuchi-ichiran（2.1）</a>。
+          本ページは「<strong>接地工事の制度全体・ELB緩和・B種倍々ルール</strong>」（C層）特化。条文の<strong>全体像・原文逐語・かみ砕き解説</strong>（A・B層）は denken-wiki が SOT。数値暗記Hub（A/B/C/D種一覧）は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-ichiran');}} style={{color:'var(--accent-ink)'}}>setsuchi-ichiran（2.1）</a>。
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <tbody>
@@ -17726,7 +17726,7 @@ function SetsuchiKojiPage({ onNav, data }) {
             </tr>
             <tr>
               <td style={{ padding: '6px 10px', background: 'var(--bg-2)', fontWeight: 600 }}>関連hoki</td>
-              <td style={{ padding: '6px 10px' }}><a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-ichiran');}} style={{color:'var(--accent)'}}>setsuchi-ichiran（2.1 4種別数値表）</a>／<a href="#" onClick={(e)=>{e.preventDefault(); onNav('bshu-setsuchi');}} style={{color:'var(--accent)'}}>bshu-setsuchi（1.7 B種計算）</a></td>
+              <td style={{ padding: '6px 10px' }}><a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-ichiran');}} style={{color:'var(--accent-ink)'}}>setsuchi-ichiran（2.1 4種別数値表）</a>／<a href="#" onClick={(e)=>{e.preventDefault(); onNav('bshu-setsuchi');}} style={{color:'var(--accent-ink)'}}>bshu-setsuchi（1.7 B種計算）</a></td>
             </tr>
           </tbody>
         </table>
@@ -17748,7 +17748,7 @@ function SetsuchiKojiPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           📅 Plan（今日の学習目標）
         </div>
         <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
@@ -17920,9 +17920,9 @@ function SetsuchiKojiPage({ onNav, data }) {
       }}>
         <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>🎯 次の学習推奨（PDCAサイクルの次回 Plan へ）</div>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
-          <li><strong>4種別の数値暗記Hub</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-ichiran');}} style={{color:'var(--accent)'}}>setsuchi-ichiran（2.1 接地工事一覧表）</a> — 抵抗値・接地線径・接地箇所を表で総復習</li>
-          <li><strong>B種計算の深掘り</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('bshu-setsuchi');}} style={{color:'var(--accent)'}}>bshu-setsuchi（1.7 B種接地抵抗値）</a> — Ig 計算・係数判定の具体例</li>
-          <li><strong>条文全体像の再確認</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/17/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki 解釈第17条（A・B・C・D種＝接地工事の種類・施設方法。C種=第3項・D種=第4項）</a></li>
+          <li><strong>4種別の数値暗記Hub</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('setsuchi-ichiran');}} style={{color:'var(--accent-ink)'}}>setsuchi-ichiran（2.1 接地工事一覧表）</a> — 抵抗値・接地線径・接地箇所を表で総復習</li>
+          <li><strong>B種計算の深掘り</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('bshu-setsuchi');}} style={{color:'var(--accent-ink)'}}>bshu-setsuchi（1.7 B種接地抵抗値）</a> — Ig 計算・係数判定の具体例</li>
+          <li><strong>条文全体像の再確認</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kaishaku/17/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>denken-wiki 解釈第17条（A・B・C・D種＝接地工事の種類・施設方法。C種=第3項・D種=第4項）</a></li>
         </ul>
       </div>
 
@@ -17947,7 +17947,7 @@ function SetsuchiKojiPage({ onNav, data }) {
           <li>R04上 問3 高圧架空電線路の接地工事（解釈第17条・穴埋）</li>
           <li>R07下 問4 電気設備の接地（解釈第17条・第29条・穴埋）</li>
         </ul>
-        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-setsuchi')} style={{ color: 'var(--accent)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-setsuchi）で解く</a></div>
+        <div style={{ marginTop: 6, fontSize: 12 }}><a onClick={() => onNav('kakomon-setsuchi')} style={{ color: 'var(--accent-ink)', cursor: 'pointer' }}>→ テーマ別過去問演習（kakomon-setsuchi）で解く</a></div>
         <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ink-3)' }}>出典: 法規過去問SoT kakomon.yml（電気技術者試験センター公表問題ベース・最終確認2026-06-25）</div>
       </div>
       <PageNav
@@ -18575,11 +18575,11 @@ function HaisenShiyouDensenPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           🗺️ A. 全体像（30秒で位置づけ把握）
         </div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
-          本ページは「<strong>配線の使用電線（電技省令第57条）・裸電線と接触電線の使い分け</strong>」（A問題対策）特化。具体的な分岐回路・配線方式は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('okunai-haisen');}} style={{color:'var(--accent)'}}>okunai-haisen（3.5）</a>、電線サイズ一覧は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('densen-size');}} style={{color:'var(--accent)'}}>densen-size（2.5）</a>。
+          本ページは「<strong>配線の使用電線（電技省令第57条）・裸電線と接触電線の使い分け</strong>」（A問題対策）特化。具体的な分岐回路・配線方式は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('okunai-haisen');}} style={{color:'var(--accent-ink)'}}>okunai-haisen（3.5）</a>、電線サイズ一覧は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('densen-size');}} style={{color:'var(--accent-ink)'}}>densen-size（2.5）</a>。
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <tbody>
@@ -18626,7 +18626,7 @@ function HaisenShiyouDensenPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           📅 Plan（今日の学習目標）
         </div>
         <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
@@ -18828,10 +18828,10 @@ function HaisenShiyouDensenPage({ onNav, data }) {
       }}>
         <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>🎯 次の学習推奨（PDCAサイクルの次回 Plan へ）</div>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
-          <li><strong>具体的な分岐回路・配線方式</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('okunai-haisen');}} style={{color:'var(--accent)'}}>okunai-haisen（3.5 屋内配線）</a> — PF/CD管・電線太さ・幹線容量</li>
-          <li><strong>電線サイズ一覧</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('densen-size');}} style={{color:'var(--accent)'}}>densen-size（2.5 電線サイズ一覧表）</a></li>
-          <li><strong>低圧電路の絶縁性能（条文ペア）</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('teiatsu-densenro-zetsuen');}} style={{color:'var(--accent)'}}>teiatsu-densenro-zetsuen（3.2 省令第22条）</a> — 絶縁性能の数値基準</li>
-          <li><strong>条文全体像</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kijun/57/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki 省令第57条</a></li>
+          <li><strong>具体的な分岐回路・配線方式</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('okunai-haisen');}} style={{color:'var(--accent-ink)'}}>okunai-haisen（3.5 屋内配線）</a> — PF/CD管・電線太さ・幹線容量</li>
+          <li><strong>電線サイズ一覧</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('densen-size');}} style={{color:'var(--accent-ink)'}}>densen-size（2.5 電線サイズ一覧表）</a></li>
+          <li><strong>低圧電路の絶縁性能（条文ペア）</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('teiatsu-densenro-zetsuen');}} style={{color:'var(--accent-ink)'}}>teiatsu-densenro-zetsuen（3.2 省令第22条）</a> — 絶縁性能の数値基準</li>
+          <li><strong>条文全体像</strong>: <a href="https://kfurufuru.github.io/denken-wiki/articles/kijun/57/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>denken-wiki 省令第57条</a></li>
         </ul>
       </div>
 
@@ -18863,7 +18863,7 @@ function ShoreiD27YudoKandenBoushiPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           🗺️ A. 全体像（30秒で位置づけ把握）
         </div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
@@ -18913,7 +18913,7 @@ function ShoreiD27YudoKandenBoushiPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           📅 Plan（今日の学習目標）
         </div>
         <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
@@ -19088,7 +19088,7 @@ function ShoreiD27YudoKandenBoushiPage({ onNav, data }) {
       </PlainExplain>
 
       <div style={{ margin: '12px 0 16px', padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)' }}>
-        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent)' }}>⚡ 静電誘導の物理イメージ（電界・容量結合）</div>
+        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent-ink)' }}>⚡ 静電誘導の物理イメージ（電界・容量結合）</div>
         <svg viewBox="0 0 820 360" style={{ width: '100%', maxWidth: 820, height: 'auto', display: 'block', margin: '0 auto', background: 'var(--card)', borderRadius: 4 }}>
           {/* 鉄塔の支柱（左） */}
           <line x1="80" y1="80" x2="80" y2="320" stroke="#666" strokeWidth="4" />
@@ -19155,7 +19155,7 @@ function ShoreiD27YudoKandenBoushiPage({ onNav, data }) {
       </PlainExplain>
 
       <div style={{ margin: '12px 0 16px', padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)' }}>
-        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent)' }}>🌀 電磁誘導の物理イメージ（磁界・弱電線路経由）</div>
+        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent-ink)' }}>🌀 電磁誘導の物理イメージ（磁界・弱電線路経由）</div>
         <svg viewBox="0 0 820 360" style={{ width: '100%', maxWidth: 820, height: 'auto', display: 'block', margin: '0 auto', background: 'var(--card)', borderRadius: 4 }}>
           {/* 鉄塔（左） */}
           <line x1="80" y1="80" x2="80" y2="320" stroke="#666" strokeWidth="4" />
@@ -19456,7 +19456,7 @@ function YudoTsushinShogaiPage({ onNav, data }) {
     <div>
       {/* ========== A. 全体像 ========== */}
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 12, lineHeight: 1.7 }}>
           「誘導障害」「通信障害（無線を含む）」は <strong>3条文に分散</strong>して規定される。混同を断つため「<strong>誰が出す → 何を守る → どの作用</strong>」で1枚に束ねる。第27条の感電・人体側の深掘りは <strong>第27条ページ</strong>へ委譲し、本ページは <strong>横断マップ＋通信・無線側（第42・67条）</strong> を担う。
         </div>
@@ -19509,7 +19509,7 @@ function YudoTsushinShogaiPage({ onNav, data }) {
       />
       <div style={{ margin: '8px 0 20px', padding: '10px 14px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 6, fontSize: 12.5, lineHeight: 1.7 }}>
         📖 <strong>第27条（静電・電磁誘導による感電防止）の逐語・物理イメージ・深掘り</strong> は専用ページへ。
-        <span onClick={() => onNav && onNav('shorei-27-yudo-kanden-boushi')} style={{ color: 'var(--accent)', cursor: 'pointer', fontWeight: 600, marginLeft: 6, textDecoration: 'underline' }}>第27条ページを開く →</span>
+        <span onClick={() => onNav && onNav('shorei-27-yudo-kanden-boushi')} style={{ color: 'var(--accent-ink)', cursor: 'pointer', fontWeight: 600, marginLeft: 6, textDecoration: 'underline' }}>第27条ページを開く →</span>
       </div>
 
       <MetaStrip
@@ -19700,7 +19700,7 @@ function GijutsuKijunGaiyouPage({ onNav, data }) {
               {r[2] ? (
                 <button
                   onClick={() => onNav(r[2])}
-                  style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', padding: 0, fontSize: 13, textDecoration: 'underline' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--accent-ink)', cursor: 'pointer', padding: 0, fontSize: 13, textDecoration: 'underline' }}
                 >{r[3]} →</button>
               ) : <span style={{ color: 'var(--ink-3)', fontSize: 13 }}>—</span>}
             </td>
@@ -20175,7 +20175,7 @@ function JuyoritsuKeisanPage({ onNav, data }) {
 
       {/* 🎯 死活5ステップ視覚化フローカード（物理直感WHYセットの①） */}
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 12 }}>
           🎯 死活5ステップ・フロー（3率を取り違えず変圧器容量まで通す設計図）
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 12 }}>
@@ -20256,7 +20256,7 @@ function JuyoritsuKeisanPage({ onNav, data }) {
 
       <h2 id="pat4">パターン④: 単独×変圧器台数×月電力量（R04上 問12型）</h2>
       <div style={{margin: '12px 0 16px', padding: '12px 16px', background: 'var(--bg-2)', border: '1px solid var(--accent)', borderLeft: '4px solid var(--accent)', borderRadius: 8, fontSize: 13, lineHeight: 1.75}}>
-        <div style={{fontWeight: 700, color: 'var(--accent)', marginBottom: 6}}>📐 与条件（R04上 問12）</div>
+        <div style={{fontWeight: 700, color: 'var(--accent-ink)', marginBottom: 6}}>📐 与条件（R04上 問12）</div>
         <div>負荷設備容量 800 kW・需要率 70%・<strong>総合力率 90%</strong>・<strong>月負荷率 60%</strong>。100 kVA 変圧器を何台必要か、月間総消費電力量はいくらか。</div>
       </div>
 
@@ -20304,7 +20304,7 @@ function JuyoritsuKeisanPage({ onNav, data }) {
 
       <h2 id="mnemonic">暗記フック：3率の分母と大小を試験本番で取り違えない覚え方</h2>
       <div style={{ padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)', borderLeft: '3px solid var(--accent)', marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
         <ol style={{ margin: 0, paddingLeft: 20, fontSize: 12.5, lineHeight: 1.9 }}>
           <li><strong>分母を固定</strong>：需要率＝÷<strong>設備容量</strong>／負荷率＝÷<strong>最大需要</strong>／不等率＝各最大の和÷<strong>合成最大</strong>。分母の取り違えが最頻出ミス</li>
           <li><strong>大小の絶対則</strong>：需要率≤1・負荷率≤1・<strong>不等率≥1</strong>（不等率だけ1以上）。計算後に必ず大小で検算</li>
@@ -20519,7 +20519,7 @@ function FuritsuPage({ onNav, data }) {
 // ─────────────────────────────────────────────
 function FutoritoPage({ onNav, data }) {
   const navLink = (id, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
   return (
     <div>
@@ -20740,7 +20740,7 @@ function KakomonSetsuchiPage({ onNav }) {
   const th  = { padding: '8px 10px', borderBottom: '2px solid var(--line)', textAlign: 'left', fontSize: 12, color: 'var(--ink-3)', background: 'var(--bg-elev)' };
 
   const navLink = (pageId, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(pageId); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(pageId); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
 
   // カテゴリ別過去問データ（kakomon.yml SOT）
@@ -21086,7 +21086,7 @@ function HogoKyochoDgrPage({ onNav, data }) {
         rows={[
           ["OCR", "過電流継電器 (Over Current Relay)", "過電流（短絡・過負荷による大電流）", "なし"],
           ["GR", "地絡継電器 (Ground Relay)", "地絡電流の大きさ（零相電流I₀）", "なし"],
-          ["DGR", "地絡方向継電器 (Directional Ground Relay)", "地絡電流の大きさ＋方向（I₀とV₀の位相）", <strong style={{color:'var(--accent)'}}>あり</strong>],
+          ["DGR", "地絡方向継電器 (Directional Ground Relay)", "地絡電流の大きさ＋方向（I₀とV₀の位相）", <strong style={{color:'var(--accent-ink)'}}>あり</strong>],
           ["ZCT", "零相変流器 (Zero-phase Current Transformer)", "零相電流3I₀の検出器（継電器ではない）", "—"],
           ["ZPD", "零相電圧検出装置 (Zero-phase voltage detector)", "零相電圧V₀の検出器（DGRの方向判定に使用）", "—"],
           ["CB", "遮断器 (Circuit Breaker)", "異常時に回路を遮断する開閉装置", "—"],
@@ -21105,7 +21105,7 @@ function HogoKyochoDgrPage({ onNav, data }) {
           ["検出量", "零相電流I₀の大きさのみ", "I₀の大きさ ＋ V₀との位相角（方向）"],
           ["動作条件", "I₀ ≥ 整定値", "I₀ ≥ 整定値 かつ 方向が整定範囲内"],
           ["使用場所", "主受電点・単一フィーダー系統", "フィーダーが複数ある系統の各フィーダー"],
-          ["選択遮断", <span style={{color:'#c33',fontWeight:700}}>不可（全フィーダーのGRが動作）</span>, <span style={{color:'var(--accent)',fontWeight:700}}>可（自フィーダー方向の地絡のみ動作）</span>],
+          ["選択遮断", <span style={{color:'#c33',fontWeight:700}}>不可（全フィーダーのGRが動作）</span>, <span style={{color:'var(--accent-ink)',fontWeight:700}}>可（自フィーダー方向の地絡のみ動作）</span>],
           ["必要センサ", "ZCTのみ", "ZCT（電流）＋ ZPD（電圧）"],
           ["コスト", "低", "高（追加センサ必要）"],
           ["誤動作リスク", "高（隣フィーダー地絡でも動作）", "低（方向フィルタあり）"],
@@ -21540,7 +21540,7 @@ function DensenTarumiPage({ onNav, data }) {
     <div>
       {/* A. 全体像 */}
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           🗺️ A. 全体像（30秒で位置づけ把握）
         </div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
@@ -21582,7 +21582,7 @@ function DensenTarumiPage({ onNav, data }) {
 
       {/* Plan */}
       <div style={{ background: 'var(--bg-elev)', border: '1px dashed var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>📅 Plan（今日の学習目標）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>📅 Plan（今日の学習目標）</div>
         <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
           <li>核心式 <strong>D = WS²/(8T)</strong>・<strong>T = Tₙ/f</strong>・<strong>L = S + 8D²/(3S)</strong> を5秒で唱える</li>
           <li>「許容張力 → たるみ → 実長」の頻出パターンを自力で <strong>D=3.75m・L=100.38m</strong> まで到達</li>
@@ -21638,7 +21638,7 @@ function DensenTarumiPage({ onNav, data }) {
 
       {/* 死活5ステップ */}
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 12 }}>
           🎯 死活5ステップ・フロー（許容張力 → 合成荷重 → たるみ → 実長 → 温度補正）
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(165px, 1fr))', gap: 10, marginBottom: 12 }}>
@@ -21944,7 +21944,7 @@ function DensenTarumiPage({ onNav, data }) {
         "⑥ 検算：たるみは径間の数%程度・実長は径間より少しだけ長い、という大きさ感で確かめる",
       ]} />
       <div style={{ background: 'var(--bg-elev)', borderLeft: '3px solid var(--accent)', borderRadius: 4, padding: '10px 14px', marginBottom: 24, fontSize: 12.5, lineHeight: 1.8 }}>
-        <strong style={{ color: 'var(--accent)' }}>何を先に求めるか</strong>：張力が与えられていなければ「① 許容張力 T」が起点。T が決まらないと D も L も出ない。風圧荷重を問う問題は「投影面積 → 圧力（甲乙丙）→ W_w」の順。
+        <strong style={{ color: 'var(--accent-ink)' }}>何を先に求めるか</strong>：張力が与えられていなければ「① 許容張力 T」が起点。T が決まらないと D も L も出ない。風圧荷重を問う問題は「投影面積 → 圧力（甲乙丙）→ W_w」の順。
       </div>
 
       <h2 id="memory">12. 暗記ポイント</h2>
@@ -23255,12 +23255,12 @@ function DemandKwhKisoPage({ onNav, data }) {
 // ─────────────────────────────────────────────
 function KeitoRenkeiPage({ onNav }) {
   const navLink = (id, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
   return (
     <div>
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
           本ページは「<strong>試験対策・直前確認</strong>」（C層）特化。分散型電源（太陽光・風力等）の系統連系は近年増加。試験では <strong>電技解釈第220条の用語定義（逆潮流・単独運転・解列）</strong>と<strong>単独運転検出（受動的＋能動的）</strong>が頻出。
         </div>
@@ -23734,12 +23734,12 @@ function KeitoRenkeiPage({ onNav }) {
 
 function TaiyouchiGijutsukijunPage({ onNav }) {
   const navLink = (id, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
   return (
     <div>
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
           本ページは「<strong>試験対策・直前確認</strong>」（C層）特化。太陽電池発電には<strong>専用の省令</strong>がある。試験では電気工作物区分（出力による）・<strong>解釈第46条（施設）</strong>・支持物の構造が問われる。
         </div>
@@ -23877,7 +23877,7 @@ function FuryokuGijutsukijunPage({ onNav }) {
   return (
     <div>
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
           本ページは「<strong>試験対策・直前確認</strong>」（C層）特化。風力発電には<strong>専用の省令</strong>がある。試験では風車の<strong>構造強度（最大風速荷重）・想定しない起動の防止</strong>が問われる。
         </div>
@@ -24003,12 +24003,12 @@ function FuryokuGijutsukijunPage({ onNav }) {
 // ─────────────────────────────────────────────
 function HaidenKanriPage({ onNav, data }) {
   const navLink = (id, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
   return (
     <div>
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
           本ページは「<strong>配電線路の電気的管理</strong>」（C層・施設管理）の見取り図。<strong>電圧降下対策・損失低減・高調波/フリッカ・負荷バランス</strong>を1枚で俯瞰する。個々の計算（力率改善コンデンサ容量・変圧器容量・需要率/負荷率・デマンド）は各専用ページに分離しているので、本ページは<strong>「どの対策がどの目的に効くか」の対応関係</strong>を押さえる。
         </div>
@@ -24194,12 +24194,12 @@ function HaidenKanriPage({ onNav, data }) {
 // ─────────────────────────────────────────────
 function JudenSetsubiKanriPage({ onNav, data }) {
   const navLink = (id, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
   return (
     <div>
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
           本ページは「<strong>試験対策・直前確認</strong>」（C層）特化。自家用の<strong>高圧受電設備（キュービクル等）</strong>の構成機器と管理実務に絞る。試験では<strong>主遮断装置の形式（CB形／PF・S形）</strong>・<strong>区分開閉器（PAS／UGS）と波及事故防止</strong>・<strong>単線結線図の機器名</strong>が頻出。点検頻度の法定運用・保護協調・主任技術者制度は各専門ページへ。
         </div>
@@ -24405,7 +24405,7 @@ function JudenSetsubiKanriPage({ onNav, data }) {
 
 function HoreiKaiseiPage({ onNav }) {
   const navLink = (id, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
   return (
     <div>
@@ -24515,7 +24515,7 @@ function HoreiKaiseiPage({ onNav }) {
 
 function TokutenSenryakuPage({ onNav }) {
   const navLink = (id, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
   return (
     <div>
@@ -24529,7 +24529,7 @@ function TokutenSenryakuPage({ onNav }) {
       </div>
 
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 8 }}>🎯 結論（30秒）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 8 }}>🎯 結論（30秒）</div>
         <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.85, color: 'var(--ink-2)' }}>
           <li>法規は <strong>A問題60点（6点×10問）＋ B問題40点（13・13・14点）</strong>、試験時間 <strong>65分</strong>、合格 <strong>60点</strong>（難しい年は54〜55点に下がることも）。</li>
           <li><strong>A問題で確実に40点台</strong>を取り、<strong>B問題で20点</strong>を足して60点超えが王道。B問題は1問が13〜14点と重いので、得意な1問は必ず取り切る。</li>
@@ -24638,10 +24638,10 @@ function TokutenSenryakuPage({ onNav }) {
 
 function ExamOverviewPage({ onNav }) {
   const navLink = (id, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
   const extLink = (href, label) => (
-    <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>{label}</a>
+    <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-ink)', textDecoration: 'underline' }}>{label}</a>
   );
   return (
     <div>
@@ -24766,14 +24766,14 @@ function KakomonThemePage({ onNav, cfg }) {
   const th  = { padding: '8px 10px', borderBottom: '2px solid var(--line)', textAlign: 'left', fontSize: 12, color: 'var(--ink-3)', background: 'var(--bg-elev)' };
   const tdL = { padding: '7px 10px', borderBottom: '1px solid var(--line)', verticalAlign: 'top', fontSize: 13, lineHeight: 1.6 };
   const navLink = (id, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
   return (
     <div>
       <h1 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 800 }}>📚 過去問テーマ別演習：{cfg.title}</h1>
 
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', margin: '12px 0 18px' }}>
-        <div style={{ fontWeight: 700, color: 'var(--accent)', marginBottom: 6, fontSize: 13 }}>過去問演習のハブページ</div>
+        <div style={{ fontWeight: 700, color: 'var(--accent-ink)', marginBottom: 6, fontSize: 13 }}>過去問演習のハブページ</div>
         <div style={{ fontSize: 13, lineHeight: 1.75, color: 'var(--ink-2)' }}>{cfg.intro}</div>
       </div>
 
@@ -24831,7 +24831,7 @@ function KakomonThemePage({ onNav, cfg }) {
             return (
               <div key={q.id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: '12px 14px', marginBottom: 12, background: 'var(--bg-elev)' }}>
                 <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.7, marginBottom: 8 }}>
-                  <span style={{ color: 'var(--accent)', marginRight: 6 }}>問{i + 1}</span>
+                  <span style={{ color: 'var(--accent-ink)', marginRight: 6 }}>問{i + 1}</span>
                   <span className={`rank rank-${q.rank}`} style={{ marginRight: 6 }}>{q.rank}</span>
                   {q.q}
                 </div>
@@ -24882,7 +24882,7 @@ function KakomonThemePage({ onNav, cfg }) {
 // ─────────────────────────────────────────────
 function ShisetsuKanriHubPage({ onNav, data }) {
   const navLink = (id, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
   const h2 = { fontSize: 17, fontWeight: 700, margin: '32px 0 12px' };
   const th = { padding: '8px 10px', background: 'var(--bg-2)', borderBottom: '2px solid var(--line)', fontSize: 12, textAlign: 'left', fontWeight: 700 };
@@ -24995,7 +24995,7 @@ function ShisetsuKanriHubPage({ onNav, data }) {
 // ─────────────────────────────────────────────
 function JigyohoTaikeiHubPage({ onNav, data }) {
   const navLink = (id, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
   const h2 = { fontSize: 17, fontWeight: 700, margin: '32px 0 12px' };
   const th = { padding: '8px 10px', background: 'var(--bg-2)', borderBottom: '2px solid var(--line)', fontSize: 12, textAlign: 'left', fontWeight: 700 };
@@ -25122,7 +25122,7 @@ function JigyohoTaikeiHubPage({ onNav, data }) {
 // ─────────────────────────────────────────────
 function ShijimonoKyodoPage({ onNav, data }) {
   const navLink = (id, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
   const h2 = { fontSize: 17, fontWeight: 700, margin: '32px 0 12px' };
   const dw = (n, label, kind) => (
@@ -25140,7 +25140,7 @@ function ShijimonoKyodoPage({ onNav, data }) {
       />
 
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
           本ページは「<strong>試験対策・直前確認</strong>」（C層）特化。条文の原文逐語・かみ砕き解説（A・B層）は denken-wiki が SOT。<strong>支線の計算</strong>は{navLink('shisen-hikisama', '支線の引張強さ（1.3）')}、<strong>たるみ・風圧合成</strong>は{navLink('densen-tarumi', '架空電線のたるみ（1.11）')}が担当。
         </div>
@@ -25270,7 +25270,7 @@ function ShijimonoKyodoPage({ onNav, data }) {
 // ─────────────────────────────────────────────
 function HatsuhendenjoPage({ onNav, data }) {
   const navLink = (id, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
   const h2 = { fontSize: 17, fontWeight: 700, margin: '32px 0 12px' };
   const dw = (n, label, kind) => (
@@ -25288,7 +25288,7 @@ function HatsuhendenjoPage({ onNav, data }) {
       />
 
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
           本ページは「<strong>試験対策・直前確認</strong>」（C層）特化。条文の原文逐語・かみ砕き解説（A・B層）は denken-wiki が SOT。<strong>風車（風力発電）の技術基準</strong>は{navLink('furyoku-gijutsukijun', '風力発電の技術基準（5.1）')}が担当。
         </div>
@@ -25371,7 +25371,7 @@ function HatsuhendenjoPage({ onNav, data }) {
 // ─────────────────────────────────────────────
 function ShiyoBashoPage({ onNav, data }) {
   const navLink = (id, label) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onNav(id); }} style={{ color: 'var(--accent-ink)', textDecoration: 'underline', cursor: 'pointer' }}>{label}</a>
   );
   const h2 = { fontSize: 17, fontWeight: 700, margin: '32px 0 12px' };
   const dw = (n, label, kind) => (
@@ -25389,7 +25389,7 @@ function ShiyoBashoPage({ onNav, data }) {
       />
 
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🗺️ A. 全体像（30秒で位置づけ把握）</div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
           本ページは「<strong>試験対策・直前確認</strong>」（C層）特化。条文の原文逐語・かみ砕き解説（A・B層）は denken-wiki が SOT。<strong>対地電圧の詳細</strong>は{navLink('juutaku-taichi-denatsu', '住宅の屋内電路の対地電圧（3.9）')}が担当。
         </div>
@@ -25458,7 +25458,7 @@ function ShiyoBashoPage({ onNav, data }) {
           <li>(b) 過電流遮断器 ≦ min(<strong>3×IM＋IH</strong>, <strong>2.5×許容電流</strong>)</li>
           <li>「1.25/1.1倍は電線の許容電流」「遮断器は3倍・2.5倍の小さい方」をセットで確認</li>
         </ol>
-        <p style={{fontSize: 11.5, color: 'var(--ink-3)', marginTop: 8}}>※ 設問本文・選択肢・正解は<a href="https://denken-ou.com/houkir1-11/" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)'}}>電験王3「R1 問11」</a>で照合（係数は解釈第148条を逐語照合済）。</p>
+        <p style={{fontSize: 11.5, color: 'var(--ink-3)', marginTop: 8}}>※ 設問本文・選択肢・正解は<a href="https://denken-ou.com/houkir1-11/" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent-ink)'}}>電験王3「R1 問11」</a>で照合（係数は解釈第148条を逐語照合済）。</p>
       </PlainExplain>
 
       <h2 style={h2} id="exam">過去の出題（テーマ別）</h2>
@@ -25625,7 +25625,7 @@ function HensyatsukiKorituPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           🗺️ A. 全体像（30秒で位置づけ把握）
         </div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
@@ -25670,7 +25670,7 @@ function HensyatsukiKorituPage({ onNav, data }) {
 
       {/* PDCA Plan */}
       <div style={{ background: 'var(--bg-elev)', border: '1px dashed var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>📅 Plan（今日の学習目標）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>📅 Plan（今日の学習目標）</div>
         <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
           <li>「<strong>鉄損は24h一定・銅損は負荷率²×時間</strong>」を5秒で唱える</li>
           <li>50kVA・鉄損0.4kW・全負荷銅損1.0kW の日負荷例で η<sub>d</sub> を自力で <strong>約96.8%</strong> に到達</li>
@@ -25725,7 +25725,7 @@ function HensyatsukiKorituPage({ onNav, data }) {
 
       {/* 死活5ステップ視覚化カード */}
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 12 }}>
           🎯 死活5ステップ・フロー（全日効率 η_d をミスゼロで通す設計図）
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 12 }}>
@@ -25845,7 +25845,7 @@ function HensyatsukiKorituPage({ onNav, data }) {
       <h2 id="svg-load">6. 日負荷曲線（時間帯別の出力）</h2>
       <SectionCheck pageId="henshatsuki-koritu" sectionId="svg-load" />
       <div style={{ margin: '12px 0 16px', padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)' }}>
-        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent)' }}>📐 日負荷例（全負荷8h → 半負荷8h → 無負荷8h）</div>
+        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent-ink)' }}>📐 日負荷例（全負荷8h → 半負荷8h → 無負荷8h）</div>
         <svg viewBox="0 0 560 260" style={{ width: '100%', maxWidth: 560, height: 'auto', display: 'block', margin: '0 auto', background: 'var(--bg-1)', borderRadius: 4 }}>
           {/* 軸 */}
           <line x1="60" y1="210" x2="520" y2="210" stroke="var(--ink-2)" strokeWidth="1.5" />
@@ -25879,7 +25879,7 @@ function HensyatsukiKorituPage({ onNav, data }) {
       <h2 id="svg-loss">7. 損失の内訳（鉄損は一定・銅損は負荷率²）</h2>
       <SectionCheck pageId="henshatsuki-koritu" sectionId="svg-loss" />
       <div style={{ margin: '12px 0 16px', padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)' }}>
-        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent)' }}>📐 鉄損（24h一定）と銅損（負荷率²）の電力量</div>
+        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent-ink)' }}>📐 鉄損（24h一定）と銅損（負荷率²）の電力量</div>
         <svg viewBox="0 0 560 240" style={{ width: '100%', maxWidth: 560, height: 'auto', display: 'block', margin: '0 auto', background: 'var(--bg-1)', borderRadius: 4 }}>
           {/* 鉄損: 24h一定の帯 */}
           <text x="40" y="40" fontSize="12" fill="#a06" fontWeight="700">鉄損 P_i=0.4kW × 24h = 9.6 kWh（常時一定）</text>
@@ -25907,7 +25907,7 @@ function HensyatsukiKorituPage({ onNav, data }) {
       <h2 id="svg-maxeff">8. 効率最大の条件（鉄損 = 銅損）</h2>
       <SectionCheck pageId="henshatsuki-koritu" sectionId="svg-maxeff" />
       <div style={{ margin: '12px 0 16px', padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)' }}>
-        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent)' }}>📐 効率 vs 負荷率（鉄損=銅損の点で最大）</div>
+        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent-ink)' }}>📐 効率 vs 負荷率（鉄損=銅損の点で最大）</div>
         <svg viewBox="0 0 560 260" style={{ width: '100%', maxWidth: 560, height: 'auto', display: 'block', margin: '0 auto', background: 'var(--bg-1)', borderRadius: 4 }}>
           <line x1="60" y1="210" x2="520" y2="210" stroke="var(--ink-2)" strokeWidth="1.5" />
           <line x1="60" y1="210" x2="60" y2="30" stroke="var(--ink-2)" strokeWidth="1.5" />
@@ -25934,7 +25934,7 @@ function HensyatsukiKorituPage({ onNav, data }) {
       <h2 id="mnemonic">9. 暗記フック：公式と性質を試験本番で忘れない覚え方</h2>
       <SectionCheck pageId="henshatsuki-koritu" sectionId="mnemonic" />
       <div style={{ padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)', borderLeft: '3px solid var(--accent)', marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
         <ol style={{ margin: 0, paddingLeft: 20, fontSize: 12.5, lineHeight: 1.9 }}>
           <li><strong>鉄は24時間勤務</strong>：鉄損は無負荷でも常時発生 → 必ず ×24h</li>
           <li><strong>銅は2乗で働く</strong>：銅損は負荷率の2乗 α²。半負荷なら1/4（0.25倍）</li>
@@ -26169,9 +26169,9 @@ function HensyatsukiKorituPage({ onNav, data }) {
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: 20, fontSize: 12.5, lineHeight: 1.8 }}>
         <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>🎯 次の学習推奨</div>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
-          <li><strong>力率改善</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('ryokuritsu-kaizen');}} style={{color:'var(--accent)'}}>ryokuritsu-kaizen（1.5）</a> — 同じ施設管理の計算B問題</li>
-          <li><strong>需要率・負荷率・不等率</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('juyoritsu-keisan');}} style={{color:'var(--accent)'}}>juyoritsu-keisan（1.6）</a> — 負荷率の概念が直結</li>
-          <li><strong>変圧器容量</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('hensyatsuki-yoryo');}} style={{color:'var(--accent)'}}>変圧器容量（6.4）</a> — 受電設備の変圧器選定</li>
+          <li><strong>力率改善</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('ryokuritsu-kaizen');}} style={{color:'var(--accent-ink)'}}>ryokuritsu-kaizen（1.5）</a> — 同じ施設管理の計算B問題</li>
+          <li><strong>需要率・負荷率・不等率</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('juyoritsu-keisan');}} style={{color:'var(--accent-ink)'}}>juyoritsu-keisan（1.6）</a> — 負荷率の概念が直結</li>
+          <li><strong>変圧器容量</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('hensyatsuki-yoryo');}} style={{color:'var(--accent-ink)'}}>変圧器容量（6.4）</a> — 受電設備の変圧器選定</li>
         </ul>
       </div>
 
@@ -26199,7 +26199,7 @@ function ShisenHikisamaPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           🗺️ A. 全体像（30秒で位置づけ把握）
         </div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
@@ -26244,7 +26244,7 @@ function ShisenHikisamaPage({ onNav, data }) {
 
       {/* PDCA Plan */}
       <div style={{ background: 'var(--bg-elev)', border: '1px dashed var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>📅 Plan（今日の学習目標）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>📅 Plan（今日の学習目標）</div>
         <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
           <li>核心式 <strong>T = F / sin θ</strong> と「θ は電柱となす角」を5秒で唱える</li>
           <li>R3 問11（F=15kN・水平4m・高さ8m）の支線張力を自力で <strong>約34kN</strong> に到達</li>
@@ -26299,7 +26299,7 @@ function ShisenHikisamaPage({ onNav, data }) {
 
       {/* 死活5ステップ視覚化カード */}
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 12 }}>
           🎯 死活5ステップ・フロー（支線張力 T と必要条数 n をミスゼロで通す設計図）
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 12 }}>
@@ -26415,7 +26415,7 @@ function ShisenHikisamaPage({ onNav, data }) {
       <h2 id="svg-geom">6. 幾何図（電柱・支線・角度・距離）</h2>
       <SectionCheck pageId="shisen-hikisama" sectionId="svg-geom" />
       <div style={{ margin: '12px 0 16px', padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)' }}>
-        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent)' }}>📐 電柱・支線の幾何（R3問11 寸法）</div>
+        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent-ink)' }}>📐 電柱・支線の幾何（R3問11 寸法）</div>
         <svg viewBox="0 0 560 320" style={{ width: '100%', maxWidth: 560, height: 'auto', display: 'block', margin: '0 auto', background: 'var(--bg-1)', borderRadius: 4 }}>
           {/* 地面 */}
           <line x1="40" y1="270" x2="520" y2="270" stroke="#666" strokeWidth="2" />
@@ -26457,7 +26457,7 @@ function ShisenHikisamaPage({ onNav, data }) {
       <h2 id="svg-force">7. 力のつり合い（水平成分 T sin θ = F）</h2>
       <SectionCheck pageId="shisen-hikisama" sectionId="svg-force" />
       <div style={{ margin: '12px 0 16px', padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)' }}>
-        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent)' }}>📐 支線張力 T の分解（水平成分が F を支える）</div>
+        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent-ink)' }}>📐 支線張力 T の分解（水平成分が F を支える）</div>
         <svg viewBox="0 0 520 280" style={{ width: '100%', maxWidth: 520, height: 'auto', display: 'block', margin: '0 auto', background: 'var(--bg-1)', borderRadius: 4 }}>
           {/* 取付点 */}
           <circle cx="120" cy="80" r="5" fill="var(--ink-1)" />
@@ -26493,7 +26493,7 @@ function ShisenHikisamaPage({ onNav, data }) {
       <h2 id="svg-jousuu">8. 必要素線条数のイメージ（安全率込み）</h2>
       <SectionCheck pageId="shisen-hikisama" sectionId="svg-jousuu" />
       <div style={{ margin: '12px 0 16px', padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)' }}>
-        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent)' }}>📐 必要条数 = 安全率を見込んだ荷重 ÷ 素線1条の強度</div>
+        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent-ink)' }}>📐 必要条数 = 安全率を見込んだ荷重 ÷ 素線1条の強度</div>
         <svg viewBox="0 0 560 230" style={{ width: '100%', maxWidth: 560, height: 'auto', display: 'block', margin: '0 auto', background: 'var(--bg-1)', borderRadius: 4 }}>
           {/* 必要強度バー */}
           <text x="40" y="40" fontSize="12" fill="var(--ink-1)" fontWeight="700">必要強度 = 安全率 × T = 1.5 × 33.5 ≒ 50.3 kN</text>
@@ -26517,7 +26517,7 @@ function ShisenHikisamaPage({ onNav, data }) {
       <h2 id="mnemonic">9. 暗記フック：公式と手順を試験本番で忘れない覚え方</h2>
       <SectionCheck pageId="shisen-hikisama" sectionId="mnemonic" />
       <div style={{ padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)', borderLeft: '3px solid var(--accent)', marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
         <ol style={{ margin: 0, paddingLeft: 20, fontSize: 12.5, lineHeight: 1.9 }}>
           <li><strong>T はエフ割るサイン</strong>：T = F / sin θ。「水平力 F を支線の水平成分 sin θ で割る」</li>
           <li><strong>θ は電柱から測る</strong>：電柱（鉛直）とのなす角 → sin θ が水平成分。「電柱基準でサイン」</li>
@@ -26768,9 +26768,9 @@ function ShisenHikisamaPage({ onNav, data }) {
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: 20, fontSize: 12.5, lineHeight: 1.8 }}>
         <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>🎯 次の学習推奨</div>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
-          <li><strong>電圧降下</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('denatsu-kouka');}} style={{color:'var(--accent)'}}>denatsu-kouka（1.2）</a> — 同じB問題・計算系の頻出テーマ</li>
-          <li><strong>変圧器の全日効率</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('henshatsuki-koritu');}} style={{color:'var(--accent)'}}>henshatsuki-koritu（1.4）</a> — 次のB問題</li>
-          <li><strong>離隔距離・電線路</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('densenro');}} style={{color:'var(--accent)'}}>電線路（3.4）</a> — 風圧荷重・電線張力で F を求める前提</li>
+          <li><strong>電圧降下</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('denatsu-kouka');}} style={{color:'var(--accent-ink)'}}>denatsu-kouka（1.2）</a> — 同じB問題・計算系の頻出テーマ</li>
+          <li><strong>変圧器の全日効率</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('henshatsuki-koritu');}} style={{color:'var(--accent-ink)'}}>henshatsuki-koritu（1.4）</a> — 次のB問題</li>
+          <li><strong>離隔距離・電線路</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('densenro');}} style={{color:'var(--accent-ink)'}}>電線路（3.4）</a> — 風圧荷重・電線張力で F を求める前提</li>
         </ul>
       </div>
 
@@ -26798,7 +26798,7 @@ function DenatsuKoukaPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           🗺️ A. 全体像（30秒で位置づけ把握）
         </div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
@@ -26843,7 +26843,7 @@ function DenatsuKoukaPage({ onNav, data }) {
 
       {/* PDCA Plan */}
       <div style={{ background: 'var(--bg-elev)', border: '1px dashed var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>📅 Plan（今日の学習目標）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>📅 Plan（今日の学習目標）</div>
         <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
           <li>核心式 <strong>e = k·I(R cos θ + X sin θ)</strong> と係数 <strong>2 / √3 / 1</strong> を5秒で唱える</li>
           <li>三相3線式（I=100A・R=0.3Ω・X=0.2Ω・cos θ=0.8）の e を自力で <strong>約62V</strong> に到達</li>
@@ -26898,7 +26898,7 @@ function DenatsuKoukaPage({ onNav, data }) {
 
       {/* 死活5ステップ視覚化カード */}
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 12 }}>
           🎯 死活5ステップ・フロー（電圧降下 e 計算をミスゼロで通す設計図）
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 12 }}>
@@ -27018,7 +27018,7 @@ function DenatsuKoukaPage({ onNav, data }) {
       <h2 id="svg-line">6. 線路モデル図（送電端・線路インピーダンス・受電端）</h2>
       <SectionCheck pageId="denatsu-kouka" sectionId="svg-line" />
       <div style={{ margin: '12px 0 16px', padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)' }}>
-        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent)' }}>📐 線路モデル（電流 I が R・X を通って電圧が降下する）</div>
+        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent-ink)' }}>📐 線路モデル（電流 I が R・X を通って電圧が降下する）</div>
         <svg viewBox="0 0 620 220" style={{ width: '100%', maxWidth: 620, height: 'auto', display: 'block', margin: '0 auto', background: 'var(--bg-1)', borderRadius: 4 }}>
           {/* 送電端 */}
           <circle cx="70" cy="80" r="22" fill="none" stroke="#0a7d50" strokeWidth="2.5" />
@@ -27055,7 +27055,7 @@ function DenatsuKoukaPage({ onNav, data }) {
       <h2 id="svg-vector">7. ベクトル図（近似式 e ≒ I(R cos θ + X sin θ) の導出）</h2>
       <SectionCheck pageId="denatsu-kouka" sectionId="svg-vector" />
       <div style={{ margin: '12px 0 16px', padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)' }}>
-        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent)' }}>📐 1線あたりの電圧降下ベクトル図（受電端電圧 V_r 基準）</div>
+        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent-ink)' }}>📐 1線あたりの電圧降下ベクトル図（受電端電圧 V_r 基準）</div>
         <svg viewBox="0 0 560 300" style={{ width: '100%', maxWidth: 560, height: 'auto', display: 'block', margin: '0 auto', background: 'var(--bg-1)', borderRadius: 4 }}>
           {/* 受電端電圧 V_r （水平基準） */}
           <line x1="40" y1="220" x2="320" y2="220" stroke="#1a73e8" strokeWidth="3" />
@@ -27088,7 +27088,7 @@ function DenatsuKoukaPage({ onNav, data }) {
       <h2 id="svg-coef">8. 方式別の係数比較図（2 / √3 / 1）</h2>
       <SectionCheck pageId="denatsu-kouka" sectionId="svg-coef" />
       <div style={{ margin: '12px 0 16px', padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)' }}>
-        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent)' }}>📐 同じ R・X・I・cos θ でも方式で電圧降下が変わる</div>
+        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent-ink)' }}>📐 同じ R・X・I・cos θ でも方式で電圧降下が変わる</div>
         <svg viewBox="0 0 600 240" style={{ width: '100%', maxWidth: 600, height: 'auto', display: 'block', margin: '0 auto', background: 'var(--bg-1)', borderRadius: 4 }}>
           {/* 単相2線 */}
           <text x="100" y="30" fontSize="12" fill="var(--ink-1)" fontWeight="700" textAnchor="middle">単相2線式</text>
@@ -27127,7 +27127,7 @@ function DenatsuKoukaPage({ onNav, data }) {
       <h2 id="mnemonic">9. 暗記フック：係数と公式を試験本番で忘れない覚え方</h2>
       <SectionCheck pageId="denatsu-kouka" sectionId="mnemonic" />
       <div style={{ padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)', borderLeft: '3px solid var(--accent)', marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
         <ol style={{ margin: 0, paddingLeft: 20, fontSize: 12.5, lineHeight: 1.9 }}>
           <li><strong>係数の語呂</strong>：「<strong>単2は2本・三相はルート3・単3は中性線で1</strong>」。本数と相のイメージで k を出す</li>
           <li><strong>括弧内は「R前X後」</strong>：R cos θ + X sin θ。「抵抗にコサイン・リアクタンスにサイン」をセットで覚える</li>
@@ -27371,9 +27371,9 @@ function DenatsuKoukaPage({ onNav, data }) {
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: 20, fontSize: 12.5, lineHeight: 1.8 }}>
         <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>🎯 次の学習推奨</div>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
-          <li><strong>力率改善</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('ryokuritsu-kaizen');}} style={{color:'var(--accent)'}}>ryokuritsu-kaizen（1.5）</a> — 力率を上げると電圧降下も減る（X sin θ が小さくなる）関連</li>
-          <li><strong>支線の引張強さ</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('shisen-hikisama');}} style={{color:'var(--accent)'}}>shisen-hikisama（1.3）</a> — 同じB問題・計算系の頻出テーマ</li>
-          <li><strong>供給電圧維持</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('kyokyu-denatsu-iji');}} style={{color:'var(--accent)'}}>供給電圧・周波数の維持（2.5）</a> — 電圧降下を抑える法的根拠</li>
+          <li><strong>力率改善</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('ryokuritsu-kaizen');}} style={{color:'var(--accent-ink)'}}>ryokuritsu-kaizen（1.5）</a> — 力率を上げると電圧降下も減る（X sin θ が小さくなる）関連</li>
+          <li><strong>支線の引張強さ</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('shisen-hikisama');}} style={{color:'var(--accent-ink)'}}>shisen-hikisama（1.3）</a> — 同じB問題・計算系の頻出テーマ</li>
+          <li><strong>供給電圧維持</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('kyokyu-denatsu-iji');}} style={{color:'var(--accent-ink)'}}>供給電圧・周波数の維持（2.5）</a> — 電圧降下を抑える法的根拠</li>
         </ul>
       </div>
 
@@ -27401,7 +27401,7 @@ function RyoritsuKaizenPage({ onNav, data }) {
         padding: '14px 18px',
         marginBottom: 20,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>
           🗺️ A. 全体像（30秒で位置づけ把握）
         </div>
         <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.7 }}>
@@ -27446,7 +27446,7 @@ function RyoritsuKaizenPage({ onNav, data }) {
 
       {/* PDCA Plan */}
       <div style={{ background: 'var(--bg-elev)', border: '1px dashed var(--accent)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>📅 Plan（今日の学習目標）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>📅 Plan（今日の学習目標）</div>
         <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12.5, lineHeight: 1.8 }}>
           <li>核心式 <strong>Q<sub>c</sub> = P (tan θ<sub>1</sub> − tan θ<sub>2</sub>)</strong> を5秒で唱える</li>
           <li>力率 0.8 → 0.95 の Q<sub>c</sub> 計算（P=100kW）を自力で <strong>43 kvar</strong> に到達</li>
@@ -27497,7 +27497,7 @@ function RyoritsuKaizenPage({ onNav, data }) {
 
       {/* 死活5ステップ視覚化カード */}
       <div style={{ background: 'var(--bg-elev)', border: '2px solid var(--accent)', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 12 }}>
           🎯 死活5ステップ・フロー（Q<sub>c</sub> 計算をミスゼロで通す設計図）
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 12 }}>
@@ -27613,7 +27613,7 @@ function RyoritsuKaizenPage({ onNav, data }) {
       <h2 id="svg-vector">6. 電力ベクトル図（改善前後・物理イメージ）</h2>
       <SectionCheck pageId="ryokuritsu-kaizen" sectionId="svg-vector" />
       <div style={{ margin: '12px 0 16px', padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)' }}>
-        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent)' }}>📐 電力ベクトル図（P・Q・S の関係・改善前 vs 改善後）</div>
+        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 12, color: 'var(--accent-ink)' }}>📐 電力ベクトル図（P・Q・S の関係・改善前 vs 改善後）</div>
         <svg viewBox="0 0 560 280" style={{ width: '100%', maxWidth: 560, height: 'auto', display: 'block', margin: '0 auto', background: 'var(--bg-1)', borderRadius: 4 }}>
           {/* 座標軸 */}
           <line x1="40" y1="240" x2="500" y2="240" stroke="var(--ink-2)" strokeWidth="1.5" />
@@ -27653,7 +27653,7 @@ function RyoritsuKaizenPage({ onNav, data }) {
       <h2 id="mnemonic">7. 暗記フック：tan 値と公式を試験本番で忘れない覚え方</h2>
       <SectionCheck pageId="ryokuritsu-kaizen" sectionId="mnemonic" />
       <div style={{ padding: '14px 16px', background: 'var(--bg-elev)', borderRadius: 6, border: '1px solid var(--line)', borderLeft: '3px solid var(--accent)', marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent-ink)', marginBottom: 10 }}>🧠 5つの覚え方（複数経路で記憶定着）</div>
         <ol style={{ margin: 0, paddingLeft: 20, fontSize: 12.5, lineHeight: 1.9 }}>
           <li><strong>主要 tan 値の丸暗記</strong>：「<strong>0.8 = 0.75</strong>」「<strong>0.95 = 0.329</strong>」を最優先で覚える（出題9割で出る2値）。次点 cos 0.6→1.33、0.7→1.02、0.9→0.484</li>
           <li><strong>公式語呂</strong>：「<strong>Q<sub>c</sub> はピ・タン・タン（P・tan・tan）</strong>」。P × (tan θ<sub>1</sub> − tan θ<sub>2</sub>) の構造を音で覚える</li>
@@ -27758,7 +27758,7 @@ function RyoritsuKaizenPage({ onNav, data }) {
 
       {/* 令和6年度上期 問12 — 直列リアクトル付きコンデンサ（実際の過去問・発展） */}
       <div style={{ marginTop: 20, marginBottom: 8, padding: '10px 14px', background: 'var(--bg-elev)', border: '1px solid var(--line)', borderLeft: '3px solid var(--accent)', borderRadius: 6, fontSize: 12.5, lineHeight: 1.7 }}>
-        <strong style={{ color: 'var(--accent)' }}>📘 令和6年度上期 問12（電気施設管理・発展）</strong><br />
+        <strong style={{ color: 'var(--accent-ink)' }}>📘 令和6年度上期 問12（電気施設管理・発展）</strong><br />
         基本の Q_c = P(tan θ_1 − tan θ_2) に <strong>直列リアクトル(SR)の補正</strong>が加わる実戦問題。SC の端子電圧の上昇（(a)）と、SR を見込んだ SC の容量（(b)）が問われた。最新年度の出題なので、基本パターンとセットで押さえる。
       </div>
 
@@ -27942,8 +27942,8 @@ function RyoritsuKaizenPage({ onNav, data }) {
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: 20, fontSize: 12.5, lineHeight: 1.8 }}>
         <div style={{ fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>🎯 次の学習推奨</div>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
-          <li><strong>需要率・負荷率・不等率</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('juyoritsu-keisan');}} style={{color:'var(--accent)'}}>juyoritsu-keisan（1.6）</a> — デマンド・負荷管理と組み合わせ問題</li>
-          <li><strong>条文全体像・力率改善の系統的解説</strong>: <a href="https://kfurufuru.github.io/denken-wiki/themes/ryokuritsu-kaizen/" target="_blank" rel="noopener" style={{color:'var(--accent)'}}>denken-wiki「力率改善」</a></li>
+          <li><strong>需要率・負荷率・不等率</strong>: hoki-wiki <a href="#" onClick={(e)=>{e.preventDefault(); onNav('juyoritsu-keisan');}} style={{color:'var(--accent-ink)'}}>juyoritsu-keisan（1.6）</a> — デマンド・負荷管理と組み合わせ問題</li>
+          <li><strong>条文全体像・力率改善の系統的解説</strong>: <a href="https://kfurufuru.github.io/denken-wiki/themes/ryokuritsu-kaizen/" target="_blank" rel="noopener" style={{color:'var(--accent-ink)'}}>denken-wiki「力率改善」</a></li>
         </ul>
       </div>
 
