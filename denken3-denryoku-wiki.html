@@ -1060,6 +1060,7 @@ window.WIKI_DATA = {
       title: "配電",
       pages: [
         { id: "haiden", num: "4.1", title: "配電線路", freq: "max", featured: true, src: "themes/haiden" },
+        { id: "jikayou-chiraku", num: "4.2", title: "自家用受電設備の地絡保護", freq: "high", src: "themes/jikayou-chiraku" },
       ],
     },
     {
@@ -1944,7 +1945,7 @@ const HomePage = ({ data, onNav }) => {
         meta={[
           { label: "対象試験", value: "電験3種 電力科目" },
           { label: "最終更新", value: "2026.06" },
-          { label: "登録単元", value: "15" },
+          { label: "登録単元", value: "16" },
         ]}
       />
       <div className="content">
@@ -2059,6 +2060,7 @@ function pageDeckSummary(id) {
     "kakuu-souden":    "線路定数・コロナ・がいし塩害・振動・雷害対策。送電分野の最重要・論説頻出。",
     "chichuu-souden":  "電力ケーブルの構造、充電電流・無負荷充電容量、布設方式、故障点標定。",
     "haiden":          "配電方式（単相3線・三相3線）、電圧降下・電力損失、力率改善。出題数No.1。",
+    "jikayou-chiraku": "高圧受電需要家の地絡保護。GR と DGR の使い分け、もらい事故（波及事故）防止、ZCT・EVT。問8枠・法規横断で高頻度。",
     "denki-zairyou":   "導電・絶縁・磁性材料の性質。SF₆ガス・絶縁油・鉄心材料が論説で頻出。",
     "denryoku-keitou": "需給バランス・周波数調整・安定度、調相設備による電圧・無効電力の制御。",
   };
@@ -2269,6 +2271,206 @@ const HaidenPage = ({ data, onNav }) => (
     </div>
     <PageNav
       prev={{ id: "chichuu-souden", title: "3.2 地中送電・電力ケーブル" }}
+      next={{ id: "jikayou-chiraku", title: "4.2 自家用受電設備の地絡保護" }}
+      onNav={onNav} />
+  </>
+);
+
+/* ============================================================
+   4.2 自家用受電設備の地絡保護 — 本文移植済み（保護継電器・高頻度 / 問8枠横断）
+   出典: denken-wiki-denryoku/docs/themes/jikayou-chiraku.md（v1.0）
+   ============================================================ */
+const JikayouChirakuPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "自家用受電設備の地絡保護" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="4.2  GROUND-FAULT PROTECTION"
+      title="自家用受電設備の地絡保護"
+      deck="高圧で受電する需要家（工場・ビル）の地絡保護。GR と DGR の使い分け、もらい事故（波及事故）の防止が核心。電力科目の保護継電器枠（問8）と法規の自家用電気工作物の双方で問われる横断領域。"
+      meta={[
+        { label: "出題頻度", value: "高頻度（問8枠・横断）" },
+        { label: "難易度", value: "★★★" },
+        { label: "出題形式", value: "穴埋・論説・計算" },
+      ]}
+    />
+    <div className="content">
+
+      <h2 id="intro"><span className="h-num">1.</span>直感的理解</h2>
+      <p>自家用受電設備の地絡保護の本質は、<strong>構内の地絡を検出して受電用遮断器を切る</strong>だけでなく、<strong>自分の事故を電力会社の配電系統に波及させない（もらい事故を起こさない・受けない）</strong>ことにある。高圧受電（6.6 kV）する需要家では、この2つを両立させる保護方式が求められる。</p>
+      <Box kind="tip" label="地絡保護の骨格（この流れで押さえる）">
+        <p>配電線 6.6 kV →&nbsp;<strong>PAS（区分開閉器）</strong>&nbsp;→ 構内引込（高圧 CVT ケーブル）→&nbsp;<strong>受電用 VCB</strong>&nbsp;→ 変圧器 → 低圧負荷。地絡検出は&nbsp;<strong>ZCT（零相電流 I₀）</strong>&nbsp;と&nbsp;<strong>EVT（零相電圧 V₀）</strong>&nbsp;で行い、<strong>DGR</strong>&nbsp;が方向を判定して PAS・VCB を切る。</p>
+      </Box>
+      <Box kind="warn" label="なぜ単純な GR では足りないのか（因果理解）">
+        <p>高圧受電では構内に高圧ケーブル（CVT 等）が引き回される。ケーブルは&nbsp;<strong>対地静電容量が大きい</strong>&nbsp;ため、<strong>構外（系統側）の地絡</strong>&nbsp;が起きると、その零相電圧を受けて構内ケーブルの対地静電容量を通る&nbsp;<strong>充電電流</strong>&nbsp;が ZCT に流れる。大きさだけを見る GR（地絡過電流継電器）はこれを「構内地絡」と誤認し、<strong>健全な自家用設備が不必要に遮断される（もらい事故）</strong>。これを防ぐため、電流の大きさに加え&nbsp;<strong>位相（方向）</strong>&nbsp;を判定する DGR で「電流が構内へ向かうか／系統へ向かうか」を仕分ける。</p>
+      </Box>
+      <Box kind="example" label="5秒で思い出す">
+        <p>GR は大きさだけ → ケーブルの充電電流で&nbsp;<strong>もらい事故</strong>。DGR は大きさ＋方向 → 構外地絡では不動作で&nbsp;<strong>波及・もらいを防ぐ</strong>。</p>
+      </Box>
+
+      <h2 id="setsubi"><span className="h-num">2.</span>設備を歩く（地絡保護の骨格）</h2>
+      <Box kind="tip" label="高圧受電設備の主要機器">
+        <ul>
+          <li><strong>PAS（区分開閉器）</strong> — 電柱上の引込口に設置。GR 付 PAS／DGR 付 PAS とし、構内地絡時に自動で開放して系統への波及を防ぐ。ただし PAS は遮断器ではないため、地絡電流を確認後に&nbsp;<strong>無電圧で開放する SOG 動作</strong>。</li>
+          <li><strong>ZCT（零相変流器）</strong> — 三相一括で鉄心を通し、零相電流 I₀（地絡電流相当）を検出。</li>
+          <li><strong>EVT／ZPD（接地形計器用変圧器・零相電圧検出器）</strong> — 零相電圧 V₀ を検出。DGR の方向判定の基準位相を与える。</li>
+          <li><strong>VCB（真空遮断器）</strong> — 受電用遮断器。継電器の指令で実際に電流を遮断する実行側。</li>
+        </ul>
+      </Box>
+      <Box kind="warn" label="GR と DGR の入力の違い（見分けの第一歩）">
+        <p><strong>GR（地絡過電流継電器）＝ ZCT のみ</strong>（I₀ の大きさだけ）。<strong>DGR（地絡方向継電器）＝ ZCT ＋ EVT</strong>（I₀ の大きさ ＋ V₀ との位相関係）。<strong>EVT が付くか付かないか</strong>が GR と DGR の見分けの第一歩。DGR は「① I₀ が整定値以上」かつ「② V₀ に対する I₀ の位相が構内方向」の両方を満たすときトリップする。</p>
+      </Box>
+
+      <h2 id="gr-dgr"><span className="h-num">3.</span>GR と DGR の比較表（最重要）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>項目</th><th>GR（地絡過電流継電器・OCGR／51G）</th><th>DGR（地絡方向継電器・67G）</th></tr></thead>
+        <tbody>
+          <tr><td><strong>入力センサー</strong></td><td>ZCT のみ</td><td>ZCT ＋ EVT／ZPD</td></tr>
+          <tr><td><strong>判定要素</strong></td><td>零相電流 I₀ の大きさだけ</td><td>I₀ の大きさ ＋ 位相（方向）</td></tr>
+          <tr><td><strong>構外地絡（系統側）</strong></td><td>ケーブル充電電流で誤動作しうる</td><td>不動作（電流が構外方向と判定）</td></tr>
+          <tr><td><strong>構内地絡</strong></td><td>動作</td><td>動作</td></tr>
+          <tr><td><strong>もらい事故防止</strong></td><td>×（できない）</td><td>○（方向判定で防ぐ）</td></tr>
+          <tr><td><strong>適用</strong></td><td>構内ケーブルが短い小規模設備</td><td>ケーブルこう長が長い／対地静電容量が大きい設備</td></tr>
+          <tr><td><strong>コスト</strong></td><td>安い（EVT 不要）</td><td>高い（EVT／ZPD が必要）</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="warn" label="出題の核心：なぜ DGR が必要か">
+        <p>「構内の高圧ケーブルが長い（対地静電容量が大きい）ほど、構外地絡時に GR が誤動作しやすい」→ だから&nbsp;<strong>方向判定する DGR</strong>&nbsp;を用いる、という因果が穴埋・論説の頻出論点。</p>
+      </Box>
+
+      <h2 id="morai"><span className="h-num">4.</span>もらい事故（波及事故）のメカニズム</h2>
+      <Box kind="example" label="構外地絡時に GR が誤動作する流れ">
+        <ol>
+          <li>構外（他需要家・系統側）で1線地絡が発生 → 系統全体に零相電圧 V₀ が生じる</li>
+          <li>V₀ により、自分の構内ケーブルの対地静電容量へ充電電流が流れる</li>
+          <li>この充電電流（零相分）が ZCT を通過し、GR が I₀ を検出</li>
+          <li>GR は大きさだけを見て「構内地絡」と誤認 → 不要動作（もらい事故）</li>
+        </ol>
+      </Box>
+      <Box kind="warn" label="もらい事故の正体">
+        <p>自分の構内では地絡が起きていないのに、<strong>他者・系統側の地絡が作る零相電圧</strong>&nbsp;によって、<strong>自分のケーブルの対地静電容量を流れる充電電流</strong>&nbsp;を GR が拾ってしまう現象。構内ケーブルが長い（C 大）ほど充電電流が大きく、誤動作しやすい。</p>
+      </Box>
+      <p>DGR がもらい事故を防ぐのは、電流の&nbsp;<strong>向き（位相）</strong>&nbsp;で構内地絡と構外地絡を仕分けられるから。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>地絡の場所</th><th>I₀ の向き（V₀ 基準）</th><th>DGR の判定</th></tr></thead>
+        <tbody>
+          <tr><td><strong>構内地絡</strong></td><td>系統 → 構内（地絡点）へ電流が向かう</td><td><strong>動作</strong>（トリップ）</td></tr>
+          <tr><td><strong>構外地絡</strong></td><td>構内（ケーブル C）→ 系統へ充電電流が向かう</td><td><strong>不動作</strong></td></tr>
+        </tbody>
+      </table></div>
+      <p>構外地絡では電流の向きが「構外向き（充電電流）」になるため、位相で除外できる。これが DGR がもらい事故を防ぐ原理。</p>
+
+      <h2 id="formula"><span className="h-num">5.</span>公式マップ</h2>
+      <FormulaCard num="01" name="対地静電容量に流れる地絡電流（容量分）" eq="I_{gc} = 2\pi f\, C_3\, E \,[\text{A}]"
+        note="C₃＝3線一括の対地静電容量[F]、E＝事故前の対地電圧（相電圧 V/√3）。1線地絡で健全相の対地電圧が上昇し、各相の対地静電容量を通じて充電電流が大地へ流れる。充電電流 ωCV と同型で、ケーブルの C が大きいほど大きい。" />
+      <FormulaCard num="02" name="1線地絡電流（抵抗分と容量分のベクトル合成）" eq="I_g = \sqrt{I_{gr}^2 + I_{gc}^2} \,[\text{A}]"
+        note="非接地系（高圧配電）では、抵抗分 I_gr（EVT の制限抵抗・地絡抵抗を流れる成分）と容量分 I_gc（対地静電容量を流れる成分）のベクトル和。" />
+      <FormulaCard num="03" name="地絡電流の位相（零相電圧 V₀ に対する進み角）" eq="\theta = \tan^{-1}\!\left(\dfrac{I_{gc}}{I_{gr}}\right)"
+        note="抵抗分 I_gr が容量分 I_gc より十分大きいと位相 θ は小さく、DGR の方向判定が安定する。EVT 二次に制限抵抗を入れて抵抗分を確保するのは、位相を安定させ DGR を確実に動作させるため。" />
+      <FormulaCard num="04" name="ケーブル1条あたりの対地静電容量（同軸近似）" eq="C = \dfrac{2\pi\varepsilon}{\ln(D/d)} \,[\text{F/m}]"
+        note="D＝遮へい層（外側電極）径、d＝導体径。高圧ケーブルは D/d が小さく C が大きい → 地絡電流（容量分）が大きい。地中送電のケーブル静電容量と同じ帰結。" />
+      <Box kind="tip" label="なぜ高圧ケーブルで地絡電流が大きいか（地中送電からの帰結）">
+        <p>高圧ケーブル（CVT 等）は導体と遮へい層の距離が数 mm と非常に近く、対地静電容量が架空電線に比べ桁違いに大きい。したがって構内ケーブルが長いほど、対地静電容量に流れる地絡電流（充電電流分）が大きくなり、もらい事故のリスクが上がる。</p>
+      </Box>
+
+      <h2 id="cvt-earth"><span className="h-num">6.</span>CVT 遮へい銅テープの接地と ZCT の関係（実務頻出）</h2>
+      <Box kind="warn" label="最頻出ミス：接地線を ZCT に通すか通さないか">
+        <p>CVT（高圧ケーブル）の&nbsp;<strong>遮へい銅テープの接地線</strong>&nbsp;を ZCT の&nbsp;<strong>どちら側で処理するか</strong>&nbsp;によって、地絡検出が正しく動いたり・動かなかったりする。実務でも試験でも狙われる。</p>
+      </Box>
+      <Box kind="example" label="なぜ接地線を ZCT に通し返すのか（因果理解）">
+        <p>遮へい層には、健全時でもケーブルの対地静電容量を通る充電電流（遮へい電流）が流れている。この電流は ZCT を「行き（導体側）」に通過するので、接地線を ZCT に&nbsp;<strong>通さず</strong>&nbsp;に接地すると、ZCT は充電電流分を「残留＝地絡」と誤検出してしまう。</p>
+        <p>接地線を&nbsp;<strong>ZCT の窓に通し返して</strong>&nbsp;接地すると、行きの充電電流と帰りの接地電流が ZCT 内で打ち消し合い（ベクトル和 ≒ 0）、ZCT は真の地絡電流だけを検出できる。</p>
+      </Box>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>接地方法</th><th>ZCT が見る電流</th><th>結果</th></tr></thead>
+        <tbody>
+          <tr><td>接地線を&nbsp;<strong>ZCT に通し返す</strong>（正）</td><td>充電電流が相殺 → 真の地絡分のみ</td><td><strong>正常検出</strong></td></tr>
+          <tr><td>接地線を&nbsp;<strong>ZCT を通さず</strong>接地（誤）</td><td>充電電流分が残留</td><td><strong>誤動作・不検出</strong></td></tr>
+        </tbody>
+      </table></div>
+      <p>結論：<strong>遮へいの接地線は ZCT を貫通させて（通し返して）から接地する</strong>。ケーブルヘッドの接地処理の定番論点。</p>
+
+      <h2 id="kaiho"><span className="h-num">7.</span>解法パターン</h2>
+      <Box kind="tip" label="① GR と DGR を見分ける（EVT の有無）">
+        <p>「EVT があるか」「方向判定するか」「もらい事故を防げるか」の3点セットで判断する。EVT/ZPD なし・大きさのみ・もらい事故を防げない＝GR。EVT/ZPD あり・大きさ＋方向・もらい事故を防げる＝DGR。</p>
+      </Box>
+      <Box kind="tip" label="② もらい事故の因果を説明する（論説の模範筋道）">
+        <ol>
+          <li>高圧ケーブルは対地静電容量が大きい</li>
+          <li>構外地絡時、零相電圧で充電電流が ZCT を流れる</li>
+          <li>GR は大きさだけ見て誤動作（もらい事故）</li>
+          <li>DGR は位相（方向）で構外地絡を除外できる</li>
+          <li>ゆえにケーブルこう長が長いほど DGR が必要</li>
+        </ol>
+      </Box>
+      <Box kind="example" label="③ 地絡電流（容量分）の計算">
+        <p>対地静電容量 C₃ ＝ 0.3 μF、6.6 kV 非接地系、f ＝ 50 Hz のときの容量分地絡電流：</p>
+        <ol>
+          <li>対地電圧 <Eq tex="E = 6600/\sqrt{3} \approx 3810\,\text{V}" /></li>
+          <li><Eq tex="\omega = 2\pi f = 2\pi\times 50 = 314\,\text{rad/s}" /></li>
+          <li><Eq tex="I_{gc} = \omega C_3 E = 314\times 0.3\times10^{-6}\times 3810 \approx 0.36\,\text{A}" /></li>
+        </ol>
+      </Box>
+      <Box kind="example" label="④ 地絡電流の合成と位相">
+        <p>抵抗分 I_gr ＝ 0.5 A、容量分 I_gc ＝ 0.36 A のとき：</p>
+        <ol>
+          <li>大きさ <Eq tex="I_g = \sqrt{0.5^2 + 0.36^2} = \sqrt{0.25+0.130} \approx 0.62\,\text{A}" /></li>
+          <li>位相 <Eq tex="\theta = \tan^{-1}(0.36/0.5) \approx 36^\circ" />（V₀ に対する進み）</li>
+        </ol>
+      </Box>
+
+      <h2 id="trap"><span className="h-num">8.</span>引っかけパターン</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>誤った記述</th><th>正しい記述</th></tr></thead>
+        <tbody>
+          <tr><td>GR は構外地絡で誤動作せず、もらい事故を防げる</td><td><strong>誤</strong>：GR は大きさだけ。方向判定する DGR でないと防げない</td></tr>
+          <tr><td>DGR は ZCT の零相電流だけで方向を判定する</td><td><strong>誤</strong>：方向判定には EVT／ZPD の零相電圧 V₀ が基準として必要</td></tr>
+          <tr><td>構内の高圧ケーブルは架空電線より対地静電容量が小さいので地絡電流は小さい</td><td><strong>誤</strong>：ケーブルは導体–遮へい間が近く C が大きい → 地絡電流（容量分）は大きい</td></tr>
+          <tr><td>ケーブル遮へいの接地線は ZCT を通さずに最短で接地するのがよい</td><td><strong>誤</strong>：充電電流分を相殺するため ZCT に通し返してから接地する。通さないと誤動作・不検出</td></tr>
+          <tr><td>GR 付 PAS は地絡電流をそのまま遮断する遮断器である</td><td><strong>誤</strong>：PAS は負荷開閉器で地絡電流の遮断能力はない。検出後に無電圧で開放（SOG 動作）</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="seigo"><span className="h-num">9.</span>正誤判定の急所</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>命題</th><th>判定</th><th>解説</th></tr></thead>
+        <tbody>
+          <tr><td>DGR は零相電流の大きさと、零相電圧に対する位相で地絡方向を判定する</td><td><strong>正</strong></td><td>ZCT(I₀)＋EVT(V₀) の位相で構内／構外を仕分け</td></tr>
+          <tr><td>GR は ZCT のみ、DGR は ZCT と EVT を入力とする</td><td><strong>正</strong></td><td>EVT の有無が GR／DGR の分かれ目</td></tr>
+          <tr><td>構内ケーブルが長いほどもらい事故のリスクが高い</td><td><strong>正</strong></td><td>対地静電容量が大きく充電電流が増えるため</td></tr>
+          <tr><td>もらい事故は自構内の地絡が原因で起こる</td><td><strong>誤</strong></td><td>構外（系統・他者）地絡が作る零相電圧が原因</td></tr>
+          <tr><td>高圧ケーブルの対地静電容量は架空電線より小さい</td><td><strong>誤</strong></td><td>導体–遮へい間が近く大きい</td></tr>
+          <tr><td>ケーブル遮へいの接地線は ZCT を貫通させてから接地する</td><td><strong>正</strong></td><td>充電電流分を相殺し真の地絡のみ検出</td></tr>
+          <tr><td>GR 付 PAS は地絡電流を直接遮断できる</td><td><strong>誤</strong></td><td>PAS は開閉器。SOG 動作で無電圧開放</td></tr>
+          <tr><td>容量分地絡電流は I_gc ＝ 2πf C₃ E で求まる</td><td><strong>正</strong></td><td>充電電流 ωCV と同型</td></tr>
+          <tr><td>地絡電流は抵抗分と容量分のベクトル和である</td><td><strong>正</strong></td><td><Eq tex="I_g=\sqrt{I_{gr}^2+I_{gc}^2}" /></td></tr>
+          <tr><td>EVT 二次の制限抵抗は地絡電流の位相を安定させ DGR を確実動作させるためにある</td><td><strong>正</strong></td><td>抵抗分を確保して位相を整える</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="kakomon"><span className="h-num">10.</span>出題実績</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>出題内容</th><th>形式</th></tr></thead>
+        <tbody>
+          <tr><td>R06上</td><td>問8</td><td>保護継電器の種類と用途（DGR を含む）</td><td>穴埋</td></tr>
+          <tr><td>R01</td><td>問8</td><td>保護継電器方式の種類（地絡方向の判定）</td><td>論説</td></tr>
+        </tbody>
+      </table></div>
+      <p>自家用受電設備の地絡保護（GR／DGR・もらい事故）は、電力科目の保護継電器枠（問8）と、法規の自家用電気工作物・保安管理の双方で問われる横断領域。</p>
+      <Box kind="tip" label="R08予測">
+        <p>DGR の方向判定原理（ZCT＋EVT）・もらい事故防止・高圧ケーブルの対地静電容量と地絡電流の関係は、保護継電器の論説枠で出題される可能性が高い。法規（自家用受電・保安）と合わせて横断学習すると得点効率が高い。</p>
+      </Box>
+
+      <Box kind="tip" label="棲み分けマップ（関連ページ）">
+        <ul>
+          <li><strong>保護継電器</strong> — 継電器一般（OCR／DGR／87／21）の動作原理・整定。本ページはその応用編。</li>
+          <li><strong>計器用変成器（VT・CT）</strong> — ZCT・EVT・残留回路などセンサーそのものの取扱い詳細。</li>
+          <li><strong>地中送電・電力ケーブル</strong> — 対地静電容量が大きい理由（導体–遮へい間が近い）の母体。</li>
+        </ul>
+      </Box>
+
+    </div>
+    <PageNav
+      prev={{ id: "haiden", title: "4.1 配電線路" }}
       next={{ id: "denki-zairyou", title: "5.1 電気材料" }}
       onNav={onNav} />
   </>
@@ -2896,7 +3098,7 @@ const DenkiZairyouPage = ({ data, onNav }) => (
 
     </div>
     <PageNav
-      prev={{ id: "haiden", title: "4.1 配電線路" }}
+      prev={{ id: "jikayou-chiraku", title: "4.2 自家用受電設備の地絡保護" }}
       next={{ id: "denryoku-keitou", title: "5.2 電力系統・需給運用" }}
       onNav={onNav} />
   </>
@@ -6377,6 +6579,7 @@ const App = () => {
     const props = { data, onNav: navigate };
     if (page === 'home')          return <HomePage {...props} />;
     if (page === 'haiden')        return <HaidenPage {...props} />;
+    if (page === 'jikayou-chiraku') return <JikayouChirakuPage {...props} />;
     if (page === 'kakuu-souden')  return <KakuuSoudenPage {...props} />;
     if (page === 'karyoku')       return <KaryokuPage {...props} />;
     if (page === 'henatsuki')     return <HenatsukiPage {...props} />;
