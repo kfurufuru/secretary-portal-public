@@ -5662,6 +5662,53 @@ const CapacitorFormulasTab = ({ onNav, switchTab }) => (
         <tr><td>電界強度 E</td><td>高い</td><td>低い（分極による打ち消し）</td></tr>
       </tbody>
     </table>
+
+    <h2 id="concentric-sphere"><span className="h-num">6</span>球形コンデンサ（導体球・同心球）</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>R06下問2 / R06上問2 / H30問1 / H18問1 出題。平行平板と違い電界が一様でない（E ∝ 1/r²）ため専用式が必要。</p>
+    <FormulaTable layer="B" rows={[
+      { formula: "C = 4\\pi\\varepsilon_0 a", meaning: "孤立導体球（半径 a）の静電容量。無限遠を対電極と見なす", when: "空気中に孤立した導体球・帯電電荷や電位を問う問題", notWhen: "対電極が有限距離にある同心球なら次式。「孤立球の容量はゼロ」は誤り（有限値・地球でも約711µF）" },
+      { formula: "C = 4\\pi\\varepsilon_0 \\dfrac{ab}{b-a}", meaning: "同心球コンデンサ。内球半径 a・外球内半径 b（a<b）", when: "内外2球の間にコンデンサを構成・同軸類似の球構造", notWhen: "平行平板の C=ε₀ε_r·S/d は流用不可（電界が一様でない）" },
+      { formula: "C = 4\\pi\\varepsilon_0\\varepsilon_r \\dfrac{ab}{b-a}", meaning: "内外球間を比誘電率 ε_r の誘電体で満たした同心球。平行平板と同様 ε_r 倍", when: "球間を誘電体で充填", notWhen: "球間が真空・空気なら ε_r=1（前式に一致）" },
+      { formula: "E = \\dfrac{Q}{4\\pi\\varepsilon_0 r^2}", meaning: "内外球間（a≦r≦b）の電界。中心からの距離 r の2乗に反比例", when: "球対称・ガウスの法則から導出", notWhen: "r が一定でない＝電界も一定でない（V=E·d は使えない）" },
+    ]} />
+    <Callout variant="tip" title="外球を無限遠に飛ばすと孤立球に戻る">
+      <p style={{ margin: 0 }}>同心球の C = 4πε₀·ab/(b−a) で外半径 b→∞ とすると ab/(b−a)→a となり <strong>C → 4πε₀a</strong>（孤立導体球）に一致。つまり孤立導体球は「内球と無限遠との間のコンデンサ」。<br/>逆に薄い球殻（b−a ≪ a）では a≒b なので S＝4πa²・d＝(b−a) を代入すると <strong>C ≒ ε₀·S/d</strong>＝平行平板近似が現れる（間隔が半径に比べ十分薄いと曲率が効かない）。</p>
+    </Callout>
+    <h3>平行平板 vs 同心球（電界分布の違い）</h3>
+    <table className="data-table">
+      <thead>
+        <tr><th>項目</th><th>平行平板</th><th>同心球</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>静電容量</td><td>C = ε₀ε_r·S/d</td><td>C = 4πε₀·ab/(b−a)</td></tr>
+        <tr><td>電界分布</td><td>一様（E = V/d）</td><td>不均一（E ∝ 1/r²）</td></tr>
+        <tr><td>適用場面</td><td>標準コンデンサ・基本問題</td><td>導体球・同軸ケーブル類似</td></tr>
+        <tr><td>外球半径 → ∞ の極限</td><td>—</td><td>C → 4πε₀a（孤立導体球）</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="dielectric-boundary"><span className="h-num">7</span>誘電体境界の条件（D と E の連続性）</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>R05上問1 / H24問15 / H21問17 出題。誘電体の境界を跨ぐとき「何が連続で何が変わるか」を取り違えると失点する。</p>
+    <Callout variant="warn" title="境界で連続な量・変化する量">
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.9 }}>
+        <li><strong>電束密度 D の法線成分</strong>（境界面に垂直な向き）は<strong>連続</strong>（真電荷が無ければ D_n1 ＝ D_n2）。</li>
+        <li><strong>電界 E の接線成分</strong>（境界面に沿う向き）は<strong>連続</strong>（E_t1 ＝ E_t2）。</li>
+        <li>その結果、境界を垂直に跨ぐと D は変わらず、E ＝ D/(ε₀ε_r) は誘電率が大きい側で小さくなる。</li>
+      </ol>
+    </Callout>
+    <Callout variant="warn" title="電気力線と電束を混同しない">
+      <p style={{ margin: 0 }}><strong>電気力線</strong>の本数は媒質で変わる（ε_r に依存）が、<strong>電束</strong>（ψ ＝ ε E·S ＝ D·S）は<strong>媒質によらず真電荷に等しい</strong>。誘電体境界を垂直に跨ぐと E は変わるが D（＝電束）は変わらない、が要点。</p>
+    </Callout>
+    <table className="data-table">
+      <thead>
+        <tr><th>量</th><th>境界（法線方向）での挙動</th><th>媒質依存</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>電束密度 D ＝ 電束 ψ/S</td><td>法線成分が連続（真電荷なし）</td><td>媒質によらない（真電荷に等しい）</td></tr>
+        <tr><td>電界 E ＝ D/(ε₀ε_r)</td><td>接線成分が連続・法線成分は 1/ε_r で変化</td><td>媒質による（ε_r 大で小）</td></tr>
+        <tr><td>電気力線の本数</td><td>媒質境界で本数が変わる</td><td>媒質による（ε_r に依存）</td></tr>
+      </tbody>
+    </table>
   </>
 );
 
@@ -6665,7 +6712,26 @@ const AcPowerExplainTab = ({ onNav, switchTab }) => (
       <p>❌ 「公式は1個だから OK」。✅ ひずみ波は<strong>各次数（基本波・3次・5次...）で個別計算して合算</strong>：<strong>P = ΣV_n I_n cosφ_n</strong>。実効値も <Eq tex="I = \sqrt{\sum I_n^2}" inline />。<strong>力率も「cosφ」という単純角度関係にならない</strong>。</p>
     </Callout>
 
-    <h2 id="complex-power"><span className="h-num">8</span>拡張：複素電力 S = V·I*（参考・Level 2）</h2>
+    <h2 id="single-phase-3wire"><span className="h-num">8</span>単相3線式の中性線電流（不平衡）</h2>
+    <Callout variant="note" title="不平衡時の中性線電流は「差」（H21問7 頻出）">
+      <p style={{ marginTop: 0 }}>単相3線式で2つの負荷が不平衡（抵抗値が異なる）だと、中性線に電流が流れる。各負荷電流は中性線基準の電圧 <strong>V（=100V）</strong>で <Eq tex="I_1 = \dfrac{V}{R_1},\quad I_2 = \dfrac{V}{R_2}" inline />。中性線電流は2つの電流の<strong>差</strong>：</p>
+      <div style={{ textAlign: "center", margin: "8px 0" }}><Eq tex="\dot I_N = \dot I_1 - \dot I_2" display /></div>
+      <p style={{ margin: "8px 0 0" }}><strong>平衡時（R₁ = R₂）は I₁ = I₂ なので I_N = 0</strong>。このとき中性線を切断しても各負荷の電圧は変わらない。「中性線には電流が流れない」は<strong>平衡時のみ</strong>成立し、不平衡時は必ず I_N ≠ 0。</p>
+      <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--ink-soft)" }}>向きの定義に注意：I₁ が I₂ より大きいとき I_N は R₁ 側から中性線を経由して電源中点へ戻る向き。消費電力は各負荷で個別計算して合算 <Eq tex="P = I_1^2 R_1 + I_2^2 R_2" inline />（解説7節④と同じ）。</p>
+    </Callout>
+    <TrapBlock
+      correct="不平衡単相3線式の中性線電流は2負荷電流の差 I_N = I₁ − I₂。電流の向きを回路図で確認してから符号を決める。平衡（R₁=R₂）なら I₁=I₂ で I_N=0。"
+      trap="I_N = I₁ + I₂ と足し算する"
+      cite="H21問7"
+      steps={[
+        "各負荷電流を出す：I₁ = V/R₁・I₂ = V/R₂（V は中性線基準の100V）",
+        "回路図で2電流の向きを確認する（中性線では互いに逆向き＝打ち消し合う）",
+        "中性線電流は差：I_N = I₁ − I₂（足し算ではない）",
+        "検算：R₁ = R₂ なら I₁ = I₂ ⇒ I_N = 0（平衡時ゼロ）と整合するか確認",
+      ]}
+    />
+
+    <h2 id="complex-power"><span className="h-num">9</span>拡張：複素電力 S = V·I*（参考・Level 2）</h2>
     <details style={{ marginTop: 12, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: "6px" }}>
       <summary style={{ cursor: "pointer", fontWeight: 600 }}>🔬 Level 2：複素電力の定義となぜ電流の共役をとるか（R02 問題で出題）</summary>
       <p style={{ marginTop: 8 }}>
@@ -6870,7 +6936,7 @@ const AcPowerLearnTab = ({ onNav, switchTab }) => (
         <tr><td>H27</td><td>問8</td><td>計算</td><td>電圧・電流の位相差から力率を求める</td><td>✅ 本ページ完結（解説タブ セクション4 4視点③位相）</td></tr>
         <tr><td>H22</td><td>問7</td><td>計算</td><td>単相3線式回路に平衡負荷を接続したときの消費電力</td><td>✅ 本ページ完結（解説タブ セクション7 ④）</td></tr>
         <tr><td>H22</td><td>問8</td><td>計算</td><td>容量性リアクタンスを接続したときの力率の変化（過補償）</td><td>✅ 本ページ完結（解説タブ セクション5 過補償）</td></tr>
-        <tr><td>H21</td><td>問7</td><td>計算</td><td>不平衡負荷を接続した単相3線式回路の電流値の比較</td><td>△ 部分カバー（解説タブ セクション7 ④）</td></tr>
+        <tr><td>H21</td><td>問7</td><td>計算</td><td>不平衡負荷を接続した単相3線式回路の電流値の比較</td><td>✅ 本ページ完結（解説タブ セクション8 中性線電流）</td></tr>
         <tr><td>H20</td><td>問9</td><td>計算</td><td>インダクタンス接続前後の交流電力の変化</td><td>⚠️ <a href="#" onClick={(e) => { e.preventDefault(); onNav('rlc-resonance'); }} style={{ textDecoration: "underline" }}>2.4 RLC共振</a> 参照</td></tr>
         <tr><td>H19</td><td>問8</td><td>計算</td><td>電源の周波数を変化させたときの力率変化（RL/RC）</td><td>✅ 本ページ完結（解説タブ セクション6 周波数特性）</td></tr>
       </tbody>
@@ -12481,6 +12547,36 @@ const DcCircuitExplainTab = ({ onNav, switchTab }) => (
           <li>試験で「線形回路では」と書かれた瞬間に「重ね合わせ・テブナン使える」と反応する条件反射が得点に直結</li>
         </ul>
       </details>
+    </Callout>
+
+    <h2 id="norton"><span className="h-num">8</span>ノートンの定理（テブナンの双対）</h2>
+    <p>テブナンが「電圧源 V<sub>th</sub> ＋直列抵抗 R<sub>th</sub>」に縮約するのに対し、<strong>ノートンの定理</strong>は同じ線形2端子網を「<strong>電流源 I<sub>N</sub> ＋並列抵抗 R<sub>N</sub></strong>」に縮約する。両者は完全に相互変換でき、<Eq tex="I_N = V_{th}/R_{th}" inline />・<Eq tex="R_N = R_{th}" inline />・<Eq tex="V_{th}=I_N R_N" inline /> で行き来する。</p>
+    <FormulaTable layer="B" rows={[
+      { formula: "I_N = \\dfrac{V_{th}}{R_{th}}", meaning: "ノートン電流＝端子を短絡したときに流れる短絡電流", when: "線形回路・特定負荷着目", notWhen: "非線形回路には使えない" },
+      { formula: "R_N = R_{th}", meaning: "ノートン抵抗＝テブナン抵抗（電源ゼロ時の端子間合成抵抗）", when: "テブナンと共通", notWhen: "—" },
+      { formula: "V_{th} = I_N R_{N}", meaning: "テブナン↔ノートン相互変換（開放電圧＝電流源×並列抵抗）", when: "両等価回路の橋渡し", notWhen: "—" },
+    ]} />
+    <SolveFlow type="ノートン等価変換" steps={[
+      "STEP1 着目端子を短絡する → その短絡電流が I_N（電圧源は生かしたまま端子だけ短絡）",
+      "STEP2 全電源をゼロにして端子間の合成抵抗を求める → R_N（=R_th。電圧源→短絡・電流源→開放）",
+      "STEP3 電流源 I_N と並列抵抗 R_N の等価回路に置換する",
+      "負荷 R_L をつなぐと分流則で I = I_N × R_N/(R_N+R_L)",
+    ]} />
+    <h3>テブナン vs ノートン</h3>
+    <table className="data-table">
+      <thead>
+        <tr><th>観点</th><th>テブナン等価</th><th>ノートン等価</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>等価回路の形</td><td>電圧源 V<sub>th</sub> ＋ <strong>直列</strong>抵抗 R<sub>th</sub></td><td>電流源 I<sub>N</sub> ＋ <strong>並列</strong>抵抗 R<sub>N</sub></td></tr>
+        <tr><td>源の求め方</td><td>着目端子を<strong>開放</strong> → 開放端電圧 V<sub>th</sub></td><td>着目端子を<strong>短絡</strong> → 短絡電流 I<sub>N</sub></td></tr>
+        <tr><td>抵抗の求め方</td><td colSpan={2}>共通：全電源をゼロ（電圧源→短絡・電流源→開放）にして端子から見た合成抵抗（R<sub>th</sub>＝R<sub>N</sub>）</td></tr>
+        <tr><td>相互関係</td><td colSpan={2}>I<sub>N</sub> = V<sub>th</sub>/R<sub>th</sub>・V<sub>th</sub> = I<sub>N</sub>·R<sub>N</sub>（同じ回路の裏表）</td></tr>
+        <tr><td>使いやすい場面</td><td>負荷電流を I = V<sub>th</sub>/(R<sub>th</sub>+R<sub>L</sub>) で直に出したいとき</td><td>並列回路・電流源を含む回路・分流で考えたいとき</td></tr>
+      </tbody>
+    </table>
+    <Callout variant="tip" title="🔑 1行で覚える">
+      <p style={{ margin: 0 }}><strong>テブナン＝開放して電圧、ノートン＝短絡して電流。</strong>抵抗 R<sub>th</sub>＝R<sub>N</sub> は共通で、<Eq tex="V_{th}=I_N R_N" inline /> が両者を結ぶ。</p>
     </Callout>
   </>
 );
@@ -18247,6 +18343,29 @@ const MeasurementFormulasTab = ({ onNav, switchTab }) => (
         <tr><td colSpan={3} style={{backgroundColor:"var(--bg-elev)", fontSize:"0.9em"}}><strong>支配因子：</strong><span className="marker">何を測っているか</span>。整流形＝平均値×波形率1.11／熱電形＝発熱（=実効値の2乗に比例）なので波形によらず真の実効値。</td></tr>
       </tbody>
     </table>
+
+    <h2 id="connect-error"><span className="h-num">4</span>電圧計・電流計の接続誤差（電圧計前置き vs 電流計前置き）</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>電圧計・電流計で直流電力を測るときの誤差（H19問14 頻出）。<strong>負荷抵抗と計器内部抵抗の大小</strong>でどちらの接続が誤差小か決まる。</p>
+    <table className="data-table">
+      <thead>
+        <tr><th>接続方式</th><th>回路イメージ</th><th>何の誤差が出るか</th><th>誤差が小さい条件</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span className="marker">電圧計前置き</span>（V 外側）</td><td>電流計 → 負荷 の直列、その全体に電圧計を並列</td><td>電圧計が<strong>電流計の電圧降下も含めて</strong>測る → 電力を過大評価</td><td><span className="marker">高抵抗負荷</span>（負荷抵抗 ≫ 電流計内部抵抗）</td></tr>
+        <tr><td><span className="marker">電流計前置き</span>（A 外側）</td><td>電圧計 → 負荷 の並列、その全体に電流計を直列</td><td>電流計に<strong>電圧計へ分岐する電流も</strong>流れる → 電力を過大評価</td><td><span className="marker">低抵抗負荷</span>（負荷抵抗 ≪ 電圧計内部抵抗）</td></tr>
+        <tr><td colSpan={4} style={{backgroundColor:"var(--bg-elev)", fontSize:"0.9em"}}><strong>覚え方：</strong><span className="marker">高抵抗には電圧計前置き（V外側）、低抵抗には電流計前置き（A外側）</span>。判断基準は「負荷抵抗と計器内部抵抗の大小」──無視できる方の計器を負荷側に寄せる。</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="watt-hour"><span className="h-num">5</span>電力量計（積算電力計）の誤差率</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>回転円板の回転数と計器定数から電力量を求め、真値と比べて誤差率を出す（H22問16 頻出）。</p>
+    <FormulaTable layer="A" rows={[
+      { formula: "W = \\dfrac{N}{k}", meaning: "電力量計の積算電力量 [kWh]。N=回転数 [rev]、k=計器定数 [rev/kWh]", when: "回転数 N と計器定数 k [rev/kWh] が与えられたとき", notWhen: "計器定数の単位（rev/kWh）を取り違えない。1回転あたりの電力量は 1/k" },
+      { formula: "\\varepsilon = \\dfrac{W_M - W_T}{W_T}\\times 100", meaning: "電力量計の誤差率 [%]。W_M=計器の積算値、W_T=真値（標準器または計算値）", when: "電力量計の誤差率を求めるとき（分母は真値 W_T）", notWhen: "測定値 W_M で割らない。回転数から W_M を出してから比較する" },
+    ]} />
+    <Callout variant="warn" title="計器定数の単位を見落とさない（H22問16 のツボ）">
+      <p style={{ margin: 0 }}>計量時間と回転数が与えられている場合は、まず W_M = N/k（k は rev/kWh）で計器の積算電力量を出し、そのうえで真値と比べて誤差率を計算する。<span className="marker">計器定数の単位 rev/kWh を kWh/rev と取り違える</span>のが典型ミス。1回転が表す電力量は 1/k [kWh]。</p>
+    </Callout>
   </>
 );
 
@@ -18383,6 +18502,31 @@ const MeasurementExplainTab = ({ onNav, switchTab }) => (
         <tr><td>高入力インピーダンスでの電圧測定</td><td>ディジタル計器は入力インピーダンスが高く回路を乱しにくい</td><td>微小信号源・高抵抗回路では入力インピーダンスを確認して選定</td></tr>
       </tbody>
     </table>
+
+    <h2 id="oscilloscope"><span className="h-num">8</span>オシロスコープの原理（時間軸掃引・リサージュ）</h2>
+    <SectionCheck pageId="measurement" sectionId="oscilloscope" />
+    <p>オシロスコープは<strong>電子ビームの偏向で電圧波形を画面に描く</strong>計器。垂直軸（Y）に測定信号を、水平軸（X）に<strong>一定速度で掃引する時間軸（のこぎり波）</strong>を加えると、横軸が時間・縦軸が電圧の<strong>波形</strong>がそのまま観測できる。周期を横軸の掃引時間から読めば周波数が、山と山の時間差から位相が分かる。</p>
+    <Callout variant="info" title="リサージュ図形による位相・周波数の観測（H20問16・H25問16・H20問14 類題）">
+      <p style={{ margin: "0 0 6px" }}>時間軸掃引を切り、<strong>X 軸・Y 軸の両方に正弦波</strong>を入れると合成軌跡（リサージュ図形）が描ける。この形から2信号の関係を読む。</p>
+      <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.75 }}>
+        <li><strong>周波数比</strong>：図形と水平線・垂直線の接点数の比が周波数比（例：横2:縦1 の接点 → f_x:f_y=1:2）。</li>
+        <li><strong>位相差</strong>：同一周波数のとき、直線＝同相(0°)または逆相(180°)、円＝90°、傾いた楕円＝その中間。</li>
+        <li><strong>ポイント</strong>：時間軸波形は「1信号の時間変化」、リサージュは「2信号の相対関係（周波数比・位相差）」を見る道具。</li>
+      </ul>
+    </Callout>
+
+    <h2 id="potentiometer"><span className="h-num">9</span>すべり抵抗器・電位差計（零位法）</h2>
+    <SectionCheck pageId="measurement" sectionId="potentiometer" />
+    <p>電位差計は<strong>未知の起電力を、既知の標準電圧と釣り合わせて測る</strong>方法。すべり抵抗器（分圧器）で作った既知電圧を未知起電力に対抗させ、<strong>検流計の指示がちょうど 0 になった</strong>ときの分圧比から未知起電力を求める。</p>
+    <Callout variant="info" title="なぜ精度が高いか──零位法（R04上問16・R05上問16 類題）">
+      <p style={{ margin: "0 0 6px" }}>釣り合った瞬間は<strong>測定回路に電流が流れない</strong>（検流計 0）。だから：</p>
+      <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.75 }}>
+        <li>未知起電力の<strong>内部抵抗による電圧降下が生じない</strong> → 起電力そのものを測れる。</li>
+        <li>検流計は「0 かどうか」だけ見ればよく、<strong>目盛の絶対精度が要らない</strong>（感度だけあればよい）。</li>
+        <li>この「基準と釣り合わせて差を 0 にして測る」やり方を<span className="marker">零位法</span>という（対してメータの振れをそのまま読むのは偏位法）。</li>
+      </ul>
+      <p style={{ margin: "6px 0 0" }}>標準電圧 E_s と分圧比が既知なら、釣り合い時の分圧比から未知起電力 E_x を <Eq tex="E_x = E_s \times \dfrac{\ell_x}{\ell_s}" inline />（すべり接点位置の比）で求める。</p>
+    </Callout>
   </>
 );
 
@@ -18524,7 +18668,8 @@ const MeasurementLearnTab = ({ onNav, switchTab }) => (
         <tr><td>R01</td><td>問14</td><td>論説</td><td>JIS記号と使用回路</td><td>△ 記号図は別途参照</td></tr>
         <tr><td>H27</td><td>問14</td><td>計算</td><td><span className="marker">整流形の電圧計（波形誤差）</span></td><td>✅ 本ページ完結（解説5節）</td></tr>
         <tr><td>H23</td><td>問17</td><td>穴埋</td><td>電力計の原理・2電力計法の理論</td><td>✅ 本ページ完結（解説4節）</td></tr>
-        <tr><td>H22</td><td>問16</td><td>穴埋・計算</td><td>電力量計の原理と誤差率</td><td>✅ 本ページ完結（公式1節）</td></tr>
+        <tr><td>H22</td><td>問16</td><td>穴埋・計算</td><td>電力量計の原理と誤差率</td><td>✅ 本ページ完結（公式5節 電力量計）</td></tr>
+        <tr><td>H19</td><td>問14</td><td>計算</td><td><span className="marker">電圧計・電流計を用いた直流電力の接続誤差</span></td><td>✅ 本ページ完結（公式4節 接続誤差）</td></tr>
         <tr><td>H19</td><td>問16</td><td>穴埋・計算</td><td>可動コイル形計器と測定範囲の拡大</td><td>✅ 本ページ完結（2・解説3節）</td></tr>
       </tbody>
     </table>
@@ -20658,6 +20803,39 @@ const TransientFormulasTab = ({ onNav, switchTab }) => (
         <tr><td>i(t)</td><td><Eq tex="\dfrac{E}{R}\,e^{-t/\tau}" inline /></td><td><Eq tex="-\dfrac{V_0}{R}\,e^{-t/\tau}" inline /></td></tr>
       </tbody>
     </table>
+
+    <h2 id="element-short"><span className="h-num">5</span>RLC回路の素子を短絡したときの回路変化（R07上・R06上・R04下 問10）</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>近年頻出。RLC直列回路の途中の素子をスイッチで<strong>短絡（バイパス）</strong>すると、残った素子で回路の型が変わり、過渡現象の性質そのものが切り替わる。<strong>短絡直後の初期値は、v<sub>C</sub> と i<sub>L</sub> が急変できない</strong>ため短絡直前の値をそのまま引き継ぐ。</p>
+    <table className="data-table">
+      <thead>
+        <tr><th>短絡する素子</th><th>残る回路型</th><th>時定数</th><th>過渡現象の変化</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>C を短絡</strong></td><td>RL回路（1次）</td><td><Eq tex="\tau = L/R" inline /></td><td>RL過渡へ移行。C 両端電圧は 0 に向かう</td></tr>
+        <tr><td><strong>L を短絡</strong></td><td>RC回路（1次）</td><td><Eq tex="\tau = RC" inline /></td><td>RC過渡へ移行。L の電流は 0 に向かう</td></tr>
+        <tr><td><strong>R を短絡</strong></td><td>LC回路（2次）</td><td>—（時定数なし）</td><td><strong>減衰なしの振動</strong>。抵抗が消え損失ゼロ → L と C の間でエネルギーが往復し電流が持続</td></tr>
+      </tbody>
+    </table>
+    <Callout variant="warn" title="R04下問10（論説）の急所">
+      <p style={{ margin: 0 }}>R を短絡（バイパス）する問題では、<strong>「エネルギーを消費する場所（抵抗）がなくなるため電流が減衰しなくなる」「L と C の間でエネルギーが行き来する振動状態になる」</strong>という定性理解が問われる。R07上・R06上の計算問題では、短絡後の <Eq tex="\tau = L/R" inline /> または <Eq tex="\tau = RC" inline /> に切り替えて解き直すのがポイント（短絡前の τ を流用しない）。詳しい2次回路の減衰振動は <a href="#" onClick={(e) => { e.preventDefault(); onNav('rlc-resonance'); }} style={{ textDecoration: "underline" }}>RLC回路</a> を併読。</p>
+    </Callout>
+
+    <h2 id="energy-half"><span className="h-num">6</span>RC充電のエネルギー — ちょうど半分則（R01問10）</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>直感に反する頻出の引っかけ。電源から供給される総エネルギーの<strong>ちょうど半分が抵抗で熱になり、残り半分がコンデンサに蓄えられる</strong>。しかもこれは<strong>抵抗値 R の大きさによらず</strong>成立する。</p>
+    <Callout variant="warn" title="供給エネルギーは 1:1 に分かれる（R に依らない）">
+      <p style={{ margin: "0 0 8px 0" }}>初期電荷ゼロの RC 直列回路を電圧 E で充電完了させると：</p>
+      <div style={{ textAlign: "center", margin: "8px 0" }}><Eq tex="W_R = W_C = \tfrac{1}{2}CE^2, \qquad W_{\text{total}} = CE^2" display /></div>
+      <p style={{ margin: "8px 0 0 0" }}>コンデンサに蓄えられる <Eq tex="W_C = \tfrac{1}{2}CE^2" inline /> と、抵抗で消費される <Eq tex="W_R = \tfrac{1}{2}CE^2" inline /> が<strong>常に等量</strong>。「R を大きくすれば損失が増えそう」という直感は誤り。R を変えても両者の比は 1:1 のまま（R は充電の時定数 τ=RC を変えるだけで、総損失量は変えない）。</p>
+    </Callout>
+    <table className="data-table">
+      <thead>
+        <tr><th>素子</th><th>蓄えられるエネルギー</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>コンデンサ C（電圧 V のとき）</td><td><Eq tex="\dfrac{1}{2}CV^2" inline /></td></tr>
+        <tr><td>インダクタ L（電流 I のとき）</td><td><Eq tex="\dfrac{1}{2}LI^2" inline /></td></tr>
+      </tbody>
+    </table>
   </>
 );
 
@@ -20970,6 +21148,8 @@ const TransientLearnTab = ({ onNav, switchTab }) => (
         <tr><th>年度</th><th>問</th><th>形式</th><th>何が問われたか</th><th>カバー</th></tr>
       </thead>
       <tbody>
+        <tr><td>R07上</td><td>問10</td><td>計算</td><td><span className="marker">RLC直列回路の素子を短絡したときの電流変化</span></td><td>✅ 本ページ完結（公式5節 素子短絡）</td></tr>
+        <tr><td>R06上</td><td>問10</td><td>計算</td><td><span className="marker">RLC直列回路の素子を短絡したときの電流変化</span></td><td>✅ 本ページ完結（公式5節 素子短絡）</td></tr>
         <tr><td>R06下</td><td>問10</td><td>計算</td><td>RC回路の過渡/定常で点Aの電流比 I₀/I（本ページ featured）</td><td>✅ 本ページ完結（3節 解法カード）</td></tr>
         <tr><td>R05下</td><td>問10</td><td>計算</td><td>RC直列回路でスイッチを切り換えた際の電圧・電流変化</td><td>✅ 本ページ完結（一般式）</td></tr>
         <tr><td>R04下</td><td>問10</td><td>論説</td><td>RLC直列回路をバイパスしたときの過渡現象</td><td>⚠ <a onClick={() => onNav('rlc-resonance')}>RLC回路</a> 併読（2次回路）</td></tr>
