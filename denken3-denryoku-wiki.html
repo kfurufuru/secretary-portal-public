@@ -894,6 +894,7 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
 /* ============================================================ KaTeX overrides */
 
 .katex { font-size: 1em; }
+.katex-display-wrap { display: block; }
 .katex-display { margin: 8px 0; overflow-x: auto; overflow-y: hidden; }
 
 /* ============================================================ Mobile toggle */
@@ -1861,7 +1862,7 @@ const Eq = ({ tex, display }) => {
     }
   }, [tex, display]);
   return display
-    ? <div className="katex-display-wrap" ref={ref} />
+    ? <span className="katex-display-wrap" ref={ref} />
     : <span ref={ref} />;
 };
 
@@ -2166,6 +2167,19 @@ const HaidenPage = ({ data, onNav }) => (
           <li><strong>電力損失</strong> — 線路抵抗で失う <Eq tex="3I^2R" /> を抑える（電流の2乗で効く）</li>
           <li><strong>力率改善</strong> — 進相コンデンサで電流そのものを減らす</li>
         </ul>
+      </Box>
+      <Box kind="tip" label="配電線路の主要機器（PAS・LBS・AVR など）">
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>機器名</th><th>機能</th><th>ポイント</th></tr></thead>
+          <tbody>
+            <tr><td>配電用変圧器（柱上変圧器）</td><td>6.6kV → 100/200V に降圧</td><td>単相3線式が主流。中性点接地</td></tr>
+            <tr><td>開閉器（PAS）</td><td>需要家引込口の地絡保護・区分</td><td>高圧気中負荷開閉器。地絡検出機能付き</td></tr>
+            <tr><td>開閉器（LBS）</td><td>変圧器一次側の開閉・保護</td><td>限流ヒューズ付きが標準</td></tr>
+            <tr><td>低圧遮断器（MCCB）</td><td>低圧幹線・分岐回路の過電流遮断</td><td>需要家内部設備</td></tr>
+            <tr><td>進相コンデンサ</td><td>力率改善・無効電力補償</td><td>柱上または変電所に設置。電流低減で損失軽減</td></tr>
+            <tr><td>自動電圧調整器（AVR）</td><td>配電線末端の電圧を自動補正</td><td>負荷変動・長距離線路に有効</td></tr>
+          </tbody>
+        </table></div>
       </Box>
 
       <h2 id="houshiki"><span className="h-num">2.</span>配電方式の比較</h2>
@@ -2531,10 +2545,13 @@ const KakuuSoudenPage = ({ data, onNav }) => (
         <thead><tr><th>障害</th><th>原因</th><th>主な対策</th></tr></thead>
         <tbody>
           <tr><td>直撃雷</td><td>落雷が導体に直撃</td><td>架空地線（遮蔽角を小さく）</td></tr>
+          <tr><td>誘導雷（感応雷）</td><td>落雷の電磁界変化が誘起電圧を発生</td><td>避雷器（アレスタ）の設置</td></tr>
           <tr><td>逆フラッシオーバー</td><td>鉄塔の接地抵抗が高く塔電位が上昇</td><td>接地抵抗の低減（埋設地線）</td></tr>
+          <tr><td>フラッシオーバー（雷サージ）</td><td>雷サージ電圧ががいし連の絶縁強度を超える</td><td>避雷器・不平衡絶縁</td></tr>
           <tr><td>コロナ放電</td><td>導体表面電界が臨界電界(約30kV/cm)超</td><td>太い導体・多導体方式・コロナリング</td></tr>
           <tr><td>微風振動</td><td>弱風のカルマン渦で上下振動</td><td>ストックブリッジダンパ</td></tr>
           <tr><td>ギャロッピング</td><td>着雪導体が強風で大振幅振動</td><td>オフセット架線・スペーサ</td></tr>
+          <tr><td>スリートジャンプ</td><td>着氷雪が一斉脱落して導体が跳ね上がる</td><td>オフセット配置（上下相を互い違い）</td></tr>
           <tr><td>塩害</td><td>塩分付着でがいし表面が導電化</td><td>耐塩がいし・シリコーン塗布・洗浄</td></tr>
         </tbody>
       </table></div>
@@ -2666,6 +2683,16 @@ const KaryokuPage = ({ data, onNav }) => (
       <Box kind="example" label="コンバインドが高効率な理由（カルノー視点）">
         <p>カルノー効率 <Eq tex="\eta = 1 - T_{\text{低}}/T_{\text{高}}" /> は高温源と低温源の温度差が大きいほど高い。ガスタービン（高温1300℃級）が捨てる中温排熱（600℃級）を蒸気タービンが回収し低温（50℃以下）まで使い切る → 実質的な温度差を最大化して効率上限を引き上げる。汽力35〜42%に対し55〜60%超。</p>
       </Box>
+      <p>火力の各発電方式を熱効率・起動時間・燃料・用途で横並びにすると、ピーク・非常用（GT・ディーゼル）とベース〜ミドル（汽力・GTCC）の棲み分けが見える。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>発電方式</th><th>熱効率</th><th>起動時間</th><th>燃料</th><th>主な用途</th></tr></thead>
+        <tbody>
+          <tr><td>汽力発電（蒸気タービン）</td><td>35〜42%</td><td>長い（数時間〜）</td><td>石炭・重油・LNG</td><td>ベース負荷</td></tr>
+          <tr><td>ガスタービン発電</td><td>25〜35%</td><td>非常に短い（数分）</td><td>LNG・軽油</td><td>ピーク対応・緊急電源</td></tr>
+          <tr><td>コンバインドサイクル（GTCC）</td><td><strong>55〜60%+</strong></td><td>短〜中程度（30分〜）</td><td>LNG</td><td>ミドル〜ベース負荷</td></tr>
+          <tr><td>ディーゼル発電</td><td>35〜45%</td><td>非常に短い（数秒〜分）</td><td>軽油・重油</td><td>非常用電源・離島</td></tr>
+        </tbody>
+      </table></div>
 
       <h2 id="formula"><span className="h-num">4.</span>公式マップ（最重要）</h2>
       <FormulaCard num="01" name="発電端熱効率（必須）" eq="\eta_{\text{gen}} = \dfrac{3600}{H_r}"
@@ -2847,6 +2874,9 @@ const HenatsukiPage = ({ data, onNav }) => (
           <tr><td>無電圧切換は変圧器を停止させずに行える</td><td><strong>誤</strong></td><td>停止が必要。停止不要は負荷時タップ切換</td></tr>
         </tbody>
       </table></div>
+      <Box kind="warn" label="「無電圧切換＝電圧を切らない」という誤読に注意">
+        <p>タップ切換装置の<strong>無電圧切換（オフロードタップチェンジャー）</strong>は、変圧器を<strong>停止してから</strong>切り換える。停止が不要なのは<strong>負荷時タップ切換装置（オンロードタップチェンジャー）</strong>。名称の「無電圧」は「電圧が印加されていない状態で切り換える」という意味であり、「電圧を中断せずに（切らずに）切り換える」という意味ではない。この誤読を突く正誤問題が頻出。</p>
+      </Box>
 
       <h2 id="kakomon"><span className="h-num">9.</span>出題実績（基礎ハブ・約27問＋変電周辺）</h2>
       <p>効率・最大効率・並行運転・短絡（遮断器選定）の計算が頻出。論説は結線方式・タップ切換・種類。深い全日効率は損失深掘りページへ。</p>
@@ -2926,6 +2956,10 @@ const SuiryokuPage = ({ data, onNav }) => (
         note="揚水は損失分だけ余分に投入するので η で割る。発電はη掛ける／揚水はη割る、が最頻出の引っかけ。" />
       <FormulaCard num="03" name="比速度" eq="N_s = \dfrac{N\sqrt{P}}{H^{5/4}}"
         note="Ns が大きいほど低落差・大流量型。ペルトン(低)→フランシス(中)→カプラン(高)。" />
+      <FormulaCard num="04" name="年間発電電力量・設備利用率" eq="E = P \times T\,[\text{kWh}]"
+        note="T=年間運転時間[h]。設備利用率 = E /(P_rated × 8760) × 100 [%]。発電電力量・重油使用量比較(R05下問15型)の起点。" />
+      <FormulaCard num="05" name="流量と流速（連続の式）" eq="Q = A \times v\,[\text{m}^3/\text{s}]"
+        note="A=水路断面積[m²]、v=平均流速[m/s]。使用水量=Q×t で有効貯水容量(R07上問15型)を組み立てる。" />
 
       <h2 id="kaiho"><span className="h-num">4.</span>解法パターン（例題つき）</h2>
       <Box kind="example" label="① 出力: Q=50・H=100・η=0.85">
@@ -3037,6 +3071,16 @@ const DenkiZairyouPage = ({ data, onNav }) => (
       <Box kind="warn" label="F=155℃ / H=180℃ の混同が最頻出">
         <p>「絶縁クラスFは180℃」「Hは155℃」はいずれも誤り。<strong>F=155・H=180 をセットで暗記</strong>。Bは130℃。なお CVケーブルの XLPE(架橋ポリエチレン)は導体最高90℃、tanδ小。</p>
       </Box>
+      <p>絶縁電線・ケーブルは記号ごとに絶縁材料と最高導体温度が決まっている。XLPE の CV・CVT が最も高温に耐え、地中ケーブルの主流。「記号→絶縁材料→最高温度」を紐づけて覚える。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>記号</th><th>名称</th><th>絶縁材料</th><th>最高導体温度</th><th>主な用途</th></tr></thead>
+        <tbody>
+          <tr><td>IV</td><td>600V ビニル絶縁電線</td><td>ビニル</td><td><strong>60℃</strong></td><td>屋内配線</td></tr>
+          <tr><td>CV</td><td>架橋ポリエチレン絶縁ビニルシースケーブル</td><td>XLPE</td><td><strong>90℃</strong></td><td>地中ケーブル</td></tr>
+          <tr><td>CVT</td><td>トリプレックス型CV</td><td>XLPE</td><td><strong>90℃</strong></td><td>地中ケーブル（3心）</td></tr>
+          <tr><td>OC</td><td>屋外用絶縁電線</td><td>ポリエチレン</td><td><strong>75℃</strong></td><td>低圧架空配電線</td></tr>
+        </tbody>
+      </table></div>
 
       <h2 id="jisei"><span className="h-num">4.</span>磁性材料</h2>
       <div className="table-wrap"><table className="data">
@@ -3161,6 +3205,18 @@ const GenshiryokuPage = ({ data, onNav }) => (
       </table></div>
       <Box kind="example" label="CANDUが天然ウランを使える理由">
         <p>重水(D₂O)は軽水より中性子吸収断面積が極めて小さい（約1/650）。余剰中性子が多く残るため、濃縮しない<strong>天然ウラン(U-235 0.7%)でも臨界を維持</strong>できる。軽水炉は軽水が中性子を吸うため2〜5%濃縮が必要。</p>
+      </Box>
+      <Box kind="tip" label="核燃料サイクル（R07上 問4で穴埋出題・要点）">
+        <p><strong>サイクルの流れ</strong>：ウラン採掘 → 精錬 → 転換 → ウラン濃縮（U-235濃度を高める）→ 燃料加工（ペレット→燃料棒→集合体）→ 原子炉 → 使用済み燃料 → 再処理（Pu抽出）→ MOX燃料／廃棄物処理</p>
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>核反応</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td>U-235 の核分裂</td><td>熱中性子を吸収して分裂→大量の熱と 2〜3 個の中性子を放出</td></tr>
+            <tr><td>U-238 の変換</td><td>中性子を吸収→Pu-239 に変換（<strong>高速増殖炉の原理</strong>）</td></tr>
+            <tr><td>連鎖反応</td><td>分裂で生じた中性子が次の核分裂を引き起こす</td></tr>
+          </tbody>
+        </table></div>
+        <p><strong>燃料構造</strong>：ペレット（UO₂ 焼結体）→ 燃料棒（ジルカロイ被覆管）→ 燃料集合体（数百本を束ねたもの）。使用済み燃料の再処理で回収した Pu を混ぜたのが <strong>MOX 燃料</strong>。</p>
       </Box>
 
       <h2 id="rinkai"><span className="h-num">4.</span>臨界と反応度</h2>
@@ -3487,6 +3543,19 @@ const HenatsukiLossPage = ({ data, onNav }) => (
         <p><strong>④ 新機の損失</strong>（(a)の4,640Wを使用）：<Eq tex="W_2 = 150 + 0.75^2\times4{,}640 = 150 + 2{,}610 = 2{,}760\,\text{W}" /></p>
         <p><strong>⑤ 比率</strong>：<Eq tex="\dfrac{W_2}{W_1} = \dfrac{2{,}760}{4{,}268.75} \approx 0.647 \to (3)\ 65\%" display /></p>
         <p>出典区分：問題・選択肢は電気技術者試験センター公表問題が正本。正答(a)(5)・(b)(3) は電験王・やくとくの2解説サイトで一致確認済み。</p>
+      </Box>
+      <Box kind="example" label="設問(b) 選択肢別の誤答理由（B問題は誤答分析が得点源）">
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>選択肢</th><th>値</th><th>想定される誤計算</th></tr></thead>
+          <tbody>
+            <tr><td>(1) 45%</td><td>0.45</td><td>α を 0.6（kW 割り）で計算した／無負荷損を 0 とした</td></tr>
+            <tr><td>(2) 54%</td><td>0.54</td><td>α を 0.6（kW 割り）で計算しつつ無負荷損も加えた</td></tr>
+            <tr><td><strong>(3) 65%</strong></td><td>0.65</td><td><strong>正答</strong>：α=0.75（皮相換算）＋ α²（二乗）＋無負荷損も加算</td></tr>
+            <tr><td>(4) 78%</td><td>0.78</td><td>銅損を α の一次（×α）で計算した</td></tr>
+            <tr><td>(5) 85%</td><td>0.85</td><td>無負荷損の改善（500→150W）を考慮し忘れた</td></tr>
+          </tbody>
+        </table></div>
+        <p>正答 (3) 以外は、いずれも「皮相換算」「銅損の二乗」「無負荷損の扱い」のどこかを1つ落とすと辿り着く値。誤答の道筋を逆算しておくと、本番で自分の計算がどの罠に落ちたか即座に気づける。</p>
       </Box>
 
       <h2 id="trap"><span className="h-num">7.</span>引っかけ・誤答ポイント</h2>
@@ -4524,8 +4593,30 @@ const DenryokuKeitouPage = ({ data, onNav }) => (
           <tr><td>高調波</td><td>インバータから発生する高調波が規制値以下であること</td></tr>
         </tbody>
       </table></div>
+      <Box kind="warn" label="逆潮流は「有効電力」の流れだけ（頻出引っかけ）">
+        <p>系統連系規程での逆潮流の定義は「分散型電源設置者の構内から、一般送配電事業者の電力系統側へ向かう<strong>有効電力</strong>の流れ」。</p>
+        <ul>
+          <li><strong>無効電力は逆潮流に含めない</strong>。連系点で系統側へ無効電力が流れていても「逆潮流」とは呼ばない。逆潮流の有無は<strong>有効電力の向き</strong>だけで判定する。</li>
+          <li>「逆潮流あり」＝余剰電力を売電している状態。「逆潮流なし連系」＝発電を構内消費だけに使い有効電力を系統へ流さない運用で、<strong>RPR（逆電力継電器）</strong>で逆潮流を監視・防止する。</li>
+          <li><strong>なぜ有効電力だけか</strong>：売電量や系統側の電圧上昇に直接効くのは有効電力の往来で、無効電力は力率・電圧調整として別枠で管理するため。</li>
+        </ul>
+      </Box>
       <Box kind="example" label="単独運転防止（アイランディング防止）が必要な理由">
         <p>系統停電時に分散型電源が単独で電圧を供給し続けると、（1）需要家側に電圧が印加されたまま残り作業員の感電リスクが生じ、（2）系統復旧時の位相不一致で機器が損傷する。<strong>検出方法</strong>は、周波数・電圧に意図的な変動を与えて検出する<strong>能動的方式</strong>と、周波数・電圧の急変を検出する<strong>受動的方式</strong>。<strong>対策</strong>は、系統停電を検出したら自動的に解列（連系点遮断）すること。</p>
+      </Box>
+      <Box kind="tip" label="単独運転検出方式（受動的3・能動的3）">
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>方式</th><th>代表例</th><th>検出原理（イメージ）</th></tr></thead>
+          <tbody>
+            <tr><td><strong>受動的</strong></td><td>電圧位相跳躍検出</td><td>系統が切れると負荷の力率分だけ電圧位相が急に飛ぶ→その跳躍を検出</td></tr>
+            <tr><td><strong>受動的</strong></td><td>周波数変化率検出（ROCOF, df/dt）</td><td>系統が切れると需給アンバランス分だけ周波数が急変→変化の速さを検出</td></tr>
+            <tr><td><strong>受動的</strong></td><td>3次高調波電圧急増検出</td><td>系統が切れると変圧器由来の3次高調波電圧が逃げ場を失い急増→それを検出</td></tr>
+            <tr><td><strong>能動的</strong></td><td>周波数シフト方式</td><td>出力周波数を少し押し続ける。系統ありなら抑え込まれ変化なし／切れると周波数がずれ続ける</td></tr>
+            <tr><td><strong>能動的</strong></td><td>無効電力変動方式</td><td>無効電力を周期的に変動させる。系統ありなら影響なし／切れると周波数が揺れる</td></tr>
+            <tr><td><strong>能動的</strong></td><td>負荷変動方式</td><td>瞬間的に負荷を挿入し電圧の変化を見る。系統ありなら変化小／切れると電圧が大きく動く</td></tr>
+          </tbody>
+        </table></div>
+        <p><strong>受動的</strong>＝系統が切れた瞬間のショック（急変）を見る。<strong>能動的</strong>＝わざと小さく揺さぶり続け、揺れが返ってこなければ（＝揺れが増幅されれば）系統が消えたと判断する。能動的は感度が高いが、複数台連系時に互いの揺さぶりが干渉する課題がある。</p>
       </Box>
       <Box kind="warn" label="再エネ大量導入と系統の慣性力（頻出引っかけ）">
         <p>「太陽光発電を大量に系統連系すると系統の慣性力が増す」→ <strong>誤り</strong>。太陽光発電はインバータ（直流→交流変換器）経由で接続されるため、同期発電機の回転体がもつ慣性力（イナーシャ）に相当するものがない。太陽光比率が上がると系統全体の慣性力が<strong>低下</strong>し、周波数が変動しやすくなる。対策は蓄電池（BESS）・揚水との組み合わせ、需要側制御（DR）。</p>
