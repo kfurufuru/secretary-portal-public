@@ -1118,6 +1118,7 @@ window.WIKI_DATA = {
         { id: "dual-map",        num: "F", title: "双対マップ",     freq: null, featured: true },
         { id: "complex-primer",  num: "G", title: "複素数・フェーザ演算", freq: null },
         { id: "vector-triangle", num: "H", title: "ベクトル合成と三角形", freq: null },
+        { id: "vector-ops",      num: "I", title: "内積・外積",           freq: null },
       ],
     },
   ],
@@ -5376,14 +5377,154 @@ const VectorTrianglePage = ({ onNav }) => (
         複素数での交流計算（掛け算＝角度を足す、極形式⇄直交形式）は <a href="#" onClick={(e) => { e.preventDefault(); onNav('complex-primer'); }} style={{ textDecoration: "underline" }}>G 複素数・フェーザ演算</a> を参照。本頁は「合成＝三角形」の幾何に特化。
       </p>
     </div>
-    <PageNav prev={{ id: "complex-primer", title: "G 複素数・フェーザ演算" }} next={{ id: "home", title: "ホーム" }} onNav={onNav} />
+    <PageNav prev={{ id: "complex-primer", title: "G 複素数・フェーザ演算" }} next={{ id: "vector-ops", title: "I 内積・外積" }} onNav={onNav} />
+  </>
+);
+
+/* ============================================================
+   I 内積・外積 (vector-ops) — 数学primer
+   静電気(仕事・電位差・電束)/電磁気(磁束)/電磁誘導(誘導起電力)/
+   電磁力(F=Il×B)/電子運動(ローレンツ力 F=qv×B) を貫く「内積=同方向度合い・
+   外積=直角な新方向」の二分法。ローレンツ力が仕事をしない理由（F⊥v）は
+   外積の定義（結果は入力と直角）から内積（仕事=F・v）が必然的に0になる
+   という2段の連鎖で説明する。
+   ============================================================ */
+const VectorOpsPage = ({ onNav }) => (
+  <>
+    <PageHeader
+      eyebrow="リファレンス — VECTOR OPERATIONS"
+      title="I 内積・外積"
+      deck="電験の公式は「内積（同じ方向にどれだけ効くか）」と「外積（直角な新方向を生む）」の2種類のベクトル演算に集約できる。この2つを見分けられると、静電気・電磁力・電磁誘導・電子運動の式が別々の暗記でなく1つの構造として見える。"
+      meta={[
+        { label: "対象", value: "F=qv×B や e=−NdΦ/dt の「なぜこの形か」で詰まったとき" },
+        { label: "狙い", value: "内積/外積の判定を反射化し、力が仕事をする/しないを式の形から即答する" },
+      ]}
+    />
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { id: "vector-ops", label: "I 内積・外積" }]} onNav={onNav} />
+    <div className="content">
+
+      <Callout variant="info" title="なぜこの2つを区別するか（30秒で）">
+        電験の公式には「2つのベクトルから<strong>数字1個</strong>を作る」ものと「2つのベクトルから<strong>新しい向きを持つベクトル</strong>を作る」ものの2種類がある。前者が<strong>内積</strong>、後者が<strong>外積</strong>。<strong>仕事・電位差・磁束</strong>は内積、<strong>力・トルク</strong>は外積で作られる——この対応を先に知っておくと、公式を見た瞬間に「これは同じ方向に働く量か、直角方向に働く量か」が分かる。
+      </Callout>
+
+      <h2 id="dot-image"><span className="h-num">1</span>内積のイメージ ＝「影の長さ」</h2>
+      <p>
+        懐中電灯を <Eq tex="B" inline /> の向きに垂直に当てて、<Eq tex="A" inline /> の<strong>影</strong>が <Eq tex="B" inline /> の上にどれだけ伸びるかを想像する。
+      </p>
+      <p style={{ textAlign: "center", margin: "10px 0" }}>
+        <Eq tex="A \cdot B = |A||B|\cos\theta" />
+      </p>
+      <table>
+        <thead><tr><th>θ（A と B の角度）</th><th>影の長さ</th><th>内積</th></tr></thead>
+        <tbody>
+          <tr><td>0°（同じ向き）</td><td>最大</td><td>最大（<Eq tex="|A||B|" inline />）</td></tr>
+          <tr><td>90°（直角）</td><td>0（影ができない）</td><td><strong>0</strong></td></tr>
+          <tr><td>180°（逆向き）</td><td>最大（逆符号）</td><td>最小（負で最大）</td></tr>
+        </tbody>
+      </table>
+      <p>
+        結果は<strong>スカラー（数字1個）</strong>。「同じ方向にどれだけ揃っているか」の物差し。荷物を斜めに引くとき、実際に前へ進める役に立つのは<strong>引く力のうち進行方向を向いた成分だけ</strong>——真横に引いても荷物はピクリとも動かない（内積0）。これが仕事 <Eq tex="W = F \cdot s" inline /> の正体。
+      </p>
+
+      <h2 id="cross-image"><span className="h-num">2</span>外積のイメージ ＝「直角な新方向を生む」＝ フレミングの指</h2>
+      <p>
+        外積は「2本の矢印から、<strong>両方と直角な新しい矢印</strong>」を作る演算。実はこれ、<strong>フレミングの左手則そのもの</strong>。親指（力 F）・人差し指（磁界 B）・中指（電流 I）を思い出すと、この3本は必ずお互い<strong>直角</strong>に立てる——これが外積の図そのもの。
+      </p>
+      <p style={{ textAlign: "center", margin: "10px 0" }}>
+        <Eq tex="|A \times B| = |A||B|\sin\theta" />
+      </p>
+      <table>
+        <thead><tr><th>θ（A と B の角度）</th><th>外積の大きさ</th></tr></thead>
+        <tbody>
+          <tr><td>0°（平行）</td><td><strong>0</strong>（新しい方向を作れない）</td></tr>
+          <tr><td>90°（直角）</td><td>最大（<Eq tex="|A||B|" inline />）</td></tr>
+        </tbody>
+      </table>
+      <p>
+        結果は<strong>ベクトル（大きさ＋向き）</strong>で、向きは右手（または左手）の法則で決まる。内積とは<strong>正反対の反応</strong>をする点が最重要——直角のとき内積は0だが、外積は逆に最大になる。
+      </p>
+
+      <h2 id="why-no-work"><span className="h-num">3</span>ローレンツ力が仕事をしない理由（外積→内積の2段連鎖）</h2>
+      <Callout variant="tip" title="「r一定だから」ではなく「外積の定義」が理由">
+        <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.9 }}>
+          <li>ローレンツ力は<strong>外積</strong>で作られる：<Eq tex="F = qv \times B" inline /></li>
+          <li>外積の結果は<strong>入力と必ず直角</strong>になる（定義そのもの）→ <Eq tex="F" inline /> は <Eq tex="v" inline /> と常に直角</li>
+          <li>仕事は<strong>内積</strong>で計算する：<Eq tex="W = F \cdot v" inline />（正確には<Eq tex="F \cdot v\,dt" inline />の積分）</li>
+          <li>内積は直角のとき<strong>必ず0</strong> → <Eq tex="F \perp v" inline /> だから <Eq tex="W = 0" inline /></li>
+        </ol>
+        <p style={{ margin: "8px 0 0" }}>円運動で半径 <Eq tex="r" inline /> が一定なのは<strong>この結果として起きる現象</strong>であって、仕事が0になる直接の理由ではない。理由は「外積で作った力は速度と直角にしかなれない」という数学的性質そのもの。</p>
+      </Callout>
+
+      <h2 id="table"><span className="h-num">4</span>電験での超重要対応表</h2>
+      <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
+        暗記する式が「内積系」か「外積系」かを先に仕分けると、公式同士のつながりが見える。
+      </p>
+      <table>
+        <thead><tr><th>分野</th><th>現象</th><th>式</th><th>内積/外積</th><th>関連ページ</th></tr></thead>
+        <tbody>
+          <tr><td>静電気</td><td>電界中の仕事</td><td><Eq tex="W = F \cdot s" inline /></td><td>内積</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('coulomb-field'); }} style={{ textDecoration: "underline" }}>1.1 静電気・クーロンの法則</a></td></tr>
+          <tr><td>静電気</td><td>電位差</td><td><Eq tex="V = W/q" inline /></td><td>内積の考え方</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('coulomb-field'); }} style={{ textDecoration: "underline" }}>1.1 静電気・クーロンの法則</a></td></tr>
+          <tr><td>静電気</td><td>電束</td><td><Eq tex="\Phi_E = E \cdot S" inline /></td><td>内積</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('capacitor'); }} style={{ textDecoration: "underline" }}>1.2 コンデンサ</a></td></tr>
+          <tr><td>電磁気</td><td>磁束</td><td><Eq tex="\Phi = B \cdot S" inline /></td><td>内積</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('magnetic-circuit'); }} style={{ textDecoration: "underline" }}>1.4 磁気回路</a></td></tr>
+          <tr><td>電磁誘導</td><td>誘導起電力</td><td><Eq tex="e = -N\dfrac{d\Phi}{dt}" inline /></td><td>内積が裏にある</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('inductance'); }} style={{ textDecoration: "underline" }}>3.1 インダクタンス・電磁誘導</a></td></tr>
+          <tr><td>電磁力</td><td>電流が受ける力</td><td><Eq tex="F = Il \times B" inline /></td><td>外積</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('electromagnetic-force'); }} style={{ textDecoration: "underline" }}>1.3 電磁力</a></td></tr>
+          <tr><td>電子運動</td><td>ローレンツ力</td><td><Eq tex="F = qv \times B" inline /></td><td>外積</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('electron-motion'); }} style={{ textDecoration: "underline" }}>5.4 電子の運動</a></td></tr>
+          <tr><td>回転機</td><td>トルク</td><td><Eq tex="T = r \times F" inline /></td><td>外積</td><td>機械科目で扱う（3種理論の範囲外）</td></tr>
+        </tbody>
+      </table>
+      <Callout variant="info" title="表から読み取れる法則">
+        <strong>「面積・仕事・エネルギーに関わる量」は内積系</strong>（電束・磁束・仕事・電位差）、<strong>「力・回転・向きを生む量」は外積系</strong>（電磁力・ローレンツ力・トルク）。誘導起電力は直接は内積で書かないが、<Eq tex="\Phi = B \cdot S" inline /> という内積量の時間変化として定義されるため「内積が裏にある」。
+      </Callout>
+
+      <h2 id="how-to-tell"><span className="h-num">5</span>一瞬で見分ける方法</h2>
+      <table>
+        <thead><tr><th>問い</th><th>内積</th><th>外積</th></tr></thead>
+        <tbody>
+          <tr><td>結果は何？</td><td>数字1個（スカラー）</td><td>向きを持つ矢印（ベクトル）</td></tr>
+          <tr><td>直角のとき</td><td><strong>0</strong></td><td><strong>最大</strong></td></tr>
+          <tr><td>平行のとき</td><td>最大</td><td><strong>0</strong></td></tr>
+          <tr><td>記号</td><td><Eq tex="\cdot" inline />（ドット）</td><td><Eq tex="\times" inline />（クロス）</td></tr>
+          <tr><td>電験での典型</td><td>仕事・電位差・磁束・電束</td><td>力（F=Il×B, F=qv×B）・トルク</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="drill"><span className="h-num">6</span>即答ドリル（3問・各20秒目安）</h2>
+      <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>即答してから解答を開く。1問でも詰まったら該当節へ戻る。</p>
+      <ol>
+        <li>導線に沿って移動する電荷が磁界から受ける力は、なぜ仕事をしないか（1行で）</li>
+        <li>磁束 <Eq tex="\Phi = B \cdot S" inline /> はなぜ外積でなく内積で定義されるか（磁束線と面の関係から）</li>
+        <li>電流が磁界から受ける力 <Eq tex="F = Il \times B" inline /> の向きが、電流の向きにも磁界の向きにも一致しない理由</li>
+      </ol>
+      <details style={{ marginTop: 10, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6 }}>
+        <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答（3問まとめて）</summary>
+        <ol style={{ lineHeight: 1.9 }}>
+          <li><strong>力 F=qv×B は速度 v と常に直角。仕事 W=F・v は直角のとき内積が0になるため仕事は常にゼロ。</strong></li>
+          <li><strong>磁束は「面を垂直に貫く磁力線の本数」。面と垂直な成分だけを数えるのは、まさに内積（影の長さ）の考え方そのもの。</strong></li>
+          <li><strong>外積の結果は定義上、入力の両方（電流の向き・磁界の向き）と直角になるため。どちらとも一致しないのは異常ではなく外積の性質そのもの。</strong></li>
+        </ol>
+      </details>
+
+      <h2 id="traps"><span className="h-num">7</span>引っかけ3点</h2>
+      <Callout variant="warn" title="内積・外積で落ちる典型3点">
+        <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.85 }}>
+          <li><strong>「近い/似ている」で済ませる</strong>：内積と外積は直角への反応が<strong>正反対</strong>。「だいたい同じ計算」と曖昧にせず、常に「結果はスカラーかベクトルか」を先に確認する。</li>
+          <li><strong>仕事0の理由を「円運動だから」にする</strong>：円運動になるのは<strong>結果</strong>であって、仕事が0になる<strong>原因</strong>は「外積で作った力が速度と常に直角」という定義そのもの。因果を逆にしない。</li>
+          <li><strong>外積の向きを「電流や磁界と同じ」と思い込む</strong>：外積の結果は入力のどちらとも<strong>直角</strong>（フレミングの親指が人差し指・中指のどちらとも別方向を向くのと同じ）。向きは必ず右手/左手の法則で決める。</li>
+        </ol>
+      </Callout>
+
+      <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+        複素数・フェーザの演算（掛け算＝角度を足す、等）は本頁の内積・外積とは別の演算体系。交流計算は <a href="#" onClick={(e) => { e.preventDefault(); onNav('complex-primer'); }} style={{ textDecoration: "underline" }}>G 複素数・フェーザ演算</a> を参照。
+      </p>
+    </div>
+    <PageNav prev={{ id: "vector-triangle", title: "H ベクトル合成と三角形" }} next={{ id: "home", title: "ホーム" }} onNav={onNav} />
   </>
 );
 
 /* ============================================================
    Export to window
    ============================================================ */
-Object.assign(window, { HomePage, Last3DaysPage, RetakeStrategyPage, ExamOperationPage, DualMapPage, GuidePage, ComplexPrimerPage, VectorTrianglePage });
+Object.assign(window, { HomePage, Last3DaysPage, RetakeStrategyPage, ExamOperationPage, DualMapPage, GuidePage, ComplexPrimerPage, VectorTrianglePage, VectorOpsPage });
 </script>
 <script type="text/babel">
 /* riron-pages-batch1.jsx */
@@ -24392,6 +24533,7 @@ const App = () => {
       case 'dual-map':           return <DualMapPage {...props} />;
       case 'complex-primer':     return <ComplexPrimerPage {...props} />;
       case 'vector-triangle':    return <VectorTrianglePage {...props} />;
+      case 'vector-ops':         return <VectorOpsPage {...props} />;
       default:                   return <HomePage {...props} />;
     }
   };
