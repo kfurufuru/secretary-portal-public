@@ -1117,6 +1117,7 @@ window.WIKI_DATA = {
         { id: "circuit-patterns",num: "E", title: "回路パターン集", freq: null },
         { id: "dual-map",        num: "F", title: "双対マップ",     freq: null, featured: true },
         { id: "complex-primer",  num: "G", title: "複素数・フェーザ演算", freq: null },
+        { id: "vector-triangle", num: "H", title: "ベクトル合成と三角形", freq: null },
       ],
     },
   ],
@@ -5177,14 +5178,212 @@ const ComplexPrimerPage = ({ onNav }) => (
         フェーザ図の「読み取り方」（ベクトル図問題の着眼）は <a href="#" onClick={(e) => { e.preventDefault(); onNav('exam-operation'); }} style={{ textDecoration: "underline" }}>7.4 本番運用 節7</a> が担当。本頁は「計算操作」専用。
       </p>
     </div>
-    <PageNav prev={{ id: "dual-map", title: "F 双対マップ" }} next={{ id: "home", title: "ホーム" }} onNav={onNav} />
+    <PageNav prev={{ id: "dual-map", title: "F 双対マップ" }} next={{ id: "vector-triangle", title: "H ベクトル合成と三角形" }} onNav={onNav} />
+  </>
+);
+
+const VectorTrianglePage = ({ onNav }) => (
+  <>
+    <PageHeader
+      eyebrow="リファレンス — VECTOR COMPOSITION & TRIANGLES"
+      title="H ベクトル合成と三角形"
+      deck="向きの違うベクトルの足し算・引き算は、必ず三角形（または平行四辺形）に化ける。等大2本なら二等辺三角形、三相の120°配置なら正三角形——この2つの形と sin/cos だけで、三相の √3・力率三角形・正三角形上の点電荷まで同じ道具で解ける。"
+      meta={[
+        { label: "対象", value: "「なぜ √3 が出るのか」「電力ベクトルの合成が曖昧」で詰まったとき" },
+        { label: "狙い", value: "ベクトル合成を三角形に翻訳し、2A cos(θ/2)・余弦定理・特別な直角三角形を反射化する" },
+      ]}
+    />
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { id: "vector-triangle", label: "H ベクトル合成と三角形" }]} onNav={onNav} />
+    <div className="content">
+
+      <Callout variant="info" title="なぜベクトルは三角形になるのか（30秒で）">
+        ベクトルの足し算は「1本目の矢の先端に2本目の矢の根元をつなぐ」だけ。始点・1本目の先端・2本目の先端の<strong>3点を結ぶと必ず三角形</strong>ができる。だから交流や力の合成は、幾何の問題（辺の長さ＝大きさ、角＝位相差）に翻訳できる。電験で出る形は実質<strong>2種類だけ</strong>——等大2本の<strong>二等辺三角形</strong>と、120°対称の<strong>正三角形</strong>。この2形と sin/cos で大半が片付く。
+      </Callout>
+
+      <h2 id="cosine-law"><span className="h-num">1</span>合成の一般式 ＝ 余弦定理</h2>
+      <p>
+        大きさ <Eq tex="A" inline />・<Eq tex="B" inline />、間の角 <Eq tex="\theta" inline /> の2ベクトルを足すと、合成ベクトルの大きさ <Eq tex="R" inline /> は<strong>余弦定理</strong>で決まる。
+      </p>
+      <p style={{ textAlign: "center", margin: "10px 0" }}>
+        <Eq tex="R = \sqrt{A^2 + B^2 + 2AB\cos\theta}" />
+      </p>
+      <p>
+        <strong>引き算</strong>（差ベクトル <Eq tex="A - B" inline />）は <Eq tex="B" inline /> を逆向きにして足すだけなので、間の角が <Eq tex="180^\circ - \theta" inline /> に変わり <Eq tex="\cos" inline /> の符号が反転する。
+      </p>
+      <p style={{ textAlign: "center", margin: "10px 0" }}>
+        <Eq tex="|A - B| = \sqrt{A^2 + B^2 - 2AB\cos\theta}" />
+      </p>
+      <table>
+        <thead><tr><th>θ（間の角）</th><th>和 <Eq tex="R" inline /> の大きさ</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><td>0°（同じ向き）</td><td><Eq tex="A + B" inline />（最大）</td><td>ただのスカラー加算</td></tr>
+          <tr><td>90°（直角）</td><td><Eq tex="\sqrt{A^2 + B^2}" inline /></td><td>三平方の定理。<Eq tex="S^2=P^2+Q^2" inline /> の形</td></tr>
+          <tr><td>180°（逆向き）</td><td><Eq tex="|A - B|" inline />（最小）</td><td>打ち消し合い</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="isosceles"><span className="h-num">2</span>二等辺三角形 ＝ 等大2ベクトルの合成</h2>
+      <p>
+        大きさが等しい2本（<Eq tex="A = B" inline />）を合成すると、2辺が等しい<strong>二等辺三角形</strong>になる。余弦定理に <Eq tex="A = B" inline /> を代入すると、覚えやすい形にまとまる。
+      </p>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", margin: "10px 0" }}>
+        <div style={{ padding: "10px 16px", background: "var(--accent-soft)", borderRadius: 8, textAlign: "center" }}>
+          <div style={{ fontSize: 12, color: "var(--ink-soft)", marginBottom: 4 }}>和（同方向寄り）</div>
+          <Eq tex="R = 2A\cos\dfrac{\theta}{2}" />
+        </div>
+        <div style={{ padding: "10px 16px", background: "var(--accent-soft)", borderRadius: 8, textAlign: "center" }}>
+          <div style={{ fontSize: 12, color: "var(--ink-soft)", marginBottom: 4 }}>差</div>
+          <Eq tex="|A-B| = 2A\sin\dfrac{\theta}{2}" />
+        </div>
+      </div>
+      <p>
+        向きは<strong>2本のちょうど真ん中（角の二等分線）</strong>。<Eq tex="\theta/2" inline /> が出るのは、二等辺三角形では頂角を二等分すると底辺に下ろした<strong>垂線が対称軸</strong>になり、直角三角形2つに割れるから。
+      </p>
+      <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+        <svg viewBox="0 0 460 300" role="img" aria-label="等大2ベクトルAとBを合成すると二等辺三角形になり、合成Rは角の二等分線方向で大きさは2Acos(θ/2)。頂角を二等分する垂線が対称軸となる" style={{ display: "block", width: "100%", height: "auto", maxWidth: "460px", margin: "0 auto" }}>
+          <line x1="230" y1="240" x2="230" y2="60" stroke="var(--rule)" strokeWidth="1" strokeDasharray="4 4" />
+          <line x1="230" y1="240" x2="159" y2="156" stroke="var(--accent)" strokeWidth="3" />
+          <polygon points="166,150 155,152 165,163" fill="var(--accent)" />
+          <text x="120" y="150" fontSize="13" fontWeight="700" fill="var(--accent)">A</text>
+          <line x1="230" y1="240" x2="301" y2="156" stroke="var(--ok)" strokeWidth="3" />
+          <polygon points="294,150 305,152 295,163" fill="var(--ok)" />
+          <text x="312" y="150" fontSize="13" fontWeight="700" fill="var(--ok)">B</text>
+          <line x1="159" y1="156" x2="230" y2="72" stroke="var(--ink-mute)" strokeWidth="1" strokeDasharray="3 3" />
+          <line x1="301" y1="156" x2="230" y2="72" stroke="var(--ink-mute)" strokeWidth="1" strokeDasharray="3 3" />
+          <line x1="230" y1="240" x2="230" y2="74" stroke="var(--danger)" strokeWidth="3.5" />
+          <polygon points="224,84 230,70 236,84" fill="var(--danger)" />
+          <text x="238" y="110" fontSize="13" fontWeight="700" fill="var(--danger)">R = 2A cos(θ/2)</text>
+          <path d="M 205.6 210.9 A 38 38 0 0 1 254.4 210.9" fill="none" stroke="var(--ink)" strokeWidth="1.4" />
+          <text x="230" y="203" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">θ</text>
+          <text x="196" y="230" fontSize="10" fill="var(--ink-mute)">θ/2</text>
+          <text x="252" y="230" fontSize="10" fill="var(--ink-mute)">θ/2</text>
+          <circle cx="230" cy="240" r="3" fill="var(--ink)" />
+          <text x="230" y="262" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">A=B のとき合成は角の二等分線方向</text>
+        </svg>
+        <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+          図：等大2ベクトルの合成。<strong>R = 2A cos(θ/2)</strong>、向きは<strong>角の二等分線</strong>。頂角を二等分する垂線（点線）が対称軸となり、二等辺三角形が直角三角形2つに割れる。
+        </figcaption>
+      </figure>
+      <Callout variant="tip" title="この1式が三相の √3 を生む">
+        大きさ <Eq tex="E" inline /> の相電圧2本は 120° ずれている。線間電圧はこの2本の<strong>差</strong> <Eq tex="V_\ell = |E_a - E_b|" inline /> なので、差の式に <Eq tex="\theta = 120^\circ" inline /> を入れると
+        <span style={{ display: "block", textAlign: "center", margin: "8px 0" }}>
+          <Eq tex="V_\ell = 2E\sin\dfrac{120^\circ}{2} = 2E\sin 60^\circ = 2E\cdot\dfrac{\sqrt{3}}{2} = \sqrt{3}\,E" />
+        </span>
+        <strong>√3 は暗記数ではなく「120°の二等辺三角形の底辺」</strong>。詳しくは <a href="#" onClick={(e) => { e.preventDefault(); onNav('three-phase'); }} style={{ textDecoration: "underline" }}>4.1 三相交流</a>。
+      </Callout>
+
+      <h2 id="equilateral"><span className="h-num">3</span>正三角形 ＝ 120°対称と点電荷配置</h2>
+      <p>
+        大きさが等しく <strong>120° ずつ</strong>ずれた3本は、先端をつなぐと<strong>正三角形</strong>を閉じる＝<strong>合計が 0</strong>。三相交流の「各相の瞬時値の和は常にゼロ」「対称三相なら中性線に電流が流れない」は、この対称性そのもの。
+      </p>
+      <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+        <svg viewBox="0 0 460 300" role="img" aria-label="大きさの等しい3本のベクトルが120度ずつずれて配置され、先端をつなぐと正三角形を閉じて合計がゼロになる。三相交流の対称性を表す" style={{ display: "block", width: "100%", height: "auto", maxWidth: "460px", margin: "0 auto" }}>
+          <circle cx="150" cy="150" r="3" fill="var(--ink)" />
+          <line x1="150" y1="150" x2="150" y2="62" stroke="var(--accent)" strokeWidth="3" />
+          <polygon points="145,72 150,58 155,72" fill="var(--accent)" />
+          <text x="150" y="50" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent)">E_a</text>
+          <line x1="150" y1="150" x2="226" y2="194" stroke="var(--ok)" strokeWidth="3" />
+          <polygon points="215,190 230,197 218,201" fill="var(--ok)" />
+          <text x="236" y="205" fontSize="12" fontWeight="700" fill="var(--ok)">E_b</text>
+          <line x1="150" y1="150" x2="74" y2="194" stroke="var(--warn)" strokeWidth="3" />
+          <polygon points="82,201 70,197 85,190" fill="var(--warn)" />
+          <text x="52" y="205" fontSize="12" fontWeight="700" fill="var(--warn)">E_c</text>
+          <text x="174" y="156" fontSize="10" fill="var(--ink-mute)">120°</text>
+          <polygon points="150,62 226,194 74,194" fill="none" stroke="var(--ink-mute)" strokeWidth="1.4" strokeDasharray="4 4" />
+          <rect x="285" y="66" width="165" height="150" rx="6" fill="var(--accent-soft)" />
+          <text x="367" y="88" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">120°対称の帰結</text>
+          <text x="298" y="112" fontSize="11" fill="var(--ink)">先端が正三角形を閉じる</text>
+          <text x="298" y="136" fontSize="11" fontWeight="700" fill="var(--ink)">→ 3本の和 = 0</text>
+          <text x="298" y="160" fontSize="11" fill="var(--ink)">三相の瞬時値の和は常に0</text>
+          <text x="298" y="184" fontSize="11" fill="var(--ink)">対称なら中性線電流 = 0</text>
+          <text x="298" y="206" fontSize="10" fill="var(--ink-mute)">線間は隣接2本の差 = √3E</text>
+        </svg>
+        <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+          図：120°ずつずれた等大3ベクトル。先端を結ぶと<strong>正三角形が閉じる＝合計 0</strong>。三相の対称性（瞬時値の和ゼロ・中性線電流ゼロ）の幾何的な正体。
+        </figcaption>
+      </figure>
+      <Callout variant="tip" title="正三角形上の点電荷（H20問1・H22問17）">
+        正三角形の頂点に等しい電荷を置くと、1つの電荷が受ける2つの力は<strong>間の角 60°</strong>。等大なので二等辺三角形の合成式に <Eq tex="\theta = 60^\circ" inline /> を入れて
+        <span style={{ display: "block", textAlign: "center", margin: "8px 0" }}>
+          <Eq tex="R = 2F\cos\dfrac{60^\circ}{2} = 2F\cos 30^\circ = \sqrt{3}\,F" />
+        </span>
+        向きは<strong>重心から外向き</strong>（二等分線）。中心に置いた電荷が受ける合成電界は、3方向が 120° 対称なので<strong>0</strong>。合成手順は <a href="#" onClick={(e) => { e.preventDefault(); onNav('coulomb-field'); }} style={{ textDecoration: "underline" }}>1.1 静電気・クーロンの法則</a>。
+      </Callout>
+
+      <h2 id="sincos"><span className="h-num">4</span>電験で使う sin/cos ＝ 2つの特別な直角三角形</h2>
+      <p>
+        合成を数値にするには、頻出角の sin/cos を暗記でなく<strong>三角形の辺の比</strong>で持っておく。覚えるのは<strong>2枚だけ</strong>。
+      </p>
+      <table>
+        <thead><tr><th>三角形</th><th>辺の比</th><th>角</th><th>電験での出どころ</th></tr></thead>
+        <tbody>
+          <tr><td>30-60-90</td><td><Eq tex="1 : \sqrt{3} : 2" inline /></td><td>sin30°=1/2, cos30°=√3/2, tan60°=√3</td><td>三相の √3、正三角形の高さ、力率0.5</td></tr>
+          <tr><td>45-45-90（直角二等辺）</td><td><Eq tex="1 : 1 : \sqrt{2}" inline /></td><td>sin45°=cos45°=1/√2</td><td>力率0.707、R=X のインピーダンス</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>θ</th><th>0°</th><th>30°</th><th>45°</th><th>60°</th><th>90°</th></tr></thead>
+        <tbody>
+          <tr><td><strong>sin</strong></td><td>0</td><td>1/2</td><td>1/√2</td><td>√3/2</td><td>1</td></tr>
+          <tr><td><strong>cos</strong></td><td>1</td><td>√3/2</td><td>1/√2</td><td>1/2</td><td>0</td></tr>
+        </tbody>
+      </table>
+      <Callout variant="info" title="正弦定理・余弦定理（等大でない合成の保険）">
+        <p style={{ margin: "0 0 6px" }}>大きさが違う2本の合成や、角度が半端なときは定理に戻る。</p>
+        <ul style={{ margin: "4px 0", paddingLeft: 20, lineHeight: 1.9 }}>
+          <li><strong>余弦定理</strong>：<Eq tex="c^2 = a^2 + b^2 - 2ab\cos C" inline />（3辺と1角。合成の大きさを出す主役）</li>
+          <li><strong>正弦定理</strong>：<Eq tex="\dfrac{a}{\sin A} = \dfrac{b}{\sin B} = 2R" inline />（合成の<strong>向き＝角度</strong>を出すのに使う）</li>
+        </ul>
+      </Callout>
+
+      <h2 id="exam-map"><span className="h-num">5</span>電験での使いどころ対応表</h2>
+      <table>
+        <thead><tr><th>場面</th><th>三角形</th><th>使う関係</th><th>関連ページ</th></tr></thead>
+        <tbody>
+          <tr><td>線間電圧＝√3×相電圧</td><td>二等辺（頂角120°）</td><td><Eq tex="2E\sin 60^\circ=\sqrt{3}E" inline /></td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('three-phase'); }} style={{ textDecoration: "underline" }}>4.1 三相交流</a></td></tr>
+          <tr><td>皮相・有効・無効電力</td><td>直角三角形</td><td><Eq tex="S^2=P^2+Q^2" inline />, <Eq tex="P=S\cos\theta" inline /></td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('ac-power'); }} style={{ textDecoration: "underline" }}>2.3 交流電力</a></td></tr>
+          <tr><td>RとXの合成インピーダンス</td><td>直角三角形</td><td><Eq tex="Z=\sqrt{R^2+X^2}" inline /></td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('rlc-resonance'); }} style={{ textDecoration: "underline" }}>2.4 RLC回路・共振</a></td></tr>
+          <tr><td>正三角形上の点電荷の合成力</td><td>二等辺（頂角60°）</td><td><Eq tex="2F\cos 30^\circ=\sqrt{3}F" inline /></td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('coulomb-field'); }} style={{ textDecoration: "underline" }}>1.1 静電気・クーロンの法則</a></td></tr>
+          <tr><td>対称三相の和＝0・中性線電流0</td><td>正三角形（閉じる）</td><td>120°対称</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('three-phase'); }} style={{ textDecoration: "underline" }}>4.1 三相交流</a></td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="drill"><span className="h-num">6</span>即答ドリル（3問・各30秒目安）</h2>
+      <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>即答してから解答を開く。詰まったら該当節へ戻る。</p>
+      <ol>
+        <li>大きさの等しい2本のベクトルが 90° をなすとき、合成の大きさは元の何倍か（式で）</li>
+        <li>三相の線間電圧が相電圧の √3 倍になる理由を、二等辺三角形の言葉で1行で</li>
+        <li>正三角形の頂点に等しい電荷を置いたとき、1つが受ける合成力の大きさと向き</li>
+      </ol>
+      <details style={{ marginTop: 10, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6 }}>
+        <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答（3問まとめて）</summary>
+        <ol style={{ lineHeight: 1.9 }}>
+          <li><strong>2A cos(90°/2) = 2A cos45° = 2A·(1/√2) = √2·A ≈ 1.41 倍。</strong>（三平方 √(A²+A²)=√2 A と一致）</li>
+          <li><strong>相電圧2本は120°ずれ、線間はその差。頂角120°の二等辺三角形の底辺 = 2E sin60° = √3 E だから。</strong></li>
+          <li><strong>2つの力は60°をなすので合成 = 2F cos30° = √3 F、向きは重心から外向き（角の二等分線）。</strong></li>
+        </ol>
+      </details>
+
+      <Callout variant="warn" title="三角形合成で落ちる3点">
+        <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.85 }}>
+          <li><strong>大きさをそのまま足す</strong>：向きが違うベクトルはスカラー加算不可。必ず余弦定理か三角形に落とす。</li>
+          <li><strong>「間の角」を取り違える</strong>：和は2本の間の角 θ、差は 180°−θ。三相の線間は<strong>差</strong>なので頂角は120°（60°ではない）。</li>
+          <li><strong>√3 を丸暗記して意味を失う</strong>：√3 は「120°の二等辺三角形の底辺」または「30-60-90 の辺比」。出どころを図で言えるようにする。</li>
+        </ol>
+      </Callout>
+
+      <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+        複素数での交流計算（掛け算＝角度を足す、極形式⇄直交形式）は <a href="#" onClick={(e) => { e.preventDefault(); onNav('complex-primer'); }} style={{ textDecoration: "underline" }}>G 複素数・フェーザ演算</a> を参照。本頁は「合成＝三角形」の幾何に特化。
+      </p>
+    </div>
+    <PageNav prev={{ id: "complex-primer", title: "G 複素数・フェーザ演算" }} next={{ id: "home", title: "ホーム" }} onNav={onNav} />
   </>
 );
 
 /* ============================================================
    Export to window
    ============================================================ */
-Object.assign(window, { HomePage, Last3DaysPage, RetakeStrategyPage, ExamOperationPage, DualMapPage, GuidePage, ComplexPrimerPage });
+Object.assign(window, { HomePage, Last3DaysPage, RetakeStrategyPage, ExamOperationPage, DualMapPage, GuidePage, ComplexPrimerPage, VectorTrianglePage });
 </script>
 <script type="text/babel">
 /* riron-pages-batch1.jsx */
@@ -24192,6 +24391,7 @@ const App = () => {
       case 'circuit-patterns':   return <CircuitPatternsPage {...props} />;
       case 'dual-map':           return <DualMapPage {...props} />;
       case 'complex-primer':     return <ComplexPrimerPage {...props} />;
+      case 'vector-triangle':    return <VectorTrianglePage {...props} />;
       default:                   return <HomePage {...props} />;
     }
   };
