@@ -21892,6 +21892,26 @@ const SemiconductorRectifierSvg = () => (
   </figure>
 );
 
+const SemiconductorClipperSvg = () => (
+  <figure style={{ margin: "16px 0" }}>
+    <svg viewBox="0 0 460 200" role="img" aria-label="並列クリッパの入出力波形。入力は正負に振れる正弦波、出力は負の半周期がゼロ付近で切り取られ正の半周期だけが残る" style={{ display: "block", width: "100%", height: "auto", maxWidth: "460px", margin: "0 auto" }}>
+      {/* 基準軸 0V */}
+      <line x1="40" y1="100" x2="430" y2="100" stroke="var(--ink)" strokeWidth="1.2" />
+      <text x="34" y="104" fontSize="10" fill="var(--ink-mute)" textAnchor="end">0V</text>
+      {/* 入力（点線・薄）：正負に振れる正弦波 */}
+      <path d="M40 100 Q89 60 138 100 Q186.5 140 235 100 Q284 60 333 100 Q381.5 140 430 100" fill="none" stroke="var(--ink-mute)" strokeWidth="1.6" strokeDasharray="5 4" />
+      {/* 出力（実線・太）：負の半周期をベースラインでカット */}
+      <path d="M40 100 Q89 60 138 100 L235 100 Q284 60 333 100 L430 100" fill="none" stroke="var(--accent)" strokeWidth="2.6" />
+      <text x="58" y="52" fontSize="11" fontWeight="700" fill="var(--accent-ink)">出力（実線）</text>
+      <text x="150" y="132" fontSize="11" fontWeight="700" fill="var(--warn)">← 負側をカット</text>
+      <text x="250" y="160" fontSize="10" fill="var(--ink-mute)">入力（点線）</text>
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      図④：<strong>並列クリッパ（負側カット）の入出力波形</strong>。ダイオードが逆バイアスの正の半周期は入力がそのまま通り、順バイアスになる負の半周期はダイオードが導通して出力が 0V 付近（理想で 0V・実際は約 −0.7V）に固定される＝<strong>負側が切り取られる</strong>。ダイオードの向きを逆にすれば正側がカットされる。
+    </figcaption>
+  </figure>
+);
+
 /* ============================ 公式タブ ============================ */
 const SemiconductorLayers = () => (
   <>
@@ -22422,6 +22442,38 @@ const SemiconductorLearnTab = ({ onNav, switchTab }) => (
     </details>
     <Callout variant="tip" title="この例題のツボ">
       「逆バイアス＝電流ゼロ」は誤り。逆飽和電流は存在する。Si 0.7V・Ge 0.3V の数値は素材確認の習慣で解決。
+    </Callout>
+
+    <h3 id="ex-clipper">例題2の応用 — ダイオード回路の出力波形（クリッパ）</h3>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
+      「クリッパ」という名称そのものは電験3種でほぼ問われないが、<strong>ダイオード回路に交流を入れ、出力波形を選ぶ／各ダイオードに加わる電圧の向きを答える</strong>問題（R04下・H19 問11 など）は実質この考え方で解ける。<strong>ダイオードのON/OFFを半周期ごとに判定する</strong>のが唯一のコツ。
+    </p>
+    <Callout variant="note" title="例題（波形選択）">
+      抵抗 R に続けてダイオード D を出力と並列に接続し（D のカソードを出力側、アノードをGND側）、入力に正弦波 <Eq tex="v_i = V_m \sin\omega t" /> を加える。出力波形はどうなるか。ダイオードは理想とする。
+    </Callout>
+    <SemiconductorClipperSvg />
+    <SolveFlow
+      type="ダイオード回路の出力波形（半周期ごとにON/OFF判定）"
+      steps={[
+        "ダイオードの向きを確認：アノード(P)が高電位になると順バイアス＝ON、逆なら OFF",
+        "入力が正の半周期：出力側(カソード)が高電位 → D は逆バイアス OFF → 電流が流れず出力＝入力（そのまま通る）",
+        "入力が負の半周期：出力側(カソード)が低電位 → D は順バイアス ON → 出力は 0V（理想）に固定＝クリップ",
+        "半周期ごとの結果をつなぐ → 負側が切り取られた波形（＝図④の実線）",
+        "選択肢は『どちら側が消えるか』で即決。D の向きを逆にすれば正側が消える",
+      ]}
+    />
+    <Callout variant="tip" title="バイアス電池を足すと（クリップ位置の調整）">
+      <p>ダイオードに直列で電池 <Eq tex="E" /> を入れると、クリップされるレベルが移動する。クリップの高さ ＝ <Eq tex="E + V_F" />（<Eq tex="V_F" /> はダイオードの順方向電圧、Si で約 0.7V・理想で 0V）。「基準電圧を超えた分だけ頭打ち」と読み替えると波形を描ける。</p>
+    </Callout>
+    <Callout variant="warn" title="混同注意：クリッパ と クランパ">
+      <table className="data-table" style={{ marginTop: 4 }}>
+        <thead><tr><th>回路</th><th>働き</th><th>目印</th></tr></thead>
+        <tbody>
+          <tr><td><strong>クリッパ</strong></td><td>波形の一部を<strong>切り取る</strong>（振幅制限）</td><td>ダイオード＋<strong>抵抗</strong></td></tr>
+          <tr><td><strong>クランパ</strong></td><td>波形全体を上下に<strong>平行移動</strong>（直流分を加える）</td><td>ダイオード＋<strong>コンデンサ</strong></td></tr>
+        </tbody>
+      </table>
+      <p style={{ marginTop: 6, marginBottom: 0 }}>「クリッパ＝切る／クランパ＝ずらす（コンデンサあり）」で区別する。</p>
     </Callout>
 
     <h2 id="r02-11"><span className="h-num">4</span>R02 問11 解法カード — 可変容量ダイオード（バラクタ）</h2>
