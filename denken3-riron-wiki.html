@@ -15716,6 +15716,30 @@ const InductanceFormulasTab = ({ onNav, switchTab }) => (
     <InductanceLayers />
     <InductanceSymbolLegend />
 
+    {/* 型判定ゲート（最優先S）：問題文の与えられた量から使う式を選ぶ */}
+    <div style={{ background: "var(--accent-soft)", border: "2px solid var(--accent-ink)", borderRadius: 10, padding: "14px 16px", margin: "12px 0 16px" }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: "var(--accent-ink)", marginBottom: 4 }}>⚡ インダクタンス問題の5秒判定ゲート</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 6, fontSize: 11, color: "var(--ink-soft)", margin: "6px 0 10px", lineHeight: 1.55 }}>
+        <div>📍 <strong>今なにを</strong>：問題文の“与えられた量”から使う式を1つに絞る</div>
+        <div>🎯 <strong>いつ使う</strong>：L・M が絡む問題を見た最初の5秒</div>
+        <div>➡️ <strong>次どこへ</strong>：式が決まったら解説タブ／学習タブの該当例題へ</div>
+      </div>
+      <p style={{ fontSize: 13, margin: "0 0 8px" }}>「公式を思い出す」のではなく、<strong>問題文に出てくる量から逆に式を選ぶ</strong>。これが電験の失点を防ぐ最短ルート。</p>
+      <table className="data-table">
+        <thead><tr><th>問題文に出てくる量</th><th>使う式</th></tr></thead>
+        <tbody>
+          <tr><td>① 磁束 <Eq tex="\Phi" inline /> が与えられる</td><td><Eq tex="L = N\Phi / I" inline /></td></tr>
+          <tr><td>② 磁路長 ℓ・断面積 S・透磁率 μ・巻数 N（＝鉄心の構造）</td><td><Eq tex="L = \mu_0\mu_r N^2 S / \ell" inline /></td></tr>
+          <tr><td>③ 電流変化 <Eq tex="\Delta I/\Delta t" inline />・端子電圧・逆起電力</td><td><Eq tex="e = -L\,\Delta I/\Delta t" inline /></td></tr>
+          <tr><td>④ 蓄えられるエネルギーが問われる</td><td><Eq tex="W = \tfrac{1}{2}L I^2" inline /></td></tr>
+          <tr><td>⑤ コイルが<strong>2つ</strong> → 相互インダクタンス M</td><td>下で分岐 ↓</td></tr>
+          <tr><td>　└ 鉄心の構造（μ・S・ℓ）＋巻数 N₁,N₂ が与えられる</td><td><Eq tex="M = \mu_0\mu_r N_1 N_2 S / \ell" inline /></td></tr>
+          <tr><td>　└ 自己 <Eq tex="L_1, L_2" inline /> と結合係数 k が与えられる</td><td><Eq tex="M = k\sqrt{L_1 L_2}" inline /></td></tr>
+        </tbody>
+      </table>
+      <p style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 8, marginBottom: 0 }}>※ さらに「直流定常／投入・遮断／交流／過渡」で挙動が変わる → <a href="#" onClick={(e) => { e.preventDefault(); switchTab('explain'); }} style={{ textDecoration: "underline" }}>解説タブ セクション4 の状態判定表</a>もセットで確認。</p>
+    </div>
+
     <DefinitionCallout symbol="インダクタンス L">
       <p style={{ margin: "0 0 8px 0" }}>
         コイルに電流 I を流すと、巻数 N に応じた磁束鎖交数 <Eq tex="\lambda = N\Phi" inline /> が生じる。<strong>L はその「電流 1 A あたりの磁束鎖交数」</strong>：
@@ -16182,6 +16206,21 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
     </p>
 
     <h2 id="dc-ac-energy"><span className="h-num">4</span>直流・交流でのコイル挙動 ＋ 磁気エネルギー</h2>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 6, fontSize: 11, color: "var(--ink-soft)", margin: "4px 0 10px", padding: "8px 10px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6, lineHeight: 1.55 }}>
+      <div>📍 <strong>今なにを</strong>：コイルの“いまの状態”を4つから判定する</div>
+      <div>🎯 <strong>いつ使う</strong>：回路が直流か・投入/遮断か・交流か・過渡かを見た時</div>
+      <div>➡️ <strong>次どこへ</strong>：交流→X_L=ωL、過渡→3.2 過渡現象へ</div>
+    </div>
+    <p style={{ fontSize: 13, marginBottom: 8 }}>コイルは「電流の変化」に反応する素子。だから<strong>同じコイルでも電流のようすで挙動が4つに分かれる</strong>。まずこの表で状態を確定させてから式を選ぶ：</p>
+    <table className="data-table">
+      <thead><tr><th>状態</th><th>電流変化 di/dt</th><th>コイルの振る舞い</th><th>使う式・扱い</th></tr></thead>
+      <tbody>
+        <tr><td><strong>直流定常</strong></td><td>di/dt = 0</td><td>誘導起電力なし ＝ <strong>短絡</strong>（v=0）</td><td>L を無視し抵抗だけで解く</td></tr>
+        <tr><td><strong>直流の投入／遮断</strong></td><td>di/dt が大</td><td>大きな<strong>逆起電力・サージ</strong></td><td><Eq tex="e = -L\,di/dt" inline />（接点火花・SPD対策）</td></tr>
+        <tr><td><strong>交流（定常）</strong></td><td>常に変化</td><td>電流を妨げる ＝ <strong>誘導リアクタンス</strong></td><td><Eq tex="X_L = \omega L" inline />、電流は電圧より90°遅れ</td></tr>
+        <tr><td><strong>過渡</strong></td><td>変化の途中</td><td>電流は<strong>瞬時に変われない</strong></td><td><Eq tex="i(t)=\tfrac{V}{R}(1-e^{-t/\tau})" inline />, τ=L/R</td></tr>
+      </tbody>
+    </table>
 
     <h3>直流定常状態：理想コイルは短絡</h3>
     <p>
@@ -16288,18 +16327,29 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
         <Eq tex="M = \dfrac{\mu_0 \mu_r S}{\ell}\, N_1 N_2 = \dfrac{N_1 N_2}{R_m}" />
       </p>
       <p><strong>導出は「磁気回路のオームの法則」1本</strong>：コイル1に電流 I を流す → 起磁力 N₁I → 磁束 <Eq tex="\Phi = \dfrac{N_1 I}{R_m}" inline />（磁気抵抗 <Eq tex="R_m = \dfrac{\ell}{\mu_0\mu_r S}" inline />）。漏れが無いので<strong>同じ Φ</strong> がコイル2（N₂巻）にも鎖交する → 相互インダクタンスの定義 <Eq tex="N_2\Phi = MI" inline /> より <Eq tex="M = \dfrac{N_2\Phi}{I} = \dfrac{N_1 N_2}{R_m} = \dfrac{\mu_0\mu_r S}{\ell}N_1 N_2" inline />。</p>
-      <p style={{ marginBottom: 6 }}><strong>芋づる式の覚え方</strong>：<Eq tex="A = \dfrac{\mu_0\mu_r S}{\ell}" inline /> を「1セット」として覚え、これに<strong>巻数を掛ける</strong>だけ。自己は同じコイルだから N²、相互は別コイルだから N₁N₂：</p>
+      <p style={{ marginBottom: 6 }}><strong>芋づる式の覚え方</strong>：<Eq tex="\Lambda = \dfrac{\mu_0\mu_r S}{\ell}" inline />（<strong>磁気パーミアンス</strong>）を「1セット」として覚え、これに<strong>巻数を掛ける</strong>だけ。自己は同じコイルだから N²、相互は別コイルだから N₁N₂。<span style={{ fontSize: 12, color: "var(--ink-soft)" }}>（断面積 S を面積記号 A と混同しやすいので、置き文字にはパーミアンス記号 <Eq tex="\Lambda" inline /> を使う）</span></p>
       <table className="data-table" style={{ marginTop: 6 }}>
         <thead>
-          <tr><th>求めたい量</th><th>式（<Eq tex="A=\mu_0\mu_r S/\ell" inline /> とおく）</th><th>覚え方</th></tr>
+          <tr><th>求めたい量</th><th>式（<Eq tex="\Lambda=\mu_0\mu_r S/\ell" inline /> とおく）</th><th>覚え方</th></tr>
         </thead>
         <tbody>
-          <tr><td>磁気抵抗 <Eq tex="R_m" inline /> [H⁻¹]</td><td><Eq tex="R_m = 1/A = \ell/(\mu_0\mu_r S)" inline /></td><td>長さ ÷（透磁率×断面積）＝電気抵抗 ρℓ/S と同形</td></tr>
-          <tr><td>自己インダクタンス L [H]</td><td><Eq tex="L = A\,N^2" inline /></td><td>同じコイル → <strong>N²</strong>（巻数2倍で L は4倍）</td></tr>
-          <tr><td>相互インダクタンス M [H]</td><td><Eq tex="M = A\,N_1 N_2" inline /></td><td>別コイル → <strong>N₁×N₂</strong></td></tr>
+          <tr><td>磁気抵抗 <Eq tex="R_m" inline /> [H⁻¹]</td><td><Eq tex="R_m = 1/\Lambda = \ell/(\mu_0\mu_r S)" inline /></td><td>長さ ÷（透磁率×断面積）＝電気抵抗 ρℓ/S と同形</td></tr>
+          <tr><td>自己インダクタンス L [H]</td><td><Eq tex="L = \Lambda N^2" inline /></td><td>同じコイル → <strong>N²</strong>（巻数2倍で L は4倍）</td></tr>
+          <tr><td>相互インダクタンス M [H]</td><td><Eq tex="M = \Lambda N_1 N_2" inline /></td><td>別コイル → <strong>N₁×N₂</strong></td></tr>
         </tbody>
       </table>
-      <p style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: 8, marginBottom: 0 }}>検算：<Eq tex="M = A N_1 N_2" inline /> と <Eq tex="L_1=AN_1^2,\ L_2=AN_2^2" inline /> から <Eq tex="\sqrt{L_1 L_2} = A N_1 N_2 = M" inline />。つまり漏れなし（k=1）では <Eq tex="M=\sqrt{L_1 L_2}" inline /> となり <Eq tex="M=k\sqrt{L_1L_2}" inline /> と一致する。数値練習は <a href="#" onClick={(e) => { e.preventDefault(); switchTab('learn'); }} style={{ textDecoration: "underline" }}>学習タブ 例題 問5</a> へ。</p>
+      <p style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: 8, marginBottom: 0 }}>検算：<Eq tex="M = \Lambda N_1 N_2" inline /> と <Eq tex="L_1=\Lambda N_1^2,\ L_2=\Lambda N_2^2" inline /> から <Eq tex="\sqrt{L_1 L_2} = \Lambda N_1 N_2 = M" inline />。つまり漏れなし（k=1）では <Eq tex="M=\sqrt{L_1 L_2}" inline /> となり <Eq tex="M=k\sqrt{L_1L_2}" inline /> と一致する。数値練習は <a href="#" onClick={(e) => { e.preventDefault(); switchTab('learn'); }} style={{ textDecoration: "underline" }}>学習タブ 例題 問5</a> へ。</p>
+    </Callout>
+
+    <Callout variant="tip" title="🔀 M の2つの式：問題文で選び分ける（ここが失点ポイント）">
+      <table className="data-table">
+        <thead><tr><th>問題文に与えられるもの</th><th>使う式</th><th>典型</th></tr></thead>
+        <tbody>
+          <tr><td>鉄心の構造（μ・S・ℓ）＋巻数 N₁,N₂</td><td><Eq tex="M = \dfrac{\mu_0\mu_r S}{\ell}N_1 N_2" inline /></td><td>環状鉄心に2コイル（H4問6型）</td></tr>
+          <tr><td>自己 <Eq tex="L_1, L_2" inline /> と結合係数 k</td><td><Eq tex="M = k\sqrt{L_1 L_2}" inline /></td><td>結合係数・和動差動の測定（R04上問3型）</td></tr>
+        </tbody>
+      </table>
+      <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "6px 0 0" }}>迷ったら「<strong>鉄心の寸法が出たら構造式</strong>／<strong>L と k が出たら k√(L₁L₂)</strong>」。両方が与えられる問題はほぼ無いので、出てきた量で一意に決まる。</p>
     </Callout>
 
     <Callout variant="note" title="📐 相互結合コイルの電圧（自己＋相互の両方が効く）">
@@ -16454,9 +16504,9 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
     </Callout>
 
     <details style={{ marginTop: 16, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: "6px" }}>
-      <summary style={{ cursor: "pointer", fontWeight: 600 }}>🏭 実務でのインダクタンス（試験範囲外・参考コラム）</summary>
+      <summary style={{ cursor: "pointer", fontWeight: 600 }}>🏭 実務・他科目でのインダクタンス（設備技術部向け・機械/法規にも接続）</summary>
       <p style={{ fontSize: "13px", color: "var(--ink-soft)", margin: "8px 0" }}>
-        電験3種試験では計算問題が主で実務事例は直接出題されないが、<strong>「電流を維持しようとする」性質</strong>がそのまま現場現象に直結する。本セクションの理解が現場で何に化けるかを知ると、セクション1の「電気の慣性」イメージが具体化する。
+        <strong>「電流を維持しようとする」性質</strong>がそのまま現場現象に直結する。理論の計算問題だけでなく、<strong>変圧器・CT・インバータ</strong>など機械/法規や現場保守にもつながる。本セクションの理解が現場で何に化けるかを知ると、セクション1の「電気の慣性」イメージが具体化する。
       </p>
       <table className="data-table">
         <thead>
@@ -16464,8 +16514,8 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
         </thead>
         <tbody>
           <tr>
-            <td><strong>リレー OFF 時の火花</strong></td>
-            <td>接点が開いた瞬間、コイルが <strong>電流を維持しようとして逆起電力</strong> を発生（e = -L di/dt）。電圧が瞬間的に跳ね上がり接点間に火花が散る。フライホイールダイオードで対策する</td>
+            <td><strong>電磁弁・リレーコイルの遮断（OFF）</strong></td>
+            <td>接点が開いた瞬間、コイルが <strong>電流を維持しようとして逆起電力</strong> を発生（e = -L di/dt）。電圧が瞬間的に跳ね上がり接点間に火花が散る。<strong>フライホイールダイオード（還流ダイオード）</strong>やスナバでサージを吸収して対策する</td>
             <td>セクション3 自己誘導</td>
           </tr>
           <tr>
@@ -16479,14 +16529,24 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
             <td>セクション3 自己誘導・セクション4 位相</td>
           </tr>
           <tr>
-            <td><strong>高周波ノイズの抑制</strong></td>
-            <td>X_L = ωL は周波数比例。<strong>高周波ほどコイルは電流を流しにくい</strong>。ラインフィルタやコモンモードチョークで高周波ノイズを遮断</td>
-            <td>セクション4 X_L=ωL</td>
+            <td><strong>高周波ノイズ／インバータの di/dt 抑制</strong></td>
+            <td>X_L = ωL は周波数比例で<strong>高周波ほど電流を流しにくい</strong>。ラインフィルタ・コモンモードチョーク・<strong>出力リアクトル</strong>で、スイッチングの急峻な di/dt をなだらかにしサージ・高調波を低減（<Eq tex="v=L\,di/dt" inline /> の逆用）</td>
+            <td>セクション4 X_L=ωL・過渡</td>
+          </tr>
+          <tr>
+            <td><strong>変圧器の一次・二次巻線</strong></td>
+            <td>変圧器は<strong>自己・相互インダクタンスの実体</strong>そのもの。一次電流が作る磁束が鉄心を通って二次に鎖交（k≈1）し、巻数比＝電圧比の根っこになる</td>
+            <td>セクション5 相互誘導 M</td>
+          </tr>
+          <tr>
+            <td><strong>CT（変流器）の二次開放は危険</strong></td>
+            <td>通電中に二次を開放すると <Eq tex="I_2=0" inline /> で二次の減磁作用が消え鉄心磁束が急増 → <Eq tex="e=-N\,d\Phi/dt" inline /> で二次に<strong>高電圧</strong>が発生し絶縁破壊・感電の危険。CT 二次は必ず短絡側で扱う</td>
+            <td>セクション3 自己誘導・5 相互</td>
           </tr>
         </tbody>
       </table>
       <p style={{ fontSize: "11px", color: "var(--ink-soft)", marginTop: 8 }}>
-        ※ 上記4例はすべて「<strong>コイルは流れている電流を守る（変化を妨げる）</strong>」セクション1 一言の現れ。試験対策としてはセクション1〜セクション7で十分だが、現場との橋渡しで本質理解が深まる。
+        ※ これらはすべて「<strong>コイルは流れている電流を守る（変化を妨げる）</strong>」セクション1 一言の現れ。理論の計算に加え、変圧器（機械）・CT二次開放（法規/保守）まで一本の性質でつながる。
       </p>
     </details>
   </>
@@ -16636,8 +16696,26 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
         <li>× N₁N₂ = 32π×10⁻⁸ × (1000×2000) = 32π×10⁻⁸ × 2×10⁶ = 64π×10⁻²</li>
       </ul>
       <p><strong>答え</strong>：M = 64π×10⁻² = 0.64π ≈ <strong>2.0 H</strong></p>
-      <p style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: 8 }}><strong>別解（自己 L 経由でも同じ）</strong>：L₁ = A·N₁² = 32π×10⁻⁸×10⁶ ≈ 1.0H、L₂ = A·N₂² = 32π×10⁻⁸×4×10⁶ ≈ 4.0H。k=1 より M = √(L₁L₂) = √(1.0×4.0) = <strong>2.0H</strong>。どちらの筋でも一致する。<strong>「相互インダクタンス」＋「同一鉄心・漏れなし」を見たら μ₀μᵣS/ℓ に N₁N₂ を掛ける</strong>——これが取り出せれば即答できる。</p>
+      <p style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: 8 }}><strong>別解（自己 L 経由でも同じ）</strong>：Λ = μ₀μᵣS/ℓ = 32π×10⁻⁸ とおくと、L₁ = Λ·N₁² = 32π×10⁻⁸×10⁶ ≈ 1.0H、L₂ = Λ·N₂² = 32π×10⁻⁸×4×10⁶ ≈ 4.0H。k=1 より M = √(L₁L₂) = √(1.0×4.0) = <strong>2.0H</strong>。どちらの筋でも一致する。<strong>「相互インダクタンス」＋「同一鉄心・漏れなし」を見たら μ₀μᵣS/ℓ に N₁N₂ を掛ける</strong>——これが取り出せれば即答できる。</p>
     </details>
+
+    <h3 style={{ marginTop: 22 }}>⚠️ 失点5分類（UNIT / SIGN / MODEL / SCALE / CAUSE）</h3>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 6, fontSize: 11, color: "var(--ink-soft)", margin: "4px 0 10px", padding: "8px 10px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6, lineHeight: 1.55 }}>
+      <div>📍 <strong>今なにを</strong>：インダクタンスで“やりがちな失点”を型で潰す</div>
+      <div>🎯 <strong>いつ使う</strong>：例題を解き終えた直後の見直しチェックとして</div>
+      <div>➡️ <strong>次どこへ</strong>：詰まった型は解説タブの該当節へ戻る</div>
+    </div>
+    <p style={{ fontSize: 13, marginBottom: 8 }}>インダクタンスの失点は原因で5つに分類できる。「自分はどれをやりがちか」を意識すると再発が止まる：</p>
+    <table className="data-table">
+      <thead><tr><th>コード</th><th>誤答パターン</th><th>正しい理解</th></tr></thead>
+      <tbody>
+        <tr><td><strong>UNIT</strong></td><td>cm²→m² を忘れ、cm のまま代入する</td><td>1 cm²=10⁻⁴ m²、1 cm=10⁻² m。代入前に必ず SI に揃える（→ 例題 問3・問5）</td></tr>
+        <tr><td><strong>SIGN</strong></td><td>e = −L·di/dt のマイナスを「電圧が負」と誤解する</td><td>マイナスは<strong>向き（変化を妨げる）</strong>の意味。大きさは |L·di/dt|、KVL では v = L·di/dt（→ 解説タブ §3）</td></tr>
+        <tr><td><strong>MODEL</strong></td><td><Eq tex="M=k\sqrt{L_1L_2}" inline /> と <Eq tex="M=\mu N_1N_2 S/\ell" inline /> を取り違える</td><td>L・k が与えられたら k√、鉄心構造が与えられたら μN₁N₂S/ℓ（→ 解説タブ §5 使い分け表）</td></tr>
+        <tr><td><strong>SCALE</strong></td><td>巻数2倍で L も2倍と誤解する</td><td><Eq tex="L \propto N^2" inline /> なので<strong>4倍</strong>。相互は <Eq tex="M \propto N_1 N_2" inline /></td></tr>
+        <tr><td><strong>CAUSE</strong></td><td>「電流があるから起電力が出る」と誤解する</td><td>起電力は<strong>電流の変化</strong>で出る。直流定常（di/dt=0）では起電力ゼロ（→ 解説タブ §4）</td></tr>
+      </tbody>
+    </table>
 
     <h2 id="r05-q10"><span className="h-num">4</span>R05上問10 解法カード — 相互結合コイル電圧最大値</h2>
     <SectionCheck pageId="inductance" sectionId="r05-q10" />
