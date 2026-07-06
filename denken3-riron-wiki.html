@@ -11801,6 +11801,84 @@ const MagneticCircuitLayers = () => (
   </>
 );
 
+/* 動かして確かめる：空隙 lg を広げると磁気抵抗が空隙に支配され Φ が崩落する
+   （denken-muscle のスライダー体験を単一 React 構成に移植。
+     「1mm≈鉄心数百mm」の "支配" と Φ 崩落を操作で体感＝解説4節の数値を動かす） */
+const MagneticCircuitGapCalc = () => {
+  const [lg, setLg] = useState(2);       // 空隙長 [mm]
+  const [mur, setMur] = useState(1000);  // 比透磁率
+  const [NI, setNI] = useState(400);     // 起磁力 F=NI [A]
+
+  const MU0 = 4 * Math.PI * 1e-7;
+  const A = 4e-4;   // 断面積 [m²]（固定＝4cm²）
+  const li = 0.4;   // 鉄心磁路長 [m]（固定）
+  const RmIron = li / (MU0 * mur * A);
+  const RmGap = (lg * 1e-3) / (MU0 * A);   // lg: mm→m
+  const Rm = RmIron + RmGap;
+
+  const phi = useMemo(() => NI / Rm, [NI, RmIron, RmGap]); // [Wb]
+  const phi0 = NI / RmIron;        // 空隙なしの Φ
+  const B = phi / A;               // [T]
+  const ratio = RmGap / RmIron;    // 空隙/鉄心 の磁気抵抗比
+  const pct = (phi / phi0) * 100;  // 空隙なし比 [%]
+  const gapPct = (RmGap / Rm) * 100; // Rm 内訳の空隙割合
+
+  const Slider = ({ label, value, min, max, step, unit, onChange }) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+        <span style={{ color: "var(--ink-soft)" }}>{label}</span>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-ink)" }}>{value}{unit}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ width: "100%", accentColor: "var(--accent)", cursor: "pointer" }} />
+    </div>
+  );
+
+  return (
+    <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "14px 16px", border: "1px solid var(--rule)" }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--accent-ink)", marginBottom: 4 }}>
+        ▶ 動かして確かめる — <span style={{ fontFamily: "var(--font-mono)" }}>Φ = NI/(Rm,iron + Rm,gap)</span>
+      </div>
+      <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "0 0 12px" }}>
+        鉄心（磁路長 0.4 m・断面積 4 cm²）は固定。<strong>空隙 lg を少し広げるだけで磁気抵抗が空隙に乗っ取られ、Φ が崩落する</strong>のを体感する（初期値は例題2と同じ）。
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: "10px 18px" }}>
+        <Slider label="空隙長 lg" value={lg} min={0} max={5} step={0.1} unit=" mm" onChange={setLg} />
+        <Slider label="比透磁率 μᵣ（鉄心）" value={mur} min={500} max={5000} step={100} unit="" onChange={setMur} />
+        <Slider label="起磁力 F = NI" value={NI} min={100} max={800} step={20} unit=" A" onChange={setNI} />
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "center", gap: 24, flexWrap: "wrap", margin: "14px 0 8px" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>磁束 Φ</div>
+          <div><span style={{ fontSize: 24, fontWeight: 800, color: "var(--accent-ink)", fontFamily: "var(--font-mono)" }}>{(phi * 1e6).toFixed(1)}</span><span style={{ fontSize: 13, fontWeight: 700 }}> μWb</span></div>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>磁束密度 B</div>
+          <div><span style={{ fontSize: 24, fontWeight: 800, color: "var(--ink)", fontFamily: "var(--font-mono)" }}>{B.toFixed(3)}</span><span style={{ fontSize: 13, fontWeight: 700 }}> T</span></div>
+        </div>
+      </div>
+
+      {/* Rm 内訳 stacked bar：空隙が広がるほど赤（空隙）が全体を乗っ取る */}
+      <div style={{ marginTop: 6, padding: "10px 8px", background: "var(--bg)", borderRadius: 6, border: "1px dashed var(--rule)" }}>
+        <div style={{ fontSize: 11, color: "var(--ink-soft)", marginBottom: 6 }}>磁気抵抗の内訳（全体を1本の棒で）— <strong>空隙 Rm,gap : 鉄心 Rm,iron = {ratio.toFixed(1)} : 1</strong></div>
+        <div style={{ display: "flex", height: 26, borderRadius: 4, overflow: "hidden", border: "1px solid var(--rule)" }}>
+          <div style={{ width: `${100 - gapPct}%`, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#fff", fontWeight: 700, transition: "width .15s", minWidth: 0 }}>{gapPct < 82 ? "鉄心" : ""}</div>
+          <div style={{ width: `${gapPct}%`, background: "var(--danger)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#fff", fontWeight: 700, transition: "width .15s", minWidth: 0 }}>{gapPct > 18 ? "空隙" : ""}</div>
+        </div>
+        <div style={{ fontSize: 12, color: "var(--ink)", textAlign: "center", marginTop: 8 }}>
+          Φ は<strong>空隙ゼロのとき（{(phi0 * 1e6).toFixed(0)} μWb）の <span style={{ color: "var(--danger)", fontWeight: 800 }}>{pct.toFixed(0)}%</span></strong>まで低下
+        </div>
+      </div>
+
+      <figcaption style={{ fontSize: 12, color: "var(--ink-mute)", textAlign: "center", marginTop: 10, lineHeight: 1.6 }}>
+        空隙 lg は μᵣ=1（空気）なので、わずか数mmでも <strong>Rm,gap が鉄心の Rm,iron を上回り全体を支配</strong>する。だから「<strong>起磁力の大半が空隙で消費される</strong>」（R05上問3・H26問3 の論説）。上の「1mm＝4倍」の数字を、スライダーで動かして確かめられる。
+      </figcaption>
+    </figure>
+  );
+};
+
 const MagneticCircuitFormulasTab = ({ onNav, switchTab }) => (
   <>
     <MagneticCircuitLayers />
@@ -12009,6 +12087,8 @@ const MagneticCircuitExplainTab = ({ onNav, switchTab }) => (
       </ol>
       <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--ink-soft)" }}>単位を統一：lg が mm でも m に換算、A は cm² でなく m²（1cm²=10⁻⁴m²）。</p>
     </Callout>
+
+    <MagneticCircuitGapCalc />
 
     <h2 id="B-H"><span className="h-num">5</span>B と H・ヒステリシス・磁気飽和</h2>
     <p>
@@ -15705,6 +15785,87 @@ const InductanceLayers = () => (
   </>
 );
 
+/* 動かして確かめる：L = μ₀μᵣN²A/ℓ のライブ計算器
+   （denken-muscle のスライダー体験を単一 React 構成に移植。
+     N² の効きを「見て」腑に落とすのが主目的＝SCALE 失点対策） */
+const InductanceLiveCalc = () => {
+  const [N, setN] = useState(100);     // 巻数
+  const [mur, setMur] = useState(200); // 比透磁率
+  const [Acm, setAcm] = useState(2);   // 断面積 [cm²]
+  const [lcm, setLcm] = useState(5);   // 磁路長 [cm]
+
+  const MU0 = 4 * Math.PI * 1e-7;
+  // L を mH で返す（A: cm²→m² は ×1e-4、ℓ: cm→m は ×1e-2）
+  const Lmh = (n) => MU0 * mur * n * n * (Acm * 1e-4) / (lcm * 1e-2) * 1e3;
+  const L = useMemo(() => Lmh(N), [N, mur, Acm, lcm]);
+  const Lhalf = Lmh(N / 2);
+  const Ldouble = Lmh(N * 2);
+
+  const fmt = (x) => (x >= 100 ? x.toFixed(0) : x >= 10 ? x.toFixed(1) : x.toFixed(2));
+  // N² 可視化バー：高さ比は常に ¼ : 1 : 4（＝この素子の「N の2乗」性）
+  const bars = [
+    { label: "N/2", sub: `${Math.round(N / 2)}巻`, val: Lhalf, h: 12, cur: false },
+    { label: "N（現在）", sub: `${N}巻`, val: L, h: 46, cur: true },
+    { label: "2N", sub: `${N * 2}巻`, val: Ldouble, h: 184, cur: false },
+  ];
+
+  const Slider = ({ label, value, min, max, step, unit, onChange }) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+        <span style={{ color: "var(--ink-soft)" }}>{label}</span>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-ink)" }}>{value}{unit}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ width: "100%", accentColor: "var(--accent)", cursor: "pointer" }} />
+    </div>
+  );
+
+  return (
+    <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "14px 16px", border: "1px solid var(--rule)" }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--accent-ink)", marginBottom: 4 }}>
+        ▶ 動かして確かめる — <span style={{ fontFamily: "var(--font-mono)" }}>L = μ₀μᵣN²A/ℓ</span>
+      </div>
+      <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "0 0 12px" }}>
+        4つのスライダーを動かすと L が即時に変わる。とくに<strong>巻数 N を動かした時の効き方</strong>に注目（初期値は例題 問3 と同じ ≒10 mH）。
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: "10px 18px" }}>
+        <Slider label="巻数 N" value={N} min={25} max={400} step={5} unit=" 巻" onChange={setN} />
+        <Slider label="比透磁率 μᵣ" value={mur} min={1} max={2000} step={1} unit="" onChange={setMur} />
+        <Slider label="断面積 A" value={Acm} min={1} max={20} step={0.5} unit=" cm²" onChange={setAcm} />
+        <Slider label="磁路長 ℓ" value={lcm} min={2} max={50} step={1} unit=" cm" onChange={setLcm} />
+      </div>
+
+      <div style={{ textAlign: "center", margin: "14px 0 6px" }}>
+        <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>自己インダクタンス </span>
+        <span style={{ fontSize: 26, fontWeight: 800, color: "var(--accent-ink)", fontFamily: "var(--font-mono)" }}>L ≈ {fmt(L)}</span>
+        <span style={{ fontSize: 15, color: "var(--ink)", fontWeight: 700 }}> mH</span>
+      </div>
+
+      {/* N² 可視化：巻数だけ半分／2倍にした L を並べる（高さ比 ¼:1:4 が常に一定＝N²の証拠） */}
+      <div style={{ marginTop: 10, padding: "10px 8px 4px", background: "var(--bg)", borderRadius: 6, border: "1px dashed var(--rule)" }}>
+        <div style={{ fontSize: 11, color: "var(--ink-soft)", textAlign: "center", marginBottom: 8 }}>
+          μᵣ・A・ℓ はそのまま、<strong>巻数 N だけ</strong>変えたときの L（棒の高さ比は<strong>常に ¼ : 1 : 4</strong>）
+        </div>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 20, height: 210 }}>
+          {bars.map((b) => (
+            <div key={b.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: b.cur ? "var(--accent-ink)" : "var(--ink-soft)", fontFamily: "var(--font-mono)" }}>{fmt(b.val)}mH</span>
+              <div style={{ width: 44, height: b.h, background: b.cur ? "var(--accent)" : "var(--ink-mute)", borderRadius: "3px 3px 0 0", transition: "height .15s" }} />
+              <span style={{ fontSize: 11, fontWeight: b.cur ? 700 : 400, color: "var(--ink)" }}>{b.label}</span>
+              <span style={{ fontSize: 10, color: "var(--ink-mute)" }}>{b.sub}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <figcaption style={{ fontSize: 12, color: "var(--ink-mute)", textAlign: "center", marginTop: 10, lineHeight: 1.6 }}>
+        巻数を<strong>2倍にすると L は4倍</strong>、半分にすると1/4。<strong>L ∝ N²</strong>（2乗で効く）が右の棒で常に一定比として見える。「N を2倍→L も2倍」と答える<strong>SCALE 失点</strong>（勘違い②・⑥）を、数字ではなく形で潰す。
+      </figcaption>
+    </figure>
+  );
+};
+
 const InductanceFormulasTab = ({ onNav, switchTab }) => (
   <>
     <ChargeRootTree />
@@ -15878,6 +16039,8 @@ const InductanceFormulasTab = ({ onNav, switchTab }) => (
         ソレノイドの自己インダクタンス L = μN²A/l：長さ l・断面積 A・巻数 N・透磁率 μ の対応。N は2乗で効く。
       </figcaption>
     </figure>
+
+    <InductanceLiveCalc />
 
     <h3 id="winding-ratio">巻数比 → L 比（典型問題）</h3>
     <p>巻数を N₁ から N₂ に変えたときのインダクタンス比：</p>
