@@ -1289,7 +1289,7 @@ window.WIKI_DATA = {
     { term: "リアクタンス", reading: "REACTANCE", letter: "ら",
       def: "交流回路のコイル・コンデンサによる抵抗成分。XL = ωL、XC = 1/(ωC) [Ω]。周波数に依存する。" },
     { term: "力率", reading: "POWER FACTOR", letter: "ら",
-      def: "有効電力と皮相電力の比。cosφ = P/S。1に近いほど効率が良い。遅れ（コイル）・進み（コンデンサ）で符号が変わる。" },
+      def: "有効電力と皮相電力の比。cosφ = P/S。1に近いほど効率が良い。力率は0〜1の値をとり、遅れ（コイル）か進み（コンデンサ）かを併記して区別する（符号が変わるのは無効電力Q側であり、力率cosφ自体の符号は変わらない）。" },
     { term: "理想電圧源", reading: "IDEAL VOLTAGE SOURCE", letter: "ら",
       def: "内部抵抗ゼロで、負荷に関わらず一定電圧を供給する電源モデル。テブナン等価変換の出力側に現れる。" },
     { term: "理想電流源", reading: "IDEAL CURRENT SOURCE", letter: "ら",
@@ -1319,7 +1319,7 @@ window.WIKI_DATA = {
     { term: "可動コイル型計器", reading: "MOVING COIL", letter: "か",
       def: "永久磁石の磁界中に置かれたコイルに電流を流して指針を動かす計器。直流専用（交流では指針が振れない）。" },
     { term: "可動鉄片型計器", reading: "MOVING IRON", letter: "か",
-      def: "電磁コイルが鉄片を吸引することで動作する計器。電流の向きに依存しないため交流・直流両用で使える。" },
+      def: "電磁コイルが鉄片を吸引することで動作する計器。電流の向きに依存しないため原理上は直流でも動くが、ヒステリシス誤差のため実用は主に商用周波数の交流用。" },
     { term: "倍率器", reading: "MULTIPLIER", letter: "は",
       def: "電圧計の測定範囲を拡大する直列抵抗。電圧計と直列接続して超過電圧を分担する。" },
     { term: "分流器", reading: "SHUNT", letter: "は",
@@ -3241,7 +3241,7 @@ const TrapPatternsPage = ({ onNav }) => {
   const [reviewOnly, setReviewOnly] = useState(false);
   const [sortMode, setSortMode] = useState("default"); // "default" | "review-due"
   const [storageVersion, setStorageVersion] = useState(0);
-  const categories = ["全部", "電磁気", "直流", "交流", "三相", "電子", "計測"];
+  const categories = ["全部", "電磁気", "直流", "交流", "三相", "過渡", "電子", "計測"];
 
   const allPatterns =
     window.WIKI_DATA && window.WIKI_DATA.trapPatterns
@@ -3678,8 +3678,8 @@ const HomePage = ({ onNav }) => {
         deck="第三種電気主任技術者試験「理論」科目に特化した、原理理解中心の学習Wiki。公式の物理的意味を押さえることで、暗記負荷を下げて応用力を高める。"
         meta={[
           { label: "対象試験", value: "電験3種 理論科目" },
-          { label: "最終更新", value: "2026.04" },
-          { label: "登録単元", value: "16" },
+          { label: "最終更新", value: "2026.07" },
+          { label: "登録単元", value: "19" },
         ]}
       />
       <div className="content">
@@ -3996,9 +3996,9 @@ const Last3DaysPage = ({ onNav }) => (
 
       <h2 id="day1"><span className="h-num">3</span>Day 1（試験前日）— R08予測テーマの重点確認</h2>
 
-      <h3>磁気回路（最優先：R06上〜R07上 3回連続空白）</h3>
+      <h3>磁気回路（最優先：R06上〜R07下 4回連続空白）</h3>
       <Callout variant="warn" title="R08（2026年8月）最高確率テーマ">
-        波分析より、磁気回路は直近3回連続で出題なし。環状鉄心の磁束密度・起磁力計算、またはヒステリシス特性の論述が出題候補。
+        波分析より、磁気回路は直近4回連続で出題なし。環状鉄心の磁束密度・起磁力計算、またはヒステリシス特性の論述が出題候補。
       </Callout>
       <DetailLink to="magnetic-circuit" onNav={onNav} />
 
@@ -4718,7 +4718,7 @@ const GuidePage = ({ onNav }) => (
       <p>反転増幅・非反転増幅の利得計算。仮想短絡（イマジナリショート）の概念を理解すれば計算は公式に当てはめるだけ。</p>
 
       <h4>STEP 15 — 計器の原理（目安: 1日）</h4>
-      <p>可動コイル・可動鉄片・整流型の特徴と適用範囲。「可動コイル = 直流専用、可動鉄片 = 交直両用」が頻出。</p>
+      <p>可動コイル・可動鉄片・整流型の特徴と適用範囲。「可動コイル = 直流専用、可動鉄片 = 主に交流（交直両用は電流力計形・熱電形）」が頻出。</p>
 
       <h4>STEP 16 — ブリッジ回路（目安: 1日）</h4>
       <p>ホイートストンブリッジの平衡条件（R1R4 = R2R3）。平衡・不平衡の両方の計算パターンを押さえる。</p>
@@ -4941,7 +4941,7 @@ const GuidePage = ({ onNav }) => (
       </Callout>
       <Callout variant="tip" title="計器の原理">
         <strong>可動コイル形 = 直流専用（永久磁石で動く）</strong><br/>
-        <strong>可動鉄片形 = 交直両用（実効値を指示）</strong><br/>
+        <strong>可動鉄片形 = 主に交流（実効値を指示。交直両用は電流力計形・熱電形）</strong><br/>
         <strong>倍率器 = 電圧計の直列抵抗、分流器 = 電流計の並列抵抗</strong>
       </Callout>
 
@@ -5464,7 +5464,7 @@ const VectorOpsPage = ({ onNav }) => (
         <tbody>
           <tr><td>静電気</td><td>電界中の仕事</td><td><Eq tex="W = F \cdot s" inline /></td><td>内積</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('coulomb-field'); }} style={{ textDecoration: "underline" }}>1.1 静電気・クーロンの法則</a></td></tr>
           <tr><td>静電気</td><td>電位差</td><td><Eq tex="V = W/q" inline /></td><td>内積の考え方</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('coulomb-field'); }} style={{ textDecoration: "underline" }}>1.1 静電気・クーロンの法則</a></td></tr>
-          <tr><td>静電気</td><td>電束</td><td><Eq tex="\Phi_E = E \cdot S" inline /></td><td>内積</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('capacitor'); }} style={{ textDecoration: "underline" }}>1.2 コンデンサ</a></td></tr>
+          <tr><td>静電気</td><td>電束</td><td><Eq tex="\Psi = D \cdot S" inline /></td><td>内積</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('capacitor'); }} style={{ textDecoration: "underline" }}>1.2 コンデンサ</a></td></tr>
           <tr><td>電磁気</td><td>磁束</td><td><Eq tex="\Phi = B \cdot S" inline /></td><td>内積</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('magnetic-circuit'); }} style={{ textDecoration: "underline" }}>1.4 磁気回路</a></td></tr>
           <tr><td>電磁誘導</td><td>誘導起電力</td><td><Eq tex="e = -N\dfrac{d\Phi}{dt}" inline /></td><td>内積が裏にある</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('inductance'); }} style={{ textDecoration: "underline" }}>3.1 インダクタンス・電磁誘導</a></td></tr>
           <tr><td>電磁力</td><td>電流が受ける力</td><td><Eq tex="F = Il \times B" inline /></td><td>外積</td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav('electromagnetic-force'); }} style={{ textDecoration: "underline" }}>1.3 電磁力</a></td></tr>
@@ -6671,7 +6671,6 @@ const AcPowerLayers = () => (
 
 const AcPowerFormulasTab = ({ onNav, switchTab }) => (
   <>
-    <ChargeRootTree />
     <AcPowerLayers />
     <AcPowerSymbolLegend />
 
@@ -7526,7 +7525,6 @@ const ThreePhaseLayers = () => (
 
 const ThreePhaseFormulasTab = ({ onNav, switchTab }) => (
   <>
-    <ChargeRootTree />
     <ThreePhaseLayers />
     <ThreePhaseSymbolLegend />
 
@@ -7847,7 +7845,7 @@ const ThreePhaseExplainTab = ({ onNav, switchTab }) => (
         <li><strong>Va と Vb は 120° 開いた等大ベクトル</strong>（どちらも長さ V<sub>p</sub>）</li>
         <li><strong>−Vb は Vb の反対方向</strong>（長さ V<sub>p</sub> のまま・180° 回転）</li>
         <li><strong>Va と −Vb のなす角は 60°</strong>（180°−120°＝60°）</li>
-        <li><strong>余弦定理</strong>: <Eq tex="|V_{ab}|^2 = V_p^2 + V_p^2 - 2 V_p^2 \cos(60°) \cdot (-1) \cdot \text{(...式変形)}" inline /> ⇒ 結局 <Eq tex="3 V_p^2" inline /></li>
+        <li><strong>余弦定理</strong>: <Eq tex="|V_{ab}|^2 = V_p^2 + V_p^2 + 2 V_p^2 \cos(60°) = 2V_p^2 + V_p^2 = 3V_p^2" inline /> ⇒ 結局 <Eq tex="3 V_p^2" inline /></li>
         <li><strong>∴ |Vab| = √3 V<sub>p</sub></strong> — 120° 等大ベクトル差は <strong>「必ず √3 倍」</strong></li>
       </ol>
       <p style={{ marginTop: 8, fontSize: 12, color: "var(--ink-soft)" }}>※ <strong>Va + (−Vb) = Va − Vb</strong> と等価。図ではベクトル合成として「Va 先端から −Vb 方向」に並べた。</p>
@@ -7963,7 +7961,7 @@ const ThreePhaseExplainTab = ({ onNav, switchTab }) => (
         <summary>もう一段深く（不平衡・V 結線・捨て問題判断）</summary>
         <ul style={{ marginTop: 8 }}>
           <li><strong>不平衡三相</strong>：4 線式（中性線あり）なら各相を独立した単相回路として扱える。3 線式不平衡は中性点電位が浮き、電験 3 種では基本的に出題されない</li>
-          <li><strong>V 結線</strong>：Δ 結線の 1 相分を取り外した形。容量は √3 / 2 ≈ 86.6% に減る。中小容量変圧器で多用</li>
+          <li><strong>V 結線</strong>：Δ 結線の 1 相分を取り外した形。出力は Δ 結線時の 1/√3 ≈ 57.7% に減る（2 台の変圧器合計定格に対する利用率は √3 / 2 ≈ 86.6%）。中小容量変圧器で多用</li>
           <li><strong>対称座標法</strong>：不平衡を「正相・逆相・零相」の 3 対称成分に分解。電力（電験 2 種以上）の地絡故障解析で使うが、3 種では出ない → 捨て問題判断 OK</li>
         </ul>
       </details>
@@ -8088,7 +8086,7 @@ const ThreePhaseLearnTab = ({ onNav, switchTab }) => (
       <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答の導出（3条件まとめて）</summary>
       <p style={{ marginTop: 8 }}><strong>① cosφ = 1.0</strong>: P = √3 × 200 × 10 × 1.0 = 2000√3 ≈ 3464 W。皮相と一致（S = P・Q = 0）</p>
       <p><strong>② cosφ = 0.8</strong>: P = √3 × 200 × 10 × 0.8 = 1600√3 ≈ 2771 W。Q = √3 × 200 × 10 × 0.6 ≈ 2078 var</p>
-      <p><strong>③ cosφ = 0.6</strong>: P = √3 × 200 × 10 × 0.6 = 1200√3 ≈ 2078 W。Q = √3 × 200 × 10 × 0.8 ≈ 2771 W（P と Q が逆転）</p>
+      <p><strong>③ cosφ = 0.6</strong>: P = √3 × 200 × 10 × 0.6 = 1200√3 ≈ 2078 W。Q = √3 × 200 × 10 × 0.8 ≈ 2771 var（P と Q が逆転）</p>
       <p style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: 8 }}>※ <strong>P は cosφ に比例</strong>。力率が 1.0 → 0.6 で電力が 60% に減る。力率改善（cosφ を 1 に近づける）の重要性が数値で見える。</p>
     </details>
     <Callout variant="warn" title="典型誤答3択（自己採点用）">
@@ -8240,9 +8238,9 @@ const ThreePhasePage = ({ onNav }) => (
   <>
     <MetaStrip difficulty="★★★★★" importance="S" frequency="高" />
     <LearningMap
-      prereqs={[{id:"ac-basics", title:"2.2 交流回路基礎"}, {id:"ac-power", title:"2.3 交流電力"}]}
+      prereqs={[{id:"ac-basics", title:"2.2 交流の基礎"}, {id:"ac-power", title:"2.3 交流電力"}]}
       current="4.1 三相交流"
-      nexts={[{id:"transient", title:"3.2 過渡現象"}]}
+      nexts={[{id:"semiconductor", title:"5.1 半導体・ダイオード"}]}
       onNav={onNav}
     />
     <PageHeader
@@ -8706,6 +8704,10 @@ const TransistorFormulasTab = ({ onNav, switchTab }) => (
         図：<strong>JFET の N／P 判別</strong>。回路記号のゲートの<strong>矢印が内向き（チャネルを指す）＝Nチャネル形</strong>、<strong>外向き＝Pチャネル形</strong>。Nは多数キャリアが電子・ドレーンが＋・ゲートがP形で、Pはすべて逆。上の空乏層の図はこの<strong>Nチャネル形</strong>の動作。
       </figcaption>
     </figure>
+
+    <Callout variant="warn" title="⚠️ 同じ「飽和」でも BJT と FET で意味が真逆">
+      <p style={{ margin: 0 }}>BJT の<strong>「飽和」はスイッチ ON 状態</strong>（V<sub>CE</sub>≈0.2V・これ以上電流が増えない導通）。一方、FET の<strong>「飽和領域」は逆に、ドレイン電流がドレイン-ソース間電圧にほぼ依存しない定電流（ピンチオフ）領域</strong>で、<strong>増幅動作はこの領域で行う</strong>。同じ語で意味が真逆なので混同しないこと（「MOSFET の飽和 ≒ BJT の活性」と対応づけると整理しやすい）。→ <a href="#" onClick={(e) => { e.preventDefault(); onNav('trap-patterns'); }} style={{ cursor: "pointer", color: "var(--accent-ink)", textDecoration: "underline" }}>引っかけパターン集（7.1）#38</a>。</p>
+    </Callout>
 
     <h2 id="amp-gain"><span className="h-num">6</span>増幅回路の利得・帰還・発振（問13・問18対策）</h2>
     <Callout variant="tip" title="⚡ 問13・問18 の計算はここ">
@@ -9336,7 +9338,7 @@ const TransistorPage = ({ onNav }) => (
       )}
     </PageTabs>
 
-    <PageNav prev={{id:"semiconductor", title:"5.1 半導体"}} next={{id:"op-amp", title:"5.3 オペアンプ"}} onNav={onNav} />
+    <PageNav prev={{id:"semiconductor", title:"5.1 半導体・ダイオード"}} next={{id:"op-amp", title:"5.3 演算増幅器"}} onNav={onNav} />
   </>
 );
 
@@ -9697,8 +9699,10 @@ const CoulombFieldFormulasTab = ({ onNav, switchTab }) => (
         <tr><td>源</td><td>電荷 Q</td><td>電流 I・磁極</td></tr>
         <tr><td>力の対象</td><td><strong>静止電荷にも作用</strong></td><td>運動電荷（電流）に作用</td></tr>
         <tr><td>対応する「位置エネルギー」</td><td>電位 V [V]</td><td>磁位（電験では主に磁束 Φ）</td></tr>
+        <tr><td>距離依存（点源・無限長直線）</td><td>点電荷は <strong>E ∝ 1/r²</strong>（球面 4πr² に薄まる・2次元的拡散）</td><td>無限長直線電流は <strong>H = I/(2πr) ∝ 1/r</strong>（円周 2πr に薄まる・1次元的拡散）</td></tr>
       </tbody>
     </table>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "6px 0 12px" }}>※ 冪の違い（1/r² と 1/r）は E・H という場の種類の本性ではなく、<strong>源の幾何</strong>で決まる（点は球面に拡散・無限長直線は円筒に拡散）。</p>
     <table>
       <thead>
         <tr><th>項目</th><th>クーロン力</th><th>重力</th></tr>
@@ -10606,7 +10610,6 @@ const ElectromagneticForceLayers = () => (
 
 const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
   <>
-    <ChargeRootTree />
     <ElectromagneticForceLayers />
     <ElectromagneticForceSymbolLegend />
 
@@ -10651,7 +10654,7 @@ const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
         },
         {
           formula: "e = BLv\\sin\\theta",
-          meaning: "速度 v で動く長さ L の導体に生じる誘導起電力。右手発電機則で方向判定",
+          meaning: "速度 v で動く長さ L の導体に生じる誘導起電力。右手発電機則で方向判定。閉回路がなくても e は発生する（電流は閉回路があって初めて流れる結果）",
           when: "直線導体・均一磁界",
           notWhen: "θ=0（v が B と平行）のとき e=0",
         },
@@ -10663,7 +10666,7 @@ const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
         },
         {
           formula: "F = qvB\\sin\\theta",
-          meaning: "ローレンツ力。電荷 q が速度 v で磁界 B 中を運動するときの力。F=BIL の起源",
+          meaning: "ローレンツ力。電荷 q が速度 v で磁界 B 中を運動するときの力。F=BIL の起源。q<0（電子）なら電流の向きは v と逆になるため、力の向きも反転する",
           when: "荷電粒子・1電荷の力",
           notWhen: "—（直線導体の力に展開すると F=BIL になる）",
         },
@@ -10726,7 +10729,7 @@ const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
       <tbody>
         <tr><td><strong>親指</strong></td><td><strong>力 F</strong>（動く方向）</td><td><strong>速度 v</strong>（動く方向）</td></tr>
         <tr><td><strong>人差し指</strong></td><td>磁界 B</td><td>磁界 B（共通）</td></tr>
-        <tr><td><strong>中指</strong></td><td>電流 I（与える）</td><td>起電力 e（生じる電流）</td></tr>
+        <tr><td><strong>中指</strong></td><td>電流 I（与える）</td><td>起電力 e（→閉回路なら電流）</td></tr>
         <tr><td>目的</td><td>電気 → 力（運動）</td><td>力（運動） → 電気</td></tr>
         <tr><td>用途</td><td>モーター・電動機</td><td>発電機・誘導起電力</td></tr>
       </tbody>
@@ -10851,6 +10854,11 @@ const ElectromagneticForceExplainTab = ({ onNav, switchTab }) => (
           <td>「e=−dΦ/dt のマイナスは飾り」と省略</td>
           <td>マイナス符号は<strong>「打ち消す向きに誘導電流」</strong>を表す物理量。<strong>磁束増加 ⇒ 元と逆向き電流／磁束減少 ⇒ 元と同向き電流</strong>（5節）</td>
         </tr>
+        <tr>
+          <td><strong>⑦ 電子のローレンツ力で電流と速度の符号を取り違える</strong></td>
+          <td>「電荷が動く向き＝電流の向き」と正電荷の感覚で当てる</td>
+          <td>電子は負電荷なので<strong>電流の向きは運動 v と逆</strong>。F=qvB の力の向きも反転する（→ <a href="#" onClick={(e) => { e.preventDefault(); onNav('electron-motion'); }} style={{ color: "var(--accent-ink)", cursor: "pointer", textDecoration: "underline" }}>5.4 電子の運動</a>）</td>
+        </tr>
       </tbody>
     </table>
 
@@ -10875,7 +10883,7 @@ const ElectromagneticForceExplainTab = ({ onNav, switchTab }) => (
       <li>違いは<strong>親指</strong>のみ：<strong>左=F</strong>・<strong>右=v</strong></li>
     </ul>
     <Callout variant="warn" title="左右で親指の意味が違う">
-      <p>「親指は常に力」と単一暗記すると右手で誤答する。<strong>左 F・右 v</strong> を 2 文字で固定する。試験で「導体を動かしたとき生じる電流の向き」と聞かれたら<strong>右手で v を親指に当て、e（生じる電流）を中指で読む</strong>。</p>
+      <p>「親指は常に力」と単一暗記すると右手で誤答する。<strong>左 F・右 v</strong> を 2 文字で固定する。試験で「導体を動かしたとき生じる電流の向き」と聞かれたら<strong>右手で v を親指に当て、e（→閉回路なら電流）を中指で読む</strong>。</p>
     </Callout>
 
     <h2 id="fleming-4views"><span className="h-num">4</span>フレミング左右手の4視点まとめ</h2>
@@ -12002,6 +12010,10 @@ const MagneticCircuitFormulasTab = ({ onNav, switchTab }) => (
       </tbody>
     </table>
 
+    <Callout variant="info" title="幾何で覚える：磁界 1/r と電界 1/r² の違い">
+      <p style={{ margin: 0 }}><strong>H=I/(2πr)</strong> は電流 I が円周 2πr に薄まって <strong>1/r</strong> で弱まる（1次元的拡散）。一方、点電荷が作る電界 <strong>E∝1/r²</strong> は球面 4πr² に薄まる（2次元的拡散）。この<strong>源の幾何の違い</strong>が冪の違いを生む。→ <a onClick={() => onNav('coulomb-field')} style={{ cursor: "pointer", color: "var(--accent-ink)", textDecoration: "underline" }}>1.1 静電気・クーロンの法則</a>の比較表と対で確認。</p>
+    </Callout>
+
     <h2 id="compare-material"><span className="h-num">4</span>磁性体の3分類と透磁率 <span style={{fontSize:"0.8em", color:"var(--ink-soft)"}}>★★★</span></h2>
     <p style={{marginTop:"-0.5em", marginBottom:"1em", fontSize:"0.9em", color:"var(--ink-soft)"}}>→ 強磁性体が磁束に与える影響を問う穴埋め（R05下問3・R03問3・H18問3）。</p>
     <table className="data-table">
@@ -12666,7 +12678,6 @@ const DcCircuitLayers = () => (
 
 const DcCircuitFormulasTab = ({ onNav, switchTab }) => (
   <>
-    <ChargeRootTree />
     <DcCircuitLayers />
     <DcCircuitSymbolLegend />
 
@@ -12728,8 +12739,9 @@ const DcCircuitFormulasTab = ({ onNav, switchTab }) => (
     </table>
     <p style={{ marginTop: 12 }}><strong>抵抗温度係数</strong>（銅は正・温度↑→抵抗↑）:</p>
     <p style={{ textAlign: "center", margin: "10px 0" }}>
-      <Eq tex="R_T = R_0 (1 + \alpha T) \quad \Leftrightarrow \quad \frac{\Delta R}{R_0} = \alpha \Delta T" />
+      <Eq tex="R_T = R_0\{1 + \alpha (T - T_0)\}" />
     </p>
+    <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "0 0 8px" }}>T₀=基準温度・R₀=T₀での抵抗</p>
     <Callout variant="warn" title="基準温度に注意">
       <p>α は「基準温度を何度にするか」で値が変わる。問題文の「α は 0°C 基準」か「20°C 基準」かを必ず確認。</p>
     </Callout>
@@ -13470,7 +13482,6 @@ const AcBasicsLayers = () => (
 
 const AcBasicsFormulasTab = ({ onNav, switchTab }) => (
   <>
-    <ChargeRootTree />
     <AcBasicsLayers />
     <AcBasicsSymbolLegend />
 
@@ -13673,7 +13684,8 @@ const AcBasicsExplainTab = ({ onNav, switchTab }) => (
       <li>回路図を見て<strong>直列か並列か</strong>を確認</li>
       <li><strong>直列</strong>（電流共通）→ 電流を基準ベクトルに（I = I ∠ 0°）</li>
       <li><strong>並列</strong>（電圧共通）→ 電圧を基準ベクトルに（V = V ∠ 0°）</li>
-      <li>R 成分は同相・L 成分は 90° 進み・C 成分は 90° 遅れ（基準による）でベクトル合成</li>
+      <li>直列（電流基準）: L の電圧が+90°・C の電圧が−90°</li>
+      <li>並列（電圧基準）: L の電流が−90°・C の電流が+90°でベクトル合成</li>
     </ol>
     <p style={{ fontSize: 12, color: "var(--ink-soft)" }}>
       ▶ Z 合成の実数列即答練習は <a href="#" onClick={(e) => { e.preventDefault(); switchTab('learn'); }} style={{ textDecoration: "underline" }}>学習タブ セクション4 限界的練習ゾーン</a> へ
@@ -14127,7 +14139,6 @@ const RlcResonanceLayers = () => (
 
 const RlcResonanceFormulasTab = ({ onNav, switchTab }) => (
   <>
-    <ChargeRootTree />
     <RlcResonanceLayers />
     <RlcResonanceSymbolLegend />
 
@@ -15874,7 +15885,6 @@ const InductanceLiveCalc = () => {
 
 const InductanceFormulasTab = ({ onNav, switchTab }) => (
   <>
-    <ChargeRootTree />
     <InductanceLayers />
     <InductanceSymbolLegend />
 
@@ -16005,6 +16015,11 @@ const InductanceFormulasTab = ({ onNav, switchTab }) => (
         <tr><td><Eq tex="l" inline /></td><td>磁路長（環状鉄心の中心線周長）</td><td>m</td><td>cm で与えられたら ×10⁻² に変換</td></tr>
       </tbody>
     </table>
+
+    <Callout variant="info" title="なぜ N² か（2段階に分けて理解する）">
+      <p>巻数 N を増やすと<strong>2つの効果が重なる</strong>。<strong>① 起磁力 NI が増えて磁束 Φ 自体が N 倍</strong>になる（N 回巻きが磁束を押し出す）。<strong>② その磁束 Φ を N 回巻きが鎖交する</strong>ので鎖交磁束数 NΦ もさらに N 倍になる。この2つが掛け合わさって <strong>N×N=N²</strong> で L に効く。</p>
+      <p style={{ marginTop: 6, fontSize: 13, color: "var(--ink-soft)" }}>相互インダクタンス <Eq tex="M \propto N_1 N_2" inline /> が N の1乗どうしの積になるのも同じ理屈（片方のコイルが作る磁束の N₁ 倍を、もう片方の N₂ 回巻きが鎖交する）。→ 3節 M の逆算式</p>
+    </Callout>
 
     <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
       <svg viewBox="0 0 360 240" role="img" aria-label="ソレノイドコイルのインダクタンス公式 L = μN²A/l の各記号と寸法の対応図" style={{ display: "block", width: "100%", height: "auto", maxWidth: "360px", margin: "0 auto" }}>
@@ -16356,6 +16371,10 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
     </p>
     <Callout variant="tip" title="使い分けの覚え方">
       <p>問題文に「逆起電力」「レンツの法則」と書いてあったら <strong>e</strong>（マイナスあり）。「端子電圧」「閉路方程式」「KVL」と書いてあったら <strong>v</strong>（マイナスなし）。<strong>問題文の言葉で判別</strong>するクセをつけると混乱しない。</p>
+    </Callout>
+
+    <Callout variant="info" title="なぜマイナスでなければならないか（エネルギー保存の番人）">
+      <p>もし符号が <strong>(+)</strong> だったら、電流が増える → 磁束が増える → <strong>さらに電流を増やす向き</strong>の起電力が生じる → 正フィードバックで電流が無限に発散する ＝ 入力なしにエネルギーが湧き出す<strong>第一種永久機関</strong>になってしまう。だから自然は必ず <strong>(−)＝変化を妨げる向き</strong>を選ぶ。マイナス符号は「大きさが負」ではなく、<strong>エネルギー保存を守るための向きの記号</strong>だと理解すると腑に落ちる。</p>
     </Callout>
 
     <h3 id="lambda-ladder" style={{ marginTop: 18 }}>磁束鎖交数 λ から L を理解する</h3>
@@ -16873,7 +16892,7 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
       <thead><tr><th>コード</th><th>誤答パターン</th><th>正しい理解</th></tr></thead>
       <tbody>
         <tr><td><strong>UNIT</strong></td><td>cm²→m² を忘れ、cm のまま代入する</td><td>1 cm²=10⁻⁴ m²、1 cm=10⁻² m。代入前に必ず SI に揃える（→ 例題 問3・問5）</td></tr>
-        <tr><td><strong>SIGN</strong></td><td>e = −L·di/dt のマイナスを「電圧が負」と誤解する</td><td>マイナスは<strong>向き（変化を妨げる）</strong>の意味。大きさは |L·di/dt|、KVL では v = L·di/dt（→ 解説タブ 第3節）</td></tr>
+        <tr><td><strong>SIGN</strong></td><td>e = −L·di/dt のマイナスを「電圧が負」と誤解する</td><td>マイナスは<strong>向き（変化を妨げる）</strong>の意味。大きさは |L·di/dt|、KVL では v = L·di/dt。<strong>符号を消すと永久機関になる</strong>（→ 解説タブ 第3節）</td></tr>
         <tr><td><strong>MODEL</strong></td><td><Eq tex="M=k\sqrt{L_1L_2}" inline /> と <Eq tex="M=\mu N_1N_2 S/\ell" inline /> を取り違える</td><td>L・k が与えられたら k√、鉄心構造が与えられたら μN₁N₂S/ℓ（→ 解説タブ 第5節 使い分け表）</td></tr>
         <tr><td><strong>SCALE</strong></td><td>巻数2倍で L も2倍と誤解する</td><td><Eq tex="L \propto N^2" inline /> なので<strong>4倍</strong>。相互は <Eq tex="M \propto N_1 N_2" inline /></td></tr>
         <tr><td><strong>CAUSE</strong></td><td>「電流があるから起電力が出る」と誤解する</td><td>起電力は<strong>電流の変化</strong>で出る。直流定常（di/dt=0）では起電力ゼロ（→ 解説タブ 第4節）</td></tr>
@@ -17602,7 +17621,7 @@ const InductancePage = ({ onNav }) => (
   <>
     <MetaStrip difficulty="★★★★" importance="S" frequency="中〜高" />
     <LearningMap
-      prereqs={[{ id: "bridge-circuit", title: "2.5 ブリッジ回路" }]}
+      prereqs={[{ id: "magnetic-circuit", title: "1.4 磁気回路" }]}
       current="3.1 インダクタンス"
       nexts={[{ id: "transient", title: "3.2 過渡現象" }]}
       onNav={onNav}
@@ -18073,7 +18092,7 @@ const OpAmpFormulasTab = ({ onNav, switchTab }) => (
         formula: "A_v = 1 \\text{（ボルテージフォロワ）}",
         meaning: "Rf=0・Ri=∞ の非反転増幅。インピーダンス変換に使う",
         when: "出力を入力に直結するとき（Rf=0）",
-        notWhen: "Rf {'>'} 0 なら非反転増幅（Av = 1 + Rf/Ri）として計算すること",
+        notWhen: "Rf > 0 なら非反転増幅（Av = 1 + Rf/Ri）として計算すること",
       },
     ]} />
 
@@ -18595,7 +18614,7 @@ const MeasurementChunkHierarchy = () => (
       <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "6px 10px", background: "var(--ok-soft)", borderRadius: "4px" }}>
         <span style={{ fontWeight: 700, minWidth: 60 }}>第2層</span>
         <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>交直の可否</span>
-        <span style={{ fontSize: "13px", color: "var(--ink-soft)" }}>可動コイル＝直流専用／可動鉄片・電流力計・熱電＝交直両用／整流形＝交流</span>
+        <span style={{ fontSize: "13px", color: "var(--ink-soft)" }}>可動コイル＝直流専用／電流力計・熱電＝交直両用／可動鉄片・整流形＝主に交流</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "6px 10px", background: "var(--warn-soft)", borderRadius: "4px" }}>
         <span style={{ fontWeight: 700, minWidth: 60 }}>第3層</span>
@@ -18957,7 +18976,7 @@ const MeasurementFormulasTab = ({ onNav, switchTab }) => (
       </thead>
       <tbody>
         <tr><td><span className="marker">可動コイル型</span></td><td>永久磁石の磁界とコイル電流の電磁力</td><td><span className="marker">直流のみ</span></td><td>電圧・電流（直流）／感度高・精度良</td></tr>
-        <tr><td>可動鉄片型</td><td>磁化された鉄片間の反発力</td><td>交流・直流</td><td>交流電圧・電流／構造簡単・安価</td></tr>
+        <tr><td>可動鉄片型</td><td>磁化された鉄片間の反発力</td><td>主に交流</td><td>交流電圧・電流／構造簡単・安価</td></tr>
         <tr><td><span className="marker">電流力計型</span></td><td>固定コイルと可動コイル間の電磁力</td><td>交流・直流</td><td><span className="marker">真の有効電力を直読（電力計）</span></td></tr>
         <tr><td><span className="marker">整流形</span></td><td>整流回路＋可動コイル型</td><td><span className="marker">交流</span></td><td>交流電圧・電流／<span className="marker">正弦波以外は波形誤差</span></td></tr>
         <tr><td>熱電形</td><td>電流による発熱→熱起電力</td><td>交流・直流</td><td>高周波測定／<span className="marker">真の実効値（True RMS）</span></td></tr>
@@ -18965,7 +18984,7 @@ const MeasurementFormulasTab = ({ onNav, switchTab }) => (
       </tbody>
     </table>
 
-    <h2 id="compare-va"><span className="h-num">2</span>電圧計 vs 電流計（接続・内部抵抗・拡大） <span style={{fontSize:"0.8em", color:"var(--ok)"}}>★★★★</span></h2>
+    <h2 id="compare-va"><span className="h-num">3</span>電圧計 vs 電流計（接続・内部抵抗・拡大） <span style={{fontSize:"0.8em", color:"var(--ok)"}}>★★★★</span></h2>
     <table className="data-table">
       <thead>
         <tr><th>項目</th><th>電圧計</th><th>電流計</th></tr>
@@ -18979,7 +18998,7 @@ const MeasurementFormulasTab = ({ onNav, switchTab }) => (
       </tbody>
     </table>
 
-    <h2 id="compare-rms"><span className="h-num">3</span>整流形 vs 熱電形（誤差の性質） <span style={{fontSize:"0.8em", color:"var(--ink-soft)"}}>★★★</span></h2>
+    <h2 id="compare-rms"><span className="h-num">4</span>整流形 vs 熱電形（誤差の性質） <span style={{fontSize:"0.8em", color:"var(--ink-soft)"}}>★★★</span></h2>
     <p style={{marginTop:"-0.5em", marginBottom:"1em", fontSize:"0.9em", color:"var(--ink-soft)"}}>→ 波形誤差・True RMS の論説（H27 問14 類題）</p>
     <table className="data-table">
       <thead>
@@ -18994,7 +19013,7 @@ const MeasurementFormulasTab = ({ onNav, switchTab }) => (
       </tbody>
     </table>
 
-    <h2 id="connect-error"><span className="h-num">4</span>電圧計・電流計の接続誤差（電圧計前置き vs 電流計前置き）</h2>
+    <h2 id="connect-error"><span className="h-num">5</span>電圧計・電流計の接続誤差（電圧計前置き vs 電流計前置き）</h2>
     <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>電圧計・電流計で直流電力を測るときの誤差（H19問14 頻出）。<strong>負荷抵抗と計器内部抵抗の大小</strong>でどちらの接続が誤差小か決まる。</p>
     <table className="data-table">
       <thead>
@@ -19007,7 +19026,7 @@ const MeasurementFormulasTab = ({ onNav, switchTab }) => (
       </tbody>
     </table>
 
-    <h2 id="watt-hour"><span className="h-num">5</span>電力量計（積算電力計）の誤差率</h2>
+    <h2 id="watt-hour"><span className="h-num">6</span>電力量計（積算電力計）の誤差率</h2>
     <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>回転円板の回転数と計器定数から電力量を求め、真値と比べて誤差率を出す（H22問16 頻出）。</p>
     <FormulaTable layer="A" rows={[
       { formula: "W = \\dfrac{N}{k}", meaning: "電力量計の積算電力量 [kWh]。N=回転数 [rev]、k=計器定数 [rev/kWh]", when: "回転数 N と計器定数 k [rev/kWh] が与えられたとき", notWhen: "計器定数の単位（rev/kWh）を取り違えない。1回転あたりの電力量は 1/k" },
@@ -19844,13 +19863,12 @@ const ElectronMotionLayers = () => (
 
 const ElectronMotionFormulasTab = ({ onNav, switchTab }) => (
   <>
-    <ChargeRootTree />
     <ElectronMotionLayers />
     <Callout variant="warn" title="🧲 まずこれ：電子の運動・4大原則">
       <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.85 }}>
         <li><strong>電子は負電荷</strong>（q = −e、e = 1.6×10⁻¹⁹ C）。向きの判断はすべてここから始まる。</li>
         <li><strong>電界中：力は電界 E と反対向き</strong>（F = eE、加速度 a = eE/m も E と逆向き）。</li>
-        <li><strong>磁界中：力の向きは正電荷と逆</strong>。フレミング左手で電流の向きから出し、電子は<strong>反転</strong>させる。</li>
+        <li><strong>磁界中：力の向きは正電荷と逆</strong>。フレミング左手で電流の向きから出し（力なので右手は使わない）、電子は<strong>反転</strong>させる。</li>
         <li><strong>電子の運動方向と電流の向きは逆</strong>（電流は正電荷の流れと定義されるため）。</li>
       </ol>
       <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--ink-soft)" }}>→ 電界の詳細は<a onClick={() => switchTab('explain')} style={{ color: "var(--accent-ink)", cursor: "pointer", textDecoration: "underline" }}>解説3節</a>、磁界・向きの反転は<a onClick={() => switchTab('explain')} style={{ color: "var(--accent-ink)", cursor: "pointer", textDecoration: "underline" }}>解説4節</a>、過去問の解き方は<a onClick={() => switchTab('learn')} style={{ color: "var(--accent-ink)", cursor: "pointer", textDecoration: "underline" }}>学習タブ</a>へ。</p>
@@ -19937,6 +19955,7 @@ const ElectronMotionExplainTab = ({ onNav, switchTab }) => (
         <tr><td><strong>③ ローレンツ力の向きを電流向きで取る</strong></td><td>フレミング左手＝そのまま電子の向き</td><td>電子は負電荷。運動の向きは電流と逆（4節）</td></tr>
         <tr><td><strong>④ 磁界 H をそのまま力の式に入れる</strong></td><td>F=evH と書く</td><td>力は B で決まる。H が与えられたら B=μ₀H に直す（5節・R03問12）</td></tr>
         <tr><td><strong>⑤ 電界中で円運動を描くと思う</strong></td><td>力が働くから曲がって回る</td><td>電界の力は一定方向＝放物線（投射）。円ではない（3節）</td></tr>
+        <tr><td><strong>⑥ 力なのに右手を使う</strong></td><td>フレミングは右手で全部いける</td><td>右手は発電機（e=BLv）専用。ローレンツ力・電磁力（力を求める場面）は<strong>左手</strong>。電子はさらに向きが反転する（4節）</td></tr>
       </tbody>
     </table>
     <SectionCheck pageId="electron-motion" sectionId="why-confuse" />
@@ -20656,7 +20675,7 @@ const BridgeCircuitFormulasTab = ({ onNav, switchTab }) => (
     <Callout variant="warn" title="🎯 まずこれ：ブリッジは「対辺の積」で平衡判定（ここから全部決まる）">
       <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.85 }}>
         <li><strong>向かい合う対辺の積を比べる</strong>：R₁·R₄ と R₂·R₃。等しければ<strong>平衡</strong>（検流計 Ig=0）。</li>
-        <li><strong>平衡なら橋絡辺（検流計の辺）を取り除ける</strong> → 単純な直並列に落として解く。<strong>不平衡なら取り除けない</strong> → テブランで解く。</li>
+        <li><strong>平衡なら橋絡辺（検流計の辺）を取り除ける</strong> → 単純な直並列に落として解く。<strong>不平衡なら取り除けない</strong> → テブナンで解く。</li>
       </ol>
       <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--ink-soft)" }}>※ <strong>隣り合う辺の積（R₁·R₂＝R₃·R₄）ではない</strong>のが最頻ひっかけ（→ <a onClick={() => switchTab('explain')} style={{ color: "var(--accent-ink)", cursor: "pointer", textDecoration: "underline" }}>解説タブ 6節</a>）。平衡＝橋絡部だけ電流ゼロで、4辺には電流が流れている。</p>
     </Callout>
@@ -20998,7 +21017,7 @@ const BridgeCircuitLearnTab = ({ onNav, switchTab }) => (
       <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答の導出（3条件まとめて）</summary>
       <p><strong>① R₃=4・R₄=6</strong>：R₁R₄=2×6=12、R₂R₃=3×4=12 → 等しい → <strong>平衡（Ig=0）</strong></p>
       <p><strong>② R₃=4・R₄=5</strong>：R₁R₄=2×5=10、R₂R₃=3×4=12 → 不一致 → <strong>不平衡（Ig≠0・テブナン）</strong></p>
-      <p><strong>③ R₃=6・R₄=4</strong>：R₁R₄=2×4=8、R₂R₃=3×6=18 → 不一致 → <strong>不平衡</strong>（隣接辺 R₁R₂=6・R₃R₄=24 で判定すると誤る）</p>
+      <p><strong>③ R₃=6・R₄=4</strong>：R₁R₄=2×4=8、R₂R₃=3×6=18 → 不一致 → <strong>不平衡</strong>（隣接辺でも不一致だが判定法として誤り。①では結論が逆転する）</p>
     </details>
     <Callout variant="warn" title="典型誤答3択（自己採点用）">
       <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.8 }}>
@@ -21926,7 +21945,7 @@ const TransientPage = ({ onNav }) => (
       )}
     </PageTabs>
 
-    <PageNav prev={{id:"inductance", title:"3.1 インダクタンス"}} next={{id:"three-phase", title:"3.3 三相交流"}} onNav={onNav} />
+    <PageNav prev={{id:"inductance", title:"3.1 インダクタンス・電磁誘導"}} next={{id:"three-phase", title:"4.1 三相交流"}} onNav={onNav} />
   </>
 );
 
@@ -22430,7 +22449,7 @@ const SemiconductorExplainTab = ({ onNav, switchTab }) => (
       steps={[
         "回路図でダイオード記号を確認（三角の底辺側＝アノード＝P型、頂点側の棒＝カソード＝N型）",
         "アノードとカソードそれぞれの電位を回路から読み取る",
-        "アノード電位 {'>'} カソード電位 → 順バイアス（電流が流れる）、逆なら逆バイアス（ほぼ遮断）",
+        "アノード電位 > カソード電位 → 順バイアス（電流が流れる）、逆なら逆バイアス（ほぼ遮断）",
       ]}
     />
     <TrapBlock
@@ -22966,7 +22985,7 @@ const ReuseRankingPage = ({ onNav }) => {
       rows:[
         ["RC直列回路の時定数・充放電","H18, H20, H25, H26, H27, H28, H30, R01, R05下, R06下"],
         ["RL直列回路の過渡現象","H19, H21, H23, H29, R03"],
-        ["RLC直列回路のバイパス時の変化","R04下, R04上?, R06上, R07上"],
+        ["RLC直列回路のバイパス時の変化","R04下, R06上, R07上"],
       ] },
     { name:"RLC回路（毎年1〜2問）",
       desc:"共振周波数（f₀=1/2π√LC）とQ値の計算は必須。直列・並列の違いを明確に。",
@@ -23054,50 +23073,50 @@ const ReuseRankingPage = ({ onNav }) => {
 };
 
 const WaveAnalysisPage = ({ onNav }) => {
-  const slotCols = ["R04上","R04下","R05上","R05下","R06上","R06下","R07上"];
+  const slotCols = ["R04上","R04下","R05上","R05下","R06上","R06下","R07上","R07下"];
   const slotRows = [
-    ["問1-2：コンデンサ",["◎","◎","◎","◎","◎","◎","◎"]],
-    ["問1-2：静電気（帯電球・クーロン）",["—","◎","◎","◎","◎","◎","◎"]],
-    ["問3-4：電磁力（フレミング・ビオサバール）",["◎","◎","△","◎","◎","◎","◎"]],
-    ["問3-4：磁気回路（鉄心・ヒステリシス）",["—","◎","△","◎","—","—","—"]],
-    ["問3-4：インダクタンス（自己・相互・結合）",["◎","—","△","—","◎","—","◎"]],
-    ["問5-7：直流回路（3問固定）",["◎","◎","◎","◎","◎","◎","◎"]],
-    ["問8：交流基礎（実効値・位相・ひずみ波）",["◎","◎","—","◎","—","◎","◎"]],
-    ["問8-9：RLC共振（直並列・Q値・エネルギー）",["◎","◎","◎","◎","◎","◎","◎"]],
-    ["問9：交流電力（力率・力率改善）",["◎","◎","◎","—","◎","—","◎"]],
-    ["問10：過渡現象（RC/RL/RLC）",["—","◎","◎","◎","◎","◎","◎"]],
-    ["問11-12：半導体論説",["◎","◎","◎","◎","◎","◎","◎"]],
-    ["問11-12：電子運動（ローレンツ力・偏向）",["◎","◎","◎","◎","◎","◎","◎"]],
-    ["問13・18：BJTトランジスタ増幅回路",["◎","◎","△","◎","—","◎","◎"]],
-    ["問13・18：オペアンプ（反転・非反転・積分）",["◎","—","△","—","—","◎","—"]],
-    ["問14・16：計器（論説・分流器・倍率器）",["◎","◎","◎","◎","◎","◎","◎"]],
-    ["問15-16：三相交流（Y-Δ・平衡電力）",["◎","◎","◎","◎","—","◎","◎"]],
-    ["問16・17-18：ブリッジ回路",["—","—","◎","—","—","◎","—"]],
+    ["問1-2：コンデンサ",["◎","◎","◎","◎","◎","◎","◎","◎"]],
+    ["問1-2：静電気（帯電球・クーロン）",["—","◎","◎","◎","◎","◎","◎","◎"]],
+    ["問3-4：電磁力（フレミング・ビオサバール）",["◎","◎","△","◎","◎","◎","◎","◎"]],
+    ["問3-4：磁気回路（鉄心・ヒステリシス）",["—","◎","△","◎","—","—","—","—"]],
+    ["問3-4：インダクタンス（自己・相互・結合）",["◎","—","△","—","◎","—","◎","◎"]],
+    ["問5-7：直流回路（3問固定）",["◎","◎","◎","◎","◎","◎","◎","◎"]],
+    ["問8：交流基礎（実効値・位相・ひずみ波）",["◎","◎","—","◎","—","◎","◎","△"]],
+    ["問8-9：RLC共振（直並列・Q値・エネルギー）",["◎","◎","◎","◎","◎","◎","◎","△"]],
+    ["問9：交流電力（力率・力率改善）",["◎","◎","◎","—","◎","—","◎","—"]],
+    ["問10：過渡現象（RC/RL/RLC）",["—","◎","◎","◎","◎","◎","◎","◎"]],
+    ["問11-12：半導体論説",["◎","◎","◎","◎","◎","◎","◎","◎"]],
+    ["問11-12：電子運動（ローレンツ力・偏向）",["◎","◎","◎","◎","◎","◎","◎","◎"]],
+    ["問13・18：BJTトランジスタ増幅回路",["◎","◎","△","◎","—","◎","◎","—"]],
+    ["問13・18：オペアンプ（反転・非反転・積分）",["◎","—","△","—","—","◎","—","—"]],
+    ["問14・16：計器（論説・分流器・倍率器）",["◎","◎","◎","◎","◎","◎","◎","◎"]],
+    ["問15-16：三相交流（Y-Δ・平衡電力）",["◎","◎","◎","◎","—","◎","◎","◎"]],
+    ["問16・17-18：ブリッジ回路",["—","—","◎","—","—","◎","—","—"]],
   ];
   const cellStyle = (v) => ({textAlign:"center", fontWeight: v==="◎"?700:400, color: v==="◎"?"var(--accent-ink)": v==="△"?"var(--ink-mute)":"var(--ink-faint)"});
   const fixedSlots = [
     ["問5-7（3問）","直流回路","R04以降全回3問出題。内容ローテーション（キルヒホッフ・テブナン・最大電力定理が順番に）"],
-    ["問10","過渡現象","H18以降ほぼ全回問10に固定。RC・RL・RLC過渡を年によって使い分け"],
+    ["問10","過渡現象","H18以降ほぼ全回（R04上は静電エネルギー題材のため解釈により対象外）。RC・RL・RLC過渡を年によって使い分け"],
     ["問11-12","半導体 + 電子運動","問11=論説（種類・特性）、問12=電子の運動計算で安定して2問セット"],
     ["問14・16","計器","問14=論説（原理・種類）、問16=計算（分流器・倍率器）で2問セット。問18に変形あり"],
   ];
   const rotation = [
-    ["磁気回路（ヒステリシス・磁束密度）","R05下（2024/3）","R04下（2022/3）","1年","高（R06上/下・R07上と3回連続空白）"],
-    ["オペアンプ（反転・非反転・積分）","R06下（2025/3）","R04上（2022/8）","≈1.5年","高（R07上が空白）"],
-    ["ブリッジ回路（ホイートストン・マクスウェル）","R06下（2025/3）","R05上（2023/8）","≈1.5年","中高（R07上が空白）"],
-    ["インダクタンス（相互・結合係数）","R07上（2025/8）","R06上（2024/8）","1年","低（直前に出題済み）"],
+    ["磁気回路（ヒステリシス・磁束密度）","R05下（2024/3）","R04下（2022/3）","1年","高（R06上〜R07下と4回連続空白）"],
+    ["オペアンプ（反転・非反転・積分）","R06下（2025/3）","R04上（2022/8）","≈2.5年","高（R07上・R07下と2回連続空白）"],
+    ["ブリッジ回路（ホイートストン・マクスウェル）","R06下（2025/3）","R05上（2023/8）","≈1.5年","中高（R07上・R07下と2回連続空白）"],
+    ["インダクタンス（自己・相互・結合）","R07下（2026/3）","R07上（2025/8）","0.5年（2回連続出題）","低（直前2回連続出題済み）"],
     ["交流電力（力率・力率改善）","R07上（2025/8）","R06上（2024/8）","1年","低〜中（R07上出題済み）"],
   ];
   const almostAlways = [
-    ["コンデンサ（問1-2）","全7回出題（問1か問2に必ず）","なし"],
-    ["電磁力（フレミング・ビオサバール）","6/7回","（R04上に問3インダクタンスが代替）"],
-    ["RLC共振（問8-9）","全7回出題","なし"],
-    ["三相交流（問15-16）","6/7回","R06上（コンデンサ・計器系が多かった年）のみ空白"],
+    ["コンデンサ（問1-2）","全8回出題（問1か問2に必ず）","なし"],
+    ["電磁力（フレミング・ビオサバール）","7/8回","（R04上に問3インダクタンスが代替）"],
+    ["RLC共振（問8-9）","全7回出題（R07下は判定保留）","なし"],
+    ["三相交流（問15-16）","7/8回","R06上（コンデンサ・計器系が多かった年）のみ空白"],
   ];
   const r08 = [
-    ["高","磁気回路（問3か問4）","R05下以降3回連続空白。2年超の不在は理論Wikiでは磁気回路のみ","★★★"],
-    ["高","オペアンプ（問13か問18）","R07上空白。R04上→R06下の約1.5年周期に合致","★★★"],
-    ["中高","ブリッジ回路（問16か問15）","R07上空白。1.5年周期で見るとR08が出番","★★"],
+    ["高","磁気回路（問3か問4）","R05下以降4回連続空白（R06上〜R07下）。2年超の不在は理論Wikiでは磁気回路のみ","★★★"],
+    ["高","オペアンプ（問13か問18）","R07上・R07下と2回連続空白。R04上→R06下は約2.5年周期","★★★"],
+    ["中高","ブリッジ回路（問16か問15）","R07上・R07下と2回連続空白。1.5年周期（R05上→R06下）で見るとR08が出番","★★"],
     ["中","ひずみ波交流（問8か問9）","R06下空白。ひずみ波実効値・電力はS/S交互パターン","★★"],
     ["中","交流基礎（波形率・位相合成）","R06上に出題なし、R05上も空白気味。波形率は2〜3年周期","★★"],
     ["通常","過渡現象（問10）","毎回出る固定スロット。R07上はRLC短絡型。R08はRC/RL型に戻る可能性","★★★"],
@@ -23125,13 +23144,13 @@ const WaveAnalysisPage = ({ onNav }) => {
       <div className="page-header">
         <div className="eyebrow">攻略 — STRATEGY</div>
         <h1>7.6 出題周期・R08予測</h1>
-        <p className="deck">理論は「スロットが読める試験」。問10（過渡現象）は全期固定、電磁気系（問1-4）は4問固定だが中身がローテーション。</p>
+        <p className="deck">理論は「スロットが読める試験」。問10はH18以降ほぼ全回固定（R04上は静電エネルギー題材のため対象外）、電磁気系（問1-4）は4問固定だが中身がローテーション。</p>
       </div>
       <div className="callout callout-warning">
         <strong>結論</strong><br/>
-        R08（2026年8月）は <strong>磁気回路（2回連続空白）</strong>・<strong>オペアンプ（R07上空白）</strong>・<strong>ブリッジ回路（R07上空白）</strong> の出題確率が最高。R07上で出題済みのテーマ（コンデンサ・インダクタンス・交流電力・直流回路）も毎回出る固定スロットに近いので「もう出ない」と切らないこと。
+        R08（2026年8月）は <strong>磁気回路（4回連続空白）</strong>・<strong>オペアンプ（R07上・R07下と2回連続空白）</strong>・<strong>ブリッジ回路（R07上・R07下と2回連続空白）</strong> の出題確率が最高。R07上で出題済みのテーマ（コンデンサ・インダクタンス・交流電力・直流回路）も毎回出る固定スロットに近いので「もう出ない」と切らないこと。
       </div>
-      <h2 id="slot-matrix">1. 問番号スロット出題パターン（R04上〜R07上）</h2>
+      <h2 id="slot-matrix">1. 問番号スロット出題パターン（R04上〜R07下）</h2>
       <p>R04以降は年2回実施（上期8月・下期3月）。◎=出題 / —=未出題 / △=推定。データ出典: 電験王3（denken-ou.com）各年度問題より収集。</p>
       <div style={{overflowX:"auto"}}>
         <table>
@@ -23148,7 +23167,7 @@ const WaveAnalysisPage = ({ onNav }) => {
       </div>
       <div className="callout callout-tip">
         <strong>マトリクスの見方</strong><br/>
-        ◎が連続しているスロット = 毎回出るので必ず対策（直流3問・半導体・計器・過渡現象）。◎と—が交互のスロット = ローテーション型で、直近が—なら次回の出題確率が上がる。<strong>R07上が—の欄 = R08の出題候補として最優先</strong>。
+        ◎が連続しているスロット = 毎回出るので必ず対策（直流3問・半導体・計器・過渡現象）。◎と—が交互のスロット = ローテーション型で、直近が—なら次回の出題確率が上がる。<strong>R07下が—の欄 = R08の出題候補として最優先</strong>。
       </div>
       <h2 id="classification">2. スロット別周期パターン分類</h2>
       <h3>固定スロット（毎回必出・対策必須）</h3>
@@ -23167,8 +23186,8 @@ const WaveAnalysisPage = ({ onNav }) => {
       </table>
       <div className="callout callout-tip">
         <strong>次に出やすい</strong><br/>
-        <strong>磁気回路（問3または問4）</strong>: R05下以降3回連続で空白。「環状鉄心の磁束・起磁力計算」か「ヒステリシス特性の穴埋め論説」を最優先で確認。<br/>
-        <strong>オペアンプ（問13または問18）</strong>: R04上・R06下の出題周期から、R07下〜R08上のどちらかに出る確率が高い。反転・非反転のゲイン公式と積分回路の時間応答を確認。
+        <strong>磁気回路（問3または問4）</strong>: R05下以降4回連続で空白。「環状鉄心の磁束・起磁力計算」か「ヒステリシス特性の穴埋め論説」を最優先で確認。<br/>
+        <strong>オペアンプ（問13または問18）</strong>: R04上・R06下の出題周期（約2.5年）から、次はR08上に出る確率が高い（R07下は空白で外れた）。反転・非反転のゲイン公式と積分回路の時間応答を確認。
       </div>
       <h3>ほぼ毎回型（欠けたときは要注意）</h3>
       <table>
@@ -23176,7 +23195,7 @@ const WaveAnalysisPage = ({ onNav }) => {
         <tbody>{almostAlways.map((r,i) => <tr key={i}><td style={{fontWeight:600}}>{r[0]}</td><td style={{textAlign:"center",whiteSpace:"nowrap"}}>{r[1]}</td><td>{r[2]}</td></tr>)}</tbody>
       </table>
       <h2 id="r08-forecast">3. R08（2026年8月上期）出題予測</h2>
-      <p>基準日: 2026年4月。R08上期は2026年8月実施予定。直近データ: R07上（2025/8）。</p>
+      <p>基準日: 2026年7月。R08上期は2026年8月実施予定。直近データ: R07下（2026/3）。</p>
       <table>
         <thead><tr><th>予測</th><th>テーマ</th><th>根拠</th><th>優先度</th></tr></thead>
         <tbody>{r08.map((r,i) => <tr key={i}><td style={{textAlign:"center",fontWeight:600,whiteSpace:"nowrap"}}>{r[0]}</td><td style={{whiteSpace:"nowrap"}}>{r[1]}</td><td>{r[2]}</td><td style={{textAlign:"center",whiteSpace:"nowrap"}}>{r[3]}</td></tr>)}</tbody>
@@ -23216,7 +23235,7 @@ const WaveAnalysisPage = ({ onNav }) => {
         <li>三相交流: <Eq tex="\sqrt{3}" /> の出どころ（Y⇔Δ変換）を図で確認</li>
         <li>直流回路: テブナンの定理（電源短絡→端子抵抗計算）の手順</li>
       </ul>
-      <p><strong>捨てていいパターン（出題確率低）</strong>：インダクタンス計算（R07上で出題済み・直前空白なし）／交流電力の力率改善コンデンサ計算（R07上で出題済み）。</p>
+      <p><strong>捨てていいパターン（出題確率低）</strong>：インダクタンス計算（R07上・R07下で連続出題済み・直前空白なし）／交流電力の力率改善コンデンサ計算（R07上で出題済み）。</p>
       <p style={{fontSize:"12px",color:"var(--ink-mute)",marginTop:"20px"}}>R08上期（2026/8）向け分析。スロットデータは電験王3（denken-ou.com）各年度問題より収集。</p>
       <div className="page-nav">
         <a className="nav-prev" href="#" onClick={(e) => { e.preventDefault(); onNav('reuse-ranking'); }}>← 再出題ランキング</a>
@@ -23421,7 +23440,7 @@ const FormulaListPage = ({ onNav }) => (
     <table>
       <thead><tr><th>公式</th><th>意味</th><th>単位</th></tr></thead>
       <tbody>
-        <tr><td><Eq tex="R_x = \dfrac{R_1 \cdot R_3}{R_2}" /></td><td>ホイートストンブリッジの平衡条件</td><td>Ω</td></tr>
+        <tr><td><Eq tex="R_x = \dfrac{R_2 \cdot R_3}{R_1}" /></td><td>ホイートストンブリッジの平衡条件</td><td>Ω</td></tr>
         <tr><td><Eq tex="V_{avg} = \dfrac{2V_m}{\pi}" /></td><td>全波整流の出力平均電圧</td><td>V</td></tr>
       </tbody>
     </table>
@@ -23744,7 +23763,7 @@ const Sidebar = ({ chapters, currentPage, onNav, mobileOpen, onCloseMobile, sear
       ))}
 
       <div className="sidebar-footer">
-        本Wikiは電験3種「機械」科目の独習用にまとめた教材集である。掲載する出題傾向データは編集者の集計によるものであり、本試験を保証するものではない。
+        本Wikiは電験3種「理論」科目の独習用にまとめた教材集である。掲載する出題傾向データは編集者の集計によるものであり、本試験を保証するものではない。
       </div>
       <div style={{marginTop:'auto',padding:'12px 16px',borderTop:'1px solid var(--rule, #333)',display:'flex',flexDirection:'column',gap:'6px'}}>
         <a href="https://kfurufuru.github.io/denken-wiki/theory/" target="_blank" rel="noopener noreferrer" style={{color:'var(--ink-mute, #8892a0)',textDecoration:'none',fontSize:'0.82rem'}}>→ 法規Wiki 理論（Risky攻略）</a>
@@ -23834,7 +23853,7 @@ function searchIndex(idx, q) {
 }
 
 /* ============================================================
-   理論Wiki「今日の一問」PDCA回転式（53問プール）
+   理論Wiki「今日の一問」PDCA回転式（73問プール）
    方針: 計算問題は除外。考え方・公式・穴埋め型のみ。
    localStorage キー（hoki と namespace 衝突回避）:
      riron_daily_pool_log::<qid>  個別問題のSR状態
@@ -24629,7 +24648,7 @@ const RironDailyQuestion = ({ onNav }) => {
           <div style={{ fontSize: 11, color: 'var(--ink-mute)', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 4 }}>DAILY · 1問1分</div>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>今日の一問（理論）</h3>
           <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--ink-soft)' }}>
-            考え方・公式・穴埋め型の53問プール。間違い/うろ覚えは <strong>翌日〜2日後</strong> に再出題、正解は <strong>+7日</strong> から間隔を延ばします。
+            考え方・公式・穴埋め型の73問プール。間違い/うろ覚えは <strong>翌日〜2日後</strong> に再出題、正解は <strong>+7日</strong> から間隔を延ばします。
           </p>
         </div>
         <button onClick={() => setHistoryOpen(true)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: 12, padding: 0 }}>過去の一問 →</button>
