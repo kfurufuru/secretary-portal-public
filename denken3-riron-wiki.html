@@ -8480,6 +8480,62 @@ const TransistorFormulasTab = ({ onNav, switchTab }) => (
       </p>
     </DefinitionCallout>
 
+    <DefinitionCallout symbol="ベース接地電流増幅率 α（h_FB）">
+      <p style={{ margin: "0 0 8px 0" }}>
+        同じトランジスタでも <strong>ベース接地</strong>では増幅率を <strong>α</strong> で表す。α は <strong>エミッタから流れ込んだ全電流 I_E のうち、コレクタへ流れた割合</strong>：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="\alpha \;=\; \dfrac{I_C}{I_E} \;(= h_{FB})" />
+      </p>
+      <p style={{ margin: "0 0 8px 0" }}>
+        <strong>言葉のアンカー：E が全体、C が大部分。だから α = I_C / I_E。</strong> 分母は「全体」の I_E。KCL <Eq tex="I_E = I_C + I_B" inline /> より必ず <Eq tex="I_C < I_E" inline /> だから、α は <strong>必ず 1 未満</strong>（実用素子で 0.98〜0.998・ほぼ1。β=99 なら 0.99、β=数百 ならさらに 1 に近づく）。100 になるのは分母がベース電流の β の方で、ここが最大の混同源。
+      </p>
+      <p style={{ margin: "0 0 6px 0" }}>
+        α と β は同じ素子を別基準で見ただけなので、KCL から相互変換できる。<Eq tex="I_C = \beta I_B" inline />・<Eq tex="I_E = (1+\beta)\,I_B" inline /> を α の式に代入すると：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="\alpha = \dfrac{\beta I_B}{(1+\beta)\,I_B} = \dfrac{\beta}{\beta+1}, \qquad \beta = \dfrac{\alpha}{1-\alpha}" />
+      </p>
+      <p style={{ margin: 0, fontSize: 13, color: "var(--ink-soft)" }}>
+        逆変換 β = α/(1−α) は丸暗記せず、この 1 行の代入から復元する。検算：α=0.99 なら β = 0.99/0.01 = 99。「1 弱の α ↔ 100 前後の β」の感覚と一致すれば正しい。
+      </p>
+    </DefinitionCallout>
+
+    <table className="data-table">
+      <thead>
+        <tr>
+          <th style={{width:"22%"}}>観点</th>
+          <th>エミッタ接地 β（h_FE）</th>
+          <th>ベース接地 α（h_FB）</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>定義</td><td><Eq tex="\beta = \dfrac{I_C}{I_B}" inline /></td><td><Eq tex="\alpha = \dfrac{I_C}{I_E}" inline /></td></tr>
+        <tr><td>分母（基準）</td><td>小さいベース電流 I_B</td><td>全体のエミッタ電流 I_E</td></tr>
+        <tr><td>値の範囲</td><td><span className="marker">1 より大（数十〜数百）</span></td><td><span className="marker">1 より少し小（0.98〜0.998・ほぼ1）</span></td></tr>
+        <tr><td>相互変換</td><td><Eq tex="\beta = \dfrac{\alpha}{1-\alpha}" inline /></td><td><Eq tex="\alpha = \dfrac{\beta}{\beta+1}" inline /></td></tr>
+      </tbody>
+    </table>
+
+    <Callout variant="warn" title="⚠️ α・β 混同の3パターン（過去問で失点する形）">
+      <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.75 }}>
+        <li><strong>分母・分子の逆</strong>：α = I_E/I_C としてしまう。割合は「部分／全体」。C が部分・E が全体なので I_C/I_E が正しい。</li>
+        <li><strong>α と β の取り違え</strong>：α = I_C/I_B は α ではなく β（エミッタ接地）の定義。分母が I_E か I_B かで判別する。</li>
+        <li><strong>α を 100 程度と思う</strong>：α は必ず 1 未満。100 前後になるのは β（I_C/I_B）。値の桁でどちらか即判定できる。</li>
+      </ul>
+    </Callout>
+
+    <Callout variant="tip" title="🔧 公式を忘れたときの復元3ステップ ＋ 数値で確認">
+      <ol style={{ margin: "0 0 8px 0", paddingLeft: 18, lineHeight: 1.75 }}>
+        <li>エミッタ電流を「全体」と考える</li>
+        <li><Eq tex="I_E = I_C + I_B" inline /> を書く（KCL・全領域で常に成立）</li>
+        <li>α は「全体 I_E のうち I_C の割合」→ <Eq tex="\alpha = I_C/I_E" inline />、β は「基準を小さい I_B に取り替えただけ」→ <Eq tex="\beta = I_C/I_B" inline /></li>
+      </ol>
+      <p style={{ margin: 0 }}>
+        <strong>数値例：</strong>I_C = 9.9 mA・I_B = 0.1 mA なら I_E = 10.0 mA。よって α = 9.9/10.0 = <strong>0.99</strong>、β = 9.9/0.1 = <strong>99</strong>。同じ回路でも「何を基準にした増幅率か」で値がまるで違う。<strong>公式を忘れても、定義と電流の流れから復元できれば失点しない。</strong>
+      </p>
+    </Callout>
+
     <TransistorChunkHierarchy />
 
     <Callout variant="tip" title="⚡ 5秒で思い出す">
