@@ -5206,19 +5206,30 @@ function ExamAnswer({ correct, explanations }) {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
           <tbody>
             {explanations.map((ex, i) => (
-              <tr key={i} style={{ borderTop: i > 0 ? '1px solid var(--line)' : 'none' }}>
-                <td style={{ padding: '8px 10px', width: '40px', fontWeight: '700', textAlign: 'center' }}>{ex.choice}</td>
-                <td style={{
-                  padding: '8px 10px',
-                  width: '30px',
-                  color: ex.mark === '○' ? 'var(--good)' : 'var(--warn)',
-                  fontWeight: '700',
-                  fontSize: '15px',
-                }}>
-                  {ex.mark}
-                </td>
-                <td style={{ padding: '8px 10px', lineHeight: '1.7' }}>{ex.reason}</td>
-              </tr>
+              typeof ex === 'string' ? (
+                // 後方互換: explanations に {choice,mark,reason} でなくプレーン文字列を渡した
+                // カードは、全幅の箇条書き行として描画する（旧・文字列渡しで解説セルが
+                // 空表示になっていた不具合の恒久救済。object schema のカードは従来どおり○×表）。
+                <tr key={i} style={{ borderTop: i > 0 ? '1px solid var(--line)' : 'none' }}>
+                  <td colSpan={3} style={{ padding: '8px 10px', lineHeight: '1.7' }}>
+                    <span style={{ color: 'var(--ink-3)', marginRight: 6 }}>•</span>{ex}
+                  </td>
+                </tr>
+              ) : (
+                <tr key={i} style={{ borderTop: i > 0 ? '1px solid var(--line)' : 'none' }}>
+                  <td style={{ padding: '8px 10px', width: '40px', fontWeight: '700', textAlign: 'center' }}>{ex.choice}</td>
+                  <td style={{
+                    padding: '8px 10px',
+                    width: '30px',
+                    color: ex.mark === '○' ? 'var(--good)' : 'var(--warn)',
+                    fontWeight: '700',
+                    fontSize: '15px',
+                  }}>
+                    {ex.mark}
+                  </td>
+                  <td style={{ padding: '8px 10px', lineHeight: '1.7' }}>{ex.reason}</td>
+                </tr>
+              )
             ))}
           </tbody>
         </table>
@@ -26022,18 +26033,26 @@ function KeitoRenkeiPage({ onNav }) {
       <SectionCheck pageId="keito-renkei" sectionId="exam-past" />
       <ExamQuestion
         year="R05下"
-        qNum="7（穴埋め・類題H23問6/H27問9/R05下 kakomon.yml「分散型電源の系統連系設備に係る用語の定義」で確認）"
-        question="電技解釈第220条の用語で、「分散型電源を連系している電力系統が事故等によって系統電源と切り離された状態において、当該分散型電源が発電を継続し、線路負荷に有効電力を供給している状態」を何というか。"
-        choices={["自立運転", "単独運転", "逆充電", "解列"]}
-        note="「線路負荷に有効電力を供給」がキーワード。自立運転は自分の構内負荷のみ"
+        qNum="7（分散型電源の系統連系設備に係る用語の定義・電技解釈第220条／電験王3で照合）"
+        question="「電気設備技術基準の解釈」に基づく分散型電源の系統連系設備に係る用語の定義として、正しいものを次の(1)〜(5)のうちから一つ選べ。"
+        choices={[
+          "単独運転とは、分散型電源を連系している電力系統が事故等によって系統電源と切り離された状態において、当該分散型電源が発電を継続し、線路負荷に無効電力を供給している状態をいう。",
+          "自立運転とは、分散型電源が、連系している電力系統から解列された状態において、当該分散型電源設置者の構内負荷にのみ電力を供給している状態をいう。",
+          "逆充電とは、分散型電源設置者の構内から、一般送配電事業者が運用する電力系統側へ向かう有効電力の流れをいう。",
+          "受動的方式の単独運転検出装置とは、分散型電源の有効電力出力又は無効電力出力等に平時から変動を与えておき、単独運転移行時に当該変動に起因して生じる周波数等の変化により、単独運転状態を検出する装置をいう。",
+          "能動的方式の単独運転検出装置とは、単独運転移行時に生じる電圧位相又は周波数等の変化により、単独運転状態を検出する装置をいう。",
+        ]}
+        note="正しいものを一つ選ぶ論説問題。正解は(2)自立運転。誤りの核心＝(1)無効電力→有効電力／(3)逆潮流の定義と混同／(4)(5)受動と能動の説明が逆。電験王3で照合"
       />
       <details style={{ margin: '8px 0', border: '1px solid var(--line)', borderRadius: 4, padding: '4px 0' }}>
         <summary style={{ cursor: 'pointer', fontWeight: 600, padding: '6px 12px', background: 'var(--bg-2)', borderRadius: 3, fontSize: 13 }}>✅ 正解と解説</summary>
         <div style={{ padding: '8px 12px' }}>
-          <ExamAnswer correct="② 単独運転" explanations={[
-            "「系統から切り離された状態で発電継続・線路負荷へ有効電力供給」＝単独運転",
-            "①自立運転は系統から解列して自分の構内負荷にのみ供給（正常運用）",
-            "③逆充電・④解列は別の用語。単独運転は検出して速やかに解列する",
+          <ExamAnswer correct="② 自立運転" explanations={[
+            { choice: "①", mark: "×", reason: "「無効電力」が誤り。単独運転は線路負荷に有効電力を供給している状態" },
+            { choice: "②", mark: "○", reason: "正解。自立運転＝系統から解列された状態で自分の構内負荷にのみ電力を供給する状態。条文どおり" },
+            { choice: "③", mark: "×", reason: "「逆潮流」の定義との混同。逆充電は系統停電中に分散型電源が系統を加圧しつつ有効電力は供給しない状態で別概念" },
+            { choice: "④", mark: "×", reason: "受動的方式と能動的方式の説明が逆。④の内容（平時から変動を与えておく）は能動的方式のもの" },
+            { choice: "⑤", mark: "×", reason: "受動的方式と能動的方式の説明が逆。⑤の内容（生じた電圧位相・周波数の変化を観測）は受動的方式のもの" },
           ]} />
         </div>
       </details>
@@ -26104,6 +26123,7 @@ function KeitoRenkeiPage({ onNav }) {
         { date: "2026-06-20", content: "v1.1: 学習者の3混同点を補強。①解列＝母線でなく電力系統から切り離す（連系点遮断器・母線は残る）の解説＋罠＋復習、②逆潮流が有効電力で定義される理由（無効電力は正味移動ゼロ・別軸）の解説＋罠＋復習、③受動的＝聴診器/能動的＝常に小突く の比喩と不感帯の理由を section3 に追記", reason: "学習者からの具体的つまずき（母線との選択肢で迷う・有効電力の理由・受動能動のイメージ不能）に直接対応" },
         { date: "2026-06-20", content: "v1.2: 5節に R6下問7（再閉路時の事故防止・解釈第224条）の穴埋めブロックを追加。2節で追加済の用語「線路無電圧確認装置」を実際の出題で閉じる。正解(ア)線路無電圧確認装置/(イ)不足電力リレー/(ウ)単独運転検出装置/(エ)逆電力リレー・5択正解(3)・解釈第224条＝再閉路時の事故防止は電験王3で一次照合", reason: "連系の『全体像→詳細（試験で問われる部分）』補完。追加用語を最新出題で着地" },
         { date: "2026-07-11", content: "v1.3: 5節の穴埋め問題の出典を「頻出パターン（穴埋め）」という合成表記から実在年度「R05下 問7」へ訂正（kakomon.yml theme:bunsan-dengenで一次照合・topic「分散型電源の系統連系設備に係る用語の定義」・article解釈第220条と完全一致）。「10年12回」の頻度表記もkakomon.yml突合で検証（H29〜R07下の12回で一致・訂正不要と確認）", reason: "厳格評価（PR#550 PL-034）で出題実績の未実証を指摘されたため一次照合" },
+        { date: "2026-07-11", content: "v1.4: 5節の R05下 問7 を実問と一致させて是正。v1.3で年度ラベルは実在化したが、カード本体は「単独運転の定義を問う4択穴埋め（合成）」のままで実問と不一致だった（実問R05下問7＝正しい用語定義を選ぶ5択論説・正解は自立運転）。電験王3（houkir5-2-7）で実問構造を照合し、①単独運転（無効電力の誤り）②自立運転（正解）③逆充電（逆潮流の定義と混同）④受動的方式（説明逆）⑤能動的方式（説明逆）の5肢論説へ差し替え。各肢定義は電技解釈第220条をdenken.joho.infoで逐語照合。ExamAnswer解説も{choice,mark,reason}正書式へ是正（旧・文字列渡しで解説セルが空表示だった不具合も同時解消）", reason: "examquestion-choicesゲート（scripts/check_examquestion_choices.py）がpre-existing FAIL 1で赤。実過去問ラベルなのに4択＝実問誤ラベル。柱1（推測で埋めない・実問誤ラベル禁止）で実問へ忠実是正" },
       ]} />
 
       <PageNav prevId="taiyouchi-gijutsukijun" prevTitle="太陽電池発電の技術基準" nextId="demand-kwh-kiso" nextTitle="デマンド値と電力量kWh" onNav={onNav} />
