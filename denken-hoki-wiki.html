@@ -36,6 +36,12 @@
     --rank-b-fg: oklch(0.40 0.006 270);
     --warn:      oklch(0.55 0.13 30);
     --good:      oklch(0.52 0.08 160);
+    /* 出題頻度ランク（S/A/B/C・hoki-components.jsx RANK_COLORS用）。重要度ランク(--rank-*-bg)とは別体系のため
+       専用トークン化（PL-020・現行の赤/橙/青/緑の見た目は維持したままハードコードhexを解消） */
+    --freqrank-s: #ef4444;
+    --freqrank-a: #f97316;
+    --freqrank-b: #3b82f6;
+    --freqrank-c: #22c55e;
     --shadow-sm: 0 1px 0 oklch(0.90 0.003 270 / 0.6);
     --shadow:    0 1px 2px oklch(0.25 0.01 270 / 0.05), 0 6px 20px oklch(0.25 0.01 270 / 0.06);
     --radius:    10px;
@@ -5689,7 +5695,7 @@ const PageTabs = ({ pageId, tabs, defaultTab, children }) => {
 // ============================================================
 
 // 出題頻度ランクの配色（commit 6519f1e より復活）
-const RANK_COLORS = { S: '#ef4444', A: '#f97316', B: '#3b82f6', C: '#22c55e' };
+const RANK_COLORS = { S: 'var(--freqrank-s)', A: 'var(--freqrank-a)', B: 'var(--freqrank-b)', C: 'var(--freqrank-c)' };
 const MKDOCS_BASE = 'https://kfurufuru.github.io/denken-wiki/';
 
 function Sidebar({ data, page, onNav }) {
@@ -6562,8 +6568,8 @@ function App() {
     .denken-wiki-cta:hover { background: var(--accent-soft); border-color: var(--accent-ink); }
     .denken-wiki-cta:active { transform: translateY(1px); }
     .denken-wiki-cta:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .freq-max  { background: #fde8e8; color: #c0392b; border-radius: 4px; padding: 1px 5px; font-size: 10px; }
-    .freq-high { background: #fef3cd; color: #7d6608; border-radius: 4px; padding: 1px 5px; font-size: 10px; }
+    .freq-max  { background: color-mix(in oklch, var(--freqrank-s) 14%, var(--bg-elev)); color: var(--freqrank-s); border-radius: 4px; padding: 1px 5px; font-size: 10px; }
+    .freq-high { background: color-mix(in oklch, var(--freqrank-a) 18%, var(--bg-elev)); color: var(--freqrank-a); border-radius: 4px; padding: 1px 5px; font-size: 10px; }
     .nav-badge-review { color: #2980b9; font-size: 11px; }
     .priority-label { font-size: 9px; color: var(--accent-ink); font-weight: 700; }
     .toc { position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 22px 14px; border-left: 1px solid var(--line); font-size: 12px; }
@@ -16207,7 +16213,7 @@ function ShuninGijutsusyaPage({ onNav, data }) {
         importance="S"
         freq="毎年"
         examType="A問題"
-        targets="R07・R05・R03・H30"
+        targets="R05上・R02・H25・H23"
         tags={["法令","主任技術者","頻出S","電圧区分","43条","外部委託","兼任"]}
         lastChecked="2026-07-11"
       />
@@ -16557,6 +16563,7 @@ function ShuninGijutsusyaPage({ onNav, data }) {
         { date: "2026-07-11", content: "Fable5 adversarial監査の指摘5件を是正：①honest-hold非対称の解消（月次点検頻度も告示由来で内規未照合＝実務経験・換算点数と同カテゴリと明記。年次・到達時間のみ内規確認済みに限定）②honest-holdノートの方向誤記『上の6-4』→『下の6-4』③用語ボックスの条文帰属是正（『小規模事業用を除く』は法43条1・2項に登場・外部委託の施行規則52条2項条文には無い＝e-Gov全文で出現0を再確認）④UpdateLog採番参照『6-2/6-8』→『6-5・セクション8』⑤ConclusionBox/warningBoxの『発電所側』→『発電所・蓄電所側』（号一の蓄電所も連系条件必須の漏れ読み防止）。法令数値の誤りは監査でゼロ確認。", reason: "Fable5監査（法令数値誤りゼロ・表現/帰属/整合の軽微〜中5件）。柱1正確性優先で表現精度を是正。" },
         { date: "2026-07-11", content: "外部委託承認 honest-hold の一部解消（内規一次照合）：6-4に『年次点検1年に1回以上（停電点検は条件付き3年に1回可）』『連絡場所は遅滞なく到達＝2時間以内到達』を追記。6-3 honest-hold ノートを『告示第249号本体・未取得＝実務経験年数・換算点数は保留／点検頻度・到達時間は内規で確認済み』に精緻化。", reason: "『主任技術者制度の解釈及び運用（内規）』(9)で規則第53条第2項第6号の『遅滞なく到達』=2時間以内、同(7)③イで年次点検1年に1回以上を逐語確認（ローカル原典PDF・2026-07-11）。実務経験年数/換算点数は内規に数値がなく告示側のため断定せず honest-hold 継続（柱1・推測しない）。" },
         { date: "2026-07-11", content: "外部委託承認（セクション6）を施行規則一次照合で拡充：①6-2 対象設備の号別表（一〜五号）を新設し、発電所の出力上限が電源種別で 5,000／2,000／1,000 kW の3段階であること・発電所側の『7,000V以下で連系』付帯条件・需要設備7,000V以下/配電線路600V以下を明示（従来ConclusionBoxは3類型のみで号三1,000kW・号五配電線路が欠落、発電所側の連系電圧条件も未記載だった不正確箇所を是正）。②6-3 委託先の要件（第52条の2・電気管理技術者/電気保安法人の2類型・免状/実務経験/機械器具/換算値、告示数値はhonest-hold）。③6-4 承認の手続と要件（第53条・様式43・委託のみの契約・点検頻度・到達可能な連絡場所）。④6-5・セクション8のTrapTable曖昧表現（『一定規模以下も対象になり得る』）を号別表参照の正確表現に是正。", reason: "外部委託承認の号別閾値が正誤問題で直撃した際の失点防止。施行規則第52条第2項/第52条の2/第53条をe-Gov法令APIで逐語一次照合（2026-07-11）。Fable5裁定=新規ページでなく既存主任技術者ページのセクション6拡充（混同ペア同居が学習価値の核心）。" },
+        { date: "2026-07-11", content: "MetaStrip targets を「R07・R05・R03・H30」から「R05上・R02・H25・H23」へ訂正。kakomon.yml横断照合（topic「主任技術者」全文検索）の結果、旧targetsの4年度はいずれもヒットせず、実際に一致するのは既存の「過去問の出題実績」box記載4件（H23問1/H25問1/R02問1/R05上問1）のみだった。2箇所の年度リストが不一致だったため実績boxに合わせて統一", reason: "厳格評価（PR#550 PL-036）で年度リスト不一致を指摘されたため一次照合" },
         { date: "2026-07-08", content: "denken-muscle law-05移植: 免状の5万V境界と電圧区分の高圧7,000V境界の混同ガード（warningBox＋TrapTable1行・6.6kV受電は5万V未満で第三種OK・外部委託の7,000V以下は対象設備要件で免状境界ではない）を追加。主任技術者=工事現場の監督（監督≠実務）のたとえを因果ladderに追記。電圧区分2.4への相互リンク追加（監査SHOULD対応）", reason: "law-05移植（Opusピックアップ→Fable裁定→Opus実行）。7,000Vが本ページで外部委託・兼任要件として複数登場し免状境界5万Vと三つ巴混同しやすい点を切り分け" },
         { date: "2026-06-11", content: "第2/第3ループ棚卸し: MemTable群は対象過去問7問の数値・語句を完全カバー済みのため変更なし。QuickReview に第二種監督範囲（17万V未満・正答率58%）を末尾追加し5→6件（現行表示は先頭5件のため新規分は表示cap撤廃PRのマージ後に可視化）。43条3項届出・外部委託承認の回答に正答率を付記", reason: "ハブページ第2/第3ループ横展。第二種の単独復習行が欠けていた" },
         { date: "2026-05-31", content: "ハブページ過去問完備化（rikkaku/setsuchi/kosakubutsu と同パターン横展★3）: ConclusionBox 5 bullet に着眼点1行追記（正答率N%・核心キーワード）、QuickReview を 11→5 件に整理し冗長定義削除＋外部委託7,000V以下数値を Q5 に含める（最大5件表示制約で旧Q6-11が表示されない既存バグ解消）。MemTable/TrapTable は既に過去問完備のため無変更", reason: "hub-page-kakomon-update Skill 初試運転。外部委託承認の受電電圧7,000V以下（正答率55%最難）が QuickReview に直接数値で出ていなかった" },
@@ -25656,7 +25663,7 @@ function KeitoRenkeiPage({ onNav }) {
         </ul>
       </ConclusionBox>
 
-      <MetaStrip ch="CH05" category="05 再エネ技術基準" importance="A" freq="mid" examType="A問題（穴埋め・用語定義）" targets="分散型電源・系統連系（10年12回・増加中）" tags={["系統連系", "単独運転", "逆潮流", "解列", "解釈第220条"]} lastChecked="2026-06-20" />
+      <MetaStrip ch="CH05" category="05 再エネ技術基準" importance="A" freq="mid" examType="A問題（穴埋め・用語定義）" targets="分散型電源・系統連系（10年12回・増加中）" tags={["系統連系", "単独運転", "逆潮流", "解列", "解釈第220条"]} lastChecked="2026-07-11" />
 
       <h2 id="exam-focus">1. 試験で問われること</h2>
       <SectionCheck pageId="keito-renkei" sectionId="exam-focus" />
@@ -26014,8 +26021,8 @@ function KeitoRenkeiPage({ onNav }) {
       <h2 id="exam-past">5. 過去問形式演習</h2>
       <SectionCheck pageId="keito-renkei" sectionId="exam-past" />
       <ExamQuestion
-        year="頻出パターン（穴埋め）"
-        qNum="第220条 用語"
+        year="R05下"
+        qNum="7（穴埋め・類題H23問6/H27問9/R05下 kakomon.yml「分散型電源の系統連系設備に係る用語の定義」で確認）"
         question="電技解釈第220条の用語で、「分散型電源を連系している電力系統が事故等によって系統電源と切り離された状態において、当該分散型電源が発電を継続し、線路負荷に有効電力を供給している状態」を何というか。"
         choices={["自立運転", "単独運転", "逆充電", "解列"]}
         note="「線路負荷に有効電力を供給」がキーワード。自立運転は自分の構内負荷のみ"
@@ -26096,6 +26103,7 @@ function KeitoRenkeiPage({ onNav }) {
         { date: "2026-06-04", content: "v1.0: StubPage から本実装へ昇格。第220条の用語定義（逆潮流/単独運転/解列/逆充電/自立運転）・単独運転検出（受動的＋能動的）・ひっかけ・穴埋め過去問。条文・用語は経産省解釈/電験王で一次照合", reason: "再エネ系統連系は10年12回・A・増加中（学習者目線レビューで空stub指摘）。kakomon-saiene 演習からの空リンク解消" },
         { date: "2026-06-20", content: "v1.1: 学習者の3混同点を補強。①解列＝母線でなく電力系統から切り離す（連系点遮断器・母線は残る）の解説＋罠＋復習、②逆潮流が有効電力で定義される理由（無効電力は正味移動ゼロ・別軸）の解説＋罠＋復習、③受動的＝聴診器/能動的＝常に小突く の比喩と不感帯の理由を section3 に追記", reason: "学習者からの具体的つまずき（母線との選択肢で迷う・有効電力の理由・受動能動のイメージ不能）に直接対応" },
         { date: "2026-06-20", content: "v1.2: 5節に R6下問7（再閉路時の事故防止・解釈第224条）の穴埋めブロックを追加。2節で追加済の用語「線路無電圧確認装置」を実際の出題で閉じる。正解(ア)線路無電圧確認装置/(イ)不足電力リレー/(ウ)単独運転検出装置/(エ)逆電力リレー・5択正解(3)・解釈第224条＝再閉路時の事故防止は電験王3で一次照合", reason: "連系の『全体像→詳細（試験で問われる部分）』補完。追加用語を最新出題で着地" },
+        { date: "2026-07-11", content: "v1.3: 5節の穴埋め問題の出典を「頻出パターン（穴埋め）」という合成表記から実在年度「R05下 問7」へ訂正（kakomon.yml theme:bunsan-dengenで一次照合・topic「分散型電源の系統連系設備に係る用語の定義」・article解釈第220条と完全一致）。「10年12回」の頻度表記もkakomon.yml突合で検証（H29〜R07下の12回で一致・訂正不要と確認）", reason: "厳格評価（PR#550 PL-034）で出題実績の未実証を指摘されたため一次照合" },
       ]} />
 
       <PageNav prevId="taiyouchi-gijutsukijun" prevTitle="太陽電池発電の技術基準" nextId="demand-kwh-kiso" nextTitle="デマンド値と電力量kWh" onNav={onNav} />
