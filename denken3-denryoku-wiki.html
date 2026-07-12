@@ -1053,6 +1053,7 @@ window.WIKI_DATA = {
       pages: [
         { id: "kakuu-souden",   num: "3.1", title: "架空送電線路",           freq: "max", featured: true, src: "themes/kakuu-souden" },
         { id: "chichuu-souden", num: "3.2", title: "地中送電・電力ケーブル", freq: "mid",  src: "themes/chichuu-souden" },
+        { id: "yudo-shougai",   num: "3.3", title: "誘導障害（静電・電磁）", freq: "mid",  src: "themes/yudo-shougai" },
       ],
     },
     {
@@ -2553,6 +2554,7 @@ const KakuuSoudenPage = ({ data, onNav }) => (
           <tr><td>ギャロッピング</td><td>着雪導体が強風で大振幅振動</td><td>オフセット架線・スペーサ</td></tr>
           <tr><td>スリートジャンプ</td><td>着氷雪が一斉脱落して導体が跳ね上がる</td><td>オフセット配置（上下相を互い違い）</td></tr>
           <tr><td>塩害</td><td>塩分付着でがいし表面が導電化</td><td>耐塩がいし・シリコーン塗布・洗浄</td></tr>
+          <tr><td>誘導障害（静電・電磁）</td><td>電線の電圧が静電誘導／電流（地絡時 3I₀）が電磁誘導で通信線に電圧を誘起</td><td>ねん架・遮蔽線・地絡電流抑制（詳細は <a href="#" onClick={(e) => { e.preventDefault(); onNav("yudo-shougai"); }}>3.3 誘導障害</a>）</td></tr>
         </tbody>
       </table></div>
       <Box kind="example" label="逆フラッシオーバーの物理（接地抵抗を下げる理由）">
@@ -4638,6 +4640,291 @@ const ChichuuSoudenPage = ({ data, onNav }) => (
     </div>
     <PageNav
       prev={{ id: "kakuu-souden", title: "3.1 架空送電線路" }}
+      next={{ id: "yudo-shougai", title: "3.3 誘導障害（静電・電磁）" }}
+      onNav={onNav} />
+  </>
+);
+
+/* ============================================================
+   3.3 誘導障害（静電誘導・電磁誘導） — 新規作成
+   静電＝電圧由来（静電容量C）／電磁＝電流由来（相互インダクタンスM）の
+   取り違え防止に特化。地絡時に効くのは電磁誘導。R07上問9・H28問8 対応。
+   ============================================================ */
+const YudoShougaiPage = ({ data, onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "誘導障害（静電・電磁）" }]} onNav={onNav} />
+    <PageHeader
+      eyebrow="3.3  ELECTROSTATIC / ELECTROMAGNETIC INDUCTION"
+      title="誘導障害（静電誘導・電磁誘導）"
+      deck="架空送電線が近くの通信線に電圧を誘起して起こす障害。「静電誘導＝電圧由来（静電容量 C）」「電磁誘導＝電流由来（相互インダクタンス M）」の二本立てで、取り違えが最頻の失点源。地絡事故時に大きくなるのは電磁誘導。"
+      meta={[
+        { label: "出題頻度", value: "中（R07上 問9・H28 問8）" },
+        { label: "難易度", value: "★★☆（論説・取り違え注意）" },
+        { label: "出題形式", value: "論説（原因・対策の正誤判定）" },
+      ]}
+    />
+    <div className="content">
+
+      {/* 1. 結論先制 */}
+      <h2 id="conclusion"><span className="h-num">1.</span>まず結論 — 「電圧由来」か「電流由来」かで割る</h2>
+      <p>架空電線路が、近くの<strong>弱電流電線路</strong>（通信線・信号線など）に電圧を誘起して障害を起こす現象を<strong>誘導障害</strong>という。原因は2種類あり、<strong>どちらも「電圧が原因か／電流が原因か」で一意に決まる</strong>。ここを固定すれば、反対に答えることはなくなる。</p>
+      <Box kind="tip" label="30秒アンカー（これだけは絶対に裏返さない）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 1.9 }}>
+          <li><strong>静電</strong>誘導 ＝ 電線路の<strong>電圧</strong>が原因 ＝ <strong>静電容量 C</strong>（コンデンサ結合・電界）</li>
+          <li><strong>電磁</strong>誘導 ＝ 電線路の<strong>電流</strong>が原因 ＝ <strong>相互インダクタンス M</strong>（磁気結合・磁束）</li>
+        </ul>
+        <p style={{ margin: "8px 0 0" }}>名前がそのままヒント。<strong>「静電」＝静電気＝電荷＝電界＝電圧 → C</strong>、<strong>「電磁」＝電流がつくる磁界＝磁束 → M</strong>。</p>
+      </Box>
+
+      {/* 対比図 SVG（核心・裏返り防止） */}
+      <div style={{ margin: "18px 0", padding: "14px 12px", background: "var(--bg-sunken)", border: "1px solid var(--rule)", borderRadius: "10px" }}>
+        <svg viewBox="0 0 680 280" width="100%" style={{ maxWidth: "680px", height: "auto", display: "block", margin: "0 auto" }} role="img" aria-label="静電誘導は電圧が電界を作り静電容量Cで結合、電磁誘導は電流が磁界を作り相互インダクタンスMで結合するという対比図">
+          <defs>
+            <marker id="ys-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)" />
+            </marker>
+            <marker id="ys-arrow-i" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--danger)" />
+            </marker>
+          </defs>
+
+          {/* 中央仕切り */}
+          <line x1="340" y1="18" x2="340" y2="262" stroke="var(--rule)" strokeWidth="1.2" strokeDasharray="5 5" />
+
+          {/* ===== 左: 静電誘導（電圧由来） ===== */}
+          <text x="180" y="26" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--accent-ink)">静電誘導</text>
+          {/* 送電線 */}
+          <line x1="50" y1="58" x2="310" y2="58" stroke="var(--danger)" strokeWidth="3" />
+          <text x="180" y="48" textAnchor="middle" fontSize="11" fill="var(--danger)">送電線（電圧 V）</text>
+          {/* 電界（下向き破線矢印） */}
+          <line x1="110" y1="66" x2="110" y2="150" stroke="var(--accent)" strokeWidth="1.6" strokeDasharray="4 3" markerEnd="url(#ys-arrow)" />
+          <line x1="180" y1="66" x2="180" y2="150" stroke="var(--accent)" strokeWidth="1.6" strokeDasharray="4 3" markerEnd="url(#ys-arrow)" />
+          <line x1="250" y1="66" x2="250" y2="150" stroke="var(--accent)" strokeWidth="1.6" strokeDasharray="4 3" markerEnd="url(#ys-arrow)" />
+          <text x="180" y="112" textAnchor="middle" fontSize="11" fill="var(--accent)">電界 E</text>
+          {/* コンデンサ（静電容量C） */}
+          <line x1="150" y1="166" x2="210" y2="166" stroke="var(--accent-ink)" strokeWidth="2" />
+          <line x1="150" y1="174" x2="210" y2="174" stroke="var(--accent-ink)" strokeWidth="2" />
+          <text x="224" y="174" fontSize="11" fontWeight="700" fill="var(--accent-ink)">C</text>
+          {/* 通信線 */}
+          <line x1="50" y1="200" x2="310" y2="200" stroke="var(--warn)" strokeWidth="2.6" strokeDasharray="2 2" />
+          <text x="180" y="220" textAnchor="middle" fontSize="11" fill="var(--warn)">通信線（Es が誘起）</text>
+          <text x="180" y="250" textAnchor="middle" fontSize="11.5" fontWeight="600" fill="var(--ink-soft)">電圧 → 電界 → 静電容量 C</text>
+
+          {/* ===== 右: 電磁誘導（電流由来） ===== */}
+          <text x="510" y="26" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--ok)">電磁誘導</text>
+          {/* 送電線（電流）— 線は左と同じ高さ y=58 */}
+          <line x1="380" y1="58" x2="640" y2="58" stroke="var(--danger)" strokeWidth="3" markerEnd="url(#ys-arrow-i)" />
+          <text x="548" y="48" textAnchor="middle" fontSize="11" fill="var(--danger)">送電線（電流 I）</text>
+          {/* 磁束（同心円・見出し/ラベルと衝突しないよう小さめ＆左寄せ） */}
+          <circle cx="430" cy="58" r="14" fill="none" stroke="var(--ok)" strokeWidth="1.5" strokeDasharray="4 3" />
+          <circle cx="430" cy="58" r="26" fill="none" stroke="var(--ok)" strokeWidth="1.5" strokeDasharray="4 3" />
+          <circle cx="430" cy="58" r="38" fill="none" stroke="var(--ok)" strokeWidth="1.5" strokeDasharray="4 3" />
+          <text x="430" y="118" textAnchor="middle" fontSize="11" fill="var(--ok)">磁束 Φ</text>
+          {/* 相互インダクタンスM */}
+          <text x="510" y="176" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ok)">相互インダクタンス M</text>
+          {/* 通信線 */}
+          <line x1="380" y1="200" x2="640" y2="200" stroke="var(--warn)" strokeWidth="2.6" strokeDasharray="2 2" />
+          <text x="510" y="220" textAnchor="middle" fontSize="11" fill="var(--warn)">通信線（Em が誘起）</text>
+          <text x="510" y="250" textAnchor="middle" fontSize="11.5" fontWeight="600" fill="var(--ink-soft)">電流 → 磁界 → 相互インダクタンス M</text>
+        </svg>
+        <p style={{ margin: "8px 4px 0", fontSize: "12px", color: "var(--ink-mute)", textAlign: "center" }}>左: 静電誘導（電圧→電界→静電容量 C）／右: 電磁誘導（電流→磁界→相互インダクタンス M）。原因と結合経路がちょうど裏返しの関係になっている。</p>
+      </div>
+
+      {/* 2. 静電誘導 */}
+      <h2 id="seiden"><span className="h-num">2.</span>静電誘導 — 電圧由来（容量結合）</h2>
+      <p><strong>静電誘導</strong>＝送電線の<strong>対地電圧</strong>が、送電線と通信線の間の<strong>静電容量（相互容量）</strong>を介して通信線に電圧を誘起する現象。電線と通信線の間に「目に見えないコンデンサ」があり、通信線と大地の間にもコンデンサがあるため、通信線が分圧されて電位をもつ。<strong>電流が流れていなくても、電圧がかかっていれば常時発生</strong>する（無負荷・充電状態でも生じる）点が急所。</p>
+
+      <div style={{ margin: "18px 0", padding: "14px 12px", background: "var(--bg-sunken)", border: "1px solid var(--rule)", borderRadius: "10px" }}>
+        <svg viewBox="0 0 680 320" width="100%" style={{ maxWidth: "680px", height: "auto", display: "block", margin: "0 auto" }} role="img" aria-label="三相送電線と通信線の間の相互容量Ca・Cb・Ccと、通信線の対地容量Csによる分圧回路の図">
+          {/* 三相導体 */}
+          <circle cx="200" cy="52" r="9" fill="var(--danger)" />
+          <circle cx="340" cy="52" r="9" fill="var(--danger)" />
+          <circle cx="480" cy="52" r="9" fill="var(--danger)" />
+          <text x="200" y="34" textAnchor="middle" fontSize="12" fontWeight="600" fill="var(--danger)">a相</text>
+          <text x="340" y="34" textAnchor="middle" fontSize="12" fontWeight="600" fill="var(--danger)">b相</text>
+          <text x="480" y="34" textAnchor="middle" fontSize="12" fontWeight="600" fill="var(--danger)">c相</text>
+          <text x="600" y="56" textAnchor="middle" fontSize="11" fill="var(--danger)">送電線</text>
+
+          {/* Ca */}
+          <line x1="200" y1="61" x2="200" y2="128" stroke="var(--accent)" strokeWidth="1.6" strokeDasharray="4 3" />
+          <line x1="186" y1="130" x2="214" y2="130" stroke="var(--accent-ink)" strokeWidth="2" />
+          <line x1="186" y1="138" x2="214" y2="138" stroke="var(--accent-ink)" strokeWidth="2" />
+          <line x1="200" y1="140" x2="200" y2="228" stroke="var(--accent)" strokeWidth="1.6" strokeDasharray="4 3" />
+          <text x="224" y="138" fontSize="11" fontWeight="700" fill="var(--accent-ink)">Ca</text>
+
+          {/* Cb */}
+          <line x1="340" y1="61" x2="340" y2="128" stroke="var(--accent)" strokeWidth="1.6" strokeDasharray="4 3" />
+          <line x1="326" y1="130" x2="354" y2="130" stroke="var(--accent-ink)" strokeWidth="2" />
+          <line x1="326" y1="138" x2="354" y2="138" stroke="var(--accent-ink)" strokeWidth="2" />
+          <line x1="340" y1="140" x2="340" y2="228" stroke="var(--accent)" strokeWidth="1.6" strokeDasharray="4 3" />
+          <text x="364" y="138" fontSize="11" fontWeight="700" fill="var(--accent-ink)">Cb</text>
+
+          {/* Cc */}
+          <line x1="480" y1="61" x2="480" y2="128" stroke="var(--accent)" strokeWidth="1.6" strokeDasharray="4 3" />
+          <line x1="466" y1="130" x2="494" y2="130" stroke="var(--accent-ink)" strokeWidth="2" />
+          <line x1="466" y1="138" x2="494" y2="138" stroke="var(--accent-ink)" strokeWidth="2" />
+          <line x1="480" y1="140" x2="480" y2="228" stroke="var(--accent)" strokeWidth="1.6" strokeDasharray="4 3" />
+          <text x="504" y="138" fontSize="11" fontWeight="700" fill="var(--accent-ink)">Cc</text>
+
+          {/* 通信線 */}
+          <line x1="90" y1="230" x2="590" y2="230" stroke="var(--warn)" strokeWidth="2.6" />
+          <text x="120" y="250" fontSize="12" fontWeight="600" fill="var(--warn)">通信線（誘起電圧 Es）</text>
+
+          {/* Cs（対地容量） */}
+          <line x1="340" y1="232" x2="340" y2="270" stroke="var(--ink-mute)" strokeWidth="1.6" strokeDasharray="4 3" />
+          <line x1="326" y1="272" x2="354" y2="272" stroke="var(--ink-soft)" strokeWidth="2" />
+          <line x1="326" y1="280" x2="354" y2="280" stroke="var(--ink-soft)" strokeWidth="2" />
+          <line x1="340" y1="282" x2="340" y2="298" stroke="var(--ink-mute)" strokeWidth="1.6" strokeDasharray="4 3" />
+          <text x="364" y="280" fontSize="11" fontWeight="700" fill="var(--ink-soft)">Cs（対地）</text>
+
+          {/* 大地 */}
+          <line x1="90" y1="300" x2="590" y2="300" stroke="var(--ink-mute)" strokeWidth="2" />
+          <text x="120" y="315" fontSize="11" fill="var(--ink-mute)">大地</text>
+        </svg>
+        <p style={{ margin: "8px 4px 0", fontSize: "12px", color: "var(--ink-mute)", textAlign: "center" }}>各相と通信線の相互容量 Ca・Cb・Cc と、通信線の対地容量 Cs による分圧。三相が対称で Ca＝Cb＝Cc なら誘起電圧は打ち消し合ってゼロになる。</p>
+      </div>
+
+      <FormulaCard num="Y1" name="静電誘導電圧（不平衡分・代表式）"
+        eq="E_s = \dfrac{\sqrt{C_a{}^2 + C_b{}^2 + C_c{}^2 - C_aC_b - C_bC_c - C_cC_a}}{C_a + C_b + C_c + C_s}\, E"
+        note="E＝送電線の対地電圧。Ca＝Cb＝Cc（完全ねん架・対称配置）なら分子がゼロになり Es＝0。だから静電誘導対策の要はねん架と対称配置。" />
+      <Box kind="tip" label="静電誘導の3つの急所">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 1.9 }}>
+          <li>原因は<strong>電圧</strong>（電流ではない）。負荷電流ゼロでも発生する。</li>
+          <li>大きさは送電線の<strong>電圧に比例</strong>し、相互容量の<strong>不平衡</strong>で決まる。</li>
+          <li><strong>ねん架・対称配置</strong>で Ca＝Cb＝Cc に近づけると打ち消せる。</li>
+        </ul>
+      </Box>
+
+      {/* 3. 電磁誘導 */}
+      <h2 id="denji"><span className="h-num">3.</span>電磁誘導 — 電流由来（磁気結合）・地絡時に急増</h2>
+      <p><strong>電磁誘導</strong>＝送電線の<strong>電流</strong>が作る<strong>磁束</strong>が、並行する通信線と鎖交し、<strong>相互インダクタンス M</strong>を介して誘導起電力を生じさせる現象（変圧器と同じ原理）。平常時は<strong>三相電流のベクトル和がほぼゼロ</strong>（Ia＋Ib＋Ic≈0）で磁束が打ち消し合うため誘導は小さい。ところが<strong>地絡事故</strong>が起きると三相の対称性が崩れ、大きな<strong>零相電流</strong>（残留電流 3I₀＝地絡電流）が流れて磁束が打ち消されず、通信線に大きな誘導電圧が現れる。<strong>電磁誘導障害が問題になるのは、この地絡事故時</strong>。</p>
+
+      <div style={{ margin: "18px 0", padding: "14px 12px", background: "var(--bg-sunken)", border: "1px solid var(--rule)", borderRadius: "10px" }}>
+        <svg viewBox="0 0 680 300" width="100%" style={{ maxWidth: "680px", height: "auto", display: "block", margin: "0 auto" }} role="img" aria-label="送電線の地絡電流3I0が作る磁束が並行する通信線と鎖交し、相互インダクタンスMを介して誘導電圧Emを生じる図">
+          <defs>
+            <marker id="ys-arrow-i2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--danger)" />
+            </marker>
+          </defs>
+          {/* 送電線（電流）・ラベルは磁束と衝突しない右側へ退避 */}
+          <line x1="60" y1="80" x2="620" y2="80" stroke="var(--danger)" strokeWidth="3.4" markerEnd="url(#ys-arrow-i2)" />
+          <text x="400" y="60" textAnchor="middle" fontSize="12" fontWeight="600" fill="var(--danger)">送電線（電流）</text>
+          <text x="390" y="106" textAnchor="middle" fontSize="11" fill="var(--danger)">平常時 Ia+Ib+Ic ≈ 0 → 地絡時 3I₀ が残る</text>
+
+          {/* 磁束（同心円・左寄せでラベル回避） */}
+          <circle cx="170" cy="80" r="16" fill="none" stroke="var(--ok)" strokeWidth="1.6" strokeDasharray="4 3" />
+          <circle cx="170" cy="80" r="30" fill="none" stroke="var(--ok)" strokeWidth="1.6" strokeDasharray="4 3" />
+          <circle cx="170" cy="80" r="44" fill="none" stroke="var(--ok)" strokeWidth="1.6" strokeDasharray="4 3" />
+          <text x="170" y="150" textAnchor="middle" fontSize="12" fontWeight="600" fill="var(--ok)">磁束 Φ（電流が作る）</text>
+
+          {/* 相互インダクタンスM（離隔） */}
+          <line x1="540" y1="88" x2="540" y2="212" stroke="var(--ink-mute)" strokeWidth="1.2" strokeDasharray="3 3" />
+          <line x1="534" y1="88" x2="546" y2="88" stroke="var(--ink-mute)" strokeWidth="1.2" />
+          <line x1="534" y1="212" x2="546" y2="212" stroke="var(--ink-mute)" strokeWidth="1.2" />
+          <text x="556" y="150" fontSize="11" fontWeight="700" fill="var(--ok)">M・離隔 d</text>
+
+          {/* 通信線 */}
+          <line x1="60" y1="220" x2="620" y2="220" stroke="var(--warn)" strokeWidth="2.8" strokeDasharray="2 2" />
+          <text x="230" y="242" textAnchor="middle" fontSize="12" fontWeight="600" fill="var(--warn)">通信線（誘導電圧 Em・並行長 ℓ）</text>
+
+          {/* 大地 */}
+          <line x1="60" y1="278" x2="620" y2="278" stroke="var(--ink-mute)" strokeWidth="2" />
+          <text x="90" y="293" fontSize="11" fill="var(--ink-mute)">大地</text>
+        </svg>
+        <p style={{ margin: "8px 4px 0", fontSize: "12px", color: "var(--ink-mute)", textAlign: "center" }}>送電線電流が作る磁束 Φ が通信線と鎖交し、相互インダクタンス M を介して Em を誘起。平常時は三相の磁束が打ち消し合うが、地絡時は 3I₀ が残って Em が急増する。</p>
+      </div>
+
+      <FormulaCard num="Y2" name="電磁誘導電圧（地絡事故時）"
+        eq="E_m = \omega M \ell \,(3I_0) = 2\pi f\, M \ell \,(3I_0)\;[\text{V}]"
+        note="M＝送電線と通信線の相互インダクタンス[H/km]、ℓ＝並行長[km]、3I₀＝地絡電流（零相電流の3倍）[A]。周波数 f・並行長 ℓ・地絡電流が大きいほど、離隔が小さいほど大きくなる。" />
+      <Box kind="warn" label="電磁誘導の急所 — 地絡電流を小さくすれば障害も小さい">
+        <p>Em は<strong>地絡電流 3I₀ に比例</strong>する。だから中性点接地方式が効いてくる：<strong>直接接地は地絡電流が大きく電磁誘導障害も大きい</strong>／<strong>抵抗接地・消弧リアクトル接地は地絡電流を抑えて障害を小さくできる</strong>。加えて<strong>故障を高速遮断</strong>して誘導電圧の継続時間を短くするのも有効。</p>
+      </Box>
+
+      {/* 4. 比較表 */}
+      <h2 id="hikaku"><span className="h-num">4.</span>静電誘導 vs 電磁誘導（対比表・裏返り防止）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>項目</th><th>静電誘導</th><th>電磁誘導</th></tr></thead>
+        <tbody>
+          <tr><td>原因</td><td><strong>電線路の電圧 V</strong></td><td><strong>電線路の電流 I</strong></td></tr>
+          <tr><td>結合</td><td>静電容量 C（コンデンサ・電界）</td><td>相互インダクタンス M（磁束・磁界）</td></tr>
+          <tr><td>比例するもの</td><td>電圧に比例</td><td>電流に比例</td></tr>
+          <tr><td>平常時</td><td>電圧があれば常時発生（不平衡分）</td><td>三相電流のベクトル和≈0 で小さい</td></tr>
+          <tr><td>最大になる時</td><td>常時（無負荷・充電状態でも）</td><td><strong>地絡事故時（3I₀ が流れる）</strong></td></tr>
+          <tr><td>代表式</td><td>Es＝√(…)/(ΣC)·E</td><td>Em＝ωMℓ·3I₀</td></tr>
+          <tr><td>主な対策</td><td>ねん架・対称配置・遮蔽線</td><td>地絡電流抑制・高速遮断・ねん架・遮蔽線</td></tr>
+        </tbody>
+      </table></div>
+
+      {/* 5. 裏返り防止 */}
+      <h2 id="anti-reverse"><span className="h-num">5.</span>なぜ反対に間違えるのか — 名前を分解して固定する</h2>
+      <Box kind="example" label="名前がそのまま原因を指している">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><strong>「静電」誘導</strong> → 静電気 → 電荷 → 電界 → <strong>電圧</strong>が原因 → 相手は<strong>コンデンサ C</strong></li>
+          <li><strong>「電磁」誘導</strong> → 電流がつくる磁界 → 磁束 → <strong>電流</strong>が原因 → 相手は<strong>相互インダクタンス M</strong></li>
+        </ul>
+        <p style={{ margin: "10px 0 0" }}>試験で迷ったら問題文のキーワードで機械的に振り分ける：「<strong>電圧・充電・無負荷でも</strong>」とあれば<strong>静電</strong>／「<strong>電流・地絡事故・零相電流</strong>」とあれば<strong>電磁</strong>。特に<strong>地絡事故時に問題になるのは電磁誘導</strong>を固定すると、R07上問9・H28問8 のような論説で裏返らない。</p>
+      </Box>
+
+      {/* 6. 対策 */}
+      <h2 id="taisaku"><span className="h-num">6.</span>誘導障害の対策</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>区分</th><th>対策</th><th>効く理由</th></tr></thead>
+        <tbody>
+          <tr><td>共通</td><td>送電線と通信線の<strong>離隔距離</strong>を大きくする</td><td>C も M も距離が離れるほど小さくなる</td></tr>
+          <tr><td>共通</td><td><strong>ねん架</strong>（電線の位置を区間ごとに入れ替える）</td><td>相互容量・相互インダクタンスを三相で均等化し打ち消す</td></tr>
+          <tr><td>共通</td><td><strong>遮蔽線</strong>（架空地線）の設置・接地</td><td>誘導を遮蔽線側に肩代わりさせ通信線への誘導を低減</td></tr>
+          <tr><td>共通</td><td>通信線を<strong>ケーブル化し金属遮蔽層を接地</strong></td><td>電界・磁界を遮蔽して誘起電圧を抑える</td></tr>
+          <tr><td>静電のみ</td><td><strong>対称配置</strong>（相導体の幾何配置を対称に）</td><td>Ca＝Cb＝Cc に近づけて静電誘導電圧を打ち消す</td></tr>
+          <tr><td>電磁のみ</td><td><strong>中性点を抵抗接地／消弧リアクトル接地</strong></td><td>地絡電流 3I₀ を小さくして Em を下げる（直接接地は逆に大きい）</td></tr>
+          <tr><td>電磁のみ</td><td>保護継電器で<strong>故障を高速遮断</strong></td><td>大きな誘導電圧の継続時間を短くする</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="warn" label="中性点接地方式は「静電」ではなく「電磁」に効く">
+        <p>中性点接地方式（直接／抵抗／消弧リアクトル）が変えるのは<strong>地絡電流の大きさ</strong>なので、効くのは<strong>電磁誘導</strong>側。静電誘導は電圧由来なので中性点接地方式では変わらない。「静電誘導対策に中性点接地」と書いた選択肢は誤り。</p>
+      </Box>
+
+      {/* 7. 正誤判定 */}
+      <h2 id="seigo"><span className="h-num">7.</span>正誤判定の急所</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>命題</th><th>判定</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>静電誘導は送電線の電流によって生じる</td><td><strong>誤</strong></td><td>静電誘導の原因は電圧。電流由来は電磁誘導</td></tr>
+          <tr><td>電磁誘導障害は地絡事故時に大きくなる</td><td><strong>正</strong></td><td>3I₀（零相電流）が流れ磁束が打ち消されない</td></tr>
+          <tr><td>完全なねん架で静電誘導電圧は打ち消される</td><td><strong>正</strong></td><td>Ca＝Cb＝Cc となり Es の分子が 0</td></tr>
+          <tr><td>電磁誘導軽減には中性点を直接接地するのがよい</td><td><strong>誤</strong></td><td>直接接地は地絡電流大→障害大。抵抗／消弧リアクトルが有効</td></tr>
+          <tr><td>通信線をケーブル化し遮蔽層を接地すると障害が減る</td><td><strong>正</strong></td><td>電界・磁界を遮蔽して誘起電圧を抑える</td></tr>
+          <tr><td>静電誘導は負荷電流が流れていなくても発生する</td><td><strong>正</strong></td><td>電圧が原因なので無負荷（充電状態）でも生じる</td></tr>
+        </tbody>
+      </table></div>
+
+      {/* 8. 出題実績 */}
+      <h2 id="kakomon"><span className="h-num">8.</span>出題実績（論説中心・取り違えを問う）</h2>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>テーマ</th><th>形式</th></tr></thead>
+        <tbody>
+          <tr><td>R07上</td><td>問9</td><td>架空送電線路に発生する誘導障害</td><td>論説</td></tr>
+          <tr><td>H28</td><td>問8</td><td>誘導障害（静電・電磁の区別と対策）</td><td>論説</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="出題のねらい">
+        <p>論説で問われるのは「原因（電圧か電流か）」「地絡時に効くのは電磁」「対策の対応づけ（ねん架・遮蔽線・中性点接地）」の3点。数値計算はまれで、<strong>静電／電磁の取り違えと対策の対応づけ</strong>で得点が決まる。</p>
+      </Box>
+
+      {/* 9. 関連ページ */}
+      <h2 id="related"><span className="h-num">9.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("kakuu-souden"); }}>3.1 架空送電線路</a> — ねん架・遮蔽線（架空地線）・コロナによる通信誘導雑音の母体テーマ</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("denryoku-keitou"); }}>5.2 電力系統・需給運用</a> — 中性点接地方式（地絡電流 3I₀ の大小＝電磁誘導障害の大小）</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("jikayou-chiraku"); }}>4.2 自家用受電設備の地絡保護</a> — 零相電流 I₀・地絡電流の基礎</li>
+          <li>法規Wiki「電技省令 第27条（架空電線路からの静電誘導作用又は電磁誘導作用による感電の防止）」— 同じ静電／電磁の区別を<strong>人体感電防止</strong>の側から規定（地表上1m・3kV/m）</li>
+        </ul>
+      </Box>
+
+    </div>
+    <PageNav
+      prev={{ id: "chichuu-souden", title: "3.2 地中送電・電力ケーブル" }}
       next={{ id: "haiden", title: "4.1 配電線路" }}
       onNav={onNav} />
   </>
@@ -6605,7 +6892,7 @@ const EmojiLegendPage = ({ data, onNav }) => (
   </>
 );
 
-Object.assign(window, { StubPage, UnitStubPage, HaidenPage, KakuuSoudenPage, KaryokuPage, HenatsukiPage, SuiryokuPage, DenkiZairyouPage, GenshiryokuPage, ShinEnergyPage, HenatsukiLossPage, KeikiHenseiPage, ShadankiPage, HogoKeidenPage, KaiheiHogoPage, ChichuuSoudenPage, DenryokuKeitouPage, KakomonByYearPage, KakomonByFieldPage, KakomonWavePage, StrategyLast3DaysPage, StrategyBMondaiPage, StrategyTrapsPage, CalcPatternsPage, NumbersPage, GlossaryPage, EmojiLegendPage });
+Object.assign(window, { StubPage, UnitStubPage, HaidenPage, KakuuSoudenPage, KaryokuPage, HenatsukiPage, SuiryokuPage, DenkiZairyouPage, GenshiryokuPage, ShinEnergyPage, HenatsukiLossPage, KeikiHenseiPage, ShadankiPage, HogoKeidenPage, KaiheiHogoPage, ChichuuSoudenPage, YudoShougaiPage, DenryokuKeitouPage, KakomonByYearPage, KakomonByFieldPage, KakomonWavePage, StrategyLast3DaysPage, StrategyBMondaiPage, StrategyTrapsPage, CalcPatternsPage, NumbersPage, GlossaryPage, EmojiLegendPage });
 
 </script>
 <script type="text/babel">
@@ -6830,6 +7117,7 @@ const App = () => {
     if (page === 'hogo-keiden')    return <HogoKeidenPage {...props} />;
     if (page === 'kaihei-hogo')    return <KaiheiHogoPage {...props} />;
     if (page === 'chichuu-souden') return <ChichuuSoudenPage {...props} />;
+    if (page === 'yudo-shougai')  return <YudoShougaiPage {...props} />;
     if (page === 'denryoku-keitou') return <DenryokuKeitouPage {...props} />;
     if (page === 'kakomon-by-year')  return <KakomonByYearPage {...props} />;
     if (page === 'kakomon-by-field') return <KakomonByFieldPage {...props} />;
