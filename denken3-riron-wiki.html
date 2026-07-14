@@ -12775,6 +12775,7 @@ const DcCircuitSummaryCard = () => {
           <li style={li}>電流は同じ（<Eq tex="I_1 = I_2 = I" inline />）</li>
           <li style={li}>電圧は分かれる（<Eq tex="V = V_1 + V_2" inline />）</li>
           <li style={li}>合成抵抗 <Eq tex="R = R_1 + R_2" inline /></li>
+          <li style={li}>分圧 <Eq tex="V_1 = V \dfrac{R_1}{R_1 + R_2}" inline />（抵抗が大きい側に大きく分かれる）</li>
         </ul>
       </div>
 
@@ -12805,14 +12806,41 @@ const DcCircuitSummaryCard = () => {
           <li style={li}>電圧は同じ（<Eq tex="V_1 = V_2 = V" inline />）</li>
           <li style={li}>電流は分かれる（<Eq tex="I = I_1 + I_2" inline />）</li>
           <li style={li}>合成抵抗 <Eq tex="\dfrac{1}{R} = \dfrac{1}{R_1} + \dfrac{1}{R_2}" inline /></li>
+          <li style={li}>分流 <Eq tex="I_1 \propto \dfrac{1}{R_1}" inline />（抵抗が小さい側に多く流れる）</li>
           <li style={{ ...li, color: "var(--accent-ink)", fontWeight: 600 }}>抵抗が2本なら和分の積で暗算：<Eq tex="R = \dfrac{R_1 R_2}{R_1 + R_2}" inline /></li>
         </ul>
       </div>
     </div>
 
-    {/* ⑥ 試験で大事 */}
+    {/* ⑥ 応用の2本柱（テブナン・重ね合わせ）*/}
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 12 }}>
+      <div style={panel}>
+        <div style={{ ...headStyle, color: "var(--accent-ink)" }}><span>⑥</span> 応用 ― テブナンの定理</div>
+        <div style={{ fontSize: 12.5, lineHeight: 1.7, color: "var(--ink)" }}>
+          特定の負荷に流れる電流だけ知りたいとき、<strong>負荷から外側を1つの電源に縮約</strong>する。
+        </div>
+        <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+          <li style={li}><Eq tex="V_{th}" inline />＝負荷を外したときの<strong>開放電圧</strong></li>
+          <li style={li}><Eq tex="R_{th}" inline />＝<strong>電源をゼロ</strong>にしたときの合成抵抗（電圧源は短絡・電流源は開放）</li>
+          <li style={li}>負荷電流 <Eq tex="I = \dfrac{V_{th}}{R_{th} + R_L}" inline /></li>
+        </ul>
+      </div>
+      <div style={panel}>
+        <div style={{ ...headStyle, color: "var(--accent-ink)" }}><span>⑥</span> 応用 ― 重ね合わせの理</div>
+        <div style={{ fontSize: 12.5, lineHeight: 1.7, color: "var(--ink)" }}>
+          電源が複数あるとき、<strong>電源を1つずつ生かして</strong>求めた電流を最後に足し合わせる。
+        </div>
+        <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+          <li style={li}>生かさない電源はゼロに（電圧源は<strong>短絡</strong>・電流源は<strong>開放</strong>）</li>
+          <li style={li}>各電源の寄与を<strong>符号つきで加算</strong>する</li>
+          <li style={li}>⚠ <strong>線形回路のみ</strong>（電力 P は重ね合わせ不可＝2乗のため）</li>
+        </ul>
+      </div>
+    </div>
+
+    {/* ⑦ 試験で大事 */}
     <div style={panelMb}>
-      <div style={{ ...headStyle, color: "var(--warn)" }}><span>⑥</span> 試験で大事</div>
+      <div style={{ ...headStyle, color: "var(--warn)" }}><span>⑦</span> 試験で大事</div>
       <ul style={{ margin: 0, paddingLeft: 18 }}>
         <li style={li}>式変形を素早く：<Eq tex="V = IR \;\Leftrightarrow\; I = V/R \;\Leftrightarrow\; R = V/I" inline /></li>
         <li style={li}>節点は電流保存（KCL <Eq tex="\sum I = 0" inline />）・閉路は電圧つり合い（KVL <Eq tex="\sum V = 0" inline />）</li>
@@ -13023,17 +13051,6 @@ const DcCircuitFormulasTab = ({ onNav, switchTab }) => (
     </DefinitionCallout>
 
     <DcCircuitChunkHierarchy />
-
-    <Callout variant="tip" title="⚡ 5秒で思い出す">
-      <p style={{ marginBottom: 8 }}>電流 = 水流・電圧 = 水圧・抵抗 = 管の細さ。<strong>V = IR</strong> ── 蛇口を絞る（R↑）と圧力差（V）が生まれる。</p>
-      <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.75 }}>
-        <li><strong>オーム則</strong>：V = IR（線形抵抗の基本3量）</li>
-        <li><strong>KVL/KCL</strong>：閉路で ΣV=0・節点で ΣI=0（複数素子連立則）</li>
-        <li><strong>分圧/分流</strong>：直列は V_i = V·R_i/ΣR・並列は I_i ∝ 1/R_i（電流は抵抗小に多く流れる）</li>
-        <li><strong>テブナン</strong>：負荷外側を V<sub>th</sub>+R<sub>th</sub> に縮約（V<sub>th</sub>=開放電圧／R<sub>th</sub>=電源ゼロ時合成抵抗）</li>
-        <li><strong>重ね合わせ</strong>：電源 n 個を 1 つずつ生かして電流を加算（線形回路限定）</li>
-      </ul>
-    </Callout>
 
     <h2 id="formulas"><span className="h-num">1</span>基本公式</h2>
     <FormulaTable

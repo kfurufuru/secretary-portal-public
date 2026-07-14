@@ -2145,6 +2145,73 @@ const UnitStubPage = ({ id, data, onNav }) => {
    4.1 配電線路 — 本文移植済み（出題数No.1 / 約85問）
    出典: denken-wiki-denryoku/docs/themes/haiden.md（v1.0）
    ============================================================ */
+/* 4.1 配電線路 — 森・ミクロ・マクロ 3層ブロック（riron/kikai と同型・電力作法に適合）*/
+const HaidenLayers = () => (
+  <>
+    <h2 id="layers"><span className="h-num">0.</span>このページ（配電線路）を森・ミクロ・マクロで見る</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "0 0 4px" }}>
+      同じテーマを <strong>森（俯瞰）→ ミクロ（なぜ）→ マクロ（解く）</strong> の3層で見る。まず森でこのページの位置を掴み、ミクロで機構を、マクロで解き方を押さえる。
+    </p>
+
+    {/* ===== 森：ページ固有の位置づけ図 ===== */}
+    <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+      <svg viewBox="0 0 480 170" role="img" aria-label="配電線路の位置づけ：架空送電線路と変圧器から6.6kVを受け、配電線路で電圧降下・電力損失・力率改善の3つのロス対策を学び、自家用受電設備の地絡保護や需給運用へつながる俯瞰図" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+        <defs>
+          <marker id="hd-mori-arr" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+            <path d="M0,1 L8,4.5 L0,8 z" fill="var(--ink-mute)" />
+          </marker>
+        </defs>
+        <text x="70" y="22" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">前提（入口）</text>
+        <text x="240" y="22" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">このページ</text>
+        <text x="412" y="22" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">つながる先（出口）</text>
+        {/* 入口 */}
+        <rect x="16" y="40" width="108" height="86" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="70" y="66" textAnchor="middle" fontSize="13" fontWeight="600" fill="var(--ink)">送電・変圧器</text>
+        <text x="70" y="88" textAnchor="middle" fontSize="12" fill="var(--ink-soft)">架空送電（3.1）</text>
+        <text x="70" y="107" textAnchor="middle" fontSize="12" fill="var(--ink-soft)">6.6 kV に降圧</text>
+        <line x1="126" y1="83" x2="159" y2="83" stroke="var(--ink-mute)" strokeWidth="2" markerEnd="url(#hd-mori-arr)" />
+        {/* 中央（強調） */}
+        <rect x="162" y="32" width="156" height="102" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="2" />
+        <text x="240" y="55" textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--accent-ink)">配電線路</text>
+        <text x="240" y="77" textAnchor="middle" fontSize="12" fill="var(--ink)">① 電圧降下</text>
+        <text x="240" y="95" textAnchor="middle" fontSize="12" fill="var(--ink)">② 電力損失 3I²R</text>
+        <text x="240" y="113" textAnchor="middle" fontSize="12" fill="var(--ink)">③ 力率改善</text>
+        <line x1="320" y1="83" x2="353" y2="83" stroke="var(--ink-mute)" strokeWidth="2" markerEnd="url(#hd-mori-arr)" />
+        {/* 出口 */}
+        <rect x="356" y="46" width="112" height="30" rx="5" fill="var(--bg)" stroke="var(--rule)" />
+        <text x="412" y="66" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">地絡保護（4.2）</text>
+        <rect x="356" y="90" width="112" height="30" rx="5" fill="var(--bg)" stroke="var(--rule)" />
+        <text x="412" y="110" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">需給運用（5.2）</text>
+        <text x="240" y="154" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">6.6 kV を受けて 100/200 V へ。ロスを抑えて需要家に届ける「最後の1マイル」</text>
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+        森（俯瞰）：送電線から受けた 6.6 kV を柱上変圧器で 100/200 V に落として需要家へ届ける最終区間。電圧降下・電力損失・力率改善の3つのロス対策が主題で、電力科目で出題数No.1。
+      </figcaption>
+    </figure>
+
+    <div className="table-wrap"><table className="data">
+      <thead><tr><th>視点</th><th>何を見るか</th><th>代表する式・量</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>ミクロ</strong><br/>（なぜ）</td>
+          <td>線路の<strong>抵抗 R とリアクタンス X に負荷電流が流れる</strong>ため、電圧降下と抵抗損失が同時に発生する。どちらも<strong>電流 I を減らせば効く</strong> ── これが力率改善が効く理由</td>
+          <td>電流 I が電圧降下・損失の共通因子</td>
+        </tr>
+        <tr>
+          <td><strong>マクロ</strong><br/>（解く）</td>
+          <td>末端電圧を規定内に保つ計算。<strong>配電方式で係数が変わる</strong>（単相2線＝2・単相3線＝1・三相3線＝√3）。損失は電流の2乗で効く。試験はここ</td>
+          <td><Eq tex="v = k\,I(R\cos\theta + X\sin\theta)" inline />・<Eq tex="P_{\text{loss}} = 3I^2R" inline /></td>
+        </tr>
+        <tr>
+          <td><strong>実務</strong><br/>（意味づけ）</td>
+          <td>柱上変圧器で 6.6 kV → 100/200 V に降圧。需要家引込口の<strong>PAS</strong>で区分・地絡保護。<strong>進相コンデンサ</strong>で力率を改善し電流そのものを減らす</td>
+          <td>柱上変圧器・PAS・進相コンデンサ</td>
+        </tr>
+      </tbody>
+    </table></div>
+  </>
+);
+
 const HaidenPage = ({ data, onNav }) => (
   <>
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "配電線路" }]} onNav={onNav} />
@@ -2159,6 +2226,8 @@ const HaidenPage = ({ data, onNav }) => (
       ]}
     />
     <div className="content">
+
+      <HaidenLayers />
 
       <h2 id="intro"><span className="h-num">1.</span>直感的理解 — 3つのロス対策</h2>
       <p>配電線路は、配電用変電所で <strong>6.6 kV</strong> に降圧された電力を、柱上変圧器でさらに <strong>100/200 V</strong> に落として各需要家へ届ける「最後の1マイル」。送電線路との本質的な違いは <strong>距離が短い・分岐が多い・負荷が不均一</strong> の3点で、そのため電圧降下と電力損失を最小化しながら安定供給することが主要課題になる。</p>
@@ -2495,6 +2564,75 @@ const JikayouChirakuPage = ({ data, onNav }) => (
    3.1 架空送電線路 — 本文移植済み（送電分野 最頻出 / 約68問）
    出典: denken-wiki-denryoku/docs/themes/kakuu-souden.md（v1.0）
    ============================================================ */
+/* 3.1 架空送電線路 — 森・ミクロ・マクロ 3層ブロック（riron/kikai と同型・電力作法に適合）*/
+const KakuuSoudenLayers = () => (
+  <>
+    <h2 id="layers"><span className="h-num">0.</span>このページ（架空送電線路）を森・ミクロ・マクロで見る</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "0 0 4px" }}>
+      同じテーマを <strong>森（俯瞰）→ ミクロ（なぜ）→ マクロ（解く）</strong> の3層で見る。まず森でこのページの位置を掴み、ミクロで機構を、マクロで解き方を押さえる。
+    </p>
+
+    {/* ===== 森：ページ固有の位置づけ図 ===== */}
+    <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+      <svg viewBox="0 0 480 170" role="img" aria-label="架空送電線路の位置づけ：発電所と変圧器から来て、超高圧で送ることで電流を下げ損失を抑える仕組みを学び、地中送電・誘導障害・配電線路へつながる俯瞰図" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+        <defs>
+          <marker id="kks-mori-arr" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+            <path d="M0,1 L8,4.5 L0,8 z" fill="var(--ink-mute)" />
+          </marker>
+        </defs>
+        <text x="70" y="22" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">前提（入口）</text>
+        <text x="240" y="22" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">このページ</text>
+        <text x="412" y="22" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">つながる先（出口）</text>
+        {/* 入口 */}
+        <rect x="16" y="40" width="108" height="86" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="70" y="66" textAnchor="middle" fontSize="13" fontWeight="600" fill="var(--ink)">発電・変圧器</text>
+        <text x="70" y="88" textAnchor="middle" fontSize="12" fill="var(--ink-soft)">水力・火力（1章）</text>
+        <text x="70" y="107" textAnchor="middle" fontSize="12" fill="var(--ink-soft)">昇圧（2.1）</text>
+        <line x1="126" y1="83" x2="159" y2="83" stroke="var(--ink-mute)" strokeWidth="2" markerEnd="url(#kks-mori-arr)" />
+        {/* 中央（強調） */}
+        <rect x="162" y="32" width="156" height="102" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="2" />
+        <text x="240" y="55" textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--accent-ink)">架空送電線路</text>
+        <text x="240" y="77" textAnchor="middle" fontSize="12" fill="var(--ink)">P = √3 V I cosθ</text>
+        <text x="240" y="95" textAnchor="middle" fontSize="12" fill="var(--ink)">V↑ ⇒ I↓</text>
+        <text x="240" y="113" textAnchor="middle" fontSize="12" fill="var(--ink)">損失 3I²R ⇒ 1/100</text>
+        <line x1="320" y1="83" x2="353" y2="83" stroke="var(--ink-mute)" strokeWidth="2" markerEnd="url(#kks-mori-arr)" />
+        {/* 出口3タグ */}
+        <rect x="356" y="40" width="112" height="26" rx="5" fill="var(--bg)" stroke="var(--rule)" />
+        <text x="412" y="57" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">地中送電（3.2）</text>
+        <rect x="356" y="70" width="112" height="26" rx="5" fill="var(--bg)" stroke="var(--rule)" />
+        <text x="412" y="87" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">誘導障害（3.3）</text>
+        <rect x="356" y="100" width="112" height="26" rx="5" fill="var(--bg)" stroke="var(--rule)" />
+        <text x="412" y="117" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">配電線路（4.1）</text>
+        <text x="240" y="154" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">同じ電力なら電圧を上げるほど電流が減り、損失は電流の2乗で効く</text>
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+        森（俯瞰）：発電所から変電所まで電力を運ぶ大動脈。「なぜ超高圧で送るか」が全体を貫く問いで、ここから地中送電・誘導障害・配電線路へ枝分かれする。送電分野の最頻出テーマ。
+      </figcaption>
+    </figure>
+
+    <div className="table-wrap"><table className="data">
+      <thead><tr><th>視点</th><th>何を見るか</th><th>代表する式・量</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>ミクロ</strong><br/>（なぜ）</td>
+          <td>三相電力は <Eq tex="P = \sqrt{3}\,V_L I_L \cos\theta" inline /> なので、<strong>同じ電力なら電圧を上げるほど電流が小さくなる</strong>。損失は<strong>電流の2乗</strong>で効くため、電圧を10倍にすれば損失は 1/100 になる</td>
+          <td>電圧↑ ⇒ 電流↓ ⇒ 損失↓↓</td>
+        </tr>
+        <tr>
+          <td><strong>マクロ</strong><br/>（解く）</td>
+          <td>電線は完全導体ではなく<strong>抵抗 R とリアクタンス X</strong> を持つ。送電端と受電端の電圧差（電圧降下）と抵抗損失を計算する。試験はここ（論説中心＋計算）</td>
+          <td><Eq tex="V_s = V_r + \Delta V" inline />・<Eq tex="P_{\text{loss}} = 3I^2R" inline /></td>
+        </tr>
+        <tr>
+          <td><strong>実務</strong><br/>（意味づけ）</td>
+          <td>275 kV・500 kV の<strong>超高圧</strong>で送り、変電所で降圧して配電する。電線・がいし・鉄塔・架空地線などの構成要素と、その保護・対策が問われる</td>
+          <td>超高圧送電・構成要素と保護</td>
+        </tr>
+      </tbody>
+    </table></div>
+  </>
+);
+
 const KakuuSoudenPage = ({ data, onNav }) => (
   <>
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "架空送電線路" }]} onNav={onNav} />
@@ -2509,6 +2647,8 @@ const KakuuSoudenPage = ({ data, onNav }) => (
       ]}
     />
     <div className="content">
+
+      <KakuuSoudenLayers />
 
       <h2 id="intro"><span className="h-num">1.</span>直感的理解 — なぜ超高圧で送るか</h2>
       <p>電線は完全な導体ではなく、抵抗 R とリアクタンス X で電圧降下が生じ、送電端と受電端の電圧が異なる。三相電力は <Eq tex="P = \sqrt{3}\,V_L I_L \cos\theta" /> なので、<strong>同じ電力なら電圧を上げるほど電流が小さくなる</strong>。</p>
