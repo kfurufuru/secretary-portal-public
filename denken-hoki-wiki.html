@@ -8257,6 +8257,113 @@ function LawSource({
     }
   }, "出典: ", source));
 }
+function LawLadder({
+  rungs = [],
+  caption
+}) {
+  return React.createElement("figure", {
+    style: {
+      margin: '10px 0 20px',
+      background: 'var(--bg-elev)',
+      borderRadius: 'var(--radius)',
+      padding: '14px 14px 10px'
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      color: 'var(--ink-3)',
+      letterSpacing: '0.04em',
+      marginBottom: 10
+    }
+  }, "⚖️ 法令階層での位置づけ（上の層から順に降りる）"), rungs.map((r, i) => React.createElement(React.Fragment, {
+    key: i
+  }, !r.skip && i > 0 && React.createElement("div", {
+    style: {
+      padding: '3px 0 3px 18px',
+      color: 'var(--ink-3)',
+      fontSize: 11.5,
+      lineHeight: 1.5
+    }
+  }, "↓ ", r.arrow || ''), React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10,
+      alignItems: 'flex-start',
+      marginLeft: r.skip ? 26 : 0,
+      marginTop: r.skip ? 6 : 0,
+      marginBottom: r.skip ? 6 : 0,
+      border: r.hot ? '2px solid var(--accent)' : `1px ${r.skip ? 'dashed' : 'solid'} var(--line)`,
+      background: r.hot ? 'var(--accent-soft)' : 'var(--bg)',
+      borderRadius: 8,
+      padding: '8px 12px',
+      opacity: r.skip ? 0.75 : 1
+    }
+  }, React.createElement("span", {
+    style: {
+      flexShrink: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 2
+    }
+  }, React.createElement("span", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      padding: '2px 8px',
+      borderRadius: 4,
+      marginTop: 1,
+      background: r.hot ? 'transparent' : 'var(--bg-2)',
+      border: r.hot ? '1px solid var(--accent)' : '1px solid var(--line)',
+      color: r.hot ? 'var(--accent-ink)' : 'var(--ink-3)'
+    }
+  }, r.tier), r.role && React.createElement("span", {
+    style: {
+      fontSize: 10,
+      fontWeight: 700,
+      color: r.hot ? 'var(--accent-ink)' : 'var(--ink-3)',
+      whiteSpace: 'nowrap'
+    }
+  }, "“", r.role, "”")), React.createElement("div", {
+    style: {
+      fontSize: 13,
+      lineHeight: 1.65,
+      minWidth: 0
+    }
+  }, React.createElement("strong", null, r.name), r.refs && React.createElement("span", {
+    style: {
+      color: 'var(--accent-ink)',
+      fontWeight: 600
+    }
+  }, "\u3000", r.refs), r.skip && React.createElement("span", {
+    style: {
+      fontSize: 10.5,
+      fontWeight: 700,
+      color: 'var(--ink-3)',
+      border: '1px dashed var(--line)',
+      borderRadius: 4,
+      padding: '1px 6px',
+      marginLeft: 8,
+      whiteSpace: 'nowrap'
+    }
+  }, "経路外"), r.note && React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: 'var(--ink-3)',
+      marginTop: 2
+    }
+  }, r.note))))), caption && React.createElement("figcaption", {
+    style: {
+      fontSize: 12,
+      color: 'var(--ink-3)',
+      lineHeight: 1.7,
+      marginTop: 10,
+      paddingTop: 8,
+      borderTop: '1px dashed var(--line)'
+    }
+  }, caption));
+}
 function DirectCheckMode({
   pageId,
   formula,
@@ -36387,7 +36494,37 @@ function GijutsuKijunTekigouPage({
     examType: "A問題",
     targets: "—",
     tags: ["設置する者", "適合命令", "事業用", "ひっかけ注意"],
-    lastChecked: "2026-06-01"
+    lastChecked: "2026-07-17"
+  }), React.createElement("h2", {
+    id: "hierarchy"
+  }, "法令階層での位置づけ"), React.createElement(LawLadder, {
+    rungs: [{
+      tier: '法律',
+      role: '守れ',
+      name: '電気事業法',
+      refs: '第39条・第40条',
+      hot: true,
+      note: '第39条＝設置する者の維持義務、第40条＝主務大臣の適合命令（一般用の命令は第56条）。法律は義務と命令の枠組みだけを定め、「何に適合するか」の中身は省令へ委任する'
+    }, {
+      tier: '政令',
+      role: '範囲',
+      name: '電気事業法施行令',
+      skip: true,
+      note: 'この論点の経路には登場しない。委任は法律から省令へ直接降りる（施行令の担当は電気工作物から除かれる工作物の定義など）。「法律→政令→省令」と機械的に降りるとは限らない'
+    }, {
+      tier: '省令',
+      role: '性能',
+      name: '電気設備技術基準（電技省令）',
+      arrow: '委任「主務省令で定める技術基準」（第39条第1項）',
+      note: '第39条のいう技術基準の実体。数値・性能の法的義務はこの層にある（例: 省令第58条の絶縁抵抗 0.1／0.2／0.4 MΩ）'
+    }, {
+      tier: '解釈',
+      role: 'やり方',
+      name: '電気設備技術基準の解釈',
+      arrow: '具体化（省令に適合すると認められる方法の一例）',
+      note: '経産省の審査基準で、法的拘束力はない（例: 解釈第14条の漏えい電流1mA代替）。「省令の数値」と「解釈の数値」の層違いが混同ポイント'
+    }],
+    caption: "第40条の適合命令は「省令の技術基準」に照らして発動される。義務（第39条）と命令（第40条）は法律の層、適合の中身（数値・性能）は省令の層、と層で覚える。"
   }), React.createElement("h2", {
     id: "flow"
   }, "第39条 → 第40条 の型（これで解ける）"), React.createElement(MemTable, {
@@ -36496,6 +36633,14 @@ function GijutsuKijunTekigouPage({
     note: "技術基準の4要件・適合命令の詳細・条文の解説は denken-wiki が SOT（jigyoho/39・40。第40条は原文逐語あり）。"
   }), React.createElement(UpdateLog, {
     entries: [{
+      date: "2026-07-17",
+      content: "v1.2.1: ChatGPT整理図の吸収（work-rules 6章の外部レビュー取り込みフロー）。層の役割一言ラベル（法律=守れ／政令=範囲／省令=性能／解釈=やり方）を LawLadder 標準語彙として追加",
+      reason: "3語で層の違いを圧縮する因果ラベルは柱2（暗記より理解）に資する。1mA対応計算・原則/数値並置は絶縁ページ(3.1/3.2)向けのためpunch list化（#619担当領域）"
+    }, {
+      date: "2026-07-17",
+      content: "v1.2: LawLadder（法令階層での位置づけ）をパイロット導入。法律→(政令=経路外)→省令→解釈の縦の委任チェーンを冒頭提示。第39/40/56条・省令58条・解釈14条・施行令1条は e-Gov API＋解釈原典PDF(令和7年11月)で一次照合済(2026-07-17)",
+      reason: "監修者さん指摘「法規ページに法令階層の全体像がない」。省令の数値vs解釈の数値の層違い混同対策。本ページで型を確定し法令系ページへ横展開予定"
+    }, {
       date: "2026-06-01",
       content: "v1.1: 第40条(事業用)⇄第56条(一般用)の適合命令対比を追加。命令5点は同一で、違いは対象/主体/相手の3つ。一般用＝所有者又は占有者(第56・57条で一貫)、事業用＝設置する者。e-Gov第56条第1項を逐語照合。TrapTable・QuickReview・条文逐語にも反映",
       reason: "第40条の双子条文(第56条)との識別は頻出論点。『設置する者 vs 所有者又は占有者』の横断整理で得点力を強化"
