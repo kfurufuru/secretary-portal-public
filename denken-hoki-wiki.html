@@ -8534,6 +8534,14 @@ function LawLadder({
   rungs = [],
   caption
 }) {
+  let collapseFrom = rungs.length;
+  {
+    let i = rungs.length - 1;
+    while (i >= 0 && rungs[i].skip) i--;
+    if (rungs.length - 1 - i >= 2) collapseFrom = i + 1;
+  }
+  const visibleRungs = rungs.slice(0, collapseFrom);
+  const collapsedRungs = rungs.slice(collapseFrom);
   return React.createElement("figure", {
     style: {
       margin: '10px 0 20px',
@@ -8549,84 +8557,132 @@ function LawLadder({
       letterSpacing: '0.04em',
       marginBottom: 10
     }
-  }, "⚖️ 法令階層での位置づけ（上の層から順に降りる）"), rungs.map((r, i) => React.createElement(React.Fragment, {
-    key: i
-  }, !r.skip && i > 0 && React.createElement("div", {
-    style: {
-      padding: '3px 0 3px 18px',
-      color: 'var(--ink-3)',
-      fontSize: 11.5,
-      lineHeight: 1.5
-    }
-  }, "↓ ", r.arrow || ''), React.createElement("div", {
+  }, "⚖️ 法令階層での位置づけ（上の層から順に降りる）"), visibleRungs.map((r, i) => {
+    const isKaishaku = r.tier === '解釈';
+    return React.createElement(React.Fragment, {
+      key: i
+    }, !r.skip && i > 0 && React.createElement("div", {
+      style: {
+        padding: '3px 0 3px 18px',
+        color: 'var(--ink-3)',
+        fontSize: 11.5,
+        lineHeight: 1.5
+      }
+    }, "↓ ", r.arrow || ''), React.createElement("div", {
+      style: {
+        display: 'flex',
+        gap: 10,
+        alignItems: 'flex-start',
+        marginLeft: r.skip ? 26 : 0,
+        marginTop: r.skip ? 6 : 0,
+        marginBottom: r.skip ? 6 : 0,
+        border: r.hot ? '2px solid var(--accent)' : `1px ${r.skip ? 'dashed' : 'solid'} var(--line)`,
+        background: r.hot ? 'var(--accent-soft)' : 'var(--bg)',
+        borderRadius: 8,
+        padding: '8px 12px',
+        opacity: r.skip ? 0.75 : 1
+      }
+    }, React.createElement("span", {
+      style: {
+        flexShrink: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 2
+      }
+    }, React.createElement("span", {
+      style: {
+        fontSize: 11,
+        fontWeight: 700,
+        padding: '2px 8px',
+        borderRadius: 4,
+        marginTop: 1,
+        background: r.hot ? 'transparent' : 'var(--bg-2)',
+        border: r.hot ? '1px solid var(--accent)' : '1px solid var(--line)',
+        color: r.hot ? 'var(--accent-ink)' : 'var(--ink-3)'
+      }
+    }, r.tier), r.role && React.createElement("span", {
+      style: {
+        fontSize: 10,
+        fontWeight: 700,
+        color: r.hot ? 'var(--accent-ink)' : 'var(--ink-3)',
+        whiteSpace: 'nowrap'
+      }
+    }, "“", r.role, "”")), React.createElement("div", {
+      style: {
+        fontSize: 13,
+        lineHeight: 1.65,
+        minWidth: 0
+      }
+    }, React.createElement("strong", null, r.name), r.refs && React.createElement("span", {
+      style: {
+        color: 'var(--accent-ink)',
+        fontWeight: 600
+      }
+    }, "\u3000", r.refs), r.skip && React.createElement("span", {
+      style: {
+        fontSize: 10.5,
+        fontWeight: 700,
+        color: 'var(--ink-3)',
+        border: '1px dashed var(--line)',
+        borderRadius: 4,
+        padding: '1px 6px',
+        marginLeft: 8,
+        whiteSpace: 'nowrap'
+      }
+    }, "経路外"), isKaishaku && !r.skip && React.createElement("span", {
+      title: "電技解釈は法令でなく経済産業省令に基づく審査基準（内規）。法的拘束力はない＝守るべき数値の在り処は省令側",
+      style: {
+        fontSize: 10.5,
+        fontWeight: 700,
+        color: 'color-mix(in oklch, #f59e0b 62%, var(--ink))',
+        background: 'color-mix(in oklch, #f59e0b 14%, var(--bg-elev))',
+        border: '1px solid color-mix(in oklch, #f59e0b 45%, var(--line))',
+        borderRadius: 4,
+        padding: '1px 6px',
+        marginLeft: 8,
+        whiteSpace: 'nowrap'
+      }
+    }, "非法令・拘束力なし"), r.note && React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: 'var(--ink-3)',
+        marginTop: 2
+      }
+    }, r.note))));
+  }), collapsedRungs.length > 0 && React.createElement("div", {
     style: {
       display: 'flex',
       gap: 10,
       alignItems: 'flex-start',
-      marginLeft: r.skip ? 26 : 0,
-      marginTop: r.skip ? 6 : 0,
-      marginBottom: r.skip ? 6 : 0,
-      border: r.hot ? '2px solid var(--accent)' : `1px ${r.skip ? 'dashed' : 'solid'} var(--line)`,
-      background: r.hot ? 'var(--accent-soft)' : 'var(--bg)',
+      marginLeft: 26,
+      marginTop: 6,
+      border: '1px dashed var(--line)',
+      background: 'var(--bg)',
       borderRadius: 8,
       padding: '8px 12px',
-      opacity: r.skip ? 0.75 : 1
+      opacity: 0.75
     }
   }, React.createElement("span", {
     style: {
       flexShrink: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: 2
-    }
-  }, React.createElement("span", {
-    style: {
-      fontSize: 11,
-      fontWeight: 700,
-      padding: '2px 8px',
-      borderRadius: 4,
-      marginTop: 1,
-      background: r.hot ? 'transparent' : 'var(--bg-2)',
-      border: r.hot ? '1px solid var(--accent)' : '1px solid var(--line)',
-      color: r.hot ? 'var(--accent-ink)' : 'var(--ink-3)'
-    }
-  }, r.tier), r.role && React.createElement("span", {
-    style: {
-      fontSize: 10,
-      fontWeight: 700,
-      color: r.hot ? 'var(--accent-ink)' : 'var(--ink-3)',
-      whiteSpace: 'nowrap'
-    }
-  }, "“", r.role, "”")), React.createElement("div", {
-    style: {
-      fontSize: 13,
-      lineHeight: 1.65,
-      minWidth: 0
-    }
-  }, React.createElement("strong", null, r.name), r.refs && React.createElement("span", {
-    style: {
-      color: 'var(--accent-ink)',
-      fontWeight: 600
-    }
-  }, "\u3000", r.refs), r.skip && React.createElement("span", {
-    style: {
       fontSize: 10.5,
       fontWeight: 700,
       color: 'var(--ink-3)',
       border: '1px dashed var(--line)',
       borderRadius: 4,
       padding: '1px 6px',
-      marginLeft: 8,
+      marginTop: 1,
       whiteSpace: 'nowrap'
     }
-  }, "経路外"), r.note && React.createElement("div", {
+  }, "経路外"), React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 12.5,
+      lineHeight: 1.6,
       color: 'var(--ink-3)',
-      marginTop: 2
+      minWidth: 0
     }
-  }, r.note))))), caption && React.createElement("figcaption", {
+  }, React.createElement("strong", null, collapsedRungs.map(r => r.tier).join('・')), "：いずれも本論点の経路外（下位規範として存在するが、この論点の委任連鎖には登場しない）")), caption && React.createElement("figcaption", {
     style: {
       fontSize: 12,
       color: 'var(--ink-3)',
