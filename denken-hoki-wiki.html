@@ -13752,22 +13752,66 @@ function App() {
     };
   };
   const [page, setPage] = React.useState(() => parseHash().pageId);
+  const scrollTokenRef = React.useRef(0);
   const scrollToAnchor = anchor => {
     if (!anchor) return;
-    let attempts = 0;
-    const tryScroll = () => {
+    const myToken = ++scrollTokenRef.current;
+    let userInterrupted = false;
+    const onUserScroll = () => {
+      userInterrupted = true;
+    };
+    const passiveOpts = {
+      passive: true,
+      capture: true
+    };
+    window.addEventListener('wheel', onUserScroll, passiveOpts);
+    window.addEventListener('touchmove', onUserScroll, passiveOpts);
+    window.addEventListener('pointerdown', onUserScroll, passiveOpts);
+    window.addEventListener('keydown', onUserScroll, true);
+    const cleanup = () => {
+      window.removeEventListener('wheel', onUserScroll, passiveOpts);
+      window.removeEventListener('touchmove', onUserScroll, passiveOpts);
+      window.removeEventListener('pointerdown', onUserScroll, passiveOpts);
+      window.removeEventListener('keydown', onUserScroll, true);
+    };
+    const stillActive = () => scrollTokenRef.current === myToken && !userInterrupted;
+    let findAttempts = 0;
+    const FIND_MAX = 30;
+    let followAttempts = 0;
+    const FOLLOW_MAX = 20;
+    const follow = () => {
+      if (!stillActive()) {
+        cleanup();
+        return;
+      }
+      const el = document.getElementById(anchor);
+      if (el) el.scrollIntoView({
+        behavior: 'auto',
+        block: 'start'
+      });
+      followAttempts++;
+      if (followAttempts < FOLLOW_MAX) setTimeout(follow, 100);else cleanup();
+    };
+    const find = () => {
+      if (!stillActive()) {
+        cleanup();
+        return;
+      }
       const el = document.getElementById(anchor);
       if (el) {
         el.scrollIntoView({
           behavior: 'smooth',
           block: 'start'
         });
-      } else if (attempts < 30) {
-        attempts++;
-        setTimeout(tryScroll, 100);
+        setTimeout(follow, 100);
+      } else if (findAttempts < FIND_MAX) {
+        findAttempts++;
+        setTimeout(find, 100);
+      } else {
+        cleanup();
       }
     };
-    tryScroll();
+    find();
   };
   React.useEffect(() => {
     const handler = () => {
@@ -13777,7 +13821,11 @@ function App() {
       } = parseHash();
       setPage(pageId);
       localStorage.setItem(`hoki_lastSeen_${pageId}`, Date.now().toString());
-      if (anchor) scrollToAnchor(anchor);
+      if (anchor) {
+        scrollToAnchor(anchor);
+      } else {
+        scrollTokenRef.current++;
+      }
     };
     window.addEventListener('hashchange', handler);
     localStorage.setItem(`hoki_lastSeen_${page}`, Date.now().toString());
