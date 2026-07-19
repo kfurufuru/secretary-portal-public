@@ -18212,9 +18212,16 @@ function HomePage({
   const dailyTopicLabels = typeof window !== 'undefined' && window.HOKI_DAILY_TOPIC_LABEL || {};
   React.useEffect(() => {
     if (!currentQ && dailyPool.length > 0) {
-      const q = _dailySelectQuestion(dailyPool, 0);
+      let forced = null;
+      try {
+        const raw = window.location.hash.slice(1);
+        const ci = raw.indexOf(':');
+        const anchor = ci === -1 ? '' : raw.slice(ci + 1);
+        if (anchor) forced = dailyPool.find(p => p.id === anchor) || null;
+      } catch (e) {}
+      const q = forced || _dailySelectQuestion(dailyPool, 0);
       setCurrentQ(q);
-      _dailyMarkServed(q.id);
+      if (!forced) _dailyMarkServed(q.id);
     }
   }, [dailyPool.length]);
   const dailyHistory = React.useMemo(() => _dailyGetHistory(), [dailyVersion, historyOpen]);
@@ -18978,11 +18985,13 @@ function HomePage({
       color: 'var(--ink-3)'
     }
   }, "問題プール読み込み中…") : React.createElement("div", {
+    id: currentQ.id,
     style: {
       background: 'var(--bg)',
       border: '1px solid var(--border)',
       borderRadius: 'var(--radius)',
-      padding: '20px'
+      padding: '20px',
+      scrollMarginTop: 72
     }
   }, React.createElement("div", {
     style: {
