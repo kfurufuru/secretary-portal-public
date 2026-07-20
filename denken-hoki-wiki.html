@@ -61116,6 +61116,17 @@ function JuyoResultCards({
   const empty = m.compositeMax <= JUYO_EPS;
   return React.createElement("div", null, React.createElement("div", {
     style: {
+      fontSize: 11,
+      color: 'var(--ink-3)',
+      marginBottom: 6,
+      lineHeight: 1.6
+    }
+  }, "以下は", React.createElement("strong", {
+    style: {
+      color: 'var(--ink-2)'
+    }
+  }, "変電所（受電点）側で見る量"), "。各工場側の量（設備容量・需要率・負荷率）は上の工場パネル内に表示（視点の区別は次の「系統図」の節）。"), React.createElement("div", {
+    style: {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
       gap: 8,
@@ -61681,6 +61692,182 @@ function JuyoInsightChecklist({
     }
   }, React.createElement("strong", null, "補足: 総合負荷率と不等率の関係"), React.createElement("br", null), "総合負荷率 ＝ 不等率 × (Σ各工場の平均需要電力 ÷ Σ各工場の最大需要電力)", React.createElement("br", null), "R3問13: 682 ÷ 1,160 × 1.25 ≒ 0.735 ≒ 73%。ピーク時刻がずれる（不等率が上がる）と合成最大需要電力が小さくなり、同じ使い方でも総合負荷率が高くなる。", m.diversityFactor !== null && m.sumIndividualMax > JUYO_EPS && React.createElement("span", null, React.createElement("br", null), "現在の設定: ", juyoFmtRatio(m.diversityFactor), " × (", juyoFmtKw(m.sumIndividualAvg), " ÷ ", juyoFmtKw(m.sumIndividualMax), ") = ", React.createElement("strong", null, juyoFmtPct(m.totalLoadFactor)))));
 }
+function JuyoSystemDiagram({
+  m,
+  factories,
+  pfPct
+}) {
+  const boxX = [40, 240, 440, 640];
+  const feederX = boxX.map(x => x + 85);
+  const rowsByName = {};
+  m.rows.forEach(r => {
+    rowsByName[r.name] = r;
+  });
+  const empty = m.compositeMax <= JUYO_EPS;
+  return React.createElement("div", {
+    style: {
+      background: 'var(--card)',
+      border: '1px solid var(--line)',
+      borderRadius: 'var(--radius)',
+      padding: 10
+    }
+  }, React.createElement("svg", {
+    viewBox: "0 0 820 312",
+    width: "100%",
+    style: {
+      display: 'block',
+      maxWidth: 820
+    },
+    role: "img",
+    "aria-label": "系統図。上段の変電所（受電点）には合成最大需要電力・不等率・総合負荷率・力率・必要皮相電力・変圧器台数という変電所側で見る量が表示され、母線から4本のフィーダで各工場につながる。下段の各工場には設備容量・需要率・最大需要・負荷率という需要家側で見る量が表示される"
+  }, React.createElement("rect", {
+    x: "270",
+    y: "14",
+    width: "280",
+    height: "96",
+    rx: "8",
+    style: {
+      fill: 'var(--bg-elev)',
+      stroke: 'var(--accent)'
+    },
+    strokeWidth: "2"
+  }), React.createElement("text", {
+    x: "410",
+    y: "34",
+    textAnchor: "middle",
+    fontSize: "13",
+    fontWeight: "700",
+    style: {
+      fill: 'var(--accent-ink)'
+    }
+  }, "変電所（受電点）"), React.createElement("text", {
+    x: "410",
+    y: "54",
+    textAnchor: "middle",
+    fontSize: "11",
+    style: {
+      fill: 'var(--ink-1)'
+    }
+  }, "合成最大需要電力 ", empty ? '—' : `${juyoFmtKw(m.compositeMax)} kW`), React.createElement("text", {
+    x: "410",
+    y: "72",
+    textAnchor: "middle",
+    fontSize: "11",
+    style: {
+      fill: 'var(--ink-1)'
+    }
+  }, "不等率 ", juyoFmtRatio(m.diversityFactor), " ／ 総合負荷率 ", juyoFmtPct(m.totalLoadFactor)), React.createElement("text", {
+    x: "410",
+    y: "90",
+    textAnchor: "middle",
+    fontSize: "11",
+    style: {
+      fill: 'var(--ink-1)'
+    }
+  }, "力率", pfPct, "% → 皮相 ", empty ? '—' : `${juyoFmtKva(m.apparentKva)} kVA`, " → 100kVA×", empty ? '—' : m.trafoCount, "台"), React.createElement("line", {
+    x1: "410",
+    y1: "110",
+    x2: "410",
+    y2: "150",
+    strokeWidth: "2.5",
+    style: {
+      stroke: 'var(--ink-2)'
+    }
+  }), React.createElement("line", {
+    x1: "100",
+    y1: "150",
+    x2: "720",
+    y2: "150",
+    strokeWidth: "4",
+    style: {
+      stroke: 'var(--ink-2)'
+    }
+  }), React.createElement("text", {
+    x: "726",
+    y: "146",
+    textAnchor: "start",
+    fontSize: "10.5",
+    style: {
+      fill: 'var(--ink-3)'
+    }
+  }, "母線"), factories.map((f, i) => {
+    const r = rowsByName[f.name];
+    const color = JUYO_FACTORY_COLORS[f.name];
+    const on = f.enabled;
+    return React.createElement("g", {
+      key: f.name,
+      opacity: on ? 1 : 0.35
+    }, React.createElement("line", {
+      x1: feederX[i],
+      y1: "150",
+      x2: feederX[i],
+      y2: "192",
+      strokeWidth: "2",
+      style: {
+        stroke: on ? color : 'var(--ink-3)'
+      }
+    }), React.createElement("rect", {
+      x: boxX[i],
+      y: "192",
+      width: "170",
+      height: "96",
+      rx: "7",
+      style: {
+        fill: 'var(--bg-2)',
+        stroke: on ? color : 'var(--line)'
+      },
+      strokeWidth: on ? 2 : 1
+    }), React.createElement("text", {
+      x: boxX[i] + 85,
+      y: "212",
+      textAnchor: "middle",
+      fontSize: "12",
+      fontWeight: "700",
+      style: {
+        fill: on ? color : 'var(--ink-3)'
+      }
+    }, "工場", f.name, on ? '' : '（無効）'), React.createElement("text", {
+      x: boxX[i] + 85,
+      y: "230",
+      textAnchor: "middle",
+      fontSize: "10.5",
+      style: {
+        fill: 'var(--ink-2)'
+      }
+    }, "設備容量 ", f.capacity, " kW"), React.createElement("text", {
+      x: boxX[i] + 85,
+      y: "248",
+      textAnchor: "middle",
+      fontSize: "10.5",
+      style: {
+        fill: 'var(--ink-2)'
+      }
+    }, "最大 ", on && r ? `${juyoFmtKw(r.curveMax)} kW（需要率${f.demandPct}%）` : '—'), React.createElement("text", {
+      x: boxX[i] + 85,
+      y: "266",
+      textAnchor: "middle",
+      fontSize: "10.5",
+      style: {
+        fill: 'var(--ink-2)'
+      }
+    }, "平均 ", on && r ? `${juyoFmtKw(r.average)} kW（負荷率${juyoFmtPct(r.loadFactor)}）` : '—'));
+  })), React.createElement("div", {
+    style: {
+      fontSize: 11.5,
+      color: 'var(--ink-2)',
+      lineHeight: 1.8,
+      marginTop: 8
+    }
+  }, React.createElement("strong", {
+    style: {
+      color: 'var(--accent-ink)'
+    }
+  }, "上（変電所側）で見る量"), ": 合成最大需要電力・不等率・総合負荷率・力率・必要皮相電力・変圧器容量 ——「母線で同じ時刻に合算した後」の量。", React.createElement("strong", {
+    style: {
+      color: 'var(--accent-ink)'
+    }
+  }, "下（需要家側）で見る量"), ": 設備容量・需要率・負荷率 ——「各工場が単独で」持つ量。 R3問13 は「変電所が需要家A・B・Cに供給」というまさにこの構図（総合負荷率＝変電所側・各負荷率＝需要家側）。力率も受電点の総合力率として変電所側で皮相電力・変圧器容量に効く。"));
+}
 function JuyoSimulatorPage({
   onNav,
   data
@@ -62086,6 +62273,22 @@ function JuyoSimulatorPage({
       setPfPct(p);
     }
   })), React.createElement("h2", {
+    id: "keitozu"
+  }, "系統図（変電所側で見る量・需要家側で見る量）"), React.createElement(SectionCheck, {
+    pageId: "juyo-simulator",
+    sectionId: "keitozu"
+  }), React.createElement("p", {
+    style: {
+      fontSize: 12.5,
+      color: 'var(--ink-2)',
+      lineHeight: 1.8,
+      margin: '0 0 8px'
+    }
+  }, "3率の混同の多くは「", React.createElement("strong", null, "どの箱で測る量か"), "」の取り違え。この系統図は上のシミュレータと連動しており、スライダーを動かすと変電所側・需要家側の数値が同時に更新される。"), React.createElement(JuyoSystemDiagram, {
+    m: m,
+    factories: factories,
+    pfPct: pfPct
+  }), React.createElement("h2", {
     id: "how-to-read"
   }, "グラフの読み方（3率はぜんぶこの1枚にいる）"), React.createElement(SectionCheck, {
     pageId: "juyo-simulator",
@@ -62154,6 +62357,9 @@ function JuyoSimulatorPage({
     }, {
       q: '1日電力量の計算に不等率を使う？',
       a: '使わない。Σ平均需要×24h（＝合成曲線の面積）。R3問13(a) は不等率1.25が与えられていても使わないのがひっかけ'
+    }, {
+      q: '不等率・総合負荷率・変圧器容量は、工場側・変電所側どちらで見る量？',
+      a: '変電所（受電点）側＝母線で同時刻に合算した後の量。各工場側で見るのは設備容量・需要率・負荷率（系統図の節で位置を確認）'
     }]
   }), React.createElement("h2", {
     id: "act-section"
@@ -62163,20 +62369,23 @@ function JuyoSimulatorPage({
       id: 'simulator',
       label: '1節 シミュレータ'
     }, {
+      id: 'keitozu',
+      label: '2節 系統図'
+    }, {
       id: 'how-to-read',
-      label: '2節 グラフの読み方'
+      label: '3節 グラフの読み方'
     }, {
       id: 'presets',
-      label: '3節 過去問プリセット'
+      label: '4節 過去問プリセット'
     }, {
       id: 'exercise',
-      label: '4節 演習モード'
+      label: '5節 演習モード'
     }, {
       id: 'insights',
-      label: '5節 気づきチェックリスト'
+      label: '6節 気づきチェックリスト'
     }, {
       id: 'quick-review',
-      label: '6節 1分復習'
+      label: '7節 1分復習'
     }],
     onJump: id => {
       location.hash = id;
@@ -62210,6 +62419,10 @@ function JuyoSimulatorPage({
     }]
   }), React.createElement(UpdateLog, {
     entries: [{
+      date: "2026-07-20",
+      content: "v1.1: 系統図セクション追加（変電所（受電点）→母線→工場A〜Dの単線結線図・シミュレータ連動で数値が動く）。「合成最大・不等率・総合負荷率・力率・変圧器容量＝変電所側」「設備容量・需要率・負荷率＝需要家側」の視点の区別を図解し、結果カード冒頭とQuickReview（7問目）にも同区別を明記",
+      reason: "監修者さん指摘「変電所における総合負荷率、力率など考慮されていない。系統図が必要でないか」——量自体は実装済みだったが『どの箱で測る量か』の構造図が無く、R3問13（変電所→需要家A・B・C）の構図と結びつかなかったため"
+    }, {
       date: "2026-07-20",
       content: "v1.0 新規作成: A〜D工場の設備容量・需要率・稼働パターン（終日一定/昼ピーク/夜ピーク/間欠バッチ）を操作すると日負荷曲線・合成曲線・3率・変圧器台数がリアルタイム再計算される体験型教材。過去問プリセット（R4上問12・R3問13＝想定波形で不等率1.25を厳密再現）・演習3問（順方向2＋逆算1）・気づきチェックリスト4枚（自動達成検知）・時刻カーソル連動の設備アイコンON/OFF表示。数値はシミュレータ表示・プリセット検算・演習解答が単一計算関数 juyoCompute() を共用（数値とSVGが同一SoT）",
       reason: "3率を数式の丸暗記でなく、負荷曲線を操作しながら因果（ピークのずれ→合成最大の低下→不等率の上昇）で理解するため（定義・公式は6.1/1.6/6.2/6.3へ委譲し重複回避）"
