@@ -60559,6 +60559,20 @@ function juyoPeakBandLabel(peakHours) {
   }
   return ranges.join('・');
 }
+function juyoFmtDelta(v, kind) {
+  if (v === null || v === undefined || !isFinite(v)) return null;
+  const thresholds = {
+    kw: 0.5,
+    ratio: 0.005,
+    pt: 0.0005
+  };
+  if (Math.abs(v) < thresholds[kind]) return null;
+  const sign = v > 0 ? '+' : '−';
+  const a = Math.abs(v);
+  if (kind === 'kw') return `${sign}${Math.round(a).toLocaleString('ja-JP')} kW`;
+  if (kind === 'ratio') return `${sign}${a.toFixed(2)}`;
+  return `${sign}${(a * 100).toFixed(1).replace(/\.0$/, '')}pt`;
+}
 function juyoNiceCeil(v) {
   if (!(v > 0)) return 100;
   const step = v <= 500 ? 100 : v <= 1200 ? 200 : v <= 3000 ? 500 : 1000;
@@ -60573,8 +60587,31 @@ function JuyoSimSlider({
   unit,
   onChange,
   disabled,
-  srName
+  srName,
+  valueText
 }) {
+  const name = srName || label;
+  const vt = valueText ? valueText(value) : `${value}${unit || ''}`;
+  const stepBtn = dir => React.createElement("button", {
+    type: "button",
+    disabled: disabled || (dir < 0 ? value <= min : value >= max),
+    "aria-label": `${name} を1段階${dir < 0 ? '減らす' : '増やす'}`,
+    onClick: () => onChange(dir < 0 ? Math.max(min, value - step) : Math.min(max, value + step)),
+    style: {
+      width: 38,
+      height: 30,
+      flex: 'none',
+      borderRadius: 6,
+      fontSize: 15,
+      fontWeight: 700,
+      lineHeight: 1,
+      border: '1px solid var(--line)',
+      background: 'var(--bg-2)',
+      color: 'var(--ink-1)',
+      cursor: disabled ? 'default' : 'pointer',
+      opacity: disabled || (dir < 0 ? value <= min : value >= max) ? 0.4 : 1
+    }
+  }, dir < 0 ? '−' : '＋');
   return React.createElement("div", {
     style: {
       display: 'flex',
@@ -60598,23 +60635,31 @@ function JuyoSimSlider({
       fontWeight: 700,
       color: 'var(--accent-ink)'
     }
-  }, value, unit)), React.createElement("input", {
+  }, value, unit)), React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6
+    }
+  }, stepBtn(-1), React.createElement("input", {
     type: "range",
     min: min,
     max: max,
     step: step,
     value: value,
     disabled: disabled,
-    "aria-label": srName || label,
+    "aria-label": name,
+    "aria-valuetext": vt,
     onChange: e => onChange(Number(e.target.value)),
     style: {
       width: '100%',
+      minWidth: 0,
       height: 30,
       margin: 0,
       accentColor: 'var(--accent)',
       cursor: disabled ? 'default' : 'pointer'
     }
-  }));
+  }), stepBtn(1)));
 }
 const JUYO_EQUIPMENT = [{
   icon: '💡',
@@ -60713,7 +60758,17 @@ function JuyoFactoryPanel({
       accentColor: color,
       cursor: 'pointer'
     }
-  }), "工場", factory.name), React.createElement("span", {
+  }), "工場", factory.name, !factory.enabled && React.createElement("span", {
+    style: {
+      fontSize: 10,
+      fontWeight: 700,
+      color: 'var(--ink-3)',
+      border: '1px solid var(--line)',
+      borderRadius: 9,
+      padding: '1px 8px',
+      background: 'var(--bg-2)'
+    }
+  }, "集計対象外")), React.createElement("span", {
     style: {
       fontSize: 10.5,
       color: 'var(--ink-3)'
@@ -60750,6 +60805,7 @@ function JuyoFactoryPanel({
     max: 1000,
     step: 50,
     unit: " kW",
+    valueText: v => `${v}キロワット`,
     disabled: !factory.enabled,
     onChange: v => onChange(index, {
       capacity: v
@@ -60762,6 +60818,7 @@ function JuyoFactoryPanel({
     max: 100,
     step: 5,
     unit: " %",
+    valueText: v => `${v}パーセント`,
     disabled: !factory.enabled,
     onChange: v => onChange(index, {
       demandPct: v
@@ -60822,7 +60879,7 @@ function JuyoFactoryPanel({
       color: 'var(--ink-3)',
       marginBottom: 3
     }
-  }, "設備容量 ", factory.capacity, "kW のうち最大需要 ", juyoFmtKw(factory.capacity * factory.demandPct / 100), "kW（需要率", factory.demandPct, "%）"), React.createElement("div", {
+  }, factory.enabled ? React.createElement("span", null, "設備容量 ", factory.capacity, "kW のうち最大需要 ", juyoFmtKw(factory.capacity * factory.demandPct / 100), "kW（需要率", factory.demandPct, "%）") : React.createElement("span", null, "設備容量 ", factory.capacity, "kW ／ 最大需要 —・平均 —（集計対象外・チェックで有効化）")), React.createElement("div", {
     style: {
       height: 10,
       borderRadius: 5,
@@ -60834,11 +60891,11 @@ function JuyoFactoryPanel({
     style: {
       width: `${factory.demandPct}%`,
       height: '100%',
-      background: color,
-      opacity: 0.75,
+      background: factory.enabled ? color : 'var(--ink-3)',
+      opacity: factory.enabled ? 0.75 : 0.35,
       transition: 'width .15s'
     }
-  })), React.createElement("div", {
+  })), factory.enabled && React.createElement("div", {
     style: {
       fontSize: 10,
       color: 'var(--ink-3)',
@@ -61046,9 +61103,10 @@ function JuyoLoadCurveChart({
   }, hour, ":00〜", hour + 1, ":00"));
 }
 function JuyoStickyBar({
-  m
+  m,
+  delta
 }) {
-  const item = (label, val, strong) => React.createElement("span", {
+  const item = (label, val, strong, dTxt) => React.createElement("span", {
     style: {
       display: 'inline-flex',
       alignItems: 'baseline',
@@ -61066,7 +61124,19 @@ function JuyoStickyBar({
       fontSize: 14,
       color: strong ? 'var(--accent-ink)' : 'var(--ink-1)'
     }
-  }, val));
+  }, val), dTxt && React.createElement("span", {
+    style: {
+      fontSize: 10.5,
+      fontFamily: 'monospace',
+      fontWeight: 700,
+      color: 'var(--ink-2)',
+      background: 'var(--bg-2)',
+      border: '1px solid var(--line)',
+      borderRadius: 8,
+      padding: '0 6px'
+    },
+    title: "直前の操作からの変化"
+  }, dTxt));
   return React.createElement("div", {
     role: "status",
     "aria-live": "polite",
@@ -61086,7 +61156,7 @@ function JuyoStickyBar({
       marginBottom: 12,
       boxShadow: '0 2px 10px rgba(0,0,0,0.10)'
     }
-  }, item('合成最大', `${juyoFmtKw(m.compositeMax > JUYO_EPS ? m.compositeMax : null)} kW`), item('不等率', juyoFmtRatio(m.diversityFactor), true), item('総合負荷率', juyoFmtPct(m.totalLoadFactor)));
+  }, item('合成最大', `${juyoFmtKw(m.compositeMax > JUYO_EPS ? m.compositeMax : null)} kW`, false, delta && juyoFmtDelta(delta.compositeMax, 'kw')), item('不等率', juyoFmtRatio(m.diversityFactor), true, delta && juyoFmtDelta(delta.diversity, 'ratio')), item('総合負荷率', juyoFmtPct(m.totalLoadFactor), false, delta && juyoFmtDelta(delta.totalLoad, 'pt')));
 }
 function JuyoResultCards({
   m,
@@ -61904,7 +61974,30 @@ function JuyoSimulatorPage({
   const [selHour, setSelHour] = React.useState(null);
   const m = React.useMemo(() => juyoCompute(factories, pfPct), [factories, pfPct]);
   const hour = selHour === null ? m.peakHours.length ? m.peakHours[0] : 12 : selHour;
+  const [history, setHistory] = React.useState(null);
+  const snapshot = () => setHistory({
+    factories,
+    pfPct,
+    presetId,
+    selHour
+  });
+  const prevMRef = React.useRef(null);
+  const [delta, setDelta] = React.useState(null);
+  React.useEffect(() => {
+    const prev = prevMRef.current;
+    if (prev && prev.compositeMax > JUYO_EPS && m.compositeMax > JUYO_EPS) {
+      setDelta({
+        compositeMax: m.compositeMax - prev.compositeMax,
+        diversity: m.diversityFactor - prev.diversityFactor,
+        totalLoad: m.totalLoadFactor - prev.totalLoadFactor
+      });
+    } else {
+      setDelta(null);
+    }
+    prevMRef.current = m;
+  }, [m]);
   const changeFactory = (idx, patch) => {
+    snapshot();
     setPresetId(null);
     setFactories(prev => prev.map((f, i) => {
       let next = i === idx ? {
@@ -61926,6 +62019,7 @@ function JuyoSimulatorPage({
     }));
   };
   const loadPreset = preset => {
+    snapshot();
     setFactories(preset.factories.map(f => ({
       ...f,
       curveSource: {
@@ -61937,6 +62031,7 @@ function JuyoSimulatorPage({
     setSelHour(null);
   };
   const loadExercise = exFactories => {
+    snapshot();
     setFactories(exFactories.map(f => ({
       ...f,
       curveSource: {
@@ -61946,6 +62041,33 @@ function JuyoSimulatorPage({
     setPfPct(100);
     setPresetId(null);
     setSelHour(null);
+  };
+  const changePf = p => {
+    if (p === pfPct) return;
+    snapshot();
+    setPresetId(null);
+    setPfPct(p);
+  };
+  const resetAll = () => {
+    snapshot();
+    setFactories(JUYO_INITIAL_FACTORIES);
+    setPfPct(100);
+    setPresetId(null);
+    setSelHour(null);
+  };
+  const undoOnce = () => {
+    if (!history) return;
+    const cur = {
+      factories,
+      pfPct,
+      presetId,
+      selHour
+    };
+    setFactories(history.factories);
+    setPfPct(history.pfPct);
+    setPresetId(history.presetId);
+    setSelHour(history.selHour);
+    setHistory(cur);
   };
   React.useEffect(() => {
     if (m.diversityError) {
@@ -62142,8 +62264,52 @@ function JuyoSimulatorPage({
     pageId: "juyo-simulator",
     sectionId: "simulator"
   }), React.createElement("div", null, React.createElement(JuyoStickyBar, {
-    m: m
-  }), m.diversityError && React.createElement("div", {
+    m: m,
+    delta: delta
+  }), React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      flexWrap: 'wrap',
+      marginBottom: 10
+    }
+  }, React.createElement("button", {
+    type: "button",
+    onClick: resetAll,
+    style: {
+      minHeight: 38,
+      padding: '5px 14px',
+      borderRadius: 6,
+      fontSize: 12,
+      fontWeight: 700,
+      cursor: 'pointer',
+      border: '1px solid var(--line)',
+      background: 'var(--bg-2)',
+      color: 'var(--ink-1)'
+    }
+  }, "↺ 初期値に戻す"), React.createElement("button", {
+    type: "button",
+    onClick: undoOnce,
+    disabled: !history,
+    style: {
+      minHeight: 38,
+      padding: '5px 14px',
+      borderRadius: 6,
+      fontSize: 12,
+      fontWeight: 700,
+      cursor: history ? 'pointer' : 'default',
+      opacity: history ? 1 : 0.4,
+      border: '1px solid var(--line)',
+      background: 'var(--bg-2)',
+      color: 'var(--ink-1)'
+    }
+  }, "⤺ 1つ戻す"), React.createElement("span", {
+    style: {
+      fontSize: 10.5,
+      color: 'var(--ink-3)',
+      alignSelf: 'center'
+    }
+  }, "「1つ戻す」は直前の変更1段階（もう一度押すとやり直し）。上のバーの（+/−）は直前の操作からの変化量")), m.diversityError && React.createElement("div", {
     style: {
       marginBottom: 10,
       padding: '8px 12px',
@@ -62247,6 +62413,7 @@ function JuyoSimulatorPage({
     max: 23,
     step: 1,
     unit: ":00",
+    valueText: v => `${v}時から${v + 1}時`,
     onChange: v => setSelHour(v)
   }), React.createElement("div", {
     style: {
@@ -62282,10 +62449,7 @@ function JuyoSimulatorPage({
   }, "※ 設備アイコン（照明・ファン・モーター・ヒーター）は、選択時刻の負荷の大きさから機械的に導出したイメージ表示です（実際の設備構成・稼働順は工場によります）。負荷が大きい時刻ほど多くの設備がONになります。"), React.createElement(JuyoResultCards, {
     m: m,
     pfPct: pfPct,
-    onPfChange: p => {
-      if (p !== pfPct) setPresetId(null);
-      setPfPct(p);
-    }
+    onPfChange: changePf
   })), React.createElement("h2", {
     id: "keitozu"
   }, "系統図（変電所側で見る量・需要家側で見る量）"), React.createElement(SectionCheck, {
@@ -62433,6 +62597,10 @@ function JuyoSimulatorPage({
     }]
   }), React.createElement(UpdateLog, {
     entries: [{
+      date: "2026-07-20",
+      content: "v1.3: 操作性改善5点（ChatGPTレビュー全採用）: ①「初期値に戻す」＋「1つ戻す」ボタン（1段undo・再押下でやり直し） ②無効工場に「集計対象外」バッジ＋最大・平均を「—」表示（ミニバーもグレー化） ③スライダー読み上げ値に単位付与（aria-valuetext=「600キロワット」「80パーセント」「9時から10時」） ④全スライダーに±ステップボタン（スマホでの1目盛操作・読み上げ名つき） ⑤StickyBarに直前操作からの差分チップ（合成最大±kW・不等率±・総合負荷率±pt）＝操作と結果の因果を可視化",
+      reason: "ChatGPTレビュー5点（リセット不能・無効工場の誤解・読み上げ値に単位なし・細かい値指定の不便・因果の見えにくさ）を全採用。④は数値入力欄でなく±ボタン方式（誤入力バリデーション不要・タップ操作性）"
+    }, {
       date: "2026-07-20",
       content: "v1.2: アクセシビリティ改善（ChatGPTレビュー4点採用）: ①全スライダーに読み上げ用 aria-label（工場名つき） ②工場ごとの同名パターンボタンを aria-label で区別＋選択状態 aria-pressed ③力率ボタンに aria-pressed＋読み上げ名 ④StickyBar を role=status aria-live=polite 化し再計算結果を支援技術へ通知。同族のプリセット/演習の同名読込ボタン・気づき確認ボタンにも文脈つき aria-label を付与",
       reason: "ChatGPTアドバイス（スライダー無名・同名ボタン区別不能・選択状態非通知・再計算結果非通知）を全採用——操作型教材は支援技術でも操作可能であるべき"
