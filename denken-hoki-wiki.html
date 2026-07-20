@@ -60572,7 +60572,8 @@ function JuyoSimSlider({
   step,
   unit,
   onChange,
-  disabled
+  disabled,
+  srName
 }) {
   return React.createElement("div", {
     style: {
@@ -60604,6 +60605,7 @@ function JuyoSimSlider({
     step: step,
     value: value,
     disabled: disabled,
+    "aria-label": srName || label,
     onChange: e => onChange(Number(e.target.value)),
     style: {
       width: '100%',
@@ -60742,6 +60744,7 @@ function JuyoFactoryPanel({
     }
   }, React.createElement(JuyoSimSlider, {
     label: "設備容量",
+    srName: `工場${factory.name} 設備容量`,
     value: factory.capacity,
     min: 100,
     max: 1000,
@@ -60753,6 +60756,7 @@ function JuyoFactoryPanel({
     })
   }), React.createElement(JuyoSimSlider, {
     label: "需要率",
+    srName: `工場${factory.name} 需要率`,
     value: factory.demandPct,
     min: 10,
     max: 100,
@@ -60780,6 +60784,8 @@ function JuyoFactoryPanel({
       key: pid,
       type: "button",
       disabled: !factory.enabled,
+      "aria-pressed": active,
+      "aria-label": `工場${factory.name} 稼働パターン ${JUYO_PATTERNS[pid].label}`,
       onClick: () => onChange(index, {
         curveSource: {
           type: 'pattern',
@@ -61062,6 +61068,9 @@ function JuyoStickyBar({
     }
   }, val));
   return React.createElement("div", {
+    role: "status",
+    "aria-live": "polite",
+    "aria-atomic": "true",
     style: {
       position: 'sticky',
       top: 8,
@@ -61154,6 +61163,8 @@ function JuyoResultCards({
     key: p,
     type: "button",
     onClick: () => onPfChange(p),
+    "aria-pressed": pfPct === p,
+    "aria-label": `合成最大需要時の総合力率 ${p}%`,
     style: {
       flex: 1,
       minHeight: 34,
@@ -61311,6 +61322,7 @@ function JuyoPresetCards({
   const loadBtn = p => React.createElement("button", {
     type: "button",
     onClick: () => onLoad(p),
+    "aria-label": `${p.title} の条件をシミュレータに読込`,
     style: {
       minHeight: 40,
       padding: '6px 14px',
@@ -61584,6 +61596,7 @@ function JuyoExerciseMode({
     key: i
   }, s))), React.createElement("button", {
     type: "button",
+    "aria-label": ex.kind === 'forward' ? `${ex.title} の条件をシミュレータに読込` : `${ex.title}: 演習2の条件を読込して曲線で検算`,
     onClick: () => onLoad(ex.kind === 'forward' ? ex.factories : JUYO_EXERCISES[1].factories),
     style: {
       minHeight: 38,
@@ -61668,6 +61681,7 @@ function JuyoInsightChecklist({
     }, ins.lesson), !ins.auto && !done && React.createElement("button", {
       type: "button",
       onClick: () => onManualCheck(ins.key),
+      "aria-label": `気づき「${ins.title}」を確認した`,
       style: {
         marginTop: 6,
         minHeight: 34,
@@ -62419,6 +62433,10 @@ function JuyoSimulatorPage({
     }]
   }), React.createElement(UpdateLog, {
     entries: [{
+      date: "2026-07-20",
+      content: "v1.2: アクセシビリティ改善（ChatGPTレビュー4点採用）: ①全スライダーに読み上げ用 aria-label（工場名つき） ②工場ごとの同名パターンボタンを aria-label で区別＋選択状態 aria-pressed ③力率ボタンに aria-pressed＋読み上げ名 ④StickyBar を role=status aria-live=polite 化し再計算結果を支援技術へ通知。同族のプリセット/演習の同名読込ボタン・気づき確認ボタンにも文脈つき aria-label を付与",
+      reason: "ChatGPTアドバイス（スライダー無名・同名ボタン区別不能・選択状態非通知・再計算結果非通知）を全採用——操作型教材は支援技術でも操作可能であるべき"
+    }, {
       date: "2026-07-20",
       content: "v1.1: 系統図セクション追加（変電所（受電点）→母線→工場A〜Dの単線結線図・シミュレータ連動で数値が動く）。「合成最大・不等率・総合負荷率・力率・変圧器容量＝変電所側」「設備容量・需要率・負荷率＝需要家側」の視点の区別を図解し、結果カード冒頭とQuickReview（7問目）にも同区別を明記",
       reason: "監修者さん指摘「変電所における総合負荷率、力率など考慮されていない。系統図が必要でないか」——量自体は実装済みだったが『どの箱で測る量か』の構造図が無く、R3問13（変電所→需要家A・B・C）の構図と結びつかなかったため"
