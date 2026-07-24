@@ -61009,9 +61009,78 @@ function JuyoFactoryPanel({
     level: level
   })));
 }
+function JuyoFocusFormula({
+  focus,
+  m
+}) {
+  if (!focus || m.compositeMax <= JUYO_EPS) return null;
+  const T = (txt, color) => React.createElement("strong", {
+    style: {
+      color,
+      fontFamily: 'monospace'
+    }
+  }, txt);
+  const blue = 'var(--dgm-blue)',
+    red = 'var(--dgm-red)',
+    green = 'var(--dgm-green)',
+    gray = 'var(--ink-2)';
+  let line = null,
+    note = null;
+  if (focus === 'compositeMax') {
+    line = React.createElement("span", null, T('合成最大需要電力', blue), " ＝ 同じ時刻で全工場を合算した最高段（", React.createElement("strong", {
+      style: {
+        color: blue
+      }
+    }, "青丸"), "）＝ ", T(`${juyoFmtKw(m.compositeMax)} kW`, blue));
+    note = '時刻を無視して各ピークを足すΣ各最大（赤破線）とは別物。差がピーク分散効果。';
+  } else if (focus === 'sumMax') {
+    line = React.createElement("span", null, T('Σ各工場の最大需要電力', red), " ＝ 各工場のピーク（", React.createElement("strong", {
+      style: {
+        color: red
+      }
+    }, "赤縁の点"), "）を時刻無視で単純合計 ＝ ", T(`${juyoFmtKw(m.sumIndividualMax)} kW`, red));
+    note = '実際にこの値が同時に流れるわけではない——合成最大（青丸）との比が不等率。';
+  } else if (focus === 'diversity') {
+    line = React.createElement("span", null, "不等率 ＝ ", T('Σ各最大', red), " ÷ ", T('合成最大', blue), " ＝ ", T(juyoFmtKw(m.sumIndividualMax), red), " ÷ ", T(juyoFmtKw(m.compositeMax), blue), " ＝ ", T(juyoFmtRatio(m.diversityFactor), 'var(--accent-ink)'));
+    note = '分子＝赤破線（各ピークの時刻無視合計）／分母＝青丸（同時刻合算の最高段）。ピークのずれが大きいほど1から離れる。';
+  } else if (focus === 'load') {
+    line = React.createElement("span", null, "総合負荷率 ＝ ", T('合成平均', green), " ÷ ", T('合成最大', blue), " ＝ ", T(juyoFmtKw(m.compositeAverage), green), " ÷ ", T(juyoFmtKw(m.compositeMax), blue), " ＝ ", T(juyoFmtPct(m.totalLoadFactor), 'var(--accent-ink)'));
+    note = '緑の平均線と青丸の「高さ比」。緑の長方形（平均×24h）は塗り面積（1日電力量）と同じ面積——同じ電力量をどれだけ平らに使ったか。';
+  } else if (focus === 'demand') {
+    line = React.createElement("span", null, "全体の需要率 ＝ ", T('合成最大', blue), " ÷ ", T('Σ設備容量', gray), " ＝ ", T(juyoFmtKw(m.compositeMax), blue), " ÷ ", T(juyoFmtKw(m.sumCapacity), gray), " ＝ ", T(juyoFmtPct(m.overallDemandFactor), 'var(--accent-ink)'));
+    note = '灰色の天井線＝設備の定格合計。青丸（実際のピーク）が天井のどこまで届いたか——届かない分が未使用余力。分子はΣ各最大（赤破線）ではない点に注意。';
+  } else if (focus === 'average') {
+    line = React.createElement("span", null, T('合成平均需要電力', green), " ＝ 1日電力量 ÷ 24h ＝ ", T(`${juyoFmtKw(m.compositeEnergy)} kWh`, blue), " ÷ 24h ＝ ", T(`${juyoFmtKw(m.compositeAverage)} kW`, green));
+    note = '塗り面積（電力量）を24時間で均した高さが緑の平均線。緑の長方形と塗り面積は同じ面積。';
+  } else if (focus === 'energy') {
+    line = React.createElement("span", null, T('1日電力量', blue), " ＝ 合成曲線の下の塗り面積 ＝ ", T('合成平均', green), " × 24h ＝ ", T(`${juyoFmtKw(m.compositeEnergy)} kWh`, blue));
+    note = '電力量の計算に不等率は使わない（R3問13(a)のひっかけ）。面積＝電力量の見方は 6.0 デマンド値と電力量が基礎。';
+  } else {
+    return null;
+  }
+  return React.createElement("div", {
+    role: "status",
+    style: {
+      marginBottom: 8,
+      padding: '8px 12px',
+      borderRadius: 6,
+      border: '1px solid var(--accent)',
+      background: 'var(--bg-elev)',
+      fontSize: 12.5,
+      lineHeight: 1.7
+    }
+  }, React.createElement("div", null, line), note && React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: 'var(--ink-2)',
+      marginTop: 2
+    }
+  }, note));
+}
 function JuyoLoadCurveChart({
   m,
-  hour
+  hour,
+  focus
 }) {
   if (!m.rows.length) {
     return React.createElement("div", {
@@ -61026,7 +61095,13 @@ function JuyoLoadCurveChart({
       }
     }, "全工場が無効です。工場を1つ以上有効にすると日負荷曲線が表示されます。");
   }
-  const yTop = juyoNiceCeil(Math.max(m.sumIndividualMax, m.compositeMax) * 1.06);
+  const showCapacity = focus === 'demand';
+  const avgEmph = focus === 'load' || focus === 'average' || focus === 'energy';
+  const showAvgRect = focus === 'load' || focus === 'average';
+  const redEmph = focus === 'diversity' || focus === 'sumMax';
+  const peakEmph = focus === 'diversity' || focus === 'load' || focus === 'demand' || focus === 'compositeMax';
+  const areaEmph = focus === 'energy';
+  const yTop = juyoNiceCeil(Math.max(m.sumIndividualMax, m.compositeMax, showCapacity ? m.sumCapacity : 0) * 1.06);
   const X0 = 62,
     X1 = 782,
     Y0 = 40,
@@ -61036,6 +61111,16 @@ function JuyoLoadCurveChart({
   const stepPts = values => values.map((v, h) => `${xOf(h)},${yOf(v)} ${xOf(h + 1)},${yOf(v)}`).join(' ');
   const peakLabelY = Math.min(yOf(m.compositeMax) + 18, Y1 - 28);
   const cursorX = (xOf(hour) + xOf(hour + 1)) / 2;
+  const peakX = (xOf(m.peakHours[0]) + xOf(m.peakHours[0] + 1)) / 2;
+  const avgY = yOf(m.compositeAverage);
+  const factoryMaxDots = redEmph ? m.rows.map(r => {
+    const h = r.curve.findIndex(v => v > r.curveMax - 1e-6);
+    return {
+      name: r.name,
+      x: (xOf(h) + xOf(h + 1)) / 2,
+      y: yOf(r.curveMax)
+    };
+  }) : [];
   return React.createElement("svg", {
     viewBox: "0 0 820 392",
     width: "100%",
@@ -61044,7 +61129,7 @@ function JuyoLoadCurveChart({
       maxWidth: 820
     },
     role: "img",
-    "aria-label": "工場ごとの日負荷曲線（階段グラフ）と合成負荷曲線。合成曲線の下の塗り面積が1日電力量を表し、赤い破線が各工場の最大需要電力の合計、合成曲線の最高段が合成最大需要電力で、この2つの比が不等率になる"
+    "aria-label": "工場ごとの日負荷曲線（階段グラフ）と合成負荷曲線。合成曲線の下の塗り面積が1日電力量、緑の破線が合成平均需要電力、赤い破線が各工場の最大需要電力の合計、合成曲線の最高段が合成最大需要電力で、Σ各最大と合成最大の比が不等率、合成平均と合成最大の比が総合負荷率になる。結果カードを押すと対応する式の分子・分母が強調される"
   }, [0.25, 0.5, 0.75, 1].map(f => React.createElement("g", {
     key: f
   }, React.createElement("line", {
@@ -61103,8 +61188,20 @@ function JuyoLoadCurveChart({
     style: {
       fill: 'var(--dgm-blue)'
     },
-    opacity: "0.12",
+    opacity: areaEmph ? 0.26 : 0.12,
     stroke: "none"
+  }), showAvgRect && React.createElement("rect", {
+    x: X0,
+    y: avgY,
+    width: X1 - X0,
+    height: Y1 - avgY,
+    strokeWidth: "1.5",
+    strokeDasharray: "6 4",
+    style: {
+      fill: 'var(--dgm-green)',
+      stroke: 'var(--dgm-green)'
+    },
+    fillOpacity: "0.10"
   }), m.rows.map(r => React.createElement("polyline", {
     key: r.name,
     points: stepPts(r.curve),
@@ -61121,12 +61218,85 @@ function JuyoLoadCurveChart({
     style: {
       stroke: 'var(--dgm-blue)'
     }
+  }), showCapacity && React.createElement("g", null, React.createElement("line", {
+    x1: X0,
+    y1: yOf(m.sumCapacity),
+    x2: X1,
+    y2: yOf(m.sumCapacity),
+    strokeWidth: "2.5",
+    style: {
+      stroke: 'var(--ink-2)'
+    }
+  }), React.createElement("text", {
+    x: X0 + 4,
+    y: yOf(m.sumCapacity) - (Math.abs(yOf(m.sumCapacity) - yOf(m.sumIndividualMax)) < 16 ? 20 : 6),
+    fontSize: "11.5",
+    fontWeight: "700",
+    style: {
+      fill: 'var(--ink-2)'
+    }
+  }, "Σ設備容量 = ", juyoFmtKw(m.sumCapacity), " kW（設備の天井・全体の需要率の分母）"), React.createElement("line", {
+    x1: X1 - 24,
+    y1: yOf(m.sumCapacity),
+    x2: X1 - 24,
+    y2: yOf(m.compositeMax),
+    strokeWidth: "1.5",
+    strokeDasharray: "3 3",
+    style: {
+      stroke: 'var(--ink-2)'
+    }
   }), React.createElement("line", {
+    x1: X1 - 30,
+    y1: yOf(m.sumCapacity),
+    x2: X1 - 18,
+    y2: yOf(m.sumCapacity),
+    strokeWidth: "1.5",
+    style: {
+      stroke: 'var(--ink-2)'
+    }
+  }), React.createElement("line", {
+    x1: X1 - 30,
+    y1: yOf(m.compositeMax),
+    x2: X1 - 18,
+    y2: yOf(m.compositeMax),
+    strokeWidth: "1.5",
+    style: {
+      stroke: 'var(--ink-2)'
+    }
+  }), React.createElement("text", {
+    x: X1 - 34,
+    y: (yOf(m.sumCapacity) + yOf(m.compositeMax)) / 2 + 4,
+    textAnchor: "end",
+    fontSize: "10.5",
+    fontWeight: "700",
+    style: {
+      fill: 'var(--ink-2)'
+    }
+  }, "未使用余力 ", juyoFmtKw(m.sumCapacity - m.compositeMax), " kW")), React.createElement("line", {
+    x1: X0,
+    y1: avgY,
+    x2: X1,
+    y2: avgY,
+    strokeWidth: avgEmph ? 3 : 2,
+    strokeDasharray: "4 4",
+    style: {
+      stroke: 'var(--dgm-green)'
+    }
+  }), React.createElement("text", {
+    x: X1 - 4,
+    y: avgY - 6,
+    textAnchor: "end",
+    fontSize: "11.5",
+    fontWeight: "700",
+    style: {
+      fill: 'var(--dgm-green)'
+    }
+  }, "合成平均 = ", juyoFmtKw(m.compositeAverage), " kW", avgEmph ? '（総合負荷率の分子）' : ''), React.createElement("line", {
     x1: X0,
     y1: yOf(m.sumIndividualMax),
     x2: X1,
     y2: yOf(m.sumIndividualMax),
-    strokeWidth: "2",
+    strokeWidth: redEmph ? 3 : 2,
     strokeDasharray: "7 5",
     style: {
       stroke: 'var(--dgm-red)'
@@ -61139,8 +61309,27 @@ function JuyoLoadCurveChart({
     style: {
       fill: 'var(--dgm-red)'
     }
-  }, "Σ各最大 = ", juyoFmtKw(m.sumIndividualMax), " kW（不等率の分子）"), React.createElement("circle", {
-    cx: (xOf(m.peakHours[0]) + xOf(m.peakHours[0] + 1)) / 2,
+  }, "Σ各最大 = ", juyoFmtKw(m.sumIndividualMax), " kW（不等率の分子）"), factoryMaxDots.map(d => React.createElement("circle", {
+    key: d.name,
+    cx: d.x,
+    cy: d.y,
+    r: "5",
+    strokeWidth: "2.5",
+    style: {
+      fill: JUYO_FACTORY_COLORS[d.name],
+      stroke: 'var(--dgm-red)'
+    }
+  })), peakEmph && React.createElement("circle", {
+    cx: peakX,
+    cy: yOf(m.compositeMax),
+    r: "11",
+    fill: "none",
+    strokeWidth: "2.5",
+    style: {
+      stroke: 'var(--dgm-blue)'
+    }
+  }), React.createElement("circle", {
+    cx: peakX,
     cy: yOf(m.compositeMax),
     r: "6",
     style: {
@@ -61162,9 +61351,9 @@ function JuyoLoadCurveChart({
     y: Y1 - 8,
     textAnchor: "middle",
     fontSize: "11.5",
-    fontWeight: "700",
+    fontWeight: areaEmph ? '800' : '700',
     style: {
-      fill: 'var(--ink-2)'
+      fill: areaEmph ? 'var(--dgm-blue)' : 'var(--ink-2)'
     }
   }, "この面積＝1日電力量 ", juyoFmtKw(m.compositeEnergy), " kWh"), React.createElement("line", {
     x1: cursorX,
@@ -61245,37 +61434,69 @@ function JuyoStickyBar({
 function JuyoResultCards({
   m,
   pfPct,
-  onPfChange
+  onPfChange,
+  focus,
+  onFocus
 }) {
-  const card = (label, value, sub, emphasized) => React.createElement("div", {
-    style: {
-      border: emphasized ? '2px solid var(--accent)' : '1px solid var(--line)',
+  const card = (label, value, sub, opts = {}) => {
+    const {
+      emphasized,
+      focusKey
+    } = opts;
+    const active = focusKey && focus === focusKey;
+    const style = {
+      border: active ? '2px solid var(--dgm-blue)' : emphasized ? '2px solid var(--accent)' : '1px solid var(--line)',
       borderRadius: 8,
       padding: '8px 10px',
-      background: emphasized ? 'var(--bg-elev)' : 'var(--card)',
+      background: active || emphasized ? 'var(--bg-elev)' : 'var(--card)',
       minWidth: 0
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 10.5,
-      color: 'var(--ink-3)',
-      lineHeight: 1.35
-    }
-  }, label), React.createElement("div", {
-    style: {
-      fontFamily: 'monospace',
-      fontWeight: 800,
-      fontSize: 17,
-      color: emphasized ? 'var(--accent-ink)' : 'var(--ink-1)',
-      margin: '2px 0'
-    }
-  }, value), sub && React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: 'var(--ink-3)',
-      lineHeight: 1.4
-    }
-  }, sub));
+    };
+    const body = React.createElement(React.Fragment, null, React.createElement("div", {
+      style: {
+        fontSize: 10.5,
+        color: 'var(--ink-3)',
+        lineHeight: 1.35
+      }
+    }, focusKey ? '🔍 ' : '', label), React.createElement("div", {
+      style: {
+        fontFamily: 'monospace',
+        fontWeight: 800,
+        fontSize: 17,
+        color: emphasized || active ? 'var(--accent-ink)' : 'var(--ink-1)',
+        margin: '2px 0'
+      }
+    }, value), sub && React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: 'var(--ink-3)',
+        lineHeight: 1.4
+      }
+    }, sub), active && React.createElement("div", {
+      style: {
+        fontSize: 10,
+        fontWeight: 700,
+        color: 'var(--dgm-blue)',
+        marginTop: 2
+      }
+    }, "グラフで点灯中（再タップで解除）"));
+    if (!focusKey) return React.createElement("div", {
+      style: style
+    }, body);
+    return React.createElement("button", {
+      type: "button",
+      onClick: () => onFocus(focusKey),
+      "aria-pressed": active,
+      "aria-label": `${label}: 式の分子・分母を上のグラフで${active ? '解除' : '強調表示'}`,
+      style: {
+        ...style,
+        textAlign: 'left',
+        cursor: 'pointer',
+        font: 'inherit',
+        display: 'block',
+        width: '100%'
+      }
+    }, body);
+  };
   const empty = m.compositeMax <= JUYO_EPS;
   return React.createElement("div", null, React.createElement("div", {
     style: {
@@ -61288,14 +61509,33 @@ function JuyoResultCards({
     style: {
       color: 'var(--ink-2)'
     }
-  }, "変電所（受電点）側で見る量"), "。各工場側の量（設備容量・需要率・負荷率）は上の工場パネル内に表示（視点の区別は次の「系統図」の節）。"), React.createElement("div", {
+  }, "変電所（受電点）側で見る量"), "。各工場側の量（設備容量・需要率・負荷率）は上の工場パネル内に表示（視点の区別は次の「系統図」の節）。 🔍つきカードをタップすると、その式の", React.createElement("strong", {
+    style: {
+      color: 'var(--ink-2)'
+    }
+  }, "分子・分母が上のグラフで点灯"), "する（再タップで解除）。"), React.createElement("div", {
     style: {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
       gap: 8,
       marginBottom: 8
     }
-  }, card('合成最大需要電力', empty ? '—' : `${juyoFmtKw(m.compositeMax)} kW`, `ピーク時間帯: ${juyoPeakBandLabel(m.peakHours)}`), card('Σ各工場の最大需要電力', empty ? '—' : `${juyoFmtKw(m.sumIndividualMax)} kW`, '時刻を無視した単純合計（赤破線）'), card('不等率', juyoFmtRatio(m.diversityFactor), 'Σ各最大 ÷ 合成最大（通常1以上）', true), card('総合負荷率', juyoFmtPct(m.totalLoadFactor), '合成平均 ÷ 合成最大'), card('全体の需要率', juyoFmtPct(m.overallDemandFactor), `合成最大 ÷ Σ設備容量（${juyoFmtKw(m.sumCapacity) === '—' ? 0 : juyoFmtKw(m.sumCapacity)}kW）`), card('合成平均需要電力', empty ? '—' : `${juyoFmtKw(m.compositeAverage)} kW`, '合成曲線の24h平均'), card('1日電力量', empty ? '—' : `${juyoFmtKw(m.compositeEnergy)} kWh`, '合成平均 × 24h（グラフの塗り面積）'), card('必要皮相電力', empty ? '—' : `${juyoFmtKva(m.apparentKva)} kVA`, `合成最大 ÷ 力率${pfPct}%`), card('100kVA変圧器 理論最少台数', empty ? '—' : `${m.trafoCount} 台`, '皮相電力 ÷ 100kVA を切上げ'), React.createElement("div", {
+  }, card('合成最大需要電力', empty ? '—' : `${juyoFmtKw(m.compositeMax)} kW`, `ピーク時間帯: ${juyoPeakBandLabel(m.peakHours)}`, {
+    focusKey: 'compositeMax'
+  }), card('Σ各工場の最大需要電力', empty ? '—' : `${juyoFmtKw(m.sumIndividualMax)} kW`, '時刻を無視した単純合計（赤破線）', {
+    focusKey: 'sumMax'
+  }), card('不等率', juyoFmtRatio(m.diversityFactor), 'Σ各最大 ÷ 合成最大（通常1以上）', {
+    emphasized: true,
+    focusKey: 'diversity'
+  }), card('総合負荷率', juyoFmtPct(m.totalLoadFactor), '合成平均 ÷ 合成最大', {
+    focusKey: 'load'
+  }), card('全体の需要率', juyoFmtPct(m.overallDemandFactor), `合成最大 ÷ Σ設備容量（${juyoFmtKw(m.sumCapacity) === '—' ? 0 : juyoFmtKw(m.sumCapacity)}kW）`, {
+    focusKey: 'demand'
+  }), card('合成平均需要電力', empty ? '—' : `${juyoFmtKw(m.compositeAverage)} kW`, '合成曲線の24h平均（緑破線）', {
+    focusKey: 'average'
+  }), card('1日電力量', empty ? '—' : `${juyoFmtKw(m.compositeEnergy)} kWh`, '合成平均 × 24h（グラフの塗り面積）', {
+    focusKey: 'energy'
+  }), card('必要皮相電力', empty ? '—' : `${juyoFmtKva(m.apparentKva)} kVA`, `合成最大 ÷ 力率${pfPct}%`), card('100kVA変圧器 理論最少台数', empty ? '—' : `${m.trafoCount} 台`, '皮相電力 ÷ 100kVA を切上げ'), React.createElement("div", {
     style: {
       border: '1px solid var(--line)',
       borderRadius: 8,
@@ -62056,6 +62296,8 @@ function JuyoSimulatorPage({
   const [pfPct, setPfPct] = React.useState(100);
   const [presetId, setPresetId] = React.useState(null);
   const [selHour, setSelHour] = React.useState(null);
+  const [focusMetric, setFocusMetric] = React.useState(null);
+  const toggleFocus = k => setFocusMetric(prev => prev === k ? null : k);
   const m = React.useMemo(() => juyoCompute(factories, pfPct), [factories, pfPct]);
   const hour = selHour === null ? m.peakHours.length ? m.peakHours[0] : 12 : selHour;
   const [history, setHistory] = React.useState(null);
@@ -62412,9 +62654,13 @@ function JuyoSimulatorPage({
       padding: 10,
       marginBottom: 8
     }
-  }, React.createElement(JuyoLoadCurveChart, {
+  }, React.createElement(JuyoFocusFormula, {
+    focus: focusMetric,
+    m: m
+  }), React.createElement(JuyoLoadCurveChart, {
     m: m,
-    hour: hour
+    hour: hour,
+    focus: focusMetric
   })), m.rows.length > 0 && React.createElement("div", {
     style: {
       display: 'flex',
@@ -62485,7 +62731,27 @@ function JuyoSimulatorPage({
     style: {
       stroke: 'var(--dgm-red)'
     }
-  })), "Σ各最大（赤破線）")), React.createElement("div", {
+  })), "Σ各最大（赤破線）"), React.createElement("span", {
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 4
+    }
+  }, React.createElement("svg", {
+    width: "26",
+    height: "8",
+    "aria-hidden": "true"
+  }, React.createElement("line", {
+    x1: "1",
+    y1: "4",
+    x2: "25",
+    y2: "4",
+    strokeWidth: "2",
+    strokeDasharray: "4 4",
+    style: {
+      stroke: 'var(--dgm-green)'
+    }
+  })), "合成平均（緑破線）")), React.createElement("div", {
     style: {
       marginBottom: 12,
       maxWidth: 480
@@ -62533,7 +62799,9 @@ function JuyoSimulatorPage({
   }, "※ 設備アイコン（照明・ファン・モーター・ヒーター）は、選択時刻の負荷の大きさから機械的に導出したイメージ表示です（実際の設備構成・稼働順は工場によります）。負荷が大きい時刻ほど多くの設備がONになります。"), React.createElement(JuyoResultCards, {
     m: m,
     pfPct: pfPct,
-    onPfChange: changePf
+    onPfChange: changePf,
+    focus: focusMetric,
+    onFocus: toggleFocus
   })), React.createElement("h2", {
     id: "keitozu"
   }, "系統図（変電所側で見る量・需要家側で見る量）"), React.createElement(SectionCheck, {
@@ -62560,7 +62828,7 @@ function JuyoSimulatorPage({
       fontSize: 13,
       lineHeight: 1.9
     }
-  }, React.createElement("li", null, React.createElement("strong", null, "細い階段線（色＋線種で区別）"), " ＝ 各工場の日負荷曲線。各線の最高段がその工場の", React.createElement("strong", null, "最大需要電力"), "（＝設備容量×需要率）"), React.createElement("li", null, React.createElement("strong", null, "太い実線"), " ＝ 合成負荷曲線（同じ時刻の各工場を合算）。その最高段が", React.createElement("strong", null, "合成最大需要電力"), "＝", React.createElement("strong", null, "不等率の分母"), "（結果カードにピーク時間帯を表示）"), React.createElement("li", null, React.createElement("strong", null, "赤い破線"), " ＝ Σ各工場の最大需要電力（時刻無視の単純合計）＝", React.createElement("strong", null, "不等率の分子"), "。太線がこの破線に届かない「すき間」がピーク分散効果"), React.createElement("li", null, React.createElement("strong", null, "薄い塗り面積"), " ＝ 1日電力量[kWh]。", React.createElement("strong", null, "負荷率 ＝ 面積 ÷（最大需要電力 × 24h）"), "——需要率を変えても面積と最大が同倍率で変わるので負荷率は不変（このモデルの性質であり、一般の実負荷で常に成り立つ法則ではない）"), React.createElement("li", null, "昼・夜ピークのパターンは24h平均が60%になるよう設計（月負荷率60%の R4上問12 とパターン選択だけで整合する）")), React.createElement("div", {
+  }, React.createElement("li", null, React.createElement("strong", null, "細い階段線（色＋線種で区別）"), " ＝ 各工場の日負荷曲線。各線の最高段がその工場の", React.createElement("strong", null, "最大需要電力"), "（＝設備容量×需要率）"), React.createElement("li", null, React.createElement("strong", null, "太い実線"), " ＝ 合成負荷曲線（同じ時刻の各工場を合算）。その最高段が", React.createElement("strong", null, "合成最大需要電力"), "＝", React.createElement("strong", null, "不等率の分母"), "（結果カードにピーク時間帯を表示）"), React.createElement("li", null, React.createElement("strong", null, "赤い破線"), " ＝ Σ各工場の最大需要電力（時刻無視の単純合計）＝", React.createElement("strong", null, "不等率の分子"), "。太線がこの破線に届かない「すき間」がピーク分散効果"), React.createElement("li", null, React.createElement("strong", null, "緑の破線"), " ＝ 合成平均需要電力（1日電力量 ÷ 24h）＝", React.createElement("strong", null, "総合負荷率の分子"), "。総合負荷率は「緑の平均線と合成最大（青丸）の高さ比」として読める"), React.createElement("li", null, React.createElement("strong", null, "結果カードの🔍"), " ＝ タップするとその式の分子・分母がグラフ上で点灯する。「全体の需要率」を押すと", React.createElement("strong", null, "Σ設備容量の天井線"), "と未使用余力、「総合負荷率」を押すと", React.createElement("strong", null, "平均×24hの長方形（塗り面積と等積）"), "が現れる"), React.createElement("li", null, React.createElement("strong", null, "薄い塗り面積"), " ＝ 1日電力量[kWh]。", React.createElement("strong", null, "負荷率 ＝ 面積 ÷（最大需要電力 × 24h）"), "——需要率を変えても面積と最大が同倍率で変わるので負荷率は不変（このモデルの性質であり、一般の実負荷で常に成り立つ法則ではない）"), React.createElement("li", null, "昼・夜ピークのパターンは24h平均が60%になるよう設計（月負荷率60%の R4上問12 とパターン選択だけで整合する）")), React.createElement("div", {
     style: {
       padding: '8px 12px',
       background: 'var(--bg-2)',
@@ -62681,6 +62949,10 @@ function JuyoSimulatorPage({
     }]
   }), React.createElement(UpdateLog, {
     entries: [{
+      date: "2026-07-25",
+      content: "v1.4: グラフと用語の接地改善（ChatGPTレビュー反映）: ①合成平均需要電力の緑破線を常時表示（総合負荷率＝緑線と青丸の高さ比として読める） ②結果カード7枚（合成最大・Σ各最大・不等率・総合負荷率・全体の需要率・合成平均・1日電力量）をタップすると、式の分子・分母が同色でグラフ点灯＋式バー表示（赤=Σ各最大／青=合成最大・面積／緑=合成平均／灰=Σ設備容量） ③「全体の需要率」タップでΣ設備容量の天井線＋未使用余力ブラケットを表示（分子がΣ各最大でない点の注意書きつき） ④「総合負荷率」「合成平均」タップで平均×24hの等積長方形を表示（同じ電力量をどれだけ平らに使ったか）",
+      reason: "ChatGPTアドバイス「設備容量・平均需要電力・電力量・合わせた需要率・総合負荷率が数値理解に寄っている——天井線・平均線・面積・分子分母の色対応が必要」を反映。操作（スライダー）と用語の一対一対応不足を、カード⇔グラフの連動で補完"
+    }, {
       date: "2026-07-20",
       content: "v1.3: 操作性改善5点（ChatGPTレビュー全採用）: ①「初期値に戻す」＋「1つ戻す」ボタン（1段undo・再押下でやり直し） ②無効工場に「集計対象外」バッジ＋最大・平均を「—」表示（ミニバーもグレー化） ③スライダー読み上げ値に単位付与（aria-valuetext=「600キロワット」「80パーセント」「9時から10時」） ④全スライダーに±ステップボタン（スマホでの1目盛操作・読み上げ名つき） ⑤StickyBarに直前操作からの差分チップ（合成最大±kW・不等率±・総合負荷率±pt）＝操作と結果の因果を可視化",
       reason: "ChatGPTレビュー5点（リセット不能・無効工場の誤解・読み上げ値に単位なし・細かい値指定の不便・因果の見えにくさ）を全採用。④は数値入力欄でなく±ボタン方式（誤入力バリデーション不要・タップ操作性）"
