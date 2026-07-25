@@ -13973,6 +13973,13 @@ function App() {
       .topbar { flex-wrap: wrap; row-gap: 6px; padding: 8px 12px !important; }
       .topbar div[aria-label="アクセント色テーマ"] { max-width: 100%; overflow-x: auto; }
     }
+    /* 600px 以下（スマホ実機幅）では 10色アクセントパレットを隠して TopBar を2段に収める。
+       sticky な TopBar が3段（約105px）になると本文の可視領域を食うため。ダーク切替と検索は残す。
+       PC・タブレットでは従来どおり表示するので機能自体は失われない。 */
+    @media (max-width: 600px) {
+      /* TopBar 内の要素は inline style で display:flex が付いているため !important が必要 */
+      .topbar div[aria-label="アクセント色テーマ"] { display: none !important; }
+    }
   `;
   document.head.appendChild(style);
 })();
@@ -60573,7 +60580,35 @@ const JUYO_R3_CURVES = {
   B: JUYO_HOURS.map(h => h >= 10 && h < 22 ? 300 : 120),
   C: JUYO_HOURS.map(h => h >= 16 ? 420 : h >= 10 ? 188 : 156)
 };
-function juyoCompute(factories, pfPct) {
+const JUYO_PERIODS = [{
+  id: 'day',
+  label: '日',
+  hours: 24,
+  lfName: '日負荷率',
+  note: '24 h'
+}, {
+  id: 'mon30',
+  label: '月(30日)',
+  hours: 720,
+  lfName: '月負荷率',
+  note: '24×30 = 720 h'
+}, {
+  id: 'mon31',
+  label: '月(31日)',
+  hours: 744,
+  lfName: '月負荷率',
+  note: '24×31 = 744 h'
+}, {
+  id: 'year',
+  label: '年',
+  hours: 8760,
+  lfName: '年負荷率',
+  note: '24×365 = 8760 h'
+}];
+function juyoPeriodOf(id) {
+  return JUYO_PERIODS.find(p => p.id === id) || JUYO_PERIODS[0];
+}
+function juyoCompute(factories, pfPct, periodId) {
   const rows = factories.filter(f => f.enabled).map(f => {
     const nominalMax = f.capacity * f.demandPct / 100;
     const curve = f.curveSource.type === 'custom' ? f.curveSource.values.slice() : JUYO_HOURS.map(h => JUYO_PATTERNS[f.curveSource.patternId].prof(h) * nominalMax);
@@ -60612,6 +60647,8 @@ function juyoCompute(factories, pfPct) {
   const overallDemandFactor = compositeMax > JUYO_EPS && sumCapacity > 0 ? compositeMax / sumCapacity : null;
   const apparentKva = compositeMax > JUYO_EPS ? compositeMax / (pfPct / 100) : null;
   const trafoCount = apparentKva !== null ? Math.ceil(apparentKva / 100 - 1e-9) : null;
+  const period = juyoPeriodOf(periodId);
+  const periodEnergy = compositeAverage * period.hours;
   return {
     rows,
     composite,
@@ -60629,7 +60666,9 @@ function juyoCompute(factories, pfPct) {
     overallDemandFactor,
     pfPct,
     apparentKva,
-    trafoCount
+    trafoCount,
+    period,
+    periodEnergy
   };
 }
 function juyoFmtKw(v) {
@@ -60645,6 +60684,14 @@ function juyoFmtPct(v) {
 }
 function juyoFmtRatio(v) {
   return v === null || v === undefined ? '—' : v.toFixed(2);
+}
+function juyoFmtMwh(v) {
+  if (v === null || v === undefined) return '—';
+  const kwh = `${Math.round(v).toLocaleString('ja-JP')} kWh`;
+  if (v < 10000) return kwh;
+  return `${(v / 1000).toLocaleString('ja-JP', {
+    maximumFractionDigits: 1
+  })} MW・h`;
 }
 function juyoPeakBandLabel(peakHours) {
   if (!peakHours || peakHours.length === 0) return '—';
@@ -61514,6 +61561,91 @@ function JuyoStickyBar({
     m: m
   })));
 }
+function JuyoPeriodSelector({
+  m,
+  periodId,
+  onChange
+}) {
+  const p = m.period;
+  return React.createElement("div", {
+    style: {
+      marginBottom: 8,
+      padding: '8px 12px',
+      border: '1px solid var(--line)',
+      borderRadius: 8,
+      background: 'var(--card)'
+    }
+  }, React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10,
+      flexWrap: 'wrap',
+      alignItems: 'center'
+    }
+  }, React.createElement("span", {
+    style: {
+      fontSize: 11.5,
+      fontWeight: 700
+    }
+  }, "集計期間"), React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 5,
+      flexWrap: 'wrap'
+    },
+    role: "group",
+    "aria-label": "負荷率と電力量の集計期間"
+  }, JUYO_PERIODS.map(op => {
+    const active = periodId === op.id;
+    return React.createElement("button", {
+      key: op.id,
+      type: "button",
+      onClick: () => onChange(op.id),
+      "aria-pressed": active,
+      "aria-label": `集計期間 ${op.label}（総時間 ${op.hours}時間・${op.lfName}）`,
+      style: {
+        minHeight: 32,
+        padding: '3px 10px',
+        borderRadius: 6,
+        fontSize: 11.5,
+        cursor: 'pointer',
+        border: active ? '2px solid var(--accent)' : '1px solid var(--line)',
+        background: active ? 'var(--bg-elev)' : 'var(--bg-2)',
+        color: active ? 'var(--accent-ink)' : 'var(--ink-1)',
+        fontWeight: active ? 700 : 400
+      }
+    }, op.label);
+  })), React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: 'var(--ink-2)',
+      fontFamily: 'monospace'
+    }
+  }, "総時間 ", p.note, " → ", p.lfName)), React.createElement("div", {
+    style: {
+      fontSize: 10.5,
+      color: 'var(--ink-3)',
+      lineHeight: 1.6,
+      marginTop: 5
+    }
+  }, "期間を変えても", React.createElement("strong", {
+    style: {
+      color: 'var(--ink-2)'
+    }
+  }, "負荷率の式は「平均 ÷ 最大」のまま"), "——変わるのは電力量を出すときに掛ける総時間だけ。 ⚠ ただし", React.createElement("strong", {
+    style: {
+      color: 'var(--ink-2)'
+    }
+  }, "本モデルは同じ日負荷曲線を期間中ずっと繰り返す前提"), "なので、期間を変えても負荷率の", React.createElement("strong", {
+    style: {
+      color: 'var(--ink-2)'
+    }
+  }, "値は同じ"), "になる。 実際の試験・実務では月や年の最大需要電力が別の日に立つため、通常は", React.createElement("strong", {
+    style: {
+      color: 'var(--ink-2)'
+    }
+  }, "年負荷率 < 月負荷率 < 日負荷率"), "となる（値が一致するのはこのモデルの性質）。"));
+}
 function JuyoResultCards({
   m,
   pfPct,
@@ -61610,7 +61742,7 @@ function JuyoResultCards({
   }), card('不等率', juyoFmtRatio(m.diversityFactor), 'Σ各最大 ÷ 合成最大（通常1以上）', {
     emphasized: true,
     focusKey: 'diversity'
-  }), card('総合負荷率（＝日負荷率）', juyoFmtPct(m.totalLoadFactor), '合成平均 ÷ 合成最大。この画面は1日なので日負荷率', {
+  }), card(`総合負荷率（＝${m.period.lfName}）`, juyoFmtPct(m.totalLoadFactor), `合成平均 ÷ 合成最大（期間: ${m.period.label}・総時間${m.period.note}）`, {
     focusKey: 'load'
   }), card('全体の需要率', juyoFmtPct(m.overallDemandFactor), `合成最大 ÷ Σ負荷設備容量（${juyoFmtKw(m.sumCapacity) === '—' ? 0 : juyoFmtKw(m.sumCapacity)}kW）`, {
     focusKey: 'demand'
@@ -61618,7 +61750,7 @@ function JuyoResultCards({
     focusKey: 'average'
   }), card('1日電力量', empty ? '—' : `${juyoFmtKw(m.compositeEnergy)} kWh`, '合成平均 × 24h（グラフの塗り面積）', {
     focusKey: 'energy'
-  }), card('必要皮相電力', empty ? '—' : `${juyoFmtKva(m.apparentKva)} kVA`, `合成最大 ÷ 力率${pfPct}%（変圧器設備容量[kVA]の必要下限）`), card('100kVA変圧器 理論最少台数', empty ? '—' : `${m.trafoCount} 台`, '皮相電力 ÷ 100kVA を切上げ（R4上問12(a)の形）'), React.createElement("div", {
+  }), m.period.id !== 'day' && card(`${m.period.label}の電力量`, empty ? '—' : `${juyoFmtMwh(m.periodEnergy)}`, `合成平均 × ${m.period.note}${m.period.id === 'mon30' ? '（R4上問12(b)の形）' : ''}`), card('必要皮相電力', empty ? '—' : `${juyoFmtKva(m.apparentKva)} kVA`, `合成最大 ÷ 力率${pfPct}%（変圧器設備容量[kVA]の必要下限）`), card('100kVA変圧器 理論最少台数', empty ? '—' : `${m.trafoCount} 台`, '皮相電力 ÷ 100kVA を切上げ（R4上問12(a)の形）'), React.createElement("div", {
     style: {
       border: '1px solid var(--line)',
       borderRadius: 8,
@@ -61664,6 +61796,7 @@ function JuyoResultCards({
 const JUYO_PRESETS = [{
   id: 'r4',
   pfPct: 90,
+  periodId: 'mon30',
   title: 'R4上 問12（単独需要家：変圧器台数・月電力量）',
   cond: '設備容量800kW・需要率70%・月負荷率60%・総合力率90%・100kVA変圧器',
   factories: [{
@@ -61706,6 +61839,7 @@ const JUYO_PRESETS = [{
 }, {
   id: 'r3',
   pfPct: 100,
+  periodId: 'day',
   title: 'R3 問13（需要家A・B・C：1日電力量・総合負荷率）',
   cond: 'A: 800kW・需要率55%・負荷率50% ／ B: 500kW・60%・70% ／ C: 600kW・70%・60% ／ 不等率1.25',
   factories: [{
@@ -62763,6 +62897,7 @@ function JuyoSimulatorPage({
   const [pfPct, setPfPct] = React.useState(100);
   const [presetId, setPresetId] = React.useState(null);
   const [selHour, setSelHour] = React.useState(null);
+  const [periodId, setPeriodId] = React.useState('day');
   const [focusMetric, setFocusMetric] = React.useState(null);
   const toggleFocus = k => setFocusMetric(prev => prev === k ? null : k);
   const [scenarioId, setScenarioId] = React.useState(null);
@@ -62785,7 +62920,7 @@ function JuyoSimulatorPage({
       app.classList.remove('wide-focus');
     };
   }, [wideMode]);
-  const m = React.useMemo(() => juyoCompute(factories, pfPct), [factories, pfPct]);
+  const m = React.useMemo(() => juyoCompute(factories, pfPct, periodId), [factories, pfPct, periodId]);
   const hour = selHour === null ? m.peakHours.length ? m.peakHours[0] : 12 : selHour;
   const [history, setHistory] = React.useState(null);
   const snapshot = () => setHistory({
@@ -62794,7 +62929,8 @@ function JuyoSimulatorPage({
     presetId,
     selHour,
     scenarioStep,
-    focusMetric
+    focusMetric,
+    periodId
   });
   const prevMRef = React.useRef(null);
   const [delta, setDelta] = React.useState(null);
@@ -62846,6 +62982,7 @@ function JuyoSimulatorPage({
     setPresetId(preset.id);
     setSelHour(null);
     setScenarioStep(null);
+    if (preset.periodId) setPeriodId(preset.periodId);
   };
   const loadExercise = exFactories => {
     snapshot();
@@ -62859,6 +62996,7 @@ function JuyoSimulatorPage({
     setPresetId(null);
     setSelHour(null);
     setScenarioStep(null);
+    setPeriodId('day');
   };
   const loadScenarioStep = (sc, idx) => {
     snapshot();
@@ -62866,6 +63004,7 @@ function JuyoSimulatorPage({
     setPfPct(100);
     setPresetId(null);
     setSelHour(null);
+    setPeriodId('day');
     setScenarioId(sc.id);
     setScenarioStep(idx);
     setFocusMetric(sc.focus);
@@ -62889,6 +63028,7 @@ function JuyoSimulatorPage({
     setPresetId(null);
     setSelHour(null);
     setScenarioStep(null);
+    setPeriodId('day');
   };
   const undoOnce = () => {
     if (!history) return;
@@ -62898,7 +63038,8 @@ function JuyoSimulatorPage({
       presetId,
       selHour,
       scenarioStep,
-      focusMetric
+      focusMetric,
+      periodId
     };
     setFactories(history.factories);
     setPfPct(history.pfPct);
@@ -62906,6 +63047,7 @@ function JuyoSimulatorPage({
     setSelHour(history.selHour);
     setScenarioStep(history.scenarioStep);
     setFocusMetric(history.focusMetric);
+    setPeriodId(history.periodId);
     setHistory(cur);
   };
   React.useEffect(() => {
@@ -63336,7 +63478,11 @@ function JuyoSimulatorPage({
       lineHeight: 1.6,
       marginBottom: 12
     }
-  }, "※ 需要率のミニバー: 色のついた分＝最大需要／グレーの残り＝「全設備が同時には動かない分」＝需要率が1未満になる理由（バーにカーソルを載せると内訳を表示）。 設備アイコン（💡照明・🌀ファン・⚙️モーター・🔥ヒーター）は選択時刻の負荷の大きさから機械的に導出したイメージ表示で、負荷が大きい時刻ほど多くONになります（実際の設備構成・稼働順は工場によります）。"))), React.createElement(JuyoResultCards, {
+  }, "※ 需要率のミニバー: 色のついた分＝最大需要／グレーの残り＝「全設備が同時には動かない分」＝需要率が1未満になる理由（バーにカーソルを載せると内訳を表示）。 設備アイコン（💡照明・🌀ファン・⚙️モーター・🔥ヒーター）は選択時刻の負荷の大きさから機械的に導出したイメージ表示で、負荷が大きい時刻ほど多くONになります（実際の設備構成・稼働順は工場によります）。"))), React.createElement(JuyoPeriodSelector, {
+    m: m,
+    periodId: periodId,
+    onChange: setPeriodId
+  }), React.createElement(JuyoResultCards, {
     m: m,
     pfPct: pfPct,
     onPfChange: changePf,
@@ -63421,13 +63567,13 @@ function JuyoSimulatorPage({
     key: "d"
   }, "カード", React.createElement("strong", null, "「必要皮相電力」→「理論最少台数」"), "の2枚（力率ボタンで変化）。まとめ式は ", navLink('hensyatsuki-yoryo', '6.4 変圧器容量')), '合成最大 ÷ 力率 ＝ 必要皮相[kVA] → 標準容量・台数を選定。まとめて 設備容量×需要率÷(不等率×力率)'], ['日負荷率', '「日負荷率」（H23 問11 のテーマ）', React.createElement("span", {
     key: "e"
-  }, "カード", React.createElement("strong", null, "「総合負荷率（＝日負荷率）」"), "。この画面は24hモデルなので総合負荷率がそのまま日負荷率"), '1日の平均 ÷ 1日の最大（総時間 24h）'], ['月負荷率', '「月負荷率60%」（R4上 問12(b)）', React.createElement("span", {
+  }, React.createElement("strong", null, "集計期間＝日"), "のときのカード「総合負荷率（＝日負荷率）」"), '1日の平均 ÷ 1日の最大（総時間 24h）'], ['月負荷率', '「月負荷率60%」（R4上 問12(b)）', React.createElement("span", {
     key: "f"
-  }, React.createElement("strong", null, "R4上問12プリセット"), "で再現（24h平均が60%になる波形を30日繰り返すモデル）"), '月の平均 ÷ 月の最大（総時間 720h＝30日／744h＝31日）'], ['年負荷率', React.createElement("span", {
+  }, React.createElement("strong", null, "集計期間＝月(30日)"), "に切り替える（R4上問12プリセットは読込と同時に自動で月30日になる）。「月(30日)の電力量」カードが 242 MW・h を再現"), '月の平均 ÷ 月の最大（総時間 720h＝30日／744h＝31日）'], ['年負荷率', React.createElement("span", {
     key: "g1"
-  }, "期間別公式として ", navLink('furitsu', '6.2 負荷率'), " に記載。", React.createElement("strong", null, "過去問データ上の出題表現は未確認"), "（honest-hold）"), React.createElement("span", {
+  }, "期間別公式として ", navLink('furitsu', '6.2 負荷率'), " に記載。", React.createElement("strong", null, "出題表現は未確認"), "（honest-hold）——法規の過去問データ（kakomon.yml・電験王照合キャッシュ・日替わりプール・各Wiki）を横断検索して0件。法規で確認できる負荷率の出題は", React.createElement("strong", null, "日負荷率"), "（H23問11）と", React.createElement("strong", null, "総合負荷率"), "（2工場合成）"), React.createElement("span", {
     key: "g"
-  }, "この画面には無い（1日モデルのため）。期間別は ", navLink('furitsu', '6.2 負荷率'), " へ"), '年間電力量 ÷ 8760h ÷ 年の最大（総時間 24×365）']].map((r, i) => React.createElement("tr", {
+  }, React.createElement("strong", null, "集計期間＝年"), "に切り替える（総時間8760h）。※本モデルは同一日の繰り返しなので値は日負荷率と同じになる点に注意"), '年間電力量 ÷ 8760h ÷ 年の最大（総時間 24×365）']].map((r, i) => React.createElement("tr", {
     key: i
   }, React.createElement("td", {
     style: {
@@ -63469,7 +63615,7 @@ function JuyoSimulatorPage({
       fontSize: 12,
       lineHeight: 1.8
     }
-  }, React.createElement("strong", null, "負荷率は「日・月・年」で式が変わらない"), "——変わるのは", React.createElement("strong", null, "期間の総時間"), "だけ（日24h／月720・744h／年8760h）。 だから本画面で", React.createElement("strong", null, "日負荷率"), "を体で覚えれば、月・年は「割る時間を差し替えるだけ」で解ける。 逆にひっかけは", React.createElement("strong", null, "平均需要電力[kW]を30分値と勘違いして時間換算で2倍する"), "誤り（R4上問12(b) の誤答選択肢）——平均需要電力はすでに時間平均のkWなので2倍しない。 期間別の公式表と月負荷率の典型例は ", navLink('furitsu', '6.2 負荷率'), "、需要率・不等率の定義は ", navLink('juyoritsu-gainen', '6.1 概念'), "、変圧器容量の選定は ", navLink('hensyatsuki-yoryo', '6.4 変圧器容量'), "。"), React.createElement("h2", {
+  }, React.createElement("strong", null, "負荷率は「日・月・年」で式が変わらない"), "——変わるのは", React.createElement("strong", null, "期間の総時間"), "だけ（日24h／月720・744h／年8760h）。 シミュレータの", React.createElement("strong", null, "「集計期間」ボタン"), "で日→月→年を切り替えると、電力量の桁と負荷率の呼び名が変わり、式（平均÷最大）は変わらないことが確認できる。 ⚠ ただし本モデルは同一日の繰り返し前提なので", React.createElement("strong", null, "負荷率の値は期間を変えても同じ"), "になる。実際は月・年の最大が別の日に立つため通常 ", React.createElement("strong", null, "年 < 月 < 日"), " の大小になる。 だから本画面で", React.createElement("strong", null, "日負荷率"), "を体で覚えれば、月・年は「割る時間を差し替えるだけ」で解ける。 逆にひっかけは", React.createElement("strong", null, "平均需要電力[kW]を30分値と勘違いして時間換算で2倍する"), "誤り（R4上問12(b) の誤答選択肢）——平均需要電力はすでに時間平均のkWなので2倍しない。 期間別の公式表と月負荷率の典型例は ", navLink('furitsu', '6.2 負荷率'), "、需要率・不等率の定義は ", navLink('juyoritsu-gainen', '6.1 概念'), "、変圧器容量の選定は ", navLink('hensyatsuki-yoryo', '6.4 変圧器容量'), "。"), React.createElement("h2", {
     id: "presets"
   }, "過去問プリセット（実戦の数値をこの画面で再現する）"), React.createElement(SectionCheck, {
     pageId: "juyo-simulator",
@@ -63593,6 +63739,10 @@ function JuyoSimulatorPage({
     }]
   }), React.createElement(UpdateLog, {
     entries: [{
+      date: "2026-07-25",
+      content: "v1.8: 集計期間の切替（日／月30日／月31日／年）を追加し、日負荷率・月負荷率・年負荷率を1画面で行き来できるようにした: ①期間ボタンで総時間（24h／720h／744h／8760h）と負荷率の呼び名が切り替わり、式（平均÷最大）が変わらないことを体験できる ②「期間の電力量」カードを追加（1万kWh以上はMW・h併記＝試験の解答表記に合わせる） ③R4上問12プリセットは読込と同時に月30日へ自動切替し、月電力量242MW・hをカードで再現 ④「同一日の繰り返しモデルなので負荷率の値は期間を変えても同じ。実際は年<月<日になる」ガードを期間セレクタ直下と用語マップに明示（教育的近似のガード） ⑤年負荷率の honest-hold に調査痕跡を追記（kakomon.yml・電験王照合キャッシュ・日替わりプール・各Wiki HTMLを横断検索して0件。法規で確認できる負荷率の出題は日負荷率(H23問11)と総合負荷率）。あわせてTopBarのアクセントパレットを600px以下で非表示にし、sticky TopBarの3段化（約105px）を2段に抑制",
+      reason: "監修者さん指示「改善実施」（前回提案3件: 年負荷率の出題実績確認・期間切替モデル・TopBar 3段折り返し）。期間切替は負荷率の期間概念を操作で理解させる一方、同一日繰り返しモデルでは値が一致してしまうため、柱1（正確性）に沿って大小関係のガードを併記した"
+    }, {
       date: "2026-07-25",
       content: "v1.7: 「用語マップ（問題文の言い方 → この画面のどこ）」セクションを新設（4節）。監修者さん点検依頼の7用語（総合負荷設備容量・合成最大需要電力・平均需要電力・変圧器設備容量・日/月/年負荷率）を、①試験での書き方＋出典 ②この画面のどこを見るか ③式 の3列で1対1対応させた。あわせて ①結果カードのラベルを「総合負荷率（＝日負荷率）」に変更（この画面が24hモデルであることを明示） ②「Σ設備容量」→「Σ負荷設備容量」（R4上問12の問題文表現に合わせる） ③「必要皮相電力」に「変圧器設備容量[kVA]の必要下限」を併記＋6.4変圧器容量への導線 ④1分復習に期間別負荷率・負荷設備容量・変圧器設備容量の3問を追加。年負荷率は過去問データに出題表現が見当たらないため honest-hold として明示（期間別公式は6.2へ委譲）",
       reason: "監修者さん点検「7用語が理解できるものになっているか」に対する機械調査の結果、①シミュレータ内で『日負荷率』が0件（総合負荷率が日単位である明示なし） ②『負荷設備容量』（R4上問12の実際の問題文表現・verified:high）と画面ラベル『設備容量』が結びつかない ③『変圧器設備容量』の主公式への導線が無い、の3ギャップを検出したため。操作で理解した内容を問題文の用語に接続する層が欠けていた"
