@@ -13953,6 +13953,12 @@ function App() {
     .app { grid-template-columns: 256px 1fr 220px; }
     @media (max-width: 1100px) { .app { grid-template-columns: 256px 1fr; } .toc { display: none; } }
     @media (max-width: 900px)  { .app { grid-template-columns: 1fr; } .sidebar { display: none; } }
+    /* 全幅（集中）モード: 左サイドバー・右目次を隠して本文を最大化する。
+       シミュレータのような「操作 → グラフの変化を同時に見る」ページ用。付与元がアンマウント時に必ず外す。
+       .content の maxWidth/padding は React の inline style のため !important で上書きする。 */
+    .app.wide-focus { grid-template-columns: 1fr; }
+    .app.wide-focus > .sidebar, .app.wide-focus > .toc { display: none; }
+    .app.wide-focus .content { max-width: 1560px !important; padding: 16px 24px !important; }
   `;
   document.head.appendChild(style);
 })();
@@ -60765,33 +60771,27 @@ const JUYO_EQUIPMENT = [{
 function JuyoEquipStrip({
   level
 }) {
-  return React.createElement("div", {
+  return React.createElement("span", {
     style: {
-      display: 'flex',
-      gap: 10,
-      alignItems: 'center',
-      flexWrap: 'wrap'
+      display: 'inline-flex',
+      gap: 4,
+      alignItems: 'center'
     }
   }, JUYO_EQUIPMENT.map(eq => {
     const on = level !== null && level >= eq.th - 1e-9;
     return React.createElement("span", {
       key: eq.label,
       title: `${eq.label}: ${on ? '稼働中' : '停止'}`,
+      "aria-label": `${eq.label} ${on ? '稼働中' : '停止'}`,
+      role: "img",
       style: {
-        fontSize: 11,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 3,
-        color: 'var(--ink-2)',
+        fontSize: 13,
+        lineHeight: 1,
         filter: on ? 'none' : 'grayscale(1)',
-        opacity: on ? 1 : 0.3,
+        opacity: on ? 1 : 0.28,
         transition: 'opacity .15s'
       }
-    }, React.createElement("span", {
-      style: {
-        fontSize: 15
-      }
-    }, eq.icon), eq.label);
+    }, eq.icon);
   }));
 }
 function JuyoFactoryPanel({
@@ -60809,7 +60809,7 @@ function JuyoFactoryPanel({
       border: '1px solid var(--line)',
       borderLeft: `4px solid ${color}`,
       borderRadius: 8,
-      padding: '10px 12px',
+      padding: '7px 10px',
       background: factory.enabled ? 'var(--card)' : 'var(--bg-2)',
       opacity: factory.enabled ? 1 : 0.72
     }
@@ -60818,7 +60818,7 @@ function JuyoFactoryPanel({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: 8
+      marginBottom: 5
     }
   }, React.createElement("label", {
     style: {
@@ -60879,7 +60879,7 @@ function JuyoFactoryPanel({
     style: {
       display: 'flex',
       flexDirection: 'column',
-      gap: 8
+      gap: 6
     }
   }, React.createElement(JuyoSimSlider, {
     label: "設備容量",
@@ -60909,15 +60909,9 @@ function JuyoFactoryPanel({
     })
   }), React.createElement("div", null, React.createElement("div", {
     style: {
-      fontSize: 11,
-      color: 'var(--ink-2)',
-      marginBottom: 4
-    }
-  }, "稼働パターン"), React.createElement("div", {
-    style: {
       display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: 6
+      gridTemplateColumns: 'repeat(4, 1fr)',
+      gap: 4
     }
   }, Object.keys(JUYO_PATTERNS).map(pid => {
     const active = !isCustom && factory.curveSource.patternId === pid;
@@ -60927,6 +60921,7 @@ function JuyoFactoryPanel({
       disabled: !factory.enabled,
       "aria-pressed": active,
       "aria-label": `工場${factory.name} 稼働パターン ${JUYO_PATTERNS[pid].label}`,
+      title: JUYO_PATTERNS[pid].label,
       onClick: () => onChange(index, {
         curveSource: {
           type: 'pattern',
@@ -60934,10 +60929,10 @@ function JuyoFactoryPanel({
         }
       }),
       style: {
-        minHeight: 44,
-        padding: '4px 6px',
+        minHeight: 32,
+        padding: '3px 2px',
         fontSize: 11.5,
-        lineHeight: 1.35,
+        lineHeight: 1.2,
         borderRadius: 6,
         cursor: factory.enabled ? 'pointer' : 'default',
         border: active ? `2px solid ${color}` : '1px solid var(--line)',
@@ -60945,32 +60940,28 @@ function JuyoFactoryPanel({
         color: 'var(--ink-1)',
         fontWeight: active ? 700 : 400
       }
-    }, JUYO_PATTERNS[pid].label);
+    }, JUYO_PATTERNS[pid].short);
   })), isCustom && React.createElement("div", {
     style: {
-      marginTop: 6,
-      padding: '5px 8px',
+      marginTop: 5,
+      padding: '4px 8px',
       borderRadius: 6,
-      fontSize: 11,
+      fontSize: 10.5,
       fontWeight: 700,
       border: `2px dashed ${color}`,
       color: 'var(--accent-ink)',
       background: 'var(--bg-elev)'
     }
-  }, "📄 ", factory.curveSource.label, "（スライダーやパターンを操作すると通常パターンに戻ります）")), React.createElement("div", null, React.createElement("div", {
+  }, "📄 ", factory.curveSource.label, "（操作すると通常パターンに戻ります）")), React.createElement("div", null, React.createElement("div", {
     style: {
-      fontSize: 10.5,
-      color: 'var(--ink-3)',
-      marginBottom: 3
-    }
-  }, factory.enabled ? React.createElement("span", null, "設備容量 ", factory.capacity, "kW のうち最大需要 ", juyoFmtKw(factory.capacity * factory.demandPct / 100), "kW（需要率", factory.demandPct, "%）") : React.createElement("span", null, "設備容量 ", factory.capacity, "kW ／ 最大需要 —・平均 —（集計対象外・チェックで有効化）")), React.createElement("div", {
-    style: {
-      height: 10,
-      borderRadius: 5,
+      height: 8,
+      borderRadius: 4,
       background: 'var(--bg-2)',
       border: '1px solid var(--line)',
-      overflow: 'hidden'
-    }
+      overflow: 'hidden',
+      marginBottom: 4
+    },
+    title: `設備容量 ${factory.capacity}kW に対する需要率 ${factory.demandPct}%（グレーの残り＝全設備が同時には動かない分＝需要率が1未満になる理由）`
   }, React.createElement("div", {
     style: {
       width: `${factory.demandPct}%`,
@@ -60979,35 +60970,39 @@ function JuyoFactoryPanel({
       opacity: factory.enabled ? 0.75 : 0.35,
       transition: 'width .15s'
     }
-  })), factory.enabled && React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: 'var(--ink-3)',
-      marginTop: 2
-    }
-  }, "グレーの残り＝「全設備が同時には動かない分」＝需要率が1未満になる理由")), factory.enabled && row && React.createElement("div", {
+  })), factory.enabled && row ? React.createElement("div", {
     style: {
       fontSize: 11.5,
       color: 'var(--ink-2)',
       display: 'flex',
-      gap: 12,
-      flexWrap: 'wrap'
+      gap: 10,
+      flexWrap: 'wrap',
+      alignItems: 'center'
     }
   }, React.createElement("span", null, "最大 ", React.createElement("strong", {
     style: {
       fontFamily: 'monospace'
     }
-  }, juyoFmtKw(row.curveMax)), " kW"), React.createElement("span", null, "平均 ", React.createElement("strong", {
+  }, juyoFmtKw(row.curveMax))), React.createElement("span", null, "平均 ", React.createElement("strong", {
     style: {
       fontFamily: 'monospace'
     }
-  }, juyoFmtKw(row.average)), " kW"), React.createElement("span", null, "負荷率 ", React.createElement("strong", {
+  }, juyoFmtKw(row.average))), React.createElement("span", null, "負荷率 ", React.createElement("strong", {
     style: {
       fontFamily: 'monospace'
     }
-  }, juyoFmtPct(row.loadFactor)))), factory.enabled && React.createElement(JuyoEquipStrip, {
+  }, juyoFmtPct(row.loadFactor))), React.createElement("span", {
+    style: {
+      marginLeft: 'auto'
+    }
+  }, React.createElement(JuyoEquipStrip, {
     level: level
-  })));
+  }))) : React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: 'var(--ink-3)'
+    }
+  }, "最大 —・平均 —（集計対象外・チェックで有効化）"))));
 }
 function JuyoFocusFormula({
   focus,
@@ -61375,6 +61370,65 @@ function JuyoLoadCurveChart({
     }
   }, hour, ":00〜", hour + 1, ":00"));
 }
+function JuyoMiniCurve({
+  m
+}) {
+  if (!m.rows.length) return null;
+  const W = 190,
+    H = 34,
+    yTop = Math.max(m.sumIndividualMax, m.compositeMax) * 1.06;
+  if (!(yTop > 0)) return null;
+  const xOf = h => h / 24 * W;
+  const yOf = v => H - v / yTop * H;
+  const stepPts = m.composite.map((v, h) => `${xOf(h)},${yOf(v)} ${xOf(h + 1)},${yOf(v)}`).join(' ');
+  return React.createElement("svg", {
+    width: W,
+    height: H,
+    viewBox: `0 0 ${W} ${H}`,
+    "aria-hidden": "true",
+    style: {
+      display: 'block',
+      flex: 'none',
+      background: 'var(--bg-2)',
+      border: '1px solid var(--line)',
+      borderRadius: 4
+    }
+  }, React.createElement("polygon", {
+    points: `0,${H} ${stepPts} ${W},${H}`,
+    style: {
+      fill: 'var(--dgm-blue)'
+    },
+    opacity: "0.14",
+    stroke: "none"
+  }), React.createElement("line", {
+    x1: "0",
+    y1: yOf(m.compositeAverage),
+    x2: W,
+    y2: yOf(m.compositeAverage),
+    strokeWidth: "1",
+    strokeDasharray: "3 3",
+    style: {
+      stroke: 'var(--dgm-green)'
+    }
+  }), React.createElement("line", {
+    x1: "0",
+    y1: yOf(m.sumIndividualMax),
+    x2: W,
+    y2: yOf(m.sumIndividualMax),
+    strokeWidth: "1",
+    strokeDasharray: "4 3",
+    style: {
+      stroke: 'var(--dgm-red)'
+    }
+  }), React.createElement("polyline", {
+    points: stepPts,
+    fill: "none",
+    strokeWidth: "1.6",
+    style: {
+      stroke: 'var(--dgm-blue)'
+    }
+  }));
+}
 function JuyoStickyBar({
   m,
   delta
@@ -61419,17 +61473,32 @@ function JuyoStickyBar({
       top: 8,
       zIndex: 30,
       display: 'flex',
-      gap: 16,
+      gap: 14,
       flexWrap: 'wrap',
       alignItems: 'center',
       background: 'var(--bg-elev)',
       border: '1px solid var(--line)',
       borderRadius: 8,
-      padding: '7px 12px',
-      marginBottom: 12,
+      padding: '6px 12px',
+      marginBottom: 10,
       boxShadow: '0 2px 10px rgba(0,0,0,0.10)'
     }
-  }, item('合成最大', `${juyoFmtKw(m.compositeMax > JUYO_EPS ? m.compositeMax : null)} kW`, false, delta && juyoFmtDelta(delta.compositeMax, 'kw')), item('不等率', juyoFmtRatio(m.diversityFactor), true, delta && juyoFmtDelta(delta.diversity, 'ratio')), item('総合負荷率', juyoFmtPct(m.totalLoadFactor), false, delta && juyoFmtDelta(delta.totalLoad, 'pt')));
+  }, item('合成最大', `${juyoFmtKw(m.compositeMax > JUYO_EPS ? m.compositeMax : null)} kW`, false, delta && juyoFmtDelta(delta.compositeMax, 'kw')), item('不等率', juyoFmtRatio(m.diversityFactor), true, delta && juyoFmtDelta(delta.diversity, 'ratio')), item('総合負荷率', juyoFmtPct(m.totalLoadFactor), false, delta && juyoFmtDelta(delta.totalLoad, 'pt')), React.createElement("span", {
+    style: {
+      marginLeft: 'auto',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 6
+    },
+    title: "合成負荷曲線のミニ表示（青=合成曲線と面積・赤破線=Σ各最大・緑破線=合成平均）"
+  }, React.createElement("span", {
+    style: {
+      fontSize: 10,
+      color: 'var(--ink-3)'
+    }
+  }, "曲線"), React.createElement(JuyoMiniCurve, {
+    m: m
+  })));
 }
 function JuyoResultCards({
   m,
@@ -62228,26 +62297,33 @@ function JuyoScenarioMode({
     style: {
       fontSize: 12,
       fontWeight: 700,
-      marginBottom: 2
+      marginBottom: 6
     }
-  }, "🎓 学習モード（1つずつ動かして用語をつかむ）"), React.createElement("div", {
+  }, "🎓 学習モード（1つずつ動かして用語をつかむ）", React.createElement("span", {
     style: {
-      fontSize: 11,
+      fontWeight: 400,
+      fontSize: 10.5,
       color: 'var(--ink-3)',
-      marginBottom: 8,
+      marginLeft: 6
+    }
+  }, "選ぶとその用語の分子・分母がグラフで自動点灯")), React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 6,
+      flexWrap: 'wrap'
+    }
+  }, JUYO_SCENARIOS.map(chip)), !sc && React.createElement("div", {
+    style: {
+      fontSize: 10.5,
+      color: 'var(--ink-3)',
+      marginTop: 6,
       lineHeight: 1.6
     }
   }, "いきなり全部のスライダーを動かすと複数の値が同時に変わって何を学んだか分からなくなる。", React.createElement("strong", {
     style: {
       color: 'var(--ink-2)'
     }
-  }, "まず1変数だけ動かすパターンを順に踏み"), "、そのあと自由操作へ進むのが最短。選ぶとその用語の分子・分母がグラフで自動点灯する。"), React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 6,
-      flexWrap: 'wrap'
-    }
-  }, JUYO_SCENARIOS.map(chip)), sc && React.createElement("div", {
+  }, "まず1変数だけ動かすパターンを順に踏み"), "、そのあと自由操作へ進むのが最短。"), sc && React.createElement("div", {
     style: {
       marginTop: 10,
       paddingTop: 9,
@@ -62677,6 +62753,24 @@ function JuyoSimulatorPage({
   const toggleFocus = k => setFocusMetric(prev => prev === k ? null : k);
   const [scenarioId, setScenarioId] = React.useState(null);
   const [scenarioStep, setScenarioStep] = React.useState(null);
+  const [wideMode, setWideMode] = React.useState(() => {
+    try {
+      return localStorage.getItem('juyo_sim_wide_v1') === '1';
+    } catch (e) {
+      return false;
+    }
+  });
+  React.useEffect(() => {
+    const app = document.querySelector('.app');
+    if (!app) return undefined;
+    app.classList.toggle('wide-focus', wideMode);
+    try {
+      localStorage.setItem('juyo_sim_wide_v1', wideMode ? '1' : '0');
+    } catch (e) {}
+    return () => {
+      app.classList.remove('wide-focus');
+    };
+  }, [wideMode]);
   const m = React.useMemo(() => juyoCompute(factories, pfPct), [factories, pfPct]);
   const hour = selHour === null ? m.peakHours.length ? m.peakHours[0] : 12 : selHour;
   const [history, setHistory] = React.useState(null);
@@ -62863,7 +62957,7 @@ function JuyoSimulatorPage({
     correctIndex: 2,
     year: "R4上 問12(a)・正答率42%",
     note: "下の「過去問プリセット」からこの問題を読み込むと、560kW → 622.2kVA → 7台 のチェーンを曲線と結果カードで確かめられる"
-  }), React.createElement(ConclusionBox, null, React.createElement("ul", null, React.createElement("li", null, React.createElement("strong", null, "使い方（初回はこの順）"), ": ①", React.createElement("strong", null, "学習モードのパターン1〜5"), "を順に踏む（1変数だけ動かして用語をつかむ） → ②自由にスライダーとパターンを動かす → ③過去問プリセットで実戦の数値を再現する"), React.createElement("li", null, "3公式の定義・導出は ", navLink('juyoritsu-gainen', '6.1 概念'), "・", navLink('juyoritsu-keisan', '1.6 計算'), "、負荷率の深掘りは ", navLink('furitsu', '6.2'), "、不等率は ", navLink('futorito', '6.3'), " を参照（本ページは定義を重複掲載しない）"), React.createElement("li", null, "ここで見るもの: ", React.createElement("strong", null, "ピーク時刻のずれ → 合成最大の低下 → 不等率の上昇"), "という因果を、操作で体感する"))), React.createElement("div", {
+  }), React.createElement(ConclusionBox, null, React.createElement("ul", null, React.createElement("li", null, React.createElement("strong", null, "使い方（初回はこの順）"), ": ①", React.createElement("strong", null, "学習モードのパターン1〜5"), "を順に踏む（1変数だけ動かして用語をつかむ） → ②自由にスライダーとパターンを動かす → ③過去問プリセットで実戦の数値を再現する"), React.createElement("li", null, "3公式の定義・導出は ", navLink('juyoritsu-gainen', '6.1 概念'), "・", navLink('juyoritsu-keisan', '1.6 計算'), "、負荷率の深掘りは ", navLink('furitsu', '6.2'), "、不等率は ", navLink('futorito', '6.3'), " を参照（本ページは定義を重複掲載しない）"), React.createElement("li", null, "ここで見るもの: ", React.createElement("strong", null, "ピーク時刻のずれ → 合成最大の低下 → 不等率の上昇"), "という因果を、操作で体感する"), React.createElement("li", null, "PCなら ", React.createElement("strong", null, "「⛶ 全幅表示」"), "を押すと左右の目次が隠れ、", React.createElement("strong", null, "グラフと工場パネルが左右に並ぶ"), "（操作と結果を同時に見られる。上部の固定バーにはミニ曲線が出るので、下へスクロールしても形状変化を追える）"))), React.createElement("div", {
     style: {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -63039,13 +63133,33 @@ function JuyoSimulatorPage({
       background: 'var(--bg-2)',
       color: 'var(--ink-1)'
     }
-  }, "⤺ 1つ戻す"), React.createElement("span", {
+  }, "⤺ 1つ戻す"), React.createElement("button", {
+    type: "button",
+    onClick: () => setWideMode(v => !v),
+    "aria-pressed": wideMode,
+    "aria-label": wideMode ? '全幅表示を解除して目次を表示する' : '全幅表示にして左右の目次を隠す',
+    style: {
+      minHeight: 38,
+      padding: '5px 14px',
+      borderRadius: 6,
+      fontSize: 12,
+      fontWeight: 700,
+      cursor: 'pointer',
+      border: wideMode ? '2px solid var(--accent)' : '1px solid var(--line)',
+      background: wideMode ? 'var(--bg-elev)' : 'var(--bg-2)',
+      color: wideMode ? 'var(--accent-ink)' : 'var(--ink-1)'
+    }
+  }, wideMode ? '⛶ 全幅表示 中（解除）' : '⛶ 全幅表示（目次を隠す）'), React.createElement("span", {
     style: {
       fontSize: 10.5,
       color: 'var(--ink-3)',
       alignSelf: 'center'
     }
-  }, "「1つ戻す」は直前の変更1段階（もう一度押すとやり直し）。上のバーの（+/−）は直前の操作からの変化量")), m.diversityError && React.createElement("div", {
+  }, "「1つ戻す」は直前の変更1段階（もう一度押すとやり直し）。全幅表示にすると", React.createElement("strong", {
+    style: {
+      color: 'var(--ink-2)'
+    }
+  }, "グラフと工場パネルが左右に並び"), "、操作と結果を同時に見られる")), m.diversityError && React.createElement("div", {
     style: {
       marginBottom: 10,
       padding: '8px 12px',
@@ -63057,6 +63171,13 @@ function JuyoSimulatorPage({
       background: 'var(--bg-2)'
     }
   }, "⚠ 不等率が1未満（", String(m.rawDiversity), "）になっています。負荷曲線計算のバグの可能性があります（この値は隠さず表示しています。再現手順を添えて報告してください）。"), React.createElement("div", {
+    style: wideMode ? {
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1fr) minmax(500px, 1fr)',
+      gap: 14,
+      alignItems: 'start'
+    } : undefined
+  }, React.createElement("div", null, React.createElement("div", {
     style: {
       background: 'var(--card)',
       border: '1px solid var(--line)',
@@ -63185,10 +63306,10 @@ function JuyoSimulatorPage({
     style: {
       fontFamily: 'monospace'
     }
-  }, m.rows.length ? juyoFmtKw(m.composite[hour]) : '—'), " kW")), React.createElement("div", {
+  }, m.rows.length ? juyoFmtKw(m.composite[hour]) : '—'), " kW"))), React.createElement("div", null, React.createElement("div", {
     style: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+      gridTemplateColumns: wideMode ? 'repeat(2, minmax(0, 1fr))' : 'repeat(auto-fit, minmax(250px, 1fr))',
       gap: 10,
       marginBottom: 8
     }
@@ -63206,7 +63327,7 @@ function JuyoSimulatorPage({
       lineHeight: 1.6,
       marginBottom: 12
     }
-  }, "※ 設備アイコン（照明・ファン・モーター・ヒーター）は、選択時刻の負荷の大きさから機械的に導出したイメージ表示です（実際の設備構成・稼働順は工場によります）。負荷が大きい時刻ほど多くの設備がONになります。"), React.createElement(JuyoResultCards, {
+  }, "※ 需要率のミニバー: 色のついた分＝最大需要／グレーの残り＝「全設備が同時には動かない分」＝需要率が1未満になる理由（バーにカーソルを載せると内訳を表示）。 設備アイコン（💡照明・🌀ファン・⚙️モーター・🔥ヒーター）は選択時刻の負荷の大きさから機械的に導出したイメージ表示で、負荷が大きい時刻ほど多くONになります（実際の設備構成・稼働順は工場によります）。"))), React.createElement(JuyoResultCards, {
     m: m,
     pfPct: pfPct,
     onPfChange: changePf,
@@ -63359,6 +63480,10 @@ function JuyoSimulatorPage({
     }]
   }), React.createElement(UpdateLog, {
     entries: [{
+      date: "2026-07-25",
+      content: "v1.6: 「操作と結果を同時に見る」ためのレイアウト改善4点: ①⛶全幅表示トグル（左サイドバー・右目次を隠して本文を1560pxまで拡張。CSS .app.wide-focus・localStorage記憶・他ページへ遷移したらクラスを必ず解除） ②全幅時はグラフと工場パネルを左右2カラム化（左右をほぼ等分にして右カラムを2列に保つ） ③工場パネルを239pxへ圧縮（稼働パターンを短縮ラベル1行チップ化116→32px・設備アイコンをラベルなし1行化・需要率バーと実測値行を統合。フル名と内訳は aria-label/title に退避） ④固定バーにミニ負荷曲線を追加（合成曲線＋Σ各最大＋合成平均。下へスクロールして工場C・Dを操作しても形状変化を追える）。実測: グラフ上端〜パネル下端 968→488px",
+      reason: "監修者さん指摘「パラメータを変更するカードがでかすぎて、変更時にどのようにグラフ・系統図が変更したかPCに収まりきらず見れない」＋「左右の目次を非表示にして最大画面にするとみやすくないか」。実測でコンテンツ幅730px・パネル411px×2行=832pxが制約と判明したため、全幅化・2カラム化・パネル圧縮・スクロール追従ミニ曲線の4点で対処"
+    }, {
       date: "2026-07-25",
       content: "v1.5: 学習モード（パターン1〜5）追加。「一度に一変数だけ変える」段階学習をシミュレータ冒頭に配置し、自由操作の前段にした: パターン1 需要率（負荷曲線を変えず設備容量だけ増やす＝分母だけ動く）／2 負荷率（最大を固定して谷を埋める）／3 不等率（各最大を固定してBのピーク時刻だけ夜へ移す）／4 設備容量vs需要率（同じ「曲線が大きくなる」操作の意味の違い・3Step）／5 電力量kWh（最大が同じでも面積は違う）。各パターンはStep読込と同時に v1.4 のフォーカス点灯が該当用語を自動で指し、解答は全Stepの比較表（最大需要・Σ設備容量・需要率・負荷率・不等率・1日電力量）を juyoCompute() から生成",
       reason: "監修者さん指摘「学習しやすいようにパターン1〜5と選べるようにしたらどうか」＋ChatGPTアドバイス⑤（自由操作の前に一変数シナリオを置く）。全パラメータを同時に動かせる状態では『何を学んでいるか分からなくなる』ため、用語ごとに変数を1つに絞った導線を先に置いた"
