@@ -60738,6 +60738,9 @@ function juyoCompute(factories, pfPct, periodId, opts) {
   const trafoCountAfter = apparentAfter !== null ? Math.ceil(apparentAfter / 100 - 1e-9) : null;
   const overCompensated = reactiveAfter < -1e-9;
   const capKvarForUnity = reactiveBefore;
+  const currentRatio = apparentAfter !== null && apparentKva !== null && apparentKva > JUYO_EPS ? apparentAfter / apparentKva : null;
+  const impedanceRatio = currentRatio !== null && currentRatio > JUYO_EPS ? 1 / currentRatio : null;
+  const lossRatio = currentRatio !== null ? currentRatio * currentRatio : null;
   const seasonalOn = !!o.seasonal && period.id === 'year';
   const seasonMax = seasonalOn ? compositeMax * JUYO_SEASON_PEAK : compositeMax;
   const seasonAverage = seasonalOn ? compositeAverage * JUYO_SEASON_MEANK : compositeAverage;
@@ -60772,6 +60775,9 @@ function juyoCompute(factories, pfPct, periodId, opts) {
     trafoCountAfter,
     overCompensated,
     capKvarForUnity,
+    currentRatio,
+    impedanceRatio,
+    lossRatio,
     seasonalOn,
     seasonMax,
     seasonAverage,
@@ -62017,7 +62023,69 @@ function JuyoResultCards({
     style: {
       fontFamily: 'monospace'
     }
-  }, pfPct, "% → ", juyoFmtPct(m.pfAfter)))), React.createElement("div", {
+  }, pfPct, "% → ", juyoFmtPct(m.pfAfter)))), m.currentRatio !== null && m.reactiveBefore > JUYO_EPS && React.createElement("div", {
+    id: "cap-impedance",
+    style: {
+      marginTop: 6,
+      padding: '7px 10px',
+      borderRadius: 6,
+      background: 'var(--bg-2)',
+      border: '1px solid var(--line)',
+      scrollMarginTop: 80
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      marginBottom: 3
+    }
+  }, "電源から見ると何が変わるか（受電電圧 V は一定）"), React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(128px, 1fr))',
+      gap: 6,
+      fontSize: 11.5
+    }
+  }, React.createElement("div", null, React.createElement("span", {
+    style: {
+      color: 'var(--ink-3)'
+    }
+  }, "線路電流 I"), React.createElement("br", null), React.createElement("strong", {
+    style: {
+      fontFamily: 'monospace'
+    }
+  }, juyoFmtRatio(m.currentRatio), " 倍"), "（I ∝ S）"), React.createElement("div", null, React.createElement("span", {
+    style: {
+      color: 'var(--ink-3)'
+    }
+  }, "合成インピーダンス |Z|"), React.createElement("br", null), React.createElement("strong", {
+    style: {
+      fontFamily: 'monospace'
+    }
+  }, juyoFmtRatio(m.impedanceRatio), " 倍"), "（|Z| = V/I）"), React.createElement("div", null, React.createElement("span", {
+    style: {
+      color: 'var(--ink-3)'
+    }
+  }, "線路損失 I²R"), React.createElement("br", null), React.createElement("strong", {
+    style: {
+      fontFamily: 'monospace'
+    }
+  }, juyoFmtRatio(m.lossRatio), " 倍"), "（I の2乗）")), React.createElement("div", {
+    style: {
+      fontSize: 10.5,
+      color: 'var(--ink-2)',
+      lineHeight: 1.7,
+      marginTop: 4
+    }
+  }, "コンデンサは負荷と", React.createElement("strong", null, "並列"), "なので、負荷自身のインピーダンスは変わらない。変わるのは", React.createElement("strong", null, "電源から見た電流"), "で、無効分が打ち消されて I が減る。V が一定なら |Z| = V/I なので", React.createElement("strong", null, "合成インピーダンスの大きさは「増える」"), "——「並列に足したから下がる」は誤り（打ち消しで電流が減るのが本質）。", !m.overCompensated && m.impedanceRatio !== null && React.createElement(React.Fragment, null, " 完全補償（力率1.0）まで入れると |Z| はちょうど ", React.createElement("strong", {
+    style: {
+      fontFamily: 'monospace'
+    }
+  }, "1/cosφ = ", (100 / pfPct).toFixed(2)), " 倍になる。"), m.overCompensated && React.createElement("strong", {
+    style: {
+      color: 'var(--warn)'
+    }
+  }, " 過補償では S が再び伸びるので電流が増え、|Z| 比は下がる方向に逆戻りします。"))), React.createElement("div", {
     style: {
       fontSize: 10.5,
       color: 'var(--ink-2)',
@@ -64067,8 +64135,8 @@ function JuyoSimulatorPage({
     freq: "毎年（需要率・負荷率・不等率はB問題頻出）",
     examType: "B問題・計算（体験型教材）",
     targets: "R04上 問12・R03 問13",
-    tags: ["シミュレータ", "日負荷曲線", "合成最大需要", "不等率", "総合負荷率", "B問題"],
-    lastChecked: "2026-07-20"
+    tags: ["シミュレータ", "日負荷曲線", "合成最大需要", "不等率", "総合負荷率", "B問題", "進相コンデンサ", "力率改善"],
+    lastChecked: "2026-07-25"
   }), React.createElement("h2", {
     id: "simulator"
   }, "シミュレータ（A〜D工場を動かす）"), React.createElement(SectionCheck, {
@@ -64592,6 +64660,10 @@ function JuyoSimulatorPage({
     }]
   }), React.createElement(UpdateLog, {
     entries: [{
+      date: "2026-07-25",
+      content: "v2.1: 進相コンデンサ投入モードに「電源から見ると何が変わるか」（id=cap-impedance）を追加。受電電圧 V 一定のもとで 線路電流 I（∝ S）・合成インピーダンス |Z|（= V/I）・線路損失 I²R の3比を表示し、完全補償では |Z| がちょうど 1/cosφ 倍になること、過補償では逆戻りすることを提示。実測（P=950kW・力率90%）: Qc=300 → I 0.91倍/|Z| 1.10倍/損失 0.83倍、Qc=460(完全補償) → 0.90/1.11/0.81（1/0.9=1.111 と一致）、Qc=600(過補償) → 警告表示",
+      reason: "監修者さんの質問「進相コンデンサ設置時のインピーダンスの考え方がわからない」への回答をシミュレータ体験に接続（柱2・柱3）。『コンデンサを並列に足したのに |Z| が増える』という直感の罠を、数値を動かして体感できる形にした。新規 opts は追加せず既存 apparentKva/apparentAfter からの導出のみ＝juyoCompute 単一SoT と既定動作を一切変えない（project_juyo_simulator_state の設計原則に準拠）"
+    }, {
       date: "2026-07-25",
       content: "v2.0: ChatGPTアドバイス優先度2〜4を実装（3件）: ①【優先度2】7節「デマンド区間の体験」新設——15分刻みのサンプル波形（9:15の15分だけ800kW）を 15分/30分/60分 の区間で平均し、区間が長いほど短時間ピークが平均化されて最大需要電力が下がることを体験（15分800→30分580→60分465kW）。本体シミュレータは1時間刻みなのでこの効果を持てず、独立デモとして分離（既存の数値SoT・過去問検算に影響させない） ②【優先度3】進相コンデンサ投入モード——Qc[kvar]スライダーで P不変・Q減少・S=√(P²+Q²)短縮・力率改善・変圧器台数減の連鎖を数値で表示。力率1.0に必要な容量と過補償（進み力率）警告つき。1.5力率改善／6.4変圧器容量へ導線 ③【優先度4】季節係数（年集計のみ）——夏1.0/中間0.8/冬0.9 の月別係数で年最大=夏の日最大・年平均=日平均×加重平均係数0.883 とし、年負荷率 < 日負荷率 を数値で成立させた（従来は同一日繰り返しモデルのため一致していた）。係数は学習用代表値である旨をガード明記",
       reason: "ChatGPTアドバイス「30分デマンドの体験が弱い」「力率改善の効果が体験できない」「年負荷率が操作対象になっていない」。いずれも計算SoT juyoCompute の拡張（opts引数）で実装し、既定値では従来の呼び出しと同一結果になるようにした"
