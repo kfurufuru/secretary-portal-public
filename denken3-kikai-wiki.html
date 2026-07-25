@@ -1884,6 +1884,18 @@ const Box = ({ kind, label, children }) => (
   </aside>
 );
 
+/* 折りたたみブロック（スマホでの縦長を抑える。結論・図・罠表は開いたまま、
+   導出・例題・論説は畳んで「必要になったら開く」導線にする） */
+const Fold = ({ label, sub, children }) => (
+  <details style={{ margin: "10px 0 14px", border: "1px solid var(--rule)", borderRadius: "8px", background: "var(--bg-elev)" }}>
+    <summary style={{ cursor: "pointer", padding: "9px 12px", fontSize: "13px", fontWeight: 700, color: "var(--accent-ink)" }}>
+      {label}
+      {sub && <span style={{ fontWeight: 400, color: "var(--ink-mute)", marginLeft: 8, fontSize: "12px" }}>{sub}</span>}
+    </summary>
+    <div style={{ padding: "2px 12px 10px" }}>{children}</div>
+  </details>
+);
+
 const FormulaCard = ({ num, name, eq, note }) => (
   <div className="formula-card">
     <div className="num">{num}</div>
@@ -3333,19 +3345,19 @@ const TransformerPage = ({ onNav }) => (
           </text>
         </svg>
         <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
-          故障した1台を切り離しても、b-c 間の線間電圧は <Eq tex="\dot V_{ab}+\dot V_{bc}+\dot V_{ca}=0" /> の関係から <Eq tex="\dot V_{bc} = -(\dot V_{ab}+\dot V_{ca})" /> として現れるので、線間電圧は3つとも得られる（無負荷・内部電圧降下を無視した場合。実負荷では多少の不平衡が生じる）。制約になるのは電圧ではなく<strong>各変圧器の巻線電流</strong>。
+          1台を切り離しても b-c 間の電圧は <Eq tex="\dot V_{bc} = -(\dot V_{ab}+\dot V_{ca})" /> として現れる。<strong>制約は電圧ではなく巻線電流</strong>（実負荷では電圧降下の分だけ不平衡が出る）。
         </figcaption>
       </figure>
 
-      <Box kind="example" label="なぜ 57.7% なのか（√3 の出どころ）">
+      <Fold label="なぜ 57.7% なのか（√3 の出どころ）" sub="導出を開く">
         <p><strong>Δ-Δ（故障前）</strong>：各変圧器は線間電圧 <Eq tex="V_L" /> を受け、巻線電流は相電流 <Eq tex="I_p = I_L/\sqrt{3}" />。1台の定格を <Eq tex="S_n = V_L I_p" /> とすれば</p>
         <Eq display tex="S_\Delta = 3 S_n = 3 V_L \dfrac{I_L}{\sqrt{3}} = \sqrt{3}\,V_L I_L" />
         <p><strong>V-V（故障後）</strong>：巻線が2辺しかないので、<span className="marker">巻線電流は線電流そのもの</span>（<Eq tex="1/\sqrt{3}" /> に分かれる相手がいない）。定格電流 <Eq tex="I_n" /> を超えられないので <Eq tex="I_L \le I_n" />、したがって</p>
         <Eq display tex="S_V = \sqrt{3}\,V_L I_L \le \sqrt{3}\,V_L I_n = \sqrt{3}\,S_n" />
         <p>よって <Eq tex="\dfrac{S_V}{S_\Delta} = \dfrac{\sqrt{3}S_n}{3S_n} = \dfrac{1}{\sqrt{3}} \approx 0.577" />、<Eq tex="\dfrac{S_V}{2S_n} = \dfrac{\sqrt{3}}{2} \approx 0.866" />。<strong>台数が 3→2 に減ったから 2/3 になる、ではない</strong>のが要点。</p>
-      </Box>
+      </Fold>
 
-      <Box kind="warn" label="kV·A 負担は等しいが、有効電力の分担は偏る（差がつく論点）">
+      <Fold label="2台の負担 — kV·A は等しいが、有効電力は偏る" sub="差がつく論点">
         <p><strong>2台の皮相電力は常に等しい</strong>：どちらも線間電圧 <Eq tex="V_L" /> を受け線電流 <Eq tex="I_L" /> を流すので <Eq tex="V_L I_L" /> で同じ。したがって<span className="marker">銅損（<Eq tex="I^2R" />）・鉄損・温度上昇も2台でほぼ等しい</span>。</p>
         <p>異なるのは<strong>個別の力率と有効・無効電力の分担</strong>。負荷力率角 <Eq tex="\theta" />（遅れ）のとき、2台の力率の大きさは <Eq tex="\cos(30^\circ-\theta)" /> と <Eq tex="\cos(30^\circ+\theta)" /> に分かれる。</p>
         <ul>
@@ -3354,21 +3366,7 @@ const TransformerPage = ({ onNav }) => (
           <li><Eq tex="\theta > 60^\circ" />（遅れ力率 0.5 未満）→ <Eq tex="\cos(30^\circ+\theta) < 0" /> となり、一方の有効電力の向きが逆になる</li>
         </ul>
         <p>合計は <Eq tex="V_L I_L\{\cos(30^\circ-\theta)+\cos(30^\circ+\theta)\} = \sqrt{3}\,V_L I_L\cos\theta" /> で三相出力に一致する。<strong>どちらの器がどちらの力率になるかは相順・残存した2辺・電流の向きの取り方で入れ替わる</strong>ので、結線図を見ずに決めつけない。</p>
-      </Box>
-
-      <Box kind="example" label="例題 2.1.2（出力・割合・利用率）">
-        <p><strong>問:</strong> 定格容量 50 kV·A の単相変圧器3台をΔ-Δ結線し、150 kV·A の三相負荷に供給していた。1台が故障し残り2台をV結線とする。(1) 供給できる最大三相容量 (2) 故障前に対する割合 (3) 利用率を求めよ。</p>
-        <p>(1) <Eq tex="S_V = \sqrt{3}\times 50 \approx 86.6\;[\mathrm{kV\cdot A}]" /></p>
-        <p>(2) <Eq tex="86.6/150 = 0.577 \to 57.7\%" /> ／ (3) <Eq tex="86.6/(2\times 50) = 0.866 \to 86.6\%" /></p>
-        <p><strong>実務的な意味:</strong> 150 kV·A の負荷をそのまま載せると2台が過負荷になる。<span className="marker">負荷を 86.6 kV·A 以下に制限</span>して初めて継続運転できる（＝<strong>故障前のバンク定格 150 kV·A に対する実負荷率</strong>が 57.7% 以下なら、負荷を切らずに移行できる）。</p>
-      </Box>
-
-      <Box kind="example" label="発展 — 例題 2.1.3（必要容量と有効電力分担）">
-        <p><strong>問:</strong> 三相平衡負荷 200 kW・力率 0.8（遅れ）をV結線で供給する。単相変圧器1台に必要な容量と、各変圧器の有効電力分担を求めよ。</p>
-        <p>三相皮相電力 <Eq tex="S = 200/0.8 = 250\;[\mathrm{kV\cdot A}]" />、1台あたり <Eq tex="S_n \ge 250/\sqrt{3} \approx 144.3\;[\mathrm{kV\cdot A}]" /></p>
-        <p><Eq tex="\theta = \cos^{-1}0.8 = 36.87^\circ" /> なので各器の力率は <Eq tex="\cos(30^\circ-36.87^\circ)=0.993" />、<Eq tex="\cos(30^\circ+36.87^\circ)=0.393" />。</p>
-        <p>有効分担は <Eq tex="144.3\times 0.993 \approx 143\;[\mathrm{kW}]" /> と <Eq tex="144.3\times 0.393 \approx 57\;[\mathrm{kW}]" />（合計 200 kW で検算 ✓）。<strong>皮相電力はどちらも 144.3 kV·A で等しく（＝損失・温度上昇も同等）、違うのは有効電力の分担だけ</strong>。ここは三種の必須線より一段深い論点なので、まず 57.7% / 86.6% / <Eq tex="\sqrt{3}S_n" /> と分母の区別を固めてから取り組めばよい。</p>
-      </Box>
+      </Fold>
 
       <h3 id="v-fault-trap">正誤判定の急所（V結線）</h3>
       <div className="table-wrap"><table className="data-table">
@@ -3384,14 +3382,28 @@ const TransformerPage = ({ onNav }) => (
         </tbody>
       </table></div>
 
-      <Box kind="mistake" label="V結線の副作用（論説で問われる）">
+      <Fold label="例題 — 50 kV·A ×3台のΔ-Δで1台故障" sub="最大三相容量・故障前比・利用率は？（解答を開く）">
+        <p><strong>問:</strong> 定格容量 50 kV·A の単相変圧器3台をΔ-Δ結線し、150 kV·A の三相負荷に供給していた。1台が故障し残り2台をV結線とする。(1) 供給できる最大三相容量 (2) 故障前に対する割合 (3) 利用率を求めよ。</p>
+        <p>(1) <Eq tex="S_V = \sqrt{3}\times 50 \approx 86.6\;[\mathrm{kV\cdot A}]" /></p>
+        <p>(2) <Eq tex="86.6/150 = 0.577 \to 57.7\%" /> ／ (3) <Eq tex="86.6/(2\times 50) = 0.866 \to 86.6\%" /></p>
+        <p><strong>実務的な意味:</strong> 150 kV·A の負荷をそのまま載せると2台が過負荷になる。<span className="marker">負荷を 86.6 kV·A 以下に制限</span>して初めて継続運転できる（＝<strong>故障前のバンク定格 150 kV·A に対する実負荷率</strong>が 57.7% 以下なら、負荷を切らずに移行できる）。</p>
+      </Fold>
+
+      <Fold label="発展 — 200 kW・力率0.8 をV結線で供給するには" sub="必要容量と有効電力分担（解答を開く）">
+        <p><strong>問:</strong> 三相平衡負荷 200 kW・力率 0.8（遅れ）をV結線で供給する。単相変圧器1台に必要な容量と、各変圧器の有効電力分担を求めよ。</p>
+        <p>三相皮相電力 <Eq tex="S = 200/0.8 = 250\;[\mathrm{kV\cdot A}]" />、1台あたり <Eq tex="S_n \ge 250/\sqrt{3} \approx 144.3\;[\mathrm{kV\cdot A}]" /></p>
+        <p><Eq tex="\theta = \cos^{-1}0.8 = 36.87^\circ" /> なので各器の力率は <Eq tex="\cos(30^\circ-36.87^\circ)=0.993" />、<Eq tex="\cos(30^\circ+36.87^\circ)=0.393" />。</p>
+        <p>有効分担は <Eq tex="144.3\times 0.993 \approx 143\;[\mathrm{kW}]" /> と <Eq tex="144.3\times 0.393 \approx 57\;[\mathrm{kW}]" />（合計 200 kW で検算 ✓）。<strong>皮相電力はどちらも 144.3 kV·A で等しく（＝損失・温度上昇も同等）、違うのは有効電力の分担だけ</strong>。ここは三種の必須線より一段深い論点なので、まず 57.7% / 86.6% / <Eq tex="\sqrt{3}S_n" /> と分母の区別を固めてから取り組めばよい。</p>
+      </Fold>
+
+      <Fold label="V結線の副作用（論説で問われる）" sub="第3高調波・電圧不平衡・常用との違い">
         <ul>
           <li><strong>Δの閉ループが消える</strong> → 第3高調波（triplen）励磁電流をΔ内に循環させておけなくなる。その結果がどこに現れるか（線電流・電圧波形）は電源インピーダンス・鉄心構造・接地条件によるが、<strong>Δ-Δの長所を1つ失う</strong>のは確か。</li>
           <li><strong>実負荷時に端子電圧が不平衡になり得る</strong> → 2台の漏れインピーダンスによる電圧降下が3つの線間電圧に同じ形では現れないため。無負荷なら不平衡は生じない。程度は %Z・X/R・負荷力率・電源の強さ次第で、一般にΔ-Δより不利。</li>
           <li><strong>故障退避としてのV-V運転は暫定運用</strong> → 出力制限のうえで使い、復旧後は3台のΔ-Δに戻すのが原則。</li>
         </ul>
         <p style={{ margin: "8px 0 0" }}>一方、<strong>V結線そのものは常用される結線</strong>でもある。需要が小さいうちは2台で供給し、増えたら3台目を足してΔ-Δにする段階増設や、柱上の灯動共用（異容量V結線）がその例。「故障時の応急」と「計画的な常用」は別物として区別する。</p>
-      </Box>
+      </Fold>
 
       <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "10px 0 0" }}>
         ▶ 結線方式そのものの比較（Y-Y / Δ-Δ / Y-Δ / Δ-Y の位相変位・第3高調波・用途）は <a href="https://kfurufuru.github.io/secretary-portal-public/denken3-denryoku-wiki.html#henatsuki" target="_blank" rel="noopener">電力Wiki「2.1 変圧器（基礎ハブ）」の三相結線とV結線</a>へ。
