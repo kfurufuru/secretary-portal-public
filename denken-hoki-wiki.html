@@ -62006,6 +62006,383 @@ function JuyoExerciseMode({
     }
   }, "▶ ", ex.kind === 'forward' ? 'この条件をシミュレータに読込' : '演習2の条件を読込（曲線で検算）')))));
 }
+function juyoFactoriesOf(specs) {
+  return ['A', 'B', 'C', 'D'].map((name, i) => {
+    const s = specs[name];
+    const base = JUYO_INITIAL_FACTORIES[i];
+    return s ? {
+      name,
+      enabled: true,
+      capacity: s.capacity,
+      demandPct: s.demandPct,
+      curveSource: {
+        type: 'pattern',
+        patternId: s.pattern
+      }
+    } : {
+      ...base,
+      enabled: false,
+      curveSource: {
+        ...base.curveSource
+      }
+    };
+  });
+}
+const JUYO_SCENARIOS = [{
+  id: 'sc1',
+  no: 1,
+  term: '需要率',
+  focus: 'demand',
+  title: '需要率 — 使い方を変えずに設備だけ増やす',
+  aim: '負荷曲線（実際の使い方）を1kWも変えないまま、設備容量だけを増やす。needs率の分母だけが動く。',
+  steps: [{
+    label: 'Step1: 設備容量 600kW・需要率 80%',
+    specs: {
+      A: {
+        capacity: 600,
+        demandPct: 80,
+        pattern: 'allday'
+      }
+    }
+  }, {
+    label: 'Step2: 設備容量 800kW・需要率 60%（最大需要は不変）',
+    specs: {
+      A: {
+        capacity: 800,
+        demandPct: 60,
+        pattern: 'allday'
+      }
+    }
+  }],
+  question: '負荷曲線がまったく同じ（最大需要も同じ）なのに、全体の需要率が下がったのはなぜ？',
+  lesson: '需要率は「設備の天井に対して、実際のピークがどこまで届いたか」。使い方が同じでも設備を増やせば天井が上がるので需要率は下がる。設備容量は負荷曲線に現れない量——だからグラフの天井線（灰）で見る。'
+}, {
+  id: 'sc2',
+  no: 2,
+  term: '負荷率',
+  focus: 'load',
+  title: '負荷率 — 最大需要を変えずに谷を埋める',
+  aim: 'ピークの高さ（最大需要電力）を固定したまま、昼だけの運転を終日運転に変える。',
+  steps: [{
+    label: 'Step1: 昼ピーク（9〜17時のみ全力・他は40%）',
+    specs: {
+      A: {
+        capacity: 600,
+        demandPct: 80,
+        pattern: 'day'
+      }
+    }
+  }, {
+    label: 'Step2: 終日一定負荷（ピークの高さは同じ）',
+    specs: {
+      A: {
+        capacity: 600,
+        demandPct: 80,
+        pattern: 'allday'
+      }
+    }
+  }],
+  question: '最大需要電力（ピークの高さ）は変わっていないのに、負荷率が上がったのはなぜ？',
+  lesson: '負荷率は「平均 ÷ 最大」＝緑の平均線と青丸の高さ比。最大が同じでも谷が埋まるほど平均線が上がる＝負荷率が上がる。「同じ電力量をどれだけ平らに使ったか」の指標であり、需要率とは別次元。'
+}, {
+  id: 'sc3',
+  no: 3,
+  term: '不等率',
+  focus: 'diversity',
+  title: '不等率 — ピーク時刻をずらす',
+  aim: 'A・B工場の設備容量と需要率（＝各最大需要）を一切変えず、B工場のピーク時刻だけを昼から夜へ移す。',
+  steps: [{
+    label: 'Step1: A・B ともに昼ピーク（同時刻にピーク）',
+    specs: {
+      A: {
+        capacity: 600,
+        demandPct: 80,
+        pattern: 'day'
+      },
+      B: {
+        capacity: 400,
+        demandPct: 75,
+        pattern: 'day'
+      }
+    }
+  }, {
+    label: 'Step2: B だけ夜ピークへ移す（各最大は不変）',
+    specs: {
+      A: {
+        capacity: 600,
+        demandPct: 80,
+        pattern: 'day'
+      },
+      B: {
+        capacity: 400,
+        demandPct: 75,
+        pattern: 'night'
+      }
+    }
+  }],
+  question: 'Σ各最大（赤破線）は変わっていないのに、合成最大が下がり不等率が上がったのはなぜ？',
+  lesson: '不等率＝Σ各最大 ÷ 合成最大。分子は時刻を無視した各ピークの合計なのでピークをずらしても不変。分母（同時刻合算の最高段）だけが下がる。この差が「ピーク分散効果」＝同じ変圧器でより多くの設備を養える理由。'
+}, {
+  id: 'sc4',
+  no: 4,
+  term: '設備容量と需要率の違い',
+  focus: 'demand',
+  title: '設備容量 vs 需要率 — どちらも曲線を大きくするが意味が違う',
+  aim: '「曲線が大きくなる」操作を2通り試して、需要率が動くか動かないかで区別する。',
+  steps: [{
+    label: 'Step1: 設備容量 600kW・需要率 80%（基準）',
+    specs: {
+      A: {
+        capacity: 600,
+        demandPct: 80,
+        pattern: 'allday'
+      }
+    }
+  }, {
+    label: 'Step2: 設備容量だけ 800kW へ（需要率 80% のまま）',
+    specs: {
+      A: {
+        capacity: 800,
+        demandPct: 80,
+        pattern: 'allday'
+      }
+    }
+  }, {
+    label: 'Step3: 設備容量 600kW に戻し、需要率だけ 100% へ',
+    specs: {
+      A: {
+        capacity: 600,
+        demandPct: 100,
+        pattern: 'allday'
+      }
+    }
+  }],
+  question: 'Step2 と Step3 はどちらも曲線が高くなる。では「全体の需要率」はどちらで動いた？',
+  lesson: '設備容量を増やす＝天井と実負荷が同じ率で伸びるので需要率は不変。需要率を上げる＝天井は同じで実負荷だけ伸びるので需要率が上がる（未使用余力が減る）。「設備容量＝持っている定格の合計」「需要率＝そのうち最大でどれだけ実際に使ったか」——スライダーの見た目が似ていても別の量。'
+}, {
+  id: 'sc5',
+  no: 5,
+  term: '電力量と平均需要電力',
+  focus: 'energy',
+  title: '電力量［kWh］— 最大が同じでも面積は違う',
+  aim: 'ピークの高さを固定したまま、稼働のしかた（間欠バッチ→終日）だけを変えて、曲線の下の面積を比べる。',
+  steps: [{
+    label: 'Step1: 間欠バッチ（待機20%・ピークは飛び飛び）',
+    specs: {
+      A: {
+        capacity: 600,
+        demandPct: 80,
+        pattern: 'batch'
+      }
+    }
+  }, {
+    label: 'Step2: 終日一定負荷（ピークの高さは同じ）',
+    specs: {
+      A: {
+        capacity: 600,
+        demandPct: 80,
+        pattern: 'allday'
+      }
+    }
+  }],
+  question: '最大需要電力［kW］が同じなのに、1日電力量［kWh］が大きく違うのはなぜ？',
+  lesson: 'kW は「その瞬間（区間）の高さ」、kWh は「高さ×時間＝曲線の下の面積」。平均需要電力は面積を24hで均した高さで、1日電力量＝平均×24h。電気料金でいえば基本料金は最大需要（高さ）、電力量料金は面積に対応する。'
+}];
+function JuyoScenarioMode({
+  scenarioId,
+  stepIdx,
+  onSelect,
+  onLoadStep
+}) {
+  const sc = JUYO_SCENARIOS.find(s => s.id === scenarioId) || null;
+  const chip = s => {
+    const active = scenarioId === s.id;
+    return React.createElement("button", {
+      key: s.id,
+      type: "button",
+      onClick: () => onSelect(active ? null : s.id),
+      "aria-pressed": active,
+      "aria-label": `学習モード パターン${s.no}: ${s.term}`,
+      style: {
+        minHeight: 38,
+        padding: '5px 12px',
+        borderRadius: 18,
+        fontSize: 12,
+        cursor: 'pointer',
+        border: active ? '2px solid var(--accent)' : '1px solid var(--line)',
+        background: active ? 'var(--bg-elev)' : 'var(--bg-2)',
+        color: active ? 'var(--accent-ink)' : 'var(--ink-1)',
+        fontWeight: active ? 700 : 400
+      }
+    }, active ? '● ' : '', "パターン", s.no, ": ", s.term);
+  };
+  return React.createElement("div", {
+    style: {
+      marginBottom: 12,
+      padding: '9px 12px',
+      border: '1px solid var(--line)',
+      borderRadius: 8,
+      background: 'var(--card)'
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      marginBottom: 2
+    }
+  }, "🎓 学習モード（1つずつ動かして用語をつかむ）"), React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: 'var(--ink-3)',
+      marginBottom: 8,
+      lineHeight: 1.6
+    }
+  }, "いきなり全部のスライダーを動かすと複数の値が同時に変わって何を学んだか分からなくなる。", React.createElement("strong", {
+    style: {
+      color: 'var(--ink-2)'
+    }
+  }, "まず1変数だけ動かすパターンを順に踏み"), "、そのあと自由操作へ進むのが最短。選ぶとその用語の分子・分母がグラフで自動点灯する。"), React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 6,
+      flexWrap: 'wrap'
+    }
+  }, JUYO_SCENARIOS.map(chip)), sc && React.createElement("div", {
+    style: {
+      marginTop: 10,
+      paddingTop: 9,
+      borderTop: '1px dashed var(--line)'
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 12.5,
+      fontWeight: 700,
+      marginBottom: 3
+    }
+  }, "パターン", sc.no, ": ", sc.title), React.createElement("div", {
+    style: {
+      fontSize: 11.5,
+      color: 'var(--ink-2)',
+      lineHeight: 1.7,
+      marginBottom: 8
+    }
+  }, React.createElement("strong", null, "変えるもの"), ": ", sc.aim), React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 6,
+      flexWrap: 'wrap',
+      marginBottom: 8
+    }
+  }, sc.steps.map((st, i) => {
+    const active = stepIdx === i;
+    return React.createElement("button", {
+      key: i,
+      type: "button",
+      onClick: () => onLoadStep(sc, i),
+      "aria-pressed": active,
+      "aria-label": `パターン${sc.no} ${st.label} をシミュレータに読込`,
+      style: {
+        minHeight: 40,
+        padding: '5px 12px',
+        borderRadius: 6,
+        fontSize: 11.5,
+        lineHeight: 1.4,
+        textAlign: 'left',
+        cursor: 'pointer',
+        border: active ? '2px solid var(--dgm-blue)' : '1px solid var(--accent)',
+        background: active ? 'var(--bg-elev)' : 'var(--bg-2)',
+        color: active ? 'var(--dgm-blue)' : 'var(--accent-ink)',
+        fontWeight: 700
+      }
+    }, active ? '▶ 表示中: ' : '▷ ', st.label);
+  })), React.createElement("div", {
+    style: {
+      fontSize: 11.5,
+      color: 'var(--ink-2)',
+      lineHeight: 1.7,
+      marginBottom: 6
+    }
+  }, React.createElement("strong", null, "手順"), ": Step を順に押して", React.createElement("strong", null, "上のグラフと結果カードの変化"), "を見る（", sc.term, "のカードは自動で点灯している）。値を見比べてから下の答えを開く。"), React.createElement("div", {
+    style: {
+      padding: '7px 10px',
+      background: 'var(--bg-2)',
+      borderLeft: '3px solid var(--warn)',
+      borderRadius: 4,
+      fontSize: 12,
+      lineHeight: 1.7,
+      marginBottom: 6
+    }
+  }, React.createElement("strong", null, "問い"), ": ", sc.question), React.createElement("details", null, React.createElement("summary", {
+    style: {
+      cursor: 'pointer',
+      fontWeight: 600,
+      fontSize: 12,
+      padding: '5px 10px',
+      background: 'var(--bg-2)',
+      borderRadius: 4
+    }
+  }, "✅ 答え（先に自分で言葉にしてから開く）"), React.createElement("div", {
+    style: {
+      padding: '8px 4px 2px'
+    }
+  }, React.createElement("div", {
+    style: {
+      overflowX: 'auto',
+      WebkitOverflowScrolling: 'touch',
+      marginBottom: 4
+    }
+  }, React.createElement("table", {
+    style: {
+      width: '100%',
+      minWidth: 430,
+      borderCollapse: 'collapse',
+      fontSize: 11.5
+    }
+  }, React.createElement("thead", null, React.createElement("tr", null, ['条件', '最大需要', 'Σ設備容量', '需要率', '負荷率', '不等率', '1日電力量'].map((h, hi) => React.createElement("th", {
+    key: h,
+    style: {
+      textAlign: hi === 0 ? 'left' : 'right',
+      padding: '4px 6px',
+      whiteSpace: 'nowrap',
+      borderBottom: '1px solid var(--line)',
+      color: 'var(--ink-3)',
+      fontWeight: 700
+    }
+  }, h)))), React.createElement("tbody", null, sc.steps.map((st, i) => {
+    const r = juyoCompute(juyoFactoriesOf(st.specs), 100);
+    const cell = (v, emph) => React.createElement("td", {
+      style: {
+        textAlign: 'right',
+        padding: '4px 6px',
+        whiteSpace: 'nowrap',
+        borderBottom: '1px solid var(--line)',
+        fontFamily: 'monospace',
+        fontWeight: emph ? 800 : 400,
+        color: emph ? 'var(--accent-ink)' : 'var(--ink-1)'
+      }
+    }, v);
+    return React.createElement("tr", {
+      key: i
+    }, React.createElement("td", {
+      style: {
+        padding: '4px 6px',
+        whiteSpace: 'nowrap',
+        borderBottom: '1px solid var(--line)'
+      }
+    }, "Step", i + 1), cell(`${juyoFmtKw(r.compositeMax)} kW`, sc.focus === 'compositeMax'), cell(`${juyoFmtKw(r.sumCapacity)} kW`), cell(juyoFmtPct(r.overallDemandFactor), sc.focus === 'demand'), cell(juyoFmtPct(r.totalLoadFactor), sc.focus === 'load'), cell(juyoFmtRatio(r.diversityFactor), sc.focus === 'diversity'), cell(`${juyoFmtKw(r.compositeEnergy)} kWh`, sc.focus === 'energy'));
+  })))), React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: 'var(--ink-3)',
+      marginBottom: 8
+    }
+  }, "※ 太字＝このパターンで注目する指標（スマホでは表を横にスクロール）"), React.createElement("div", {
+    style: {
+      fontSize: 12,
+      lineHeight: 1.8
+    }
+  }, sc.lesson)))));
+}
 const JUYO_INSIGHTS = [{
   key: 'ins1',
   auto: true,
@@ -62298,6 +62675,8 @@ function JuyoSimulatorPage({
   const [selHour, setSelHour] = React.useState(null);
   const [focusMetric, setFocusMetric] = React.useState(null);
   const toggleFocus = k => setFocusMetric(prev => prev === k ? null : k);
+  const [scenarioId, setScenarioId] = React.useState(null);
+  const [scenarioStep, setScenarioStep] = React.useState(null);
   const m = React.useMemo(() => juyoCompute(factories, pfPct), [factories, pfPct]);
   const hour = selHour === null ? m.peakHours.length ? m.peakHours[0] : 12 : selHour;
   const [history, setHistory] = React.useState(null);
@@ -62305,7 +62684,9 @@ function JuyoSimulatorPage({
     factories,
     pfPct,
     presetId,
-    selHour
+    selHour,
+    scenarioStep,
+    focusMetric
   });
   const prevMRef = React.useRef(null);
   const [delta, setDelta] = React.useState(null);
@@ -62325,6 +62706,7 @@ function JuyoSimulatorPage({
   const changeFactory = (idx, patch) => {
     snapshot();
     setPresetId(null);
+    setScenarioStep(null);
     setFactories(prev => prev.map((f, i) => {
       let next = i === idx ? {
         ...f,
@@ -62355,6 +62737,7 @@ function JuyoSimulatorPage({
     setPfPct(preset.pfPct);
     setPresetId(preset.id);
     setSelHour(null);
+    setScenarioStep(null);
   };
   const loadExercise = exFactories => {
     snapshot();
@@ -62367,12 +62750,29 @@ function JuyoSimulatorPage({
     setPfPct(100);
     setPresetId(null);
     setSelHour(null);
+    setScenarioStep(null);
+  };
+  const loadScenarioStep = (sc, idx) => {
+    snapshot();
+    setFactories(juyoFactoriesOf(sc.steps[idx].specs));
+    setPfPct(100);
+    setPresetId(null);
+    setSelHour(null);
+    setScenarioId(sc.id);
+    setScenarioStep(idx);
+    setFocusMetric(sc.focus);
+  };
+  const selectScenario = id => {
+    setScenarioId(id);
+    setScenarioStep(null);
+    if (id === null) setFocusMetric(null);
   };
   const changePf = p => {
     if (p === pfPct) return;
     snapshot();
     setPresetId(null);
     setPfPct(p);
+    setScenarioStep(null);
   };
   const resetAll = () => {
     snapshot();
@@ -62380,6 +62780,7 @@ function JuyoSimulatorPage({
     setPfPct(100);
     setPresetId(null);
     setSelHour(null);
+    setScenarioStep(null);
   };
   const undoOnce = () => {
     if (!history) return;
@@ -62387,12 +62788,16 @@ function JuyoSimulatorPage({
       factories,
       pfPct,
       presetId,
-      selHour
+      selHour,
+      scenarioStep,
+      focusMetric
     };
     setFactories(history.factories);
     setPfPct(history.pfPct);
     setPresetId(history.presetId);
     setSelHour(history.selHour);
+    setScenarioStep(history.scenarioStep);
+    setFocusMetric(history.focusMetric);
     setHistory(cur);
   };
   React.useEffect(() => {
@@ -62458,7 +62863,7 @@ function JuyoSimulatorPage({
     correctIndex: 2,
     year: "R4上 問12(a)・正答率42%",
     note: "下の「過去問プリセット」からこの問題を読み込むと、560kW → 622.2kVA → 7台 のチェーンを曲線と結果カードで確かめられる"
-  }), React.createElement(ConclusionBox, null, React.createElement("ul", null, React.createElement("li", null, React.createElement("strong", null, "使い方"), ": ①工場のスライダーとパターンを動かす → ②合成曲線と不等率の変化を見る → ③過去問プリセットで実戦の数値を再現する"), React.createElement("li", null, "3公式の定義・導出は ", navLink('juyoritsu-gainen', '6.1 概念'), "・", navLink('juyoritsu-keisan', '1.6 計算'), "、負荷率の深掘りは ", navLink('furitsu', '6.2'), "、不等率は ", navLink('futorito', '6.3'), " を参照（本ページは定義を重複掲載しない）"), React.createElement("li", null, "ここで見るもの: ", React.createElement("strong", null, "ピーク時刻のずれ → 合成最大の低下 → 不等率の上昇"), "という因果を、操作で体感する"))), React.createElement("div", {
+  }), React.createElement(ConclusionBox, null, React.createElement("ul", null, React.createElement("li", null, React.createElement("strong", null, "使い方（初回はこの順）"), ": ①", React.createElement("strong", null, "学習モードのパターン1〜5"), "を順に踏む（1変数だけ動かして用語をつかむ） → ②自由にスライダーとパターンを動かす → ③過去問プリセットで実戦の数値を再現する"), React.createElement("li", null, "3公式の定義・導出は ", navLink('juyoritsu-gainen', '6.1 概念'), "・", navLink('juyoritsu-keisan', '1.6 計算'), "、負荷率の深掘りは ", navLink('furitsu', '6.2'), "、不等率は ", navLink('futorito', '6.3'), " を参照（本ページは定義を重複掲載しない）"), React.createElement("li", null, "ここで見るもの: ", React.createElement("strong", null, "ピーク時刻のずれ → 合成最大の低下 → 不等率の上昇"), "という因果を、操作で体感する"))), React.createElement("div", {
     style: {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -62592,6 +62997,11 @@ function JuyoSimulatorPage({
   }), React.createElement("div", null, React.createElement(JuyoStickyBar, {
     m: m,
     delta: delta
+  }), React.createElement(JuyoScenarioMode, {
+    scenarioId: scenarioId,
+    stepIdx: scenarioStep,
+    onSelect: selectScenario,
+    onLoadStep: loadScenarioStep
   }), React.createElement("div", {
     style: {
       display: 'flex',
@@ -62949,6 +63359,10 @@ function JuyoSimulatorPage({
     }]
   }), React.createElement(UpdateLog, {
     entries: [{
+      date: "2026-07-25",
+      content: "v1.5: 学習モード（パターン1〜5）追加。「一度に一変数だけ変える」段階学習をシミュレータ冒頭に配置し、自由操作の前段にした: パターン1 需要率（負荷曲線を変えず設備容量だけ増やす＝分母だけ動く）／2 負荷率（最大を固定して谷を埋める）／3 不等率（各最大を固定してBのピーク時刻だけ夜へ移す）／4 設備容量vs需要率（同じ「曲線が大きくなる」操作の意味の違い・3Step）／5 電力量kWh（最大が同じでも面積は違う）。各パターンはStep読込と同時に v1.4 のフォーカス点灯が該当用語を自動で指し、解答は全Stepの比較表（最大需要・Σ設備容量・需要率・負荷率・不等率・1日電力量）を juyoCompute() から生成",
+      reason: "監修者さん指摘「学習しやすいようにパターン1〜5と選べるようにしたらどうか」＋ChatGPTアドバイス⑤（自由操作の前に一変数シナリオを置く）。全パラメータを同時に動かせる状態では『何を学んでいるか分からなくなる』ため、用語ごとに変数を1つに絞った導線を先に置いた"
+    }, {
       date: "2026-07-25",
       content: "v1.4: グラフと用語の接地改善（ChatGPTレビュー反映）: ①合成平均需要電力の緑破線を常時表示（総合負荷率＝緑線と青丸の高さ比として読める） ②結果カード7枚（合成最大・Σ各最大・不等率・総合負荷率・全体の需要率・合成平均・1日電力量）をタップすると、式の分子・分母が同色でグラフ点灯＋式バー表示（赤=Σ各最大／青=合成最大・面積／緑=合成平均／灰=Σ設備容量） ③「全体の需要率」タップでΣ設備容量の天井線＋未使用余力ブラケットを表示（分子がΣ各最大でない点の注意書きつき） ④「総合負荷率」「合成平均」タップで平均×24hの等積長方形を表示（同じ電力量をどれだけ平らに使ったか）",
       reason: "ChatGPTアドバイス「設備容量・平均需要電力・電力量・合わせた需要率・総合負荷率が数値理解に寄っている——天井線・平均線・面積・分子分母の色対応が必要」を反映。操作（スライダー）と用語の一対一対応不足を、カード⇔グラフの連動で補完"
