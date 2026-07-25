@@ -60630,7 +60630,59 @@ const JUYO_PERIODS = [{
 function juyoPeriodOf(id) {
   return JUYO_PERIODS.find(p => p.id === id) || JUYO_PERIODS[0];
 }
-function juyoCompute(factories, pfPct, periodId) {
+const JUYO_SEASON = [{
+  m: 1,
+  k: 0.9,
+  days: 31
+}, {
+  m: 2,
+  k: 0.9,
+  days: 28
+}, {
+  m: 3,
+  k: 0.8,
+  days: 31
+}, {
+  m: 4,
+  k: 0.8,
+  days: 30
+}, {
+  m: 5,
+  k: 0.8,
+  days: 31
+}, {
+  m: 6,
+  k: 0.9,
+  days: 30
+}, {
+  m: 7,
+  k: 1.0,
+  days: 31
+}, {
+  m: 8,
+  k: 1.0,
+  days: 31
+}, {
+  m: 9,
+  k: 1.0,
+  days: 30
+}, {
+  m: 10,
+  k: 0.8,
+  days: 31
+}, {
+  m: 11,
+  k: 0.8,
+  days: 30
+}, {
+  m: 12,
+  k: 0.9,
+  days: 31
+}];
+const JUYO_SEASON_DAYS = JUYO_SEASON.reduce((s, x) => s + x.days, 0);
+const JUYO_SEASON_PEAK = JUYO_SEASON.reduce((s, x) => Math.max(s, x.k), 0);
+const JUYO_SEASON_MEANK = JUYO_SEASON.reduce((s, x) => s + x.k * x.days, 0) / JUYO_SEASON_DAYS;
+function juyoCompute(factories, pfPct, periodId, opts) {
   const rows = factories.filter(f => f.enabled).map(f => {
     const nominalMax = f.capacity * f.demandPct / 100;
     const curve = f.curveSource.type === 'custom' ? f.curveSource.values.slice() : JUYO_HOURS.map(h => JUYO_PATTERNS[f.curveSource.patternId].prof(h) * nominalMax);
@@ -60670,7 +60722,22 @@ function juyoCompute(factories, pfPct, periodId) {
   const apparentKva = compositeMax > JUYO_EPS ? compositeMax / (pfPct / 100) : null;
   const trafoCount = apparentKva !== null ? Math.ceil(apparentKva / 100 - 1e-9) : null;
   const period = juyoPeriodOf(periodId);
-  const periodEnergy = compositeAverage * period.hours;
+  const o = opts || {};
+  const capKvar = Math.max(0, o.capacitorKvar || 0);
+  const cos1 = pfPct / 100;
+  const tan1 = Math.sqrt(Math.max(0, 1 / (cos1 * cos1) - 1));
+  const reactiveBefore = compositeMax > JUYO_EPS ? compositeMax * tan1 : 0;
+  const reactiveAfter = reactiveBefore - capKvar;
+  const apparentAfter = compositeMax > JUYO_EPS ? Math.sqrt(compositeMax * compositeMax + reactiveAfter * reactiveAfter) : null;
+  const pfAfter = apparentAfter !== null && apparentAfter > JUYO_EPS ? compositeMax / apparentAfter : null;
+  const trafoCountAfter = apparentAfter !== null ? Math.ceil(apparentAfter / 100 - 1e-9) : null;
+  const overCompensated = reactiveAfter < -1e-9;
+  const capKvarForUnity = reactiveBefore;
+  const seasonalOn = !!o.seasonal && period.id === 'year';
+  const seasonMax = seasonalOn ? compositeMax * JUYO_SEASON_PEAK : compositeMax;
+  const seasonAverage = seasonalOn ? compositeAverage * JUYO_SEASON_MEANK : compositeAverage;
+  const periodEnergy = seasonalOn ? seasonAverage * period.hours : compositeAverage * period.hours;
+  const periodLoadFactor = seasonalOn ? seasonMax > JUYO_EPS ? seasonAverage / seasonMax : null : totalLoadFactor;
   return {
     rows,
     composite,
@@ -60690,7 +60757,20 @@ function juyoCompute(factories, pfPct, periodId) {
     apparentKva,
     trafoCount,
     period,
-    periodEnergy
+    periodEnergy,
+    periodLoadFactor,
+    capKvar,
+    reactiveBefore,
+    reactiveAfter,
+    apparentAfter,
+    pfAfter,
+    trafoCountAfter,
+    overCompensated,
+    capKvarForUnity,
+    seasonalOn,
+    seasonMax,
+    seasonAverage,
+    seasonMeanK: JUYO_SEASON_MEANK
   };
 }
 function juyoFmtKw(v) {
@@ -61586,7 +61666,9 @@ function JuyoStickyBar({
 function JuyoPeriodSelector({
   m,
   periodId,
-  onChange
+  onChange,
+  seasonal,
+  onSeasonalChange
 }) {
   const p = m.period;
   return React.createElement("div", {
@@ -61643,7 +61725,51 @@ function JuyoPeriodSelector({
       color: 'var(--ink-2)',
       fontFamily: 'monospace'
     }
-  }, "総時間 ", p.note, " → ", p.lfName)), React.createElement("div", {
+  }, "総時間 ", p.note, " → ", p.lfName)), m.period.id === 'year' && React.createElement("div", {
+    style: {
+      marginTop: 7,
+      paddingTop: 7,
+      borderTop: '1px dashed var(--line)'
+    }
+  }, React.createElement("label", {
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 7,
+      cursor: 'pointer',
+      fontSize: 11.5,
+      fontWeight: 700,
+      minHeight: 30
+    }
+  }, React.createElement("input", {
+    type: "checkbox",
+    checked: !!seasonal,
+    onChange: e => onSeasonalChange(e.target.checked),
+    style: {
+      width: 16,
+      height: 16,
+      accentColor: 'var(--accent)',
+      cursor: 'pointer'
+    }
+  }), "季節変動をつける（夏1.0／中間0.8／冬0.9）"), seasonal ? React.createElement("div", {
+    style: {
+      fontSize: 10.5,
+      color: 'var(--ink-2)',
+      lineHeight: 1.7,
+      marginTop: 3
+    }
+  }, "年最大＝", React.createElement("strong", null, "夏の日最大"), "（係数1.0）、年平均＝日平均×", React.createElement("strong", null, "加重平均係数 ", m.seasonMeanK.toFixed(3)), "（Σ係数×日数÷365）。 その結果 ", React.createElement("strong", {
+    style: {
+      color: 'var(--accent-ink)'
+    }
+  }, "年負荷率 ", juyoFmtPct(m.periodLoadFactor), " < 日負荷率 ", juyoFmtPct(m.totalLoadFactor)), " となり、 「月最大 ≠ 年最大」の効果が数値に出る。※係数は", React.createElement("strong", null, "学習用の代表値"), "（規格値ではない）。試験では与えられた条件を使う。") : React.createElement("div", {
+    style: {
+      fontSize: 10.5,
+      color: 'var(--ink-3)',
+      lineHeight: 1.7,
+      marginTop: 3
+    }
+  }, "OFF のままだと同じ日をずっと繰り返す前提なので、年負荷率は日負荷率と同じ値になる。ONにすると季節差で年最大だけが上がり、年負荷率が下がる。")), React.createElement("div", {
     style: {
       fontSize: 10.5,
       color: 'var(--ink-3)',
@@ -61654,26 +61780,25 @@ function JuyoPeriodSelector({
     style: {
       color: 'var(--ink-2)'
     }
-  }, "負荷率の式は「平均 ÷ 最大」のまま"), "——変わるのは電力量を出すときに掛ける総時間だけ。 ⚠ ただし", React.createElement("strong", {
+  }, "負荷率の式は「平均 ÷ 最大」のまま"), "——変わるのは電力量を出すときに掛ける総時間だけ。 ⚠ 本モデルは同じ日負荷曲線を繰り返す前提なので、", React.createElement("strong", {
     style: {
       color: 'var(--ink-2)'
     }
-  }, "本モデルは同じ日負荷曲線を期間中ずっと繰り返す前提"), "なので、期間を変えても負荷率の", React.createElement("strong", {
+  }, "季節変動をONにしない限り"), "期間を変えても負荷率の値は同じになる。 実際は月や年の最大需要電力が別の日に立つため、通常は", React.createElement("strong", {
     style: {
       color: 'var(--ink-2)'
     }
-  }, "値は同じ"), "になる。 実際の試験・実務では月や年の最大需要電力が別の日に立つため、通常は", React.createElement("strong", {
-    style: {
-      color: 'var(--ink-2)'
-    }
-  }, "年負荷率 < 月負荷率 < 日負荷率"), "となる（値が一致するのはこのモデルの性質）。"));
+  }, "年負荷率 < 月負荷率 < 日負荷率"), "（年のチェックで体験できる）。"));
 }
 function JuyoResultCards({
   m,
   pfPct,
   onPfChange,
   focus,
-  onFocus
+  onFocus,
+  capKvar,
+  onCapChange,
+  navLink
 }) {
   const card = (label, value, sub, opts = {}) => {
     const {
@@ -61764,7 +61889,7 @@ function JuyoResultCards({
   }), card('不等率', juyoFmtRatio(m.diversityFactor), 'Σ各最大 ÷ 合成最大（通常1以上）', {
     emphasized: true,
     focusKey: 'diversity'
-  }), card(`総合負荷率（＝${m.period.lfName}）`, juyoFmtPct(m.totalLoadFactor), `合成平均 ÷ 合成最大（期間: ${m.period.label}・総時間${m.period.note}）`, {
+  }), card(`総合負荷率（＝${m.period.lfName}）`, juyoFmtPct(m.periodLoadFactor), m.seasonalOn ? `季節変動あり: 年平均 ${juyoFmtKw(m.seasonAverage)} ÷ 年最大 ${juyoFmtKw(m.seasonMax)} kW（日負荷率 ${juyoFmtPct(m.totalLoadFactor)} より低い）` : `合成平均 ÷ 合成最大（期間: ${m.period.label}・総時間${m.period.note}）`, {
     focusKey: 'load'
   }), card('全体の需要率', juyoFmtPct(m.overallDemandFactor), `合成最大 ÷ Σ負荷設備容量（${juyoFmtKw(m.sumCapacity) === '—' ? 0 : juyoFmtKw(m.sumCapacity)}kW）`, {
     focusKey: 'demand'
@@ -61772,7 +61897,7 @@ function JuyoResultCards({
     focusKey: 'average'
   }), card('1日電力量', empty ? '—' : `${juyoFmtKw(m.compositeEnergy)} kWh`, '合成平均 × 24h（グラフの塗り面積）', {
     focusKey: 'energy'
-  }), m.period.id !== 'day' && card(`${m.period.label}の電力量`, empty ? '—' : `${juyoFmtMwh(m.periodEnergy)}`, `合成平均 × ${m.period.note}${m.period.id === 'mon30' ? '（R4上問12(b)の形）' : ''}`), card('必要皮相電力', empty ? '—' : `${juyoFmtKva(m.apparentKva)} kVA`, `合成最大 ÷ 力率${pfPct}%（変圧器設備容量[kVA]の必要下限）`), card('100kVA変圧器 理論最少台数', empty ? '—' : `${m.trafoCount} 台`, '皮相電力 ÷ 100kVA を切上げ（R4上問12(a)の形）'), React.createElement("div", {
+  }), m.period.id !== 'day' && card(`${m.period.label}の電力量`, empty ? '—' : `${juyoFmtMwh(m.periodEnergy)}`, m.seasonalOn ? `年平均 ${juyoFmtKw(m.seasonAverage)} kW（季節変動あり）× ${m.period.note}` : `合成平均 × ${m.period.note}${m.period.id === 'mon30' ? '（R4上問12(b)の形）' : ''}`), card('必要皮相電力', empty ? '—' : `${juyoFmtKva(m.capKvar > 0 ? m.apparentAfter : m.apparentKva)} kVA`, !empty && m.capKvar > 0 ? `コンデンサ${Math.round(m.capKvar)}kvar 投入後（投入前 ${juyoFmtKva(m.apparentKva)} kVA）` : `合成最大 ÷ 力率${pfPct}%（変圧器設備容量[kVA]の必要下限）`), card('100kVA変圧器 理論最少台数', empty ? '—' : `${m.capKvar > 0 ? m.trafoCountAfter : m.trafoCount} 台`, !empty && m.capKvar > 0 ? `投入前 ${m.trafoCount} 台 → ${m.trafoCountAfter} 台（${m.trafoCount - m.trafoCountAfter}台減）` : '皮相電力 ÷ 100kVA を切上げ（R4上問12(a)の形）'), React.createElement("div", {
     style: {
       border: '1px solid var(--line)',
       borderRadius: 8,
@@ -61807,13 +61932,108 @@ function JuyoResultCards({
       color: 'var(--ink-1)',
       fontWeight: pfPct === p ? 700 : 400
     }
-  }, p, "%"))))), React.createElement("div", {
+  }, p, "%"))))), !empty && React.createElement("div", {
+    style: {
+      border: '1px solid var(--line)',
+      borderRadius: 8,
+      padding: '9px 12px',
+      background: 'var(--card)',
+      marginBottom: 8
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      marginBottom: 2
+    }
+  }, "⚡ 進相コンデンサを入れる（力率改善 → 皮相電力 → 変圧器台数）"), React.createElement("div", {
+    style: {
+      fontSize: 10.5,
+      color: 'var(--ink-3)',
+      lineHeight: 1.6,
+      marginBottom: 6
+    }
+  }, "有効電力 P［kW］は", React.createElement("strong", null, "変わらない"), "。減るのは無効電力 Q［kvar］だけ。P が同じでも Q が減ると斜辺 S＝√(P²+Q²) が短くなる——これが「力率を改善すると変圧器容量が小さくて済む」理由。"), m.reactiveBefore <= JUYO_EPS ? React.createElement("div", {
+    style: {
+      padding: '7px 10px',
+      borderRadius: 6,
+      fontSize: 11.5,
+      lineHeight: 1.7,
+      border: '1px dashed var(--accent)',
+      background: 'var(--bg-2)'
+    }
+  }, "いまは", React.createElement("strong", null, "力率 100%"), "（無効電力 Q = 0）なので、コンデンサを入れる余地がありません。 上の「合成最大需要時の総合力率」を ", React.createElement("strong", null, "90%"), " か ", React.createElement("strong", null, "85%"), " にすると Q が現れ、コンデンサの効果を体験できます。") : React.createElement(JuyoSimSlider, {
+    label: "進相コンデンサ容量",
+    srName: "進相コンデンサ容量",
+    value: capKvar,
+    min: 0,
+    max: Math.ceil(m.reactiveBefore / 50) * 50 + 100,
+    step: 10,
+    unit: " kvar",
+    valueText: v => `${v}キロバール`,
+    onChange: onCapChange
+  }), React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(128px, 1fr))',
+      gap: 6,
+      marginTop: 6,
+      fontSize: 11.5
+    }
+  }, React.createElement("div", null, React.createElement("span", {
+    style: {
+      color: 'var(--ink-3)'
+    }
+  }, "有効電力 P"), React.createElement("br", null), React.createElement("strong", {
+    style: {
+      fontFamily: 'monospace'
+    }
+  }, juyoFmtKw(m.compositeMax), " kW"), "（不変）"), React.createElement("div", null, React.createElement("span", {
+    style: {
+      color: 'var(--ink-3)'
+    }
+  }, "無効電力 Q"), React.createElement("br", null), React.createElement("strong", {
+    style: {
+      fontFamily: 'monospace'
+    }
+  }, juyoFmtKva(m.reactiveBefore), " → ", juyoFmtKva(m.reactiveAfter), " kvar")), React.createElement("div", null, React.createElement("span", {
+    style: {
+      color: 'var(--ink-3)'
+    }
+  }, "皮相電力 S"), React.createElement("br", null), React.createElement("strong", {
+    style: {
+      fontFamily: 'monospace'
+    }
+  }, juyoFmtKva(m.apparentKva), " → ", juyoFmtKva(m.apparentAfter), " kVA")), React.createElement("div", null, React.createElement("span", {
+    style: {
+      color: 'var(--ink-3)'
+    }
+  }, "力率 cosφ"), React.createElement("br", null), React.createElement("strong", {
+    style: {
+      fontFamily: 'monospace'
+    }
+  }, pfPct, "% → ", juyoFmtPct(m.pfAfter)))), React.createElement("div", {
+    style: {
+      fontSize: 10.5,
+      color: 'var(--ink-2)',
+      lineHeight: 1.7,
+      marginTop: 5
+    }
+  }, "力率1.0にするのに必要な容量は ", React.createElement("strong", {
+    style: {
+      fontFamily: 'monospace'
+    }
+  }, juyoFmtKva(m.capKvarForUnity), " kvar"), "（＝現在の Q）。", m.overCompensated && React.createElement("strong", {
+    style: {
+      color: 'var(--warn)'
+    }
+  }, "\u3000⚠ 入れすぎです（進み力率＝過補償）。Q が負に振れると皮相電力は再び増え、実務では電圧上昇の原因にもなります。"), "\u3000深掘りは ", navLink('ryokuritsu-kaizen', '1.5 力率改善'), "・", navLink('hensyatsuki-yoryo', '6.4 変圧器容量'), " へ。")), React.createElement("div", {
     style: {
       fontSize: 11,
       color: 'var(--ink-3)',
       lineHeight: 1.7
     }
-  }, "※ 力率は有効電力の負荷曲線には影響しない独立後段です（曲線・kW値は力率を変えても不変）。変圧器台数は予備率・裕度を考慮しない理論最少台数です。"));
+  }, "※ 力率・コンデンサは有効電力の負荷曲線には影響しない独立後段です（曲線・kW値は不変）。変圧器台数は予備率・裕度を考慮しない理論最少台数です。"));
 }
 const JUYO_PRESETS = [{
   id: 'r4',
@@ -62244,6 +62464,239 @@ function JuyoExerciseMode({
       marginTop: 4
     }
   }, "▶ ", ex.kind === 'forward' ? 'この条件をシミュレータに読込' : '演習2の条件を読込（曲線で検算）')))));
+}
+const JUYO_DW_START_MIN = 8 * 60;
+const JUYO_DW_CURVE = [300, 300, 320, 320, 360, 800, 360, 340, 340, 340, 360, 360, 520, 520, 380, 360, 300, 300, 320, 340, 360, 360, 340, 320];
+const JUYO_DW_WINDOWS = [{
+  id: 'w15',
+  label: '15分',
+  slots: 1
+}, {
+  id: 'w30',
+  label: '30分（実際のデマンド）',
+  slots: 2
+}, {
+  id: 'w60',
+  label: '60分',
+  slots: 4
+}];
+function juyoDwAverages(slots) {
+  const out = [];
+  for (let i = 0; i < JUYO_DW_CURVE.length; i += slots) {
+    const seg = JUYO_DW_CURVE.slice(i, i + slots);
+    out.push({
+      startIdx: i,
+      len: seg.length,
+      avg: seg.reduce((s, v) => s + v, 0) / seg.length
+    });
+  }
+  return out;
+}
+function juyoDwTimeLabel(idx) {
+  const t = JUYO_DW_START_MIN + idx * 15;
+  return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+}
+function JuyoDemandWindow() {
+  const [winId, setWinId] = React.useState('w30');
+  const win = JUYO_DW_WINDOWS.find(w => w.id === winId) || JUYO_DW_WINDOWS[1];
+  const segs = juyoDwAverages(win.slots);
+  const peak = segs.reduce((a, b) => b.avg > a.avg ? b : a, segs[0]);
+  const instMax = Math.max(...JUYO_DW_CURVE);
+  const W = 720,
+    H = 210,
+    X0 = 54,
+    X1 = 706,
+    Y0 = 16,
+    Y1 = 168;
+  const yTop = 900;
+  const xOf = i => X0 + i / JUYO_DW_CURVE.length * (X1 - X0);
+  const yOf = v => Y1 - v / yTop * (Y1 - Y0);
+  return React.createElement("div", null, React.createElement("div", {
+    style: {
+      marginBottom: 8,
+      padding: '8px 12px',
+      background: 'var(--bg-2)',
+      borderLeft: '3px solid var(--accent)',
+      borderRadius: 4,
+      fontSize: 12,
+      lineHeight: 1.7
+    }
+  }, "最大需要電力は", React.createElement("strong", null, "瞬時値ではなく「区間の平均値」の最大"), "。だから", React.createElement("strong", null, "区間の取り方で値が変わる"), "。 下は同じ負荷（15分刻みの実測値・9:15の15分だけ 800kW の短いピーク）を、区間長だけ変えて平均したもの。"), React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 6,
+      flexWrap: 'wrap',
+      marginBottom: 8
+    },
+    role: "group",
+    "aria-label": "デマンド区間の長さ"
+  }, JUYO_DW_WINDOWS.map(w => {
+    const active = w.id === winId;
+    return React.createElement("button", {
+      key: w.id,
+      type: "button",
+      onClick: () => setWinId(w.id),
+      "aria-pressed": active,
+      "aria-label": `デマンド区間 ${w.label}`,
+      style: {
+        minHeight: 34,
+        padding: '4px 12px',
+        borderRadius: 6,
+        fontSize: 12,
+        cursor: 'pointer',
+        border: active ? '2px solid var(--accent)' : '1px solid var(--line)',
+        background: active ? 'var(--bg-elev)' : 'var(--bg-2)',
+        color: active ? 'var(--accent-ink)' : 'var(--ink-1)',
+        fontWeight: active ? 700 : 400
+      }
+    }, w.label);
+  })), React.createElement("div", {
+    style: {
+      background: 'var(--card)',
+      border: '1px solid var(--line)',
+      borderRadius: 'var(--radius)',
+      padding: 10,
+      marginBottom: 8
+    }
+  }, React.createElement("svg", {
+    viewBox: `0 0 ${W} ${H}`,
+    width: "100%",
+    style: {
+      display: 'block',
+      maxWidth: W
+    },
+    role: "img",
+    "aria-label": `15分刻みの負荷（細い階段）と、${win.label}区間で平均した値（太い階段）の比較。区間が長いほど短時間のピークが平均化され、最大需要電力が下がる`
+  }, [300, 600, 900].map(v => React.createElement("g", {
+    key: v
+  }, React.createElement("line", {
+    x1: X0,
+    y1: yOf(v),
+    x2: X1,
+    y2: yOf(v),
+    strokeWidth: "1",
+    style: {
+      stroke: 'var(--line)'
+    }
+  }), React.createElement("text", {
+    x: X0 - 6,
+    y: yOf(v) + 4,
+    textAnchor: "end",
+    fontSize: "10",
+    style: {
+      fill: 'var(--ink-2)'
+    }
+  }, v))), React.createElement("text", {
+    x: "14",
+    y: (Y0 + Y1) / 2,
+    textAnchor: "middle",
+    fontSize: "10",
+    style: {
+      fill: 'var(--ink-2)'
+    },
+    transform: `rotate(-90 14 ${(Y0 + Y1) / 2})`
+  }, "電力 [kW]"), [0, 4, 8, 12, 16, 20, 24].map(i => React.createElement("text", {
+    key: i,
+    x: xOf(i),
+    y: Y1 + 15,
+    textAnchor: "middle",
+    fontSize: "10",
+    style: {
+      fill: 'var(--ink-2)'
+    }
+  }, juyoDwTimeLabel(i))), React.createElement("polyline", {
+    fill: "none",
+    strokeWidth: "1.5",
+    style: {
+      stroke: 'var(--dgm-teal)'
+    },
+    points: JUYO_DW_CURVE.map((v, i) => `${xOf(i)},${yOf(v)} ${xOf(i + 1)},${yOf(v)}`).join(' ')
+  }), segs.map((s, i) => React.createElement("g", {
+    key: i
+  }, React.createElement("line", {
+    x1: xOf(s.startIdx),
+    y1: yOf(s.avg),
+    x2: xOf(s.startIdx + s.len),
+    y2: yOf(s.avg),
+    strokeWidth: s === peak ? 4 : 2.5,
+    style: {
+      stroke: s === peak ? 'var(--dgm-red)' : 'var(--dgm-blue)'
+    }
+  }), React.createElement("line", {
+    x1: xOf(s.startIdx),
+    y1: Y0,
+    x2: xOf(s.startIdx),
+    y2: Y1,
+    strokeWidth: "0.8",
+    strokeDasharray: "2 3",
+    style: {
+      stroke: 'var(--ink-3)'
+    },
+    opacity: "0.55"
+  }))), React.createElement("text", {
+    x: (xOf(peak.startIdx) + xOf(peak.startIdx + peak.len)) / 2,
+    y: Math.max(yOf(peak.avg) - 7, Y0 + 10),
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fontWeight: "700",
+    style: {
+      fill: 'var(--dgm-red)'
+    }
+  }, "最大需要電力 ", Math.round(peak.avg), " kW（", juyoDwTimeLabel(peak.startIdx), "〜", juyoDwTimeLabel(peak.startIdx + peak.len), "）"), React.createElement("text", {
+    x: X1,
+    y: Y1 + 30,
+    textAnchor: "end",
+    fontSize: "10",
+    style: {
+      fill: 'var(--ink-3)'
+    }
+  }, "細線＝15分ごとの実測／太線＝", win.label, "区間の平均"))), React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+      gap: 8,
+      marginBottom: 8
+    }
+  }, JUYO_DW_WINDOWS.map(w => {
+    const sg = juyoDwAverages(w.slots);
+    const pk = sg.reduce((a, b) => b.avg > a.avg ? b : a, sg[0]);
+    const active = w.id === winId;
+    return React.createElement("div", {
+      key: w.id,
+      style: {
+        border: active ? '2px solid var(--accent)' : '1px solid var(--line)',
+        borderRadius: 8,
+        padding: '8px 10px',
+        background: active ? 'var(--bg-elev)' : 'var(--card)'
+      }
+    }, React.createElement("div", {
+      style: {
+        fontSize: 10.5,
+        color: 'var(--ink-3)'
+      }
+    }, w.label, " 区間での最大需要電力"), React.createElement("div", {
+      style: {
+        fontFamily: 'monospace',
+        fontWeight: 800,
+        fontSize: 17,
+        color: active ? 'var(--accent-ink)' : 'var(--ink-1)'
+      }
+    }, Math.round(pk.avg), " kW"), React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: 'var(--ink-3)'
+      }
+    }, juyoDwTimeLabel(pk.startIdx), "〜", juyoDwTimeLabel(pk.startIdx + pk.len)));
+  })), React.createElement("div", {
+    style: {
+      padding: '8px 12px',
+      background: 'var(--bg-2)',
+      borderLeft: '3px solid var(--warn)',
+      borderRadius: 4,
+      fontSize: 12,
+      lineHeight: 1.8
+    }
+  }, React.createElement("strong", null, "読み取り"), ": 瞬時のピークは ", React.createElement("strong", null, instMax, " kW"), " だが、 15分区間なら ", Math.round(juyoDwAverages(1).reduce((a, b) => b.avg > a.avg ? b : a).avg), " kW、 30分区間なら ", React.createElement("strong", null, Math.round(juyoDwAverages(2).reduce((a, b) => b.avg > a.avg ? b : a).avg), " kW"), "、 60分区間なら ", Math.round(juyoDwAverages(4).reduce((a, b) => b.avg > a.avg ? b : a).avg), " kW。", React.createElement("strong", null, "区間が長いほど短時間のピークが平均化されて下がる"), "。 実際の高圧受電は", React.createElement("strong", null, "30分"), "が区間なので、「30分の平均をどう抑えるか」がデマンド制御の勝負どころ—— 1〜2分の瞬間的な突入電流よりも、", React.createElement("strong", null, "30分の中でどれだけの時間 高い負荷を続けたか"), "が効く。 なお本体のシミュレータは1時間刻みの概念モデルなので、この区間効果は含まれていません（区間の意味はここで掴む）。 実務・制御の詳細は ", '→', " 6.7 デマンド制御。"));
 }
 const JUYO_MISTAKE_TYPES = {
   diversity_multiply: {
@@ -63233,6 +63686,8 @@ function JuyoSimulatorPage({
   const [presetId, setPresetId] = React.useState(null);
   const [selHour, setSelHour] = React.useState(null);
   const [periodId, setPeriodId] = React.useState('day');
+  const [seasonal, setSeasonal] = React.useState(false);
+  const [capKvar, setCapKvar] = React.useState(0);
   const [focusMetric, setFocusMetric] = React.useState(null);
   const toggleFocus = k => setFocusMetric(prev => prev === k ? null : k);
   const [scenarioId, setScenarioId] = React.useState(null);
@@ -63255,7 +63710,10 @@ function JuyoSimulatorPage({
       app.classList.remove('wide-focus');
     };
   }, [wideMode]);
-  const m = React.useMemo(() => juyoCompute(factories, pfPct, periodId), [factories, pfPct, periodId]);
+  const m = React.useMemo(() => juyoCompute(factories, pfPct, periodId, {
+    seasonal,
+    capacitorKvar: capKvar
+  }), [factories, pfPct, periodId, seasonal, capKvar]);
   const hour = selHour === null ? m.peakHours.length ? m.peakHours[0] : 12 : selHour;
   const [history, setHistory] = React.useState(null);
   const snapshot = () => setHistory({
@@ -63265,7 +63723,9 @@ function JuyoSimulatorPage({
     selHour,
     scenarioStep,
     focusMetric,
-    periodId
+    periodId,
+    seasonal,
+    capKvar
   });
   const prevMRef = React.useRef(null);
   const [delta, setDelta] = React.useState(null);
@@ -63378,6 +63838,7 @@ function JuyoSimulatorPage({
     setPresetId(null);
     setPfPct(p);
     setScenarioStep(null);
+    setCapKvar(0);
   };
   const resetAll = () => {
     snapshot();
@@ -63387,6 +63848,8 @@ function JuyoSimulatorPage({
     setSelHour(null);
     setScenarioStep(null);
     setPeriodId('day');
+    setSeasonal(false);
+    setCapKvar(0);
   };
   const undoOnce = () => {
     if (!history) return;
@@ -63397,7 +63860,9 @@ function JuyoSimulatorPage({
       selHour,
       scenarioStep,
       focusMetric,
-      periodId
+      periodId,
+      seasonal,
+      capKvar
     };
     setFactories(history.factories);
     setPfPct(history.pfPct);
@@ -63406,6 +63871,8 @@ function JuyoSimulatorPage({
     setScenarioStep(history.scenarioStep);
     setFocusMetric(history.focusMetric);
     setPeriodId(history.periodId);
+    setSeasonal(!!history.seasonal);
+    setCapKvar(history.capKvar || 0);
     setHistory(cur);
   };
   React.useEffect(() => {
@@ -63839,13 +64306,18 @@ function JuyoSimulatorPage({
   }, "※ 需要率のミニバー: 色のついた分＝最大需要／グレーの残り＝「全設備が同時には動かない分」＝需要率が1未満になる理由（バーにカーソルを載せると内訳を表示）。 設備アイコン（💡照明・🌀ファン・⚙️モーター・🔥ヒーター）は選択時刻の負荷の大きさから機械的に導出したイメージ表示で、負荷が大きい時刻ほど多くONになります（実際の設備構成・稼働順は工場によります）。"))), React.createElement(JuyoPeriodSelector, {
     m: m,
     periodId: periodId,
-    onChange: setPeriodId
+    onChange: setPeriodId,
+    seasonal: seasonal,
+    onSeasonalChange: setSeasonal
   }), React.createElement(JuyoResultCards, {
     m: m,
     pfPct: pfPct,
     onPfChange: changePf,
     focus: focusMetric,
-    onFocus: toggleFocus
+    onFocus: toggleFocus,
+    capKvar: capKvar,
+    onCapChange: setCapKvar,
+    navLink: navLink
   })), React.createElement("h2", {
     id: "keitozu"
   }, "系統図（変電所側で見る量・需要家側で見る量）"), React.createElement(SectionCheck, {
@@ -63989,6 +64461,11 @@ function JuyoSimulatorPage({
   }), React.createElement(JuyoExerciseMode, {
     onLoad: loadExercise
   }), React.createElement("h2", {
+    id: "demand-window"
+  }, "デマンド区間の体験（15分／30分／60分で最大需要電力が変わる）"), React.createElement(SectionCheck, {
+    pageId: "juyo-simulator",
+    sectionId: "demand-window"
+  }), React.createElement(JuyoDemandWindow, null), React.createElement("h2", {
     id: "calc-drill"
   }, "計算ドリル（穴埋め入力 → 自動採点 → ミス種別の記録）"), React.createElement(SectionCheck, {
     pageId: "juyo-simulator",
@@ -64066,14 +64543,17 @@ function JuyoSimulatorPage({
       id: 'exercise',
       label: '6節 演習モード'
     }, {
+      id: 'demand-window',
+      label: '7節 デマンド区間の体験'
+    }, {
       id: 'calc-drill',
-      label: '7節 計算ドリル'
+      label: '8節 計算ドリル'
     }, {
       id: 'insights',
-      label: '8節 気づきチェックリスト'
+      label: '9節 気づきチェックリスト'
     }, {
       id: 'quick-review',
-      label: '9節 1分復習'
+      label: '10節 1分復習'
     }],
     onJump: id => {
       location.hash = id;
@@ -64107,6 +64587,10 @@ function JuyoSimulatorPage({
     }]
   }), React.createElement(UpdateLog, {
     entries: [{
+      date: "2026-07-25",
+      content: "v2.0: ChatGPTアドバイス優先度2〜4を実装（3件）: ①【優先度2】7節「デマンド区間の体験」新設——15分刻みのサンプル波形（9:15の15分だけ800kW）を 15分/30分/60分 の区間で平均し、区間が長いほど短時間ピークが平均化されて最大需要電力が下がることを体験（15分800→30分580→60分465kW）。本体シミュレータは1時間刻みなのでこの効果を持てず、独立デモとして分離（既存の数値SoT・過去問検算に影響させない） ②【優先度3】進相コンデンサ投入モード——Qc[kvar]スライダーで P不変・Q減少・S=√(P²+Q²)短縮・力率改善・変圧器台数減の連鎖を数値で表示。力率1.0に必要な容量と過補償（進み力率）警告つき。1.5力率改善／6.4変圧器容量へ導線 ③【優先度4】季節係数（年集計のみ）——夏1.0/中間0.8/冬0.9 の月別係数で年最大=夏の日最大・年平均=日平均×加重平均係数0.883 とし、年負荷率 < 日負荷率 を数値で成立させた（従来は同一日繰り返しモデルのため一致していた）。係数は学習用代表値である旨をガード明記",
+      reason: "ChatGPTアドバイス「30分デマンドの体験が弱い」「力率改善の効果が体験できない」「年負荷率が操作対象になっていない」。いずれも計算SoT juyoCompute の拡張（opts引数）で実装し、既定値では従来の呼び出しと同一結果になるようにした"
+    }, {
       date: "2026-07-25",
       content: "v1.9: 7節「計算ドリル（穴埋め入力→自動採点→ミス種別の記録）」を新設（ChatGPTアドバイス優先度1＋5）。シミュレータは『条件→結果を見る』道具で、試験の『条件→自分で数値を作る』との差が残っていたため、得点化フェーズを追加: ①4問7ステップの穴埋め入力（R4上問12(a)(b)・R3問13(b)・合わせた需要率）②入力値が典型的な誤答値に近いと6種のミス種別（不等率を掛けた／30分値と混同して2倍／力率を忘れた／切り捨てた／合わせた需要率の分子取り違え／需要率と負荷率の混同）を特定して処方を表示 ③誤答は判定と同時に間違いノート（denken_check::hoki_juyo-simulator::calc_*）へ自動記録し、記録ボタンの押し忘れを構造的に排除（fail-open哲学）④再挑戦で正解すると status を understood へ昇格しミス種別は memo に保持（PDCAのAct）⑤初回から正解した設問は記録を作らない（間違いノートを正解で埋めない）",
       reason: "ChatGPTアドバイス「値を読むから値を作るへの転換が未実装」「弱点記録との接続が未完成」。与件と正解は過去問（hoki-daily-pool.js q51/q52・verified:high）およびシミュレータのプリセット実測値（560kW/622.2kVA/7台/336kW/241,920kWh/928kW）と一致"
