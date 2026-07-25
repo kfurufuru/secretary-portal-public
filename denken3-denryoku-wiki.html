@@ -3029,6 +3029,72 @@ const HenatsukiPage = ({ data, onNav }) => (
    1.1 水力発電 — 本文移植済み（約37問）
    出典: denken-wiki-denryoku/docs/themes/suiryoku.md（v1.0）
    ============================================================ */
+const SuiryokuLayers = () => (
+  <>
+    <h2 id="layers"><span className="h-num">0.</span>このページ（水力発電）を森・ミクロ・マクロで見る</h2>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "0 0 4px" }}>
+      同じテーマを <strong>森（俯瞰）→ ミクロ（なぜ）→ マクロ（解く）</strong> の3層で見る。まず森でこのページの位置を掴み、ミクロで機構を、マクロで解き方を押さえる。
+    </p>
+
+    {/* ===== 森：ページ固有の位置づけ図 ===== */}
+    <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+      <svg viewBox="0 0 480 170" role="img" aria-label="水力発電の位置づけ：水の位置エネルギーを入口として、有効落差・水車選定・揚水の3点を学び、火力発電の熱効率計算や電力系統の需給運用へつながる俯瞰図" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+        <defs>
+          <marker id="sr-mori-arr" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+            <path d="M0,1 L8,4.5 L0,8 z" fill="var(--ink-mute)" />
+          </marker>
+        </defs>
+        <text x="70" y="22" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">前提（入口）</text>
+        <text x="240" y="22" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">このページ</text>
+        <text x="412" y="22" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">つながる先（出口）</text>
+        {/* 入口 */}
+        <rect x="16" y="40" width="108" height="86" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="70" y="66" textAnchor="middle" fontSize="13" fontWeight="600" fill="var(--ink)">位置エネルギー</text>
+        <text x="70" y="88" textAnchor="middle" fontSize="12" fill="var(--ink-soft)">水 ≒ 電流</text>
+        <text x="70" y="107" textAnchor="middle" fontSize="12" fill="var(--ink-soft)">落差 ≒ 電圧</text>
+        <line x1="126" y1="83" x2="159" y2="83" stroke="var(--ink-mute)" strokeWidth="2" markerEnd="url(#sr-mori-arr)" />
+        {/* 中央（強調） */}
+        <rect x="162" y="32" width="156" height="102" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="2" />
+        <text x="240" y="55" textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--accent-ink)">水力発電</text>
+        <text x="240" y="77" textAnchor="middle" fontSize="12" fill="var(--ink)">① 有効落差 H</text>
+        <text x="240" y="95" textAnchor="middle" fontSize="12" fill="var(--ink)">② 水車の選定 Ns</text>
+        <text x="240" y="113" textAnchor="middle" fontSize="12" fill="var(--ink)">③ 揚水は η で割る</text>
+        <line x1="320" y1="83" x2="353" y2="83" stroke="var(--ink-mute)" strokeWidth="2" markerEnd="url(#sr-mori-arr)" />
+        {/* 出口 */}
+        <rect x="356" y="46" width="112" height="30" rx="5" fill="var(--bg)" stroke="var(--rule)" />
+        <text x="412" y="66" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">火力の熱効率（1.2）</text>
+        <rect x="356" y="90" width="112" height="30" rx="5" fill="var(--bg)" stroke="var(--rule)" />
+        <text x="412" y="110" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">需給運用（5.2）</text>
+        <text x="240" y="154" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">発電分野の入口テーマ。P=9.8QHη は火力・新エネの出力計算にもそのまま効く</text>
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+        森（俯瞰）：水の位置エネルギーを電気に変える最初の発電テーマ。ここで固めた「出力＝流量×落差×効率」の型が火力（熱効率）・新エネ（設備利用率）へ横展開され、揚水は電力系統の需給調整（5.2）につながる。
+      </figcaption>
+    </figure>
+
+    <div className="table-wrap"><table className="data">
+      <thead><tr><th>視点</th><th>何を見るか</th><th>代表する式・量</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>ミクロ</strong><br/>（なぜ）</td>
+          <td>水がもつ位置エネルギー <Eq tex="\rho g H" inline /> を、水路の途中で<strong>摩擦により一部失いながら</strong>水車へ運ぶ。失った分が損失水頭で、<strong>残った落差だけが仕事をする</strong> ── これが有効落差を使う理由</td>
+          <td><Eq tex="H = H_g - h_l" inline /></td>
+        </tr>
+        <tr>
+          <td><strong>マクロ</strong><br/>（解く）</td>
+          <td>出力・発電電力量・揚水入力の計算。<strong>効率の掛ける／割るの向き</strong>と、比速度による水車選定が試験の中心</td>
+          <td><Eq tex="P = 9.8\,Q\,H\,\eta" inline />・<Eq tex="N_s = \dfrac{N\sqrt{P}}{H^{5/4}}" inline /></td>
+        </tr>
+        <tr>
+          <td><strong>実務</strong><br/>（意味づけ）</td>
+          <td>流れ込み式はベース、貯水池式は季節調整、<strong>揚水式は蓄電池の代わり</strong>。夜間の余剰で水を汲み上げ、ピーク時に落として需給を合わせる</td>
+          <td>サージタンク・調速機・上下調整池</td>
+        </tr>
+      </tbody>
+    </table></div>
+  </>
+);
+
 const SuiryokuPage = ({ data, onNav }) => (
   <>
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "水力発電" }]} onNav={onNav} />
@@ -3044,11 +3110,74 @@ const SuiryokuPage = ({ data, onNav }) => (
     />
     <div className="content">
 
+      <SuiryokuLayers />
+
       <h2 id="intro"><span className="h-num">1.</span>直感的理解 — P=9.8QHη</h2>
       <p>「高い水を低い所へ落とす」だけ。位置E→運動E(水車)→電気E(発電機)。アナロジーで <strong>水≒電流、落差≒電圧</strong>（P=VI と同じ構造）。流量が多く落差が大きいほど大出力。</p>
       <Box kind="tip" label="「9.8」の正体">
         <p>水の比重量 <Eq tex="\rho g = 1000 \times 9.8 = 9800\,\text{N/m}^3 = 9.8\,\text{kN/m}^3" />。これに流量 Q[m³/s]・有効落差 H[m] を掛け、kW にまとめた係数が 9.8。単位確認：[kN/m³]×[m³/s]×[m]＝[kW]。</p>
       </Box>
+
+      <figure style={{ margin: "12px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+        <svg viewBox="0 0 480 250" role="img" aria-label="水路と落差の関係図：取水口水面から放水面までが総落差、水路と水圧管路の摩擦で失う分が損失水頭、その差である有効落差だけが発電に使える" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+          <defs>
+            <marker id="sr-dim-a" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M4,0 L7,7 L1,7 z" fill="var(--ink-mute)" />
+            </marker>
+            <marker id="sr-dim-b" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M4,8 L1,1 L7,1 z" fill="var(--ink-mute)" />
+            </marker>
+            <marker id="sr-flow" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+              <path d="M0,1 L8,4.5 L0,8 z" fill="var(--accent)" />
+            </marker>
+          </defs>
+
+          {/* 左：作図エリア（x < 300） ============================ */}
+          {/* 取水口水面（基準線・寸法線まで延長） */}
+          <line x1="12" y1="52" x2="340" y2="52" stroke="var(--accent)" strokeWidth="1.5" strokeDasharray="4 3" />
+          <text x="120" y="44" textAnchor="middle" fontSize="12" fill="var(--ink-soft)">取水口水面</text>
+
+          {/* 貯水池 */}
+          <rect x="12" y="52" width="86" height="54" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1.5" />
+          <text x="55" y="84" textAnchor="middle" fontSize="12" fill="var(--accent-ink)" fontWeight="600">貯水池</text>
+
+          {/* 水路（水平） */}
+          <line x1="98" y1="70" x2="168" y2="70" stroke="var(--accent)" strokeWidth="3" markerEnd="url(#sr-flow)" />
+          <text x="128" y="86" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">水路</text>
+
+          {/* 水圧管路（斜め） */}
+          <line x1="168" y1="70" x2="248" y2="182" stroke="var(--accent)" strokeWidth="3" markerEnd="url(#sr-flow)" />
+          <text x="176" y="140" textAnchor="start" fontSize="12" fill="var(--ink-soft)">水圧管路</text>
+
+          {/* 水車 */}
+          <circle cx="262" cy="192" r="16" fill="var(--bg)" stroke="var(--accent)" strokeWidth="2" />
+          <text x="262" y="197" textAnchor="middle" fontSize="12" fill="var(--accent-ink)" fontWeight="700">水車</text>
+
+          {/* 放水面（基準線・寸法線まで延長） */}
+          <line x1="98" y1="206" x2="470" y2="206" stroke="var(--ink-mute)" strokeWidth="1.5" strokeDasharray="4 3" />
+          <text x="140" y="222" textAnchor="middle" fontSize="12" fill="var(--ink-soft)">放水面</text>
+
+          {/* 右：寸法エリア（x >= 300） ============================ */}
+          {/* 損失水頭 hl */}
+          <line x1="330" y1="52" x2="330" y2="88" stroke="var(--ink-mute)" strokeWidth="1.2" markerStart="url(#sr-dim-b)" markerEnd="url(#sr-dim-a)" />
+          <text x="340" y="74" textAnchor="start" fontSize="12" fill="var(--ink-soft)">損失水頭 hl</text>
+
+          {/* 有効落差 H */}
+          <line x1="330" y1="88" x2="330" y2="206" stroke="var(--accent)" strokeWidth="2" markerStart="url(#sr-dim-b)" markerEnd="url(#sr-dim-a)" />
+          <line x1="256" y1="88" x2="336" y2="88" stroke="var(--accent)" strokeWidth="1" strokeDasharray="3 3" />
+          <text x="340" y="136" textAnchor="start" fontSize="13" fill="var(--accent-ink)" fontWeight="700">有効落差 H</text>
+          <text x="340" y="153" textAnchor="start" fontSize="11" fill="var(--accent-ink)">↑ 式に代入するのはこれ</text>
+
+          {/* 総落差 Hg（最右） */}
+          <line x1="452" y1="52" x2="452" y2="206" stroke="var(--ink-mute)" strokeWidth="1.2" markerStart="url(#sr-dim-b)" markerEnd="url(#sr-dim-a)" />
+          <text x="468" y="44" textAnchor="end" fontSize="12" fill="var(--ink)" fontWeight="600">総落差 Hg</text>
+
+          <text x="240" y="242" textAnchor="middle" fontSize="12" fill="var(--ink-mute)">H = Hg − hl ／ 摩擦で食われた分は発電に使えない</text>
+        </svg>
+        <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+          落差の内訳：取水口水面から放水面までの高さが<strong>総落差 Hg</strong>。水路・水圧管路の摩擦で失う分が<strong>損失水頭 hl</strong>で、残った<strong>有効落差 H = Hg − hl</strong> だけが水車の仕事になる。P=9.8QHη の H は必ずこの有効落差。
+        </figcaption>
+      </figure>
 
       <h2 id="suisha"><span className="h-num">2.</span>水車の種類（衝動 vs 反動）</h2>
       <div className="table-wrap"><table className="data">
@@ -3060,6 +3189,10 @@ const SuiryokuPage = ({ data, onNav }) => (
           <tr><td>キーワード</td><td>ノズル・バケット</td><td>フランシス＝混流／カプラン＝可動翼</td></tr>
         </tbody>
       </table></div>
+      <Box kind="warn" label="落差レンジの数値は「目安」（公式根拠ではない）">
+        <p>上表の「300m級」「40〜600m」「〜60m」は文献により幅があり、<strong>実機の適用範囲は互いに重なる</strong>（同じ落差でフランシスもペルトンも成立しうる）。境界値を丸暗記すると、レンジがずれた出典の設問で外す。</p>
+        <p>試験で問われるのは<strong>絶対値ではなく相対関係</strong>。<strong>ペルトン（高落差・小流量）→ フランシス（中落差・中流量）→ カプラン（低落差・大流量）</strong> の順序と、それが比速度 Ns の小→大と一致することだけを覚える。</p>
+      </Box>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>発電所分類</th><th>特徴</th><th>調整単位</th></tr></thead>
         <tbody>
@@ -3079,8 +3212,12 @@ const SuiryokuPage = ({ data, onNav }) => (
         note="Ns が大きいほど低落差・大流量型。ペルトン(低)→フランシス(中)→カプラン(高)。" />
       <FormulaCard num="04" name="年間発電電力量・設備利用率" eq="E = P \times T\,[\text{kWh}]"
         note="T=年間運転時間[h]。設備利用率 = E /(P_rated × 8760) × 100 [%]。発電電力量・重油使用量比較(R05下問15型)の起点。" />
-      <FormulaCard num="05" name="流量と流速（連続の式）" eq="Q = A \times v\,[\text{m}^3/\text{s}]"
-        note="A=水路断面積[m²]、v=平均流速[m/s]。使用水量=Q×t で有効貯水容量(R07上問15型)を組み立てる。" />
+      <FormulaCard num="05" name="流量と流速（連続の式）" eq="Q = A_1 v_1 = A_2 v_2\,[\text{m}^3/\text{s}]"
+        note="A=水路断面積[m²]、v=平均流速[m/s]。流量は途中で増減しないので、断面が狭まれば流速は上がる。使用水量=Q×t で有効貯水容量(R07上問15型)を組み立てる。" />
+      <FormulaCard num="06" name="ベルヌーイの定理（全水頭一定）" eq="z + \dfrac{p}{\rho g} + \dfrac{v^2}{2g} = \text{一定}\,[\text{m}]"
+        note="位置水頭＋圧力水頭＋速度水頭の和が一定（損失を無視した場合）。3項とも単位は[m]で、この和が全水頭。損失があるぶん下流側で全水頭が減り、その減少分が損失水頭 hl。R03問2型。" />
+      <FormulaCard num="07" name="単位体積当たりのエネルギー" eq="w_k = \dfrac{1}{2}\rho v^2\,[\text{J/m}^3]"
+        note="運動エネルギー。位置エネルギーは w_p = ρgh [J/m³]。ρ=1000 kg/m³ を入れて計算する。体積[m³]を掛ければ [J] になる。R07下問2型。" />
 
       <h2 id="kaiho"><span className="h-num">4.</span>解法パターン（例題つき）</h2>
       <Box kind="example" label="① 出力: Q=50・H=100・η=0.85">
@@ -3093,6 +3230,15 @@ const SuiryokuPage = ({ data, onNav }) => (
         <p><Eq tex="P_{\text{gen}} = 9.8\times40\times150\times0.88 = 51{,}744\,\text{kW}" /></p>
         <p><Eq tex="P_{\text{pump}} = \dfrac{9.8\times40\times150}{0.82} \approx 71{,}707\,\text{kW}" /></p>
         <p><Eq tex="\eta_{\text{total}} = \dfrac{51{,}744}{71{,}707} \approx 72.2\%" /></p>
+      </Box>
+      <Box kind="example" label="④ 比速度と水車選定: N=300 min⁻¹・P=10,000 kW・H=100 m">
+        <p><Eq tex="H^{5/4} = 100 \times 100^{1/4} = 100 \times 3.162 = 316.2" display /></p>
+        <p><Eq tex="N_s = \dfrac{300 \times \sqrt{10000}}{316.2} = \dfrac{300 \times 100}{316.2} \approx 94.9" display /></p>
+        <p>Ns が中程度 ⇒ <strong>フランシス水車</strong>。ペルトンならもっと小さく、カプランならもっと大きい値になる（R06上問15型）。</p>
+      </Box>
+      <Box kind="example" label="⑤ 単位体積当たりの運動エネルギー: 流速 v=20 m/s">
+        <p><Eq tex="w_k = \tfrac{1}{2}\rho v^2 = 0.5 \times 1000 \times 20^2 = 200{,}000\,\text{J/m}^3 = 200\,\text{kJ/m}^3" display /></p>
+        <p>速度水頭に直すと <Eq tex="\dfrac{v^2}{2g} = \dfrac{400}{2 \times 9.8} \approx 20.4\,\text{m}" />。<strong>「流速20 m/s ≒ 落差20 m 相当」</strong>と押さえると、ベルヌーイの3項が同じ土俵（[m]）に乗っていることが実感できる（R07下問2・R03問2型）。</p>
       </Box>
 
       <Box kind="tip" label="水撃作用・キャビテーション（R02 問1 型の論説急所）">
@@ -3110,6 +3256,9 @@ const SuiryokuPage = ({ data, onNav }) => (
           <li><strong>揚水の効率の向き</strong> — 揚水は P=9.8QH/η（割る）。発電は掛ける。向きが逆。</li>
           <li><strong>ペルトンを低落差・大流量と誤認</strong> — ペルトンは高落差・小流量。低落差大流量はカプラン。</li>
           <li><strong>調整池式を季節調整と誤認</strong> — 季節間は貯水池式。調整池式は日〜週。</li>
+          <li><strong>比速度の指数を H² や H^(3/2) と誤記</strong> — 分母は <Eq tex="H^{5/4}" inline />。<Eq tex="H^{5/4}=H \times \sqrt[4]{H}" inline /> と分解すれば電卓で出せる。分子の P は <strong>1台（1ランナー）当たりの出力[kW]</strong>。</li>
+          <li><strong>ベルヌーイの3項の単位を混ぜる</strong> — 水頭形なら位置・圧力・速度の3項ともすべて[m]。<Eq tex="p" inline />[Pa] や <Eq tex="v^2/2" inline />[J/kg] のまま足さない。</li>
+          <li><strong>運動エネルギーに ρ を掛け忘れる</strong> — 「単位<strong>体積</strong>当たり」は <Eq tex="\rho v^2/2" inline />[J/m³]、「単位<strong>質量</strong>当たり」は <Eq tex="v^2/2" inline />[J/kg]。設問がどちらを訊いているかを先に確認する。</li>
         </ul>
       </Box>
 
@@ -3123,22 +3272,57 @@ const SuiryokuPage = ({ data, onNav }) => (
           <tr><td>揚水所要電力は P=9.8QHη で求められる</td><td><strong>誤</strong></td><td>正しくは P=9.8QH/η</td></tr>
           <tr><td>カプラン水車は可動式ランナー翼を持つ</td><td><strong>正</strong></td><td>低落差・大流量・プロペラ型</td></tr>
           <tr><td>サージタンクはウォーターハンマーを吸収する</td><td><strong>正</strong></td><td>圧力変動の緩衝装置</td></tr>
+          <tr><td>吸出し管はペルトン水車にも設けられる</td><td><strong>誤</strong></td><td>反動水車のみ。ペルトンは大気中で放水するため回収する圧力がない</td></tr>
+          <tr><td>比速度が大きい水車ほど高落差に適する</td><td><strong>誤</strong></td><td>逆。Ns 大＝低落差・大流量（カプラン側）</td></tr>
+          <tr><td>損失を無視すれば全水頭は水路のどこでも等しい</td><td><strong>正</strong></td><td>ベルヌーイの定理。実際は損失分だけ下流で減り、それが損失水頭</td></tr>
         </tbody>
       </table></div>
 
-      <h2 id="kakomon"><span className="h-num">7.</span>出題実績（約37問）</h2>
-      <p>理論出力・有効落差・揚水・比速度の計算と、水車種別・発電所分類の論説/穴埋めが循環。</p>
+      <h2 id="hoki-cross"><span className="h-num">7.</span>法規科目との横断（同じ「水力」でも問われ方が違う）</h2>
+      <p>水力発電は<strong>電力・法規の両科目で出る</strong>が、問われる知識は別物。このページは<strong>物理と計算</strong>を扱い、<strong>法令の出力境界・保安装置・手続は法規科目の担当</strong>。数値の出所を一本化するため、条文の具体的な数値は法規Wiki側を正（SoT）とし、ここでは論点名だけを示す。</p>
       <div className="table-wrap"><table className="data">
-        <thead><tr><th>年度</th><th>問</th><th>テーマ</th><th>形式</th></tr></thead>
+        <thead><tr><th>論点</th><th>どちらの科目で問われるか</th><th>根拠</th></tr></thead>
         <tbody>
-          <tr><td>R07上</td><td>問15</td><td>調整池式の使用水量と有効貯水容量</td><td>計算</td></tr>
-          <tr><td>R06上</td><td>問2</td><td>揚水発電所の電動機入力と発電機出力</td><td>計算</td></tr>
-          <tr><td>R06上</td><td>問15</td><td>水車の回転速度と比速度・種類</td><td>計算</td></tr>
-          <tr><td>R05下</td><td>問15</td><td>発電電力量と汽力の重油使用量</td><td>計算</td></tr>
-          <tr><td>R05上</td><td>問1</td><td>水車の比速度の定義と特徴</td><td>穴埋</td></tr>
-          <tr><td>R02</td><td>問1</td><td>水撃作用及びサージタンク</td><td>論説</td></tr>
+          <tr><td>理論出力 P=9.8QHη・有効落差・比速度・揚水効率</td><td><strong>電力</strong>（このページ）</td><td>—</td></tr>
+          <tr><td>水車・発電機の構造、水撃作用、キャビテーション</td><td><strong>電力</strong>（このページ）</td><td>—</td></tr>
+          <tr><td>常時監視をしない発電所（随時巡回・随時監視制御・遠隔常時監視制御）の出力要件</td><td><strong>法規</strong></td><td>解釈第47条の2</td></tr>
+          <tr><td>発電機の自動遮断（水車の制御電源電圧低下・圧油装置の油圧低下など）</td><td><strong>法規</strong></td><td>解釈第42条</td></tr>
+          <tr><td>主任技術者の外部委託承認が使える水力発電所の出力要件</td><td><strong>法規</strong></td><td>施行規則</td></tr>
+          <tr><td>小出力発電設備に当たる水力（出力・最大使用水量の要件）</td><td><strong>法規</strong></td><td>電気事業法</td></tr>
         </tbody>
       </table></div>
+      <Box kind="tip" label="使い分けの目安">
+        <p>設問に <strong>[kW] や [m³/s] の「境界値」と「〜できる／できない」</strong> が出てきたら法規側の知識。<strong>数値を式に代入して答えを出す</strong>なら電力側の知識。<a href="denken-hoki-wiki.html">📗 法規Wiki</a> の「常時監視をしない発電所」「発電機の保護」「小出力発電設備」の各項で確認する。</p>
+      </Box>
+
+      <h2 id="kakomon"><span className="h-num">8.</span>出題実績（約37問・うち R01〜R07 は全20問）</h2>
+      <p>理論出力・有効落差・揚水・比速度の計算と、水車種別・発電所分類の論説/穴埋めが循環。<strong>R01〜R07 の全20問</strong>と、それぞれがこのページのどの節に対応するかを突き合わせる（未対応の節があれば穴）。</p>
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>年度</th><th>問</th><th>テーマ</th><th>形式</th><th>該当節</th></tr></thead>
+        <tbody>
+          <tr><td>R07下</td><td>問1</td><td>水力発電所の落差分類</td><td>穴埋</td><td>1（落差の図）</td></tr>
+          <tr><td>R07下</td><td>問2</td><td>単位体積当たりの水の運動エネルギー</td><td>計算</td><td>3-07 / 4-⑤</td></tr>
+          <tr><td>R07上</td><td>問1</td><td>水力発電所の理論出力と各単位</td><td>穴埋</td><td>3-01</td></tr>
+          <tr><td>R07上</td><td>問15</td><td>調整池式水力発電所の使用水量と有効貯水容量</td><td>計算</td><td>2 / 3-05</td></tr>
+          <tr><td>R06下</td><td>問1</td><td>水力発電の水車・発電機・主変圧器の特徴</td><td>論説</td><td>2</td></tr>
+          <tr><td>R06上</td><td>問1</td><td>衝動水車を中心とした水力発電所</td><td>論説</td><td>2</td></tr>
+          <tr><td>R06上</td><td>問2</td><td>揚水発電所の電動機入力と発電機出力</td><td>計算</td><td>3-02 / 4-③</td></tr>
+          <tr><td>R06上</td><td>問15</td><td>水車の回転速度と比速度および水車の種類</td><td>計算</td><td>3-03 / 4-④</td></tr>
+          <tr><td>R05下</td><td>問1</td><td>水力発電所の落差と理論式</td><td>穴埋</td><td>1 / 3-01</td></tr>
+          <tr><td>R05下</td><td>問15</td><td>水力発電所の発電電力量と汽力発電所の重油使用量</td><td>計算</td><td>3-04</td></tr>
+          <tr><td>R05上</td><td>問1</td><td>水車の比速度の定義と特徴</td><td>穴埋</td><td>3-03</td></tr>
+          <tr><td>R04下</td><td>問1</td><td>水力発電の特徴や現在の概況</td><td>論説</td><td>0（森）/ 2</td></tr>
+          <tr><td>R04下</td><td>問2</td><td>水力発電で使用される水車の特徴</td><td>穴埋</td><td>2</td></tr>
+          <tr><td>R04上</td><td>問1</td><td>水力発電所における水車の特徴及び監視制御方式</td><td>論説</td><td>2</td></tr>
+          <tr><td>R04上</td><td>問15</td><td>揚水発電所の揚水運転時の必要電力量及び流量</td><td>計算</td><td>3-02 / 4-③</td></tr>
+          <tr><td>R03</td><td>問1</td><td>水力発電所の落差を得る方法や流量調整による分類</td><td>論説</td><td>1 / 2</td></tr>
+          <tr><td>R03</td><td>問2</td><td>連続の定理及びベルヌーイの定理</td><td>計算</td><td>3-05,06 / 4-⑤</td></tr>
+          <tr><td>R02</td><td>問1</td><td>ダム水路式発電所における水撃作用及びサージタンク</td><td>論説</td><td>4（水撃・キャビ）</td></tr>
+          <tr><td>R02</td><td>問15</td><td>貯水池を有する水力発電所の発電計画</td><td>計算</td><td>3-04,05</td></tr>
+          <tr><td>R01</td><td>問1</td><td>水力発電所の水車及び発電機</td><td>論説</td><td>2</td></tr>
+        </tbody>
+      </table></div>
+      <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>R01〜R07 で20問（H30以前を含めた通算が約37問）。出典・難易度つきの全分野一覧は <strong>過去問マッピング → 分野別一覧（K2）</strong> にある。</p>
       <Box kind="tip" label="R08予測">
         <p>理論出力・揚水・比速度の計算は毎年級。論説は水車種別・発電所分類・水撃/サージタンクが循環。</p>
       </Box>
