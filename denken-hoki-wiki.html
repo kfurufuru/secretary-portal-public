@@ -62245,6 +62245,319 @@ function JuyoExerciseMode({
     }
   }, "▶ ", ex.kind === 'forward' ? 'この条件をシミュレータに読込' : '演習2の条件を読込（曲線で検算）')))));
 }
+const JUYO_MISTAKE_TYPES = {
+  diversity_multiply: {
+    label: '不等率を掛けてしまった（割るのが正）',
+    fix: '「合成最大を求める」ときは Σ各最大 ÷ 不等率。÷か×かは"どちら向きの変形か"を最初に確認する'
+  },
+  demand_30min_double: {
+    label: '平均需要電力を30分値と勘違いして2倍した',
+    fix: '平均需要電力はすでに時間平均の kW。電力量は 平均kW × 時間h でそのまま出す（2倍しない）'
+  },
+  pf_forgot: {
+    label: '力率を忘れた（kW をそのまま kVA にした）',
+    fix: '変圧器は皮相電力[kVA]で選ぶ。合成最大[kW] ÷ 力率 で kVA に直してから台数を出す'
+  },
+  ceil_floor: {
+    label: '切り上げずに切り捨てた',
+    fix: '台数は「必要最小限」なので切り上げ。6.22台では足りない（600kVA < 622kVA）'
+  },
+  demand_numerator: {
+    label: '合わせた需要率の分子に Σ各最大を使った',
+    fix: '合わせた需要率 = 合成最大需要電力 ÷ 設備容量合計。分子は Σ各最大ではない'
+  },
+  ritsu_confuse: {
+    label: '需要率と負荷率を混同した',
+    fix: '需要率＝最大÷設備容量（設備の天井に対する到達度）／負荷率＝平均÷最大（使い方の平らさ）'
+  }
+};
+const JUYO_DRILLS = [{
+  id: 'd1',
+  title: 'R4上 問12(a)：設備容量→最大需要→皮相→変圧器台数',
+  given: '負荷設備容量 800 kW、需要率 70%、総合力率 90%、100kVA の変圧器を複数台使用',
+  ask: '必要最小限の変圧器台数を求める（3ステップ）',
+  steps: [{
+    ask: '① 最大需要電力',
+    expr: '800 kW × 0.70 =',
+    answer: 560,
+    tol: 0.5,
+    unit: 'kW',
+    wrongs: []
+  }, {
+    ask: '② 必要皮相電力',
+    expr: '560 kW ÷ 0.90 =',
+    answer: 622.2,
+    tol: 0.6,
+    unit: 'kVA',
+    wrongs: [{
+      v: 504,
+      type: 'pf_forgot'
+    }, {
+      v: 560,
+      type: 'pf_forgot'
+    }]
+  }, {
+    ask: '③ 100kVA 変圧器の台数',
+    expr: '622.2 ÷ 100 = 6.22 →',
+    answer: 7,
+    tol: 0.01,
+    unit: '台',
+    wrongs: [{
+      v: 6,
+      type: 'ceil_floor'
+    }, {
+      v: 5,
+      type: 'pf_forgot'
+    }]
+  }]
+}, {
+  id: 'd2',
+  title: 'R3 問13(b)：Σ各最大と不等率から合成最大',
+  given: '各需要家の最大需要電力の合計 Σ各最大 = 1,160 kW、需要家間の不等率 = 1.25',
+  ask: '合成最大需要電力を求める',
+  steps: [{
+    ask: '① 合成最大需要電力',
+    expr: '1,160 kW ÷ 1.25 =',
+    answer: 928,
+    tol: 1,
+    unit: 'kW',
+    wrongs: [{
+      v: 1450,
+      type: 'diversity_multiply'
+    }]
+  }]
+}, {
+  id: 'd3',
+  title: 'R4上 問12(b)：最大需要と月負荷率から月電力量',
+  given: '最大需要電力 560 kW、月負荷率 60%、1か月 = 30日',
+  ask: '1か月の総消費電力量を求める（2ステップ）',
+  steps: [{
+    ask: '① 平均需要電力',
+    expr: '560 kW × 0.60 =',
+    answer: 336,
+    tol: 0.5,
+    unit: 'kW',
+    wrongs: [{
+      v: 933,
+      type: 'ritsu_confuse'
+    }]
+  }, {
+    ask: '② 1か月の電力量',
+    expr: '336 kW × 24 h × 30日 =',
+    answer: 241920,
+    tol: 200,
+    unit: 'kWh',
+    wrongs: [{
+      v: 483840,
+      type: 'demand_30min_double'
+    }, {
+      v: 10080,
+      type: 'demand_30min_double'
+    }]
+  }]
+}, {
+  id: 'd4',
+  title: '合わせた需要率：分子はどちらか',
+  given: '2工場：設備容量 400 kW と 700 kW（合計 1,100 kW）、各最大の合計 Σ各最大 = 800 kW、合成最大需要電力 = 640 kW',
+  ask: '2工場を合わせた需要率を求める（%で小数1位まで）',
+  steps: [{
+    ask: '① 合わせた需要率',
+    expr: '（分子）÷ 1,100 kW × 100 =',
+    answer: 58.2,
+    tol: 0.3,
+    unit: '%',
+    wrongs: [{
+      v: 72.7,
+      type: 'demand_numerator'
+    }]
+  }]
+}];
+function JuyoCalcDrill({
+  onRecord
+}) {
+  const [inputs, setInputs] = React.useState({});
+  const [judged, setJudged] = React.useState({});
+  const keyOf = (d, i) => `${d.id}:${i}`;
+  const judge = (d, i, step) => {
+    const key = keyOf(d, i);
+    const raw = (inputs[key] || '').replace(/[,\s]/g, '');
+    if (raw === '') return;
+    const v = Number(raw);
+    if (!isFinite(v)) {
+      setJudged(p => ({
+        ...p,
+        [key]: {
+          ok: false,
+          mistakeType: null,
+          notNumber: true
+        }
+      }));
+      return;
+    }
+    const ok = Math.abs(v - step.answer) <= step.tol;
+    let mistakeType = null;
+    if (!ok) {
+      const hit = (step.wrongs || []).find(w => Math.abs(v - w.v) <= Math.max(Math.abs(w.v) * 0.02, 0.5));
+      mistakeType = hit ? hit.type : null;
+    }
+    onRecord(d, step, i, mistakeType, v, ok);
+    setJudged(p => ({
+      ...p,
+      [key]: {
+        ok,
+        mistakeType,
+        value: v
+      }
+    }));
+  };
+  return React.createElement("div", null, React.createElement("div", {
+    style: {
+      marginBottom: 10,
+      padding: '8px 12px',
+      background: 'var(--bg-2)',
+      borderLeft: '3px solid var(--accent)',
+      borderRadius: 4,
+      fontSize: 12,
+      lineHeight: 1.7
+    }
+  }, React.createElement("strong", null, "使い方"), ": シミュレータは「条件→結果を見る」道具。ここは", React.createElement("strong", null, "試験と同じ「条件→自分で数値を作る」"), "練習。 各ステップに数値を入れて「判定」を押すと自動採点し、", React.createElement("strong", null, "典型的な誤答値なら種別を特定して処方"), "を出す。 誤答は", React.createElement("strong", null, "その場で間違いノートに記録"), "される（記録ボタンの押し忘れを構造的に排除）。"), JUYO_DRILLS.map(d => React.createElement("div", {
+    key: d.id,
+    style: {
+      border: '1px solid var(--line)',
+      borderRadius: 8,
+      padding: '10px 12px',
+      background: 'var(--card)',
+      marginBottom: 10
+    }
+  }, React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 13,
+      marginBottom: 3
+    }
+  }, d.title), React.createElement("div", {
+    style: {
+      fontSize: 12.5,
+      lineHeight: 1.7
+    }
+  }, d.given), React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: 'var(--ink-2)',
+      marginBottom: 8
+    }
+  }, "問: ", d.ask), d.steps.map((step, i) => {
+    const key = keyOf(d, i);
+    const j = judged[key];
+    const mt = j && j.mistakeType ? JUYO_MISTAKE_TYPES[j.mistakeType] : null;
+    return React.createElement("div", {
+      key: i,
+      style: {
+        marginBottom: 8,
+        paddingBottom: 8,
+        borderBottom: i < d.steps.length - 1 ? '1px dashed var(--line)' : 'none'
+      }
+    }, React.createElement("div", {
+      style: {
+        fontSize: 12,
+        marginBottom: 4
+      }
+    }, React.createElement("strong", null, step.ask), "\u3000", React.createElement("span", {
+      style: {
+        fontFamily: 'monospace',
+        color: 'var(--ink-2)'
+      }
+    }, step.expr)), React.createElement("div", {
+      style: {
+        display: 'flex',
+        gap: 6,
+        flexWrap: 'wrap',
+        alignItems: 'center'
+      }
+    }, React.createElement("input", {
+      type: "text",
+      inputMode: "decimal",
+      value: inputs[key] || '',
+      "aria-label": `${d.title} ${step.ask} の答え（単位 ${step.unit}）`,
+      onChange: e => setInputs(p => ({
+        ...p,
+        [key]: e.target.value
+      })),
+      onKeyDown: e => {
+        if (e.key === 'Enter') judge(d, i, step);
+      },
+      style: {
+        width: 130,
+        minHeight: 34,
+        padding: '4px 8px',
+        fontSize: 13,
+        fontFamily: 'monospace',
+        border: '1px solid var(--line)',
+        borderRadius: 6,
+        background: 'var(--bg-2)',
+        color: 'var(--ink-1)'
+      }
+    }), React.createElement("span", {
+      style: {
+        fontSize: 12,
+        color: 'var(--ink-2)'
+      }
+    }, step.unit), React.createElement("button", {
+      type: "button",
+      onClick: () => judge(d, i, step),
+      "aria-label": `${d.title} ${step.ask} を判定`,
+      style: {
+        minHeight: 34,
+        padding: '4px 14px',
+        borderRadius: 6,
+        fontSize: 12,
+        fontWeight: 700,
+        cursor: 'pointer',
+        border: '1px solid var(--accent)',
+        background: 'var(--bg-elev)',
+        color: 'var(--accent-ink)'
+      }
+    }, "判定"), j && j.ok && React.createElement("span", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        color: 'var(--dgm-green)'
+      }
+    }, "✅ 正解"), j && !j.ok && !j.notNumber && React.createElement("span", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        color: 'var(--dgm-red)'
+      }
+    }, "❌ 不正解（記録しました）"), j && j.notNumber && React.createElement("span", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        color: 'var(--warn)'
+      }
+    }, "⚠ 入力エラー（未採点）")), j && !j.ok && React.createElement("div", {
+      style: {
+        marginTop: 5,
+        padding: '6px 10px',
+        borderRadius: 6,
+        fontSize: 11.5,
+        lineHeight: 1.7,
+        border: `1px solid ${j.notNumber ? 'var(--warn)' : 'var(--dgm-red)'}`,
+        background: 'var(--bg-2)'
+      }
+    }, j.notNumber ? React.createElement("span", null, "数値で入力してください（単位や記号は入れない）。") : mt ? React.createElement("span", null, React.createElement("strong", {
+      style: {
+        color: 'var(--dgm-red)'
+      }
+    }, "ミス種別: ", mt.label), React.createElement("br", null), mt.fix) : React.createElement("span", null, "正解は ", React.createElement("strong", null, step.answer.toLocaleString('ja-JP'), " ", step.unit), "。式の形（", step.expr, "）をもう一度確認してから再入力。")));
+  }))), React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: 'var(--ink-3)',
+      lineHeight: 1.7
+    }
+  }, "※ 与件と正解は過去問の数値（R4上問12・R3問13）に基づき、シミュレータのプリセット実測値（560kW / 622.2kVA / 7台 / 336kW / 241,920kWh / 928kW）と一致しています。 記録は ", '→', " 間違いノート（ページ上部メニュー）で「要確認」として集約され、復習対象になります。"));
+}
 function juyoFactoriesOf(specs) {
   return ['A', 'B', 'C', 'D'].map((name, i) => {
     const s = specs[name];
@@ -63031,6 +63344,29 @@ function JuyoSimulatorPage({
     setScenarioStep(idx);
     setFocusMetric(sc.focus);
   };
+  const recordMistake = (drill, step, stepIdx, mistakeType, value, ok) => {
+    try {
+      const key = `denken_check::hoki_juyo-simulator::calc_${drill.id}_s${stepIdx}`;
+      const existing = localStorage.getItem(key);
+      if (ok && !existing) return;
+      const base = existing ? JSON.parse(existing) || {} : {};
+      const now = new Date().toISOString();
+      const mt = mistakeType ? JUYO_MISTAKE_TYPES[mistakeType] : null;
+      const memo = ok ? [`正解: ${step.answer.toLocaleString('ja-JP')} ${step.unit}（再挑戦で正解）`, base.memo && base.memo.indexOf('ミス種別') >= 0 ? base.memo.split('\n').filter(l => l.indexOf('ミス種別') === 0 || l.indexOf('処方') === 0).join('\n') : ''].filter(Boolean).join('\n') : [`正解: ${step.answer.toLocaleString('ja-JP')} ${step.unit}（あなたの入力: ${value.toLocaleString('ja-JP')}）`, mt ? `ミス種別: ${mt.label}` : 'ミス種別: 典型パターン以外（式の形を再確認）', mt ? `処方: ${mt.fix}` : `処方: ${step.expr} の形で立式し直す`].join('\n');
+      localStorage.setItem(key, JSON.stringify(Object.assign({}, base, {
+        status: ok ? 'understood' : 'wrong',
+        updatedAt: now,
+        firstSeenAt: base.firstSeenAt || now,
+        reviewCount: (base.reviewCount || 0) + 1,
+        source: 'juyo-calc-drill',
+        itemType: 'calc-drill',
+        articleTitle: '工場負荷シミュレータ（6.8）— 計算ドリル',
+        itemTitle: `${drill.title} ／ ${step.ask}`,
+        articleUrl: 'denken-hoki-wiki.html#juyo-simulator:calc-drill',
+        memo: memo
+      })));
+    } catch (e) {}
+  };
   const selectScenario = id => {
     setScenarioId(id);
     setScenarioStep(null);
@@ -63653,6 +63989,13 @@ function JuyoSimulatorPage({
   }), React.createElement(JuyoExerciseMode, {
     onLoad: loadExercise
   }), React.createElement("h2", {
+    id: "calc-drill"
+  }, "計算ドリル（穴埋め入力 → 自動採点 → ミス種別の記録）"), React.createElement(SectionCheck, {
+    pageId: "juyo-simulator",
+    sectionId: "calc-drill"
+  }), React.createElement(JuyoCalcDrill, {
+    onRecord: recordMistake
+  }), React.createElement("h2", {
     id: "insights"
   }, "気づきチェックリスト（操作から法則を取り出す）"), React.createElement(SectionCheck, {
     pageId: "juyo-simulator",
@@ -63723,11 +64066,14 @@ function JuyoSimulatorPage({
       id: 'exercise',
       label: '6節 演習モード'
     }, {
+      id: 'calc-drill',
+      label: '7節 計算ドリル'
+    }, {
       id: 'insights',
-      label: '7節 気づきチェックリスト'
+      label: '8節 気づきチェックリスト'
     }, {
       id: 'quick-review',
-      label: '8節 1分復習'
+      label: '9節 1分復習'
     }],
     onJump: id => {
       location.hash = id;
@@ -63761,6 +64107,10 @@ function JuyoSimulatorPage({
     }]
   }), React.createElement(UpdateLog, {
     entries: [{
+      date: "2026-07-25",
+      content: "v1.9: 7節「計算ドリル（穴埋め入力→自動採点→ミス種別の記録）」を新設（ChatGPTアドバイス優先度1＋5）。シミュレータは『条件→結果を見る』道具で、試験の『条件→自分で数値を作る』との差が残っていたため、得点化フェーズを追加: ①4問7ステップの穴埋め入力（R4上問12(a)(b)・R3問13(b)・合わせた需要率）②入力値が典型的な誤答値に近いと6種のミス種別（不等率を掛けた／30分値と混同して2倍／力率を忘れた／切り捨てた／合わせた需要率の分子取り違え／需要率と負荷率の混同）を特定して処方を表示 ③誤答は判定と同時に間違いノート（denken_check::hoki_juyo-simulator::calc_*）へ自動記録し、記録ボタンの押し忘れを構造的に排除（fail-open哲学）④再挑戦で正解すると status を understood へ昇格しミス種別は memo に保持（PDCAのAct）⑤初回から正解した設問は記録を作らない（間違いノートを正解で埋めない）",
+      reason: "ChatGPTアドバイス「値を読むから値を作るへの転換が未実装」「弱点記録との接続が未完成」。与件と正解は過去問（hoki-daily-pool.js q51/q52・verified:high）およびシミュレータのプリセット実測値（560kW/622.2kVA/7台/336kW/241,920kWh/928kW）と一致"
+    }, {
       date: "2026-07-25",
       content: "v1.8: 集計期間の切替（日／月30日／月31日／年）を追加し、日負荷率・月負荷率・年負荷率を1画面で行き来できるようにした: ①期間ボタンで総時間（24h／720h／744h／8760h）と負荷率の呼び名が切り替わり、式（平均÷最大）が変わらないことを体験できる ②「期間の電力量」カードを追加（1万kWh以上はMW・h併記＝試験の解答表記に合わせる） ③R4上問12プリセットは読込と同時に月30日へ自動切替し、月電力量242MW・hをカードで再現 ④「同一日の繰り返しモデルなので負荷率の値は期間を変えても同じ。実際は年<月<日になる」ガードを期間セレクタ直下と用語マップに明示（教育的近似のガード） ⑤年負荷率の honest-hold に調査痕跡を追記（kakomon.yml・電験王照合キャッシュ・日替わりプール・各Wiki HTMLを横断検索して0件。法規で確認できる負荷率の出題は日負荷率(H23問11)と総合負荷率）。あわせてTopBarのアクセントパレットを600px以下で非表示にし、sticky TopBarの3段化（約105px）を2段に抑制",
       reason: "監修者さん指示「改善実施」（前回提案3件: 年負荷率の出題実績確認・期間切替モデル・TopBar 3段折り返し）。期間切替は負荷率の期間概念を操作で理解させる一方、同一日繰り返しモデルでは値が一致してしまうため、柱1（正確性）に沿って大小関係のガードを併記した"
