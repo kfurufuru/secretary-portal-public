@@ -13955,10 +13955,24 @@ function App() {
     @media (max-width: 900px)  { .app { grid-template-columns: 1fr; } .sidebar { display: none; } }
     /* 全幅（集中）モード: 左サイドバー・右目次を隠して本文を最大化する。
        シミュレータのような「操作 → グラフの変化を同時に見る」ページ用。付与元がアンマウント時に必ず外す。
-       .content の maxWidth/padding は React の inline style のため !important で上書きする。 */
+       .content の maxWidth/padding は React の inline style のため !important で上書きする。
+       padding は方向別に指定する（一括 padding にすると 900px 以下の
+       .content{padding-bottom:88px} ＝下部固定ナビ分の余白を潰し、本文末尾がナビに隠れる）。 */
     .app.wide-focus { grid-template-columns: 1fr; }
     .app.wide-focus > .sidebar, .app.wide-focus > .toc { display: none; }
-    .app.wide-focus .content { max-width: 1560px !important; padding: 16px 24px !important; }
+    .app.wide-focus .content { max-width: 1560px !important; padding-top: 16px !important; padding-left: 24px !important; padding-right: 24px !important; }
+    @media (max-width: 600px) { .app.wide-focus .content { padding-left: 14px !important; padding-right: 14px !important; } }
+    /* シミュレータの「グラフ｜操作パネル」2カラム。全幅モードでのみ有効。
+       狭い画面では1カラムへ戻す（2カラムのままだと 840+320px を要求してページが横スクロールする）。 */
+    /* 左右をほぼ等分にする（右が 500px 未満だと工場パネルが1列に縦積みされ、4枚で約1000px になり同時可視化が崩れる） */
+    .juyo-sim-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(500px, 1fr); gap: 14px; align-items: start; }
+    @media (max-width: 1180px) { .juyo-sim-split { grid-template-columns: 1fr; } }
+    /* TopBar: 900px 以下では折り返す（検索欄＋10色テーマ＋ダーク切替が1行に収まらず
+       ページ全体が横スクロールしていた。テーマ群自体もはみ出す時は内部で横スクロール）。 */
+    @media (max-width: 900px) {
+      .topbar { flex-wrap: wrap; row-gap: 6px; padding: 8px 12px !important; }
+      .topbar div[aria-label="アクセント色テーマ"] { max-width: 100%; overflow-x: auto; }
+    }
   `;
   document.head.appendChild(style);
 })();
@@ -63171,12 +63185,7 @@ function JuyoSimulatorPage({
       background: 'var(--bg-2)'
     }
   }, "⚠ 不等率が1未満（", String(m.rawDiversity), "）になっています。負荷曲線計算のバグの可能性があります（この値は隠さず表示しています。再現手順を添えて報告してください）。"), React.createElement("div", {
-    style: wideMode ? {
-      display: 'grid',
-      gridTemplateColumns: 'minmax(0, 1fr) minmax(500px, 1fr)',
-      gap: 14,
-      alignItems: 'start'
-    } : undefined
+    className: wideMode ? 'juyo-sim-split' : undefined
   }, React.createElement("div", null, React.createElement("div", {
     style: {
       background: 'var(--card)',
@@ -63480,6 +63489,10 @@ function JuyoSimulatorPage({
     }]
   }), React.createElement(UpdateLog, {
     entries: [{
+      date: "2026-07-25",
+      content: "v1.6.1: v1.6 のスマホ回帰2件を是正＋全Wiki共通の横スクロールを解消: ①全幅モードの .content 一括 padding が「下部固定ナビ分の余白（padding-bottom:88px）」を潰し本文末尾がナビに隠れていた → padding を方向別指定に変更 ②全幅モードの2カラム指定が inline style だったためスマホでも 1fr+500px を要求しページが横スクロールしていた → .juyo-sim-split クラス化＋1180px以下で1カラムへ復帰 ③（v1.6以前からの既存不具合）TopBar の検索欄＋10色テーマ＋ダーク切替が900px以下で1行に収まらず、全ページがスマホで横スクロールしていた → TopBar を折り返し可に（実測: 375/768/1440px × 全幅ON/OFF × 3ページで横はみ出し 0px）",
+      reason: "v1.6 の実機検証（375/768/1440px）で自作の回帰2件を検出。③は前回報告で『bottom-nav が599px幅』と推定していた既存不具合の真因（bottom-nav は横に広がったページの被害者側だった）"
+    }, {
       date: "2026-07-25",
       content: "v1.6: 「操作と結果を同時に見る」ためのレイアウト改善4点: ①⛶全幅表示トグル（左サイドバー・右目次を隠して本文を1560pxまで拡張。CSS .app.wide-focus・localStorage記憶・他ページへ遷移したらクラスを必ず解除） ②全幅時はグラフと工場パネルを左右2カラム化（左右をほぼ等分にして右カラムを2列に保つ） ③工場パネルを239pxへ圧縮（稼働パターンを短縮ラベル1行チップ化116→32px・設備アイコンをラベルなし1行化・需要率バーと実測値行を統合。フル名と内訳は aria-label/title に退避） ④固定バーにミニ負荷曲線を追加（合成曲線＋Σ各最大＋合成平均。下へスクロールして工場C・Dを操作しても形状変化を追える）。実測: グラフ上端〜パネル下端 968→488px",
       reason: "監修者さん指摘「パラメータを変更するカードがでかすぎて、変更時にどのようにグラフ・系統図が変更したかPCに収まりきらず見れない」＋「左右の目次を非表示にして最大画面にするとみやすくないか」。実測でコンテンツ幅730px・パネル411px×2行=832pxが制約と判明したため、全幅化・2カラム化・パネル圧縮・スクロール追従ミニ曲線の4点で対処"
