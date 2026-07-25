@@ -61610,15 +61610,15 @@ function JuyoResultCards({
   }), card('不等率', juyoFmtRatio(m.diversityFactor), 'Σ各最大 ÷ 合成最大（通常1以上）', {
     emphasized: true,
     focusKey: 'diversity'
-  }), card('総合負荷率', juyoFmtPct(m.totalLoadFactor), '合成平均 ÷ 合成最大', {
+  }), card('総合負荷率（＝日負荷率）', juyoFmtPct(m.totalLoadFactor), '合成平均 ÷ 合成最大。この画面は1日なので日負荷率', {
     focusKey: 'load'
-  }), card('全体の需要率', juyoFmtPct(m.overallDemandFactor), `合成最大 ÷ Σ設備容量（${juyoFmtKw(m.sumCapacity) === '—' ? 0 : juyoFmtKw(m.sumCapacity)}kW）`, {
+  }), card('全体の需要率', juyoFmtPct(m.overallDemandFactor), `合成最大 ÷ Σ負荷設備容量（${juyoFmtKw(m.sumCapacity) === '—' ? 0 : juyoFmtKw(m.sumCapacity)}kW）`, {
     focusKey: 'demand'
   }), card('合成平均需要電力', empty ? '—' : `${juyoFmtKw(m.compositeAverage)} kW`, '合成曲線の24h平均（緑破線）', {
     focusKey: 'average'
   }), card('1日電力量', empty ? '—' : `${juyoFmtKw(m.compositeEnergy)} kWh`, '合成平均 × 24h（グラフの塗り面積）', {
     focusKey: 'energy'
-  }), card('必要皮相電力', empty ? '—' : `${juyoFmtKva(m.apparentKva)} kVA`, `合成最大 ÷ 力率${pfPct}%`), card('100kVA変圧器 理論最少台数', empty ? '—' : `${m.trafoCount} 台`, '皮相電力 ÷ 100kVA を切上げ'), React.createElement("div", {
+  }), card('必要皮相電力', empty ? '—' : `${juyoFmtKva(m.apparentKva)} kVA`, `合成最大 ÷ 力率${pfPct}%（変圧器設備容量[kVA]の必要下限）`), card('100kVA変圧器 理論最少台数', empty ? '—' : `${m.trafoCount} 台`, '皮相電力 ÷ 100kVA を切上げ（R4上問12(a)の形）'), React.createElement("div", {
     style: {
       border: '1px solid var(--line)',
       borderRadius: 8,
@@ -63378,6 +63378,98 @@ function JuyoSimulatorPage({
       lineHeight: 1.7
     }
   }, "本ページは", React.createElement("strong", null, "1時間刻みの概念学習モデル"), "。実際の最大需要電力は", React.createElement("strong", null, "30分平均（30分デマンド値）"), "の最大値として扱う——30分デマンドとデマンド制御は ", navLink('demand-kanri', '6.7 デマンド制御・最大需要電力管理'), " の管轄。"), React.createElement("h2", {
+    id: "term-map"
+  }, "用語マップ（問題文の言い方 → この画面のどこ）"), React.createElement(SectionCheck, {
+    pageId: "juyo-simulator",
+    sectionId: "term-map"
+  }), React.createElement("p", {
+    style: {
+      fontSize: 12.5,
+      color: 'var(--ink-2)',
+      lineHeight: 1.8,
+      margin: '0 0 8px'
+    }
+  }, "本試験は", React.createElement("strong", null, "問題文の用語"), "で出る。画面のラベルと問題文の言い方がつながらないと、操作で理解した内容が得点に変わらない。下表は", React.createElement("strong", null, "7つの主要用語"), "について「試験での書き方 → この画面のどこを見るか → 式」を1対1で対応させたもの。"), React.createElement("div", {
+    style: {
+      overflowX: 'auto',
+      marginBottom: 8
+    }
+  }, React.createElement("table", {
+    style: {
+      width: '100%',
+      minWidth: 620,
+      borderCollapse: 'collapse',
+      fontSize: 12
+    }
+  }, React.createElement("thead", null, React.createElement("tr", null, ['用語', '試験での書き方（出典）', 'この画面のどこ', '式'].map((h, i) => React.createElement("th", {
+    key: h,
+    style: {
+      textAlign: 'left',
+      padding: '6px 8px',
+      whiteSpace: 'nowrap',
+      borderBottom: '1px solid var(--line)',
+      color: 'var(--ink-3)',
+      fontWeight: 700
+    }
+  }, h)))), React.createElement("tbody", null, [['総合負荷設備容量', '「負荷設備容量800kW」（R4上 問12）。複数需要家なら各設備容量の合計', React.createElement("span", {
+    key: "a"
+  }, "結果カード", React.createElement("strong", null, "「全体の需要率」"), "をタップ → グラフに", React.createElement("strong", null, "灰色の天井線"), "と未使用余力が出る"), '各工場の設備容量の単純合計（負荷曲線には現れない量）'], ['合成最大需要電力', '「合成最大需要電力」（R3 問13(b)）', React.createElement("span", {
+    key: "b"
+  }, "合成曲線（太線）の", React.createElement("strong", null, "最高段＝青丸"), "。カードにピーク時間帯も表示"), 'Σ各最大 ÷ 不等率（掛けない）'], ['平均需要電力', '「平均需要電力」（R4上 問12(b)）', React.createElement("span", {
+    key: "c"
+  }, React.createElement("strong", null, "緑の破線"), "。カード「合成平均需要電力」をタップで等積長方形も出る"), '電力量 ÷ 期間の総時間 ＝ 最大需要電力 × 負荷率'], ['変圧器設備容量', '「100kVAの変圧器を複数台使用する場合の必要最小限の台数」（R4上 問12(a)）／「変圧器容量[kVA]」', React.createElement("span", {
+    key: "d"
+  }, "カード", React.createElement("strong", null, "「必要皮相電力」→「理論最少台数」"), "の2枚（力率ボタンで変化）。まとめ式は ", navLink('hensyatsuki-yoryo', '6.4 変圧器容量')), '合成最大 ÷ 力率 ＝ 必要皮相[kVA] → 標準容量・台数を選定。まとめて 設備容量×需要率÷(不等率×力率)'], ['日負荷率', '「日負荷率」（H23 問11 のテーマ）', React.createElement("span", {
+    key: "e"
+  }, "カード", React.createElement("strong", null, "「総合負荷率（＝日負荷率）」"), "。この画面は24hモデルなので総合負荷率がそのまま日負荷率"), '1日の平均 ÷ 1日の最大（総時間 24h）'], ['月負荷率', '「月負荷率60%」（R4上 問12(b)）', React.createElement("span", {
+    key: "f"
+  }, React.createElement("strong", null, "R4上問12プリセット"), "で再現（24h平均が60%になる波形を30日繰り返すモデル）"), '月の平均 ÷ 月の最大（総時間 720h＝30日／744h＝31日）'], ['年負荷率', React.createElement("span", {
+    key: "g1"
+  }, "期間別公式として ", navLink('furitsu', '6.2 負荷率'), " に記載。", React.createElement("strong", null, "過去問データ上の出題表現は未確認"), "（honest-hold）"), React.createElement("span", {
+    key: "g"
+  }, "この画面には無い（1日モデルのため）。期間別は ", navLink('furitsu', '6.2 負荷率'), " へ"), '年間電力量 ÷ 8760h ÷ 年の最大（総時間 24×365）']].map((r, i) => React.createElement("tr", {
+    key: i
+  }, React.createElement("td", {
+    style: {
+      padding: '6px 8px',
+      borderBottom: '1px solid var(--line)',
+      fontWeight: 700,
+      whiteSpace: 'nowrap',
+      verticalAlign: 'top'
+    }
+  }, r[0]), React.createElement("td", {
+    style: {
+      padding: '6px 8px',
+      borderBottom: '1px solid var(--line)',
+      lineHeight: 1.6,
+      verticalAlign: 'top'
+    }
+  }, r[1]), React.createElement("td", {
+    style: {
+      padding: '6px 8px',
+      borderBottom: '1px solid var(--line)',
+      lineHeight: 1.6,
+      verticalAlign: 'top'
+    }
+  }, r[2]), React.createElement("td", {
+    style: {
+      padding: '6px 8px',
+      borderBottom: '1px solid var(--line)',
+      lineHeight: 1.6,
+      fontFamily: 'monospace',
+      fontSize: 11,
+      verticalAlign: 'top'
+    }
+  }, r[3])))))), React.createElement("div", {
+    style: {
+      padding: '9px 12px',
+      background: 'var(--bg-2)',
+      borderLeft: '3px solid var(--accent)',
+      borderRadius: 4,
+      fontSize: 12,
+      lineHeight: 1.8
+    }
+  }, React.createElement("strong", null, "負荷率は「日・月・年」で式が変わらない"), "——変わるのは", React.createElement("strong", null, "期間の総時間"), "だけ（日24h／月720・744h／年8760h）。 だから本画面で", React.createElement("strong", null, "日負荷率"), "を体で覚えれば、月・年は「割る時間を差し替えるだけ」で解ける。 逆にひっかけは", React.createElement("strong", null, "平均需要電力[kW]を30分値と勘違いして時間換算で2倍する"), "誤り（R4上問12(b) の誤答選択肢）——平均需要電力はすでに時間平均のkWなので2倍しない。 期間別の公式表と月負荷率の典型例は ", navLink('furitsu', '6.2 負荷率'), "、需要率・不等率の定義は ", navLink('juyoritsu-gainen', '6.1 概念'), "、変圧器容量の選定は ", navLink('hensyatsuki-yoryo', '6.4 変圧器容量'), "。"), React.createElement("h2", {
     id: "presets"
   }, "過去問プリセット（実戦の数値をこの画面で再現する）"), React.createElement(SectionCheck, {
     pageId: "juyo-simulator",
@@ -63430,6 +63522,15 @@ function JuyoSimulatorPage({
     }, {
       q: '不等率・総合負荷率・変圧器容量は、工場側・変電所側どちらで見る量？',
       a: '変電所（受電点）側＝母線で同時刻に合算した後の量。各工場側で見るのは設備容量・需要率・負荷率（系統図の節で位置を確認）'
+    }, {
+      q: '日負荷率・月負荷率・年負荷率で「変わるもの」は？',
+      a: '式は変わらない（平均÷最大）。変わるのは期間の総時間だけ——日24h／月720h(30日)・744h(31日)／年8760h。この画面の総合負荷率は24hモデルなので日負荷率'
+    }, {
+      q: '問題文の「負荷設備容量」はこの画面のどこ？',
+      a: '各工場の設備容量の合計（Σ負荷設備容量）。「全体の需要率」カードをタップするとグラフに灰色の天井線として出る（負荷曲線には現れない量）'
+    }, {
+      q: '変圧器設備容量[kVA]はどう出す？',
+      a: '合成最大需要電力 ÷ 力率 ＝ 必要皮相[kVA] → 標準容量・台数を選定。まとめて 設備容量×需要率÷(不等率×力率)。単一需要家なら不等率＝1で分母から消える'
     }]
   }), React.createElement("h2", {
     id: "act-section"
@@ -63445,17 +63546,20 @@ function JuyoSimulatorPage({
       id: 'how-to-read',
       label: '3節 グラフの読み方'
     }, {
+      id: 'term-map',
+      label: '4節 用語マップ'
+    }, {
       id: 'presets',
-      label: '4節 過去問プリセット'
+      label: '5節 過去問プリセット'
     }, {
       id: 'exercise',
-      label: '5節 演習モード'
+      label: '6節 演習モード'
     }, {
       id: 'insights',
-      label: '6節 気づきチェックリスト'
+      label: '7節 気づきチェックリスト'
     }, {
       id: 'quick-review',
-      label: '7節 1分復習'
+      label: '8節 1分復習'
     }],
     onJump: id => {
       location.hash = id;
@@ -63489,6 +63593,10 @@ function JuyoSimulatorPage({
     }]
   }), React.createElement(UpdateLog, {
     entries: [{
+      date: "2026-07-25",
+      content: "v1.7: 「用語マップ（問題文の言い方 → この画面のどこ）」セクションを新設（4節）。監修者さん点検依頼の7用語（総合負荷設備容量・合成最大需要電力・平均需要電力・変圧器設備容量・日/月/年負荷率）を、①試験での書き方＋出典 ②この画面のどこを見るか ③式 の3列で1対1対応させた。あわせて ①結果カードのラベルを「総合負荷率（＝日負荷率）」に変更（この画面が24hモデルであることを明示） ②「Σ設備容量」→「Σ負荷設備容量」（R4上問12の問題文表現に合わせる） ③「必要皮相電力」に「変圧器設備容量[kVA]の必要下限」を併記＋6.4変圧器容量への導線 ④1分復習に期間別負荷率・負荷設備容量・変圧器設備容量の3問を追加。年負荷率は過去問データに出題表現が見当たらないため honest-hold として明示（期間別公式は6.2へ委譲）",
+      reason: "監修者さん点検「7用語が理解できるものになっているか」に対する機械調査の結果、①シミュレータ内で『日負荷率』が0件（総合負荷率が日単位である明示なし） ②『負荷設備容量』（R4上問12の実際の問題文表現・verified:high）と画面ラベル『設備容量』が結びつかない ③『変圧器設備容量』の主公式への導線が無い、の3ギャップを検出したため。操作で理解した内容を問題文の用語に接続する層が欠けていた"
+    }, {
       date: "2026-07-25",
       content: "v1.6.1: v1.6 のスマホ回帰2件を是正＋全Wiki共通の横スクロールを解消: ①全幅モードの .content 一括 padding が「下部固定ナビ分の余白（padding-bottom:88px）」を潰し本文末尾がナビに隠れていた → padding を方向別指定に変更 ②全幅モードの2カラム指定が inline style だったためスマホでも 1fr+500px を要求しページが横スクロールしていた → .juyo-sim-split クラス化＋1180px以下で1カラムへ復帰 ③（v1.6以前からの既存不具合）TopBar の検索欄＋10色テーマ＋ダーク切替が900px以下で1行に収まらず、全ページがスマホで横スクロールしていた → TopBar を折り返し可に（実測: 375/768/1440px × 全幅ON/OFF × 3ページで横はみ出し 0px）",
       reason: "v1.6 の実機検証（375/768/1440px）で自作の回帰2件を検出。③は前回報告で『bottom-nav が599px幅』と推定していた既存不具合の真因（bottom-nav は横に広がったページの被害者側だった）"
