@@ -232,59 +232,116 @@
     margin-top: -2px;
     letter-spacing: 0.06em;
   }
+  /* 章ツリー（教科書順タブ）— 電力Wikiのサイドバーと同形 */
   .nav-group {
-    margin: 14px 0 6px;
+    margin-bottom: 4px;
   }
-  .nav-group-title {
-    font-size: 11px;
-    color: var(--ink-3);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    padding: 0 8px;
-    margin-bottom: 6px;
-  }
-  .nav-item {
+  .nav-chapter {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 7px 10px;
-    border-radius: 8px;
-    font-size: 13.5px;
+    gap: 6px;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    padding: 7px 6px;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+  }
+  .nav-chapter:hover { color: var(--ink); }
+  /* キーボード操作時のフォーカスリングをUA既定任せにせず明示（border:0 で消えないよう保証） */
+  .nav-chapter:focus-visible,
+  .nav-tree-tools button:focus-visible,
+  .nav-tree-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-radius: 4px;
+  }
+  .nav-chapter-caret {
+    width: 10px;
+    height: 10px;
+    flex: none;
+    transition: transform 0.15s;
+  }
+  .nav-chapter[data-open="false"] .nav-chapter-caret { transform: rotate(-90deg); }
+  .nav-chapter-title { flex: 1; }
+  .nav-chapter-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-3);
+    flex: none;
+  }
+  .nav-items {
+    margin: 0 0 6px 6px;
+    border-left: 1px solid var(--line);
+  }
+  .nav-items[data-open="false"] { display: none; }
+  .nav-item {
+    display: flex;
+    align-items: baseline;
+    /* サイドバー幅256px（電力Wikiは280px）に対し番号列32pxを足すぶん、
+       タイトルの折返しが増えないよう gap/padding を電力Wikiより詰める */
+    gap: 6px;
+    padding: 5px 6px 5px 10px;
+    margin-left: -1px;
+    border-left: 2px solid transparent;
+    font-size: 13px;
     color: var(--ink-2);
-    line-height: 1.3;
+    line-height: 1.45;
     cursor: pointer;
     user-select: none;
+    transition: background 0.12s, color 0.12s;
   }
   .nav-item:hover { background: var(--bg-3); color: var(--ink); }
   .nav-item.active {
     background: var(--accent-soft);
-    color: var(--ink);
-    font-weight: 500;
+    border-left-color: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
   }
-  .nav-num {
+  .nav-item-num {
     font-family: var(--mono);
-    font-size: 11px;
+    font-size: 10px;
     color: var(--ink-3);
-    width: 18px;
     flex: none;
+    flex-shrink: 0;
+    font-weight: 400;
+    /* 実データ最長は 00.0、例外形式 2.4b / 4.0b / 1.12 等が16件あるため 1.1 前提の幅にしない */
+    min-width: 32px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
   }
-  .nav-item.active .nav-num { color: var(--accent-ink); }
-  .nav-children {
-    margin: 2px 0 6px 18px;
-    padding-left: 10px;
-    border-left: 1px solid var(--line);
+  .nav-item.active .nav-item-num { color: var(--accent-ink); }
+  /* 章ツリーの一括操作（すべて展開／すべて折りたたむ）と参照リンク */
+  .nav-tree-tools {
     display: flex;
-    flex-direction: column;
-    gap: 1px;
+    gap: 6px;
+    padding: 2px 6px 8px;
   }
-  .nav-child {
-    padding: 4px 8px;
-    font-size: 12.5px;
+  .nav-tree-tools button {
+    flex: 1;
+    padding: 4px 0;
+    font-family: inherit;
+    font-size: 11px;
     color: var(--ink-2);
-    border-radius: 6px;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 4px;
     cursor: pointer;
   }
-  .nav-child:hover { background: var(--bg-3); color: var(--ink); }
+  .nav-tree-tools button:hover { background: var(--bg-3); color: var(--ink); }
+  .nav-tree-link {
+    display: block;
+    padding: 0 6px 10px;
+    font-size: 11px;
+    color: var(--ink-3);
+    text-decoration: none;
+  }
+  .nav-tree-link:hover { color: var(--accent-ink); text-decoration: underline; }
   .nav-foot {
     margin-top: 18px;
     padding: 12px;
@@ -12862,22 +12919,82 @@ function Sidebar({
       localStorage.setItem('hoki_sidebar_window', yearWindow);
     } catch (e) {}
   }, [yearWindow]);
+  const CH_STORE_KEY = 'hoki_sidebar_chapters_v1';
+  const chapterIndexOf = React.useCallback(pageId => {
+    if (!data || !data.chapters) return -1;
+    return data.chapters.findIndex(ch => (ch.pages || []).some(p => p.id === pageId));
+  }, [data]);
   const [openChapters, setOpenChapters] = React.useState(() => {
     if (!data || !data.chapters) return {};
+    let saved = null;
+    try {
+      const raw = localStorage.getItem(CH_STORE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) saved = new Set(parsed);
+      }
+    } catch (e) {
+      saved = null;
+    }
     const initial = {};
     data.chapters.forEach((ch, idx) => {
-      if (ch.pages && ch.pages.some(p => p.id === page)) {
-        initial[idx] = true;
-      }
+      const isCurrent = ch.pages && ch.pages.some(p => p.id === page);
+      initial[idx] = saved ? saved.has(ch.id) || isCurrent : !!isCurrent;
     });
     return initial;
   });
-  const toggleChapter = idx => {
-    setOpenChapters(prev => ({
-      ...prev,
-      [idx]: !prev[idx]
-    }));
+  const persistChapters = next => {
+    if (!data || !data.chapters) return;
+    try {
+      const ids = data.chapters.filter((ch, i) => next[i]).map(ch => ch.id);
+      localStorage.setItem(CH_STORE_KEY, JSON.stringify(ids));
+    } catch (e) {}
   };
+  const toggleChapter = idx => {
+    setOpenChapters(prev => {
+      const next = {
+        ...prev,
+        [idx]: !prev[idx]
+      };
+      persistChapters(next);
+      return next;
+    });
+  };
+  const setAllChapters = open => {
+    setOpenChapters(() => {
+      const next = {};
+      (data.chapters || []).forEach((ch, i) => {
+        next[i] = open;
+      });
+      persistChapters(next);
+      return next;
+    });
+  };
+  const prevPageRef = React.useRef(page);
+  React.useEffect(() => {
+    if (prevPageRef.current === page) return;
+    prevPageRef.current = page;
+    const idx = chapterIndexOf(page);
+    if (idx < 0) return;
+    setOpenChapters(prev => prev[idx] ? prev : {
+      ...prev,
+      [idx]: true
+    });
+  }, [page, chapterIndexOf]);
+  const treeRef = React.useRef(null);
+  React.useEffect(() => {
+    if (sidebarMode !== 'chapter') return;
+    const tree = treeRef.current;
+    if (!tree) return;
+    const el = tree.querySelector('[data-nav-current="1"]');
+    if (!el) return;
+    const aside = el.closest('.sidebar');
+    if (!aside) return;
+    const er = el.getBoundingClientRect();
+    const ar = aside.getBoundingClientRect();
+    if (er.top >= ar.top && er.bottom <= ar.bottom) return;
+    aside.scrollTop += er.top < ar.top ? er.top - ar.top - 8 : er.bottom - ar.bottom + 8;
+  }, [page, sidebarMode, openChapters]);
   const getLastSeenBadge = pageId => {
     const val = localStorage.getItem(`hoki_lastSeen_${pageId}`);
     if (!val) return null;
@@ -12923,13 +13040,20 @@ function Sidebar({
       borderRight: '1px solid var(--line)',
       padding: '12px 0'
     }
-  }, data.title && React.createElement("div", {
+  }, React.createElement("div", {
+    className: "brand",
+    onClick: () => onNav && onNav('top'),
     style: {
-      padding: '10px 16px 12px',
-      fontWeight: '700',
-      fontSize: '14px'
+      cursor: 'pointer',
+      margin: '0 12px'
     }
-  }, data.title), React.createElement("div", {
+  }, React.createElement("div", {
+    className: "brand-mark"
+  }, "法"), React.createElement("div", null, React.createElement("div", {
+    className: "brand-name"
+  }, data.title || '法規Wiki'), React.createElement("div", {
+    className: "brand-sub"
+  }, "DENKEN-3 / HOKI"))), React.createElement("div", {
     style: {
       display: 'flex',
       padding: '0 12px',
@@ -13064,84 +13188,87 @@ function Sidebar({
         opacity: 0.75
       }
     }, t.count));
-  })) : data.chapters.map((ch, idx) => React.createElement("div", {
-    key: idx
+  })) : React.createElement("nav", {
+    ref: treeRef,
+    "aria-label": "教科書順の章ツリー",
+    style: {
+      padding: '0 8px'
+    }
   }, React.createElement("div", {
-    onClick: () => toggleChapter(idx),
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '6px',
-      padding: '8px 16px',
-      cursor: 'pointer',
-      fontSize: '12px',
-      fontWeight: '700',
-      color: 'var(--ink-2)',
-      background: openChapters[idx] ? 'var(--bg-2)' : 'transparent',
-      userSelect: 'none'
-    }
-  }, React.createElement("span", {
-    style: {
-      color: 'var(--ink-3)',
-      fontSize: '10px'
-    }
-  }, openChapters[idx] ? '▼' : '▶'), ch.ch && React.createElement("span", {
-    style: {
-      fontSize: '10px',
-      color: 'var(--ink-3)'
-    }
-  }, ch.ch), React.createElement("span", {
-    style: {
-      flex: 1
-    }
-  }, ch.title)), openChapters[idx] && ch.pages && ch.pages.map((p, pi) => {
-    const isActive = p.id === page;
+    className: "nav-tree-tools"
+  }, React.createElement("button", {
+    type: "button",
+    onClick: () => setAllChapters(true)
+  }, "すべて展開"), React.createElement("button", {
+    type: "button",
+    onClick: () => setAllChapters(false)
+  }, "すべて折りたたむ")), React.createElement("a", {
+    className: "nav-tree-link",
+    href: "#top:ch-taiou"
+  }, "📘 市販テキストCH対応表を見る"), data.chapters.map((ch, idx) => {
+    const open = !!openChapters[idx];
+    const listId = `nav-ch-${ch.id || idx}`;
     return React.createElement("div", {
-      key: pi,
-      onClick: () => onNav && onNav(p.id),
-      style: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-        padding: '7px 16px 7px 28px',
-        cursor: 'pointer',
-        fontSize: '12px',
-        background: isActive ? 'var(--accent-soft)' : 'transparent',
-        borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
-        color: isActive ? 'var(--accent-ink)' : 'var(--ink-2)',
-        transition: 'background 0.1s'
-      },
-      onMouseEnter: e => {
-        if (!isActive) e.currentTarget.style.background = 'var(--bg-2)';
-      },
-      onMouseLeave: e => {
-        if (!isActive) e.currentTarget.style.background = 'transparent';
-      }
-    }, React.createElement("span", {
-      style: {
-        flex: 1,
-        lineHeight: '1.4'
-      },
-      title: p.nav ? p.title : undefined
-    }, p.nav || p.title), p.priority === 'required' && React.createElement("span", {
-      className: "priority-label"
-    }, "★必須"), p.freq === 'max' && React.createElement("span", {
-      className: "freq-max"
-    }, "毎回"), p.freq === 'high' && React.createElement("span", {
-      className: "freq-high"
-    }, "頻出"), p.twin && React.createElement("span", {
-      title: `対となるページ: ${p.twin}`,
-      onClick: e => {
-        e.stopPropagation();
-        onNav && onNav(p.twin);
-      },
-      style: {
-        cursor: 'pointer',
-        color: 'var(--accent-ink)',
-        fontSize: '11px'
-      }
-    }, "↔"), getLastSeenBadge(p.id));
-  }))), React.createElement("div", {
+      className: "nav-group",
+      key: idx
+    }, React.createElement("button", {
+      type: "button",
+      className: "nav-chapter",
+      "data-open": String(open),
+      "aria-expanded": open,
+      "aria-controls": listId,
+      onClick: () => toggleChapter(idx)
+    }, React.createElement("svg", {
+      className: "nav-chapter-caret",
+      viewBox: "0 0 12 12",
+      fill: "currentColor",
+      "aria-hidden": "true"
+    }, React.createElement("path", {
+      d: "M3 4l3 4 3-4z"
+    })), React.createElement("span", {
+      className: "nav-chapter-title"
+    }, ch.title), React.createElement("span", {
+      className: "nav-chapter-num",
+      "aria-label": `章 ${ch.num}`
+    }, ch.num)), React.createElement("div", {
+      className: "nav-items",
+      id: listId,
+      "data-open": String(open)
+    }, (ch.pages || []).map((p, pi) => {
+      const isActive = p.id === page;
+      return React.createElement("div", {
+        key: pi,
+        className: `nav-item${isActive ? ' active' : ''}`,
+        "data-nav-current": isActive ? '1' : undefined,
+        "aria-current": isActive ? 'page' : undefined,
+        onClick: () => onNav && onNav(p.id)
+      }, React.createElement("span", {
+        className: "nav-item-num"
+      }, p.num), React.createElement("span", {
+        style: {
+          flex: 1
+        },
+        title: p.nav ? p.title : undefined
+      }, p.nav || p.title), p.priority === 'required' && React.createElement("span", {
+        className: "priority-label"
+      }, "★必須"), p.freq === 'max' && React.createElement("span", {
+        className: "freq-max"
+      }, "毎回"), p.freq === 'high' && React.createElement("span", {
+        className: "freq-high"
+      }, "頻出"), p.twin && React.createElement("span", {
+        title: `対となるページ: ${p.twin}`,
+        onClick: e => {
+          e.stopPropagation();
+          onNav && onNav(p.twin);
+        },
+        style: {
+          cursor: 'pointer',
+          color: 'var(--accent-ink)',
+          fontSize: '11px'
+        }
+      }, "↔"), getLastSeenBadge(p.id));
+    })));
+  })), React.createElement("div", {
     style: {
       marginTop: '16px',
       padding: '12px 16px',
@@ -13835,6 +13962,7 @@ function App() {
       }
       const el = document.getElementById(anchor);
       if (el) {
+        if (el.tagName === 'DETAILS') el.open = true;
         el.scrollIntoView({
           behavior: 'smooth',
           block: 'start'
@@ -19033,6 +19161,7 @@ function HomePage({
       marginBottom: 40
     }
   }, React.createElement("details", {
+    id: "ch-taiou",
     style: {
       background: 'var(--bg-elev)',
       border: '1px solid var(--border)',
