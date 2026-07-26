@@ -3286,6 +3286,23 @@ const SuiryokuPage = ({ data, onNav }) => (
         note="位置水頭＋圧力水頭＋速度水頭の和が一定（損失を無視した場合）。3項とも単位は[m]で、この和が全水頭。損失があるぶん下流側で全水頭が減り、その減少分が損失水頭 hl。R03問2型。" />
       <FormulaCard num="07" name="単位体積当たりのエネルギー" eq="w_k = \dfrac{1}{2}\rho v^2\,[\text{J/m}^3]"
         note="運動エネルギー。位置エネルギーは w_p = ρgh [J/m³]。ρ=1000 kg/m³ を入れて計算する。体積[m³]を掛ければ [J] になる。R07下問2型。" />
+      <FormulaCard num="08" name="総水量からの発電電力量（÷3600 が要る型）" eq="W = \dfrac{9.8\,V H \eta}{3600}\,[\text{kWh}]"
+        note="V=水の総量[m³]（年間流出量など）。9.8VHη の単位は [kJ]＝[kW·s] なので、3600[s/h] で割って [kWh] にする。答えが [GW·h] ならさらに 10⁶ で割る。R06下 法規問11（流込式水力発電所の年間可能発電電力量）型。" />
+
+      <Box kind="warn" label="単位換算の急所 — 3600 と 8760 を取り違えない">
+        <p><strong>3600 の正体は「1時間 = 3600秒」</strong>。<Eq tex="\text{kJ}" inline /> は正体が <Eq tex="\text{kW}\cdot\text{s}" inline />（1秒あたりの仕事）なので、電力量の単位 <Eq tex="\text{kWh}" inline /> にするには秒を時間に直す必要がある。</p>
+        <p><Eq tex="9.8\,[\text{kN/m}^3] \times V\,[\text{m}^3] \times H\,[\text{m}] = [\text{kN}\cdot\text{m}] = [\text{kJ}] = [\text{kW}\cdot\text{s}] \;\xrightarrow{\;\div 3600\;}\; [\text{kW}\cdot\text{h}]" display /></p>
+        <p><strong>掛けるか割るかで迷ったら</strong>：<Eq tex="1\,\text{kWh} = 3600\,\text{kJ}" inline /> なので、同じエネルギーを kJ で数えると kWh の 3600倍の数字になる。<strong>大きい数字を小さい数字に直すから割る</strong>。火力の <Eq tex="\eta = 3600/H_r" inline /> に出てくる 3600 も全く同じ定数。</p>
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>手元にある量</th><th>通るルート</th><th>最後の換算</th></tr></thead>
+          <tbody>
+            <tr><td><strong>水の総量 V [m³]</strong></td><td>先にエネルギー [kJ] を出す</td><td><strong>÷3600</strong>（式08）</td></tr>
+            <tr><td><strong>流量 Q [m³/s]</strong></td><td>先に出力 P [kW] を出す</td><td><strong>×時間 T [h]</strong>（式04・3600は出ない）</td></tr>
+          </tbody>
+        </table></div>
+        <p><strong>判別法</strong>：流量 Q は最初から「毎秒」＝時間の情報を含むので P[kW] になり、あとは時間を掛けるだけ。総量 V は時間の情報を持たないので、秒→時間の換算（÷3600）が要る。<strong>両方やると桁が3600倍ずれる</strong>。</p>
+        <p><strong>[GW·h] で問われたら</strong>：kWh を出してから <Eq tex="10^6" inline /> で割る（<Eq tex="1\,\text{GWh} = 10^3\,\text{MWh} = 10^6\,\text{kWh}" inline />）。式08と合わせると <Eq tex="W\,[\text{GWh}] = 9.8\,V H \eta / (3.6\times10^9)" inline />。</p>
+      </Box>
 
       <h2 id="kaiho"><span className="h-num">4.</span>解法パターン（例題つき）</h2>
       <Box kind="example" label="① 出力: Q=50・H=100・η=0.85">
@@ -3308,6 +3325,13 @@ const SuiryokuPage = ({ data, onNav }) => (
         <p><Eq tex="w_k = \tfrac{1}{2}\rho v^2 = 0.5 \times 1000 \times 20^2 = 200{,}000\,\text{J/m}^3 = 200\,\text{kJ/m}^3" display /></p>
         <p>速度水頭に直すと <Eq tex="\dfrac{v^2}{2g} = \dfrac{400}{2 \times 9.8} \approx 20.4\,\text{m}" />。<strong>「流速20 m/s ≒ 落差20 m 相当」</strong>と押さえると、ベルヌーイの3項が同じ土俵（[m]）に乗っていることが実感できる（R07下問2・R03問2型）。</p>
       </Box>
+      <Box kind="example" label="⑥ 総水量から年間可能発電電力量[GW·h]（÷3600 の型・R06下 法規問11）">
+        <p>流域面積 150 km²・年降水量 1,800 mm・流出係数 0.7・有効落差 100 m・総合効率 0.85 とすると</p>
+        <p><Eq tex="V = 150\times10^6 \times 1.8 \times 0.7 = 1.89\times10^8\,\text{m}^3" display /></p>
+        <p><Eq tex="9.8\,V H \eta = 9.8 \times 1.89\times10^8 \times 100 \times 0.85 = 1.574\times10^{11}\,\text{kJ}" display /></p>
+        <p><Eq tex="W = \dfrac{1.574\times10^{11}}{3600} = 4.37\times10^7\,\text{kWh} = \dfrac{4.37\times10^7}{10^6} \approx 43.7\,\text{GWh}" display /></p>
+        <p><strong>÷3600（秒→時間）と ÷10⁶（kWh→GWh）の二段</strong>で単位が着地する。数値は型を確かめるための設定例で、設問の実数値ではない。</p>
+      </Box>
 
       <Box kind="tip" label="水撃作用・キャビテーション（R02 問1 型の論説急所）">
         <ul>
@@ -3327,6 +3351,9 @@ const SuiryokuPage = ({ data, onNav }) => (
           <li><strong>比速度の指数を H² や H^(3/2) と誤記</strong> — 分母は <Eq tex="H^{5/4}" inline />。<Eq tex="H^{5/4}=H \times \sqrt[4]{H}" inline /> と分解すれば電卓で出せる。分子の P は <strong>1台（1ランナー）当たりの出力[kW]</strong>。</li>
           <li><strong>ベルヌーイの3項の単位を混ぜる</strong> — 水頭形なら位置・圧力・速度の3項ともすべて[m]。<Eq tex="p" inline />[Pa] や <Eq tex="v^2/2" inline />[J/kg] のまま足さない。</li>
           <li><strong>運動エネルギーに ρ を掛け忘れる</strong> — 「単位<strong>体積</strong>当たり」は <Eq tex="\rho v^2/2" inline />[J/m³]、「単位<strong>質量</strong>当たり」は <Eq tex="v^2/2" inline />[J/kg]。設問がどちらを訊いているかを先に確認する。</li>
+          <li><strong>3600 と 8760 を両方掛ける／どちらも忘れる</strong> — <strong>総水量 V[m³] から入ったら ÷3600 だけ</strong>（式08）、<strong>流量 Q[m³/s] から入ったら ×時間[h] だけ</strong>（式04）。両方やると桁が3600倍ずれる。手元が「総量」か「毎秒」かで一意に決まる。</li>
+          <li><strong>kJ → kWh で 3600 を掛けてしまう</strong> — <Eq tex="1\,\text{kWh}=3600\,\text{kJ}" inline /> なので kJ の数字のほうが大きい。<strong>割る</strong>のが正しい向き。</li>
+          <li><strong>[GW·h] 指定で 10⁶ を忘れる</strong> — kWh を出して終わりにしない。<Eq tex="1\,\text{GWh}=10^6\,\text{kWh}" inline />。単位の指定は必ず最後に読み直す。</li>
         </ul>
       </Box>
 
@@ -3343,6 +3370,8 @@ const SuiryokuPage = ({ data, onNav }) => (
           <tr><td>吸出し管はペルトン水車にも設けられる</td><td><strong>誤</strong></td><td>反動水車のみ。ペルトンは大気中で放水するため回収する圧力がない</td></tr>
           <tr><td>比速度が大きい水車ほど高落差に適する</td><td><strong>誤</strong></td><td>逆。Ns 大＝低落差・大流量（カプラン側）</td></tr>
           <tr><td>損失を無視すれば全水頭は水路のどこでも等しい</td><td><strong>正</strong></td><td>ベルヌーイの定理。実際は損失分だけ下流で減り、それが損失水頭</td></tr>
+          <tr><td>9.8VHη [kJ] を kWh にするには 3600 を掛ける</td><td><strong>誤</strong></td><td>割る。1 kWh = 3600 kJ で kJ の数字のほうが3600倍大きい</td></tr>
+          <tr><td>P=9.8QHη で出した kW に、さらに 3600 を掛けて年間電力量を出す</td><td><strong>誤</strong></td><td>Q から入った時点で単位は kW。掛けるのは運転時間[h]（年間なら8760）</td></tr>
         </tbody>
       </table></div>
 
@@ -3352,6 +3381,7 @@ const SuiryokuPage = ({ data, onNav }) => (
         <thead><tr><th>論点</th><th>どちらの科目で問われるか</th><th>根拠</th></tr></thead>
         <tbody>
           <tr><td>理論出力 P=9.8QHη・有効落差・比速度・揚水効率</td><td><strong>電力</strong>（このページ）</td><td>—</td></tr>
+          <tr><td>年間可能発電電力量の計算（総水量 → kJ → kWh → GW·h）</td><td><strong>法規のB問題でも出る</strong>（R06下 問11・流込式）</td><td>—（計算問題）</td></tr>
           <tr><td>水車・発電機の構造、水撃作用、キャビテーション</td><td><strong>電力</strong>（このページ）</td><td>—</td></tr>
           <tr><td>常時監視をしない発電所（随時巡回・随時監視制御・遠隔常時監視制御）の出力要件</td><td><strong>法規</strong></td><td>解釈第47条の2</td></tr>
           <tr><td>発電機の自動遮断（水車の制御電源電圧低下・圧油装置の油圧低下など）</td><td><strong>法規</strong></td><td>解釈第42条</td></tr>
@@ -3361,6 +3391,7 @@ const SuiryokuPage = ({ data, onNav }) => (
       </table></div>
       <Box kind="tip" label="使い分けの目安">
         <p>設問に <strong>[kW] や [m³/s] の「境界値」と「〜できる／できない」</strong> が出てきたら法規側の知識。<strong>数値を式に代入して答えを出す</strong>なら電力側の知識。<a href="denken-hoki-wiki.html">📗 法規Wiki</a> の「常時監視をしない発電所」「発電機の保護」「小出力発電設備」の各項で確認する。</p>
+        <p><strong>ただし法規のB問題（問11〜13）は例外</strong>：法令知識ではなく<strong>このページの計算がそのまま出る</strong>ことがある（R06下 問11＝流込式の年間可能発電電力量）。「法規だから条文暗記」と構えず、<strong>水力の計算は法規のB問題対策も兼ねる</strong>と考える。</p>
       </Box>
 
       <h2 id="kakomon"><span className="h-num">8.</span>出題実績（約37問・うち R01〜R07 は全20問）</h2>
