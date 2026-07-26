@@ -2861,6 +2861,21 @@ const KaryokuPage = ({ data, onNav }) => (
         note="Pgen=発電電力[kW]、Hl=燃料の低発熱量[kJ/kg]。総入熱 Q=P·Hr を Hl で割る。" />
       <FormulaCard num="03" name="送電端効率（所内率を引く）" eq="\eta_{\text{send}} = \eta_{\text{gen}} \times (1 - L_{\text{aux}})"
         note="Laux=所内率=所内消費/発電電力（汽力3〜7%）。送電端は発電端より必ず低い。" />
+      <FormulaCard num="04" name="発熱量から直接（Hr が与えられない型）" eq="B = \dfrac{3600\,W}{H_l\,\eta}\,[\text{kg}]"
+        note="W=発電電力量[kWh]、Hl=低発熱量[kJ/kg]、η=熱効率。3600W が「電気として取り出した熱量[kJ]」。それを η で割れば投入熱量、Hl で割れば燃料質量。設問に Hr が無く『発熱量と効率』だけ与えられたらこちら（R05下問15の重油使用量型）。" />
+
+      <Box kind="warn" label="単位換算の急所 — 3600 は「掛ける」側（水力と向きが逆）">
+        <p>火力で 3600 が出るのは <strong>電力量[kWh] を熱量[kJ] に戻すとき</strong>。<Eq tex="1\,\text{kWh}=3600\,\text{kJ}" inline /> なので <strong>kWh → kJ は掛ける</strong>。水力の式08（<Eq tex="9.8VH\eta/3600" inline />）は kJ → kWh で割る側なので、<strong>同じ 3600 でも向きが逆</strong>になる。</p>
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>変換</th><th>3600 の向き</th><th>出てくる場面</th></tr></thead>
+          <tbody>
+            <tr><td>kWh → kJ（電気を熱に戻す）</td><td><strong>×3600</strong></td><td>火力の熱効率・燃料消費量（式04）</td></tr>
+            <tr><td>kJ → kWh（熱を電気の単位に直す）</td><td><strong>÷3600</strong></td><td>水力の総水量ルート（1.1 の式08）</td></tr>
+          </tbody>
+        </table></div>
+        <p><strong>迷ったら数字の大小で判定</strong>：kJ で数えたほうが数字は 3600倍大きい。<strong>kJ 側へ行くなら掛ける、kJ 側から来るなら割る</strong>。<Eq tex="\eta = 3600/H_r" inline /> も、分子の 3600 は「1 kWh 分の熱量[kJ]」で、分母 Hr[kJ/kWh] と単位が揃うから割り算が成立している。</p>
+        <p><strong>燃料量の単位</strong>：Hl が [kJ/kg] なら答えは [kg]、[MJ/kg] なら 10³ を合わせる。<strong>[t] や [kL] で問われたら最後に換算</strong>（重油は密度も要る）。時間あたりを問われているのか総量かも読み分ける（式02は [kg/h]、式04は [kg]）。</p>
+      </Box>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>熱消費率 Hr [kJ/kWh]</th><th>10,000</th><th>9,000</th><th>8,000</th><th>7,200</th><th>6,000</th></tr></thead>
         <tbody><tr><td>熱効率 η</td><td>36.0%</td><td>40.0%</td><td>45.0%</td><td>50.0%</td><td>60.0%</td></tr></tbody>
@@ -2910,6 +2925,8 @@ const KaryokuPage = ({ data, onNav }) => (
           <li><strong>発電端と送電端を同一視</strong> — 所内消費の分、送電端が必ず低い。問題に「所内率」が出たら送電端を問われている。</li>
           <li><strong>熱消費率と熱効率の逆数を誤る</strong> — η=3600/Hr。Hr が小さいほど高効率。「Hrが大きいほど高効率」は誤。</li>
           <li><strong>ガスタービンは起動が遅いと誤認</strong> — 数分で起動し緊急・ピーク向き。起動が遅いのは汽力（蒸気昇温に数時間）。</li>
+          <li><strong>3600 の向きを逆にする</strong> — 火力は <strong>kWh → kJ で掛ける</strong>（式04の分子 3600W）。水力の総水量ルート（1.1 式08）は kJ → kWh で割る側。同じ定数でも向きが逆。</li>
+          <li><strong>燃料量の「毎時」と「総量」を混同</strong> — 式02は <Eq tex="[\text{kg/h}]" inline />、式04は <Eq tex="[\text{kg}]" inline />。設問が「1日あたり」「年間」なら時間を掛ける。[t]・[kL] 指定なら最後に換算する。</li>
         </ul>
       </Box>
 
@@ -3908,6 +3925,19 @@ const ShinEnergyPage = ({ data, onNav }) => (
       <Box kind="warn" label="風速の3乗に比例（2乗ではない）">
         <p>風速が2倍 → 出力は <Eq tex="2^3 = 8" /> 倍。「2乗に比例」が典型誤答。「運動Eは速度の2乗」は正しいが、同時に流入空気量（質量流量）も速度に比例するので合わせて3乗。発電機は誘導／同期／可変速(DFIG)。</p>
       </Box>
+      <Box kind="warn" label="単位換算の急所 — 答えは [W]（kW ではない）／直径と半径">
+        <p><strong>① 出てくるのは [W]</strong>：<Eq tex="\rho" inline />[kg/m³]・<Eq tex="A" inline />[m²]・<Eq tex="v" inline />[m/s] を素直に入れると <Eq tex="\tfrac{1}{2}\rho A v^3" inline /> は <strong>ワット</strong>で出る。選択肢が [kW] なら <strong>1000 で割る</strong>、[MW] なら 10⁶ で割る。水力の <Eq tex="P=9.8QH\eta" inline /> が最初から [kW] なのと違うので、続けて解くと取り違えやすい。</p>
+        <p><strong>② 直径か半径か</strong>：<Eq tex="A = \pi r^2" inline /> の <Eq tex="r" inline /> は<strong>半径</strong>。設問は「ロータ直径 D」で与えることが多く、<Eq tex="D" inline /> をそのまま入れると <strong>面積が4倍＝出力も4倍</strong>ずれる。<Eq tex="A = \pi (D/2)^2 = \pi D^2/4" inline /> を使う。</p>
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>確認項目</th><th>正</th><th>やりがちな誤り</th></tr></thead>
+          <tbody>
+            <tr><td>式が返す単位</td><td>[W]</td><td>[kW] と思い込み 10³ ずれ</td></tr>
+            <tr><td>受風面積</td><td><Eq tex="\pi (D/2)^2" inline /></td><td><Eq tex="\pi D^2" inline /> で 4倍</td></tr>
+            <tr><td>年間発電量</td><td><Eq tex="\times 8760" inline />（式01）</td><td>3600 を掛ける（風力に秒→時間の換算は不要）</td></tr>
+          </tbody>
+        </table></div>
+        <p><strong>3600 は出てこない</strong>：<Eq tex="\tfrac{1}{2}\rho A v^3" inline /> は最初から「毎秒」の量＝仕事率なので、年間量は <strong>運転時間[h] を掛けるだけ</strong>（水力の総水量ルートのような秒→時間の換算は不要）。</p>
+      </Box>
 
       <h2 id="nenryo"><span className="h-num">5.</span>燃料電池（カルノー非依存）</h2>
       <Box kind="example" label="カルノー効率の制約を受けない理由">
@@ -3924,13 +3954,15 @@ const ShinEnergyPage = ({ data, onNav }) => (
       </table></div>
 
       <h2 id="trap"><span className="h-num">6.</span>引っかけ・誤答ポイント</h2>
-      <Box kind="warn" label="頻出5トラップ">
+      <Box kind="warn" label="頻出トラップ">
         <ul>
           <li><strong>太陽電池は高温で効率向上</strong> → 誤。温度上昇で Voc 低下＝効率<strong>低下</strong>。</li>
           <li><strong>風力は風速の2乗に比例</strong> → 誤。<strong>3乗</strong>（P=½ρAv³）。2倍で8倍。</li>
           <li><strong>燃料電池はカルノー効率以下</strong> → 誤。熱機関を経由せず<strong>カルノー非依存</strong>。</li>
           <li><strong>地熱の設備利用率は太陽光より低い</strong> → 誤。地熱60〜80%で<strong>最も高い</strong>。</li>
           <li><strong>バイオマスはCO₂を排出しない</strong> → 誤。排出するが植物吸収分の再放出で<strong>カーボンニュートラル</strong>（差引ゼロ）。</li>
+          <li><strong>風力の答えを kW と思い込む</strong> → <Eq tex="\tfrac{1}{2}\rho A v^3" inline /> が返すのは <strong>[W]</strong>。選択肢が [kW] なら 1000 で割る。水力の <Eq tex="P=9.8QH\eta" inline /> が最初から [kW] なので続けて解くと引きずられる。</li>
+          <li><strong>ロータ直径をそのまま半径に使う</strong> → <Eq tex="A=\pi r^2" inline /> の r は半径。直径 D なら <Eq tex="A=\pi D^2/4" inline />。取り違えると<strong>出力が4倍</strong>ずれる。</li>
         </ul>
       </Box>
 
