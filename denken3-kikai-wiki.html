@@ -1640,8 +1640,8 @@ const RotatingFieldDiagram = () => (
       const rad = (deg - 90) * Math.PI / 180;
       const x = 200 + Math.cos(rad) * 100;
       const y = 130 + Math.sin(rad) * 100;
-      const lx = 200 + Math.cos(rad) * 118;
-      const ly = 130 + Math.sin(rad) * 118;
+      const lx = 200 + Math.cos(rad) * 123;
+      const ly = 130 + Math.sin(rad) * 123;
       const labels = ["U", "V", "W"];
       return (
         <g key={i}>
@@ -1680,15 +1680,13 @@ const EquivalentCircuit = () => (
     <text x="154" y="84" textAnchor="middle" className="diagram-text-mono">jx₁</text>
     <line x1="170" y1="100" x2="210" y2="100" className="diagram-stroke" />
 
-    {/* Magnetizing branch */}
+    {/* Magnetizing branch — r₀ と jx₀ を上下ノード間に並列接続 */}
     <line x1="210" y1="100" x2="210" y2="148" className="diagram-stroke" />
     <rect x="194" y="148" width="32" height="16" className="diagram-stroke diagram-fill-bg" />
-    <text x="184" y="160" textAnchor="end" className="diagram-text-mono">r₀</text>
-    <path d="M236 100 q4 -8 8 0 q4 8 8 0 q4 -8 8 0 q4 8 8 0" className="diagram-stroke" transform="translate(0 56) rotate(0)" />
-    <line x1="236" y1="148" x2="236" y2="148" />
-    <line x1="236" y1="100" x2="236" y2="148" className="diagram-stroke" />
-    <path d="M236 148 q4 8 8 0 q4 -8 8 0 q4 8 8 0 q4 -8 8 0" className="diagram-stroke" />
-    <text x="270" y="160" className="diagram-text-mono">jx₀</text>
+    <text x="188" y="160" textAnchor="end" className="diagram-text-mono">r₀</text>
+    <line x1="250" y1="100" x2="250" y2="140" className="diagram-stroke" />
+    <path d="M 250 140 q 9 5 0 10 q 9 5 0 10 q 9 5 0 10" className="diagram-stroke" />
+    <text x="266" y="160" className="diagram-text-mono">jx₀</text>
 
     <line x1="210" y1="100" x2="280" y2="100" className="diagram-stroke" />
 
@@ -1706,9 +1704,7 @@ const EquivalentCircuit = () => (
     <line x1="40" y1="114" x2="40" y2="170" className="diagram-stroke" />
     <line x1="40" y1="170" x2="430" y2="170" className="diagram-stroke" />
     <line x1="430" y1="100" x2="430" y2="170" className="diagram-stroke" />
-    <line x1="210" y1="164" x2="236" y2="164" className="diagram-stroke" />
     <line x1="210" y1="164" x2="210" y2="170" className="diagram-stroke" />
-    <line x1="236" y1="164" x2="236" y2="170" className="diagram-stroke" />
   </DiagramFrame>
 );
 
@@ -1729,6 +1725,7 @@ const TorqueSlipCurve = () => (
     <text x="390" y="218" textAnchor="middle" className="diagram-text-mono">0</text>
     <text x="50"  y="232" textAnchor="middle" className="diagram-text" fontSize="9">始動</text>
     <text x="390" y="232" textAnchor="middle" className="diagram-text" fontSize="9">同期速度</text>
+    <text x="220" y="232" textAnchor="middle" className="diagram-text" fontSize="9">← s 大（低速）　　s 小（高速）→</text>
 
     {/* Curve: typical induction motor torque-slip */}
     <path d="M 50 160 C 90 160, 130 80, 170 70 C 210 65, 270 110, 320 150 C 360 180, 380 195, 390 200"
@@ -1750,32 +1747,51 @@ const TorqueSlipCurve = () => (
 
 /* DC machine cross-section */
 const DCMachineCross = () => (
-  <DiagramFrame caption="図1.1.1  直流機の構造（界磁・電機子・整流子・ブラシ）" viewBox="0 0 400 240">
-    <circle cx="200" cy="120" r="90" className="diagram-stroke" />
-    <circle cx="200" cy="120" r="48" className="diagram-stroke" />
-    {/* Field poles */}
-    <path d="M 200 30 L 170 60 L 230 60 Z" className="diagram-stroke diagram-fill-bg" />
-    <path d="M 200 210 L 170 180 L 230 180 Z" className="diagram-stroke diagram-fill-bg" />
-    <text x="200" y="50" textAnchor="middle" className="diagram-text" fontSize="11" fontWeight="700">N</text>
-    <text x="200" y="200" textAnchor="middle" className="diagram-text" fontSize="11" fontWeight="700">S</text>
-    {/* Commutator + brushes */}
-    <line x1="290" y1="120" x2="320" y2="120" className="diagram-stroke" />
-    <rect x="320" y="112" width="14" height="16" className="diagram-stroke diagram-fill-bg" />
-    <line x1="80" y1="120" x2="110" y2="120" className="diagram-stroke" />
-    <rect x="66" y="112" width="14" height="16" className="diagram-stroke diagram-fill-bg" />
-    <text x="338" y="116" className="diagram-text-mono">+</text>
-    <text x="60" y="116" textAnchor="end" className="diagram-text-mono">−</text>
-    {/* Armature winding marks */}
-    {[0, 60, 120, 180, 240, 300].map((d, i) => {
+  <DiagramFrame caption="図1.1.1  直流機の構造（左:断面 界磁と電機子／右:整流子とブラシ）" viewBox="0 0 440 232">
+    {/* ===== 左：軸に垂直な断面 ===== */}
+    <circle cx="130" cy="120" r="78" className="diagram-stroke" />
+    <circle cx="130" cy="120" r="42" className="diagram-stroke" />
+    {/* 界磁極（固定子側・回転子に対向） */}
+    <rect x="112" y="44" width="36" height="32" className="diagram-stroke diagram-fill-bg" />
+    <rect x="112" y="164" width="36" height="32" className="diagram-stroke diagram-fill-bg" />
+    <text x="130" y="65" textAnchor="middle" className="diagram-text" fontSize="12" fontWeight="700">N</text>
+    <text x="130" y="185" textAnchor="middle" className="diagram-text" fontSize="12" fontWeight="700">S</text>
+    {/* 界磁巻線（磁極の両脇） */}
+    {[[106, 60], [154, 60], [106, 180], [154, 180]].map(([x, y], i) => (
+      <circle key={"fw" + i} cx={x} cy={y} r="3.5" className="diagram-accent" fill="var(--accent)" />
+    ))}
+    {/* 電機子巻線（回転子スロット内＝半径42の内側） */}
+    {[0, 45, 90, 135, 180, 225, 270, 315].map((d, i) => {
       const r = (d - 90) * Math.PI / 180;
-      const x = 200 + Math.cos(r) * 70;
-      const y = 120 + Math.sin(r) * 70;
-      return <circle key={i} cx={x} cy={y} r="4" className="diagram-stroke diagram-fill-bg" />;
+      const x = 130 + Math.cos(r) * 31;
+      const y = 120 + Math.sin(r) * 31;
+      return <circle key={"aw" + i} cx={x} cy={y} r="4" className="diagram-stroke diagram-fill-bg" />;
     })}
-    {/* Labels */}
-    <text x="200" y="120" textAnchor="middle" className="diagram-text" fontSize="11">電機子</text>
-    <text x="20"  y="120" className="diagram-text-mono">ブラシ</text>
-    <text x="345" y="135" className="diagram-text-mono">整流子</text>
+    <text x="130" y="124" textAnchor="middle" className="diagram-text" fontSize="11">電機子</text>
+    {/* 引き出しラベル */}
+    <text x="76" y="62" textAnchor="end" className="diagram-text" fontSize="10">界磁極</text>
+    <line x1="109" y1="141" x2="72" y2="175" className="diagram-stroke-soft" strokeDasharray="3 3" />
+    <text x="68" y="179" textAnchor="end" className="diagram-text" fontSize="9.5">電機子巻線</text>
+    <text x="130" y="214" textAnchor="middle" className="diagram-text" fontSize="10">固定子（ヨーク）と回転子</text>
+
+    {/* ===== 右：整流子とブラシ（軸方向の別位置） ===== */}
+    <text x="330" y="40" textAnchor="middle" className="diagram-text" fontSize="9.5">整流子とブラシ（軸方向の別位置）</text>
+    <circle cx="330" cy="115" r="30" className="diagram-stroke diagram-fill-bg" />
+    <line x1="330" y1="85" x2="330" y2="145" className="diagram-stroke" />
+    <circle cx="330" cy="115" r="5" className="diagram-fill" />
+    <text x="330" y="76" textAnchor="middle" className="diagram-text" fontSize="10">整流子（分割環）</text>
+    {/* ブラシ */}
+    <rect x="284" y="105" width="16" height="20" className="diagram-accent diagram-fill-bg" stroke="var(--accent)" strokeWidth="1.6" />
+    <rect x="360" y="105" width="16" height="20" className="diagram-accent diagram-fill-bg" stroke="var(--accent)" strokeWidth="1.6" />
+    <text x="292" y="141" textAnchor="middle" className="diagram-text" fontSize="9.5">ブラシ</text>
+    <text x="368" y="141" textAnchor="middle" className="diagram-text" fontSize="9.5">ブラシ</text>
+    {/* 外部端子 */}
+    <line x1="284" y1="115" x2="258" y2="115" className="diagram-stroke" />
+    <line x1="376" y1="115" x2="402" y2="115" className="diagram-stroke" />
+    <text x="252" y="119" textAnchor="end" className="diagram-text-mono">−</text>
+    <text x="408" y="119" className="diagram-text-mono">+</text>
+    <text x="330" y="166" textAnchor="middle" className="diagram-text" fontSize="9">回転につれ接触する分割片が入れ替わり</text>
+    <text x="330" y="188" textAnchor="middle" className="diagram-text" fontSize="9">電機子電流の向きが反転する</text>
   </DiagramFrame>
 );
 
@@ -1888,7 +1904,7 @@ const TransformerPhasorLeading = () => (
 
 /* PWM / chopper waveform */
 const PWMWaveform = () => (
-  <DiagramFrame caption="図2.2.1  降圧チョッパの動作とデューティ比 D" viewBox="0 0 420 240">
+  <DiagramFrame caption="図2.2.2  降圧チョッパの動作とデューティ比 D" viewBox="0 0 420 240">
     <line x1="30" y1="200" x2="400" y2="200" className="diagram-stroke" />
     <line x1="30" y1="200" x2="30"  y2="40"  className="diagram-stroke" />
     <text x="406" y="204" className="diagram-text-mono">t</text>
@@ -1924,7 +1940,7 @@ const PWMWaveform = () => (
 
 /* Bode-style block diagram */
 const BlockDiagram = () => (
-  <DiagramFrame caption="図3.1.1  単位フィードバック制御系のブロック線図" viewBox="0 0 420 160">
+  <DiagramFrame caption="図3.1.2  単位フィードバック制御系のブロック線図" viewBox="0 0 420 160">
     <line x1="20"  y1="80" x2="60"  y2="80" className="diagram-stroke" />
     <polygon points="60,80 54,76 54,84" className="diagram-fill" />
     <text x="20" y="72" className="diagram-text-mono">R(s)</text>
@@ -2346,6 +2362,78 @@ const InductionMachineLayers = () => (
   </>
 );
 
+/* Y-Δ 始動：なぜ電流もトルクも 1/3 になるか（1/√3 との区別） */
+const YDeltaStartFig = () => (
+  <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+    <svg viewBox="0 0 480 322" role="img" aria-label="Y結線とデルタ結線の比較図。同じ線間電圧に対して、Y結線では相電圧が1割るルート3になり、相電流も1割るルート3になる。Y結線では線電流イコール相電流だがデルタ結線では線電流が相電流のルート3倍なので、線電流の比は3分の1になる。トルクは相電圧の2乗に比例するのでこちらも3分の1になる" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+      <text x="110" y="30" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">Y 結線（始動時）</text>
+      <text x="300" y="30" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">Δ 結線（運転時＝直入れ相当）</text>
+
+      {/* ===== Y 結線 ===== */}
+      <line x1="110" y1="105" x2="110" y2="53" stroke="var(--ink)" strokeWidth="1.6" />
+      <line x1="110" y1="105" x2="65" y2="131" stroke="var(--ink)" strokeWidth="1.6" />
+      <line x1="110" y1="105" x2="155" y2="131" stroke="var(--ink)" strokeWidth="1.6" />
+      {[[110, 79], [87, 118], [133, 118]].map(([cx, cy], i) => (
+        <circle key={"yc" + i} cx={cx} cy={cy} r="7" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1.6" />
+      ))}
+      <circle cx="110" cy="105" r="3.5" fill="var(--ink)" />
+      <text x="120" y="103" fontSize="9" fill="var(--ink-mute)">N</text>
+      {[[110, 53, "U", 110, 45], [65, 131, "V", 55, 143], [155, 131, "W", 165, 143]].map(([x, y, lb, tx, ty], i) => (
+        <g key={"yt" + i}>
+          <circle cx={x} cy={y} r="3.5" fill="var(--ink)" />
+          <text x={tx} y={ty} textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">{lb}</text>
+        </g>
+      ))}
+      <text x="110" y="162" textAnchor="middle" fontSize="10" fill="var(--accent-ink)">相電圧 = V_L / √3　（線電流 = 相電流）</text>
+
+      {/* ===== Δ 結線 ===== */}
+      <line x1="300" y1="53" x2="255" y2="131" stroke="var(--ink)" strokeWidth="1.6" />
+      <line x1="255" y1="131" x2="345" y2="131" stroke="var(--ink)" strokeWidth="1.6" />
+      <line x1="345" y1="131" x2="300" y2="53" stroke="var(--ink)" strokeWidth="1.6" />
+      {[[277, 92], [300, 131], [323, 92]].map(([cx, cy], i) => (
+        <circle key={"dc" + i} cx={cx} cy={cy} r="7" fill="var(--bg)" stroke="var(--ink-mute)" strokeWidth="1.6" />
+      ))}
+      {[[300, 53, "U", 300, 45], [255, 131, "V", 245, 143], [345, 131, "W", 355, 143]].map(([x, y, lb, tx, ty], i) => (
+        <g key={"dt" + i}>
+          <circle cx={x} cy={y} r="3.5" fill="var(--ink)" />
+          <text x={tx} y={ty} textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">{lb}</text>
+        </g>
+      ))}
+      <text x="300" y="162" textAnchor="middle" fontSize="10" fill="var(--ink-soft)">相電圧 = V_L　（線電流 = √3 × 相電流）</text>
+
+      <text x="240" y="180" textAnchor="middle" fontSize="9.5" fill="var(--ink-mute)">電源の線間電圧 V_L は共通。Δ 運転時の相電流を I_p とする</text>
+
+      {/* ===== 導出表 ===== */}
+      <rect x="40" y="188" width="400" height="108" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+      <text x="80" y="205" fontSize="10" fontWeight="700" fill="var(--ink-soft)">項目</text>
+      <text x="205" y="205" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--accent-ink)">Y（始動）</text>
+      <text x="310" y="205" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--ink-soft)">Δ（運転）</text>
+      <text x="400" y="205" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--ink-soft)">Y / Δ 比</text>
+      <line x1="50" y1="211" x2="430" y2="211" stroke="var(--rule)" strokeWidth="1" />
+      <text x="80" y="226" fontSize="10.5" fill="var(--ink)">相電圧</text>
+      <text x="205" y="226" textAnchor="middle" fontSize="10.5" fill="var(--ink)">V_L / √3</text>
+      <text x="310" y="226" textAnchor="middle" fontSize="10.5" fill="var(--ink)">V_L</text>
+      <text x="400" y="226" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">1/√3</text>
+      <text x="80" y="248" fontSize="10.5" fill="var(--ink)">相電流</text>
+      <text x="205" y="248" textAnchor="middle" fontSize="10.5" fill="var(--ink)">I_p / √3</text>
+      <text x="310" y="248" textAnchor="middle" fontSize="10.5" fill="var(--ink)">I_p</text>
+      <text x="400" y="248" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">1/√3</text>
+      <text x="80" y="270" fontSize="10.5" fontWeight="700" fill="var(--danger)">線電流</text>
+      <text x="205" y="270" textAnchor="middle" fontSize="10.5" fill="var(--ink)">I_p / √3</text>
+      <text x="310" y="270" textAnchor="middle" fontSize="10.5" fill="var(--ink)">√3 · I_p</text>
+      <text x="400" y="270" textAnchor="middle" fontSize="11.5" fontWeight="700" fill="var(--danger)">1/3</text>
+      <text x="80" y="290" fontSize="9.5" fontWeight="700" fill="var(--danger)">トルク</text>
+      <text x="205" y="290" textAnchor="middle" fontSize="9.5" fill="var(--ink-soft)">∝ (V_L/√3)²</text>
+      <text x="310" y="290" textAnchor="middle" fontSize="9.5" fill="var(--ink-soft)">∝ V_L²</text>
+      <text x="400" y="290" textAnchor="middle" fontSize="11.5" fontWeight="700" fill="var(--danger)">1/3</text>
+      <text x="240" y="312" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--danger)">始動電流もトルクも 1/3（1/√3 になるのは相電圧と相電流）</text>
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      図1.2.4　Y-Δ 始動で 1/3 になる理由。相電圧・相電流は 1/√3 だが、Δ では線電流が相電流の √3 倍あるため線電流の比は 1/3。トルクは相電圧の2乗に比例するので同じく 1/3。「1/√3」と答える誤りは、相電流と線電流を取り違えたときに起きる。
+    </figcaption>
+  </figure>
+);
+
 const InductionMachinePage = ({ data, onNav }) => (
   <>
     <Crumbs items={[
@@ -2453,6 +2541,8 @@ const InductionMachinePage = ({ data, onNav }) => (
           </tbody>
         </table>
       </div>
+
+      <YDeltaStartFig />
 
       <Box kind="mistake" label="頻出の誤答">
         <p><strong>Y-Δ 始動の電流とトルク</strong> はともに <Eq tex="1/3" /> になると覚える。「電流は <Eq tex="1/\sqrt{3}" /> 」と書いて間違えるパターンが多い。これは <strong>線電流</strong> と <strong>相電流</strong> の混同が原因。<br/>
@@ -2692,9 +2782,109 @@ const DCMachineLayers = () => (
       </ol>
     </div>
     <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "0 0 4px" }}>
-      ▶ <strong>マクロ（解く）</strong>の図解は、この下の「図1.1.1 直流電動機の速度-トルク特性（励磁方式の違い）」を参照。
+      ▶ <strong>マクロ（解く）</strong>の図解は、この下の「図1.1.2 直流電動機の速度-トルク特性（励磁方式の違い）」を参照。
     </p>
   </>
+);
+
+/* 電機子反作用：中性軸の移動と、補極・補償巻線の配置 */
+const ArmatureReactionFig = () => (
+  <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+    <svg viewBox="0 0 480 338" role="img" aria-label="直流機の電機子反作用の端面図。無負荷では界磁磁束が左右対称で電気的中性軸は幾何学的中性軸と一致する。負荷時は電機子電流が作る電機子磁束が直交方向に加わり、合成磁束が傾いて電気的中性軸が移動する。対策として補極を幾何学的中性軸上に、補償巻線を磁極片の溝に設ける" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+      <defs>
+        <marker id="kar-field" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+          <path d="M0,1 L8,4.5 L0,8 z" fill="var(--accent)" />
+        </marker>
+        <marker id="kar-arm" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+          <path d="M0,1 L8,4.5 L0,8 z" fill="var(--warn)" />
+        </marker>
+        <marker id="kar-res" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+          <path d="M0,1 L8,4.5 L0,8 z" fill="var(--danger)" />
+        </marker>
+        <marker id="kar-rot" markerWidth="8" markerHeight="8" refX="5.5" refY="4" orient="auto">
+          <path d="M0,1 L7,4 L0,7 z" fill="var(--ink-mute)" />
+        </marker>
+      </defs>
+
+      {/* ===== ① 無負荷 ===== */}
+      <text x="118" y="30" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">① 無負荷：界磁磁束だけ</text>
+      <circle cx="118" cy="100" r="40" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.5" />
+      <rect x="32" y="64" width="28" height="72" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1.4" />
+      <text x="46" y="105" textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--accent-ink)">N</text>
+      <rect x="176" y="64" width="28" height="72" rx="3" fill="var(--bg)" stroke="var(--ink-mute)" strokeWidth="1.4" />
+      <text x="190" y="105" textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--ink)">S</text>
+      {[80, 100, 120].map((y, i) => (
+        <line key={"f" + i} x1="62" y1={y} x2="172" y2={y} stroke="var(--accent)" strokeWidth="1.8" markerEnd="url(#kar-field)" />
+      ))}
+      <line x1="118" y1="50" x2="118" y2="152" stroke="var(--ink-mute)" strokeWidth="1.4" strokeDasharray="5 4" />
+      <text x="118" y="168" textAnchor="middle" fontSize="9.5" fill="var(--ink-mute)">中性軸＝幾何学的中性軸（左右対称）</text>
+
+      {/* ===== ② 負荷時 ===== */}
+      <text x="358" y="30" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--danger)">② 負荷時：合成磁束が傾く</text>
+      <circle cx="358" cy="100" r="40" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.5" />
+      <rect x="272" y="64" width="28" height="72" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1.4" />
+      <text x="286" y="105" textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--accent-ink)">N</text>
+      <rect x="416" y="64" width="28" height="72" rx="3" fill="var(--bg)" stroke="var(--ink-mute)" strokeWidth="1.4" />
+      <text x="430" y="105" textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--ink)">S</text>
+      {/* 界磁磁束（薄く） */}
+      <line x1="302" y1="100" x2="412" y2="100" stroke="var(--accent)" strokeWidth="1.6" opacity="0.5" markerEnd="url(#kar-field)" />
+      {/* 電機子磁束（直交方向） */}
+      <line x1="358" y1="142" x2="358" y2="60" stroke="var(--warn)" strokeWidth="2.2" markerEnd="url(#kar-arm)" />
+      {/* 合成磁束（傾く） */}
+      <line x1="306" y1="124" x2="404" y2="76" stroke="var(--danger)" strokeWidth="2.4" markerEnd="url(#kar-res)" />
+      {/* 幾何学的中性軸（参照）と電気的中性軸（移動後） */}
+      <line x1="358" y1="50" x2="358" y2="152" stroke="var(--rule)" strokeWidth="1.4" strokeDasharray="5 4" />
+      <line x1="377" y1="48" x2="339" y2="152" stroke="var(--danger)" strokeWidth="1.8" strokeDasharray="6 3" />
+      {/* 回転方向 */}
+      <path d="M 325 58 A 42 42 0 0 1 391 58" fill="none" stroke="var(--ink-mute)" strokeWidth="1.4" strokeDasharray="4 3" markerEnd="url(#kar-rot)" />
+      <text x="400" y="52" fontSize="9" fill="var(--ink-mute)">回転</text>
+
+      {/* 凡例 */}
+      <line x1="252" y1="164" x2="272" y2="164" stroke="var(--accent)" strokeWidth="1.8" />
+      <text x="276" y="168" fontSize="9" fill="var(--ink-soft)">界磁磁束</text>
+      <line x1="336" y1="164" x2="356" y2="164" stroke="var(--warn)" strokeWidth="2.2" />
+      <text x="360" y="168" fontSize="9" fill="var(--ink-soft)">電機子磁束</text>
+      <line x1="252" y1="181" x2="272" y2="181" stroke="var(--danger)" strokeWidth="2.4" />
+      <text x="276" y="185" fontSize="9" fill="var(--ink-soft)">合成磁束</text>
+      <line x1="336" y1="181" x2="356" y2="181" stroke="var(--danger)" strokeWidth="1.8" strokeDasharray="6 3" />
+      <text x="360" y="185" fontSize="9" fill="var(--ink-soft)">電気的中性軸（移動）</text>
+      <text x="118" y="185" textAnchor="middle" fontSize="9" fill="var(--ink-mute)">発電機は回転方向へ／電動機は逆方向へ移動</text>
+
+      <line x1="30" y1="196" x2="450" y2="196" stroke="var(--rule-soft)" strokeWidth="1" />
+
+      {/* ===== ③ 対策の配置 ===== */}
+      <text x="135" y="212" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">③ 対策の配置</text>
+      <line x1="135" y1="222" x2="135" y2="322" stroke="var(--rule)" strokeWidth="1.2" strokeDasharray="5 4" />
+      <circle cx="135" cy="272" r="34" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.5" />
+      <rect x="56" y="242" width="24" height="60" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1.3" />
+      <text x="68" y="277" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">N</text>
+      <rect x="190" y="242" width="24" height="60" rx="3" fill="var(--bg)" stroke="var(--ink-mute)" strokeWidth="1.3" />
+      <text x="202" y="277" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">S</text>
+      {/* 補極（幾何学的中性軸上） */}
+      <rect x="124" y="222" width="22" height="16" rx="2" fill="var(--ok-soft)" stroke="var(--ok)" strokeWidth="1.5" />
+      <rect x="124" y="306" width="22" height="16" rx="2" fill="var(--ok-soft)" stroke="var(--ok)" strokeWidth="1.5" />
+      {/* 補償巻線（磁極片の溝） */}
+      {[254, 272, 290].map((y, i) => (
+        <g key={"cw" + i}>
+          <circle cx="76" cy={y} r="3.2" fill="var(--warn)" />
+          <circle cx="194" cy={y} r="3.2" fill="var(--warn)" />
+        </g>
+      ))}
+      {/* 引き出し線 */}
+      <line x1="146" y1="230" x2="236" y2="230" stroke="var(--ok)" strokeWidth="1" strokeDasharray="3 3" />
+      <line x1="80" y1="272" x2="112" y2="272" stroke="var(--warn)" strokeWidth="1" strokeDasharray="3 3" />
+      <line x1="112" y1="272" x2="112" y2="252" stroke="var(--warn)" strokeWidth="1" strokeDasharray="3 3" />
+      <text x="242" y="227" fontSize="10" fontWeight="700" fill="var(--ok)">補極（緑）：幾何学的中性軸上に設置し</text>
+      <text x="242" y="241" fontSize="10" fill="var(--ink-soft)">整流中の導体に生じる起電力を打ち消す</text>
+      <text x="242" y="266" fontSize="10" fontWeight="700" fill="var(--warn)">補償巻線（橙）：磁極片の溝に埋め込み</text>
+      <text x="242" y="280" fontSize="10" fill="var(--ink-soft)">電機子起磁力と逆向きの起磁力を作る</text>
+      <text x="242" y="305" fontSize="9.5" fill="var(--ink-mute)">どちらも電機子巻線と直列接続</text>
+      <text x="242" y="319" fontSize="9.5" fill="var(--ink-mute)">＝負荷電流に応じて自動的に補正される</text>
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      図1.1.3　電機子反作用と対策。無負荷では界磁磁束が左右対称で中性軸は幾何学的中性軸と一致するが、負荷時は電機子電流が作る磁束が直交方向に加わって合成磁束が傾き、電気的中性軸が移動する（発電機は回転方向へ、電動機は逆方向へ）。補極は幾何学的中性軸上、補償巻線は磁極片の溝に置く。
+    </figcaption>
+  </figure>
 );
 
 const DCMachinePage = ({ onNav }) => (
@@ -2740,7 +2930,7 @@ const DCMachinePage = ({ onNav }) => (
         </table>
       </div>
 
-      <DiagramFrame caption="図1.1.1  直流電動機の速度-トルク特性（励磁方式の違い）" viewBox="0 0 480 250">
+      <DiagramFrame caption="図1.1.2  直流電動機の速度-トルク特性（励磁方式の違い）" viewBox="0 0 480 250">
         {/* 軸 */}
         <line x1="60" y1="205" x2="450" y2="205" stroke="var(--ink-soft)" strokeWidth="1.5" />
         <line x1="60" y1="205" x2="60" y2="25" stroke="var(--ink-soft)" strokeWidth="1.5" />
@@ -2749,11 +2939,11 @@ const DCMachinePage = ({ onNav }) => (
         <text x="455" y="209" fontSize="12" style={{fill:'var(--ink)'}}>T</text>
         <text x="60" y="20" fontSize="12" style={{fill:'var(--ink)'}} textAnchor="middle">N</text>
         {/* 分巻・他励: 定速度（ほぼ水平・わずかに下降） */}
-        <path d="M 80 90 Q 255 100 440 116" fill="none" stroke="#2471a3" strokeWidth="2.4" />
-        <text x="250" y="84" fontSize="11.5" fill="#2471a3" fontWeight="700" textAnchor="middle">分巻・他励（定速度）</text>
+        <path d="M 80 90 Q 255 100 440 116" fill="none" stroke="var(--accent)" strokeWidth="2.4" />
+        <text x="250" y="84" fontSize="11.5" fill="var(--accent-ink)" fontWeight="700" textAnchor="middle">分巻・他励（定速度）</text>
         {/* 直巻: 無負荷で過速度（高トルクで急降下） */}
-        <path d="M 86 45 Q 180 165 440 185" fill="none" stroke="#c0392b" strokeWidth="2.4" />
-        <text x="150" y="150" fontSize="11.5" fill="#c0392b" fontWeight="700">直巻（過速度・始動トルク大）</text>
+        <path d="M 86 45 Q 180 165 440 185" fill="none" stroke="var(--danger)" strokeWidth="2.4" />
+        <text x="150" y="150" fontSize="11.5" fill="var(--danger)" fontWeight="700">直巻（過速度・始動トルク大）</text>
         {/* 過速度の注記 */}
         <text x="92" y="40" fontSize="10.5" fill="var(--ink-mute)">T→0 で過速度（空車運転禁止）</text>
       </DiagramFrame>
@@ -2776,6 +2966,7 @@ const DCMachinePage = ({ onNav }) => (
       </Box>
 
       <h2 id="reaction"><span className="h-num">5.</span>電機子反作用と対策（補極・補償巻線）</h2>
+      <ArmatureReactionFig />
       <p>負荷時に電機子電流が作る磁束が界磁磁束を歪ませる（<strong>電機子反作用</strong>）。直流機では<span className="marker">電気的中性軸が移動</span>し（発電機は回転方向へ・電動機は逆方向へ）、主磁束の<strong>減磁</strong>と<strong>整流不良（ブラシ火花）</strong>を招く。</p>
       <ul>
         <li><strong>補極</strong> — 主磁極の中間（幾何学的中性軸上）に置き、<span className="marker">整流中の導体の起電力を打ち消して整流を改善</span>。電機子巻線と直列に接続し、負荷電流に応じて自動補正</li>
@@ -2940,9 +3131,78 @@ const SynchronousLayers = () => (
       </ol>
     </div>
     <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "0 0 4px" }}>
-      ▶ <strong>マクロ（解く）</strong>の図解は、この下の「V カーブと位相特性」にある <strong>図1.3.1 同期電動機の V カーブ</strong>を参照。
+      ▶ <strong>マクロ（解く）</strong>の図解は、この下の「V カーブと位相特性」にある <strong>図1.3.2 同期電動機の V カーブ</strong>を参照。
     </p>
   </>
+);
+
+/* 同期発電機の電機子反作用：力率による3ケースの起磁力の向き */
+const SyncReactionFig = () => (
+  <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+    <svg viewBox="0 0 480 258" role="img" aria-label="同期発電機の電機子反作用を力率別に比較したベクトル図。力率1では電機子起磁力が界磁起磁力と直交して交差磁化作用となり、遅れ力率では界磁起磁力と逆向きになって減磁作用、進み力率では同じ向きになって増磁作用となる。同期電動機ではこの対応が逆になる" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+      <defs>
+        <marker id="ksy-ff" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+          <path d="M0,1 L8,4.5 L0,8 z" fill="var(--accent)" />
+        </marker>
+        <marker id="ksy-fa-c" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+          <path d="M0,1 L8,4.5 L0,8 z" fill="var(--warn)" />
+        </marker>
+        <marker id="ksy-fa-d" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+          <path d="M0,1 L8,4.5 L0,8 z" fill="var(--danger)" />
+        </marker>
+        <marker id="ksy-fa-m" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+          <path d="M0,1 L8,4.5 L0,8 z" fill="var(--ok)" />
+        </marker>
+      </defs>
+
+      <text x="90" y="28" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">力率 1</text>
+      <text x="240" y="28" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">遅れ力率（誘導性）</text>
+      <text x="390" y="28" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">進み力率（容量性）</text>
+      <text x="90" y="44" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--warn)">交差磁化作用</text>
+      <text x="240" y="44" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--danger)">減磁作用</text>
+      <text x="390" y="44" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--ok)">増磁作用</text>
+
+      {[90, 240, 390].map((cx, i) => (
+        <circle key={"sc" + i} cx={cx} cy="105" r="46" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1.2" />
+      ))}
+
+      {/* 力率1：直交 */}
+      <line x1="90" y1="105" x2="90" y2="62" stroke="var(--accent)" strokeWidth="2.6" markerEnd="url(#ksy-ff)" />
+      <text x="82" y="58" textAnchor="end" fontSize="10" fontWeight="700" fill="var(--accent-ink)">F_f</text>
+      <line x1="90" y1="105" x2="133" y2="105" stroke="var(--warn)" strokeWidth="2.6" markerEnd="url(#ksy-fa-c)" />
+      <text x="137" y="102" fontSize="10" fontWeight="700" fill="var(--warn)">F_a</text>
+      <line x1="90" y1="105" x2="120" y2="75" stroke="var(--danger)" strokeWidth="1.8" strokeDasharray="5 3" markerEnd="url(#ksy-fa-d)" />
+
+      {/* 遅れ：逆向き */}
+      <line x1="232" y1="105" x2="232" y2="62" stroke="var(--accent)" strokeWidth="2.6" markerEnd="url(#ksy-ff)" />
+      <text x="224" y="58" textAnchor="end" fontSize="10" fontWeight="700" fill="var(--accent-ink)">F_f</text>
+      <line x1="250" y1="105" x2="250" y2="140" stroke="var(--danger)" strokeWidth="2.6" markerEnd="url(#ksy-fa-d)" />
+      <text x="256" y="140" fontSize="10" fontWeight="700" fill="var(--danger)">F_a</text>
+
+      {/* 進み：同じ向き */}
+      <line x1="382" y1="105" x2="382" y2="62" stroke="var(--accent)" strokeWidth="2.6" markerEnd="url(#ksy-ff)" />
+      <text x="374" y="58" textAnchor="end" fontSize="10" fontWeight="700" fill="var(--accent-ink)">F_f</text>
+      <line x1="400" y1="105" x2="400" y2="70" stroke="var(--ok)" strokeWidth="2.6" markerEnd="url(#ksy-fa-m)" />
+      <text x="406" y="70" fontSize="10" fontWeight="700" fill="var(--ok)">F_a</text>
+
+      {/* 判定 */}
+      <text x="90" y="170" textAnchor="middle" fontSize="10" fill="var(--ink)">磁束の向きが横へ偏る</text>
+      <text x="90" y="184" textAnchor="middle" fontSize="10" fill="var(--ink-soft)">端子電圧はほぼ不変</text>
+      <text x="240" y="170" textAnchor="middle" fontSize="10" fill="var(--ink)">合成起磁力が弱まる</text>
+      <text x="240" y="184" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--danger)">端子電圧が下がる</text>
+      <text x="390" y="170" textAnchor="middle" fontSize="10" fill="var(--ink)">合成起磁力が強まる</text>
+      <text x="390" y="184" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--ok)">端子電圧が上がる</text>
+      <text x="240" y="203" textAnchor="middle" fontSize="9" fill="var(--ink-mute)">F_f = 界磁起磁力（回転子）　F_a = 電機子起磁力（固定子電流がつくる）</text>
+
+      {/* 電動機は逆 */}
+      <rect x="30" y="212" width="420" height="42" rx="6" fill="var(--warn-soft)" stroke="var(--warn)" strokeWidth="1" />
+      <text x="240" y="230" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--ink)">同期電動機では対応が逆：遅れ力率＝増磁 ／ 進み力率＝減磁</text>
+      <text x="240" y="246" textAnchor="middle" fontSize="9.5" fill="var(--ink-soft)">この図は発電機の場合。「遅れ＝減磁」は必ず主語を付けて覚える</text>
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      図1.3.1　同期発電機の電機子反作用。電機子起磁力 F_a が界磁起磁力 F_f に対してどの向きに立つかで作用が決まる。直交なら交差磁化、逆向きなら減磁（遅れ力率）、同じ向きなら増磁（進み力率）。同期電動機では遅れと進みの対応が入れ替わる。
+    </figcaption>
+  </figure>
 );
 
 const SynchronousPage = ({ onNav }) => (
@@ -2957,7 +3217,7 @@ const SynchronousPage = ({ onNav }) => (
       <p>固定子（電機子）に三相巻線、回転子に界磁を持つ。回転子は <span className="marker">常に同期速度</span> <Eq tex="N_s = 120f/p" /> で回る。<span className="marker">誘導機と異なり滑りはゼロ</span>。</p>
 
       <Box kind="example" label="理解を深める — 起電力の正体は理論「電磁誘導」">
-        <p>同期発電機が電圧を生むのは、回転する <strong>界磁の磁束</strong> が固定子（電機子）巻線を周期的に切るから。これは理論で学ぶ <strong>電磁誘導（ファラデーの法則）</strong> <Eq tex="e=-N\dfrac{d\Phi}{dt}" /> そのもの。磁束が <Eq tex="\Phi=\Phi_m\cos\omega t" /> と正弦波状に変化するので、起電力も正弦波になり、実効値は <Eq tex="E=4.44\,fN\Phi_m" />。</p>
+        <p>同期発電機が電圧を生むのは、回転する <strong>界磁の磁束</strong> が固定子（電機子）巻線を周期的に切るから。これは理論で学ぶ <strong>電磁誘導（ファラデーの法則）</strong> <Eq tex="e=-N\dfrac{d\Phi}{dt}" /> そのもの。磁束が <Eq tex="\Phi=\Phi_m\cos\omega t" /> と正弦波状に変化するので、起電力も正弦波になり、1相分の実効値は <Eq tex="E=4.44\,k_w fN\Phi_m" />。ここで <Eq tex="k_w" /> は <strong>巻線係数</strong>（1以下・実機で 0.9〜0.96 程度）で、変圧器と違い同期機の電機子巻線は<strong>複数スロットに分布して巻かれ（分布巻）、コイル辺の間隔が極ピッチより短い（短節巻）</strong>ため、各コイルの起電力が少しずつ位相差を持ち、単純な和より小さくなることを表す。<span className="marker">変圧器は集中巻なので <Eq tex="k_w \approx 1" /> となり <Eq tex="E=4.44fN\Phi_m" /></span> だが、同期機では <Eq tex="k_w" /> が与件として問題文に示される。</p>
         <p>周波数は回転速度と極数で決まる：<Eq tex="f=\dfrac{p N_s}{120}" />（同期速度 <Eq tex="N_s=120f/p" /> の裏返し）。「同期速度で回す → 決まった周波数の正弦波起電力」という機械の動作は、理論の <strong>電磁誘導＋磁束鎖交</strong> を回転体に適用しただけ、と捉えると腑に落ちる。</p>
         <p style={{margin:"8px 0 0"}}><a href="https://kfurufuru.github.io/secretary-portal-public/denken3-riron-wiki.html#inductance" target="_blank" rel="noopener">→ 理論Wiki「3.1 インダクタンス・電磁誘導」でファラデー則・磁束鎖交を深掘り</a></p>
       </Box>
@@ -2969,6 +3229,8 @@ const SynchronousPage = ({ onNav }) => (
         <li><strong>進み力率</strong>（容量性） — 増磁作用、電圧上昇</li>
         <li><strong>力率1</strong> — 交差磁化作用（電機子起磁力が界磁に直交）</li>
       </ul>
+      <SyncReactionFig />
+
       <Box kind="mistake" label="発電機と電動機で逆になる（定番ひっかけ）">
         <p><span className="marker">同期電動機では対応が逆</span>：遅れ力率=増磁・進み力率=減磁。「遅れ=減磁」は<strong>発電機の場合</strong>と、必ず主語を付けて覚える。</p>
       </Box>
@@ -2976,7 +3238,7 @@ const SynchronousPage = ({ onNav }) => (
       <h2 id="vcurve"><span className="h-num">3.</span>V カーブと位相特性</h2>
       <p>同期電動機の <strong>V カーブ</strong> は界磁電流 If を横軸、電機子電流 Ia を縦軸にとった V 字曲線。底点で電機子電流が最小となり力率1、左側（不足励磁）で遅れ・右側（過励磁）で進み力率となる。</p>
 
-      <DiagramFrame caption="図1.3.1  同期電動機の V カーブ（界磁電流 If と電機子電流 Ia の関係）" viewBox="0 0 480 250">
+      <DiagramFrame caption="図1.3.2  同期電動機の V カーブ（界磁電流 If と電機子電流 Ia の関係）" viewBox="0 0 480 250">
         {/* 軸 */}
         <line x1="60" y1="200" x2="450" y2="200" stroke="var(--ink-soft)" strokeWidth="1.5" />
         <line x1="60" y1="200" x2="60" y2="25" stroke="var(--ink-soft)" strokeWidth="1.5" />
@@ -2985,16 +3247,16 @@ const SynchronousPage = ({ onNav }) => (
         <text x="455" y="204" fontSize="12" style={{fill:'var(--ink)'}}>If</text>
         <text x="44" y="24" fontSize="12" style={{fill:'var(--ink)'}} textAnchor="middle">Ia</text>
         {/* V 字曲線 */}
-        <path d="M 95 55 Q 255 250 415 55" fill="none" stroke="#2471a3" strokeWidth="2.4" />
+        <path d="M 95 55 Q 255 250 415 55" fill="none" stroke="var(--accent)" strokeWidth="2.4" />
         {/* 底点（力率1） */}
         <line x1="255" y1="152" x2="255" y2="200" stroke="var(--rule)" strokeWidth="1" strokeDasharray="4 3" />
-        <circle cx="255" cy="152" r="4.5" fill="#c0392b" />
-        <text x="255" y="142" fontSize="11.5" fill="#c0392b" fontWeight="700" textAnchor="middle">力率1（cosφ=1）</text>
+        <circle cx="255" cy="152" r="4.5" fill="var(--danger)" />
+        <text x="255" y="142" fontSize="11.5" fill="var(--danger)" fontWeight="700" textAnchor="middle">力率1（cosφ=1）</text>
         <text x="255" y="218" fontSize="11" fill="var(--ink-soft)" textAnchor="middle">電機子電流最小</text>
         {/* 左右の領域ラベル */}
-        <text x="120" y="80" fontSize="11.5" fill="#8e44ad" fontWeight="700">遅れ力率</text>
+        <text x="120" y="80" fontSize="11.5" fill="var(--warn)" fontWeight="700">遅れ力率</text>
         <text x="120" y="96" fontSize="10.5" fill="var(--ink-mute)">（不足励磁）</text>
-        <text x="392" y="80" fontSize="11.5" fill="#2e8b57" fontWeight="700" textAnchor="end">進み力率</text>
+        <text x="392" y="80" fontSize="11.5" fill="var(--ok)" fontWeight="700" textAnchor="end">進み力率</text>
         <text x="392" y="96" fontSize="10.5" fill="var(--ink-mute)" textAnchor="end">（過励磁）</text>
       </DiagramFrame>
 
@@ -4858,9 +5120,149 @@ const PowerElecLayers = () => (
       </ol>
     </div>
     <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "0 0 4px" }}>
-      ▶ <strong>マクロ（解く）</strong>の図解は、この下のセクション3にある<strong>図2.2.1（降圧チョッパの動作とデューティ比 D）</strong>を参照。
+      ▶ <strong>マクロ（解く）</strong>の図解は、この下のセクション3にある<strong>図2.2.2（降圧チョッパの動作とデューティ比 D）</strong>を参照。
     </p>
   </>
+);
+
+/* 単相全波ブリッジ整流：回路と出力波形（平均値 0.90V の由来） */
+const RectifierBridgeFig = () => (
+  <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+    <svg viewBox="0 0 480 285" role="img" aria-label="単相全波ブリッジ整流の回路図と出力波形。ダイオード4個をブリッジ接続し、交流入力を上下の直流レールに導く。入力の正弦波は負の半波が正側へ折り返され、全波整流波形となる。その平均値は最大値の2割るπ倍、すなわち実効値Vの約0.90倍になる" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+      <text x="150" y="22" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">① ブリッジ回路（ダイオード4個）</text>
+      <text x="367" y="22" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">② 出力波形（負の半波が折り返る）</text>
+
+      {/* ===== 回路 ===== */}
+      {/* 直流レール */}
+      <line x1="85" y1="70" x2="215" y2="70" stroke="var(--ink)" strokeWidth="1.6" />
+      <line x1="85" y1="160" x2="215" y2="160" stroke="var(--ink)" strokeWidth="1.6" />
+      {/* 交流側の縦枝（ダイオード4個） */}
+      <line x1="100" y1="70" x2="100" y2="160" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="190" y1="70" x2="190" y2="160" stroke="var(--ink)" strokeWidth="1.4" />
+      {[[100, 92], [190, 92], [100, 138], [190, 138]].map(([cx, cy], i) => (
+        <g key={"d" + i}>
+          <polygon points={`${cx - 6},${cy + 5} ${cx + 6},${cy + 5} ${cx},${cy - 5}`} fill="var(--accent)" />
+          <line x1={cx - 7.5} y1={cy - 5} x2={cx + 7.5} y2={cy - 5} stroke="var(--accent)" strokeWidth="2" />
+        </g>
+      ))}
+      {/* 交流入力（中点どうしを結ぶ） */}
+      <line x1="100" y1="115" x2="132" y2="115" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="158" y1="115" x2="190" y2="115" stroke="var(--ink)" strokeWidth="1.4" />
+      <circle cx="145" cy="115" r="13" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.4" />
+      <text x="145" y="120" textAnchor="middle" fontSize="14" fill="var(--ink)">~</text>
+      <circle cx="100" cy="115" r="3" fill="var(--ink)" />
+      <circle cx="190" cy="115" r="3" fill="var(--ink)" />
+      <text x="92" y="99" textAnchor="end" fontSize="10" fill="var(--ink-soft)">交流入力</text>
+      <text x="92" y="136" textAnchor="end" fontSize="10" fill="var(--ink-soft)">実効値 V</text>
+      {/* 負荷 */}
+      <line x1="215" y1="70" x2="215" y2="100" stroke="var(--ink)" strokeWidth="1.4" />
+      <rect x="205" y="100" width="20" height="30" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="215" y1="130" x2="215" y2="160" stroke="var(--ink)" strokeWidth="1.4" />
+      <text x="232" y="119" fontSize="11" fill="var(--ink)">R</text>
+      <text x="198" y="63" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--danger)">＋</text>
+      <text x="198" y="176" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">−</text>
+      <text x="150" y="196" textAnchor="middle" fontSize="9.5" fill="var(--ink-mute)">4個とも上向き＝交流のどちら向きでも上レールが＋</text>
+
+      {/* ===== 波形 ===== */}
+      <line x1="270" y1="130" x2="468" y2="130" stroke="var(--ink-soft)" strokeWidth="1.3" />
+      <line x1="272" y1="45" x2="272" y2="200" stroke="var(--ink-soft)" strokeWidth="1.3" />
+      <text x="472" y="134" fontSize="11" fill="var(--ink)">t</text>
+      {/* 入力（正弦波・負の半波あり） */}
+      <path d="M 275 130 Q 306 40 337 130 Q 368 220 399 130 Q 430 40 461 130"
+            fill="none" stroke="var(--ink-mute)" strokeWidth="1.6" strokeDasharray="5 4" />
+      {/* 出力（全波整流） */}
+      <path d="M 275 130 Q 306 40 337 130 Q 368 40 399 130 Q 430 40 461 130"
+            fill="none" stroke="var(--accent)" strokeWidth="2.6" strokeLinecap="round" />
+      {/* 平均値 */}
+      <line x1="272" y1="101" x2="461" y2="101" stroke="var(--danger)" strokeWidth="1.8" strokeDasharray="6 4" />
+      <text x="306" y="76" textAnchor="middle" fontSize="9.5" fill="var(--ink-mute)">最大値 √2 V</text>
+
+      {/* ===== 凡例 ===== */}
+      <line x1="70" y1="240" x2="95" y2="240" stroke="var(--ink-mute)" strokeWidth="1.6" strokeDasharray="5 4" />
+      <text x="101" y="244" fontSize="10" fill="var(--ink-soft)">入力（交流・実効値 V）</text>
+      <line x1="255" y1="240" x2="280" y2="240" stroke="var(--accent)" strokeWidth="2.6" />
+      <text x="286" y="244" fontSize="10" fill="var(--ink-soft)">出力（全波整流後）</text>
+      <line x1="70" y1="264" x2="95" y2="264" stroke="var(--danger)" strokeWidth="1.8" strokeDasharray="6 4" />
+      <text x="101" y="268" fontSize="10" fontWeight="700" fill="var(--danger)">平均値 Vd = (2√2/π)·V ≈ 0.90 V</text>
+      <text x="312" y="268" fontSize="9.5" fill="var(--ink-mute)">（理想素子。実機は約2VF低下）</text>
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      図2.2.1　単相全波ブリッジ整流。ダイオード4個が全て「下から上」を向くので、交流入力がどちら向きでも上レールが常に＋になる＝負の半波が正側へ折り返る。平均値 0.90V は、この折り返した波形の面積を1周期で割った値。
+    </figcaption>
+  </figure>
+);
+
+/* 三相インバータの構成と PWM（パルス幅を正弦波に比例させる） */
+const InverterPWMFig = () => (
+  <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+    <svg viewBox="0 0 480 348" role="img" aria-label="三相インバータの回路構成とPWMの原理。直流電源から上下2本のレールを引き、スイッチング素子を上アーム3個・下アーム3個の合計6個ブリッジ接続して、各相の中点からU・V・Wの三相出力を取り出す。PWMでは振幅一定のパルス列の幅を正弦波に比例させることで、平均が正弦波状に変化する擬似正弦波を作る" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+      <text x="165" y="28" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">① 三相インバータ：素子6個のブリッジ</text>
+
+      {/* 直流レール */}
+      <line x1="85" y1="55" x2="255" y2="55" stroke="var(--ink)" strokeWidth="1.8" />
+      <line x1="85" y1="175" x2="255" y2="175" stroke="var(--ink)" strokeWidth="1.8" />
+      {/* 直流電源 */}
+      <line x1="85" y1="55" x2="85" y2="104" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="77" y1="104" x2="93" y2="104" stroke="var(--ink)" strokeWidth="2.6" />
+      <line x1="81" y1="112" x2="89" y2="112" stroke="var(--ink)" strokeWidth="1.5" />
+      <line x1="85" y1="112" x2="85" y2="175" stroke="var(--ink)" strokeWidth="1.4" />
+      <text x="70" y="111" textAnchor="end" fontSize="11.5" fill="var(--ink)">E</text>
+      <text x="98" y="49" fontSize="11" fontWeight="700" fill="var(--danger)">＋</text>
+      <text x="68" y="190" fontSize="11" fontWeight="700" fill="var(--ink)">−</text>
+
+      {/* 3本の脚（上アーム・下アーム） */}
+      {[130, 175, 220].map((x, i) => (
+        <g key={"leg" + i}>
+          <line x1={x} y1="55" x2={x} y2="70" stroke="var(--ink)" strokeWidth="1.4" />
+          <rect x={x - 9} y="70" width="18" height="24" rx="2" fill="var(--bg)" stroke="var(--accent)" strokeWidth="1.6" />
+          <line x1={x - 4} y1="89" x2={x + 4} y2="75" stroke="var(--accent)" strokeWidth="1.6" />
+          <line x1={x} y1="94" x2={x} y2="136" stroke="var(--ink)" strokeWidth="1.4" />
+          <rect x={x - 9} y="136" width="18" height="24" rx="2" fill="var(--bg)" stroke="var(--accent)" strokeWidth="1.6" />
+          <line x1={x - 4} y1="155" x2={x + 4} y2="141" stroke="var(--accent)" strokeWidth="1.6" />
+          <line x1={x} y1="160" x2={x} y2="175" stroke="var(--ink)" strokeWidth="1.4" />
+          <circle cx={x} cy="115" r="3" fill="var(--ink)" />
+        </g>
+      ))}
+      {/* 三相出力 U・V・W */}
+      <line x1="130" y1="115" x2="152" y2="115" stroke="var(--ok)" strokeWidth="2" />
+      <text x="157" y="119" fontSize="11.5" fontWeight="700" fill="var(--ok)">U</text>
+      <line x1="175" y1="115" x2="197" y2="115" stroke="var(--ok)" strokeWidth="2" />
+      <text x="202" y="119" fontSize="11.5" fontWeight="700" fill="var(--ok)">V</text>
+      <line x1="220" y1="115" x2="248" y2="115" stroke="var(--ok)" strokeWidth="2" />
+      <text x="253" y="119" fontSize="11.5" fontWeight="700" fill="var(--ok)">W</text>
+      <text x="170" y="206" textAnchor="middle" fontSize="9.5" fill="var(--ink-mute)">各相の中点から三相出力（電動機へ）</text>
+
+      {/* 右の要点ボックス */}
+      <rect x="312" y="58" width="155" height="118" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1" />
+      <text x="389" y="80" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">構成の要点</text>
+      <text x="389" y="101" textAnchor="middle" fontSize="10.5" fill="var(--ink)">IGBT を 6 個</text>
+      <text x="389" y="119" textAnchor="middle" fontSize="10.5" fill="var(--ink)">上アーム3・下アーム3</text>
+      <text x="389" y="143" textAnchor="middle" fontSize="10" fill="var(--warn)">同じ相の上下を同時オン</text>
+      <text x="389" y="159" textAnchor="middle" fontSize="10" fill="var(--warn)">＝直流電源の短絡（禁止）</text>
+
+      {/* ===== PWM 波形 ===== */}
+      <text x="255" y="222" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">② PWM：パルスの幅を正弦波に比例させる</text>
+      <line x1="55" y1="270" x2="462" y2="270" stroke="var(--ink-soft)" strokeWidth="1.3" />
+      <text x="466" y="274" fontSize="11" fill="var(--ink)">t</text>
+      {[[72, 3.8], [96, 11.0], [120, 16.5], [144, 19.5], [168, 19.7], [192, 17.0], [216, 11.8], [240, 4.8]].map(([cx, w], i) => (
+        <rect key={"pp" + i} x={cx - w / 2} y="240" width={w} height="30" fill="var(--accent)" opacity="0.85" />
+      ))}
+      {[[267, 3.8], [291, 11.0], [315, 16.5], [339, 19.5], [363, 19.7], [387, 17.0], [411, 11.8], [435, 4.8]].map(([cx, w], i) => (
+        <rect key={"np" + i} x={cx - w / 2} y="270" width={w} height="30" fill="var(--ok)" opacity="0.85" />
+      ))}
+      <path d="M 60 270 Q 157.5 190 255 270 Q 352.5 350 450 270"
+            fill="none" stroke="var(--danger)" strokeWidth="2" strokeDasharray="6 4" />
+
+      {/* 凡例 */}
+      <line x1="70" y1="326" x2="95" y2="326" stroke="var(--danger)" strokeWidth="2" strokeDasharray="6 4" />
+      <text x="101" y="330" fontSize="10" fill="var(--ink-soft)">変調波（目標の正弦波）</text>
+      <rect x="255" y="321" width="14" height="9" fill="var(--accent)" opacity="0.85" />
+      <text x="275" y="330" fontSize="10" fill="var(--ink-soft)">パルス（振幅は一定・幅だけ可変）</text>
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      図2.2.3　三相インバータは素子6個のブリッジで、各相の中点から U・V・W を取り出す。PWM の出力は振幅一定のパルス列で、幅を正弦波に比例させることで1スイッチング周期ごとの平均が正弦波状に変化する（基本波成分が正弦波）。
+    </figcaption>
+  </figure>
 );
 
 const PowerElecPage = ({ onNav }) => (
@@ -4889,9 +5291,10 @@ const PowerElecPage = ({ onNav }) => (
 
       <Box kind="example" label="理解を深める — 整流作用はPN接合の一方向性">
         <p>整流回路がAC→DCを実現できるのは、ダイオードの<strong>一方向性（順方向で導通・逆方向で阻止）</strong>を利用しているから。この一方向性は、理論で学ぶ<strong>PN接合の電位障壁</strong>に由来する。P形とN形を接合すると接合部にキャリアの拡散で<strong>空乏層</strong>ができ、内部に電位障壁（拡散電位）が立つ。順方向（PにプラスNにマイナス）に電圧を加えると障壁が下がってキャリアが流れ込み導通し、逆方向では障壁がさらに高くなって電流をほぼ通さない。これが<strong>整流作用</strong>の正体。</p>
-        <p>導通時もダイオードは抵抗ゼロではなく、障壁を越えるぶんの<strong>順方向電圧降下</strong> <Eq tex="V_F" />（シリコンで約0.6〜0.7 V）が残る。単相全波整流の平均値 <Eq tex="V_d = \dfrac{2\sqrt{2}}{\pi}V \approx 0.900\,V" /> はダイオードを理想（<Eq tex="V_F=0" />）とした値で、実機では <Eq tex="V_F" /> ぶんだけ出力が下がる。<strong>「制御不可＝ゲートがなく順方向で必ず導通する」</strong>というダイオードの性質も、外部信号ではなく接合の物理だけでオン・オフが決まることを意味する。</p>
+        <p>導通時もダイオードは抵抗ゼロではなく、障壁を越えるぶんの<strong>順方向電圧降下</strong> <Eq tex="V_F" />（シリコンで約0.6〜0.7 V）が残る。単相全波整流の平均値 <Eq tex="V_d = \dfrac{2\sqrt{2}}{\pi}V \approx 0.900\,V" /> はダイオードを理想（<Eq tex="V_F=0" />）とした値。<strong>ブリッジ整流では各半周期にダイオードが2個直列で導通する</strong>ので、実機の出力は約 <Eq tex="2V_F" /> ぶん下がる（センタータップ形なら1個ぶん）。<strong>「制御不可＝ゲートがなく順方向で必ず導通する」</strong>というダイオードの性質も、外部信号ではなく接合の物理だけでオン・オフが決まることを意味する。</p>
         <p style={{margin:"8px 0 0"}}><a href="https://kfurufuru.github.io/secretary-portal-public/denken3-riron-wiki.html#semiconductor" target="_blank" rel="noopener">→ 理論Wiki「半導体・ダイオード」でPN接合の電位障壁と順方向電圧降下を深掘り</a></p>
       </Box>
+      <RectifierBridgeFig />
       <FormulaCard num="01 / 04" name="単相全波整流（平均値）" eq="V_d = \dfrac{2\sqrt{2}}{\pi} V \approx 0.900 V" />
       <FormulaCard num="02 / 04" name="三相全波整流（平均値）" eq="V_d = \dfrac{3\sqrt{2}}{\pi} V_L \approx 1.35 V_L"
         note="V_L は線間電圧の実効値。脈動率が小さく実用上の主役。" />
@@ -4903,6 +5306,8 @@ const PowerElecPage = ({ onNav }) => (
 
       <h2 id="inverter"><span className="h-num">4.</span>インバータと PWM</h2>
       <p>直流を交流に変換する装置。<span className="marker">PWM（パルス幅変調）</span> でスイッチング比を変えながら正弦波に近い出力を作る。三相インバータは IGBT を 6 個ブリッジ接続するのが基本構成。</p>
+
+      <InverterPWMFig />
 
       <Box kind="warn" label="計算上の注意">
         <ul>
@@ -4947,15 +5352,15 @@ const BHCurveSVG = () => (
     <text x="40" y="22" fontSize="13" style={{fill:'var(--ink)'}} textAnchor="end">B</text>
     <text x="20" y="20" fontSize="11" fill="var(--ink-soft)">[T]</text>
     <path d="M 50 270 Q 130 268 200 230 Q 260 195 310 130 Q 360 80 430 70 Q 490 67 525 65"
-          fill="none" stroke="#c33" strokeWidth="2.5"/>
-    <line x1="50" y1="270" x2="200" y2="230" stroke="#27c" strokeWidth="1.2" strokeDasharray="4,3" opacity="0.6"/>
-    <text x="58" y="205" fontSize="11" fill="#27c">直線域（μ_r ≈ 数千）</text>
-    <text x="240" y="112" fontSize="11" fill="#a60">ニー（屈曲）</text>
-    <text x="400" y="55" fontSize="11" fill="#c33">飽和域（dB/dH 激減）</text>
+          fill="none" stroke="var(--danger)" strokeWidth="2.5"/>
+    <line x1="50" y1="270" x2="200" y2="230" stroke="var(--accent)" strokeWidth="1.2" strokeDasharray="4,3" opacity="0.6"/>
+    <text x="58" y="205" fontSize="11" fill="var(--accent-ink)">直線域（μ_r ≈ 数千）</text>
+    <text x="240" y="112" fontSize="11" fill="var(--warn)">ニー（屈曲）</text>
+    <text x="400" y="55" fontSize="11" fill="var(--danger)">飽和域（dB/dH 激減）</text>
     <line x1="430" y1="70" x2="430" y2="270" stroke="var(--rule)" strokeWidth="1" strokeDasharray="2,3"/>
     <text x="435" y="285" fontSize="10" fill="var(--ink-mute)">H が増えても</text>
     <line x1="50" y1="70" x2="430" y2="70" stroke="var(--rule)" strokeWidth="1" strokeDasharray="2,3"/>
-    <text x="55" y="63" fontSize="11" fill="#c33" fontWeight="600">B_s（飽和磁束密度）</text>
+    <text x="55" y="63" fontSize="11" fill="var(--danger)" fontWeight="600">B_s（飽和磁束密度）</text>
     <text x="55" y="305" fontSize="11" style={{fill:'var(--ink-soft)'}}>通常運用域 ←</text>
     <text x="220" y="305" fontSize="11" style={{fill:'var(--ink-soft)'}}>→ ここに突入すると波形歪み</text>
   </svg>
@@ -5023,8 +5428,8 @@ const KeikiYoHenseikiLayers = () => (
         </tr>
         <tr>
           <td><strong>実務</strong><br/>（意味づけ）</td>
-          <td>受電設備の<strong>計測・保護</strong>の入口。CT二次は<strong>短絡端子</strong>で常時閉路を維持し、二次1端子は<strong>D種接地</strong>で感電防止</td>
-          <td>短絡端子・D種接地</td>
+          <td>受電設備の<strong>計測・保護</strong>の入口。CT二次は<strong>短絡端子</strong>で常時閉路を維持し、二次1端子は<strong>接地</strong>して感電防止（高圧D種・特別高圧A種）</td>
+          <td>短絡端子・二次側接地（解釈第28条）</td>
         </tr>
       </tbody>
     </table></div>
@@ -5100,6 +5505,93 @@ const KeikiYoHenseikiLayers = () => (
   </>
 );
 
+/* CT は直列挿入・VT は並列接続：実配線の左右比較 */
+const CtVtWiringFig = () => (
+  <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+    <svg viewBox="0 0 480 296" role="img" aria-label="CTとVTの結線比較図。CTは高圧回路の電流経路に直列挿入し、二次側に電流計と短絡端子を持つ。VTは二相間に並列接続し、二次側に電圧計とヒューズを持つ。どちらも二次側の1端子をD種接地する" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+      <text x="240" y="24" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--ink)">高圧回路（例 6.6 kV）</text>
+      {/* 高圧母線 2相 */}
+      <line x1="55" y1="44" x2="455" y2="44" stroke="var(--ink)" strokeWidth="2.2" />
+      <line x1="55" y1="76" x2="455" y2="76" stroke="var(--ink)" strokeWidth="2.2" />
+      <text x="48" y="48" textAnchor="end" fontSize="10" fill="var(--ink-soft)">R相</text>
+      <text x="48" y="80" textAnchor="end" fontSize="10" fill="var(--ink-soft)">S相</text>
+
+      {/* ===== CT：直列挿入 ===== */}
+      <circle cx="130" cy="76" r="15" fill="none" stroke="var(--accent)" strokeWidth="2.2" />
+      <text x="108" y="66" textAnchor="end" fontSize="11" fontWeight="700" fill="var(--accent-ink)">CT</text>
+      {/* 二次リード */}
+      <line x1="122" y1="91" x2="122" y2="180" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="138" y1="91" x2="138" y2="180" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="122" y1="180" x2="117" y2="180" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="138" y1="180" x2="143" y2="180" stroke="var(--ink)" strokeWidth="1.4" />
+      {/* 短絡端子（点検時に投入） */}
+      <circle cx="122" cy="118" r="2.8" fill="var(--ok)" />
+      <circle cx="138" cy="118" r="2.8" fill="var(--ok)" />
+      <line x1="122" y1="118" x2="141" y2="109" stroke="var(--ok)" strokeWidth="2" />
+      <text x="148" y="114" fontSize="9" fontWeight="700" fill="var(--ok)">短絡端子</text>
+      <text x="148" y="126" fontSize="8.5" fill="var(--ink-soft)">（計器交換時に投入）</text>
+      {/* 電流計 */}
+      <circle cx="130" cy="180" r="13" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.5" />
+      <text x="130" y="185" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">A</text>
+      {/* D種接地 */}
+      <line x1="122" y1="158" x2="95" y2="158" stroke="var(--ink)" strokeWidth="1.2" />
+      <line x1="95" y1="158" x2="95" y2="176" stroke="var(--ink)" strokeWidth="1.2" />
+      <line x1="86" y1="176" x2="104" y2="176" stroke="var(--ink)" strokeWidth="1.6" />
+      <line x1="89" y1="181" x2="101" y2="181" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="92" y1="186" x2="98" y2="186" stroke="var(--ink)" strokeWidth="1.2" />
+      <text x="95" y="200" textAnchor="middle" fontSize="9" fill="var(--ink-soft)">D種接地</text>
+      <text x="130" y="224" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">CT：一次を直列挿入</text>
+      <text x="130" y="240" textAnchor="middle" fontSize="9.5" fill="var(--ink-soft)">二次 短絡OK ／ 開放NG</text>
+
+      {/* ===== VT：並列接続 ===== */}
+      <circle cx="340" cy="44" r="3" fill="var(--ink)" />
+      <line x1="340" y1="44" x2="340" y2="70" stroke="var(--ink)" strokeWidth="1.4" />
+      <path d="M 340 70 A 6 6 0 0 1 340 82" fill="none" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="340" y1="82" x2="340" y2="104" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="340" y1="104" x2="348" y2="104" stroke="var(--ink)" strokeWidth="1.4" />
+      <circle cx="400" cy="76" r="3" fill="var(--ink)" />
+      <line x1="400" y1="76" x2="400" y2="104" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="400" y1="104" x2="382" y2="104" stroke="var(--ink)" strokeWidth="1.4" />
+      {/* VT 巻線 */}
+      <rect x="348" y="96" width="34" height="16" rx="2" fill="var(--bg)" stroke="var(--accent)" strokeWidth="1.6" />
+      <rect x="348" y="124" width="34" height="16" rx="2" fill="var(--bg)" stroke="var(--accent)" strokeWidth="1.6" />
+      <line x1="362" y1="112" x2="362" y2="124" stroke="var(--ink-mute)" strokeWidth="1.5" />
+      <line x1="368" y1="112" x2="368" y2="124" stroke="var(--ink-mute)" strokeWidth="1.5" />
+      <text x="332" y="122" textAnchor="end" fontSize="11" fontWeight="700" fill="var(--accent-ink)">VT</text>
+      {/* 二次リード */}
+      <line x1="348" y1="132" x2="318" y2="132" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="318" y1="132" x2="318" y2="185" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="382" y1="132" x2="412" y2="132" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="412" y1="132" x2="412" y2="185" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="318" y1="185" x2="352" y2="185" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="378" y1="185" x2="412" y2="185" stroke="var(--ink)" strokeWidth="1.4" />
+      {/* ヒューズ（二次側） */}
+      <rect x="313" y="148" width="10" height="16" rx="1.5" fill="var(--warn-soft)" stroke="var(--warn)" strokeWidth="1.4" />
+      <text x="306" y="160" textAnchor="end" fontSize="9" fontWeight="700" fill="var(--warn)">ヒューズ</text>
+      {/* 電圧計 */}
+      <circle cx="365" cy="185" r="13" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.5" />
+      <text x="365" y="190" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">V</text>
+      {/* D種接地 */}
+      <line x1="412" y1="160" x2="435" y2="160" stroke="var(--ink)" strokeWidth="1.2" />
+      <line x1="435" y1="160" x2="435" y2="176" stroke="var(--ink)" strokeWidth="1.2" />
+      <line x1="426" y1="176" x2="444" y2="176" stroke="var(--ink)" strokeWidth="1.6" />
+      <line x1="429" y1="181" x2="441" y2="181" stroke="var(--ink)" strokeWidth="1.4" />
+      <line x1="432" y1="186" x2="438" y2="186" stroke="var(--ink)" strokeWidth="1.2" />
+      <text x="435" y="200" textAnchor="middle" fontSize="9" fill="var(--ink-soft)">D種接地</text>
+      <text x="365" y="224" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">VT：二相間に並列接続</text>
+      <text x="365" y="240" textAnchor="middle" fontSize="9.5" fill="var(--ink-soft)">二次 開放OK ／ 短絡NG</text>
+
+      {/* まとめ帯 */}
+      <rect x="30" y="252" width="420" height="36" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1" />
+      <text x="240" y="269" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">一次側に電流を強制するのが CT（開放NG）、電圧を強制するのが VT（短絡NG）</text>
+      <text x="240" y="283" textAnchor="middle" fontSize="9.5" fill="var(--ink-soft)">結線図では「電流計と同じ直列なら CT／電圧計と同じ並列なら VT」で見分けられる</text>
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      図2.3.1　CT・VT の結線比較。CT は電流経路に直列挿入するので二次を開けると磁気平衡が崩れる（開放NG・短絡端子で常時閉路）。VT は電圧を測るので二相間に並列接続し、二次を短絡すると過電流で焼損する（短絡NG・二次ヒューズで保護）。二次側の接地種別は電圧区分で決まり、図の高圧回路では D種（特別高圧なら A種・解釈第28条）。
+    </figcaption>
+  </figure>
+);
+
 const KeikiYoHenseikiPage = ({ onNav }) => (
   <>
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "2. 静止器・電力変換" }, { label: "2.3 計器用変成器（CT・VT）" }]} onNav={onNav} />
@@ -5139,6 +5631,8 @@ const KeikiYoHenseikiPage = ({ onNav }) => (
         <p>この3点は CT も VT も同じ。違いは「一次側から何を強制するか」だけ。</p>
       </Box>
 
+      <CtVtWiringFig />
+
       <h2 id="vt"><span className="h-num">2.</span>VT：一次側から「電圧」を強制する使い方</h2>
 
       <h3>2-1. 接続と動作</h3>
@@ -5151,8 +5645,13 @@ const KeikiYoHenseikiPage = ({ onNav }) => (
       <h3>2-3. 二次短絡：禁止（焼損）</h3>
       <p>二次を短絡すると <Eq tex="V_2 \approx 0" /> に近づく。一次電圧 <Eq tex="V_1" /> はそのままなので、二次起電力と短絡端子の電位差を <strong>巻線インピーダンス（小さい）</strong> だけで割った大電流が二次に流れる。一次も磁気平衡を保つために I₁ が急増し、<Eq tex="I^2 R" /> 銅損で <strong>巻線が焼損</strong>。VT保護のため二次側にはヒューズを入れるのが標準設計。</p>
 
-      <h3>2-4. 二次側1端子を D種接地する理由</h3>
-      <p>VTは高圧側（一次）と低圧側（二次）の間に絶縁が入っているが、絶縁劣化で混触すると <strong>二次に高電圧が侵入</strong> し計器・人体に到達する。二次1端子を <strong>D種接地</strong>（接地抵抗100Ω以下）しておけば、その端子が大地電位に固定され、計器筐体も安全。法規（電技解釈）でも要求される。</p>
+      <h3>2-4. 二次側を接地する理由と、接地種別（高圧D種・特別高圧A種）</h3>
+      <p>VTは高圧側（一次）と低圧側（二次）の間に絶縁が入っているが、絶縁劣化で混触すると <strong>二次に高電圧が侵入</strong> し計器・人体に到達する。二次側を接地しておけば、その点が大地電位に固定され、計器筐体も安全。実務では二次1端子を接地する。</p>
+      <Box kind="formula" label="根拠条文：電技解釈 第28条（計器用変成器の2次側電路の接地）">
+        <p>「<strong>高圧</strong>計器用変成器の2次側電路には、<span className="marker">D種接地工事</span>を施すこと。<br/>2　<strong>特別高圧</strong>計器用変成器の2次側電路には、<span className="marker">A種接地工事</span>を施すこと。」</p>
+        <p style={{margin:"8px 0 0"}}>⚠️ <strong>接地種別は電圧区分で変わる</strong>。高圧（6.6 kV など）なら D種（接地抵抗100Ω以下）だが、<strong>特別高圧なら A種</strong>（10Ω以下）。「計器用変成器の二次はD種」と丸暗記すると特別高圧の設問で失点する。CT・VT のどちらでも同じ条文が適用される。</p>
+        <p style={{fontSize:"12px", color:"var(--ink-mute)", margin:"6px 0 0"}}>典拠：電気設備の技術基準の解釈（令和7年11月）第28条・原典PDF逐語照合済（2026-07-26）</p>
+      </Box>
 
       <Box kind="formula" label="セクション2 まとめ（VT）">
         <p>一次に電圧を強制 → 磁束が決まる → 二次は <strong>開放OK・短絡NG</strong>（過電流で焼損）。二次1端子D種接地で感電防止。</p>
@@ -5185,7 +5684,7 @@ const KeikiYoHenseikiPage = ({ onNav }) => (
       <p>常に「閉路を保つ」設計で、物理的に開放させない仕組み。<strong>短絡端子の存在理由がセクション3-3・3-4の物理から導かれる</strong>のがこの設計の美しさ。</p>
 
       <h3>3-6. 二次側1端子を D種接地する理由</h3>
-      <p>VTと同じく一次高圧と二次低圧の混触対策で1端子D種接地。CTは特に開放時に高電圧スパイクが出る危険があるため、接地は二重の意味で重要（混触対策＋万一のスパイク逃がし）。</p>
+      <p>VTと同じく一次高圧と二次低圧の混触対策で二次側を接地する（<strong>高圧はD種・特別高圧はA種</strong>＝解釈第28条。セクション2-4参照）。CTは特に開放時に高電圧スパイクが出る危険があるため、接地は二重の意味で重要（混触対策＋万一のスパイク逃がし）。</p>
 
       <Box kind="formula" label="セクション3 まとめ（CT）">
         <p>一次に電流を強制 → 二次は磁気平衡で <Eq tex="I_2 \approx (N_1/N_2) I_1" /> が <strong>流れる必要</strong> → 二次は <strong>短絡OK・開放NG</strong>（深飽和→スパイク→絶縁破壊）。現場では短絡端子で常時閉路を維持。二次1端子D種接地で感電防止。</p>
@@ -5261,9 +5760,9 @@ const KeikiYoHenseikiPage = ({ onNav }) => (
         <p style={{marginTop:'8px', fontSize:'12px', color:'var(--ink-3,#888)'}}>確認ポイント：直接外すと一瞬でも二次開放状態 → セクション3-3・3-4の深飽和→スパイクが発生し絶縁破壊と感電の危険 → 短絡端子で常時閉路を維持すれば磁気平衡が崩れず Φ は直線域に留まる。物理から運用器具の設計理由が出てくる。</p>
       </Box>
 
-      <Box kind="formula" label="問5: 二次1端子D種接地の目的">
-        <p>「CT・VT どちらも二次1端子を <strong>D種接地</strong> する。<strong>両端接地ではなく1端子のみ</strong> である理由と、<strong>D種が選ばれる理由</strong> をセクション2-4・3-6から説明せよ。」</p>
-        <p style={{marginTop:'8px', fontSize:'12px', color:'var(--ink-3,#888)'}}>確認ポイント：1端子のみ＝二次回路に閉路を作らない（両端接地は地絡電流ループの危険）／D種＝低圧機器の標準（接地抵抗100Ω以下）／目的＝混触時の二次高電圧を大地電位に逃がし感電防止。</p>
+      <Box kind="formula" label="問5: 二次側接地の目的と接地種別">
+        <p>「CT・VT どちらも二次側を接地する。<strong>両端接地ではなく1端子のみ</strong> である理由と、<strong>接地種別が電圧区分でどう変わるか</strong> をセクション2-4・3-6から説明せよ。」</p>
+        <p style={{marginTop:'8px', fontSize:'12px', color:'var(--ink-3,#888)'}}>確認ポイント：1端子のみ＝二次回路に閉路を作らない（両端接地は地絡電流ループの危険）／種別＝高圧計器用変成器はD種（100Ω以下）・特別高圧計器用変成器はA種（10Ω以下）＝解釈第28条／目的＝混触時の二次高電圧を大地電位に逃がし感電防止。</p>
       </Box>
 
       <h2 id="links"><span className="h-num">7.</span>関連ページ</h2>
@@ -5405,8 +5904,8 @@ const AutoControlLayers = () => (
       <tbody>
         <tr>
           <td><strong>ミクロ</strong><br/>（なぜ）</td>
-          <td>負帰還ループが<strong>出力 y を測って目標値 r と比べ</strong>、偏差 e = r − y の分だけ操作して修正し続ける。だから外乱があっても目標に追従する（↓図解）</td>
-          <td>偏差 e = r − y・負帰還</td>
+          <td>負帰還ループが<strong>出力 y を検出部 H で測り目標値 r と比べ</strong>、偏差 e = r − Hy の分だけ操作して修正し続ける。だから外乱があっても目標に追従する（↓図解）</td>
+          <td>偏差 e = r − Hy・負帰還</td>
         </tr>
         <tr>
           <td><strong>マクロ</strong><br/>（解く）</td>
@@ -5424,7 +5923,7 @@ const AutoControlLayers = () => (
     {/* ===== ミクロ：負帰還ループの偏差修正機構 ===== */}
     <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent-ink)", margin: "16px 0 4px" }}>▼ ミクロを図で掘り下げる：なぜ負帰還は出力を目標値に追従させられるか</p>
     <figure style={{ margin: "6px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
-      <svg viewBox="0 0 470 270" role="img" aria-label="負帰還ループの偏差修正機構：①目標値rが比較器に入り②偏差e=r−yを作る③制御器と制御対象G(s)が偏差に応じて出力yを動かす④検出部Hが出力yを測って比較器へ戻す。ループが回り続けて偏差を潰し、出力が目標値に追従する機構図" style={{ display: "block", width: "100%", height: "auto", maxWidth: "470px", margin: "0 auto" }}>
+      <svg viewBox="0 0 470 270" role="img" aria-label="負帰還ループの偏差修正機構：①目標値rが比較器に入り②検出部Hが返す帰還量Hyとの差である偏差e=r−Hyを作る③制御器と制御対象G(s)が偏差に応じて出力yを動かす④検出部Hが出力yを測って比較器へ戻す。ループが回り続けて偏差を潰し、出力が目標値に追従する機構図" style={{ display: "block", width: "100%", height: "auto", maxWidth: "470px", margin: "0 auto" }}>
         <defs>
           <marker id="kac-micro-fwd" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
             <path d="M0,1 L8,4.5 L0,8 z" fill="var(--accent)" />
@@ -5440,7 +5939,7 @@ const AutoControlLayers = () => (
         <circle cx="98" cy="112" r="14" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.5" />
         <text x="82" y="103" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">＋</text>
         <text x="114" y="143" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--warn)">−</text>
-        <text x="148" y="98" textAnchor="middle" fontSize="12" fontWeight="bold" fill="var(--ink)">② 偏差 e = r − y</text>
+        <text x="150" y="98" textAnchor="middle" fontSize="12" fontWeight="bold" fill="var(--ink)">② 偏差 e = r − Hy</text>
         <line x1="112" y1="112" x2="190" y2="112" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" markerEnd="url(#kac-micro-fwd)" />
         {/* ③ 制御器＋制御対象 G(s) */}
         <rect x="196" y="84" width="128" height="56" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="2" />
@@ -5457,6 +5956,7 @@ const AutoControlLayers = () => (
         <text x="260" y="182" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--warn)">④ 検出部 H</text>
         <text x="260" y="200" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">出力 y を測って戻す</text>
         <line x1="210" y1="186" x2="98" y2="186" stroke="var(--warn)" strokeWidth="2.5" strokeLinecap="round" />
+        <text x="154" y="178" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--warn)">帰還量 Hy</text>
         <line x1="98" y1="186" x2="98" y2="132" stroke="var(--warn)" strokeWidth="2.5" strokeLinecap="round" markerEnd="url(#kac-micro-fb)" />
         {/* 結果box（2行） */}
         <rect x="30" y="222" width="410" height="40" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1" />
@@ -5466,22 +5966,111 @@ const AutoControlLayers = () => (
         </text>
       </svg>
       <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
-        ミクロ（なぜ）：負帰還は「出力 y を検出部 H で測り、比較器で目標値 r と比べ、偏差 e = r − y の分だけ G(s) が操作する」ループ。外乱で y がずれても偏差が生じて修正が働くので、y は r に追従し続ける。
+        ミクロ（なぜ）：負帰還は「出力 y を検出部 H で測り、その帰還量 Hy を目標値 r と比べ、偏差 e = r − Hy の分だけ G(s) が操作する」ループ。外乱で y がずれても偏差が生じて修正が働くので、y は r に追従し続ける。検出部が理想（H = 1・単位フィードバック）なら e = r − y になる。
       </figcaption>
     </figure>
     <div style={{ background: "var(--accent-soft)", borderRadius: "6px", padding: "12px 14px", margin: "14px 0" }}>
       <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--accent-ink)", marginBottom: 8, letterSpacing: "0.04em" }}>🔬 ミクロの因果（なぜ出力が目標値に追従するか）</div>
       <ol style={{ margin: 0, paddingLeft: 24, lineHeight: 1.9 }}>
-        <li><strong>比較器が目標値 r と戻ってきた出力を比べ</strong>、偏差 e = r − y を作る</li>
+        <li><strong>比較器が目標値 r と戻ってきた帰還量 Hy を比べ</strong>、偏差 e = r − Hy を作る（H = 1 の単位フィードバックなら e = r − y）</li>
         <li><strong>制御器＋制御対象 G(s) が偏差 e に応じて</strong>出力 y を動かす（操作）</li>
         <li><strong>検出部 H が出力 y を測って比較器へ戻す</strong>（負帰還）</li>
         <li>ループが回り続けて<strong>偏差を潰し、y が r に追従</strong>。まとめると閉ループ伝達関数 <Eq tex="\dfrac{Y}{R} = \dfrac{G}{1+GH}" /></li>
       </ol>
     </div>
     <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "0 0 4px" }}>
-      ▶ <strong>マクロ（解く）</strong>の図解は、この下の「2. ブロック線図」にある<strong>図3.1.1（単位フィードバック制御系のブロック線図）</strong>を参照。単位フィードバックは検出部 H = 1 の特別な場合。
+      ▶ <strong>マクロ（解く）</strong>の図解は、この下の「2. ブロック線図」にある<strong>図3.1.2（単位フィードバック制御系のブロック線図）</strong>を参照。単位フィードバックは検出部 H = 1 の特別な場合。
     </p>
   </>
+);
+
+/* 一次遅れ系のステップ応答（時定数 T・63%・5T の図的定義） */
+const StepResponseFig = () => (
+  <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+    <svg viewBox="0 0 480 250" role="img" aria-label="一次遅れ系のステップ応答曲線。縦軸が出力、横軸が時間。出力は指数関数的に最終値Kへ立ち上がり、時刻t=Tで最終値の約63パーセント、t=5Tでほぼ整定する。原点における接線はt=Tで最終値Kに達し、これが時定数Tの図的な定義になる" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+      {/* 軸 */}
+      <line x1="60" y1="210" x2="450" y2="210" stroke="var(--ink-soft)" strokeWidth="1.5" />
+      <line x1="60" y1="210" x2="60" y2="35" stroke="var(--ink-soft)" strokeWidth="1.5" />
+      <polygon points="450,210 442,206 442,214" fill="var(--ink-soft)" />
+      <polygon points="60,35 56,43 64,43" fill="var(--ink-soft)" />
+      <text x="456" y="214" fontSize="12" fill="var(--ink)">t</text>
+      <text x="52" y="34" fontSize="12" fill="var(--ink)" textAnchor="end">y(t)</text>
+      {/* 最終値 K の漸近線 */}
+      <line x1="60" y1="60" x2="445" y2="60" stroke="var(--rule)" strokeWidth="1.2" strokeDasharray="5 4" />
+      <text x="240" y="52" fontSize="10.5" fill="var(--ink-mute)" textAnchor="middle">最終値 K（定常値）</text>
+      {/* 原点の接線（時定数の図的定義） */}
+      <line x1="60" y1="210" x2="130" y2="60" stroke="var(--ink-mute)" strokeWidth="1.2" strokeDasharray="2 3" />
+      <text x="272" y="178" fontSize="10" fill="var(--ink-mute)" textAnchor="middle">原点での接線は t = T でちょうど K に達する（時定数の図的定義）</text>
+      {/* ステップ応答曲線 y = K(1 - e^(-t/T)) */}
+      <path d="M 60 210 L 78 177 L 95 151 L 113 131 L 130 115 L 165 94 L 200 80 L 235 72 L 270 68 L 305 65 L 340 63 L 375 62 L 440 61"
+            fill="none" stroke="var(--accent)" strokeWidth="2.6" strokeLinecap="round" />
+      {/* t = T の 63% 点 */}
+      <line x1="130" y1="210" x2="130" y2="115" stroke="var(--accent)" strokeWidth="1" strokeDasharray="4 3" />
+      <line x1="60" y1="115" x2="130" y2="115" stroke="var(--accent)" strokeWidth="1" strokeDasharray="4 3" />
+      <circle cx="130" cy="115" r="4.5" fill="var(--accent)" />
+      <text x="139" y="110" fontSize="10.5" fill="var(--accent-ink)" fontWeight="700">0.632 K（約 63 %）</text>
+      <text x="130" y="226" fontSize="11" fill="var(--ink-soft)" textAnchor="middle">T</text>
+      {/* t = 5T のほぼ整定 */}
+      <line x1="410" y1="210" x2="410" y2="61" stroke="var(--rule)" strokeWidth="1" strokeDasharray="4 3" />
+      <text x="410" y="226" fontSize="11" fill="var(--ink-soft)" textAnchor="middle">5T</text>
+      <text x="406" y="82" fontSize="10" fill="var(--ink-soft)" textAnchor="end">t = 5T で約 99.3 %（ほぼ整定）</text>
+      <text x="60" y="243" fontSize="10" fill="var(--ink-mute)" textAnchor="middle">0</text>
+      <text x="240" y="243" fontSize="10.5" fill="var(--ink-mute)" textAnchor="middle">y(t) = K ( 1 − e^(−t/T) )　　T を小さくするほど応答が速い＝速応性が高い</text>
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      図3.1.1　一次遅れ系のステップ応答。RC 回路の充電カーブと同じ形で、t = T で最終値の約63%、t = 5T でほぼ整定する。原点での接線が t = T で K に達することが時定数の図的定義。
+    </figcaption>
+  </figure>
+);
+
+/* ボード線図：ゲイン余裕・位相余裕の読み取り */
+const BodeMarginFig = () => (
+  <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+    <svg viewBox="0 0 480 330" role="img" aria-label="開ループ周波数特性のボード線図。上段がゲイン特性、下段が位相特性。ゲインがゼロデシベルを横切る周波数における位相とマイナス180度との差が位相余裕、位相がマイナス180度を横切る周波数でゲインがゼロデシベルを下回っている量がゲイン余裕。どちらも正なら安定" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+      <defs>
+        <marker id="kac-bode-arr" markerWidth="8" markerHeight="8" refX="4" refY="7" orient="auto">
+          <path d="M0,7 L4,0 L8,7 z" fill="var(--danger)" />
+        </marker>
+      </defs>
+      {/* ===== 上段：ゲイン特性 ===== */}
+      <text x="66" y="26" fontSize="11" fontWeight="700" fill="var(--ink)">ゲイン [dB]</text>
+      <line x1="66" y1="35" x2="66" y2="155" stroke="var(--ink-soft)" strokeWidth="1.4" />
+      <line x1="66" y1="155" x2="450" y2="155" stroke="var(--ink-soft)" strokeWidth="1.4" />
+      {/* 0 dB 基準線 */}
+      <line x1="66" y1="80" x2="445" y2="80" stroke="var(--rule)" strokeWidth="1.2" strokeDasharray="5 4" />
+      <text x="60" y="84" fontSize="10.5" fill="var(--ink-mute)" textAnchor="end">0 dB</text>
+      <path d="M 76 44 C 150 57, 190 70, 230 80 C 280 97, 300 108, 320 115 C 380 135, 410 145, 442 152"
+            fill="none" stroke="var(--accent)" strokeWidth="2.4" strokeLinecap="round" />
+      {/* ゲイン余裕（位相交差周波数での 0dB からの下回り量） */}
+      <line x1="320" y1="80" x2="320" y2="115" stroke="var(--danger)" strokeWidth="2" markerEnd="url(#kac-bode-arr)" />
+      <text x="330" y="103" fontSize="10.5" fontWeight="700" fill="var(--danger)">ゲイン余裕 GM</text>
+      <text x="330" y="117" fontSize="9.5" fill="var(--ink-mute)">目安 6 dB 以上</text>
+      <circle cx="230" cy="80" r="4" fill="var(--accent)" />
+      <text x="228" y="70" fontSize="10" fill="var(--accent-ink)" textAnchor="end">ゲインが 0 dB を横切る</text>
+      {/* ===== 縦の対応線 ===== */}
+      <line x1="230" y1="80" x2="230" y2="238" stroke="var(--rule)" strokeWidth="1" strokeDasharray="3 3" />
+      <line x1="320" y1="115" x2="320" y2="250" stroke="var(--rule)" strokeWidth="1" strokeDasharray="3 3" />
+      {/* ===== 下段：位相特性 ===== */}
+      <text x="66" y="188" fontSize="11" fontWeight="700" fill="var(--ink)">位相 [°]</text>
+      <line x1="66" y1="196" x2="66" y2="296" stroke="var(--ink-soft)" strokeWidth="1.4" />
+      <line x1="66" y1="296" x2="450" y2="296" stroke="var(--ink-soft)" strokeWidth="1.4" />
+      {/* −180° 基準線 */}
+      <line x1="66" y1="250" x2="445" y2="250" stroke="var(--rule)" strokeWidth="1.2" strokeDasharray="5 4" />
+      <text x="60" y="254" fontSize="10.5" fill="var(--ink-mute)" textAnchor="end">−180°</text>
+      <path d="M 76 206 C 140 212, 190 226, 230 238 C 270 245, 300 248, 320 250 C 370 258, 410 268, 442 276"
+            fill="none" stroke="var(--ok)" strokeWidth="2.4" strokeLinecap="round" />
+      {/* 位相余裕（ゲイン交差周波数での −180° までの余り） */}
+      <line x1="230" y1="250" x2="230" y2="238" stroke="var(--danger)" strokeWidth="2" markerEnd="url(#kac-bode-arr)" />
+      <text x="240" y="240" fontSize="10.5" fontWeight="700" fill="var(--danger)">位相余裕 PM（目安 30〜60°）</text>
+      <circle cx="320" cy="250" r="4" fill="var(--ok)" />
+      <text x="330" y="266" fontSize="10" fill="var(--ink-soft)">位相が −180° を横切る</text>
+      <text x="456" y="300" fontSize="11" fill="var(--ink)">ω</text>
+      <text x="240" y="320" fontSize="10.5" fill="var(--ink-mute)" textAnchor="middle">GM も PM も正であれば安定（両者が 0 に近いほど安定余裕が小さい）</text>
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      図3.1.3　開ループ周波数特性のボード線図。ゲインが 0 dB を横切る周波数で「位相が −180° までどれだけ余っているか」が位相余裕、位相が −180° を横切る周波数で「ゲインが 0 dB をどれだけ下回っているか」がゲイン余裕。
+    </figcaption>
+  </figure>
 );
 
 const AutoControlPage = ({ onNav }) => (
@@ -5504,6 +6093,8 @@ const AutoControlPage = ({ onNav }) => (
         <p>この対応を押さえると、制御の <strong>速応性＝時定数の小ささ</strong> が腑に落ちる。応答を速くしたければ T を小さくすればよく、理論で言えば RC や L/R を小さくして充放電を速める操作と同じ。</p>
         <p style={{margin:"8px 0 0"}}><a href="https://kfurufuru.github.io/secretary-portal-public/denken3-riron-wiki.html#transient" target="_blank" rel="noopener">→ 理論Wiki「過渡現象」で τ=RC・τ=L/R と 1−e^(−t/τ) の充放電カーブを深掘り</a></p>
       </Box>
+
+      <StepResponseFig />
 
       <h2 id="block"><span className="h-num">2.</span>ブロック線図</h2>
       <BlockDiagram />
@@ -5528,6 +6119,8 @@ const AutoControlPage = ({ onNav }) => (
         <p><strong>位相余裕</strong>: 開ループ GH のゲインが 0 dB となる周波数における位相 + 180°。</p>
         <p>実用上は <strong>位相余裕 30°〜60°</strong>、<strong>ゲイン余裕 6 dB 以上</strong> が目安。</p>
       </Box>
+
+      <BodeMarginFig />
 
       <h2 id="pid"><span className="h-num">4.</span>PID制御・シーケンス制御（頻出）</h2>
       <ul>
