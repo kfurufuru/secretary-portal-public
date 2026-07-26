@@ -6150,6 +6150,284 @@ const AutoControlPage = ({ onNav }) => (
   </>
 );
 
+/* 図の共通ラッパ（3層ブロック型と同じハウススタイル） */
+const FigBox = ({ viewBox, label, caption, maxW = 480, children }) => (
+  <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+    <svg viewBox={viewBox} role="img" aria-label={label} style={{ display: "block", width: "100%", height: "auto", maxWidth: maxW + "px", margin: "0 auto" }}>
+      {children}
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>{caption}</figcaption>
+  </figure>
+);
+
+/* 論理ゲートの記号（AND/OR/NOT の本体パスを共通化） */
+const GateSym = ({ cx, cy, kind, bubble, name, expr }) => {
+  const X = Number(cx), Y = Number(cy);
+  const body =
+    kind === "and" ? `M ${X - 20} ${Y - 17} L ${X - 3} ${Y - 17} A 17 17 0 0 1 ${X - 3} ${Y + 17} L ${X - 20} ${Y + 17} Z`
+    : kind === "or" ? `M ${X - 21} ${Y - 17} Q ${X - 7} ${Y} ${X - 21} ${Y + 17} Q ${X + 2} ${Y + 15} ${X + 15} ${Y} Q ${X + 2} ${Y - 15} ${X - 21} ${Y - 17} Z`
+    : `M ${X - 18} ${Y - 16} L ${X - 18} ${Y + 16} L ${X + 11} ${Y} Z`;
+  const tip = kind === "and" ? X + 14 : kind === "or" ? X + 15 : X + 11;
+  return (
+    <g>
+      <path d={body} fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.6" />
+      {kind !== "not" && <line x1={X - 34} y1={Y - 8} x2={X - 21} y2={Y - 8} stroke="var(--ink)" strokeWidth="1.4" />}
+      {kind !== "not" && <line x1={X - 34} y1={Y + 8} x2={X - 21} y2={Y + 8} stroke="var(--ink)" strokeWidth="1.4" />}
+      {kind === "not" && <line x1={X - 32} y1={Y} x2={X - 18} y2={Y} stroke="var(--ink)" strokeWidth="1.4" />}
+      {bubble && <circle cx={tip + 5} cy={Y} r="4.5" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.5" />}
+      <line x1={bubble ? tip + 10 : tip} y1={Y} x2={X + 34} y2={Y} stroke="var(--ink)" strokeWidth="1.4" />
+      <text x={X - 2} y={Y + 38} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">{name}</text>
+      <text x={X - 2} y={Y + 53} textAnchor="middle" fontSize="9.5" fill="var(--ink-soft)">{expr}</text>
+    </g>
+  );
+};
+
+/* 図3.2.1 基本論理ゲートとド・モルガンの定理 */
+const LogicGateFig = () => (
+  <FigBox viewBox="0 0 480 296"
+    label="基本論理ゲート6種の記号図。AND・OR・NOT を上段に、出力に否定の丸を付けた NAND・NOR と、排他的論理和 XOR を下段に並べ、それぞれの論理式を添えている。下部にド・モルガンの定理を示す"
+    caption="図3.2.1　基本ゲートの記号。出力側の小さな丸（バブル）が「否定」を表し、AND にバブルが付けば NAND、OR に付けば NOR になる。ド・モルガンの定理は「全体のバーを各文字に配ると、＋ と · が入れ替わる」と読むと機械的に使える。">
+    <GateSym cx="90" cy="52" kind="and" name="AND（論理積）" expr="Y = A · B" />
+    <GateSym cx="240" cy="52" kind="or" name="OR（論理和）" expr="Y = A ＋ B" />
+    <GateSym cx="390" cy="52" kind="not" bubble name="NOT（否定）" expr="Y = A のバー" />
+    <GateSym cx="90" cy="160" kind="and" bubble name="NAND" expr="Y = (A · B) のバー" />
+    <GateSym cx="240" cy="160" kind="or" bubble name="NOR" expr="Y = (A ＋ B) のバー" />
+    <g>
+      <path d="M 369 143 Q 383 160 369 177" fill="none" stroke="var(--ink)" strokeWidth="1.6" />
+      <GateSym cx="396" cy="160" kind="or" name="XOR（排他的論理和）" expr="一致で 0・不一致で 1" />
+    </g>
+    <rect x="30" y="228" width="420" height="56" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1" />
+    <text x="240" y="248" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">ド・モルガンの定理</text>
+    <text x="240" y="266" textAnchor="middle" fontSize="10.5" fill="var(--ink)">(A ＋ B) のバー ＝ (A のバー)·(B のバー)　／　(A · B) のバー ＝ (A のバー)＋(B のバー)</text>
+    <text x="240" y="280" textAnchor="middle" fontSize="9.5" fill="var(--ink-soft)">バーを各文字に配ると ＋ と · が入れ替わる</text>
+  </FigBox>
+);
+
+/* 図4.1.1 光の4量（光束・光度・照度・輝度）が測る場所 */
+const LightQuantityFig = () => (
+  <FigBox viewBox="0 0 480 258"
+    label="光の4量が測る場所を示す図。点光源から全方向へ出る総量が光束、ある向きの単位立体角あたりの光束が光度、被照面が受け取る単位面積あたりの光束が照度、その面を見た方向の明るさが輝度であることを、光源から面、目までの流れで示す"
+    caption="図4.1.1　4つの量は「どこで測るか」が違うだけ。光源が出す総量が光束 [lm]、その中である向きの単位立体角ぶんが光度 [cd]、面が受け取る単位面積あたりが照度 [lx]、そして面を見たときの明るさが輝度 [cd/m²]。">
+    <defs>
+      <marker id="klq-ray" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+        <path d="M0,1 L7,4 L0,7 z" fill="var(--warn)" />
+      </marker>
+      <marker id="klq-eye" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+        <path d="M0,1 L7,4 L0,7 z" fill="var(--ok)" />
+      </marker>
+    </defs>
+    {/* 光源と全方向放射 */}
+    {[[-150, 0], [-120, 0], [150, 0], [120, 0], [90, 0], [-90, 0], [180, 0], [0, 0]].map(([d], i) => {
+      const r = d * Math.PI / 180;
+      return <line key={"ray" + i} x1={68 + Math.cos(r) * 12} y1={128 + Math.sin(r) * 12}
+        x2={68 + Math.cos(r) * 26} y2={128 + Math.sin(r) * 26} stroke="var(--warn)" strokeWidth="1.6" opacity="0.75" />;
+    })}
+    <circle cx="68" cy="128" r="9" fill="var(--warn)" />
+    <text x="68" y="100" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--ink)">点光源</text>
+    <text x="68" y="174" textAnchor="middle" fontSize="10" fill="var(--warn)">光束 F [lm]</text>
+    <text x="68" y="188" textAnchor="middle" fontSize="9" fill="var(--ink-mute)">全方向の総量</text>
+    {/* 立体角の円錐 */}
+    <path d="M 78 128 L 296 74 L 296 182 Z" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1.4" opacity="0.9" />
+    <text x="186" y="116" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--accent-ink)">立体角 ω [sr]</text>
+    <text x="186" y="132" textAnchor="middle" fontSize="10" fill="var(--ink)">光度 I ＝ F / ω [cd]</text>
+    <text x="186" y="147" textAnchor="middle" fontSize="9" fill="var(--ink-mute)">この向きの単位立体角あたり</text>
+    {/* 被照面 */}
+    <rect x="296" y="70" width="13" height="116" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.6" />
+    <text x="302" y="62" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--ink)">被照面</text>
+    <text x="318" y="106" fontSize="10" fontWeight="700" fill="var(--accent-ink)">照度 E [lx]</text>
+    <text x="318" y="121" fontSize="9" fill="var(--ink-mute)">面が受け取る</text>
+    <text x="318" y="134" fontSize="9" fill="var(--ink-mute)">単位面積あたりの光束</text>
+    {/* 輝度：面を見る方向 */}
+    <line x1="311" y1="160" x2="396" y2="186" stroke="var(--ok)" strokeWidth="2" markerEnd="url(#klq-eye)" />
+    <ellipse cx="418" cy="192" rx="15" ry="9" fill="var(--bg)" stroke="var(--ok)" strokeWidth="1.6" />
+    <circle cx="418" cy="192" r="4" fill="var(--ok)" />
+    <text x="418" y="216" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--ok)">輝度 L [cd/m²]</text>
+    <text x="418" y="230" textAnchor="middle" fontSize="9" fill="var(--ink-mute)">見た方向の明るさ</text>
+    <text x="240" y="250" textAnchor="middle" fontSize="9.5" fill="var(--ink-mute)">光源が出す量（光束・光度）と、面が受ける量（照度）と、目が感じる量（輝度）を区別する</text>
+  </FigBox>
+);
+
+/* 図4.1.2 点光源の照度：直下と斜め点の幾何 */
+const IlluminanceGeometryFig = () => (
+  <FigBox viewBox="0 0 480 300"
+    label="点光源による床面照度の幾何図。高さhの点光源から真下の点Aまでの距離はhで垂直入射のため照度はI割るhの2乗。水平にx離れた点Pまでの斜め距離rは三平方の定理でhの2乗とxの2乗の和の平方根となり、入射角θの余弦はh割るrになる。点Pの水平面照度はI割るrの2乗にcosθを掛けた値"
+    caption="図4.1.2　斜め点 P の照度でつまずく原因は、分母に高さ h を入れてしまうこと。まず斜め距離 r を三平方の定理で出し、cosθ = h / r を掛ける。1本にまとめると E = I·h / r³ = I·h / (h²+x²)^(3/2)。">
+    <defs>
+      <marker id="kig-ray" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+        <path d="M0,1 L7,4 L0,7 z" fill="var(--warn)" />
+      </marker>
+    </defs>
+    {/* 光源 */}
+    <circle cx="150" cy="60" r="8" fill="var(--warn)" />
+    <text x="150" y="38" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--ink)">点光源　I = 1000 cd</text>
+    {/* 床 */}
+    <line x1="40" y1="200" x2="450" y2="200" stroke="var(--ink)" strokeWidth="2" />
+    <text x="440" y="192" textAnchor="end" fontSize="9.5" fill="var(--ink-mute)">床（水平面）</text>
+    {/* 光線 */}
+    <line x1="150" y1="70" x2="150" y2="196" stroke="var(--warn)" strokeWidth="2" markerEnd="url(#kig-ray)" />
+    <line x1="156" y1="66" x2="251" y2="196" stroke="var(--warn)" strokeWidth="2" markerEnd="url(#kig-ray)" />
+    {/* 高さ h の寸法線 */}
+    <line x1="112" y1="60" x2="112" y2="200" stroke="var(--ink-mute)" strokeWidth="1" strokeDasharray="4 3" />
+    <line x1="106" y1="60" x2="118" y2="60" stroke="var(--ink-mute)" strokeWidth="1" />
+    <line x1="106" y1="200" x2="118" y2="200" stroke="var(--ink-mute)" strokeWidth="1" />
+    <text x="104" y="133" textAnchor="end" fontSize="10.5" fontWeight="700" fill="var(--ink)">h = 2 m</text>
+    {/* 斜め距離 r */}
+    <text x="222" y="116" fontSize="10.5" fontWeight="700" fill="var(--danger)">r = 2.5 m</text>
+    <text x="222" y="130" fontSize="9" fill="var(--ink-mute)">（斜め距離）</text>
+    {/* 点 A・P */}
+    <circle cx="150" cy="200" r="4" fill="var(--ink)" />
+    <text x="140" y="216" textAnchor="end" fontSize="10.5" fontWeight="700" fill="var(--ink)">A</text>
+    <circle cx="255" cy="200" r="4" fill="var(--ink)" />
+    <text x="266" y="216" fontSize="10.5" fontWeight="700" fill="var(--ink)">P</text>
+    {/* 水平距離 x */}
+    <line x1="150" y1="228" x2="255" y2="228" stroke="var(--ink-mute)" strokeWidth="1" />
+    <line x1="150" y1="222" x2="150" y2="234" stroke="var(--ink-mute)" strokeWidth="1" />
+    <line x1="255" y1="222" x2="255" y2="234" stroke="var(--ink-mute)" strokeWidth="1" />
+    <text x="202" y="244" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--ink)">x = 1.5 m</text>
+    {/* 法線と入射角 θ */}
+    <line x1="255" y1="200" x2="255" y2="138" stroke="var(--ok)" strokeWidth="1.4" strokeDasharray="5 3" />
+    <text x="262" y="146" fontSize="9" fill="var(--ok)">法線</text>
+    <path d="M 255 172 A 28 28 0 0 0 238 178" fill="none" stroke="var(--danger)" strokeWidth="1.6" />
+    <text x="234" y="166" textAnchor="end" fontSize="11" fontWeight="700" fill="var(--danger)">θ</text>
+    <text x="330" y="170" fontSize="10" fill="var(--danger)">cos θ = h / r = 2 / 2.5 = 0.8</text>
+    {/* 結果 */}
+    <rect x="24" y="256" width="212" height="38" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1" />
+    <text x="130" y="272" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">直下 A（垂直入射）</text>
+    <text x="130" y="287" textAnchor="middle" fontSize="10.5" fill="var(--ink)">E = I / h² = 1000 / 4 = 250 lx</text>
+    <rect x="244" y="256" width="212" height="38" rx="6" fill="var(--warn-soft)" stroke="var(--warn)" strokeWidth="1" />
+    <text x="350" y="272" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--warn)">斜め点 P（余弦の法則）</text>
+    <text x="350" y="287" textAnchor="middle" fontSize="10.5" fill="var(--ink)">E = (I / r²) cos θ = 160 × 0.8 = 128 lx</text>
+  </FigBox>
+);
+
+/* 図4.2.1 ヒートポンプの熱の流れと COP */
+const HeatPumpFig = () => (
+  <FigBox viewBox="0 0 480 262"
+    label="ヒートポンプの熱の流れ図。低温の外気から熱Qcを汲み上げ、電力Wを投入して、高温の室内へQc足すWの熱を放出する。したがって得られる熱は投入電力より大きくCOPは1を超え、加熱COPは冷房COPに1を足した値になる"
+    caption="図4.2.1　ヒートポンプは電気で熱を「作る」のではなく、外気から「汲み上げて運ぶ」装置。室内に出る熱は汲み上げた熱 Qc に投入電力 W が上乗せされた Qc + W なので、COP は必ず 1 を超える。">
+    <defs>
+      <marker id="khp-q" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+        <path d="M0,1 L8,4.5 L0,8 z" fill="var(--accent)" />
+      </marker>
+      <marker id="khp-w" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+        <path d="M0,1 L8,4.5 L0,8 z" fill="var(--warn)" />
+      </marker>
+      <marker id="khp-h" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+        <path d="M0,1 L8,4.5 L0,8 z" fill="var(--danger)" />
+      </marker>
+    </defs>
+    {/* 低温側 */}
+    <rect x="26" y="76" width="96" height="80" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1.4" />
+    <text x="74" y="106" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">低温側</text>
+    <text x="74" y="126" textAnchor="middle" fontSize="10" fill="var(--ink)">外気・地中</text>
+    <text x="74" y="142" textAnchor="middle" fontSize="9.5" fill="var(--ink-mute)">ここから奪う</text>
+    {/* 本体 */}
+    <rect x="182" y="66" width="116" height="100" rx="8" fill="var(--bg)" stroke="var(--accent)" strokeWidth="2.2" />
+    <text x="240" y="104" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">ヒートポンプ</text>
+    <text x="240" y="124" textAnchor="middle" fontSize="9.5" fill="var(--ink-soft)">圧縮機・熱交換器</text>
+    <text x="240" y="140" textAnchor="middle" fontSize="9.5" fill="var(--ink-soft)">（冷媒サイクル）</text>
+    {/* 高温側 */}
+    <rect x="358" y="76" width="96" height="80" rx="6" fill="var(--danger-soft)" stroke="var(--danger)" strokeWidth="1.4" />
+    <text x="406" y="106" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--danger)">高温側</text>
+    <text x="406" y="126" textAnchor="middle" fontSize="10" fill="var(--ink)">室内・給湯</text>
+    <text x="406" y="142" textAnchor="middle" fontSize="9.5" fill="var(--ink-mute)">ここへ出す</text>
+    {/* 熱と仕事の矢印 */}
+    <line x1="124" y1="112" x2="178" y2="112" stroke="var(--accent)" strokeWidth="2.6" markerEnd="url(#khp-q)" />
+    <text x="151" y="102" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--accent-ink)">Qc</text>
+    <text x="151" y="132" textAnchor="middle" fontSize="9" fill="var(--ink-mute)">汲み上げる熱</text>
+    <line x1="240" y1="212" x2="240" y2="170" stroke="var(--warn)" strokeWidth="2.6" markerEnd="url(#khp-w)" />
+    <text x="252" y="196" fontSize="10" fontWeight="700" fill="var(--warn)">W（投入する電力）</text>
+    <line x1="302" y1="112" x2="354" y2="112" stroke="var(--danger)" strokeWidth="2.6" markerEnd="url(#khp-h)" />
+    <text x="328" y="102" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--danger)">Qh</text>
+    <text x="328" y="132" textAnchor="middle" fontSize="9" fill="var(--ink-mute)">Qc ＋ W</text>
+    {/* まとめ */}
+    <rect x="24" y="222" width="432" height="34" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1" />
+    <text x="240" y="238" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">加熱COP ＝ Qh / W ＝ (Qc ＋ W) / W ＝ 冷房COP ＋ 1</text>
+    <text x="240" y="252" textAnchor="middle" fontSize="9.5" fill="var(--ink-soft)">抵抗加熱は電力をそのまま熱にするだけ（COP = 1 相当）。汲み上げるから 1 を超える（実用機 3〜6）</text>
+  </FigBox>
+);
+
+/* 図4.3.1 電解槽とファラデーの法則 */
+const ElectrolysisFig = () => (
+  <FigBox viewBox="0 0 480 278"
+    label="電解槽の断面図。直流電源の正極につながる陽極と負極につながる陰極が電解液に浸かり、電流Iが流れる。液中では銅イオンが陰極へ、硫酸イオンが陽極へ移動し、陰極に銅が析出する。析出量は流れた電気量に比例する"
+    caption="図4.3.1　電気分解では、外部回路を流れた電気量 Q = I·t がそのまま「やり取りされた電子の量」になる。陰極では銅イオンが電子を受け取って金属銅として析出するので、析出量は電気量に比例する。">
+    <defs>
+      <marker id="kel-i" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+        <path d="M0,1 L8,4.5 L0,8 z" fill="var(--danger)" />
+      </marker>
+      <marker id="kel-ion" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+        <path d="M0,1 L7,4 L0,7 z" fill="var(--accent)" />
+      </marker>
+      <marker id="kel-ion2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+        <path d="M0,1 L7,4 L0,7 z" fill="var(--ok)" />
+      </marker>
+    </defs>
+    {/* 直流電源 */}
+    <text x="240" y="20" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--ink)">直流電源</text>
+    <line x1="232" y1="26" x2="232" y2="46" stroke="var(--ink)" strokeWidth="2.6" />
+    <line x1="242" y1="31" x2="242" y2="41" stroke="var(--ink)" strokeWidth="1.6" />
+    <text x="222" y="40" textAnchor="end" fontSize="11" fontWeight="700" fill="var(--danger)">＋</text>
+    <text x="252" y="40" fontSize="11" fontWeight="700" fill="var(--ink)">−</text>
+    {/* 配線 */}
+    <line x1="232" y1="36" x2="165" y2="36" stroke="var(--ink)" strokeWidth="1.6" />
+    <line x1="165" y1="36" x2="165" y2="92" stroke="var(--ink)" strokeWidth="1.6" />
+    <line x1="242" y1="36" x2="315" y2="36" stroke="var(--ink)" strokeWidth="1.6" />
+    <line x1="315" y1="36" x2="315" y2="92" stroke="var(--ink)" strokeWidth="1.6" />
+    <line x1="212" y1="36" x2="190" y2="36" stroke="var(--danger)" strokeWidth="2.4" markerEnd="url(#kel-i)" />
+    <text x="200" y="26" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--danger)">電流 I</text>
+    {/* 電解槽 */}
+    <path d="M 116 84 L 116 216 L 364 216 L 364 84" fill="none" stroke="var(--ink)" strokeWidth="2" />
+    <rect x="118" y="110" width="244" height="104" fill="var(--accent-soft)" opacity="0.55" />
+    <text x="240" y="234" textAnchor="middle" fontSize="9.5" fill="var(--ink-mute)">電解液（硫酸銅水溶液）</text>
+    {/* 電極 */}
+    <rect x="157" y="92" width="16" height="104" fill="var(--ink-mute)" stroke="var(--ink)" strokeWidth="1.4" />
+    <rect x="307" y="92" width="16" height="104" fill="var(--ink-mute)" stroke="var(--ink)" strokeWidth="1.4" />
+    <text x="165" y="252" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--danger)">陽極（＋）</text>
+    <text x="315" y="252" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--ink)">陰極（−）</text>
+    <text x="315" y="266" textAnchor="middle" fontSize="9.5" fill="var(--ok)">ここに銅が析出</text>
+    {/* イオンの移動 */}
+    <line x1="184" y1="134" x2="296" y2="134" stroke="var(--accent)" strokeWidth="2" markerEnd="url(#kel-ion)" />
+    <text x="240" y="126" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--accent-ink)">銅イオン → 陰極へ</text>
+    <line x1="296" y1="176" x2="184" y2="176" stroke="var(--ok)" strokeWidth="2" markerEnd="url(#kel-ion2)" />
+    <text x="240" y="194" textAnchor="middle" fontSize="10" fill="var(--ok)">硫酸イオン → 陽極へ</text>
+    {/* 析出 */}
+    {[118, 144, 170].map((y, i) => (
+      <circle key={"dep" + i} cx="302" cy={y} r="4" fill="var(--ok)" />
+    ))}
+  </FigBox>
+);
+
+/* 図4.4.1 負荷の特性分類（トルク-回転速度平面） */
+const LoadTypeFig = () => (
+  <FigBox viewBox="0 0 480 296"
+    label="トルクと回転速度の平面に3種類の負荷特性を重ねた図。定トルク負荷は回転速度によらず一定の水平線、二乗低減トルク負荷は回転速度の2乗に比例する上向きの放物線、定出力負荷は回転速度に反比例する双曲線になる"
+    caption="図4.4.1　負荷の種類は「回転速度を変えたときトルクがどう動くか」で分かれる。ポンプ・送風機の T ∝ N² は軸動力が N³ で効くため、回転速度を少し落とすだけで動力が大きく減る（インバータ省エネの根拠）。">
+    {/* 軸 */}
+    <line x1="60" y1="220" x2="446" y2="220" stroke="var(--ink-soft)" strokeWidth="1.5" />
+    <line x1="60" y1="220" x2="60" y2="34" stroke="var(--ink-soft)" strokeWidth="1.5" />
+    <polygon points="446,220 438,216 438,224" fill="var(--ink-soft)" />
+    <polygon points="60,34 56,42 64,42" fill="var(--ink-soft)" />
+    <text x="452" y="224" fontSize="11" fill="var(--ink)">N</text>
+    <text x="52" y="34" textAnchor="end" fontSize="11" fill="var(--ink)">T</text>
+    <text x="250" y="240" textAnchor="middle" fontSize="9.5" fill="var(--ink-mute)">回転速度 N →</text>
+    <text x="30" y="130" textAnchor="middle" fontSize="9.5" fill="var(--ink-mute)">トルク T</text>
+    {/* 定トルク */}
+    <line x1="70" y1="120" x2="424" y2="120" stroke="var(--accent)" strokeWidth="2.6" />
+    <text x="424" y="112" textAnchor="end" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">定トルク負荷（クレーン・エレベータ）</text>
+    {/* 二乗低減トルク T ∝ N^2 */}
+    <path d="M 60 220 L 150 210 L 240 180 L 330 130 L 424 62" fill="none" stroke="var(--ok)" strokeWidth="2.6" strokeLinejoin="round" />
+    <text x="196" y="204" fontSize="10.5" fontWeight="700" fill="var(--ok)">二乗低減トルク負荷（ポンプ・送風機） T ∝ N²</text>
+    {/* 定出力 T ∝ 1/N */}
+    <path d="M 150 62 L 180 100 L 240 140 L 300 160 L 360 172 L 424 180" fill="none" stroke="var(--danger)" strokeWidth="2.6" strokeLinejoin="round" />
+    <text x="164" y="52" fontSize="10.5" fontWeight="700" fill="var(--danger)">定出力負荷（巻取機） T ∝ 1 / N</text>
+    {/* まとめ */}
+    <rect x="24" y="252" width="432" height="40" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1" />
+    <text x="240" y="269" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">ポンプ・送風機：軸動力 P ＝ T·ω ∝ N³　→　回転速度を落とすと動力は3乗で減る</text>
+    <text x="240" y="283" textAnchor="middle" fontSize="9" fill="var(--ink-soft)">（遠心形を相似運転した場合の関係。静水頭の大きい系や弁で絞る運転では、このとおりにならない）</text>
+  </FigBox>
+);
+
 const StubPage = ({ id, title, eyebrow, deck, freq, sections, onNav, prev, next }) => (
   <>
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: title }]} onNav={onNav} />
@@ -6180,13 +6458,17 @@ const InfoElecPage = ({ onNav }) => (
         <Box kind="formula" label="覚えるべき恒等式">
           <p><Eq tex="A + AB = A,\quad A + \bar A B = A + B,\quad A(A+B)=A" /></p>
         </Box>
+        <LogicGateFig />
       </>},
       { id: "flipflop", heading: "順序回路（フリップフロップ）", body: <>
         <ul>
-          <li><strong>RS-FF</strong> — R=1,S=1 は禁止入力</li>
-          <li><strong>D-FF</strong> — クロック立上りで D 入力を保持</li>
-          <li><strong>JK-FF</strong> — J=K=1 で反転動作</li>
+          <li><strong>RS-FF</strong> — 基本形（NOR 形・正論理入力）では <span className="marker">R=1, S=1 が禁止入力</span>（両出力が同じ値になり、次の状態が決まらない）</li>
+          <li><strong>D-FF</strong> — クロックのエッジで D 入力を取り込んで保持する。<strong>立上りか立下りかは素子で決まる</strong>（記号のクロック端子に丸が付いていれば立下り）</li>
+          <li><strong>JK-FF</strong> — J=K=1 で反転動作。<strong>禁止入力がない</strong>のが RS-FF との違い</li>
         </ul>
+        <Box kind="mistake" label="禁止入力は「形」で変わる">
+          <p>「RS-FF の禁止入力は R=S=1」は <strong>NOR 形（正論理入力）の場合</strong>。<span className="marker">NAND 形（負論理入力）では両入力を 0 にしたときが禁止</span>になる。問題文の回路がどちらの形かを見てから答える。</p>
+        </Box>
       </>},
       { id: "adda", heading: "A/D・D/A 変換", body: <p>分解能 n ビットのA/D変換器は <Eq tex="2^n" /> 段階で量子化する。逐次比較形・並列比較形・積分形が主要方式。</p> },
       { id: "radix", heading: "基数変換（2進・10進・16進）", body: <>
@@ -6227,6 +6509,7 @@ const LightingPage = ({ onNav }) => (
             </tbody>
           </table>
         </div>
+        <LightQuantityFig />
       </>},
       { id: "laws", heading: "計算法則", body: <>
         <FormulaCard num="00" name="球光源の全光束" eq="F = 4\pi I" note="均等放射の点光源。全立体角 4π [sr] × 光度 I。" />
@@ -6239,6 +6522,7 @@ const LightingPage = ({ onNav }) => (
         </Box>
         <FormulaCard num="03" name="平均照度（屋内照明）" eq="E = \dfrac{F \cdot N \cdot U \cdot M}{A}"
           note="N:灯具数, U:照明率, M:保守率, A:被照面積" />
+        <IlluminanceGeometryFig />
         <Box kind="example" label="例題 — 点光源の直下照度と斜め点の水平面照度">
           <p>光度 <Eq tex="I = 1000\;\mathrm{cd}" /> の点光源が床からの高さ <Eq tex="h = 2\;\mathrm{m}" /> にある。(a) 光源直下の床の照度、(b) 直下から水平に <Eq tex="x = 1.5\;\mathrm{m}" /> 離れた床点 P の水平面照度を求めよ。</p>
           <p><strong>(a) 直下</strong>：距離は <Eq tex="r = h = 2\;\mathrm{m}" /> で光は床に垂直入射。逆二乗の法則そのまま。</p>
@@ -6284,11 +6568,12 @@ const HeatPage = ({ onNav }) => (
         <li><strong>アーク加熱</strong> — 電極間アーク（製鋼）</li>
         <li><strong>誘導加熱</strong> — 渦電流による加熱（IH調理器・焼入れ）</li>
         <li><strong>誘電加熱</strong> — 高周波で誘電損失を利用（プラスチック溶接）</li>
-        <li><strong>マイクロ波加熱</strong> — 数 GHz で水分子を励起（電子レンジ）</li>
+        <li><strong>マイクロ波加熱</strong> — 誘電加熱の一種。数 GHz の交番電界で<strong>水分子（双極子）の向きが振られ、追従しきれないぶんが誘電損失として発熱</strong>する（電子レンジ）。<span className="marker">分子の共鳴を起こしているのではない</span></li>
       </ul>},
       { id: "heatpump", heading: "ヒートポンプとCOP（成績係数）", body: <>
         <FormulaCard num="03" name="成績係数（COP）" eq="\mathrm{COP} = \dfrac{Q}{W}"
           note="Q: 得られる熱量, W: 入力電力量。外気から熱を汲み上げるため COP は 1 を超える（実用機で 3〜6 程度）" />
+        <HeatPumpFig />
         <p>ヒートポンプは電力で熱を<strong>作る</strong>のではなく<strong>汲み上げて運ぶ</strong>装置。だから入力電力以上の熱が得られ、抵抗加熱（COP=1相当）より高効率。<strong>加熱COP = 冷房COP + 1</strong>（Q_加熱 = Q_冷房 + W より。<strong>同一サイクル・同一運転状態で成り立つ関係</strong>で、別条件で測定した市販機の定格暖房COPと定格冷房COPを直接結ぶ式ではない）も頻出。</p>
       </>},
       { id: "quick-review", heading: "1分復習（即答チェック）", body: <>
@@ -6311,7 +6596,8 @@ const ChemPage = ({ onNav }) => (
     sections={[
       { id: "faraday", heading: "ファラデーの法則", body: <>
         <FormulaCard num="01" name="析出量" eq="W = \dfrac{M \cdot I \cdot t}{n \cdot F}"
-          note="M:原子量, n:価数, F:ファラデー定数 (96500 C/mol)" />
+          note="M:原子量, n:価数, F:ファラデー定数 (96500 C/mol)。流れた電流が全て目的の反応に使われる（電流効率100%）とした式で、試験問題は原則この前提。実際の電解では水素発生などの副反応があり析出量はこれより少なくなる。" />
+        <ElectrolysisFig />
         <Box kind="example" label="理解を深める — 析出量の I·t は直流回路の電気量 Q=It そのもの">
           <p>ファラデーの法則 <Eq tex="W = \dfrac{M \cdot I \cdot t}{n \cdot F}" /> に現れる <Eq tex="I \cdot t" /> は、理論の直流回路で学ぶ <strong>電気量</strong> <Eq tex="Q = I t" />（電流×時間、単位クーロン C）そのもの。つまり析出量は流れた電気量 <Eq tex="Q" /> に比例する <Eq tex="W \propto Q" />。分母の <Eq tex="n \cdot F" /> は「物質1molを析出させるのに必要な電気量」で、ファラデー定数 <Eq tex="F = 96500" /> C/mol は電子1molが運ぶ電荷（アボガドロ数 × 電気素量 <Eq tex="e" />）に等しい。だから <Eq tex="\dfrac{I t}{n F}" /> は「流れた電子のmol数 ÷ 価数」＝析出する物質のmol数。電気分解は直流回路を流れる電荷を電子のやり取りに翻訳しただけで、両者は同じ <Eq tex="Q = I t" /> で結ばれている。</p>
           <p style={{margin:"8px 0 0"}}><a href="https://kfurufuru.github.io/secretary-portal-public/denken3-riron-wiki.html#dc-circuit" target="_blank" rel="noopener">→ 理論Wiki「2.1 直流回路」で電気量 Q=It と電流の定義を深掘り</a></p>
@@ -6358,11 +6644,17 @@ const DriveMechPage = ({ onNav }) => (
           <p style={{margin:"8px 0 0"}}>⚠️ 効率 <Eq tex="\eta" /> は<strong>分母</strong>。所要入力＝有効出力 ÷ 効率で、入力は出力より<strong>大きく</strong>なる。<Eq tex="\times\eta" /> と取り違えて 1568 W にしない。ポンプ <Eq tex="P=\dfrac{\rho g Q H}{\eta}" />・送風機 <Eq tex="P=\dfrac{Q\,\Delta p}{\eta}" /> も同じく <Eq tex="\eta" /> は分母。</p>
         </Box>
       </>},
-      { id: "load-types", heading: "負荷の特性分類", body: <ul>
-        <li><strong>定トルク負荷</strong> — クレーン・エレベータ</li>
-        <li><strong>二乗低減トルク負荷</strong> — ポンプ・送風機（T ∝ N²）</li>
-        <li><strong>定出力負荷</strong> — 巻取機（張力一定）</li>
-      </ul>},
+      { id: "load-types", heading: "負荷の特性分類", body: <>
+        <ul>
+          <li><strong>定トルク負荷</strong> — クレーン・エレベータ（回転速度によらずトルクが一定）</li>
+          <li><strong>二乗低減トルク負荷</strong> — ポンプ・送風機（T ∝ N²・軸動力は N³ で効く）</li>
+          <li><strong>定出力負荷</strong> — 巻取機（張力一定・T ∝ 1/N）</li>
+        </ul>
+        <LoadTypeFig />
+        <Box kind="warn" label="T ∝ N² が成り立つ条件">
+          <p>ポンプ・送風機の <Eq tex="T \propto N^2" />・<Eq tex="P \propto N^3" /> は、<strong>遠心形を相似な状態で運転したとき</strong>に成り立つ相似則（比例則）。<span className="marker">静水頭（持ち上げる高さ）が大きい系や、弁で絞って流量を変える運転では全域では成り立たない</span>。試験では「回転速度制御のポンプ・送風機」を前提に使ってよい。</p>
+        </Box>
+      </>},
       { id: "flywheel", heading: "はずみ車効果（理論のエネルギー貯蔵とのつながり）", body: <>
         <Box kind="example" label="理解を深める — はずみ車のエネルギー ½Jω² はコイル ½LI²・コンデンサ ½CV² と同型">
           <p>はずみ車（フライホイール）は回転体の<strong>慣性</strong>で運動エネルギー <Eq tex="W=\dfrac{1}{2}J\omega^2" />（<Eq tex="J" />:慣性モーメント、<Eq tex="\omega" />:角速度）を貯え、負荷変動時にこれを出し入れして<strong>速度変動を平滑化</strong>する（プレス機・圧延機など）。この「エネルギーを貯えて急変を緩和する」働きは、理論で学ぶ素子と同型である。</p>
