@@ -3514,15 +3514,18 @@ const TransformerPage = ({ onNav }) => (
 
       <Box kind="tip" label="まず覚える結論（3つ）">
         <ul style={{ margin: 0, paddingLeft: 22 }}>
-          <li><strong>通常効率は kW、全日効率は kWh</strong>。全日効率では出力・鉄損・銅損を <span className="marker">すべて電力量 [kWh] に直してから</span> 分母に入れる。通常効率の答えに時間を掛けても全日効率にはならない。</li>
+          <li><strong>通常効率は電力 [kW] の比、全日効率は電力量 [kWh] の比</strong>（効率そのものは無次元で [%] 表示）。全日効率では出力・鉄損・銅損を <span className="marker">すべて電力量 [kWh] に直してから</span> 分母に入れる。通常効率の答えに時間を掛けても全日効率にはならない。</li>
           <li><strong>出力は「kV·A × 力率 × 時間」、鉄損は「一定 × 通電時間」、銅損は「全負荷銅損 × 負荷率² × 時間」</strong>。この3つを別々に積算してから割り算する。</li>
-          <li><strong>力率は出力 kWh に使い、負荷率は kV·A で取る</strong>（銅損を決めるのは巻線電流＝kV·A）。<span className="marker">負荷率に力率を掛けるのは誤り</span>。</li>
+          <li><strong>力率は出力 kWh に使い、負荷率は kV·A で取る</strong>（銅損を決めるのは巻線電流で、定格電圧ならその電流が kV·A に比例する）。<span className="marker">kV·A で与えられた負荷率に力率を掛けるのは誤り</span>。ただし<strong>負荷が kW で与えられたら先に <Eq tex="S = P/\cos\phi" /> で kV·A へ換算</strong>する（掛けるのでなく割る）。</li>
         </ul>
         <p style={{ margin: "8px 0 0", fontSize: 13 }}>本セクションでは力率角を <Eq tex="\phi" /> と書く（同じ量をセクション2の電圧変動率では <Eq tex="\theta" /> と表記している）。</p>
       </Box>
 
       <h3 id="loss-iron-copper">鉄損と銅損 — どこで・いつ発生するか</h3>
-      <p>変圧器の損失は <strong>無負荷損（鉄損 <Eq tex="P_i" />）</strong> と <strong>負荷損（銅損 <Eq tex="P_c" />）</strong> に大別される。全日効率で効くのは大きさより「<span className="marker">いつ発生しているか</span>」の違い。</p>
+      <p>変圧器の損失は <strong>無負荷損</strong> と <strong>負荷損</strong> に大別される。全日効率で効くのは大きさより「<span className="marker">いつ発生しているか</span>」の違い。</p>
+      <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+        なお <strong>無負荷損 ＝ 鉄損、負荷損 ＝ 銅損 は厳密には近似</strong>。無負荷損には鉄損のほか誘電体損や励磁電流による巻線抵抗損が、負荷損には抵抗損のほか漂遊負荷損が含まれる。三種の計算では<span className="marker">無負荷損を鉄損 <Eq tex="P_i" />、負荷損を銅損 <Eq tex="P_c" /> で代表させる</span>のが前提。以下この前提で書く。
+      </p>
 
       <div className="table-wrap"><table className="data-table">
         <thead><tr><th>項目</th><th>鉄損 <Eq tex="P_i" /></th><th>銅損 <Eq tex="P_c" /></th></tr></thead>
@@ -3544,12 +3547,12 @@ const TransformerPage = ({ onNav }) => (
       </Box>
 
       <Fold label="鉄損の内訳と、電圧・周波数への依存性" sub="主線ではないが論説で問われる（補足を開く）">
-        <p>鉄損は次の2つの和で、どちらも磁束密度の最大値 <Eq tex="B_m" /> で決まる。<Eq tex="E = 4.44 f N B_m A" /> から <Eq tex="B_m \propto V/f" /> なので、電圧と周波数の効き方が違う。</p>
+        <p>鉄損は主に次の2つからなり、いずれも磁束密度の最大値 <Eq tex="B_m" /> に依存するが、<strong>周波数・材料・鉄心条件（板厚）への依存の仕方は互いに異なる</strong>。<Eq tex="E = 4.44 f N B_m A" /> から <Eq tex="B_m \propto V/f" /> なので、電圧と周波数の効き方も違ってくる。</p>
         <ul>
-          <li><strong>ヒステリシス損</strong> <Eq tex="P_h \propto f B_m^{1.6\sim2}" />（鉄心の磁化・消磁のたびに履歴面積分のエネルギーが失われる）→ 周波数一定なら <Eq tex="P_h \propto V^{1.6\sim2}" /></li>
-          <li><strong>渦電流損</strong> <Eq tex="P_e \propto f^2 B_m^2 t^2" />（<Eq tex="t" />: 鋼板の厚さ）→ <Eq tex="B_m \propto V/f" /> を代入すると <Eq tex="P_e \propto V^2" /> となり<strong>周波数に依存しない</strong>。成層鉄心（薄い鋼板を積層）で <Eq tex="t" /> を小さくするのはここを減らすため</li>
+          <li><strong>ヒステリシス損</strong> <Eq tex="P_h \propto f B_m^{\,n}" />（鉄心の磁化・消磁のたびに履歴面積分のエネルギーが失われる）→ 周波数一定なら <Eq tex="P_h \propto V^{\,n}" />。<strong>Steinmetz 指数 <Eq tex="n" /> は材料・動作範囲による経験値でおおむね 1.6〜2</strong>（普遍の固定値ではない）。<span className="marker">問題文で指数や比例関係が指定されていれば、必ずその指定を優先する</span></li>
+          <li><strong>渦電流損</strong> <Eq tex="P_e \propto f^2 B_m^2 t^2" />（<Eq tex="t" />: 鋼板の厚さ）→ 正弦波・鉄心条件一定・<Eq tex="V \simeq E" /> の古典的近似で <Eq tex="B_m \propto V/f" /> を代入し<strong>印加電圧 <Eq tex="V" /> の関数として表すと</strong> <Eq tex="P_e \propto V^2" /> となり、式上の <Eq tex="f" /> が相殺される。<span className="marker">無条件に「周波数に依存しない」のではない</span>（<Eq tex="B_m" /> を一定に保つ条件なら <Eq tex="P_e \propto f^2" />）。成層鉄心（薄い鋼板を積層）で <Eq tex="t" /> を小さくするのはここを減らすため</li>
         </ul>
-        <p>したがって「鉄損は電圧の2乗に比例」は、<strong>周波数一定のもとで、ヒステリシス損の指数も2とみなした近似</strong>。三種の全日効率問題では電圧・周波数は定格一定なので、結局「一定値」として扱えばよい。</p>
+        <p>したがって「鉄損は電圧の2乗に比例」は、<strong>周波数一定のもとで、ヒステリシス損の指数 <Eq tex="n" /> も 2 とみなした近似</strong>。三種の全日効率問題では電圧・周波数は定格一定なので、結局「一定値」として扱えばよい。</p>
       </Fold>
 
       <h4>なぜ銅損は負荷率の2乗になるのか</h4>
@@ -3569,16 +3572,24 @@ const TransformerPage = ({ onNav }) => (
       </Box>
 
       <h4>負荷率は原則 kV·A 基準（力率を掛けない）</h4>
-      <Eq display tex="x = \frac{\text{負荷の皮相電力}\;[\mathrm{kV\cdot A}]}{\text{定格容量}\;[\mathrm{kV\cdot A}]} \qquad(\text{誤り}:\; x = \tfrac{S\cos\phi}{S_N})" />
-      <p>巻線の発熱を決めるのは<strong>電流</strong>であり、三相では <Eq tex="I = S/(\sqrt{3}V)" />。電圧が一定なら電流は kV·A に比例するので、負荷率は kV·A どうしの比で取る。力率を掛けてしまうと、同じ電流でも力率が低い時間帯の銅損を過小評価する。</p>
-      <Box kind="formula" label="覚え方">
-        <p style={{ margin: 0, fontSize: 15 }}><strong>力率は出力 kWh に使う。kV·A 負荷率は銅損に使う。</strong></p>
+      <p>負荷率の<strong>本質は電流比</strong> <Eq tex="x = I/I_N" />。定格電圧・平衡負荷という通常の条件では、電流は皮相電力に比例するので kV·A どうしの比で取れる。</p>
+      <Eq display tex="x = \frac{I}{I_N} = \frac{\text{負荷の皮相電力}\;[\mathrm{kV\cdot A}]}{\text{定格容量}\;[\mathrm{kV\cdot A}]} = \frac{S}{S_N} \qquad(\text{誤り}:\; x = \tfrac{S\cos\phi}{S_N})" />
+      <p>巻線の発熱を決めるのは<strong>電流</strong>であり、三相では <Eq tex="I = S/(\sqrt{3}V)" />。電圧が一定なら電流は kV·A に比例するので、負荷率は kV·A どうしの比で取る。<strong>kV·A で与えられた負荷</strong>に力率を掛けてしまうと、同じ電流でも力率が低い時間帯の銅損を過小評価する。</p>
+
+      <Box kind="warn" label="負荷が kW で与えられたときは、先に kV·A へ直す">
+        <p style={{ margin: 0 }}>「力率を掛けない」は <strong>負荷が kV·A（皮相電力）で与えられている場合</strong>の話。問題文が <strong>kW（有効電力）</strong> で与えてきたら、まず <Eq tex="S = P/\cos\phi" /> で皮相電力に換算してから <Eq tex="x = S/S_N" /> とする。</p>
+        <Eq display tex="x = \frac{S}{S_N} = \frac{P}{S_N \cos\phi} \qquad(P\;[\mathrm{kW}]\;\text{で与えられたとき})" />
+        <p style={{ margin: "6px 0 0" }}>例: 定格 100 kV·A の変圧器に「40 kW・力率 0.8」の負荷 → <Eq tex="S = 40/0.8 = 50" /> kV·A、<Eq tex="x = 0.5" />（<span className="marker"><Eq tex="40/100 = 0.4" /> としない</span>）。<strong>掛けるのではなく割る</strong>のがポイント。</p>
       </Box>
 
-      <h3 id="loss-normal">通常効率 — ある負荷状態を kW で評価する</h3>
-      <p>ある負荷率 <Eq tex="x" />・力率 <Eq tex="\cos\phi" /> で運転しているときの効率。<strong>すべて電力 [kW] のまま</strong>扱う。</p>
-      <FormulaCard num="06 / 09" name="通常効率（規約効率）" eq="\eta = \dfrac{P_{\mathrm{out}}}{P_{\mathrm{out}} + P_i + x^2 P_{cN}} \times 100\;[\%]"
-        note={<>出力 <Eq tex="P_{\mathrm{out}} = x S_N \cos\phi\;[\mathrm{kW}]" />。分母は「出力＋鉄損＋銅損」＝入力。</>} />
+      <Box kind="formula" label="覚え方">
+        <p style={{ margin: 0, fontSize: 15 }}><strong>力率は出力 kWh に使う。kV·A 負荷率は銅損に使う。</strong>（kW 与件なら、まず力率で<strong>割って</strong> kV·A にする）</p>
+      </Box>
+
+      <h3 id="loss-normal">通常効率 — ある運転点を kW で評価する</h3>
+      <p>ある負荷率 <Eq tex="x" />・力率 <Eq tex="\cos\phi" /> の定常的な運転点における効率。<strong>すべて電力 [kW] のまま</strong>扱う。</p>
+      <FormulaCard num="06 / 09" name="通常効率（損失から算定する規約効率）" eq="\eta = \dfrac{P_{\mathrm{out}}}{P_{\mathrm{out}} + P_i + x^2 P_{cN}} \times 100\;[\%]"
+        note={<>出力 <Eq tex="P_{\mathrm{out}} = x S_N \cos\phi\;[\mathrm{kW}]" />。分母は「出力＋鉄損＋銅損」＝入力。<strong>規約効率</strong>とは入力と出力を直接実測する<strong>実測効率</strong>に対し、別に求めた損失からこの式で算出する効率のこと（<span className="marker">「ある負荷状態の効率」という意味ではなく、算出方法を指す用語</span>）。</>} />
 
       <h3 id="loss-daily">全日効率とは — 1日を kWh で評価する</h3>
       <p>配電用変圧器のように<strong>負荷が時間帯で大きく変わる</strong>設備では、ある一点の効率では実力を表せない。そこで日負荷曲線をもとに <strong>1日分の電力量 [kWh]</strong> で評価するのが全日効率。</p>
@@ -3588,8 +3599,8 @@ const TransformerPage = ({ onNav }) => (
       <div className="table-wrap"><table className="data-table">
         <thead><tr><th>比較項目</th><th>通常効率</th><th>全日効率</th></tr></thead>
         <tbody>
-          <tr><td>評価対象</td><td>ある瞬間・ある負荷状態</td><td>1日全体</td></tr>
-          <tr><td>使用単位</td><td><strong>kW</strong></td><td><strong>kWh</strong></td></tr>
+          <tr><td>評価対象</td><td>ある定常運転点</td><td>1日全体</td></tr>
+          <tr><td>計算に用いる量</td><td>電力 <strong>[kW]</strong></td><td>電力量 <strong>[kWh]</strong></td></tr>
           <tr><td>鉄損</td><td>その時点の損失 <Eq tex="P_i" /></td><td>通電時間分を積算 <Eq tex="P_i T_{\mathrm{on}}" /></td></tr>
           <tr><td>銅損</td><td>その負荷率での損失 <Eq tex="x^2 P_{cN}" /></td><td>各時間帯を積算 <Eq tex="P_{cN}\sum x_k^2 t_k" /></td></tr>
           <tr><td>主な対象</td><td>電力用変圧器など</td><td><strong>配電用変圧器</strong>など</td></tr>
@@ -3723,7 +3734,7 @@ const TransformerPage = ({ onNav }) => (
       </Box>
 
       <h3 id="loss-sim">全日効率シミュレータ（数字を動かして確かめる）</h3>
-      <p>上の例題の条件が初期値。<strong>負荷率を半分にしても銅損は 1/4 にしかならない</strong>こと、<strong>通電時間を減らすと鉄損電力量だけが減る</strong>ことを、数値で確かめてほしい。</p>
+      <p>上の例題の条件が初期値。<strong>負荷率を半分にしても銅損は 1/4 にしかならない</strong>こと、<strong>負荷時間帯はそのままで通電時間だけを減らす（無負荷通電の時間を電源切離しに変える）と鉄損電力量だけが減る</strong>ことを、数値で確かめてほしい。負荷のある時間まで削れば、当然そのぶん出力電力量と銅損電力量も減る。</p>
       <TransformerDailyEfficiencySimulator />
 
       <h3 id="loss-mistakes">頻出ミス</h3>
@@ -3735,7 +3746,8 @@ const TransformerPage = ({ onNav }) => (
           <tr><td>銅損を負荷率に比例させる</td><td><strong>負荷率の2乗</strong>に比例（50% 負荷なら 25%）</td></tr>
           <tr><td>無負荷時間の鉄損を 0 にする</td><td>通電しているなら<strong>鉄損は発生</strong>する</td></tr>
           <tr><td>無負荷時間に全負荷銅損を入れる</td><td>三種の計算では<strong>無負荷時の銅損はほぼ 0</strong>（励磁電流による微小な銅損は無視する前提）</td></tr>
-          <tr><td>負荷率に力率を掛ける</td><td>原則 <strong>kV·A ÷ 定格 kV·A</strong>（銅損は電流で決まる）</td></tr>
+          <tr><td>kV·A の負荷率に力率を掛ける</td><td><strong>kV·A ÷ 定格 kV·A</strong>（銅損は電流で決まる）</td></tr>
+          <tr><td>kW で与えられた負荷をそのまま定格 kV·A で割る</td><td>先に <Eq tex="S = P/\cos\phi" /> で kV·A へ<strong>換算</strong>してから割る（掛けるのでなく割る）</td></tr>
           <tr><td>全負荷銅損をそのまま使う</td><td>その時間帯の実銅損は <Eq tex="x^2 P_{cN}" /></td></tr>
           <tr><td>通電時間を 24 時間と決めつける</td><td>問題文の<strong>実際の通電時間</strong>を確認する（「12時間だけ接続」なら 12）</td></tr>
         </tbody>
@@ -3746,7 +3758,10 @@ const TransformerPage = ({ onNav }) => (
 
       <Fold label="等価負荷率 — 複数の時間帯を1つにまとめる" sub="主線を理解した後の補足（開く）">
         <p>銅損電力量だけを見れば、変動する負荷を「ある一定の負荷率 <Eq tex="x_e" /> で <Eq tex="T" /> 時間運転した」と置き換えられる。これが<strong>等価負荷率</strong>。</p>
-        <Eq display tex="x_e = \sqrt{\frac{\sum_k x_k^2 t_k}{T}} \qquad\Longrightarrow\qquad W_c = P_{cN}\, x_e^2\, T" />
+        <Eq display tex="x_e = \sqrt{\frac{\sum_k x_k^2 t_k}{T}}, \quad T = \sum_k t_k \qquad\Longrightarrow\qquad W_c = P_{cN}\, x_e^2\, T" />
+        <Box kind="warn" label="T の取り方を必ず分子とそろえる">
+          <p style={{ margin: 0 }}><Eq tex="T" /> は<strong>等価化する評価期間</strong>で、<span className="marker">分子の時間区分の合計 <Eq tex="\textstyle\sum_k t_k" /> と必ず一致させる</span>。1日を等価化するなら、無負荷や電源切離しの時間も <Eq tex="x_k = 0" /> の区間として数え、<Eq tex="T = 24" /> h に含める。<strong>含める区間を変えると <Eq tex="x_e" /> の値が変わる</strong>ので、<Eq tex="W_c = P_{cN}x_e^2T" /> が元の <Eq tex="P_{cN}\sum x_k^2 t_k" /> と一致するのは分子と分母をそろえたときだけ。</p>
+        </Box>
         <p>定義から分かるとおり、これは<strong>単純平均ではなく二乗平均平方根（RMS）</strong>。銅損が負荷率の2乗で効くので、2乗して平均してから平方根を取る必要がある。</p>
         <p><strong>例:</strong> 100% 負荷で12時間、無負荷で12時間（<Eq tex="T = 24" />）のとき</p>
         <Eq display tex="x_e = \sqrt{\frac{1^2 \times 12 + 0^2 \times 12}{24}} = \sqrt{0.5} \approx 0.707" />
@@ -3756,11 +3771,12 @@ const TransformerPage = ({ onNav }) => (
       <h3 id="loss-maxeff">最高効率の条件との橋渡し</h3>
       <p><strong>通常効率</strong>が最大になるのは、負荷とともに増える銅損が、一定の鉄損に追いついたとき。</p>
       <FormulaCard num="09 / 09" name="最高効率の条件（通常効率）" eq="P_i = P_c = x^2 P_{cN} \quad(\text{鉄損 = 銅損})"
-        note={<>これを満たす負荷率は <Eq tex="x = \sqrt{P_i / P_{cN}}" />。配電用変圧器は軽負荷の時間が長いので、<strong>全負荷より低い負荷率</strong>で効率が最大になるよう設計されることが多い。</>} />
+        note={<><strong>電圧・周波数・力率 <Eq tex="\cos\phi" />・巻線抵抗を一定として負荷率 <Eq tex="x" /> だけを変えたとき</strong>の条件（力率が <Eq tex="x" /> とともに変わる場合は出力が <Eq tex="x" /> に比例しないので一般には成り立たない）。これを満たす負荷率は <Eq tex="x = \sqrt{P_i / P_{cN}}" />。配電用変圧器は軽負荷の時間が長いので、<strong>全負荷より低い負荷率</strong>で効率が最大になるよう設計されることが多い。</>} />
 
       <Box kind="warn" label="全日効率にそのまま当てはめない">
         <p style={{ margin: 0 }}>「全日効率が最大 ＝ 鉄損電力量 ＝ 銅損電力量」と<strong>無条件に断定してはいけない</strong>。負荷の形（日負荷曲線）が変われば最適点も変わるからである。限定つきなら次のように言える。</p>
-        <p style={{ margin: "8px 0 0" }}><span className="marker">同じ負荷パターンを一定倍率で拡大・縮小して全日効率の最大条件を考える場合に限り、1日の鉄損電力量と1日の銅損電力量が等しくなる点が対応する。</span></p>
+        <p style={{ margin: "8px 0 0" }}><span className="marker">同じ負荷パターンを一定倍率で拡大・縮小して全日効率の最大条件を考える場合には、1日の鉄損電力量と1日の銅損電力量が等しくなる点が対応する。</span></p>
+        <p style={{ margin: "8px 0 0", fontSize: 13 }}>ここで固定しているのは <strong>各時間帯の力率・時間区分の長さ・通電時間・電圧と周波数・鉄損と全負荷銅損（巻線抵抗一定）</strong>。動かすのは負荷の大きさの倍率 <Eq tex="m" /> だけ。</p>
       </Box>
 
       <Fold label="なぜ「一定倍率で拡大・縮小」なら Wi = Wc になるのか" sub="導出を開く">
@@ -3922,13 +3938,14 @@ const TransformerPage = ({ onNav }) => (
         <details><summary>巻数比 a と電圧・電流の関係は？</summary>a = N₁/N₂ = V₁/V₂ = I₂/I₁（電流は巻数比の逆比）</details>
         <details><summary>%Z = 5% のとき短絡電流は定格の何倍？</summary>20倍（I_s = (100/%Z)·I_n）</details>
         <details><summary>変圧器の最高効率の条件は？</summary>鉄損 = 銅損（P_i = x²P_cN）。そのときの負荷率 x = √(P_i / P_cN)。分母は全負荷銅損であって、そのときの実銅損ではない</details>
-        <details><summary>通常効率と全日効率は何が違う？</summary>通常効率＝ある瞬間・ある負荷状態を <strong>kW</strong> で評価（η = Pout /(Pout+Pi+x²PcN)）／全日効率＝1日全体を <strong>kWh</strong> で評価（ηd = Wout /(Wout+Wi+Wc)）。対象も違い、通常効率は電力用変圧器、全日効率は負荷が時間変化する配電用変圧器で使う</details>
+        <details><summary>通常効率と全日効率は何が違う？</summary>通常効率＝ある運転点を <strong>kW の比</strong>で評価（η = Pout /(Pout+Pi+x²PcN)）／全日効率＝1日全体を <strong>kWh の比</strong>で評価（ηd = Wout /(Wout+Wi+Wc)）。効率自体はどちらも無次元で [%] 表示。<strong>主に重視される用途</strong>が通常効率＝電力用変圧器、全日効率＝負荷変動の大きい配電用変圧器（同じ1台について両方を評価でき、対象機器が排他的に分かれるわけではない）</details>
         <details><summary>全日効率は kW と kWh のどちらで計算する？</summary><strong>kWh（電力量）</strong>。出力・鉄損・銅損をそれぞれ電力量に直してから分母に入れる。通常効率を求めてから時間を掛けても全日効率にはならない（鉄損と銅損では掛ける時間が違うため）</details>
         <details><summary>出力電力量の式は？</summary>Wout = Σ Sk·cosφk·tk [kWh]。kV·A は皮相電力なので、有効電力量にするには<strong>力率を掛ける</strong>。無負荷の時間帯は出力ゼロなので足さない</details>
         <details><summary>鉄損電力量の式は？</summary>Wi = Pi × Ton [kWh]。Ton は<strong>電圧が加わっている時間</strong>。24時間通電のときだけ Pi×24 で、「12時間だけ電源に接続」ならその通電時間を使う</details>
         <details><summary>銅損電力量の式は？</summary>Wc = PcN × Σ xk²·tk [kWh]（xk = Sk/SN）。各時間帯ごとに<strong>2乗してから足す</strong>。全負荷銅損 PcN をそのまま使うのではない</details>
         <details><summary>50% 負荷のとき銅損は全負荷銅損の何%？</summary><strong>25%</strong>（x² = 0.5² = 0.25）。半分ではない。銅損は I²R で、電圧一定なら I は kV·A に比例するので負荷率の2乗で効く</details>
-        <details><summary>出力の計算には力率を使うのに、負荷率には原則使わないのはなぜ？</summary>出力は<strong>有効電力</strong>なので kV·A に力率を掛ける。一方、銅損を決めるのは<strong>巻線電流</strong>で、三相では I = S/(√3V)。電圧一定なら電流は kV·A に比例するので、負荷率は x = S/SN（kV·A どうしの比）で取る。力率を掛けると低力率の時間帯の銅損を過小評価する。合言葉は「力率は出力 kWh に、kV·A 負荷率は銅損に」</details>
+        <details><summary>出力の計算には力率を使うのに、負荷率には原則使わないのはなぜ？</summary>出力は<strong>有効電力</strong>なので kV·A に力率を掛ける。一方、銅損を決めるのは<strong>巻線電流</strong>で、負荷率の本質は x = I/IN。三相では I = S/(√3V) なので、電圧一定なら電流は kV·A に比例し x = S/SN（kV·A どうしの比）で取れる。力率を掛けると低力率の時間帯の銅損を過小評価する。合言葉は「力率は出力 kWh に、kV·A 負荷率は銅損に」</details>
+        <details><summary>負荷が「40 kW・力率0.8」と kW で与えられたら負荷率は？（定格 100 kV·A）</summary><strong>x = 0.5</strong>。負荷率は皮相電力の比なので、まず S = P/cosφ = 40/0.8 = <strong>50 kV·A</strong> に換算してから x = 50/100 = 0.5。<span className="marker">40/100 = 0.4 としない</span>。「力率を掛けない」のは負荷が kV·A で与えられたときの話で、kW 与件では力率で<strong>割って</strong> kV·A に直す</details>
         <details><summary>無負荷通電中（電源は入・負荷ゼロ）に発生する損失は？</summary><strong>鉄損だけ</strong>。銅損は三種の計算ではほぼ 0 として扱う（励磁電流によるわずかな銅損は無視する前提）</details>
         <details><summary>電源切離し中（開放）に発生する損失は？</summary><strong>鉄損も銅損も発生しない</strong>。「無負荷」と「電源切離し」を混同すると、鉄損電力量の通電時間を取り違える</details>
         <details><summary>全日効率の計算順序（5ステップ）は？</summary>①各時間帯の出力電力量 Sk·cosφk·tk → ②合計して Wout → ③鉄損電力量 Wi = Pi·Ton → ④銅損電力量 Wc = PcN·Σxk²tk → ⑤ηd = Wout/(Wout+Wi+Wc)×100。最後に 0〜100% に収まるか検算する</details>
