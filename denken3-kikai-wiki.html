@@ -1126,6 +1126,15 @@ window.WIKI_DATA = {
     { page: "transformer", pageTitle: "2.1 変圧器", anchor: "v-denominator",
       title: "57.7%と86.6%の分母の違い", desc: "分子は同じ√3VI。分母がΔ3台か残り2台かの違い",
       keywords: "V結線 57.7 86.6 利用率 出力比 分母" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "traps-flow",
+      title: "どの式を使うか（判断フロー）", desc: "問題文のキーワードから解法を引く対応表",
+      keywords: "解き方 判断 フロー 過去問 キーワード どの式" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "traps-table",
+      title: "ひっかけ一覧", desc: "無負荷/短絡の取り違え・kWとkWh・%Zと短絡電流など12件",
+      keywords: "ひっかけ 誤り 注意 罠 まとめ" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "pz-meaning",
+      title: "%Zから何が分かるか", desc: "短絡電流・電圧変動率・並行運転の分担の3つに整理",
+      keywords: "%Z パーセントインピーダンス 短絡電流 電圧変動率 負荷分担" },
   ],
   glossary: [
     { term: "同期速度",        reading: "DOUKI SOKUDO",      letter: "た",
@@ -3713,6 +3722,30 @@ const TransformerPage = ({ onNav }) => (
       </table></div>
       <p style={{ fontSize: 12.5, color: "var(--ink-mute)" }}>出題頻度の表記は<strong>編集者による過去問の概算集計</strong>であり、実施機関の公式集計ではない。年度・区分の内訳は非公開のため、学習の優先度の目安としてのみ使うこと。</p>
 
+      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-soft)", margin: "14px 0 6px" }}>目的の節へ直接飛ぶ</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "0 0 6px" }}>
+        {[
+          ["basic", "巻数比"], ["emf", "誘導起電力"], ["equiv", "等価回路"],
+          ["oc-test", "無負荷試験"], ["sc-test", "短絡試験"], ["loss", "損失と効率"],
+          ["loss-daily", "全日効率"], ["vreg", "電圧変動率"], ["pz", "%Z・短絡電流"],
+          ["parallel", "並行運転"], ["vconn", "V結線"], ["traps", "ひっかけ注意"],
+        ].map(([id, label]) => (
+          <button key={id} type="button" onClick={() => onNav("transformer", id)}
+            style={{ fontFamily: "inherit", fontSize: 12.5, padding: "7px 13px", borderRadius: 999, cursor: "pointer",
+                     border: "1px solid var(--rule)", background: "var(--bg-elev)", color: "var(--accent-ink)", fontWeight: 600 }}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <p style={{ fontSize: 12, color: "var(--ink-mute)", margin: "0 0 4px" }}>
+        各ボタンは <code>#transformer/&lt;節id&gt;</code> へ移動する。この形のURLは<strong>再読み込みしても同じ見出しに着地する</strong>ので、そのままブックマークしてよい。
+      </p>
+
+      <Box kind="warn" label="このページの約束（記号の基準側）">
+        <p style={{ margin: 0 }}>本ページの等価回路・試験計算・電圧変動率・%Z は、断りがない限り <strong>すべて一次側換算</strong> で書く。二次側の量に付く <Eq tex="{}'" />（ダッシュ）は「一次側に換算した値」の意味で、<Eq tex="r_2' = a^2 r_2" />、<Eq tex="x_2' = a^2 x_2" />。<span className="marker">計算の途中で一次換算と二次換算を混ぜない</span>のが失点しないコツ。<br />
+        ただし<strong>%Z・p・q だけは基準側によらず同じ値</strong>になる（分子分母が同じ倍率で変わるため）。三相問題で結線が絡むときに %Z 経由で解くと安全なのはこのため。</p>
+      </Box>
+
       <h2 id="basic"><span className="h-num">2.</span>理想変圧器と巻数比</h2>
       <FormulaCard num="01 / 15" name="巻数比と電圧・電流（理想変圧器での関係）" eq="a = \dfrac{N_1}{N_2} = \dfrac{V_1}{V_2} = \dfrac{I_2}{I_1}"
         note={<><Eq tex="N_1,N_2" />: 一次・二次巻数、<Eq tex="V,I" />: 各側の電圧・電流。<strong>電流は巻数比の逆比</strong>になる。</>} />
@@ -3842,9 +3875,70 @@ const TransformerPage = ({ onNav }) => (
       </ul>
       <p>励磁電流 <Eq tex="I_0" /> は、鉄損を負担する<strong>有効分</strong> <Eq tex="I_w" /> と、磁束をつくる<strong>磁化分</strong> <Eq tex="I_\mu" /> の直角合成になる。</p>
       <FormulaCard num="04 / 15" name="無負荷試験 — 励磁電流の分解と励磁枝" eq="I_0^2 = I_w^2 + I_\mu^2,\qquad I_w = \dfrac{P_0}{V_1},\qquad I_\mu = \sqrt{I_0^2 - I_w^2}"
-        note={<>ここから <Eq tex="r_0 = V_1/I_w" />、<Eq tex="x_0 = V_1/I_\mu" />。<Eq tex="I_w" /> は電圧と同相の成分なので <Eq tex="P_0 = V_1 I_w" /> から出る。</>} />
+        note={<>ここから <Eq tex="r_0 = V_1/I_w = V_1^{\,2}/P_0" />、<Eq tex="x_0 = V_1/I_\mu" />。<Eq tex="I_w" /> は電圧と同相の成分なので <Eq tex="P_0 = V_1 I_w" /> から出る。</>} />
+
+      <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+        <svg viewBox="0 0 420 232" role="img" aria-label="無負荷電流の分解ベクトル図。印加電圧V1を右向きの基準にとり、無負荷電流I0は力率角θ0だけ遅れて右下を向く。I0をV1と同相の成分である鉄損電流Iwと、V1より90度遅れた成分である磁化電流Iμに直交分解すると直角三角形になり、I0の2乗がIwの2乗とIμの2乗の和に等しくなる。無負荷力率cosθ0はIwをI0で割った値で非常に小さい" style={{ display: "block", width: "100%", height: "auto", maxWidth: "420px", margin: "0 auto" }}>
+          <text x="210" y="18" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">無負荷電流 I₀ の直交分解</text>
+
+          {/* V1 基準 */}
+          <line x1="80" y1="60" x2="300" y2="60" stroke="var(--accent)" strokeWidth="2.4" />
+          <polygon points="300,60 291,56.5 291,63.5" style={{ fill: 'var(--accent)' }} />
+          <text x="308" y="64" fontSize="11.5" fontWeight="700" fill="var(--accent-ink)">V₁（基準）</text>
+
+          {/* Iw（同相成分） */}
+          <line x1="80" y1="60" x2="119" y2="60" stroke="var(--warn)" strokeWidth="4" />
+          <text x="99" y="50" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--warn)">Iw</text>
+
+          {/* Iμ（90°遅れ成分） */}
+          <line x1="119" y1="60" x2="119" y2="184" stroke="var(--danger)" strokeWidth="2.4" strokeDasharray="5 3" />
+          <text x="127" y="128" fontSize="11" fontWeight="700" fill="var(--danger)">Iμ</text>
+          {/* 直角記号 */}
+          <path d="M 111 60 L 111 68 L 119 68" fill="none" stroke="var(--ink-mute)" strokeWidth="1.2" />
+
+          {/* I0 */}
+          <line x1="80" y1="60" x2="119" y2="184" stroke="var(--ink)" strokeWidth="2.4" />
+          <polygon points="119,184 111.5,178.6 117.9,175.1" className="diagram-fill" style={{ fill: 'var(--ink)' }} />
+          <text x="72" y="132" textAnchor="end" fontSize="11.5" fontWeight="700" fill="var(--ink)">I₀</text>
+
+          {/* θ0 */}
+          <path d="M 112 60 A 32 32 0 0 1 89.8 90.7" fill="none" stroke="var(--ink-mute)" strokeWidth="1.2" />
+          <text x="96" y="86" fontSize="11" fill="var(--ink-mute)">θ₀</text>
+
+          {/* 右側の説明 */}
+          <text x="160" y="104" fontSize="11.5" fontWeight="700" fill="var(--ink)">I₀² ＝ Iw² ＋ Iμ²</text>
+          <text x="160" y="126" fontSize="11" fill="var(--warn)">Iw ＝ P₀ / V₁　…　鉄損分（V₁ と同相）</text>
+          <text x="160" y="146" fontSize="11" fill="var(--danger)">Iμ ＝ √(I₀² − Iw²)　…　磁化分（90° 遅れ）</text>
+          <text x="160" y="170" fontSize="11" fill="var(--ink-soft)">r₀ ＝ V₁ / Iw ＝ V₁² / P₀</text>
+          <text x="160" y="188" fontSize="11" fill="var(--ink-soft)">x₀ ＝ V₁ / Iμ</text>
+          <text x="210" y="216" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">無負荷力率 cos θ₀ ＝ Iw / I₀ は非常に小さい（磁化分が主）</text>
+        </svg>
+        <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+          鉄損を負担する <Eq tex="I_w" /> は電圧と<strong>同相</strong>、磁束をつくる <Eq tex="I_\mu" /> は電圧より<strong>90° 遅れ</strong>。直角三角形なので <Eq tex="I_0^2 = I_w^2 + I_\mu^2" />。無負荷では磁化分が圧倒的に大きいため、<span className="marker">無負荷力率は 0.1〜0.3 程度と非常に低い</span>。
+        </figcaption>
+      </figure>
       <Box kind="warn" label="単相と三相で式をそのまま使わない">
         <p style={{ margin: 0 }}>上の式は<strong>単相、または三相の1相分</strong>に対するもの。三相変圧器で三相電力 <Eq tex="P_{0,3\phi}" /> と線間電圧・線電流を測った場合は、<span className="marker">1相分に直してから</span>当てはめる（Y結線なら相電圧は <Eq tex="V_{\ell}/\sqrt3" />、相電流は線電流。Δ結線なら相電圧は線間電圧、相電流は <Eq tex="I_{\ell}/\sqrt3" />）。結線が示されていない問題では、<strong>1相分の値が与えられているのか三相合計なのかを必ず確認する</strong>。</p>
+      </Box>
+
+      <Box kind="example" label="解法例 2.1.3（無負荷試験から励磁枝を求める）">
+        <p><strong>与えられた値:</strong> 単相変圧器の無負荷試験で、一次に定格電圧 <Eq tex="V_1 = 200\;\mathrm{V}" /> を加えたところ、無負荷電流 <Eq tex="I_0 = 2.5\;\mathrm{A}" />、入力電力 <Eq tex="P_0 = 150\;\mathrm{W}" /> であった。</p>
+        <p><strong>何を求めるか:</strong> 鉄損電流 <Eq tex="I_w" />、磁化電流 <Eq tex="I_\mu" />、鉄損抵抗 <Eq tex="r_0" />、励磁リアクタンス <Eq tex="x_0" />。</p>
+
+        <p style={{ marginBottom: 4 }}><strong>① 鉄損電流</strong>（電圧と同相の成分なので <Eq tex="P_0 = V_1 I_w" /> から）</p>
+        <Eq display tex="I_w = \frac{P_0}{V_1} = \frac{150}{200} = 0.75\;[\mathrm{A}]" />
+
+        <p style={{ marginBottom: 4 }}><strong>② 磁化電流</strong>（直角三角形 <Eq tex="I_0^2 = I_w^2 + I_\mu^2" /> から）</p>
+        <Eq display tex="I_\mu = \sqrt{I_0^2 - I_w^2} = \sqrt{2.5^2 - 0.75^2} = \sqrt{5.6875} \approx 2.38\;[\mathrm{A}]" />
+
+        <p style={{ marginBottom: 4 }}><strong>③ 鉄損抵抗</strong></p>
+        <Eq display tex="r_0 = \frac{V_1}{I_w} = \frac{200}{0.75} \approx 267\;[\Omega] \quad\left(= \frac{V_1^{\,2}}{P_0} = \frac{200^2}{150} \approx 267\right)" />
+
+        <p style={{ marginBottom: 4 }}><strong>④ 励磁リアクタンス</strong></p>
+        <Eq display tex="x_0 = \frac{V_1}{I_\mu} = \frac{200}{2.38} \approx 84\;[\Omega]" />
+
+        <p><strong>単位確認:</strong> V ÷ A ＝ Ω ✓　<strong>検算:</strong> 無負荷力率 <Eq tex="\cos\theta_0 = I_w/I_0 = 0.75/2.5 = 0.30" />。無負荷では磁化分が主なので力率が非常に低い、という実態と合う。</p>
+        <p style={{ margin: "8px 0 0" }}><strong>ひっかけ注意:</strong> <span className="marker"><Eq tex="r_0" /> の分母は <Eq tex="I_0" /> ではなく <Eq tex="I_w" /></span>。<Eq tex="V_1/I_0 = 200/2.5 = 80\,\Omega" /> としてしまうのが典型的な誤り（それは励磁インピーダンスの大きさであって鉄損抵抗ではない）。また <Eq tex="P_0" /> は<strong>鉄損</strong>であって銅損ではない。</p>
       </Box>
 
       <h2 id="sc-test"><span className="h-num">6.</span>短絡試験（インピーダンス試験）</h2>
@@ -3873,6 +3967,32 @@ const TransformerPage = ({ onNav }) => (
           </tbody>
         </table></div>
         <p style={{ margin: "8px 0 0" }}>覚え方は<strong>「開けて鉄、短くして銅」</strong>。開放（無負荷）で鉄損、短絡で銅損。<span className="marker">測定対象を逆に覚えると全滅する</span>ので、電圧の大小（定格電圧か低電圧か）とセットで押さえる。</p>
+      </Box>
+
+      <Box kind="example" label="解法例 2.1.4（短絡試験から等価回路定数・%Z・全負荷銅損まで）">
+        <p><strong>与えられた値:</strong> 単相変圧器 <Eq tex="10\;\mathrm{kV\cdot A}" />、一次定格電圧 <Eq tex="1000\;\mathrm{V}" />。短絡試験で <Eq tex="V_s = 50\;\mathrm{V}" />、<Eq tex="I_s = 10\;\mathrm{A}" />、<Eq tex="P_s = 200\;\mathrm{W}" /> を得た（すべて一次側の測定値）。</p>
+        <p><strong>何を求めるか:</strong> <Eq tex="Z_e,\ R_e,\ X_e" />、%Z、全負荷銅損、短絡電流。</p>
+
+        <p style={{ marginBottom: 4 }}><strong>① まず定格電流を出す</strong>（短絡試験の電流が定格かを確認するため）</p>
+        <Eq display tex="I_n = \frac{S_N}{V_n} = \frac{10 \times 10^3}{1000} = 10\;[\mathrm{A}] \quad\Longrightarrow\quad I_s = I_n\;\text{（定格電流での測定）}" />
+
+        <p style={{ marginBottom: 4 }}><strong>② 等価インピーダンス・等価抵抗・等価リアクタンス</strong></p>
+        <Eq display tex="Z_e = \frac{V_s}{I_s} = \frac{50}{10} = 5\;[\Omega],\qquad R_e = \frac{P_s}{I_s^{\,2}} = \frac{200}{10^2} = 2\;[\Omega]" />
+        <Eq display tex="X_e = \sqrt{Z_e^{\,2} - R_e^{\,2}} = \sqrt{5^2 - 2^2} = \sqrt{21} \approx 4.58\;[\Omega]" />
+
+        <p style={{ marginBottom: 4 }}><strong>③ %Z</strong>（定義の2つの式が一致することを確認）</p>
+        <Eq display tex="\%Z = \frac{V_s}{V_n}\times 100 = \frac{50}{1000}\times 100 = 5\;[\%] \;\;=\;\; \frac{I_n Z_e}{V_n}\times 100 = \frac{10 \times 5}{1000}\times 100 = 5\;[\%]" />
+
+        <p style={{ marginBottom: 4 }}><strong>④ p・q に分けて検算</strong></p>
+        <Eq display tex="p = \frac{I_n R_e}{V_n}\times 100 = 2.0\;[\%],\qquad q = \frac{I_n X_e}{V_n}\times 100 \approx 4.58\;[\%]" />
+        <Eq display tex="\sqrt{p^2 + q^2} = \sqrt{2.0^2 + 4.58^2} \approx 5.00\;[\%] \;=\; \%Z \;\checkmark" />
+
+        <p style={{ marginBottom: 4 }}><strong>⑤ 全負荷銅損と短絡電流</strong></p>
+        <Eq display tex="P_{cN} = P_s = 200\;[\mathrm{W}]\quad(\text{定格電流時の銅損}),\qquad I_s' = \frac{100}{\%Z}I_n = \frac{100}{5}\times 10 = 200\;[\mathrm{A}]" />
+
+        <p><strong>単位確認:</strong> V÷A＝Ω ✓／W÷A²＝Ω ✓／%Z は無次元 ✓　<strong>検算:</strong> 短絡電流は定格の <Eq tex="100/5 = 20" /> 倍。</p>
+        <p style={{ margin: "8px 0 0" }}><strong>ここから電圧変動率へ直結する:</strong> 力率 0.8 の定格負荷なら、<Eq tex="\varepsilon \approx p\cos\theta + q\sin\theta = 2.0\times0.8 + 4.58\times0.6 \approx 4.35\;[\%]" />（遅れ）。進みなら <Eq tex="2.0\times0.8 - 4.58\times0.6 \approx -1.15\;[\%]" /> で<span className="marker">符号が反転する</span>。<strong>短絡試験1つから %Z・銅損・短絡電流・電圧変動率がすべて出る</strong>のがこの試験の価値。</p>
+        <p style={{ margin: "8px 0 0" }}><strong>ひっかけ注意:</strong> <Eq tex="R_e" /> の分母は <Eq tex="I_s^{\,2}" /> であって <Eq tex="I_s" /> ではない（<Eq tex="P = I^2R" /> だから）。また <Eq tex="X_e = Z_e - R_e" /> は誤り（<span className="marker">直角合成なので二乗の差の平方根</span>）。<Eq tex="5-2=3" /> としないこと（正しくは 4.58）。</p>
       </Box>
 
       <h2 id="loss"><span className="h-num">7.</span>損失・通常効率・全日効率</h2>
@@ -4264,6 +4384,35 @@ const TransformerPage = ({ onNav }) => (
         <p style={{ margin: "8px 0 0" }}>三相の定格電流は <Eq tex="I_n = S_N/(\sqrt3 V_n)" />。<span className="marker">単相の <Eq tex="S_N/V_n" /> と混同しない</span>。</p>
       </Box>
 
+      <h3 id="pz-meaning">%Z から何が分かるか — 3つに分けて覚える</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 10, margin: "10px 0" }}>
+        {[
+          ["① 短絡電流の大きさ", "var(--danger)", <>%Z が<strong>小さい</strong>ほど短絡電流は<strong>大きい</strong>。<Eq tex="I_s = (100/\%Z)I_n" /> より反比例。遮断器の遮断容量を決める。</>],
+          ["② 電圧変動率", "var(--warn)", <>%Z が小さいほど電圧降下は<strong>小さくなりやすい</strong>。ただし <Eq tex="\varepsilon" /> は %Z の大きさだけでは決まらない（次の注意を参照）。</>],
+          ["③ 並行運転の負荷分担", "var(--accent)", <>%Z が小さい器ほど<strong>多く負担しやすい</strong>。ただし容量も効くので <Eq tex="S_N/z" /> の比で判断する。</>],
+        ].map(([t, c, body], i) => (
+          <div key={i} style={{ border: "1px solid var(--rule)", borderTop: `3px solid ${c}`, borderRadius: "0 0 6px 6px", background: "var(--bg-elev)", padding: "10px 12px" }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: c, marginBottom: 4 }}>{t}</div>
+            <div style={{ fontSize: 12.5, color: "var(--ink-soft)", lineHeight: 1.7 }}>{body}</div>
+          </div>
+        ))}
+      </div>
+      <Box kind="mistake" label="②には条件がつく — 電圧変動率は %Z だけでは決まらない">
+        <p style={{ margin: 0 }}>電圧変動率は <Eq tex="\varepsilon \approx p\cos\theta \pm q\sin\theta" /> で、<strong>抵抗分 <Eq tex="p" />・リアクタンス分 <Eq tex="q" />・負荷力率</strong>の3つに依存する。<span className="marker">%Z が同じでも、<Eq tex="p" /> と <Eq tex="q" /> の内訳や力率が違えば <Eq tex="\varepsilon" /> は変わる</span>し、進み力率なら負にもなる。「%Z が小さい ＝ 電圧変動率も必ず小さい」と短絡させないこと。</p>
+      </Box>
+
+      <Fold label="実務補足 — 実系統の短絡電流はこの式では出ない" sub="試験の主線ではない（開く）">
+        <p>変圧器単体の %Z だけで求めた短絡電流は、電源を無限大母線とみなした<strong>上限側の概算</strong>。実際の系統計算では、共通の基準容量に換算したうえで次をすべて合成する。</p>
+        <ul>
+          <li>電源側（上位系統）のインピーダンス</li>
+          <li>発電機のインピーダンス（過渡・次過渡で値が違う）</li>
+          <li>ケーブル・架空線のインピーダンス</li>
+          <li>母線・変流器などの機器インピーダンス</li>
+          <li>変圧器が複数ある場合はその合成、および系統構成（母線連絡の開閉状態）</li>
+        </ul>
+        <p style={{ margin: "8px 0 0" }}>合成インピーダンスは必ず変圧器単独より大きくなるので、<strong>実際の短絡電流は簡易式の値より小さくなる</strong>。遮断器の選定では簡易式で安全側に見積もったうえで、詳細計算で確認する。</p>
+      </Fold>
+
       <h2 id="parallel"><span className="h-num">10.</span>並行運転</h2>
       <p><strong>何を求めるか</strong>：2台以上の変圧器を並列につないだとき、それぞれが何 kV·A を負担するか。</p>
 
@@ -4340,6 +4489,21 @@ const TransformerPage = ({ onNav }) => (
         <p style={{ margin: "10px 0 4px" }}><strong>誤り（%Z の逆比だけを使った場合）</strong></p>
         <Eq display tex="S_A : S_B = \frac{1}{4} : \frac{1}{6} = 3 : 2 \;\Rightarrow\; S_A = 180,\; S_B = 120" />
         <p style={{ margin: 0 }}>A の負担が 180 kV·A＝<span className="marker">定格 100 kV·A に対して 180 % の過負荷</span>という、現実には焼損する答えになる。<strong>容量が違う組み合わせで「%Z の逆比」を使ってはいけない</strong>。</p>
+      </Box>
+
+      <Box kind="example" label="3ケースを同じ式で解く（数値で確認）">
+        <p>いずれも一般式 <Eq tex="S_A : S_B = S_{NA}/z_A : S_{NB}/z_B" /> に入れるだけ。<strong>覚える式は1つでよい</strong>。</p>
+        <p style={{ marginBottom: 4 }}><strong>例1　定格容量が同じ</strong>（A: 500 kV·A・5 %／B: 500 kV·A・10 %）</p>
+        <Eq display tex="S_A : S_B = \frac{500}{5} : \frac{500}{10} = 100 : 50 = 2 : 1" />
+        <p>容量が同じなので <strong>%Z の逆比</strong>になる。%Z が小さい A が2倍負担する。</p>
+
+        <p style={{ marginBottom: 4, marginTop: 10 }}><strong>例2　%Z が同じ</strong>（A: 500 kV·A・5 %／B: 1000 kV·A・5 %）</p>
+        <Eq display tex="S_A : S_B = \frac{500}{5} : \frac{1000}{5} = 100 : 200 = 1 : 2" />
+        <p>%Z が同じなので <strong>定格容量の比</strong>になる。両器とも同じ負荷率になり、設備を無駄なく使える。</p>
+
+        <p style={{ marginBottom: 4, marginTop: 10 }}><strong>例3　容量も %Z も違う</strong>（A: 500 kV·A・5 %／B: 1000 kV·A・10 %）</p>
+        <Eq display tex="S_A : S_B = \frac{500}{5} : \frac{1000}{10} = 100 : 100 = 1 : 1" />
+        <p style={{ margin: 0 }}><span className="marker">容量が2倍でも %Z が2倍なら、負担容量は同じ</span>になる。ここで「%Z の逆比」だけを使うと <Eq tex="1/5 : 1/10 = 2:1" /> となり、<strong>A が2倍負担するという逆の答え</strong>が出てしまう。容量と %Z の<strong>両方</strong>を見ること。</p>
       </Box>
 
       <Box kind="example" label="確認 — 2つの特別な場合">
@@ -4504,7 +4668,47 @@ const TransformerPage = ({ onNav }) => (
         ▶ 結線方式そのものの比較（Y-Y / Δ-Δ / Y-Δ / Δ-Y の位相変位・第3高調波・用途）は <a href="https://kfurufuru.github.io/secretary-portal-public/denken3-denryoku-wiki.html#henatsuki" target="_blank" rel="noopener">電力Wiki「2.1 変圧器（基礎ハブ）」の三相結線とV結線</a>へ。
       </p>
 
-      <h2 id="quick-review"><span className="h-num">13.</span>1分復習（即答チェック）</h2>
+      <h2 id="traps"><span className="h-num">13.</span>過去問での解き方とひっかけ注意</h2>
+
+      <h3 id="traps-flow">どの式を使うか — 問題文のキーワードから引く</h3>
+      <p>変圧器の問題は、<strong>問題文に出てくる語</strong>でほぼ解法が決まる。迷ったらこの表を上から見る。</p>
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th>問題文にこれがあれば</th><th>使う道具</th><th>求まるもの</th><th>節</th></tr></thead>
+        <tbody>
+          <tr><td><strong>無負荷電流・無負荷入力</strong>（二次開放・定格電圧）</td><td>無負荷試験</td><td>鉄損・励磁枝 <Eq tex="r_0,\ x_0" /></td><td>5</td></tr>
+          <tr><td><strong>短絡電圧（インピーダンス電圧）・短絡入力</strong>（二次短絡・低電圧）</td><td>短絡試験</td><td>銅損・<Eq tex="Z_e,R_e,X_e" />・%Z</td><td>6</td></tr>
+          <tr><td><strong>1日の負荷パターン・時間帯</strong></td><td>全日効率</td><td><span className="marker">kWh で計算</span></td><td>7</td></tr>
+          <tr><td><strong>力率・<Eq tex="p" />・<Eq tex="q" /></strong></td><td>電圧変動率</td><td><Eq tex="\varepsilon \approx p\cos\theta \pm q\sin\theta" /></td><td>8</td></tr>
+          <tr><td><strong>%Z・短絡電流</strong></td><td>%Z の定義</td><td><Eq tex="I_s = (100/\%Z)I_n" /></td><td>9</td></tr>
+          <tr><td><strong>2台の変圧器・並行運転</strong></td><td>負担配分</td><td><Eq tex="S_{NA}/z_A : S_{NB}/z_B" /></td><td>10</td></tr>
+          <tr><td><strong>1台故障・V結線</strong></td><td>V結線容量</td><td>57.7 % と 86.6 %（<span className="marker">分母を確認</span>）</td><td>11・12</td></tr>
+          <tr><td><strong>周波数が変わる・磁束・飽和</strong></td><td><Eq tex="E = 4.44fN\Phi_m" /></td><td><Eq tex="\Phi_m \propto V/f" /></td><td>3</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="tip" label="最初の30秒でやること">
+        <p style={{ margin: 0 }}><strong>①「二次側は開放か短絡か」</strong>を読む（試験の種類が決まる）→ <strong>②「電圧は定格か低電圧か」</strong>で裏を取る → <strong>③ 求めるのは損失か・定数か・電流か</strong>を確認。この3つで、無負荷試験と短絡試験を取り違えることはなくなる。</p>
+      </Box>
+
+      <h3 id="traps-table">ひっかけ一覧（本ページ全体の総まとめ）</h3>
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th>ひっかけ（誤り）</th><th>正しい考え方</th><th>節</th></tr></thead>
+        <tbody>
+          <tr><td>無負荷試験で<strong>銅損</strong>を求める</td><td>無負荷試験は主に<strong>鉄損・励磁枝</strong>（二次開放・定格電圧）</td><td>5</td></tr>
+          <tr><td>短絡試験で<strong>鉄損</strong>を求める</td><td>短絡試験は主に<strong>銅損・直列等価回路</strong>（二次短絡・低電圧）</td><td>6</td></tr>
+          <tr><td>全日効率を <strong>kW だけ</strong>で計算する</td><td>全日効率は<strong>すべて kWh</strong> にそろえてから割る</td><td>7</td></tr>
+          <tr><td>銅損が<strong>負荷率に比例</strong>する</td><td>銅損は<strong>負荷率の2乗</strong>に比例（50 % 負荷なら 25 %）</td><td>7</td></tr>
+          <tr><td>進み力率でも <strong>+ 符号</strong>を使う</td><td>進みは <Eq tex="\varepsilon \approx p\cos\theta - q\sin\theta" />（<strong>負にもなる</strong>）</td><td>8</td></tr>
+          <tr><td>%Z が小さいと短絡電流も<strong>小さい</strong></td><td><strong>%Z が小さいほど短絡電流は大きい</strong>（反比例）</td><td>9</td></tr>
+          <tr><td>並行運転は <strong>%Z だけ</strong>を見る</td><td><strong>容量と %Z の両方</strong>（<Eq tex="S_N/z" /> の比）。容量が違うと %Z 逆比は誤り</td><td>10</td></tr>
+          <tr><td>V結線の 57.7 % と 86.6 % を<strong>同じ分母</strong>で考える</td><td><strong>分母が違う</strong>（Δ3台の合計容量／使用中2台の定格合計）</td><td>12</td></tr>
+          <tr><td><Eq tex="X_e = Z_e - R_e" /> とする</td><td>直角合成なので <Eq tex="X_e = \sqrt{Z_e^2 - R_e^2}" /></td><td>6</td></tr>
+          <tr><td><Eq tex="r_0 = V_1/I_0" /> とする</td><td>分母は<strong>鉄損電流</strong> <Eq tex="I_w" />。<Eq tex="r_0 = V_1/I_w = V_1^2/P_0" /></td><td>5</td></tr>
+          <tr><td>負荷率に<strong>力率を掛ける</strong></td><td>kV·A どうしの比。kW 与件なら <Eq tex="S = P/\cos\phi" /> で<strong>割って</strong>から</td><td>7</td></tr>
+          <tr><td>巻数比の式を<strong>実機にそのまま</strong>使う</td><td><strong>理想変圧器</strong>の関係。実機は巻線抵抗・漏れリアクタンス・励磁電流でずれる</td><td>2</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="quick-review"><span className="h-num">14.</span>1分復習（即答チェック）</h2>
       <div className="box">
         <details><summary>巻数比 a と電圧・電流の関係は？</summary>a = N₁/N₂ = V₁/V₂ = I₂/I₁（電流は巻数比の逆比）</details>
         <details><summary>%Z = 5% のとき短絡電流は定格の何倍？</summary>20倍（I_s = (100/%Z)·I_n）</details>
