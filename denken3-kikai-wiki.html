@@ -507,6 +507,17 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .formula-card .body { font-size: 14px; color: var(--ink-soft); line-height: 1.6; min-width: 0; }
 .formula-card .body strong { color: var(--ink); display: block; font-size: 13px; margin-bottom: 4px; font-family: var(--font-sans); }
 .formula-card .eq { font-size: 1.15em; margin: 6px 0; }
+/* 長い数式がスマホ幅で切れず、枠内で横スクロールするようにする。
+   text-align:center のままだと溢れた左側がスクロールで到達できないので、
+   狭幅のときだけ左寄せにする（PC幅の中央寄せの見た目は変えない）。 */
+@media (max-width: 760px) {
+  .formula-card .eq .katex-display,
+  .content .katex-display-wrap .katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    text-align: left;
+  }
+}
 
 /* ============================================================ Tables */
 
@@ -1085,6 +1096,8 @@ window.WIKI_DATA = {
       def: "変圧器の定格電流が流れたとき、内部インピーダンスで生じる電圧降下を定格電圧で割った百分率。短絡電流の計算や並列運転の負荷分担に用いる。" },
     { term: "V結線",           reading: "V KESSEN",          letter: "は",
       def: "単相変圧器2台で三相を供給する結線。同一定格2台で平衡三相負荷を供給する標準計算では、三相容量は √3·Sn（Sn:単器容量）、2台の合計容量に対する利用率は √3/2 ≈ 86.6%、Δ結線3台に対する出力比は 1/√3 ≈ 57.7%（異容量V結線や単相負荷を併給する灯動共用では各器の負担を個別計算する）。Δ-Δ結線の1台が故障したときの応急運転（V-V運転）や、需要増を見越した段階増設に用いる。" },
+    { term: "全日効率",        reading: "ZENJITSU KOURITSU", letter: "さ",
+      def: "配電用変圧器のように負荷が時間変化する場合に、1日（24時間）の電力量[kWh]で評価した効率。ηd = 出力電力量 /（出力電力量＋鉄損電力量＋銅損電力量）×100。出力電力量は日負荷曲線の各時間帯について kVA×力率×時間 を合計、鉄損電力量は 鉄損×通電時間（負荷ゼロでも無負荷通電中なら発生。電源切離し中は発生しない）、銅損電力量は 全負荷銅損×負荷率²×時間 で求める。負荷率は kVA÷定格容量[kVA] で取り、力率は掛けない（銅損は巻線電流＝kVA で決まるため）。複数時間帯を1つにまとめるときは等価負荷率 xe = √(Σxk²tk / T) を使う。通常効率が kW（ある負荷状態）で評価するのに対し、全日効率は kWh（1日全体）で評価する点が最大の違い。" },
     { term: "デューティ比",    reading: "DUTY RATIO",        letter: "た",
       def: "チョッパ等のスイッチング素子で、1周期中にオン状態である時間の比率。降圧チョッパでは Vo = D · Vi。" },
     { term: "PWM制御",         reading: "PWM",                letter: "は",
@@ -3220,6 +3233,250 @@ const TransformerLayers = () => (
   </>
 );
 
+/* ============================================================
+   全日効率シミュレータ（変圧器ページ セクション4）
+   入力はすべて文字列で保持し、空欄・非数値でも落ちないようにする。
+   計算不能（入力電力量ゼロ）は NaN を出さず「算出不可」を表示する。
+   ============================================================ */
+
+const TDE_INIT_TF = { sn: "100", pi: "0.6", pc: "1.5", ton: "24" };
+const TDE_INIT_ROWS = [
+  { key: "A", s: "80", pf: "0.8", t: "8" },
+  { key: "B", s: "40", pf: "0.9", t: "8" },
+  { key: "C", s: "0",  pf: "1.0", t: "8" },
+];
+
+const tdeFmt = (v, d) => (Number.isFinite(v) ? v.toFixed(d) : "—");
+
+const TdeNum = ({ label, unit, value, onChange, width }) => (
+  <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--ink-soft)", margin: "0 0 6px" }}>
+    <span style={{ minWidth: 104 }}>{label}</span>
+    <input type="number" inputMode="decimal" step="any" min="0" value={value}
+      onChange={(e) => onChange(e.target.value)}
+      style={{ width: width || 76, padding: "4px 6px", border: "1px solid var(--rule)", borderRadius: 5,
+               background: "var(--bg)", color: "var(--ink)", fontFamily: "inherit", fontSize: 13, textAlign: "right" }} />
+    <span style={{ fontSize: 11.5, color: "var(--ink-mute)" }}>{unit}</span>
+  </label>
+);
+
+const TransformerDailyEfficiencySimulator = () => {
+  const [tf, setTf] = React.useState(TDE_INIT_TF);
+  const [rows, setRows] = React.useState(TDE_INIT_ROWS);
+
+  const setRow = (i, k, v) => setRows((prev) => prev.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
+  const reset = () => { setTf(TDE_INIT_TF); setRows(TDE_INIT_ROWS); };
+
+  const calc = React.useMemo(() => {
+    const n = (v) => { const x = parseFloat(v); return Number.isFinite(x) ? x : NaN; };
+    const sn = n(tf.sn), pi = n(tf.pi), pc = n(tf.pc), ton = n(tf.ton);
+    const errs = [];
+    if ([sn, pi, pc, ton].some((v) => !Number.isFinite(v))) {
+      errs.push("変圧器条件に、未入力または数値でない欄があります。");
+    } else {
+      if (!(sn > 0)) errs.push("定格容量は 0 より大きい値を入力してください（負荷率が計算できません）。");
+      if (pi < 0) errs.push("鉄損は 0 以上で入力してください。");
+      if (pc < 0) errs.push("全負荷銅損は 0 以上で入力してください。");
+      if (ton < 0) errs.push("通電時間は 0 以上で入力してください。");
+    }
+    const parsed = rows.map((r) => ({ key: r.key, s: n(r.s), pf: n(r.pf), t: n(r.t) }));
+    parsed.forEach((r) => {
+      if ([r.s, r.pf, r.t].some((v) => !Number.isFinite(v))) {
+        errs.push("時間帯 " + r.key + " に、未入力または数値でない欄があります。");
+        return;
+      }
+      if (r.s < 0) errs.push("時間帯 " + r.key + "：負荷は 0 以上で入力してください。");
+      if (r.t < 0) errs.push("時間帯 " + r.key + "：時間は 0 以上で入力してください。");
+      if (!(r.pf > 0 && r.pf <= 1)) errs.push("時間帯 " + r.key + "：力率は 0 より大きく 1 以下で入力してください。");
+    });
+    if (errs.length) return { ok: false, errs, warns: [] };
+
+    const warns = [];
+    const tSum = parsed.reduce((a, r) => a + r.t, 0);
+    if (tSum > ton) warns.push("負荷時間の合計 " + tdeFmt(tSum, 1) + " h が通電時間 " + tdeFmt(ton, 1) + " h を上回っています。電圧が加わっていない時間に負荷は載せられません。");
+    const over = parsed.filter((r) => r.s > sn).map((r) => r.key);
+    if (over.length) warns.push("過負荷：時間帯 " + over.join("・") + " の負荷が定格容量 " + tdeFmt(sn, 1) + " kV·A を超えています。計算は続けますが、実機では継続運転できません。");
+
+    const detail = parsed.map((r) => {
+      const x = r.s / sn;
+      return { key: r.key, s: r.s, pf: r.pf, t: r.t, x, x2: x * x, wout: r.s * r.pf * r.t, wc: pc * x * x * r.t };
+    });
+    const wout = detail.reduce((a, r) => a + r.wout, 0);
+    const wi = pi * ton;
+    const wc = detail.reduce((a, r) => a + r.wc, 0);
+    const win = wout + wi + wc;
+    const eta = win > 0 && Number.isFinite(win) ? (wout / win) * 100 : null;
+    return { ok: true, errs: [], warns, detail, wout, wi, wc, win, eta };
+  }, [tf, rows]);
+
+  const cell = { padding: "5px 6px", textAlign: "right" };
+  const inp = { width: 62, padding: "3px 5px", border: "1px solid var(--rule)", borderRadius: 5,
+                background: "var(--bg)", color: "var(--ink)", fontFamily: "inherit", fontSize: 13, textAlign: "right" };
+  const bandLabel = { fontSize: 11, color: "var(--ink-mute)", letterSpacing: "0.04em", margin: "0 0 2px" };
+  const bandValue = { fontFamily: "var(--font-mono)", fontSize: 17, fontWeight: 700, color: "var(--ink)" };
+  const arrow = <div style={{ textAlign: "center", color: "var(--ink-mute)", fontSize: 15, lineHeight: 1, margin: "6px 0" }}>↓</div>;
+
+  const seg = (label, value, color) => {
+    if (!calc.ok || !(calc.win > 0)) return null;
+    const pct = (value / calc.win) * 100;
+    return (
+      <div key={label} title={label + " " + tdeFmt(value, 1) + " kWh"}
+        style={{ width: pct + "%", minWidth: value > 0 ? 4 : 0, background: color, height: "100%" }} />
+    );
+  };
+
+  const legend = (label, value, color) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+      <span style={{ width: 11, height: 11, borderRadius: 2, background: color, flexShrink: 0 }} />
+      <span style={{ color: "var(--ink-soft)" }}>{label}</span>
+      <span style={{ fontFamily: "var(--font-mono)", color: "var(--ink)", fontWeight: 600 }}>
+        {calc.ok ? tdeFmt(value, 1) : "—"} kWh
+      </span>
+      <span style={{ color: "var(--ink-mute)" }}>
+        {calc.ok && calc.win > 0 ? "(" + tdeFmt((value / calc.win) * 100, 1) + "%)" : ""}
+      </span>
+    </div>
+  );
+
+  return (
+    <div style={{ border: "1px solid var(--rule)", borderRadius: 8, background: "var(--bg-elev)", padding: "14px 16px", margin: "14px 0 18px" }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+        <strong style={{ fontSize: 13.5, color: "var(--accent-ink)" }}>全日効率シミュレータ</strong>
+        <button type="button" onClick={reset}
+          style={{ fontFamily: "inherit", fontSize: 12, padding: "3px 10px", borderRadius: 5, cursor: "pointer",
+                   border: "1px solid var(--rule)", background: "var(--bg)", color: "var(--ink-soft)" }}>
+          初期値（典型例題）に戻す
+        </button>
+      </div>
+
+      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-soft)", margin: "0 0 6px" }}>① 変圧器の条件</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0 24px" }}>
+        <TdeNum label="定格容量 S_N" unit="kV·A" value={tf.sn}  onChange={(v) => setTf({ ...tf, sn: v })} />
+        <TdeNum label="鉄損 P_i"     unit="kW"   value={tf.pi}  onChange={(v) => setTf({ ...tf, pi: v })} />
+        <TdeNum label="全負荷銅損 P_cN" unit="kW" value={tf.pc} onChange={(v) => setTf({ ...tf, pc: v })} />
+        <TdeNum label="通電時間 T_on" unit="h"   value={tf.ton} onChange={(v) => setTf({ ...tf, ton: v })} />
+      </div>
+
+      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-soft)", margin: "12px 0 4px" }}>② 負荷時間帯（日負荷曲線）</div>
+      <div className="table-wrap" style={{ margin: "0 0 10px" }}>
+        <table className="data-table" style={{ fontSize: 12.5 }}>
+          <thead>
+            <tr>
+              <th style={{ textAlign: "left" }}>時間帯</th>
+              <th style={{ textAlign: "right" }}>負荷 [kV·A]</th>
+              <th style={{ textAlign: "right" }}>力率 cosφ</th>
+              <th style={{ textAlign: "right" }}>時間 [h]</th>
+              <th style={{ textAlign: "right" }}>負荷率 x</th>
+              <th style={{ textAlign: "right" }}>銅損倍率 x²</th>
+              <th style={{ textAlign: "right" }}>出力 [kWh]</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => {
+              const d = calc.ok ? calc.detail[i] : null;
+              return (
+                <tr key={r.key}>
+                  <td><strong>{r.key}</strong></td>
+                  <td style={cell}><input type="number" inputMode="decimal" step="any" min="0" style={inp}
+                    aria-label={"時間帯 " + r.key + " の負荷 [kV·A]"} value={r.s} onChange={(e) => setRow(i, "s", e.target.value)} /></td>
+                  <td style={cell}><input type="number" inputMode="decimal" step="any" min="0" max="1" style={inp}
+                    aria-label={"時間帯 " + r.key + " の力率"} value={r.pf} onChange={(e) => setRow(i, "pf", e.target.value)} /></td>
+                  <td style={cell}><input type="number" inputMode="decimal" step="any" min="0" style={inp}
+                    aria-label={"時間帯 " + r.key + " の時間 [h]"} value={r.t} onChange={(e) => setRow(i, "t", e.target.value)} /></td>
+                  <td style={cell}>{d ? tdeFmt(d.x * 100, 1) + " %" : "—"}</td>
+                  <td style={cell}>{d ? tdeFmt(d.x2, 3) : "—"}</td>
+                  <td style={cell}>{d ? tdeFmt(d.wout, 1) : "—"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {!calc.ok && (
+        <div role="status" style={{ background: "var(--danger-soft)", border: "1px solid var(--danger)", borderRadius: 6, padding: "9px 12px", fontSize: 12.5, color: "var(--ink)" }}>
+          <strong style={{ color: "var(--danger)" }}>計算できません</strong>
+          <ul style={{ margin: "4px 0 0", paddingLeft: 20 }}>
+            {calc.errs.map((m, i) => <li key={i}>{m}</li>)}
+          </ul>
+        </div>
+      )}
+
+      {calc.ok && calc.warns.map((m, i) => (
+        <div key={i} role="status" style={{ background: "var(--warn-soft)", border: "1px solid var(--warn)", borderRadius: 6, padding: "8px 12px", fontSize: 12.5, color: "var(--ink)", margin: "0 0 8px" }}>
+          <strong style={{ color: "var(--warn)" }}>注意</strong>　{m}
+        </div>
+      ))}
+
+      {calc.ok && (
+        <div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
+            <div style={{ background: "var(--bg-sunken)", borderRadius: 6, padding: "8px 10px" }}>
+              <div style={bandLabel}>③ 出力電力量 W_out</div>
+              <div style={bandValue}>{tdeFmt(calc.wout, 1)} <span style={{ fontSize: 12, fontWeight: 400, color: "var(--ink-mute)" }}>kWh</span></div>
+              <div style={{ fontSize: 11, color: "var(--ink-mute)" }}>Σ（kV·A × 力率 × 時間）</div>
+            </div>
+            <div style={{ background: "var(--bg-sunken)", borderRadius: 6, padding: "8px 10px" }}>
+              <div style={bandLabel}>③ 鉄損電力量 W_i</div>
+              <div style={bandValue}>{tdeFmt(calc.wi, 1)} <span style={{ fontSize: 12, fontWeight: 400, color: "var(--ink-mute)" }}>kWh</span></div>
+              <div style={{ fontSize: 11, color: "var(--ink-mute)" }}>鉄損 × 通電時間</div>
+            </div>
+            <div style={{ background: "var(--bg-sunken)", borderRadius: 6, padding: "8px 10px" }}>
+              <div style={bandLabel}>③ 銅損電力量 W_c</div>
+              <div style={bandValue}>{tdeFmt(calc.wc, 1)} <span style={{ fontSize: 12, fontWeight: 400, color: "var(--ink-mute)" }}>kWh</span></div>
+              <div style={{ fontSize: 11, color: "var(--ink-mute)" }}>Σ（全負荷銅損 × x² × 時間）</div>
+            </div>
+          </div>
+
+          {arrow}
+
+          <div style={{ background: "var(--bg-sunken)", borderRadius: 6, padding: "8px 10px" }}>
+            <div style={bandLabel}>④ 入力電力量 W_in ＝ W_out ＋ W_i ＋ W_c</div>
+            <div style={bandValue}>{tdeFmt(calc.win, 1)} <span style={{ fontSize: 12, fontWeight: 400, color: "var(--ink-mute)" }}>kWh</span></div>
+          </div>
+
+          {arrow}
+
+          <div style={{ background: "var(--accent-soft)", border: "1px solid var(--accent)", borderRadius: 6, padding: "10px 12px" }}>
+            <div style={bandLabel}>⑤ 全日効率 ηd</div>
+            {calc.eta === null ? (
+              <>
+                <div style={{ ...bandValue, color: "var(--ink-mute)" }}>算出不可（—）</div>
+                <div style={{ fontSize: 11.5, color: "var(--ink-mute)" }}>入力電力量が 0 kWh です（通電時間も負荷もゼロ）。効率は定義できません。</div>
+              </>
+            ) : (
+              <>
+                <div style={{ ...bandValue, fontSize: 22, color: "var(--accent-ink)" }}>
+                  {tdeFmt(calc.eta, 1)} <span style={{ fontSize: 13, fontWeight: 400 }}>%</span>
+                </div>
+                <div style={{ fontSize: 11.5, color: "var(--ink-mute)", fontFamily: "var(--font-mono)" }}>
+                  = {tdeFmt(calc.wout, 1)} / {tdeFmt(calc.win, 1)} × 100
+                </div>
+              </>
+            )}
+          </div>
+
+          <div style={{ margin: "12px 0 0" }}>
+            <div style={{ ...bandLabel, marginBottom: 4 }}>損失内訳（1日の入力電力量の内わけ）</div>
+            <div style={{ display: "flex", height: 16, borderRadius: 4, overflow: "hidden", background: "var(--bg-sunken)", border: "1px solid var(--rule)" }}>
+              {seg("出力", calc.wout, "var(--accent)")}
+              {seg("鉄損", calc.wi, "var(--warn)")}
+              {seg("銅損", calc.wc, "var(--danger)")}
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 18px", marginTop: 6 }}>
+              {legend("出力", calc.wout, "var(--accent)")}
+              {legend("鉄損", calc.wi, "var(--warn)")}
+              {legend("銅損", calc.wc, "var(--danger)")}
+            </div>
+            <p style={{ fontSize: 11.5, color: "var(--ink-mute)", margin: "6px 0 0" }}>
+              帯は面積比なので、効率の高い変圧器では損失の帯がごく細くなる。細くて見えないときは上の数値で読むこと。
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const TransformerPage = ({ onNav }) => (
   <>
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "2. 静止器" }, { label: "2.1 変圧器" }]} onNav={onNav} />
@@ -3229,8 +3486,8 @@ const TransformerPage = ({ onNav }) => (
     <div className="content">
       <TransformerLayers />
       <h2 id="basic"><span className="h-num">1.</span>基本式</h2>
-      <FormulaCard num="01 / 05" name="巻数比と電圧・電流" eq="a = \dfrac{N_1}{N_2} = \dfrac{V_1}{V_2} = \dfrac{I_2}{I_1}" />
-      <FormulaCard num="02 / 05" name="一次換算" eq="r_2' = a^2 r_2,\quad x_2' = a^2 x_2,\quad I_2' = I_2 / a" />
+      <FormulaCard num="01 / 09" name="巻数比と電圧・電流" eq="a = \dfrac{N_1}{N_2} = \dfrac{V_1}{V_2} = \dfrac{I_2}{I_1}" />
+      <FormulaCard num="02 / 09" name="一次換算" eq="r_2' = a^2 r_2,\quad x_2' = a^2 x_2,\quad I_2' = I_2 / a" />
 
       <Box kind="example" label="等価回路 — 理論「相互インダクタンス」とのつながり">
         <p>一次換算（<Eq tex="r_2'=a^2 r_2,\ x_2'=a^2 x_2" />）で二次側を一次側に寄せると、変圧器は <strong>1つの簡易等価回路</strong> にまとまる：一次・二次の <strong>漏れリアクタンス</strong> <Eq tex="x_1, x_2'" /> が直列、<strong>励磁回路</strong>（鉄損 <Eq tex="r_0" /> と励磁リアクタンス <Eq tex="x_0" /> の並列）がその間に並列に入る。電圧変動率・効率・短絡電流はすべてこの回路から導かれる。</p>
@@ -3245,22 +3502,273 @@ const TransformerPage = ({ onNav }) => (
 
       <h2 id="vreg"><span className="h-num">2.</span>電圧変動率</h2>
       <p>定格負荷時の電圧降下を百分率で表す。簡易式は次の通り（<Eq tex="\theta" />: 負荷力率角）:</p>
-      <FormulaCard num="03 / 05" name="電圧変動率（簡易）" eq="\varepsilon \approx p\cos\theta + q\sin\theta\;[\%]"
+      <FormulaCard num="03 / 09" name="電圧変動率（簡易）" eq="\varepsilon \approx p\cos\theta + q\sin\theta\;[\%]"
         note="p: %抵抗降下、q: %リアクタンス降下。遅れ力率では sin が正。" />
       <TransformerPhasor />
 
       <h2 id="pz"><span className="h-num">3.</span>百分率インピーダンス</h2>
-      <FormulaCard num="04 / 05" name="%Z と短絡電流" eq="I_s = \dfrac{100}{\%Z} \cdot I_n"
+      <FormulaCard num="04 / 09" name="%Z と短絡電流" eq="I_s = \dfrac{100}{\%Z} \cdot I_n"
         note="%Z=5% なら短絡電流は定格の20倍。系統設計の根幹。" />
 
-      <h2 id="loss"><span className="h-num">4.</span>損失と効率</h2>
-      <p>変圧器の損失は <strong>無負荷損（鉄損）</strong> と <strong>負荷損（銅損）</strong> に大別される。鉄損は電圧の二乗、銅損は負荷電流の二乗に比例。</p>
-      <FormulaCard num="05 / 05" name="最高効率の条件" eq="P_i = P_c \quad(\text{鉄損 = 銅損})"
-        note={<>これを満たす負荷率を <Eq tex="\alpha" /> とすれば <Eq tex="\alpha = \sqrt{P_i / P_{c,\mathrm{rated}}}" />。</>} />
+      <h2 id="loss"><span className="h-num">4.</span>損失・通常効率・全日効率</h2>
 
-      <Box kind="mistake" label="頻出引っ掛け">
-        <p>「<span className="marker">鉄損は負荷に依存しない</span>」。一日の効率（全日効率）計算では、銅損は負荷時間にしか発生しないが <span className="marker">鉄損は 24 時間発生</span> することに注意。</p>
+      <Box kind="tip" label="まず覚える結論（3つ）">
+        <ul style={{ margin: 0, paddingLeft: 22 }}>
+          <li><strong>通常効率は kW、全日効率は kWh</strong>。全日効率では出力・鉄損・銅損を <span className="marker">すべて電力量 [kWh] に直してから</span> 分母に入れる。通常効率の答えに時間を掛けても全日効率にはならない。</li>
+          <li><strong>出力は「kV·A × 力率 × 時間」、鉄損は「一定 × 通電時間」、銅損は「全負荷銅損 × 負荷率² × 時間」</strong>。この3つを別々に積算してから割り算する。</li>
+          <li><strong>力率は出力 kWh に使い、負荷率は kV·A で取る</strong>（銅損を決めるのは巻線電流＝kV·A）。<span className="marker">負荷率に力率を掛けるのは誤り</span>。</li>
+        </ul>
+        <p style={{ margin: "8px 0 0", fontSize: 13 }}>本セクションでは力率角を <Eq tex="\phi" /> と書く（同じ量をセクション2の電圧変動率では <Eq tex="\theta" /> と表記している）。</p>
       </Box>
+
+      <h3 id="loss-iron-copper">鉄損と銅損 — どこで・いつ発生するか</h3>
+      <p>変圧器の損失は <strong>無負荷損（鉄損 <Eq tex="P_i" />）</strong> と <strong>負荷損（銅損 <Eq tex="P_c" />）</strong> に大別される。全日効率で効くのは大きさより「<span className="marker">いつ発生しているか</span>」の違い。</p>
+
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th>項目</th><th>鉄損 <Eq tex="P_i" /></th><th>銅損 <Eq tex="P_c" /></th></tr></thead>
+        <tbody>
+          <tr><td>主な発生場所</td><td>鉄心</td><td>巻線</td></tr>
+          <tr><td>主な内訳</td><td>ヒステリシス損・渦電流損</td><td>巻線抵抗による <Eq tex="I^2R" /> 損</td></tr>
+          <tr><td>負荷との関係</td><td><strong>定格電圧・定格周波数ならほぼ一定</strong>（負荷によらない）</td><td><strong>負荷電流の2乗に比例</strong></td></tr>
+          <tr><td><strong>無負荷通電中</strong><br/>（電源は入・負荷ゼロ）</td><td><span className="marker">発生する</span></td><td>三種の計算では<strong>ほぼ 0</strong> として扱う</td></tr>
+          <tr><td><strong>電源切離し中</strong><br/>（遮断器を開放）</td><td>発生しない</td><td>発生しない</td></tr>
+        </tbody>
+      </table></div>
+
+      <Box kind="warn" label="主線で使う鉄損の表現">
+        <p style={{ margin: 0 }}><strong>鉄損は、定格電圧・定格周波数で運転している間は、負荷にかかわらずほぼ一定と扱う。</strong>「電圧の2乗に比例」は条件（周波数一定・近似）を省くと誤解のもとなので、全日効率の計算では上の表現を使う。</p>
+      </Box>
+
+      <Box kind="mistake" label="「無負荷」と「電源切離し」は別物">
+        <p style={{ margin: 0 }}>問題文の「無負荷」は<strong>電圧は加わったまま負荷がゼロ</strong>の状態で、<span className="marker">鉄損は発生し続ける</span>。<strong>電源から切り離した（開放した）</strong>ときだけ鉄損もゼロになる。「24時間通電」と書いてあれば <Eq tex="T_{\mathrm{on}}=24" />、「12時間だけ電源に接続」ならその通電時間を使う。</p>
+      </Box>
+
+      <Fold label="鉄損の内訳と、電圧・周波数への依存性" sub="主線ではないが論説で問われる（補足を開く）">
+        <p>鉄損は次の2つの和で、どちらも磁束密度の最大値 <Eq tex="B_m" /> で決まる。<Eq tex="E = 4.44 f N B_m A" /> から <Eq tex="B_m \propto V/f" /> なので、電圧と周波数の効き方が違う。</p>
+        <ul>
+          <li><strong>ヒステリシス損</strong> <Eq tex="P_h \propto f B_m^{1.6\sim2}" />（鉄心の磁化・消磁のたびに履歴面積分のエネルギーが失われる）→ 周波数一定なら <Eq tex="P_h \propto V^{1.6\sim2}" /></li>
+          <li><strong>渦電流損</strong> <Eq tex="P_e \propto f^2 B_m^2 t^2" />（<Eq tex="t" />: 鋼板の厚さ）→ <Eq tex="B_m \propto V/f" /> を代入すると <Eq tex="P_e \propto V^2" /> となり<strong>周波数に依存しない</strong>。成層鉄心（薄い鋼板を積層）で <Eq tex="t" /> を小さくするのはここを減らすため</li>
+        </ul>
+        <p>したがって「鉄損は電圧の2乗に比例」は、<strong>周波数一定のもとで、ヒステリシス損の指数も2とみなした近似</strong>。三種の全日効率問題では電圧・周波数は定格一定なので、結局「一定値」として扱えばよい。</p>
+      </Fold>
+
+      <h4>なぜ銅損は負荷率の2乗になるのか</h4>
+      <p>銅損は巻線抵抗の発熱そのもの（<Eq tex="P_c = I^2 R" />）。電圧が一定なら電流は皮相電力に比例（三相では <Eq tex="I = S / (\sqrt{3}V)" />）なので、</p>
+      <Eq display tex="\frac{I}{I_N} = \frac{S}{S_N} = x \;\Longrightarrow\; P_c = \left(\frac{I}{I_N}\right)^2 P_{cN} = x^2 P_{cN}" />
+      <FormulaCard num="05 / 09" name="銅損は負荷率の2乗に比例" eq="P_c = x^2 P_{cN},\qquad x = \dfrac{S}{S_N}"
+        note={<><Eq tex="P_{cN}" />: 全負荷銅損（定格電流時の銅損）、<Eq tex="S_N" />: 定格容量 [kV·A]。<strong>全負荷銅損と実際の銅損を混同しない</strong>。</>} />
+
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th>負荷率 <Eq tex="x" /></th><th>100%</th><th>80%</th><th>60%</th><th>50%</th><th>40%</th><th>20%</th></tr></thead>
+        <tbody>
+          <tr><td>銅損倍率 <Eq tex="x^2" /></td><td>1.00</td><td>0.64</td><td>0.36</td><td>0.25</td><td>0.16</td><td>0.04</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="mistake" label="ここを間違える">
+        <p style={{ margin: 0 }}><span className="marker">負荷が半分なら銅損も半分、ではない。50% 負荷では銅損は 25%</span>。軽負荷の時間帯の銅損は、感覚よりずっと小さくなる。</p>
+      </Box>
+
+      <h4>負荷率は原則 kV·A 基準（力率を掛けない）</h4>
+      <Eq display tex="x = \frac{\text{負荷の皮相電力}\;[\mathrm{kV\cdot A}]}{\text{定格容量}\;[\mathrm{kV\cdot A}]} \qquad(\text{誤り}:\; x = \tfrac{S\cos\phi}{S_N})" />
+      <p>巻線の発熱を決めるのは<strong>電流</strong>であり、三相では <Eq tex="I = S/(\sqrt{3}V)" />。電圧が一定なら電流は kV·A に比例するので、負荷率は kV·A どうしの比で取る。力率を掛けてしまうと、同じ電流でも力率が低い時間帯の銅損を過小評価する。</p>
+      <Box kind="formula" label="覚え方">
+        <p style={{ margin: 0, fontSize: 15 }}><strong>力率は出力 kWh に使う。kV·A 負荷率は銅損に使う。</strong></p>
+      </Box>
+
+      <h3 id="loss-normal">通常効率 — ある負荷状態を kW で評価する</h3>
+      <p>ある負荷率 <Eq tex="x" />・力率 <Eq tex="\cos\phi" /> で運転しているときの効率。<strong>すべて電力 [kW] のまま</strong>扱う。</p>
+      <FormulaCard num="06 / 09" name="通常効率（規約効率）" eq="\eta = \dfrac{P_{\mathrm{out}}}{P_{\mathrm{out}} + P_i + x^2 P_{cN}} \times 100\;[\%]"
+        note={<>出力 <Eq tex="P_{\mathrm{out}} = x S_N \cos\phi\;[\mathrm{kW}]" />。分母は「出力＋鉄損＋銅損」＝入力。</>} />
+
+      <h3 id="loss-daily">全日効率とは — 1日を kWh で評価する</h3>
+      <p>配電用変圧器のように<strong>負荷が時間帯で大きく変わる</strong>設備では、ある一点の効率では実力を表せない。そこで日負荷曲線をもとに <strong>1日分の電力量 [kWh]</strong> で評価するのが全日効率。</p>
+      <FormulaCard num="07 / 09" name="全日効率" eq="\eta_d = \dfrac{W_{\mathrm{out}}}{W_{\mathrm{out}} + W_i + W_c} \times 100\;[\%]"
+        note="Wout: 1日の出力電力量、Wi: 1日の鉄損電力量、Wc: 1日の銅損電力量（いずれも kWh）。" />
+
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th>比較項目</th><th>通常効率</th><th>全日効率</th></tr></thead>
+        <tbody>
+          <tr><td>評価対象</td><td>ある瞬間・ある負荷状態</td><td>1日全体</td></tr>
+          <tr><td>使用単位</td><td><strong>kW</strong></td><td><strong>kWh</strong></td></tr>
+          <tr><td>鉄損</td><td>その時点の損失 <Eq tex="P_i" /></td><td>通電時間分を積算 <Eq tex="P_i T_{\mathrm{on}}" /></td></tr>
+          <tr><td>銅損</td><td>その負荷率での損失 <Eq tex="x^2 P_{cN}" /></td><td>各時間帯を積算 <Eq tex="P_{cN}\sum x_k^2 t_k" /></td></tr>
+          <tr><td>主な対象</td><td>電力用変圧器など</td><td><strong>配電用変圧器</strong>など</td></tr>
+        </tbody>
+      </table></div>
+
+      <Box kind="mistake" label="いちばん多い誤り">
+        <p style={{ margin: 0 }}>通常効率を求めてから<strong>時間を適当に掛ける</strong>のは誤り。出力・鉄損・銅損を<span className="marker">それぞれ電力量にしてから</span>分母に入れる。鉄損と銅損では「掛ける時間」が違う（鉄損＝通電時間、銅損＝各負荷時間）ので、一括で時間を掛けることはできない。</p>
+      </Box>
+
+      <h4>長い式を一気に覚えない — 3つの箱に分ける</h4>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 10, margin: "10px 0" }}>
+        <div style={{ border: "1px solid var(--rule)", borderTop: "3px solid var(--accent)", borderRadius: "0 0 6px 6px", background: "var(--bg-elev)", padding: "10px 12px" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent-ink)", marginBottom: 4 }}>① 出力電力量 <Eq tex="W_{\mathrm{out}}" /></div>
+          <Eq display tex="W_{\mathrm{out}} = \sum_k S_k \cos\phi_k\, t_k" />
+          <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>kV·A は皮相電力なので、<strong>負荷に実際に渡した有効電力量</strong>を出すには力率を掛ける。</div>
+        </div>
+        <div style={{ border: "1px solid var(--rule)", borderTop: "3px solid var(--warn)", borderRadius: "0 0 6px 6px", background: "var(--bg-elev)", padding: "10px 12px" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--warn)", marginBottom: 4 }}>② 鉄損電力量 <Eq tex="W_i" /></div>
+          <Eq display tex="W_i = P_i\, T_{\mathrm{on}}" />
+          <div style={{ fontSize: 12, color: "var(--ink-soft)" }}><Eq tex="T_{\mathrm{on}}" /> は<strong>電圧が加わっている時間</strong>。24時間通電のときだけ <Eq tex="P_i \times 24" />。</div>
+        </div>
+        <div style={{ border: "1px solid var(--rule)", borderTop: "3px solid var(--danger)", borderRadius: "0 0 6px 6px", background: "var(--bg-elev)", padding: "10px 12px" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--danger)", marginBottom: 4 }}>③ 銅損電力量 <Eq tex="W_c" /></div>
+          <Eq display tex="W_c = P_{cN} \sum_k x_k^2\, t_k" />
+          <div style={{ fontSize: 12, color: "var(--ink-soft)" }}><Eq tex="x_k = S_k / S_N" />（力率は掛けない）。各時間帯ごとに2乗してから足す。</div>
+        </div>
+      </div>
+      <div style={{ textAlign: "center", color: "var(--ink-mute)", fontSize: 16, lineHeight: 1, margin: "2px 0 6px" }}>↓ 最後に全日効率へ代入</div>
+      <FormulaCard num="08 / 09" name="全日効率（3つの箱を代入した展開式）"
+        eq="\eta_d = \dfrac{\sum_k S_k\cos\phi_k t_k}{\sum_k S_k\cos\phi_k t_k + P_i T_{\mathrm{on}} + P_{cN}\sum_k \left(\frac{S_k}{S_N}\right)^2 t_k} \times 100"
+        note="この形を丸暗記する必要はない。3つの箱を別々に計算してから、上の 07 / 09 に入れれば同じこと。" />
+
+      <h4>24時間タイムライン — 出力・鉄損・銅損はいつ出ているか</h4>
+      <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+        <svg viewBox="0 0 480 300" role="img" aria-label="24時間タイムラインの比較図。定格容量100キロボルトアンペアの変圧器で、0時から8時は80キロボルトアンペアの負荷運転、8時から14時は40キロボルトアンペアの負荷運転、14時から19時は無負荷通電（電源は入ったまま負荷ゼロ）、19時から24時は電源切離しとする例。出力の帯は負荷運転中だけ現れ無負荷以降はゼロ。鉄損の帯は0時から19時の通電中ずっと同じ高さで連続し、電源切離し後はゼロ。銅損の帯は負荷運転中だけ現れ、高さは負荷率の2乗に比例して0.64対0.16すなわち4倍の差がつき、無負荷通電中はほぼゼロ、電源切離し中はゼロ" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+          <text x="240" y="16" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">例：定格 100 kV·A・19時間通電（うち14時間が負荷運転）・残り5時間は電源切離し</text>
+
+          {/* 状態バンド */}
+          <text x="68" y="45" textAnchor="end" fontSize="11" fill="var(--ink-mute)">状態</text>
+          <rect x="74"  y="30" width="129" height="22" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1" />
+          <rect x="203" y="30" width="97"  height="22" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1" />
+          <rect x="300" y="30" width="81"  height="22" rx="3" fill="var(--warn-soft)"   stroke="var(--warn)"   strokeWidth="1" />
+          <rect x="381" y="30" width="81"  height="22" rx="3" fill="var(--bg-sunken)"   stroke="var(--rule)"   strokeWidth="1" strokeDasharray="4 3" />
+          <text x="138" y="45" textAnchor="middle" fontSize="10.5" fill="var(--ink)">負荷 80kV·A</text>
+          <text x="251" y="45" textAnchor="middle" fontSize="10.5" fill="var(--ink)">負荷 40kV·A</text>
+          <text x="340" y="45" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--ink)">無負荷通電</text>
+          <text x="421" y="45" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">電源切離し</text>
+
+          {/* 区切りの縦線 */}
+          <line x1="203" y1="30" x2="203" y2="202" stroke="var(--rule)" strokeWidth="1" strokeDasharray="3 3" />
+          <line x1="300" y1="30" x2="300" y2="202" stroke="var(--rule)" strokeWidth="1" strokeDasharray="3 3" />
+          <line x1="381" y1="30" x2="381" y2="202" stroke="var(--rule)" strokeWidth="1" strokeDasharray="3 3" />
+
+          {/* 出力 */}
+          <text x="68" y="100" textAnchor="end" fontSize="11.5" fill="var(--ink-soft)">出力</text>
+          <line x1="74" y1="104" x2="462" y2="104" stroke="var(--rule)" strokeWidth="1" />
+          <rect x="74"  y="74" width="129" height="30" fill="var(--accent)" />
+          <rect x="203" y="87" width="97"  height="17" fill="var(--accent)" />
+          <text x="340" y="100" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">0</text>
+          <text x="421" y="100" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">0</text>
+
+          {/* 鉄損 */}
+          <text x="68" y="144" textAnchor="end" fontSize="11.5" fill="var(--ink-soft)">鉄損</text>
+          <line x1="74" y1="148" x2="462" y2="148" stroke="var(--rule)" strokeWidth="1" />
+          <rect x="74" y="134" width="307" height="14" fill="var(--warn)" />
+          <text x="421" y="144" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">0</text>
+          <text x="227" y="128" textAnchor="middle" fontSize="10" fill="var(--warn)">通電中はずっと同じ高さ（負荷によらない）</text>
+
+          {/* 銅損 */}
+          <text x="68" y="192" textAnchor="end" fontSize="11.5" fill="var(--ink-soft)">銅損</text>
+          <line x1="74" y1="196" x2="462" y2="196" stroke="var(--rule)" strokeWidth="1" />
+          <rect x="74"  y="172" width="129" height="24" fill="var(--danger)" />
+          <rect x="203" y="190" width="97"  height="6"  fill="var(--danger)" />
+          <text x="138" y="168" textAnchor="middle" fontSize="10" fill="var(--danger)">x²=0.64</text>
+          <text x="251" y="186" textAnchor="middle" fontSize="10" fill="var(--danger)">x²=0.16</text>
+          <text x="340" y="192" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">≈0</text>
+          <text x="421" y="192" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">0</text>
+
+          {/* 時間軸 */}
+          <line x1="74" y1="206" x2="462" y2="206" stroke="var(--ink-mute)" strokeWidth="1.2" />
+          <line x1="74"  y1="206" x2="74"  y2="212" stroke="var(--ink-mute)" strokeWidth="1.2" />
+          <line x1="203" y1="206" x2="203" y2="212" stroke="var(--ink-mute)" strokeWidth="1.2" />
+          <line x1="300" y1="206" x2="300" y2="212" stroke="var(--ink-mute)" strokeWidth="1.2" />
+          <line x1="381" y1="206" x2="381" y2="212" stroke="var(--ink-mute)" strokeWidth="1.2" />
+          <line x1="462" y1="206" x2="462" y2="212" stroke="var(--ink-mute)" strokeWidth="1.2" />
+          <text x="74"  y="224" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">0</text>
+          <text x="203" y="224" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">8</text>
+          <text x="300" y="224" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">14</text>
+          <text x="381" y="224" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">19</text>
+          <text x="462" y="224" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">24</text>
+          <text x="240" y="240" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">時刻 [h]</text>
+
+          <rect x="16" y="248" width="448" height="42" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1" />
+          <text x="240" y="265" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">
+            <tspan x="240" dy="0">鉄損の帯は通電している間ずっと連続（無負荷でも消えない）</tspan>
+            <tspan x="240" dy="18">銅損の帯は負荷時間だけ・高さは負荷率の2乗（0.64 と 0.16 で4倍差）</tspan>
+          </text>
+        </svg>
+        <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+          鉄損は<strong>電圧が加わっている19時間</strong>ぶん連続して発生し、負荷がゼロの時間帯（14時から19時）でも消えない。銅損は<strong>負荷がある時間だけ</strong>で、しかも高さは負荷率の2乗。電源を切り離した19時から24時は3つとも発生しない。この図の状況なら <Eq tex="W_i = P_i \times 19" /> であって <Eq tex="P_i \times 24" /> ではない。
+        </figcaption>
+      </figure>
+
+      <h3 id="loss-steps">全日効率の5ステップ解法</h3>
+      <ol style={{ paddingLeft: 22 }}>
+        <li style={{ marginBottom: 6 }}><strong>各時間帯の出力電力量</strong>を出す — <Eq tex="W_{\mathrm{out},k} = S_k \cos\phi_k\, t_k" />（kV·A に力率を掛ける）</li>
+        <li style={{ marginBottom: 6 }}><strong>合計する</strong> — <Eq tex="W_{\mathrm{out}} = \sum_k W_{\mathrm{out},k}" /></li>
+        <li style={{ marginBottom: 6 }}><strong>鉄損電力量</strong> — <Eq tex="W_i = P_i T_{\mathrm{on}}" />（<span className="marker">24時間と決めつけず通電時間を確認</span>）</li>
+        <li style={{ marginBottom: 6 }}><strong>銅損電力量</strong> — <Eq tex="W_c = P_{cN}\sum_k (S_k/S_N)^2 t_k" />（負荷率は kV·A 基準・2乗してから足す）</li>
+        <li><strong>全日効率</strong> — <Eq tex="\eta_d = W_{\mathrm{out}} / (W_{\mathrm{out}} + W_i + W_c) \times 100" />（0〜100% に収まるか検算）</li>
+      </ol>
+
+      <h3 id="loss-example">典型例題（途中式をすべて書く）</h3>
+      <Box kind="example" label="例題 2.1.2（全日効率）">
+        <p><strong>問:</strong> 定格容量 100 kV·A、鉄損 0.6 kW、全負荷銅損 1.5 kW の単相変圧器がある。1日の負荷が「80 kV·A・力率 0.8 で 8 時間」「40 kV·A・力率 0.9 で 8 時間」「残り 8 時間は無負荷」であり、変圧器は<strong>24時間通電</strong>している。全日効率を求めよ。</p>
+
+        <p style={{ marginBottom: 4 }}><strong>Step 1・2　出力電力量</strong>（無負荷の8時間は出力ゼロなので足さない）</p>
+        <Eq display tex="W_{\mathrm{out}} = 80 \times 0.8 \times 8 + 40 \times 0.9 \times 8 = 512 + 288 = 800\;[\mathrm{kWh}]" />
+
+        <p style={{ marginBottom: 4 }}><strong>Step 3　鉄損電力量</strong>（無負荷の8時間も通電しているので24時間ぶん）</p>
+        <Eq display tex="W_i = 0.6 \times 24 = 14.4\;[\mathrm{kWh}]" />
+
+        <p style={{ marginBottom: 4 }}><strong>Step 4　銅損電力量</strong>（負荷率 <Eq tex="x_1 = 80/100 = 0.8" />、<Eq tex="x_2 = 40/100 = 0.4" />。力率は掛けない）</p>
+        <Eq display tex="W_c = 1.5\left[\left(\tfrac{80}{100}\right)^2 \times 8 + \left(\tfrac{40}{100}\right)^2 \times 8\right] = 1.5\,[\,0.64 \times 8 + 0.16 \times 8\,] = 1.5 \times 6.4 = 9.6\;[\mathrm{kWh}]" />
+
+        <p style={{ marginBottom: 4 }}><strong>Step 5　全日効率</strong>（分母＝入力電力量 <Eq tex="800 + 14.4 + 9.6 = 824\;[\mathrm{kWh}]" />）</p>
+        <Eq display tex="\eta_d = \frac{800}{800 + 14.4 + 9.6} \times 100 = \frac{800}{824}\times 100 \approx 97.1\;[\%]" />
+
+        <p style={{ margin: "10px 0 0" }}><strong>検算:</strong> 出力 800 ＋ 損失 24.0 ＝ 入力 824.0 kWh。効率は 0〜100% の範囲に収まっている。損失のうち<span className="marker">鉄損が 14.4 kWh と銅損 9.6 kWh を上回る</span>のは、負荷率が低い時間帯が長い配電用変圧器の典型的な姿。</p>
+      </Box>
+
+      <h3 id="loss-sim">全日効率シミュレータ（数字を動かして確かめる）</h3>
+      <p>上の例題の条件が初期値。<strong>負荷率を半分にしても銅損は 1/4 にしかならない</strong>こと、<strong>通電時間を減らすと鉄損電力量だけが減る</strong>ことを、数値で確かめてほしい。</p>
+      <TransformerDailyEfficiencySimulator />
+
+      <h3 id="loss-mistakes">頻出ミス</h3>
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th>誤り</th><th>正しい考え方</th></tr></thead>
+        <tbody>
+          <tr><td>kW と kWh を混ぜる</td><td>全日効率では<strong>すべて kWh にそろえる</strong></td></tr>
+          <tr><td>kV·A × 時間 で出力を求める</td><td><strong>kV·A × 力率 × 時間</strong>（皮相電力のままでは有効電力量にならない）</td></tr>
+          <tr><td>銅損を負荷率に比例させる</td><td><strong>負荷率の2乗</strong>に比例（50% 負荷なら 25%）</td></tr>
+          <tr><td>無負荷時間の鉄損を 0 にする</td><td>通電しているなら<strong>鉄損は発生</strong>する</td></tr>
+          <tr><td>無負荷時間に全負荷銅損を入れる</td><td>三種の計算では<strong>無負荷時の銅損はほぼ 0</strong>（励磁電流による微小な銅損は無視する前提）</td></tr>
+          <tr><td>負荷率に力率を掛ける</td><td>原則 <strong>kV·A ÷ 定格 kV·A</strong>（銅損は電流で決まる）</td></tr>
+          <tr><td>全負荷銅損をそのまま使う</td><td>その時間帯の実銅損は <Eq tex="x^2 P_{cN}" /></td></tr>
+          <tr><td>通電時間を 24 時間と決めつける</td><td>問題文の<strong>実際の通電時間</strong>を確認する（「12時間だけ接続」なら 12）</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="formula" label="この一文だけ持ち帰る">
+        <p style={{ margin: 0, fontSize: 15 }}>出力は「<strong>kV·A × 力率 × 時間</strong>」、鉄損は「<strong>一定 × 通電時間</strong>」、銅損は「<strong>全負荷銅損 × 負荷率² × 時間</strong>」。</p>
+      </Box>
+
+      <Fold label="等価負荷率 — 複数の時間帯を1つにまとめる" sub="主線を理解した後の補足（開く）">
+        <p>銅損電力量だけを見れば、変動する負荷を「ある一定の負荷率 <Eq tex="x_e" /> で <Eq tex="T" /> 時間運転した」と置き換えられる。これが<strong>等価負荷率</strong>。</p>
+        <Eq display tex="x_e = \sqrt{\frac{\sum_k x_k^2 t_k}{T}} \qquad\Longrightarrow\qquad W_c = P_{cN}\, x_e^2\, T" />
+        <p>定義から分かるとおり、これは<strong>単純平均ではなく二乗平均平方根（RMS）</strong>。銅損が負荷率の2乗で効くので、2乗して平均してから平方根を取る必要がある。</p>
+        <p><strong>例:</strong> 100% 負荷で12時間、無負荷で12時間（<Eq tex="T = 24" />）のとき</p>
+        <Eq display tex="x_e = \sqrt{\frac{1^2 \times 12 + 0^2 \times 12}{24}} = \sqrt{0.5} \approx 0.707" />
+        <p>単純平均の負荷率は 50% だが、<span className="marker">銅損計算上の等価負荷率は約 70.7%</span>。平均で 50% と置いて <Eq tex="0.5^2 = 0.25" /> を使うと、銅損を半分に見誤る（正しくは <Eq tex="0.707^2 = 0.5" />）。</p>
+      </Fold>
+
+      <h3 id="loss-maxeff">最高効率の条件との橋渡し</h3>
+      <p><strong>通常効率</strong>が最大になるのは、負荷とともに増える銅損が、一定の鉄損に追いついたとき。</p>
+      <FormulaCard num="09 / 09" name="最高効率の条件（通常効率）" eq="P_i = P_c = x^2 P_{cN} \quad(\text{鉄損 = 銅損})"
+        note={<>これを満たす負荷率は <Eq tex="x = \sqrt{P_i / P_{cN}}" />。配電用変圧器は軽負荷の時間が長いので、<strong>全負荷より低い負荷率</strong>で効率が最大になるよう設計されることが多い。</>} />
+
+      <Box kind="warn" label="全日効率にそのまま当てはめない">
+        <p style={{ margin: 0 }}>「全日効率が最大 ＝ 鉄損電力量 ＝ 銅損電力量」と<strong>無条件に断定してはいけない</strong>。負荷の形（日負荷曲線）が変われば最適点も変わるからである。限定つきなら次のように言える。</p>
+        <p style={{ margin: "8px 0 0" }}><span className="marker">同じ負荷パターンを一定倍率で拡大・縮小して全日効率の最大条件を考える場合に限り、1日の鉄損電力量と1日の銅損電力量が等しくなる点が対応する。</span></p>
+      </Box>
+
+      <Fold label="なぜ「一定倍率で拡大・縮小」なら Wi = Wc になるのか" sub="導出を開く">
+        <p>負荷パターン全体を <Eq tex="m" /> 倍する（<Eq tex="S_k \to m S_k" />）と、出力電力量は <Eq tex="m" /> に比例、銅損電力量は負荷率の2乗で効くので <Eq tex="m^2" /> に比例し、鉄損電力量は変わらない。<Eq tex="A = \sum S_k\cos\phi_k t_k" />、<Eq tex="B = P_{cN}\sum x_k^2 t_k" /> と置くと</p>
+        <Eq display tex="\eta_d(m) = \frac{mA}{mA + W_i + m^2 B}" />
+        <p>分子分母を <Eq tex="mA" /> で割ると <Eq tex="\eta_d = 1/\left(1 + \dfrac{W_i}{mA} + \dfrac{mB}{A}\right)" />。分母のうち <Eq tex="m" /> に依存する2項の和は、相加相乗平均から <Eq tex="2\sqrt{W_i B}/A" /> 以上で、等号は <Eq tex="W_i/(mA) = mB/A" /> すなわち <Eq tex="m^2 B = W_i" /> のとき。<Eq tex="m^2 B" /> はそのときの銅損電力量 <Eq tex="W_c" /> なので、<strong><Eq tex="W_i = W_c" /></strong> で最大となる。</p>
+        <p style={{ margin: "8px 0 0" }}>通常効率の <Eq tex="P_i = P_c" /> と形は同じだが、<strong>比べているのは電力 [kW] ではなく電力量 [kWh]</strong>。主線では両者を混同しないこと。</p>
+      </Fold>
 
       <h2 id="parallel"><span className="h-num">5.</span>並列運転の条件</h2>
       <ol>
@@ -3413,8 +3921,17 @@ const TransformerPage = ({ onNav }) => (
       <div className="box">
         <details><summary>巻数比 a と電圧・電流の関係は？</summary>a = N₁/N₂ = V₁/V₂ = I₂/I₁（電流は巻数比の逆比）</details>
         <details><summary>%Z = 5% のとき短絡電流は定格の何倍？</summary>20倍（I_s = (100/%Z)·I_n）</details>
-        <details><summary>変圧器の最高効率の条件は？</summary>鉄損 = 銅損（P_i = P_c）。そのときの負荷率 α = √(P_i / P_c,rated)</details>
-        <details><summary>全日効率で鉄損と銅損の発生時間の違いは？</summary>鉄損は負荷に依存せず24時間発生／銅損は負荷がかかる時間のみ発生</details>
+        <details><summary>変圧器の最高効率の条件は？</summary>鉄損 = 銅損（P_i = x²P_cN）。そのときの負荷率 x = √(P_i / P_cN)。分母は全負荷銅損であって、そのときの実銅損ではない</details>
+        <details><summary>通常効率と全日効率は何が違う？</summary>通常効率＝ある瞬間・ある負荷状態を <strong>kW</strong> で評価（η = Pout /(Pout+Pi+x²PcN)）／全日効率＝1日全体を <strong>kWh</strong> で評価（ηd = Wout /(Wout+Wi+Wc)）。対象も違い、通常効率は電力用変圧器、全日効率は負荷が時間変化する配電用変圧器で使う</details>
+        <details><summary>全日効率は kW と kWh のどちらで計算する？</summary><strong>kWh（電力量）</strong>。出力・鉄損・銅損をそれぞれ電力量に直してから分母に入れる。通常効率を求めてから時間を掛けても全日効率にはならない（鉄損と銅損では掛ける時間が違うため）</details>
+        <details><summary>出力電力量の式は？</summary>Wout = Σ Sk·cosφk·tk [kWh]。kV·A は皮相電力なので、有効電力量にするには<strong>力率を掛ける</strong>。無負荷の時間帯は出力ゼロなので足さない</details>
+        <details><summary>鉄損電力量の式は？</summary>Wi = Pi × Ton [kWh]。Ton は<strong>電圧が加わっている時間</strong>。24時間通電のときだけ Pi×24 で、「12時間だけ電源に接続」ならその通電時間を使う</details>
+        <details><summary>銅損電力量の式は？</summary>Wc = PcN × Σ xk²·tk [kWh]（xk = Sk/SN）。各時間帯ごとに<strong>2乗してから足す</strong>。全負荷銅損 PcN をそのまま使うのではない</details>
+        <details><summary>50% 負荷のとき銅損は全負荷銅損の何%？</summary><strong>25%</strong>（x² = 0.5² = 0.25）。半分ではない。銅損は I²R で、電圧一定なら I は kV·A に比例するので負荷率の2乗で効く</details>
+        <details><summary>出力の計算には力率を使うのに、負荷率には原則使わないのはなぜ？</summary>出力は<strong>有効電力</strong>なので kV·A に力率を掛ける。一方、銅損を決めるのは<strong>巻線電流</strong>で、三相では I = S/(√3V)。電圧一定なら電流は kV·A に比例するので、負荷率は x = S/SN（kV·A どうしの比）で取る。力率を掛けると低力率の時間帯の銅損を過小評価する。合言葉は「力率は出力 kWh に、kV·A 負荷率は銅損に」</details>
+        <details><summary>無負荷通電中（電源は入・負荷ゼロ）に発生する損失は？</summary><strong>鉄損だけ</strong>。銅損は三種の計算ではほぼ 0 として扱う（励磁電流によるわずかな銅損は無視する前提）</details>
+        <details><summary>電源切離し中（開放）に発生する損失は？</summary><strong>鉄損も銅損も発生しない</strong>。「無負荷」と「電源切離し」を混同すると、鉄損電力量の通電時間を取り違える</details>
+        <details><summary>全日効率の計算順序（5ステップ）は？</summary>①各時間帯の出力電力量 Sk·cosφk·tk → ②合計して Wout → ③鉄損電力量 Wi = Pi·Ton → ④銅損電力量 Wc = PcN·Σxk²tk → ⑤ηd = Wout/(Wout+Wi+Wc)×100。最後に 0〜100% に収まるか検算する</details>
         <details><summary>電圧変動率の簡易式は？</summary>ε ≈ p·cosθ + q·sinθ（遅れ力率では sinθ が正）</details>
         <details><summary>V結線の出力と利用率は？</summary>出力 = √3 × 単器容量。利用率 √3/2 ≈ 86.6%（Δ結線3台比の出力は 57.7%）</details>
         <details><summary>Δ-Δ の1台が故障したら出力は何%になる？</summary>1/√3 ≈ 57.7%（2/3 = 66.7% ではない）。巻線電流が線電流そのものになり √3 倍の負担になるため</details>
