@@ -3610,6 +3610,85 @@ const TransformerDailyEfficiencySimulator = () => {
   );
 };
 
+/* 無負荷試験／短絡試験の結線図。mode='open'（二次開放）/'short'（二次短絡）で
+   二次側の処理・印加電圧の大小・注記だけを切り替える。回路の骨格は共通。 */
+const TransformerTestCircuit = ({ mode }) => {
+  const open = mode === "open";
+  return (
+    <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+      <svg viewBox="0 0 420 212" role="img"
+        aria-label={open
+          ? "無負荷試験の結線図。一次側に電源から定格電圧を加え、電流計と電力計を直列・電圧計を並列に入れる。二次側は開放して何も接続しない。流れるのは励磁電流I0だけで、電力計の読みP0が鉄損にほぼ等しい"
+          : "短絡試験の結線図。一次側に可変電源から低電圧を加え、電流計と電力計を直列・電圧計を並列に入れる。二次側は導線で短絡する。定格電流Isが流れるまで電圧を上げ、そのときの電力計の読みPsが全負荷銅損にほぼ等しい"}
+        style={{ display: "block", width: "100%", height: "auto", maxWidth: "420px", margin: "0 auto" }}>
+        <text x="210" y="20" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--ink)">
+          {open ? "無負荷試験（二次開放・定格電圧）" : "短絡試験（二次短絡・低電圧）"}
+        </text>
+
+        {/* 電源 */}
+        <circle cx="46" cy="110" r="16" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.6" />
+        <path d="M 37 110 q 4.5 -7 9 0 q 4.5 7 9 0" fill="none" stroke="var(--ink)" strokeWidth="1.4" />
+        <line x1="46" y1="94" x2="46" y2="64" stroke="var(--ink)" strokeWidth="1.6" />
+        <line x1="46" y1="126" x2="46" y2="156" stroke="var(--ink)" strokeWidth="1.6" />
+
+        {/* 上side: 電流計・電力計 */}
+        <line x1="46" y1="64" x2="99" y2="64" stroke="var(--ink)" strokeWidth="1.6" />
+        <circle cx="110" cy="64" r="11" fill="var(--bg)" stroke="var(--accent)" strokeWidth="1.6" />
+        <text x="110" y="68" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">A</text>
+        <line x1="121" y1="64" x2="159" y2="64" stroke="var(--ink)" strokeWidth="1.6" />
+        <circle cx="170" cy="64" r="11" fill="var(--bg)" stroke="var(--accent)" strokeWidth="1.6" />
+        <text x="170" y="68" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">W</text>
+        <line x1="181" y1="64" x2="250" y2="64" stroke="var(--ink)" strokeWidth="1.6" />
+
+        {/* 電圧計（一次側に並列） */}
+        <line x1="222" y1="64" x2="222" y2="99" stroke="var(--ink)" strokeWidth="1.4" />
+        <circle cx="222" cy="110" r="11" fill="var(--bg)" stroke="var(--accent)" strokeWidth="1.6" />
+        <text x="222" y="114" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">V</text>
+        <line x1="222" y1="121" x2="222" y2="156" stroke="var(--ink)" strokeWidth="1.4" />
+
+        {/* 変圧器（一次巻線・鉄心・二次巻線） */}
+        <line x1="250" y1="64" x2="250" y2="80" stroke="var(--ink)" strokeWidth="1.6" />
+        <rect x="244" y="80" width="12" height="50" rx="2" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.6" />
+        <line x1="250" y1="130" x2="250" y2="156" stroke="var(--ink)" strokeWidth="1.6" />
+        <line x1="262" y1="76" x2="262" y2="134" stroke="var(--ink-mute)" strokeWidth="1.6" />
+        <line x1="266" y1="76" x2="266" y2="134" stroke="var(--ink-mute)" strokeWidth="1.6" />
+        <rect x="272" y="80" width="12" height="50" rx="2" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.6" />
+        <text x="264" y="148" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">鉄心</text>
+
+        {/* 下側の帰路 */}
+        <line x1="46" y1="156" x2="250" y2="156" stroke="var(--ink)" strokeWidth="1.6" />
+
+        {/* 二次側 */}
+        <line x1="278" y1="80" x2="278" y2="64" stroke="var(--ink)" strokeWidth="1.6" />
+        <line x1="278" y1="64" x2="350" y2="64" stroke="var(--ink)" strokeWidth="1.6" />
+        <line x1="278" y1="130" x2="278" y2="156" stroke="var(--ink)" strokeWidth="1.6" />
+        <line x1="278" y1="156" x2="350" y2="156" stroke="var(--ink)" strokeWidth="1.6" />
+        <circle cx="350" cy="64" r="3.5" fill="var(--ink)" />
+        <circle cx="350" cy="156" r="3.5" fill="var(--ink)" />
+        {open
+          ? <text x="362" y="114" fontSize="11.5" fontWeight="700" fill="var(--warn)">開放</text>
+          : <>
+              <line x1="350" y1="64" x2="350" y2="156" stroke="var(--danger)" strokeWidth="2.6" />
+              <text x="362" y="114" fontSize="11.5" fontWeight="700" fill="var(--danger)">短絡</text>
+            </>}
+
+        {/* 注記 */}
+        <text x="46" y="182" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">
+          {open ? "定格電圧" : "低電圧（可変）"}
+        </text>
+        <text x="210" y="200" textAnchor="middle" fontSize="11" fontWeight="700" fill={open ? "var(--warn)" : "var(--danger)"}>
+          {open ? "流れるのは励磁電流 I₀ だけ → 電力計の読み P₀ ≒ 鉄損" : "定格電流 Iₛ まで電圧を上げる → 電力計の読み Pₛ ≒ 全負荷銅損"}
+        </text>
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+        {open
+          ? <>二次側を<strong>開放</strong>し、一次に<strong>定格電圧</strong>を加える。負荷電流が流れないので直列インピーダンスの降下はごくわずかで、測っているのは実質<strong>励磁回路だけ</strong>。</>
+          : <>二次側を<strong>短絡</strong>し、一次に<strong>低電圧</strong>を加えて定格電流を流す。磁束が小さく鉄損が無視できるので、測っているのは実質<strong>直列インピーダンスだけ</strong>。</>}
+      </figcaption>
+    </figure>
+  );
+};
+
 const TransformerPage = ({ onNav }) => (
   <>
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "2. 静止器" }, { label: "2.1 変圧器" }]} onNav={onNav} />
@@ -3756,6 +3835,7 @@ const TransformerPage = ({ onNav }) => (
       <Box kind="tip" label="何を測って何を得るか">
         <p style={{ margin: 0 }}><strong>二次側を開放し、一次側に定格電圧を加える</strong>。負荷電流が流れないので直列の <Eq tex="r_1,x_1" /> による降下はごくわずかで、測るのは実質<strong>励磁回路だけ</strong>。得られるのは <span className="marker">鉄損 <Eq tex="P_i" /> と励磁枝 <Eq tex="r_0,\ x_0" /></span>。</p>
       </Box>
+      <TransformerTestCircuit mode="open" />
       <ul>
         <li>測定量：<strong>無負荷電流 <Eq tex="I_0" /></strong>、<strong>入力電力 <Eq tex="P_0" /></strong>、印加電圧 <Eq tex="V_1" />（＝定格電圧）</li>
         <li><strong>鉄損はおおむね <Eq tex="P_0" /> とみなせる</strong>。無負荷時に流れるのは励磁電流だけで、その一次銅損 <Eq tex="I_0^2 r_1" /> は <Eq tex="P_0" /> に比べて小さいため無視する（<span className="marker">これは近似</span>）</li>
@@ -3771,6 +3851,7 @@ const TransformerPage = ({ onNav }) => (
       <Box kind="tip" label="何を測って何を得るか">
         <p style={{ margin: 0 }}><strong>二次側を短絡し、一次側に低い電圧を加えて定格電流を流す</strong>。印加電圧が定格の数 % と低いので<span className="marker">磁束が小さく鉄損は無視できる</span>。測るのは実質<strong>直列インピーダンスだけ</strong>。得られるのは <span className="marker">全負荷銅損 <Eq tex="P_{cN}" /> と <Eq tex="Z_e,\ R_e,\ X_e" />、そして %Z</span>。</p>
       </Box>
+      <TransformerTestCircuit mode="short" />
       <ul>
         <li>測定量：<strong>短絡時の印加電圧 <Eq tex="V_s" /></strong>（＝インピーダンス電圧）、<strong>電流 <Eq tex="I_s" /></strong>（定格電流まで上げる）、<strong>入力電力 <Eq tex="P_s" /></strong></li>
         <li><strong>入力電力は定格電流時の銅損とみなせる</strong>（鉄損が無視できるため）</li>
@@ -4054,6 +4135,70 @@ const TransformerPage = ({ onNav }) => (
 
       <h3 id="loss-maxeff">最高効率の条件との橋渡し</h3>
       <p><strong>通常効率</strong>が最大になるのは、負荷とともに増える銅損が、一定の鉄損に追いついたとき。</p>
+
+      <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+        <svg viewBox="0 0 480 268" role="img" aria-label="効率と損失を負荷率に対して描いたグラフ。鉄損は負荷率によらず一定なので水平な直線、銅損は負荷率の2乗に比例するので右上がりの放物線になる。2本が交わる負荷率63パーセントの位置で効率曲線が最大値98.1パーセントをとる。効率曲線は軽負荷側で急に落ち、最大点の周辺はなだらかで、全負荷を超えると再び下がる" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+          <text x="240" y="18" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">損失と効率（定格100 kV·A・鉄損0.6 kW・全負荷銅損1.5 kW・力率1）</text>
+
+          {/* 軸 */}
+          <line x1="60" y1="210" x2="440" y2="210" stroke="var(--ink-mute)" strokeWidth="1.4" />
+          <line x1="60" y1="210" x2="60" y2="52" stroke="var(--ink-mute)" strokeWidth="1.4" />
+          <line x1="430" y1="210" x2="430" y2="52" stroke="var(--ink-mute)" strokeWidth="1.4" strokeDasharray="3 3" />
+          <text x="58" y="46" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">損失 [kW]</text>
+          <text x="432" y="46" textAnchor="middle" fontSize="10.5" fill="var(--accent-ink)">効率 [%]</text>
+          {/* 左目盛（損失） */}
+          {[[0,210],[1,167],[2,124],[3,81]].map(([v,y]) => (
+            <g key={"L"+v}>
+              <line x1="56" y1={y} x2="60" y2={y} stroke="var(--ink-mute)" strokeWidth="1.2" />
+              <text x="52" y={y+3.5} textAnchor="end" fontSize="10" fill="var(--ink-mute)">{v}</text>
+            </g>
+          ))}
+          {/* 右目盛（効率） */}
+          {[[90,210],[95,135],[100,60]].map(([v,y]) => (
+            <g key={"E"+v}>
+              <line x1="430" y1={y} x2="434" y2={y} stroke="var(--accent)" strokeWidth="1.2" />
+              <text x="438" y={y+3.5} fontSize="10" fill="var(--accent-ink)">{v}</text>
+            </g>
+          ))}
+          {/* 横目盛（負荷率） */}
+          {[[0,60],[50,183],[100,307],[150,430]].map(([v,x]) => (
+            <g key={"X"+v}>
+              <line x1={x} y1="210" x2={x} y2="215" stroke="var(--ink-mute)" strokeWidth="1.2" />
+              <text x={x} y="228" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">{v}</text>
+            </g>
+          ))}
+          <text x="245" y="246" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">負荷率 x [%]（100 % ＝ 全負荷）</text>
+
+          {/* 鉄損（一定） */}
+          <line x1="60" y1="184.3" x2="430" y2="184.3" stroke="var(--warn)" strokeWidth="2.2" />
+          <text x="96" y="178" fontSize="11" fontWeight="700" fill="var(--warn)">鉄損（一定）</text>
+
+          {/* 銅損 ∝ x² */}
+          <polyline points="60,210 85,209 109,207 134,204 159,200 183,194 208,187 233,179 257,169 282,158 307,146 331,132 356,117 381,101 405,84 430,65"
+            fill="none" stroke="var(--danger)" strokeWidth="2.2" />
+          <text x="398" y="78" textAnchor="end" fontSize="11" fontWeight="700" fill="var(--danger)">銅損 ∝ x²</text>
+
+          {/* 効率曲線 */}
+          <polyline points="80,166 90,134 99,118 109,108 119,102 129,97 139,95 149,92 159,91 169,90 178,89 188,88 198,88 208,88 218,88 228,88 238,88 247,88 257,89 267,89 277,89 287,90 297,90 307,91 317,91 326,92 336,93 346,93 356,94 366,94 376,95 386,96 395,96 405,97 415,98 425,98 430,99"
+            fill="none" stroke="var(--accent)" strokeWidth="2.6" />
+          <text x="300" y="76" fontSize="11.5" fontWeight="700" fill="var(--accent-ink)">効率 η</text>
+
+          {/* 交点 */}
+          <line x1="216" y1="88" x2="216" y2="210" stroke="var(--ink-mute)" strokeWidth="1.2" strokeDasharray="4 3" />
+          <circle cx="216" cy="184.3" r="4.5" fill="var(--bg)" stroke="var(--ink)" strokeWidth="2" />
+          <circle cx="216" cy="88" r="4.5" fill="var(--accent)" />
+          <text x="216" y="222" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--ink)">63</text>
+
+          <rect x="86" y="252" width="308" height="0.1" fill="none" />
+          <text x="240" y="262" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">
+            鉄損＝銅損 となる x ＝ √(Pi/PcN) ＝ √(0.6/1.5) ≒ 0.63 で効率が最大（98.1 %）
+          </text>
+        </svg>
+        <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+          鉄損は水平（負荷によらない）、銅損は放物線（<Eq tex="x^2" /> に比例）。<strong>2本が交わる負荷率で効率が最大</strong>になる。<span className="marker">最大点の周辺は平ら</span>なので、多少ずれても効率はあまり落ちない。一方<strong>軽負荷側では急激に落ちる</strong>（出力が小さいのに鉄損は同じだけ出続けるため）。
+        </figcaption>
+      </figure>
+
       <FormulaCard num="10 / 15" name="最高効率の条件（通常効率）" eq="P_i = P_c = x^2 P_{cN} \quad(\text{鉄損 = 銅損})"
         note={<><strong>電圧・周波数・力率 <Eq tex="\cos\phi" />・巻線抵抗を一定として負荷率 <Eq tex="x" /> だけを変えたとき</strong>の条件（力率が <Eq tex="x" /> とともに変わる場合は出力が <Eq tex="x" /> に比例しないので一般には成り立たない）。これを満たす負荷率は <Eq tex="x = \sqrt{P_i / P_{cN}}" />。配電用変圧器は軽負荷の時間が長いので、<strong>全負荷より低い負荷率</strong>で効率が最大になるよう設計されることが多い。</>} />
 
@@ -4147,6 +4292,45 @@ const TransformerPage = ({ onNav }) => (
           <tr><td><strong>両方とも違う</strong></td><td colSpan="2"><span className="marker">一般式 <Eq tex="S_{NA}/z_A : S_{NB}/z_B" /> で計算するしかない</span></td></tr>
         </tbody>
       </table></div>
+
+      <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+        <svg viewBox="0 0 480 250" role="img" aria-label="並行運転の負荷分担を棒で比較した図。A は定格100キロボルトアンペアでパーセントインピーダンス4パーセント、B は定格300キロボルトアンペアで6パーセント、合計300キロボルトアンペアの負荷を供給する。正しい一般式ではAが100・Bが200となり両方とも定格枠に収まる。パーセントインピーダンスの逆比だけを使う誤った計算ではAが180となり定格枠を大きくはみ出して180パーセントの過負荷になる" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+          <text x="240" y="17" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">A（100 kV·A・4 %）＋ B（300 kV·A・6 %）で 300 kV·A を分担する</text>
+
+          {/* ===== 正しい ===== */}
+          <text x="14" y="42" fontSize="11.5" fontWeight="700" fill="var(--ok)">正しい：（定格容量 ÷ %Z）の比 ＝ 100/4 : 300/6 ＝ 25 : 50 ＝ 1 : 2</text>
+          <text x="106" y="63" textAnchor="end" fontSize="11" fill="var(--ink-soft)">A 定格100</text>
+          <rect x="110" y="52" width="110" height="16" rx="2" fill="none" stroke="var(--ink-mute)" strokeWidth="1.2" strokeDasharray="3 2" />
+          <rect x="110" y="52" width="110" height="16" rx="2" fill="var(--ok)" opacity="0.85" />
+          <text x="228" y="64" fontSize="10.5" fontWeight="700" fill="var(--ink)">100 kV·A（負荷率100 %）</text>
+          <text x="106" y="89" textAnchor="end" fontSize="11" fill="var(--ink-soft)">B 定格300</text>
+          <rect x="110" y="78" width="330" height="16" rx="2" fill="none" stroke="var(--ink-mute)" strokeWidth="1.2" strokeDasharray="3 2" />
+          <rect x="110" y="78" width="220" height="16" rx="2" fill="var(--ok)" opacity="0.85" />
+          <text x="338" y="90" fontSize="10.5" fontWeight="700" fill="var(--ink)">200 kV·A（67 %）</text>
+          <text x="14" y="112" fontSize="11" fill="var(--ok)">→ 2台とも定格枠（点線）の中に収まる</text>
+
+          {/* 区切り */}
+          <line x1="14" y1="126" x2="466" y2="126" stroke="var(--rule)" strokeWidth="1" />
+
+          {/* ===== 誤り ===== */}
+          <text x="14" y="150" fontSize="11.5" fontWeight="700" fill="var(--danger)">誤り：%Z の逆比だけ 1/4 : 1/6 ＝ 3 : 2</text>
+          <text x="106" y="171" textAnchor="end" fontSize="11" fill="var(--ink-soft)">A 定格100</text>
+          <rect x="110" y="160" width="110" height="16" rx="2" fill="none" stroke="var(--ink-mute)" strokeWidth="1.2" strokeDasharray="3 2" />
+          <rect x="110" y="160" width="198" height="16" rx="2" fill="var(--danger)" opacity="0.85" />
+          <line x1="220" y1="156" x2="220" y2="180" stroke="var(--danger)" strokeWidth="2.4" />
+          <text x="316" y="172" fontSize="10.5" fontWeight="700" fill="var(--danger)">180 kV·A ＝ 180 %</text>
+          <text x="106" y="197" textAnchor="end" fontSize="11" fill="var(--ink-soft)">B 定格300</text>
+          <rect x="110" y="186" width="330" height="16" rx="2" fill="none" stroke="var(--ink-mute)" strokeWidth="1.2" strokeDasharray="3 2" />
+          <rect x="110" y="186" width="132" height="16" rx="2" fill="var(--danger)" opacity="0.6" />
+          <text x="250" y="198" fontSize="10.5" fill="var(--ink-soft)">120 kV·A（40 %）</text>
+
+          <rect x="14" y="212" width="452" height="30" rx="6" fill="var(--danger-soft)" stroke="var(--danger)" strokeWidth="1" />
+          <text x="240" y="231" textAnchor="middle" fontSize="11.5" fontWeight="700" fill="var(--ink)">A が定格枠を突き抜ける ＝ 現実には焼損。容量が違う組で「%Z 逆比」は使えない</text>
+        </svg>
+        <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+          点線が各器の<strong>定格容量の枠</strong>、塗りが<strong>実際の負担</strong>。棒の長さは kV·A に比例（同一縮尺）。容量差を無視した式では、小さい方の A に負担が寄って枠を大きくはみ出す。
+        </figcaption>
+      </figure>
 
       <Box kind="mistake" label="「%Z に反比例」だけを暗記した人が落ちる穴">
         <p><strong>問:</strong> A（100 kV·A・%Z = 4 %）と B（300 kV·A・%Z = 6 %）を並行運転し、合計 300 kV·A の負荷を供給する。各器の負担は？</p>
