@@ -1081,6 +1081,52 @@ window.WIKI_DATA = {
     { year: "H26",  topic: "誘導発電機の動作条件",                      tag: "理論" },
   ],
 
+  /* 本文セクション索引。検索から見出しへ直接着地させる（#<page>/<anchor>）。
+     keywords には見出しに出てこない同義語・別表記を入れる。 */
+  sections: [
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "scope",
+      title: "このページで得点できる問題", desc: "変圧器の出題6パターンと使う道具の対応表",
+      keywords: "変圧器 出題 傾向 一覧" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "basic",
+      title: "理想変圧器と巻数比", desc: "a=N1/N2=V1/V2=I2/I1 と一次換算。理想条件の但し書き",
+      keywords: "変圧器 巻数比 理想変圧器 一次換算 二次換算" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "emf",
+      title: "誘導起電力と磁束", desc: "E=4.44fNΦm、Φm∝V/f、周波数低下で鉄心が飽和する因果",
+      keywords: "誘導起電力 磁束 飽和 励磁電流 V/f 周波数" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "equiv",
+      title: "実際の変圧器と等価回路", desc: "r1・x1・r2'・x2'・r0・x0 の意味と、どの試験で求まるか",
+      keywords: "等価回路 励磁電流 鉄損抵抗 漏れリアクタンス 一次換算 T形" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "oc-test",
+      title: "無負荷試験（開放試験）", desc: "二次開放・定格電圧。鉄損とr0・x0を求める",
+      keywords: "無負荷試験 開放試験 鉄損 励磁電流 磁化電流 I0 P0" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "sc-test",
+      title: "短絡試験（インピーダンス試験）", desc: "二次短絡・低電圧。銅損とZe・Re・Xeを求める",
+      keywords: "短絡試験 インピーダンス試験 銅損 Ze Re Xe インピーダンス電圧" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "loss",
+      title: "損失・通常効率・全日効率", desc: "鉄損と銅損の違い、kWとkWhの区別、全日効率とシミュレータ",
+      keywords: "鉄損 銅損 効率 最大効率 全日効率 負荷率 全負荷銅損 kWh 日負荷曲線" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "loss-maxeff",
+      title: "最高効率の条件", desc: "鉄損=銅損で効率最大。x=√(Pi/PcN)",
+      keywords: "最大効率 最高効率 鉄損 銅損 負荷率" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "loss-sim",
+      title: "全日効率シミュレータ", desc: "負荷時間帯を入力して全日効率を体験する",
+      keywords: "全日効率 シミュレータ 計算" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "vreg",
+      title: "電圧変動率", desc: "定義ε=(V20-V2)/V2、遅れ・進みの符号、ベクトル図",
+      keywords: "電圧変動率 遅れ力率 進み力率 ベクトル図 百分率抵抗降下 百分率リアクタンス降下" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "pz",
+      title: "百分率インピーダンスと短絡電流", desc: "%Zの定義、%Z=√(p²+q²)、Is=100/%Z·In と適用条件",
+      keywords: "百分率インピーダンス パーセントインピーダンス %インピーダンス ％インピーダンス %Z ％Z 短絡電流 インピーダンス電圧" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "parallel",
+      title: "並行運転", desc: "負担配分 SNA/zA : SNB/zB。容量が違うとき%Z逆比は誤り",
+      keywords: "並行運転 並列運転 負荷分担 負担 %Z 逆比 極性 角変位" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "vconn",
+      title: "V結線・単巻変圧器", desc: "V結線の出力√3Sn・利用率86.6%、単巻変圧器の自己容量",
+      keywords: "V結線 三相結線 単巻変圧器 利用率" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "v-denominator",
+      title: "57.7%と86.6%の分母の違い", desc: "分子は同じ√3VI。分母がΔ3台か残り2台かの違い",
+      keywords: "V結線 57.7 86.6 利用率 出力比 分母" },
+  ],
   glossary: [
     { term: "同期速度",        reading: "DOUKI SOKUDO",      letter: "た",
       def: "回転磁界が回る速度。Ns = 120f / p（p:極数, f:周波数[Hz]）。誘導機の回転速度は滑り分の速度を差し引いた N = (1−s)Ns となる。" },
@@ -1725,36 +1771,109 @@ const DCMachineCross = () => (
 );
 
 /* Transformer phasor */
+/* 電圧変動率のベクトル図（遅れ力率）
+   幾何の約束: 端子電圧 V₂ を基準にとり右向き。SVG は y 軸が下向きなので、
+   遅れ電流（複素平面で −θ）は画面でも V₂ の「下側」に出る。
+   I₂r は I₂ と同方向、jI₂x は I₂ より 90° 進み（I₂ を反時計 90° 回転）。
+   E₂ = V₂ + I₂r + jI₂x。座標は V₂=200, I₂r=30, I₂x=80, θ=36.87°(cosθ=0.8) で作図。
+   ※降下は視認のため誇張してある（実機の p,q は数 %）。 */
 const TransformerPhasor = () => (
-  <DiagramFrame caption="図2.1.1  変圧器の電圧変動率（簡易ベクトル図）" viewBox="0 0 400 240">
-    <line x1="40" y1="180" x2="360" y2="180" className="diagram-stroke" />
-    <line x1="40" y1="180" x2="40"  y2="40"  className="diagram-stroke" />
-    <polygon points="360,180 354,176 354,184" className="diagram-fill" />
+  <DiagramFrame caption="図2.1.1  電圧変動率のベクトル図（遅れ力率・降下は誇張）" viewBox="0 0 420 244">
+    <text x="210" y="16" textAnchor="middle" className="diagram-text" style={{ fontWeight: 700 }}>遅れ力率（誘導性負荷）— 端子電圧 V₂ を基準にとる</text>
 
-    {/* V2 (output) */}
-    <line x1="40" y1="180" x2="240" y2="180" className="diagram-accent" strokeWidth="2" />
-    <polygon points="240,180 234,176 234,184" fill="var(--accent)" />
-    <text x="140" y="174" textAnchor="middle" className="diagram-text-mono" style={{ fill: 'var(--accent)' }}>V₂</text>
+    {/* 基準軸 */}
+    <line x1="40" y1="130" x2="396" y2="130" className="diagram-stroke-soft" strokeDasharray="3 3" />
 
-    {/* I2 (load current at lagging pf) */}
-    <line x1="40" y1="180" x2="180" y2="120" className="diagram-stroke" strokeWidth="1.6" />
-    <text x="100" y="146" className="diagram-text-mono">I₂</text>
+    {/* |V₂| の参照円弧：E₂ の先端がこの外側なら ε は正 */}
+    <path d="M 256 130 A 200 200 0 0 0 243.9 61.6" className="diagram-stroke-soft" strokeDasharray="4 4" fill="none" />
+    <text x="228" y="56" textAnchor="end" className="diagram-text-mono">半径 |V₂| の円弧</text>
 
-    {/* IR drop */}
-    <line x1="240" y1="180" x2="280" y2="180" className="diagram-stroke" />
-    <text x="260" y="194" textAnchor="middle" className="diagram-text-mono">I·r</text>
+    {/* V₂（基準） */}
+    <line x1="56" y1="130" x2="256" y2="130" className="diagram-accent" strokeWidth="2.4" />
+    <polygon points="256,130 247,126.5 247,133.5" style={{ fill: 'var(--accent)' }} />
+    <text x="150" y="146" textAnchor="middle" className="diagram-text-mono" style={{ fill: 'var(--accent)', fontWeight: 700 }}>V₂（基準）</text>
 
-    {/* IX drop */}
-    <line x1="280" y1="180" x2="280" y2="140" className="diagram-stroke" />
-    <text x="294" y="160" className="diagram-text-mono">I·x</text>
+    {/* I₂（遅れ → 基準より下側） */}
+    <line x1="56" y1="130" x2="136" y2="190" className="diagram-stroke" strokeWidth="1.8" />
+    <polygon points="136,190 126.7,187.4 130.9,181.8" className="diagram-fill" />
+    <text x="74" y="177" className="diagram-text-mono" style={{ fontWeight: 700 }}>I₂（θ だけ遅れる）</text>
 
-    {/* V1 */}
-    <line x1="40" y1="180" x2="280" y2="140" className="diagram-stroke" strokeWidth="2" strokeDasharray="2 2" />
-    <text x="160" y="156" className="diagram-text-mono">V₁</text>
+    {/* θ */}
+    <path d="M 90 130 A 34 34 0 0 1 83.2 150.4" className="diagram-stroke-soft" fill="none" />
+    <text x="97" y="148" className="diagram-text-mono">θ</text>
 
-    {/* angle */}
-    <path d="M 60 180 A 20 20 0 0 0 60 168" className="diagram-stroke-soft" fill="none" />
-    <text x="78" y="174" className="diagram-text-mono">θ</text>
+    {/* I₂r（I₂ と同方向） */}
+    <line x1="256" y1="130" x2="280" y2="148" className="diagram-warn" strokeWidth="2" />
+    <polygon points="280,148 270.7,145.4 274.9,139.8" style={{ fill: 'var(--warn)' }} />
+    <text x="276" y="163" textAnchor="middle" className="diagram-text-mono" style={{ fill: 'var(--warn)' }}>I₂r</text>
+
+    {/* jI₂x（I₂ より 90° 進み） */}
+    <line x1="280" y1="148" x2="328" y2="84" className="diagram-warn" strokeWidth="2" />
+    <polygon points="328,84 325.4,93.3 319.8,89.1" style={{ fill: 'var(--warn)' }} />
+    <text x="337" y="112" className="diagram-text-mono" style={{ fill: 'var(--warn)' }}>jI₂x</text>
+    <text x="414" y="125" textAnchor="end" className="diagram-text-mono" style={{ fill: 'var(--warn)' }}>（I₂ より 90° 進み）</text>
+
+    {/* E₂ = V₂ + I₂r + jI₂x */}
+    <line x1="56" y1="130" x2="328" y2="84" className="diagram-stroke" strokeWidth="2.4" strokeDasharray="5 3" />
+    <polygon points="328,84 319.7,88.9 318.5,82.1" className="diagram-fill" />
+    <text x="186" y="97" textAnchor="middle" className="diagram-text-mono" style={{ fill: 'var(--ink)', fontWeight: 700 }}>E₂ ＝ V₂ + I₂r + jI₂x</text>
+
+    {/* 水平成分の増分 ＝ 近似式の正体 */}
+    <line x1="256" y1="130" x2="256" y2="170" className="diagram-stroke-soft" strokeDasharray="2 3" />
+    <line x1="328" y1="84"  x2="328" y2="170" className="diagram-stroke-soft" strokeDasharray="2 3" />
+    <line x1="256" y1="170" x2="328" y2="170" className="diagram-stroke" />
+    <polygon points="256,170 264,167 264,173" className="diagram-fill" />
+    <polygon points="328,170 320,167 320,173" className="diagram-fill" />
+    <text x="292" y="190" textAnchor="middle" className="diagram-text-mono" style={{ fontWeight: 700 }}>≈ ε·V₂</text>
+    <text x="292" y="204" textAnchor="middle" className="diagram-text-mono">I₂r·cosθ + I₂x·sinθ</text>
+
+    <text x="210" y="228" textAnchor="middle" className="diagram-text-mono">E₂ が円弧の外側 → |E₂| が |V₂| より大きい → ε は正</text>
+  </DiagramFrame>
+);
+
+/* 進み力率（容量性負荷）。遅れとの違いは jI₂x の向きだけで、
+   その水平成分が V₂ と逆向きになるため差し引かれ、条件により ε が負になる。
+   座標は V₂=200, I₂r=30, I₂x=110, θ=36.87°(進み) で作図。 */
+const TransformerPhasorLeading = () => (
+  <DiagramFrame caption="図2.1.2  進み力率では jI₂x の水平成分が逆向きになる（降下は誇張）" viewBox="0 0 420 200">
+    <text x="210" y="16" textAnchor="middle" className="diagram-text" style={{ fontWeight: 700 }}>進み力率（容量性負荷）— 同じ V₂ 基準</text>
+
+    <line x1="40" y1="150" x2="396" y2="150" className="diagram-stroke-soft" strokeDasharray="3 3" />
+
+    {/* |V₂| の参照円弧 */}
+    <path d="M 256 150 A 200 200 0 0 0 222 38.4" className="diagram-stroke-soft" strokeDasharray="4 4" fill="none" />
+
+    {/* V₂ */}
+    <line x1="56" y1="150" x2="256" y2="150" className="diagram-accent" strokeWidth="2.4" />
+    <polygon points="256,150 247,146.5 247,153.5" style={{ fill: 'var(--accent)' }} />
+    <text x="150" y="166" textAnchor="middle" className="diagram-text-mono" style={{ fill: 'var(--accent)', fontWeight: 700 }}>V₂（基準）</text>
+
+    {/* I₂（進み → 基準より上側） */}
+    <line x1="56" y1="150" x2="136" y2="90" className="diagram-stroke" strokeWidth="1.8" />
+    <polygon points="136,90 126.7,92.6 130.9,98.2" className="diagram-fill" />
+    <text x="74" y="84" className="diagram-text-mono" style={{ fontWeight: 700 }}>I₂（θ だけ進む）</text>
+
+    {/* I₂r（I₂ と同方向） */}
+    <line x1="256" y1="150" x2="280" y2="132" className="diagram-warn" strokeWidth="2" />
+    <polygon points="280,132 270.7,134.6 274.9,140.2" style={{ fill: 'var(--warn)' }} />
+    <text x="290" y="145" className="diagram-text-mono" style={{ fill: 'var(--warn)' }}>I₂r</text>
+
+    {/* jI₂x（I₂ より 90° 進み → 左上を向く） */}
+    <line x1="280" y1="132" x2="214" y2="44" className="diagram-warn" strokeWidth="2" />
+    <polygon points="214,44 219.6,52.4 224.4,45.2" style={{ fill: 'var(--warn)' }} />
+    <text x="243" y="76" className="diagram-text-mono" style={{ fill: 'var(--warn)' }}>jI₂x</text>
+
+    {/* E₂ */}
+    <line x1="56" y1="150" x2="214" y2="44" className="diagram-stroke" strokeWidth="2.4" strokeDasharray="5 3" />
+    <polygon points="214,44 209.4,52.1 205.4,46.1" className="diagram-fill" />
+    <text x="168" y="62" className="diagram-text-mono" style={{ fontWeight: 700 }}>E₂</text>
+
+    <text x="330" y="100" textAnchor="middle" className="diagram-text-mono" style={{ fill: 'var(--warn)', fontWeight: 700 }}>
+      <tspan x="330" dy="0">jI₂x の水平成分が</tspan>
+      <tspan x="330" dy="14">V₂ と逆向き</tspan>
+      <tspan x="330" dy="14">→ 差し引かれる</tspan>
+    </text>
+    <text x="210" y="188" textAnchor="middle" className="diagram-text-mono">E₂ が円弧の内側まで来ると |E₂| が |V₂| を下回り、ε は負になる</text>
   </DiagramFrame>
 );
 
@@ -1836,6 +1955,7 @@ Object.assign(window, {
   TorqueSlipCurve,
   DCMachineCross,
   TransformerPhasor,
+  TransformerPhasorLeading,
   PWMWaveform,
   BlockDiagram,
 });
@@ -3276,7 +3396,7 @@ const TransformerDailyEfficiencySimulator = () => {
       if (!(sn > 0)) errs.push("定格容量は 0 より大きい値を入力してください（負荷率が計算できません）。");
       if (pi < 0) errs.push("鉄損は 0 以上で入力してください。");
       if (pc < 0) errs.push("全負荷銅損は 0 以上で入力してください。");
-      if (ton < 0) errs.push("通電時間は 0 以上で入力してください。");
+      if (ton < 0 || ton > 24) errs.push("通電時間は 0 〜 24 時間の範囲で入力してください（1日で評価するため）。");
     }
     const parsed = rows.map((r) => ({ key: r.key, s: n(r.s), pf: n(r.pf), t: n(r.t) }));
     parsed.forEach((r) => {
@@ -3285,14 +3405,18 @@ const TransformerDailyEfficiencySimulator = () => {
         return;
       }
       if (r.s < 0) errs.push("時間帯 " + r.key + "：負荷は 0 以上で入力してください。");
-      if (r.t < 0) errs.push("時間帯 " + r.key + "：時間は 0 以上で入力してください。");
+      if (r.t < 0 || r.t > 24) errs.push("時間帯 " + r.key + "：時間は 0 〜 24 時間の範囲で入力してください。");
       if (!(r.pf > 0 && r.pf <= 1)) errs.push("時間帯 " + r.key + "：力率は 0 より大きく 1 以下で入力してください。");
     });
+    // 時間の整合は「警告のまま誤った効率を出し続けない」ためエラー扱いにする（結果は非表示）。
+    const tSumAll = parsed.reduce((a, r) => a + (Number.isFinite(r.t) ? r.t : 0), 0);
+    if (!errs.length) {
+      if (tSumAll > 24) errs.push("負荷時間の合計 " + tdeFmt(tSumAll, 1) + " h が 24 時間を超えています。1日に収まる時間配分にしてください。");
+      else if (tSumAll > ton) errs.push("負荷時間の合計 " + tdeFmt(tSumAll, 1) + " h が通電時間 " + tdeFmt(ton, 1) + " h を上回っています。電圧が加わっていない時間に負荷は載せられません（通電時間を延ばすか、負荷時間を減らしてください）。");
+    }
     if (errs.length) return { ok: false, errs, warns: [] };
 
     const warns = [];
-    const tSum = parsed.reduce((a, r) => a + r.t, 0);
-    if (tSum > ton) warns.push("負荷時間の合計 " + tdeFmt(tSum, 1) + " h が通電時間 " + tdeFmt(ton, 1) + " h を上回っています。電圧が加わっていない時間に負荷は載せられません。");
     const over = parsed.filter((r) => r.s > sn).map((r) => r.key);
     if (over.length) warns.push("過負荷：時間帯 " + over.join("・") + " の負荷が定格容量 " + tdeFmt(sn, 1) + " kV·A を超えています。計算は続けますが、実機では継続運転できません。");
 
@@ -3357,6 +3481,9 @@ const TransformerDailyEfficiencySimulator = () => {
       </div>
 
       <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-soft)", margin: "12px 0 4px" }}>② 負荷時間帯（日負荷曲線）</div>
+      <p style={{ fontSize: 11.5, color: "var(--ink-mute)", margin: "0 0 4px" }}>
+        負荷率は原則 <Eq tex="x = \dfrac{\text{負荷皮相電力}\;[\mathrm{kV\cdot A}]}{\text{定格容量}\;[\mathrm{kV\cdot A}]}" /> で扱う（力率は掛けない）。負荷時間の合計は通電時間以下かつ 24 時間以内。
+      </p>
       <div className="table-wrap" style={{ margin: "0 0 10px" }}>
         <table className="data-table" style={{ fontSize: 12.5, minWidth: 560 }}>
           <thead>
@@ -3368,6 +3495,7 @@ const TransformerDailyEfficiencySimulator = () => {
               <th style={{ textAlign: "right" }}>負荷率 x</th>
               <th style={{ textAlign: "right" }}>銅損倍率 x²</th>
               <th style={{ textAlign: "right" }}>出力 [kWh]</th>
+              <th style={{ textAlign: "right" }}>銅損 [kWh]</th>
             </tr>
           </thead>
           <tbody>
@@ -3385,6 +3513,7 @@ const TransformerDailyEfficiencySimulator = () => {
                   <td style={cell}>{d ? tdeFmt(d.x * 100, 1) + " %" : "—"}</td>
                   <td style={cell}>{d ? tdeFmt(d.x2, 3) : "—"}</td>
                   <td style={cell}>{d ? tdeFmt(d.wout, 1) : "—"}</td>
+                  <td style={cell}>{d ? tdeFmt(d.wc, 2) : "—"}</td>
                 </tr>
               );
             })}
@@ -3430,8 +3559,12 @@ const TransformerDailyEfficiencySimulator = () => {
           {arrow}
 
           <div style={{ background: "var(--bg-sunken)", borderRadius: 6, padding: "8px 10px" }}>
-            <div style={bandLabel}>④ 入力電力量 <Eq tex="W_{\mathrm{in}} = W_{\mathrm{out}} + W_i + W_c" /></div>
-            <div style={bandValue}>{tdeFmt(calc.win, 1)} <span style={{ fontSize: 12, fontWeight: 400, color: "var(--ink-mute)" }}>kWh</span></div>
+            <div style={bandLabel}>④ 総損失電力量 <Eq tex="W_i + W_c" /> ／ 入力電力量 <Eq tex="W_{\mathrm{in}} = W_{\mathrm{out}} + W_i + W_c" /></div>
+            <div style={bandValue}>
+              {tdeFmt(calc.wi + calc.wc, 1)} <span style={{ fontSize: 12, fontWeight: 400, color: "var(--ink-mute)" }}>kWh（総損失）</span>
+              <span style={{ color: "var(--ink-mute)", fontWeight: 400, margin: "0 8px" }}>→</span>
+              {tdeFmt(calc.win, 1)} <span style={{ fontSize: 12, fontWeight: 400, color: "var(--ink-mute)" }}>kWh（入力）</span>
+            </div>
           </div>
 
           {arrow}
@@ -3482,35 +3615,186 @@ const TransformerPage = ({ onNav }) => (
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "2. 静止器" }, { label: "2.1 変圧器" }]} onNav={onNav} />
     <PageHeader eyebrow="2.1  TRANSFORMER" title="変圧器"
       deck="鉄心と二つの巻線で電圧を変成する静止器。誘導機に並ぶ最頻出単元。巻数比・%Z・電圧変動率・損失と効率・並列運転が出題の柱。"
-      meta={[{ label: "出題頻度", value: "最頻出（10年で約32問）" }, { label: "難易度", value: "★★★★☆" }]} />
+      meta={[{ label: "出題頻度", value: "最頻出（編集者集計・概算）" }, { label: "難易度", value: "★★★★☆" }]} />
     <div className="content">
       <TransformerLayers />
-      <h2 id="basic"><span className="h-num">1.</span>基本式</h2>
-      <FormulaCard num="01 / 09" name="巻数比と電圧・電流" eq="a = \dfrac{N_1}{N_2} = \dfrac{V_1}{V_2} = \dfrac{I_2}{I_1}" />
-      <FormulaCard num="02 / 09" name="一次換算" eq="r_2' = a^2 r_2,\quad x_2' = a^2 x_2,\quad I_2' = I_2 / a" />
 
-      <Box kind="example" label="等価回路 — 理論「相互インダクタンス」とのつながり">
-        <p>一次換算（<Eq tex="r_2'=a^2 r_2,\ x_2'=a^2 x_2" />）で二次側を一次側に寄せると、変圧器は <strong>1つの簡易等価回路</strong> にまとまる：一次・二次の <strong>漏れリアクタンス</strong> <Eq tex="x_1, x_2'" /> が直列、<strong>励磁回路</strong>（鉄損 <Eq tex="r_0" /> と励磁リアクタンス <Eq tex="x_0" /> の並列）がその間に並列に入る。電圧変動率・効率・短絡電流はすべてこの回路から導かれる。</p>
-        <p>この回路の正体は、理論で学ぶ <strong>2つの結合コイルのT型等価回路</strong>（<Eq tex="L_1-M,\ L_2-M,\ M" /> の3インダクタ）そのもの。対応は次の通り：</p>
+      <h2 id="scope"><span className="h-num">1.</span>このページで得点できる問題</h2>
+      <p>変圧器は「1つの等価回路」から枝分かれして出題される。どの問いも、下の6つのどれかに帰着する。</p>
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th>問われ方</th><th>使う道具</th><th>本ページの節</th></tr></thead>
+        <tbody>
+          <tr><td>一次二次の電圧・電流・インピーダンスを換算する</td><td>巻数比 <Eq tex="a" />・一次換算</td><td>2</td></tr>
+          <tr><td>周波数や電圧が変わると磁束・励磁電流はどうなるか</td><td><Eq tex="E = 4.44 f N \Phi_m" /></td><td>3</td></tr>
+          <tr><td>試験データから等価回路定数を出す</td><td>無負荷試験・短絡試験</td><td>5・6</td></tr>
+          <tr><td>効率を求める／最大になる負荷率を求める</td><td>鉄損・銅損・全日効率</td><td>7</td></tr>
+          <tr><td>負荷をかけたとき端子電圧がどれだけ下がるか</td><td>電圧変動率 <Eq tex="\varepsilon" /></td><td>8</td></tr>
+          <tr><td>短絡電流の大きさ／2台の負荷分担</td><td>%Z・並行運転</td><td>9・10</td></tr>
+        </tbody>
+      </table></div>
+      <p style={{ fontSize: 12.5, color: "var(--ink-mute)" }}>出題頻度の表記は<strong>編集者による過去問の概算集計</strong>であり、実施機関の公式集計ではない。年度・区分の内訳は非公開のため、学習の優先度の目安としてのみ使うこと。</p>
+
+      <h2 id="basic"><span className="h-num">2.</span>理想変圧器と巻数比</h2>
+      <FormulaCard num="01 / 15" name="巻数比と電圧・電流（理想変圧器での関係）" eq="a = \dfrac{N_1}{N_2} = \dfrac{V_1}{V_2} = \dfrac{I_2}{I_1}"
+        note={<><Eq tex="N_1,N_2" />: 一次・二次巻数、<Eq tex="V,I" />: 各側の電圧・電流。<strong>電流は巻数比の逆比</strong>になる。</>} />
+      <Box kind="warn" label="これは「理想変圧器」での関係">
+        <p style={{ margin: 0 }}>上の式は次を<strong>すべて無視した理想条件</strong>で成り立つ。実際の変圧器では負荷時の端子電圧比・電流比はこの式から少しずれる。</p>
+        <ul style={{ margin: "6px 0 0", paddingLeft: 22 }}>
+          <li><strong>巻線抵抗</strong> <Eq tex="r_1, r_2" />（銅損と電圧降下の原因）</li>
+          <li><strong>漏れリアクタンス</strong> <Eq tex="x_1, x_2" />（電圧降下の原因）</li>
+          <li><strong>鉄損</strong>（鉄心のヒステリシス損・渦電流損）</li>
+          <li><strong>励磁電流</strong>（無負荷でも流れる電流。<Eq tex="I_1 = I_2/a" /> が厳密には成り立たない理由）</li>
+        </ul>
+        <p style={{ margin: "6px 0 0" }}>ずれの正体を回路の形で表したものが、セクション4の<strong>等価回路</strong>。ずれの大きさを百分率で表したものが、セクション8の<strong>電圧変動率</strong>。</p>
+      </Box>
+      <FormulaCard num="02 / 15" name="一次換算（二次側の量を一次側へ寄せる）" eq="r_2' = a^2 r_2,\quad x_2' = a^2 x_2,\quad I_2' = I_2 / a,\quad V_2' = a V_2"
+        note={<>インピーダンスは <Eq tex="a^2" /> 倍、電流は <Eq tex="1/a" /> 倍、電圧は <Eq tex="a" /> 倍。<span className="marker">一次換算と二次換算を計算の途中で混ぜない</span>（どちら側に統一したかを必ず先に決める）。</>} />
+
+      <h2 id="emf"><span className="h-num">3.</span>誘導起電力と磁束</h2>
+      <p>巻線に生じる起電力の実効値は、鉄心を通る磁束の最大値 <Eq tex="\Phi_m" /> と周波数で決まる。</p>
+      <FormulaCard num="03 / 15" name="誘導起電力" eq="E = 4.44\, f\, N\, \Phi_m\;[\mathrm{V}]"
+        note={<><Eq tex="f" />: 周波数 [Hz]、<Eq tex="N" />: 巻数、<Eq tex="\Phi_m" />: 鉄心の最大磁束 [Wb]。係数 4.44 は <Eq tex="2\pi/\sqrt2 \approx 4.44" />（正弦波の実効値換算）から来る。</>} />
+      <p>この式を <Eq tex="\Phi_m" /> について解くと、印加電圧をほぼ一定とみなせる範囲で次が言える。</p>
+      <Eq display tex="\Phi_m = \frac{E}{4.44 f N} \;\Longrightarrow\; \Phi_m \propto \frac{V}{f}" />
+      <Box kind="mistake" label="周波数が下がると何が起きるか（V/f 一定制御の根拠）">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, margin: "4px 0 8px" }}>
+          {[
+            ["周波数 f が低下", "1周期が長くなる"],
+            ["磁束 Φm が増える", "Φm ∝ V/f"],
+            ["鉄心が飽和に近づく", "B-H 曲線の膝を超える"],
+            ["励磁電流が急増", "わずかな磁束増で電流が跳ねる"],
+            ["発熱・うなり・保護動作", "焼損・騒音・過電流トリップ"],
+          ].map(([t, s], i) => (
+            <div key={i} style={{ background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6, padding: "7px 9px" }}>
+              <div style={{ fontSize: 11, color: "var(--ink-mute)" }}>{i + 1}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink)" }}>{t}</div>
+              <div style={{ fontSize: 11.5, color: "var(--ink-soft)" }}>{s}</div>
+            </div>
+          ))}
+        </div>
+        <p style={{ margin: 0 }}>だから<strong>電圧を下げずに周波数だけ下げてはいけない</strong>。インバータで電動機を可変速駆動するとき <span className="marker"><Eq tex="V/f" /> を一定に保つ</span>のは、磁束を一定にして飽和を避けるためである。<strong>逆に周波数が上がる</strong>と磁束は減り、鉄損は減るがトルクも落ちる。</p>
+      </Box>
+
+      <h2 id="equiv"><span className="h-num">4.</span>実際の変圧器と等価回路</h2>
+      <p>理想変圧器に、無視していた4つ（巻線抵抗・漏れリアクタンス・鉄損・励磁電流）を回路素子として描き足したものが等価回路。<strong>電圧変動率・効率・短絡電流・並行運転はすべてこの1枚から導かれる</strong>。</p>
+
+      <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+        <svg viewBox="0 0 480 210" role="img" aria-label="変圧器の等価回路図。左の一次端子から順に、一次巻線抵抗r1と一次漏れリアクタンスx1が直列に入り、中央で励磁回路として鉄損抵抗r0と励磁リアクタンスx0が並列に分岐して下側の帰路へつながり、さらに右へ一次換算した二次巻線抵抗r2ダッシュと二次漏れリアクタンスx2ダッシュが直列に入って二次端子へ至る。直列の4素子が電圧降下と銅損を、並列の励磁回路が鉄損と磁化電流を表す" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+          <text x="240" y="16" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">一次側に換算した等価回路（試験の主線）</text>
+
+          {/* 上側の幹線 */}
+          <line x1="45" y1="60" x2="75" y2="60" stroke="var(--ink)" strokeWidth="1.6" />
+          <rect x="75" y="50" width="42" height="20" rx="3" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.4" />
+          <line x1="117" y1="60" x2="137" y2="60" stroke="var(--ink)" strokeWidth="1.6" />
+          <rect x="137" y="50" width="42" height="20" rx="3" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.4" />
+          <line x1="179" y1="60" x2="285" y2="60" stroke="var(--ink)" strokeWidth="1.6" />
+          <rect x="285" y="50" width="42" height="20" rx="3" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.4" />
+          <line x1="327" y1="60" x2="347" y2="60" stroke="var(--ink)" strokeWidth="1.6" />
+          <rect x="347" y="50" width="42" height="20" rx="3" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.4" />
+          <line x1="389" y1="60" x2="435" y2="60" stroke="var(--ink)" strokeWidth="1.6" />
+
+          <text x="96"  y="43" textAnchor="middle" fontSize="11.5" fill="var(--ink)">r₁</text>
+          <text x="158" y="43" textAnchor="middle" fontSize="11.5" fill="var(--ink)">x₁</text>
+          <text x="306" y="43" textAnchor="middle" fontSize="11.5" fill="var(--ink)">r₂′</text>
+          <text x="368" y="43" textAnchor="middle" fontSize="11.5" fill="var(--ink)">x₂′</text>
+          <text x="240" y="43" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">（一次換算）</text>
+
+          {/* 励磁回路 */}
+          <line x1="232" y1="60" x2="232" y2="82" stroke="var(--ink)" strokeWidth="1.6" />
+          <line x1="200" y1="82" x2="264" y2="82" stroke="var(--ink)" strokeWidth="1.6" />
+          <line x1="200" y1="82" x2="200" y2="98" stroke="var(--ink)" strokeWidth="1.6" />
+          <line x1="264" y1="82" x2="264" y2="98" stroke="var(--ink)" strokeWidth="1.6" />
+          <rect x="188" y="98" width="24" height="34" rx="3" fill="var(--bg)" stroke="var(--warn)" strokeWidth="1.6" />
+          <rect x="252" y="98" width="24" height="34" rx="3" fill="var(--bg)" stroke="var(--accent)" strokeWidth="1.6" />
+          <line x1="200" y1="132" x2="200" y2="150" stroke="var(--ink)" strokeWidth="1.6" />
+          <line x1="264" y1="132" x2="264" y2="150" stroke="var(--ink)" strokeWidth="1.6" />
+          <text x="182" y="119" textAnchor="end" fontSize="11.5" fill="var(--warn)">r₀</text>
+          <text x="282" y="119" fontSize="11.5" fill="var(--accent-ink)">x₀</text>
+
+          {/* 下側の帰路 */}
+          <line x1="45" y1="150" x2="435" y2="150" stroke="var(--ink)" strokeWidth="1.6" />
+
+          {/* 端子 */}
+          <line x1="45" y1="60" x2="45" y2="150" stroke="var(--ink)" strokeWidth="1.6" />
+          <line x1="435" y1="60" x2="435" y2="150" stroke="var(--ink)" strokeWidth="1.6" />
+          <circle cx="45" cy="60" r="3.5" fill="var(--ink)" />
+          <circle cx="45" cy="150" r="3.5" fill="var(--ink)" />
+          <circle cx="435" cy="60" r="3.5" fill="var(--ink)" />
+          <circle cx="435" cy="150" r="3.5" fill="var(--ink)" />
+          <text x="26" y="109" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">V₁</text>
+          <text x="458" y="109" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">V₂′</text>
+
+          <text x="240" y="176" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">直列の4素子 → 電圧降下と銅損　／　並列の励磁回路 → 鉄損と磁化電流</text>
+          <text x="240" y="194" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">無負荷試験 → 励磁枝（r₀・x₀）　／　短絡試験 → 直列の等価インピーダンス</text>
+        </svg>
+        <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+          二次側の量は <Eq tex="r_2' = a^2 r_2" /> のように一次換算してある。励磁回路を電源側の端に寄せた「簡易等価回路」で扱うことも多く、三種の計算ではその近似で十分。
+        </figcaption>
+      </figure>
+
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th>回路素子</th><th>正体</th><th>効いてくる場所</th><th>求め方</th></tr></thead>
+        <tbody>
+          <tr><td><Eq tex="r_1,\ r_2'" /></td><td>巻線の抵抗</td><td><strong>銅損</strong>（負荷電流の2乗）・電圧降下</td><td rowSpan="2">短絡試験</td></tr>
+          <tr><td><Eq tex="x_1,\ x_2'" /></td><td>漏れ磁束によるリアクタンス</td><td><strong>電圧降下</strong>（電圧変動率・%Z）</td></tr>
+          <tr><td><Eq tex="r_0" /></td><td>鉄損を電力として消費する等価抵抗</td><td><strong>鉄損</strong>（無負荷でも発生）</td><td rowSpan="2">無負荷試験</td></tr>
+          <tr><td><Eq tex="x_0" /></td><td>鉄心を磁化するための励磁リアクタンス</td><td><strong>磁化電流</strong>（磁束をつくる電流）</td></tr>
+        </tbody>
+      </table></div>
+
+      <Fold label="発展 — この回路の正体は理論の「結合コイルのT形等価回路」" sub="理論とのつながり（開く）">
+        <p>この回路の正体は、理論で学ぶ <strong>2つの結合コイルのT形等価回路</strong>（<Eq tex="L_1-M,\ L_2-M,\ M" /> の3インダクタ）そのもの。対応は次の通り：</p>
         <ul>
           <li><strong>励磁インダクタンス ↔ 相互インダクタンス <Eq tex="M" /></strong>（鉄心を共有し磁束を結合する分）</li>
           <li><strong>漏れリアクタンス ↔ <Eq tex="L_1-M,\ L_2-M" /></strong>（相手と結合しない漏れ磁束の分）</li>
         </ul>
         <p>結合係数 <Eq tex="k=M/\sqrt{L_1 L_2}" /> が1に近いほど漏れが小さく、理想変圧器（<Eq tex="k=1" />・漏れゼロ）で <Eq tex="V_1/V_2=N_1/N_2" /> が厳密に成立する。「なぜ巻数比で電圧が変わるか」は、相互誘導 <Eq tex="V_2=-N_2(d\Phi/dt)" /> を二巻線が共有する磁束 <Eq tex="\Phi" /> で受けるからだと理論まで遡ると腑に落ちる。</p>
         <p style={{margin:"8px 0 0"}}><a href="https://kfurufuru.github.io/secretary-portal-public/denken3-riron-wiki.html#inductance" target="_blank" rel="noopener">→ 理論Wiki「3.1 インダクタンス」で相互M・結合係数k・和動/差動を深掘り</a></p>
+      </Fold>
+
+      <h2 id="oc-test"><span className="h-num">5.</span>無負荷試験（開放試験）</h2>
+      <Box kind="tip" label="何を測って何を得るか">
+        <p style={{ margin: 0 }}><strong>二次側を開放し、一次側に定格電圧を加える</strong>。負荷電流が流れないので直列の <Eq tex="r_1,x_1" /> による降下はごくわずかで、測るのは実質<strong>励磁回路だけ</strong>。得られるのは <span className="marker">鉄損 <Eq tex="P_i" /> と励磁枝 <Eq tex="r_0,\ x_0" /></span>。</p>
+      </Box>
+      <ul>
+        <li>測定量：<strong>無負荷電流 <Eq tex="I_0" /></strong>、<strong>入力電力 <Eq tex="P_0" /></strong>、印加電圧 <Eq tex="V_1" />（＝定格電圧）</li>
+        <li><strong>鉄損はおおむね <Eq tex="P_0" /> とみなせる</strong>。無負荷時に流れるのは励磁電流だけで、その一次銅損 <Eq tex="I_0^2 r_1" /> は <Eq tex="P_0" /> に比べて小さいため無視する（<span className="marker">これは近似</span>）</li>
+      </ul>
+      <p>励磁電流 <Eq tex="I_0" /> は、鉄損を負担する<strong>有効分</strong> <Eq tex="I_w" /> と、磁束をつくる<strong>磁化分</strong> <Eq tex="I_\mu" /> の直角合成になる。</p>
+      <FormulaCard num="04 / 15" name="無負荷試験 — 励磁電流の分解と励磁枝" eq="I_0^2 = I_w^2 + I_\mu^2,\qquad I_w = \dfrac{P_0}{V_1},\qquad I_\mu = \sqrt{I_0^2 - I_w^2}"
+        note={<>ここから <Eq tex="r_0 = V_1/I_w" />、<Eq tex="x_0 = V_1/I_\mu" />。<Eq tex="I_w" /> は電圧と同相の成分なので <Eq tex="P_0 = V_1 I_w" /> から出る。</>} />
+      <Box kind="warn" label="単相と三相で式をそのまま使わない">
+        <p style={{ margin: 0 }}>上の式は<strong>単相、または三相の1相分</strong>に対するもの。三相変圧器で三相電力 <Eq tex="P_{0,3\phi}" /> と線間電圧・線電流を測った場合は、<span className="marker">1相分に直してから</span>当てはめる（Y結線なら相電圧は <Eq tex="V_{\ell}/\sqrt3" />、相電流は線電流。Δ結線なら相電圧は線間電圧、相電流は <Eq tex="I_{\ell}/\sqrt3" />）。結線が示されていない問題では、<strong>1相分の値が与えられているのか三相合計なのかを必ず確認する</strong>。</p>
       </Box>
 
-      <h2 id="vreg"><span className="h-num">2.</span>電圧変動率</h2>
-      <p>定格負荷時の電圧降下を百分率で表す。簡易式は次の通り（<Eq tex="\theta" />: 負荷力率角）:</p>
-      <FormulaCard num="03 / 09" name="電圧変動率（簡易）" eq="\varepsilon \approx p\cos\theta + q\sin\theta\;[\%]"
-        note="p: %抵抗降下、q: %リアクタンス降下。遅れ力率では sin が正。" />
-      <TransformerPhasor />
+      <h2 id="sc-test"><span className="h-num">6.</span>短絡試験（インピーダンス試験）</h2>
+      <Box kind="tip" label="何を測って何を得るか">
+        <p style={{ margin: 0 }}><strong>二次側を短絡し、一次側に低い電圧を加えて定格電流を流す</strong>。印加電圧が定格の数 % と低いので<span className="marker">磁束が小さく鉄損は無視できる</span>。測るのは実質<strong>直列インピーダンスだけ</strong>。得られるのは <span className="marker">全負荷銅損 <Eq tex="P_{cN}" /> と <Eq tex="Z_e,\ R_e,\ X_e" />、そして %Z</span>。</p>
+      </Box>
+      <ul>
+        <li>測定量：<strong>短絡時の印加電圧 <Eq tex="V_s" /></strong>（＝インピーダンス電圧）、<strong>電流 <Eq tex="I_s" /></strong>（定格電流まで上げる）、<strong>入力電力 <Eq tex="P_s" /></strong></li>
+        <li><strong>入力電力は定格電流時の銅損とみなせる</strong>（鉄損が無視できるため）</li>
+      </ul>
+      <FormulaCard num="05 / 15" name="短絡試験 — 等価インピーダンス" eq="Z_e = \dfrac{V_s}{I_s},\qquad R_e = \dfrac{P_s}{I_s^{\,2}},\qquad X_e = \sqrt{Z_e^{\,2} - R_e^{\,2}}"
+        note={<><Eq tex="R_e = r_1 + r_2'" />、<Eq tex="X_e = x_1 + x_2'" />（基準側に換算した合計）。<Eq tex="R_e" /> は <Eq tex="P_s = I_s^2 R_e" /> から出る。</>} />
+      <Box kind="warn" label="三相では線間・線電流・三相電力の関係を確認する">
+        <p style={{ margin: 0 }}>上の式も<strong>単相、または三相の1相分</strong>。三相で三相電力 <Eq tex="P_{s,3\phi}" /> を測ったなら1相分は <Eq tex="P_{s,3\phi}/3" />、Y結線の相電圧は <Eq tex="V_{s,\ell}/\sqrt3" />。<span className="marker">単相の式に線間電圧と三相電力を混ぜて代入しない</span>。%Z を経由すれば結線に依らず扱えるので、三相はそちらが安全（セクション9）。</p>
+      </Box>
+      <Box kind="example" label="2つの試験の対比（取り違え防止）">
+        <div className="table-wrap"><table className="data-table">
+          <thead><tr><th></th><th>無負荷試験</th><th>短絡試験</th></tr></thead>
+          <tbody>
+            <tr><td>二次側</td><td><strong>開放</strong></td><td><strong>短絡</strong></td></tr>
+            <tr><td>加える電圧</td><td><strong>定格電圧</strong>（高い）</td><td><strong>低電圧</strong>（定格の数 %）</td></tr>
+            <tr><td>流す電流</td><td>励磁電流のみ（小）</td><td><strong>定格電流</strong></td></tr>
+            <tr><td>無視するもの</td><td>一次銅損</td><td>鉄損</td></tr>
+            <tr><td>得られるもの</td><td>鉄損・<Eq tex="r_0" />・<Eq tex="x_0" /></td><td>全負荷銅損・<Eq tex="Z_e" />・<Eq tex="R_e" />・<Eq tex="X_e" />・%Z</td></tr>
+          </tbody>
+        </table></div>
+        <p style={{ margin: "8px 0 0" }}>覚え方は<strong>「開けて鉄、短くして銅」</strong>。開放（無負荷）で鉄損、短絡で銅損。<span className="marker">測定対象を逆に覚えると全滅する</span>ので、電圧の大小（定格電圧か低電圧か）とセットで押さえる。</p>
+      </Box>
 
-      <h2 id="pz"><span className="h-num">3.</span>百分率インピーダンス</h2>
-      <FormulaCard num="04 / 09" name="%Z と短絡電流" eq="I_s = \dfrac{100}{\%Z} \cdot I_n"
-        note="%Z=5% なら短絡電流は定格の20倍。系統設計の根幹。" />
-
-      <h2 id="loss"><span className="h-num">4.</span>損失・通常効率・全日効率</h2>
+      <h2 id="loss"><span className="h-num">7.</span>損失・通常効率・全日効率</h2>
 
       <Box kind="tip" label="まず覚える結論（3つ）">
         <ul style={{ margin: 0, paddingLeft: 22 }}>
@@ -3558,7 +3842,7 @@ const TransformerPage = ({ onNav }) => (
       <h4>なぜ銅損は負荷率の2乗になるのか</h4>
       <p>銅損は巻線抵抗の発熱そのもの（<Eq tex="P_c = I^2 R" />）。電圧が一定なら電流は皮相電力に比例（三相では <Eq tex="I = S / (\sqrt{3}V)" />）なので、</p>
       <Eq display tex="\frac{I}{I_N} = \frac{S}{S_N} = x \;\Longrightarrow\; P_c = \left(\frac{I}{I_N}\right)^2 P_{cN} = x^2 P_{cN}" />
-      <FormulaCard num="05 / 09" name="銅損は負荷率の2乗に比例" eq="P_c = x^2 P_{cN},\qquad x = \dfrac{S}{S_N}"
+      <FormulaCard num="06 / 15" name="銅損は負荷率の2乗に比例" eq="P_c = x^2 P_{cN},\qquad x = \dfrac{S}{S_N}"
         note={<><Eq tex="P_{cN}" />: 全負荷銅損（定格電流時の銅損）、<Eq tex="S_N" />: 定格容量 [kV·A]。<strong>全負荷銅損と実際の銅損を混同しない</strong>。</>} />
 
       <div className="table-wrap"><table className="data-table">
@@ -3588,12 +3872,12 @@ const TransformerPage = ({ onNav }) => (
 
       <h3 id="loss-normal">通常効率 — ある運転点を kW で評価する</h3>
       <p>ある負荷率 <Eq tex="x" />・力率 <Eq tex="\cos\phi" /> の定常的な運転点における効率。<strong>すべて電力 [kW] のまま</strong>扱う。</p>
-      <FormulaCard num="06 / 09" name="通常効率（損失から算定する規約効率）" eq="\eta = \dfrac{P_{\mathrm{out}}}{P_{\mathrm{out}} + P_i + x^2 P_{cN}} \times 100\;[\%]"
+      <FormulaCard num="07 / 15" name="通常効率（損失から算定する規約効率）" eq="\eta = \dfrac{P_{\mathrm{out}}}{P_{\mathrm{out}} + P_i + x^2 P_{cN}} \times 100\;[\%]"
         note={<>出力 <Eq tex="P_{\mathrm{out}} = x S_N \cos\phi\;[\mathrm{kW}]" />。分母は「出力＋鉄損＋銅損」＝入力。<strong>規約効率</strong>とは入力と出力を直接実測する<strong>実測効率</strong>に対し、別に求めた損失からこの式で算出する効率のこと（<span className="marker">「ある負荷状態の効率」という意味ではなく、算出方法を指す用語</span>）。</>} />
 
       <h3 id="loss-daily">全日効率とは — 1日を kWh で評価する</h3>
       <p>配電用変圧器のように<strong>負荷が時間帯で大きく変わる</strong>設備では、ある一点の効率では実力を表せない。そこで日負荷曲線をもとに <strong>1日分の電力量 [kWh]</strong> で評価するのが全日効率。</p>
-      <FormulaCard num="07 / 09" name="全日効率" eq="\eta_d = \dfrac{W_{\mathrm{out}}}{W_{\mathrm{out}} + W_i + W_c} \times 100\;[\%]"
+      <FormulaCard num="08 / 15" name="全日効率" eq="\eta_d = \dfrac{W_{\mathrm{out}}}{W_{\mathrm{out}} + W_i + W_c} \times 100\;[\%]"
         note="Wout: 1日の出力電力量、Wi: 1日の鉄損電力量、Wc: 1日の銅損電力量（いずれも kWh）。" />
 
       <div className="table-wrap"><table className="data-table">
@@ -3630,7 +3914,7 @@ const TransformerPage = ({ onNav }) => (
         </div>
       </div>
       <div style={{ textAlign: "center", color: "var(--ink-mute)", fontSize: 16, lineHeight: 1, margin: "2px 0 6px" }}>↓ 最後に全日効率へ代入</div>
-      <FormulaCard num="08 / 09" name="全日効率（3つの箱を代入した展開式）"
+      <FormulaCard num="09 / 15" name="全日効率（3つの箱を代入した展開式）"
         eq="\eta_d = \dfrac{\sum_k S_k\cos\phi_k t_k}{\sum_k S_k\cos\phi_k t_k + P_i T_{\mathrm{on}} + P_{cN}\sum_k \left(\frac{S_k}{S_N}\right)^2 t_k} \times 100"
         note="この形を丸暗記する必要はない。3つの箱を別々に計算してから、上の 07 / 09 に入れれば同じこと。" />
 
@@ -3770,7 +4054,7 @@ const TransformerPage = ({ onNav }) => (
 
       <h3 id="loss-maxeff">最高効率の条件との橋渡し</h3>
       <p><strong>通常効率</strong>が最大になるのは、負荷とともに増える銅損が、一定の鉄損に追いついたとき。</p>
-      <FormulaCard num="09 / 09" name="最高効率の条件（通常効率）" eq="P_i = P_c = x^2 P_{cN} \quad(\text{鉄損 = 銅損})"
+      <FormulaCard num="10 / 15" name="最高効率の条件（通常効率）" eq="P_i = P_c = x^2 P_{cN} \quad(\text{鉄損 = 銅損})"
         note={<><strong>電圧・周波数・力率 <Eq tex="\cos\phi" />・巻線抵抗を一定として負荷率 <Eq tex="x" /> だけを変えたとき</strong>の条件（力率が <Eq tex="x" /> とともに変わる場合は出力が <Eq tex="x" /> に比例しないので一般には成り立たない）。これを満たす負荷率は <Eq tex="x = \sqrt{P_i / P_{cN}}" />。配電用変圧器は軽負荷の時間が長いので、<strong>全負荷より低い負荷率</strong>で効率が最大になるよう設計されることが多い。</>} />
 
       <Box kind="warn" label="全日効率にそのまま当てはめない">
@@ -3786,27 +4070,110 @@ const TransformerPage = ({ onNav }) => (
         <p style={{ margin: "8px 0 0" }}>通常効率の <Eq tex="P_i = P_c" /> と形は同じだが、<strong>比べているのは電力 [kW] ではなく電力量 [kWh]</strong>。主線では両者を混同しないこと。</p>
       </Fold>
 
-      <h2 id="parallel"><span className="h-num">5.</span>並列運転の条件</h2>
-      <ol>
-        <li>定格電圧（巻数比）が等しい</li>
-        <li>%Z が等しい（負荷分担を<strong>定格容量に比例</strong>させるため。分担は %Z の<strong>逆比</strong>）。厳密には<strong>X/R比（インピーダンス角）</strong>も等しいこと — 異なると分担電流に位相差が生じ合成容量が減る</li>
-        <li>極性が一致</li>
-        <li>三相の場合: 角変位（位相群）が一致</li>
-      </ol>
+      <h2 id="vreg"><span className="h-num">8.</span>電圧変動率</h2>
+      <p><strong>何を求めるか</strong>：負荷をかけたときに二次端子電圧がどれだけ下がるか。まず定義から押さえる。</p>
+      <FormulaCard num="11 / 15" name="電圧変動率の定義" eq="\varepsilon = \dfrac{V_{20} - V_2}{V_2}\times 100\;[\%]"
+        note={<><Eq tex="V_{20}" />: 無負荷時の二次電圧、<Eq tex="V_2" />: 定格負荷時の二次端子電圧。<span className="marker">分母は無負荷電圧ではなく定格負荷時の <Eq tex="V_2" /></span>（電験の定義）。</>} />
+      <p>これを等価回路の <Eq tex="p,\ q" /> で近似したのが次の式。<strong>近似式</strong>であることに注意（降下が定格電圧に比べて小さいことを使っている）。</p>
+      <FormulaCard num="12 / 15" name="電圧変動率の近似式（遅れ力率／進み力率）" eq="\varepsilon \approx p\cos\theta + q\sin\theta\;\;(\text{遅れ}),\qquad \varepsilon \approx p\cos\theta - q\sin\theta\;\;(\text{進み})"
+        note={<><Eq tex="p" />: 百分率抵抗降下 [%]、<Eq tex="q" />: 百分率リアクタンス降下 [%]、<Eq tex="\theta" />: 力率角。<strong>違いは <Eq tex="q\sin\theta" /> の符号だけ</strong>。</>} />
 
-      <Box kind="example" label="例題 2.1.1（%Z と短絡電流）">
-        <p><strong>問:</strong> 三相変圧器、定格容量 500 kVA、二次定格電圧 6.6 kV、%Z = 4.0% のとき、二次側短絡電流を求めよ。</p>
-        <Eq display tex="I_n = \dfrac{500{\times}10^3}{\sqrt{3}\times 6600} \approx 43.7\;[\mathrm{A}]" />
-        <Eq display tex="I_s = \dfrac{100}{4.0}\times 43.7 \approx 1.09\;[\mathrm{kA}]" />
+      <TransformerPhasor />
+      <p>図の要点は3つ。<strong>①</strong> <Eq tex="I_2r" /> は <Eq tex="I_2" /> と同方向、<strong>②</strong> <Eq tex="jI_2x" /> は <Eq tex="I_2" /> より 90° 進み、<strong>③</strong> 端子電圧に効くのは降下の<strong>水平成分（<Eq tex="V_2" /> 方向の成分）</strong>だけ。この水平成分を足し合わせると <Eq tex="I_2r\cos\theta + I_2x\sin\theta" /> になり、<Eq tex="V_2" /> で割って百分率にすると <Eq tex="p\cos\theta + q\sin\theta" /> がそのまま出てくる。<span className="marker">近似式は「降下ベクトルの水平成分」を読んでいるだけ</span>である。</p>
+
+      <TransformerPhasorLeading />
+      <Box kind="mistake" label="進み力率では ε が負になりうる ＝ 負荷をかけた方が電圧が高い">
+        <p><Eq tex="\varepsilon" /> が負とは、定義 <Eq tex="\varepsilon = (V_{20}-V_2)/V_2" /> が負、すなわち <span className="marker"><Eq tex="V_2 > V_{20}" />（負荷時の端子電圧が無負荷時より<strong>高い</strong>）</span>ということ。進み力率（コンデンサ性負荷）では <Eq tex="jI_2x" /> の水平成分が <Eq tex="V_2" /> と逆を向き、電圧を押し上げる側に働くために起こる。</p>
+        <p style={{ margin: "8px 0 0" }}>長距離送電線の軽負荷時に受電端電圧が送電端より上がる<strong>フェランチ効果</strong>と同じ機構。「負荷をかければ必ず電圧は下がる」と思い込んでいると、この符号で失点する。</p>
       </Box>
 
-      <h2 id="vconn"><span className="h-num">6.</span>V結線・単巻変圧器（頻出小論点）</h2>
+      <Box kind="example" label="数値例 — 同じ変圧器でも力率で符号が変わる">
+        <p><strong>問:</strong> <Eq tex="p = 2\;\%" />、<Eq tex="q = 5\;\%" /> の変圧器に力率 0.8 の定格負荷をかけた。(1) 遅れ力率のとき (2) 進み力率のときの電圧変動率を求めよ。</p>
+        <p><Eq tex="\cos\theta = 0.8" /> より <Eq tex="\sin\theta = 0.6" />。</p>
+        <Eq display tex="(1)\;\; \varepsilon \approx 2 \times 0.8 + 5 \times 0.6 = 1.6 + 3.0 = 4.6\;[\%]" />
+        <Eq display tex="(2)\;\; \varepsilon \approx 2 \times 0.8 - 5 \times 0.6 = 1.6 - 3.0 = -1.4\;[\%]" />
+        <p style={{ margin: "8px 0 0" }}>(2) は負。<strong>進み力率では端子電圧が無負荷時より上がる</strong>。<span className="marker"><Eq tex="q" /> が <Eq tex="p" /> より大きい変圧器ほど、この符号反転は起こりやすい</span>（実機の変圧器は一般に <Eq tex="q > p" />）。</p>
+      </Box>
+
+      <h2 id="pz"><span className="h-num">9.</span>百分率インピーダンスと短絡電流</h2>
+      <p><strong>何を求めるか</strong>：変圧器の内部インピーダンスの「大きさの程度」を、容量や電圧が違っても比較できる共通のものさしで表す。</p>
+      <FormulaCard num="13 / 15" name="%Z の定義" eq="\%Z = \dfrac{V_s}{V_n}\times 100 = \dfrac{I_n Z_e}{V_n}\times 100\;[\%]"
+        note={<><Eq tex="V_s" />: 二次側を短絡して定格電流を流すのに必要な印加電圧（インピーダンス電圧）、<Eq tex="V_n" />: 定格電圧、<Eq tex="I_n" />: 定格電流、<Eq tex="Z_e" />: 基準側に換算した等価インピーダンス。<strong>いずれも同じ側（一次なら一次）でそろえる</strong>。</>} />
+      <p>つまり %Z は「<strong>定格電流を流したときの内部電圧降下が、定格電圧の何 % か</strong>」。セクション6の短絡試験で得た <Eq tex="R_e,\ X_e" /> をそれぞれ百分率にしたものが <Eq tex="p,\ q" /> で、%Z はその直角合成になる。</p>
+      <Eq display tex="p = \frac{I_n R_e}{V_n}\times 100,\qquad q = \frac{I_n X_e}{V_n}\times 100 \qquad\Longrightarrow\qquad \%Z = \sqrt{p^2 + q^2}" />
+      <p>したがって <strong>短絡試験 → <Eq tex="R_e,X_e" /> → <Eq tex="p,q" /> → %Z → 電圧変動率と短絡電流</strong> が1本の線でつながる。<Eq tex="p,q" /> はセクション8の電圧変動率でそのまま使う量である。</p>
+
+      <FormulaCard num="14 / 15" name="短絡電流（簡易式）" eq="I_s = \dfrac{100}{\%Z}\, I_n\;[\mathrm{A}]"
+        note={<>%Z = 5 % なら短絡電流は定格の 20 倍。<span className="marker">%Z が小さいほど短絡電流は大きい</span>（電圧変動は小さいが遮断器の負担は重い）。</>} />
+      <Box kind="warn" label="この簡易式が前提にしていること（実系統ではそのまま使えない）">
+        <ul style={{ margin: 0, paddingLeft: 22 }}>
+          <li><strong>変圧器の端子直近で短絡した</strong>場合を想定している</li>
+          <li><strong>上位電源・発電機・ケーブル・母線などのインピーダンスをすべて無視</strong>している（電源を無限大母線とみなしている）</li>
+          <li>実際の系統短絡電流は、変圧器以外のインピーダンスも共通基準容量に換算して<strong>合成してから</strong>計算する。合成インピーダンスは必ず変圧器単独より大きくなるので、<span className="marker">この簡易式は実際より大きめの（安全側の）短絡電流を与える</span></li>
+        </ul>
+      </Box>
+      <Box kind="example" label="例題 2.1.1（%Z と短絡電流）">
+        <p><strong>問:</strong> 三相変圧器、定格容量 500 kV·A、二次定格電圧 6.6 kV、%Z = 4.0 % のとき、二次側短絡電流を求めよ（変圧器端子直近での短絡・上位系統のインピーダンスは無視する）。</p>
+        <Eq display tex="I_n = \dfrac{500{\times}10^3}{\sqrt{3}\times 6600} \approx 43.7\;[\mathrm{A}]" />
+        <Eq display tex="I_s = \dfrac{100}{4.0}\times 43.7 \approx 1.09\;[\mathrm{kA}]" />
+        <p style={{ margin: "8px 0 0" }}>三相の定格電流は <Eq tex="I_n = S_N/(\sqrt3 V_n)" />。<span className="marker">単相の <Eq tex="S_N/V_n" /> と混同しない</span>。</p>
+      </Box>
+
+      <h2 id="parallel"><span className="h-num">10.</span>並行運転</h2>
+      <p><strong>何を求めるか</strong>：2台以上の変圧器を並列につないだとき、それぞれが何 kV·A を負担するか。</p>
+
+      <h3 id="parallel-cond">並行運転の条件</h3>
+      <p style={{ marginBottom: 6 }}><strong>主条件（これを満たさないと運転できない・三種の得点に直結）</strong></p>
+      <ol style={{ marginTop: 0 }}>
+        <li><strong>変圧比（巻数比）が等しい</strong> — 違うと無負荷でも巻線間に循環電流が流れる</li>
+        <li><strong>極性が等しい</strong> — 違うと短絡と同じ状態になる（最も危険）</li>
+        <li><strong>三相では相順および位相変位（角変位）が等しい</strong> — Y-Y と Y-Δ のように角変位が 30° 違う組は並行運転できない</li>
+        <li><strong>%Z が適切である</strong> — 負担を定格容量に比例させたいなら %Z を等しくする（次項）</li>
+      </ol>
+      <p style={{ margin: "10px 0 6px" }}><strong>発展的注意（論説で問われる）</strong></p>
+      <ul style={{ marginTop: 0 }}>
+        <li><strong>抵抗分とリアクタンス分の比（X/R 比＝インピーダンス角）</strong>が大きく異なると、分担電流に位相差が生じる。各器の電流の<strong>ベクトル和</strong>が負荷電流なので、位相がずれると合計の皮相電力が各器の和より小さくなり、設備を使い切れない</li>
+      </ul>
+
+      <h3 id="parallel-share">負荷分担 — 「%Z の逆比」だけを覚えてはいけない</h3>
+      <p>並列なので<strong>両器にかかる電圧降下は共通</strong>。よって電流は実インピーダンスの逆比で分かれる。これを各器の自己容量基準の %Z で書き直すと、次の一般式になる。</p>
+      <FormulaCard num="15 / 15" name="並行運転の負担配分（一般式）" eq="S_A : S_B = \dfrac{S_{NA}}{z_A} : \dfrac{S_{NB}}{z_B}"
+        note={<><Eq tex="S_A,S_B" />: 各器の負担容量 [kV·A]、<Eq tex="S_{NA},S_{NB}" />: 各器の定格容量 [kV·A]、<Eq tex="z_A,z_B" />: 各器の %Z [%]（<strong>それぞれ自分の定格容量を基準にした値</strong>）。</>} />
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th>条件</th><th>一般式の帰結</th><th>覚え方</th></tr></thead>
+        <tbody>
+          <tr><td><strong>定格容量が同じ</strong>（<Eq tex="S_{NA}=S_{NB}" />）</td><td><Eq tex="S_A : S_B = 1/z_A : 1/z_B" /></td><td>負担は <strong>%Z に反比例</strong></td></tr>
+          <tr><td><strong>%Z が同じ</strong>（<Eq tex="z_A=z_B" />）</td><td><Eq tex="S_A : S_B = S_{NA} : S_{NB}" /></td><td>負担は <strong>定格容量に比例</strong></td></tr>
+          <tr><td><strong>両方とも違う</strong></td><td colSpan="2"><span className="marker">一般式 <Eq tex="S_{NA}/z_A : S_{NB}/z_B" /> で計算するしかない</span></td></tr>
+        </tbody>
+      </table></div>
+
+      <Box kind="mistake" label="「%Z に反比例」だけを暗記した人が落ちる穴">
+        <p><strong>問:</strong> A（100 kV·A・%Z = 4 %）と B（300 kV·A・%Z = 6 %）を並行運転し、合計 300 kV·A の負荷を供給する。各器の負担は？</p>
+        <p style={{ marginBottom: 4 }}><strong>正しい計算（一般式）</strong></p>
+        <Eq display tex="S_A : S_B = \frac{100}{4} : \frac{300}{6} = 25 : 50 = 1 : 2" />
+        <p><Eq tex="S_A = 300\times\frac{1}{3} = 100" /> kV·A（負荷率 100 %）、<Eq tex="S_B = 300\times\frac{2}{3} = 200" /> kV·A（負荷率 67 %）。どちらも定格以内。</p>
+        <p style={{ margin: "10px 0 4px" }}><strong>誤り（%Z の逆比だけを使った場合）</strong></p>
+        <Eq display tex="S_A : S_B = \frac{1}{4} : \frac{1}{6} = 3 : 2 \;\Rightarrow\; S_A = 180,\; S_B = 120" />
+        <p style={{ margin: 0 }}>A の負担が 180 kV·A＝<span className="marker">定格 100 kV·A に対して 180 % の過負荷</span>という、現実には焼損する答えになる。<strong>容量が違う組み合わせで「%Z の逆比」を使ってはいけない</strong>。</p>
+      </Box>
+
+      <Box kind="example" label="確認 — 2つの特別な場合">
+        <p><strong>(1) 同容量・%Z 違い:</strong> A（100 kV·A・4 %）、B（100 kV·A・5 %）、負荷 90 kV·A。</p>
+        <Eq display tex="S_A : S_B = \frac{100}{4} : \frac{100}{5} = 25 : 20 = 5 : 4 \;\Rightarrow\; S_A = 50,\; S_B = 40\;[\mathrm{kV\cdot A}]" />
+        <p><span className="marker">%Z が小さい A の方が多く負担する</span>（インピーダンスが小さい＝電流が流れやすい）。</p>
+        <p style={{ marginTop: 10 }}><strong>(2) 同 %Z・容量違い:</strong> A（200 kV·A・5 %）、B（100 kV·A・5 %）、負荷 150 kV·A。</p>
+        <Eq display tex="S_A : S_B = \frac{200}{5} : \frac{100}{5} = 2 : 1 \;\Rightarrow\; S_A = 100,\; S_B = 50\;[\mathrm{kV\cdot A}]" />
+        <p style={{ margin: 0 }}>容量比 2:1 そのままで分担し、<strong>両器とも負荷率 50 %</strong> でそろう。これが「%Z をそろえる」ことの実利。</p>
+      </Box>
+
+      <h2 id="vconn"><span className="h-num">11.</span>V結線・単巻変圧器（頻出小論点）</h2>
       <ul>
         <li><strong>V結線</strong> — 単相変圧器2台で三相を供給。出力容量は <Eq tex="\sqrt{3}\,S_1" />（<Eq tex="S_1" />: 1台の定格容量 [V·A]）。2台合計 <Eq tex="2S_1" /> に対する<span className="marker">利用率は √3/2 ≈ 86.6%</span>、Δ結線（3台）に対する出力比は <Eq tex="1/\sqrt{3} \approx 57.7\%" />。<strong>単相3台のΔ-Δで1台が故障した場合の応急運転</strong>は次のセクション7で詳説。</li>
         <li><strong>単巻変圧器</strong> — 一次・二次が巻線を共用（分路巻線＋直列巻線）。<span className="marker">自己容量（等価容量）＝ 負荷容量 × (V_h − V_l)/V_h</span> で、変圧比が1に近いほど小さな自己容量で大きな負荷容量を扱える（小型・高効率。ただし一次二次が絶縁されない）。</li>
       </ul>
 
-      <h2 id="v-fault"><span className="h-num">7.</span>単相3台のΔ-Δで1台故障 → V結線運転</h2>
+      <h2 id="v-fault"><span className="h-num">12.</span>単相3台のΔ-Δで1台故障 → V結線運転</h2>
       <Box kind="tip" label="まず覚える結論（3つ）">
         <ul style={{ margin: 0, paddingLeft: 22 }}>
           <li><strong>三相供給は続けられる</strong>。線間電圧は3つとも得られる（これがΔ-Δ結線の代表的な利点）。</li>
@@ -3814,6 +4181,26 @@ const TransformerPage = ({ onNav }) => (
           <li>残った2台の合計容量に対する<span className="marker">利用率は √3/2 ≈ 86.6%</span>。<strong>57.7% と 86.6% は分母が違うだけ</strong>（Δ3台基準か、残り2台基準か）。</li>
         </ul>
         <p style={{ margin: "8px 0 0", fontSize: 13 }}>成立条件は <strong>同一定格2台・平衡三相負荷・正しい極性と相順</strong>。不平衡負荷では各器の巻線電流を個別に確認する。</p>
+      </Box>
+
+      <h3 id="v-denominator">57.7 % と 86.6 % — 分子は同じ、違うのは分母だけ</h3>
+      <p>2つの割合は<strong>まったく同じ出力 <Eq tex="\sqrt3\,VI" /> を、違うものと比べている</strong>だけ。取り違えの原因は分母なので、並べて確認する。</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, margin: "10px 0 14px" }}>
+        <div style={{ border: "1px solid var(--rule)", borderTop: "3px solid var(--warn)", borderRadius: "0 0 8px 8px", background: "var(--bg-elev)", padding: "12px 14px" }}>
+          <div style={{ fontSize: 26, fontWeight: 700, color: "var(--warn)", lineHeight: 1.2 }}>57.7 %</div>
+          <Eq display tex="\frac{\sqrt3\,VI}{3VI} = \frac{1}{\sqrt3} \approx 0.577" />
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginTop: 6 }}>分母＝正常なΔ結線<strong>3台</strong>の合計容量</div>
+          <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>「故障前と比べて何 % 供給できるか」。<strong>故障前のバンク定格が基準</strong>。</div>
+        </div>
+        <div style={{ border: "1px solid var(--rule)", borderTop: "3px solid var(--accent)", borderRadius: "0 0 8px 8px", background: "var(--bg-elev)", padding: "12px 14px" }}>
+          <div style={{ fontSize: 26, fontWeight: 700, color: "var(--accent-ink)", lineHeight: 1.2 }}>86.6 %</div>
+          <Eq display tex="\frac{\sqrt3\,VI}{2VI} = \frac{\sqrt3}{2} \approx 0.866" />
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginTop: 6 }}>分母＝いま使っている<strong>2台</strong>の定格容量合計</div>
+          <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>「残った設備をどれだけ使い切れているか」＝<strong>利用率</strong>。</div>
+        </div>
+      </div>
+      <Box kind="mistake" label="なぜ 2 台なのに 100 % 取り出せないのか">
+        <p style={{ margin: 0 }}>2台の定格容量の合計は <Eq tex="2VI" /> なのに、三相として取り出せるのは <Eq tex="\sqrt3\,VI" /> しかない。理由は<strong>各変圧器の電流と線電流の位相</strong>にある。V結線では2台の巻線電流が <span className="marker">60° の位相差</span>を持つため、単純な代数和ではなく<strong>ベクトル和</strong>で効き、合計容量をそのまま三相出力に変換できない。<Eq tex="2VI \times \cos 30^\circ = \sqrt3\,VI" /> の <Eq tex="\cos 30^\circ = 0.866" /> がその目減り分であり、これが利用率 86.6 % の正体である。</p>
       </Box>
 
       <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
@@ -3933,7 +4320,7 @@ const TransformerPage = ({ onNav }) => (
         ▶ 結線方式そのものの比較（Y-Y / Δ-Δ / Y-Δ / Δ-Y の位相変位・第3高調波・用途）は <a href="https://kfurufuru.github.io/secretary-portal-public/denken3-denryoku-wiki.html#henatsuki" target="_blank" rel="noopener">電力Wiki「2.1 変圧器（基礎ハブ）」の三相結線とV結線</a>へ。
       </p>
 
-      <h2 id="quick-review"><span className="h-num">8.</span>1分復習（即答チェック）</h2>
+      <h2 id="quick-review"><span className="h-num">13.</span>1分復習（即答チェック）</h2>
       <div className="box">
         <details><summary>巻数比 a と電圧・電流の関係は？</summary>a = N₁/N₂ = V₁/V₂ = I₂/I₁（電流は巻数比の逆比）</details>
         <details><summary>%Z = 5% のとき短絡電流は定格の何倍？</summary>20倍（I_s = (100/%Z)·I_n）</details>
@@ -5294,7 +5681,9 @@ const TOC = ({ page }) => {
       <ul>
         {items.map(it => (
           <li key={it.id} className={it.level === 3 ? 'h3' : ''}>
-            <a href={`#${it.id}`} className={active === it.id ? 'active' : ''}>{it.text}</a>
+            {/* href は #<pageId>/<sectionId>。素の #<sectionId> だと再読み込みで
+                ページ判定に失敗して home へ落ちるため（深いリンク対応）。 */}
+            <a href={`#${page}/${it.id}`} className={active === it.id ? 'active' : ''}>{it.text}</a>
           </li>
         ))}
       </ul>
@@ -5302,12 +5691,21 @@ const TOC = ({ page }) => {
   );
 };
 
-/* ---------- Search index ---------- */
+/* ---------- Search index ----------
+   ページ名・用語に加えて **本文セクション見出し** も索引に載せる。
+   anchor を持つ項目は選択時に #<pageId>/<anchor> へ直接着地する。 */
 function buildSearchIndex(data) {
   const items = [];
   data.chapters.forEach(ch => {
     ch.pages.forEach(p => {
       items.push({ kind: "ページ", title: p.title, id: p.id, context: `${ch.title} / ${p.num}`, terms: `${p.title} ${p.num}` });
+    });
+  });
+  (data.sections || []).forEach(s => {
+    items.push({
+      kind: "セクション", title: s.title, id: s.page, anchor: s.anchor,
+      context: `${s.pageTitle} — ${s.desc}`,
+      terms: `${s.title} ${s.desc} ${s.keywords || ''} ${s.pageTitle}`,
     });
   });
   data.glossary.forEach(g => {
@@ -5325,15 +5723,31 @@ function searchIndex(idx, q) {
   });
 }
 
+/* ---------- Hash routing ----------
+   ハッシュは `#<pageId>` または `#<pageId>/<セクションid>` の2形式。
+   ページ内アンカーを `#loss` のような素の id にすると、再読み込み時に
+   pageIds に無いため home へ落ちる（＝深いリンクが壊れる）。ページIDを
+   必ず先頭に持たせることで、リロード・戻る/進む・直リンクすべてで
+   同じ見出しに着地する。既存の `#transformer` 単独形も従来どおり動く。 */
+function parseHash() {
+  const raw = (location.hash || '').replace(/^#/, '');
+  if (!raw) return { page: null, anchor: null };
+  const i = raw.indexOf('/');
+  if (i === -1) return { page: raw, anchor: null };
+  return { page: raw.slice(0, i), anchor: raw.slice(i + 1) || null };
+}
+
 /* ---------- App ---------- */
 const App = () => {
   const data = window.WIKI_DATA;
   const [tweaks, setTweak] = window.useTweaks ? window.useTweaks(TWEAK_DEFAULTS) : [TWEAK_DEFAULTS, () => {}];
 
   const [page, setPage] = useState(() => {
-    const h = location.hash.replace(/^#/, '');
-    return h && pageIds().includes(h) ? h : 'home';
+    const { page: p } = parseHash();
+    return p && pageIds().includes(p) ? p : 'home';
   });
+  // 着地させたいセクションid。ページ描画（KaTeX含む）完了後に scrollIntoView する。
+  const [anchor, setAnchor] = useState(() => parseHash().anchor);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchIdx = useMemo(() => buildSearchIndex(data), [data]);
@@ -5347,19 +5761,42 @@ const App = () => {
     document.documentElement.style.setProperty('--lh-base', tweaks.lineHeight);
   }, [tweaks]);
 
-  const navigate = (id) => {
+  // navigate('transformer') / navigate('transformer', 'loss') の両方を受ける。
+  const navigate = (id, sectionId) => {
     setPage(id);
-    location.hash = id;
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    setAnchor(sectionId || null);
+    location.hash = sectionId ? `${id}/${sectionId}` : id;
+    if (!sectionId) window.scrollTo({ top: 0, behavior: 'auto' });
   };
   useEffect(() => {
     const onHash = () => {
-      const h = location.hash.replace(/^#/, '');
-      if (h && pageIds().includes(h)) setPage(h);
+      const { page: p, anchor: a } = parseHash();
+      if (p && pageIds().includes(p)) {
+        setPage(p);
+        setAnchor(a);
+        if (!a) window.scrollTo({ top: 0, behavior: 'auto' });
+      }
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
+
+  // アンカーへの着地。KaTeX の描画でレイアウトが動くため、要素が現れるまで
+  // 短い間隔でリトライする（最大 2 秒）。見つからなければ何もしない（fail-open）。
+  useEffect(() => {
+    if (!anchor) return;
+    let tries = 0;
+    const timer = setInterval(() => {
+      const el = document.getElementById(anchor);
+      if (el) {
+        el.scrollIntoView({ block: 'start', behavior: 'auto' });
+        clearInterval(timer);
+      } else if (++tries > 40) {
+        clearInterval(timer);
+      }
+    }, 50);
+    return () => clearInterval(timer);
+  }, [page, anchor]);
 
   function pageIds() {
     return ['home', ...data.chapters.flatMap(c => c.pages.map(p => p.id))];
@@ -5397,7 +5834,7 @@ const App = () => {
                  mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)}
                  searchQuery={searchQuery} onSearchChange={setSearchQuery}
                  searchResults={searchResults}
-                 onSearchSelect={(r) => { navigate(r.id); setSearchQuery(''); }} />
+                 onSearchSelect={(r) => { navigate(r.id, r.anchor); setSearchQuery(''); }} />
         <main className="main" key={page}>{renderPage()}</main>
         <TOC key={`toc-${page}`} page={page} />
       </div>
