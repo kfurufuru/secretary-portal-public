@@ -22167,7 +22167,7 @@ const TransientLayers = () => (
           <tspan x="235" dy="0">④ 2枚の等価回路から f(0)・f(∞) を直流計算し、</tspan>
           <tspan x="235" dy="18">f(t) = f(∞) + [f(0) − f(∞)]e^(−t/τ) で2点を指数で結ぶ</tspan>
         </text>
-        <text x="235" y="292" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">直後と定常の2枚を描けば、間は必ず指数カーブでつながる</text>
+        <text x="235" y="292" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">RC・RL（1次回路）なら、直後と定常の2枚を描けば間は1本の指数カーブで結べる</text>
       </svg>
       <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
         ミクロ（なぜ）：初期電荷・初期電流ゼロでスイッチONした瞬間、C は電圧を・L は電流を急変できない。だから t=0⁺ は C短絡・L開放、t→∞ は C開放・L短絡の2枚の等価回路になり、f(0) と f(∞) の間が e<sup>−t/τ</sup> で結ばれる。
@@ -22228,7 +22228,7 @@ const TransientFormulasTab = ({ onNav, switchTab }) => (
       rows={[
         { formula: "\\tau = RC", meaning: "RC回路の時定数", when: "直列RC（1次回路）", notWhen: "複数のR・Cが混在する複雑な回路" },
         { formula: "\\tau = \\frac{L}{R}", meaning: "RL回路の時定数", when: "直列RL（1次回路）", notWhen: "複数のL・Rが混在する複雑な回路" },
-        { formula: "f(t) = f(\\infty) + [f(0) - f(\\infty)]\\,e^{-t/\\tau}", meaning: "過渡現象の一般式：初期値→最終値への指数変化（▶ 解説タブで初期値・最終値の決め方）", when: "1次回路全般", notWhen: "2次以上のLC回路（減衰振動）" },
+        { formula: "f(t) = f(\\infty) + [f(0^+) - f(\\infty)]\\,e^{-t/\\tau}", meaning: "過渡現象の一般式：初期値→最終値への指数変化（▶ 解説タブで初期値・最終値の決め方）", when: "蓄積素子が実質1個の線形1次回路（RC・RL）で、切替後の電源が一定のとき", notWhen: "L と C の両方が効く2次回路（RLC）。減衰の度合いにより 減衰振動／臨界減衰／過減衰 に分かれ、1本の指数では表せない" },
         { formula: "e^{-1} \\approx 0.368", meaning: "τ 後の残存率（≒ 63.2%変化）", when: "数値計算の目安", notWhen: "—" },
       ]}
     />
@@ -22488,7 +22488,7 @@ const TransientExplainTab = ({ onNav, switchTab }) => (
         })()}
       </svg>
       <figcaption style={{fontSize: "12.5px", color: "var(--ink-soft, #555)", marginTop: 8, lineHeight: 1.6}}>
-        同じ2本のカーブが <strong>RL回路</strong> にも対応：コイル電流 i_L は立ち上がりカーブ（1−e<sup>−t/τ</sup>）、コイル電圧 v_L は減衰カーブ（e<sup>−t/τ</sup>）。τ＝RC か τ＝L/R かで変化の速さは変わるが、曲線の形は同じ。
+        同じ2本のカーブが <strong>RL回路</strong> にも対応：<strong>初期電流ゼロの直列 RL に直流電圧をステップ投入した場合</strong>、コイル電流 i_L は立ち上がりカーブ（1−e<sup>−t/τ</sup>）、コイル電圧 v_L は減衰カーブ（e<sup>−t/τ</sup>）。τ＝RC か τ＝L/R かで変化の速さは変わるが、曲線の形は同じ。
       </figcaption>
     </figure>
 
@@ -22549,7 +22549,7 @@ const TransientExplainTab = ({ onNav, switchTab }) => (
           <li><strong>放射性崩壊</strong>：残っている原子数に比例して崩壊 → 同じ指数則（半減期 ↔ 時定数）</li>
           <li><strong>ニュートンの冷却</strong>：温度差に比例して冷える → 指数で常温へ</li>
           <li>いずれも<strong>1階線形微分方程式</strong>。過渡現象を理解すれば物理・化学の指数現象が一気に繋がる</li>
-          <li>逆に L と C が<strong>両方</strong>あると微分方程式が2階になり、応答は <strong>R の大きさで3通りに分かれる</strong>（RLC回路）：<Eq tex="\alpha = R/(2L)" inline /> と <Eq tex="\omega_0 = 1/\sqrt{LC}" inline /> を比べて、<strong>α &lt; ω₀ なら減衰振動</strong>／<strong>α = ω₀ で臨界減衰</strong>／<strong>α &gt; ω₀ なら過減衰</strong>（後の2つは振動せず指数の重ね合わせ）。<strong>「LとCがあれば必ず振動する」ではない</strong>（直列RLCなら R が <Eq tex="2\sqrt{L/C}" inline /> を超えると振動しなくなる）</li>
+          <li>逆に L と C が<strong>両方</strong>あると微分方程式が2階になり、応答は <strong>抵抗の大きさで3通りに分かれる</strong>（RLC回路）。<strong>直列RLC</strong>なら <Eq tex="\alpha = R/(2L)" inline /> と <Eq tex="\omega_0 = 1/\sqrt{LC}" inline /> を比べて：<strong>α &lt; ω₀ で減衰振動</strong>／<strong>α = ω₀ で臨界減衰</strong>（解は <Eq tex="(A+Bt)e^{-\alpha t}" inline />・振動しない）／<strong>α &gt; ω₀ で過減衰</strong>（2つの実指数の和・振動しない）。<strong>「LとCがあれば必ず振動する」ではない</strong>：直列RLCが振動しない条件は <Eq tex="R \ge 2\sqrt{L/C}" inline />（<strong>等号＝臨界減衰も振動しない</strong>）。並列RLCでは減衰係数の式が変わる</li>
         </ul>
       </details>
     </Callout>
