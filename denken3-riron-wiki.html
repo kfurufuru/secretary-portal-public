@@ -10245,6 +10245,12 @@ const CoulombFieldFormulasTab = ({ onNav, switchTab }) => (
           notWhen: "電界の積分で直接計算（遠回り・時間切れの元）",
         },
         {
+          formula: "U = \\dfrac{Q_1 Q_2}{4\\pi\\varepsilon_0 r}",
+          meaning: "2点電荷系の静電エネルギー（無限遠基準）。力 F と違い r の1乗",
+          when: "無限遠から r まで運ぶ仕事＝系が蓄えるエネルギー。エネルギー収支の比較（H26問17(b)）",
+          notWhen: "F（1/r²）と冪を取り違えない → 解説タブ 7節",
+        },
+        {
           formula: "C = 4\\pi\\varepsilon_0 r",
           meaning: "孤立導体球（半径 r）の静電容量",
           when: "球形導体・無限遠基準（例: 地球 r=6.4×10⁶m → C≈711μF）",
@@ -10580,6 +10586,25 @@ const CoulombFieldExplainTab = ({ onNav, switchTab }) => (
     <Callout variant="tip" title="仕事が問われたら「まず電位を求める」">
       電位はスカラーなので向きを気にせず足し算できる。W=QΔV が最短手順（R02問1 型）。電界の積分を直接計算しようとすると時間を消費する。
     </Callout>
+    <Callout variant="warn" title="力は 1/r²・エネルギーは 1/r — 冪がひとつ違う（H26問17(b) 実誤答）">
+      <p style={{ margin: "4px 0" }}>
+        <strong>なぜ違うか：エネルギー＝力×距離だから。</strong>距離を1回掛ける分、分母の r がひとつ減る。
+        クーロン力 <Eq tex="F = \dfrac{Q_1 Q_2}{4\pi\varepsilon_0 r^2}" inline /> に逆らって電荷を r から無限遠まで引き離す仕事は、力を距離で積み上げて
+        <Eq tex="U = \int_r^{\infty} \dfrac{Q_1 Q_2}{4\pi\varepsilon_0 r'^2}\,dr' = \dfrac{Q_1 Q_2}{4\pi\varepsilon_0 r}" inline />。
+        <strong>1/r² × 距離 → 1/r</strong> になる。
+      </p>
+      <p style={{ margin: "6px 0 4px" }}>
+        <strong>検算は単位で</strong>：エネルギー [J] ＝ 力 [N] × 距離 [m]。エネルギーは力より長さの次元が1つ多い＝ r の逆冪が1つ少ない。
+        重力も同じ構図（<Eq tex="F = \dfrac{GMm}{r^2}" inline /> ↔ 脱出に要するエネルギー <Eq tex="\dfrac{GMm}{r}" inline />、地表なら 力 mg × 高さ h ＝ mgh）。
+      </p>
+      <p style={{ margin: "6px 0 4px" }}>
+        <strong>問題文での使い分け</strong>：「動き出すか・釣り合うか」＝<strong>その瞬間の力くらべ → 1/r²</strong>。「戻ってくるか・逃げ切れるか・どこまで届くか」＝<strong>道のり全体のエネルギー収支 → 1/r</strong>。
+        H26問17 は (a) 静止した B が動き出すか＝力の比較 <Eq tex="\dfrac{q_A q_B}{4\pi\varepsilon_0 r^2} &gt; m_B g" inline />、(b) 初速 v_B の B が引き戻されるか＝エネルギーの比較 <Eq tex="\dfrac{1}{2}m_B v_B^2 &lt; \dfrac{q_A q_B}{4\pi\varepsilon_0 r}" inline /> と、<strong>1問の中で両方を切り替えさせる</strong>のが罠。
+      </p>
+      <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--ink-soft)" }}>
+        冪の整理は「割る面・掛ける距離」で統一：電界・力は球面 4πr² に薄まるから 1/r²、電位・エネルギーはその力を距離で積み上げるから 1/r（磁界が円周 2πr で 1/r になるのと同じ発想の拡張）。
+      </p>
+    </Callout>
     <h3>正答者 vs 誤答者</h3>
     <table className="data-table">
       <thead>
@@ -10591,6 +10616,7 @@ const CoulombFieldExplainTab = ({ onNav, switchTab }) => (
         <tr><td>誘電体の効果</td><td>ε_r を無視して ε₀ だけで計算</td><td>ε = ε₀ε_r を使い誘電体の効果を反映</td></tr>
         <tr><td>電位の重ね合わせ</td><td>ベクトル合成（向きを考慮）する</td><td>スカラー合成（代数和）する</td></tr>
         <tr><td>導体内部の電界</td><td>「導体なら電流が流れるから電界あり」</td><td>「静電平衡の導体内部の電界はゼロ」</td></tr>
+        <tr><td>力とエネルギーの冪</td><td>エネルギー比較でも 1/r² を使う</td><td>力＝1/r²・エネルギー＝力×距離＝1/r と区別する</td></tr>
       </tbody>
     </table>
 
@@ -10826,7 +10852,7 @@ const CoulombFieldLearnTab = ({ onNav, switchTab }) => (
         <tr><td>H29</td><td>問1</td><td>論説</td><td>電気力線に関する論説</td><td>✅ 本ページ完結（公式タブ 3節）</td></tr>
         <tr><td>H28</td><td>問1</td><td>計算</td><td>点電荷の等電位面</td><td>✅ 本ページ完結（解説タブ 3節）</td></tr>
         <tr><td>H26</td><td>問2</td><td>穴埋</td><td>静電気に関する空欄穴埋</td><td>✅ 本ページ完結</td></tr>
-        <tr><td>H26</td><td>問17</td><td>計算</td><td>真空中の電荷に働く力</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>H26</td><td>問17</td><td>計算</td><td>(a)クーロン力と重力の力比較・(b)運動エネルギーと静電エネルギーの収支比較</td><td>✅ 本ページ完結（解説タブ 7節：力は1/r²・エネルギーは1/r）</td></tr>
         <tr><td>H25</td><td>問2</td><td>計算</td><td>クーロンの法則</td><td>✅ 本ページ完結</td></tr>
         <tr><td>H25</td><td>問17</td><td>計算</td><td>空気中の電荷を帯びた金属球</td><td>✅ 本ページ完結</td></tr>
         <tr><td>H23</td><td>問1</td><td>論説</td><td>静電界における電気力線や電界・電荷に関する論説</td><td>✅ 本ページ完結</td></tr>
