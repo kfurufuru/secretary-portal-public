@@ -13871,7 +13871,59 @@ const DcCircuitExplainTab = ({ onNav, switchTab }) => (
     </p>
     <p><strong>電位計算手順</strong>: グランド（基準点 = 0V）を定め、そこからの電位差を経路に沿って積み上げる。抵抗を通過するたびに V_{"降下"} = IR を引く（電流と同方向の場合）。どの経路を選んでも答えは同じ（KVL の別表現）。</p>
 
-    <h2 id="traps"><span className="h-num">6</span>引っかけポイント</h2>
+    <h2 id="sign-convention"><span className="h-num">6</span>電圧の符号規約（二重添字・矢印・電流の向き）</h2>
+    <p><strong>流派に依らない絶対規則は「添字の順序」だけ</strong>。<Eq tex="V_{ab}" inline /> は必ず <Eq tex="V_a - V_b" inline /> であり、<strong>後ろの添字 b が基準</strong>（0 V と見る足場）・前の添字 a が測る点。<Eq tex="V_{sb}" inline /> でも <Eq tex="V_{12}" inline /> でも規則は同じで、文字が何を指すかは無関係。一方で<strong>矢印（→）の意味は教科書によって2流派に分かれる</strong>ため、矢印だけを根拠に符号を決めてはいけない。</p>
+    <table className="data-table">
+      <thead>
+        <tr><th>読む対象</th><th>ルール（因果）</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>定義</td><td><Eq tex="V_{ab} = V_a - V_b" inline />。<strong>前 引く 後ろ</strong>。<Eq tex="V_{ab} > 0" inline /> なら a のほうが高電位</td></tr>
+        <tr><td>基準（0 V）</td><td><strong>後ろの添字 b</strong>。接地記号がある回路ではその点が基準</td></tr>
+        <tr><td>符号反転</td><td><Eq tex="V_{ab} = -V_{ba}" inline />。前後を入れ替えたら符号が変わる</td></tr>
+        <tr><td>抵抗（受動素子）</td><td>電流を a→b の向きに仮定したら <Eq tex="V_{ab} = +RI" inline />。抵抗は電流を流すのに電位差を消費するので、<strong>電流が入る側の端子が必ず高電位</strong></td></tr>
+        <tr><td>電池（起電力 E・内部抵抗 r）</td><td>端子 a から電流 I を吐き出すなら <Eq tex="V_{ab} = E - rI" inline />（端子電圧＝起電力−内部降下）</td></tr>
+        <tr><td>電流の仮定向き</td><td><strong>自分で自由に決めてよい</strong>。負の値で出たら「仮定と逆向きだった」だけの意味で誤りではない（勘違い⑤）</td></tr>
+      </tbody>
+    </table>
+    <div style={{ maxWidth: 360, margin: "12px auto 4px" }}>
+      <svg viewBox="0 0 320 176" role="img" aria-label="端子aとbの間に抵抗Rを置き、電流Iをaからbの向きに仮定した図。電圧の矢印は流派Aではaからbへ向き矢先が低電位、流派Bではbからaへ向き矢先が高電位となるが、添字の定義は変わらない" style={{ display: "block", width: "100%", height: "auto" }}>
+        <defs>
+          <marker id="sgn-cur" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto"><path d="M0,1 L8,4.5 L0,8 z" fill="var(--ink-mute)" /></marker>
+          <marker id="sgn-a" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto"><path d="M0,1 L8,4.5 L0,8 z" fill="var(--accent)" /></marker>
+          <marker id="sgn-b" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto"><path d="M0,1 L8,4.5 L0,8 z" fill="var(--warn)" /></marker>
+        </defs>
+        <text x="160" y="18" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">I（a→b と仮定した電流）</text>
+        <line x1="120" y1="26" x2="200" y2="26" stroke="var(--ink-mute)" strokeWidth="2" markerEnd="url(#sgn-cur)" />
+        <text x="44" y="58" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">a</text>
+        <text x="276" y="58" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">b</text>
+        <text x="144" y="54" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ok)">R</text>
+        <line x1="44" y1="70" x2="108" y2="70" stroke="var(--ink)" strokeWidth="1.6" />
+        <path d="M108 70 L114 59 L126 81 L138 59 L150 81 L162 59 L174 81 L180 70" fill="none" stroke="var(--ok)" strokeWidth="1.8" />
+        <line x1="180" y1="70" x2="276" y2="70" stroke="var(--ink)" strokeWidth="1.6" />
+        <circle cx="44" cy="70" r="3.5" fill="var(--ink)" />
+        <circle cx="276" cy="70" r="3.5" fill="var(--ink)" />
+        <text x="10" y="112" fontSize="11" fontWeight="700" fill="var(--accent-ink)">流派A</text>
+        <line x1="70" y1="108" x2="250" y2="108" stroke="var(--accent)" strokeWidth="2" markerEnd="url(#sgn-a)" />
+        <text x="160" y="126" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">矢先が低電位（電圧降下型）＝抵抗では電流と同じ向き</text>
+        <text x="10" y="152" fontSize="11" fontWeight="700" fill="var(--warn)">流派B</text>
+        <line x1="250" y1="148" x2="70" y2="148" stroke="var(--warn)" strokeWidth="2" markerEnd="url(#sgn-b)" />
+        <text x="160" y="166" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">矢先が高電位（極性型）＝抵抗では電流と逆向き</text>
+      </svg>
+      <div style={{ fontSize: 11.5, color: "var(--ink-soft)", textAlign: "center", marginTop: 4 }}>矢印の向きは流派で逆になるが、<Eq tex="V_{ab} = V_a - V_b" inline /> の定義は流派に依らない。</div>
+    </div>
+    <Callout variant="warn" title="矢印の意味は図ごとに確定させる（この順に見る）">
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.9 }}>
+        <li><strong>＋／−記号があればそれが最優先</strong>（＋側の端子が前の添字）</li>
+        <li>添字があれば <Eq tex="V_{ab} = V_a - V_b" inline /> で決める（矢印より添字が強い）</li>
+        <li>どちらも無ければ<strong>「矢印の根を基準にする」と自分で宣言してから</strong>式を立てる。1問の中で流派を混在させなければ、どちらを採っても答えは一致する</li>
+      </ol>
+    </Callout>
+    <Callout variant="tip" title="🔑 1行で覚える">
+      <p style={{ margin: 0 }}><strong>後ろの添字が基準・電流が入る端子が高電位。</strong>矢印は流派依存なので符号の根拠にしない。三相の線間電圧 <Eq tex="V_{ab} = V_a - V_b" inline /> も同じ規則の応用（大きさ <Eq tex="\sqrt{3}" inline /> 倍・位相 30° 進みの出どころ）→ <a onClick={() => onNav('three-phase')} style={{ cursor: "pointer", color: "var(--accent-ink)" }}>三相交流（4.1）</a></p>
+    </Callout>
+
+    <h2 id="traps"><span className="h-num">7</span>引っかけポイント</h2>
     <Callout variant="warn" title="勘違い①: 並列合成抵抗で「逆数に戻すのを忘れる」">
       <p>1/Rp = 1/4 + 1/4 = 1/2 → Rp = 2Ω。「1/2Ω」と答えるミスが多い。最後に必ずひっくり返す。</p>
     </Callout>
@@ -13887,8 +13939,11 @@ const DcCircuitExplainTab = ({ onNav, switchTab }) => (
     <Callout variant="warn" title="勘違い⑤: KCL の負解を「誤り」と判断（パターン24）">
       <p>I₁ = −2A と求まったら「仮定と逆向きに 2A 実際の電流が流れている」物理的意味であり、誤りではない。そのまま次の方程式に代入して連立を解く。やり直すと符号ミスを誘発。</p>
     </Callout>
+    <Callout variant="warn" title="勘違い⑥: V_ab と V_ba を取り違える（符号だけ逆の選択肢に吸い込まれる）">
+      <p><Eq tex="V_{ab} = -V_{ba}" inline /> で、<Eq tex="V_{ab}" inline /> は「b を 0 V と見たときの a の電位」。<strong>後ろの添字が基準</strong>という一点を外すと、符号だけ逆の選択肢（必ず用意されている）を選ぶ。基準点を図に「0 V」と書き込んでから式を立てると潰せる（セクション6）。</p>
+    </Callout>
 
-    <h2 id="diffuse"><span className="h-num">7</span>拡張問い（思考を広げる）</h2>
+    <h2 id="diffuse"><span className="h-num">8</span>拡張問い（思考を広げる）</h2>
     <Callout variant="info" title="🧐 なぜ重ね合わせの原理が成り立つのか？（diffuse mode 起動）">
       <p>線形性（オーム則 V=IR は <strong>比例関係</strong>）が成り立つから。電源 A だけのとき I_A、電源 B だけのとき I_B なら、両方加わると I_A + I_B が流れる（線形系の入出力加法性）。</p>
       <details>
@@ -13902,7 +13957,7 @@ const DcCircuitExplainTab = ({ onNav, switchTab }) => (
       </details>
     </Callout>
 
-    <h2 id="norton"><span className="h-num">8</span>ノートンの定理（テブナンの双対）</h2>
+    <h2 id="norton"><span className="h-num">9</span>ノートンの定理（テブナンの双対）</h2>
     <p>テブナンが「電圧源 V<sub>th</sub> ＋直列抵抗 R<sub>th</sub>」に縮約するのに対し、<strong>ノートンの定理</strong>は同じ線形2端子網を「<strong>電流源 I<sub>N</sub> ＋並列抵抗 R<sub>N</sub></strong>」に縮約する。両者は完全に相互変換でき、<Eq tex="I_N = V_{th}/R_{th}" inline />・<Eq tex="R_N = R_{th}" inline />・<Eq tex="V_{th}=I_N R_N" inline /> で行き来する。</p>
     <FormulaTable layer="B" rows={[
       { formula: "I_N = \\dfrac{V_{th}}{R_{th}}", meaning: "ノートン電流＝端子を短絡したときに流れる短絡電流", when: "線形回路・特定負荷着目", notWhen: "非線形回路には使えない" },
