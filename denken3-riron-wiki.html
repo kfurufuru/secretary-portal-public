@@ -10246,9 +10246,9 @@ const CoulombFieldFormulasTab = ({ onNav, switchTab }) => (
         },
         {
           formula: "U = \\dfrac{Q_1 Q_2}{4\\pi\\varepsilon_0 r}",
-          meaning: "2点電荷系の静電エネルギー（無限遠基準）。力 F と違い r の1乗",
-          when: "無限遠から r まで運ぶ仕事＝系が蓄えるエネルギー。エネルギー収支の比較（H26問17(b)）",
-          notWhen: "F（1/r²）と冪を取り違えない → 解説タブ 7節",
+          meaning: "2点電荷系の位置エネルギー（無限遠基準）。Q₁・Q₂ は符号付き＝同符号で U＞0・異符号で U＜0。力 F と違い r の1乗",
+          when: "エネルギー収支の比較（H26問17(b)）。異符号電荷を無限遠まで引き離す仕事は |U| = |Q₁Q₂|/(4πε₀r)",
+          notWhen: "「引き離すエネルギー」を符号説明なしに U と書かない／F（1/r²）と冪を取り違えない → 解説タブ 7節",
         },
         {
           formula: "C = 4\\pi\\varepsilon_0 r",
@@ -10260,6 +10260,9 @@ const CoulombFieldFormulasTab = ({ onNav, switchTab }) => (
     />
     <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
       仕事 W=QΔV は R01・R02 で、孤立導体球 C=4πε₀r は R06下・H18 で出題。導出や使いどころは <a href="#" onClick={(e)=>{e.preventDefault(); switchTab('explain');}} style={{ textDecoration: "underline" }}>解説タブ</a> へ。
+    </p>
+    <p style={{ fontSize: 13 }}>
+      ⚠️ <a href="#" onClick={(e)=>{e.preventDefault(); location.hash = 'coulomb-field:explain:force-energy-power';}} style={{ textDecoration: "underline", fontWeight: 600 }}>H26問17(b)「力は1/r²・エネルギーは1/r」の実誤答解説を見る</a>（U の符号と引き離す仕事 |U| の区別もここ）
     </p>
 
     <h2 id="field-lines"><span className="h-num">3</span>電気力線の性質（論説の頻出テーマ）</h2>
@@ -10330,7 +10333,7 @@ const CoulombFieldExplainTab = ({ onNav, switchTab }) => (
       重力と同じ「距離の逆二乗則」に従う。電界は「その場に置いた +1C の電荷が受ける力の向きと大きさの地図」。電位は「高さ」のアナロジー：高いところから低いところへ<strong>＋電荷</strong>は動く（電子は逆向き＝2節の表①）。電池の+極が「山の頂上」、−極が「谷底」のイメージ。
     </Analogy>
     <p>
-      電界と電位の関係：急峻な「坂（電位差）」ほど電界が強い。<strong>平坦な場所（等電位面）では電界がゼロ</strong>。電位 V はスカラー量なので、複数の点電荷がある場合は符号だけ考慮して代数和で求められる。
+      電界と電位の関係：急峻な「坂（電位差）」ほど電界が強い。<strong>広い範囲で電位が一様な「平地」では電界がゼロ</strong>。等電位「面」はこれとは別で、面に沿った方向の成分がゼロになるだけ＝<strong>電界そのものはゼロとは限らず、面に垂直に向く</strong>（点電荷のまわりの同心球状の等電位面がその例 → 3節）。電位 V はスカラー量なので、複数の点電荷がある場合は符号だけ考慮して代数和で求められる。
     </p>
 
     <h2 id="why-confuse"><span className="h-num">2</span>なぜ静電気で詰まりやすいか（メタ認知）</h2>
@@ -10586,25 +10589,35 @@ const CoulombFieldExplainTab = ({ onNav, switchTab }) => (
     <Callout variant="tip" title="仕事が問われたら「まず電位を求める」">
       電位はスカラーなので向きを気にせず足し算できる。W=QΔV が最短手順（R02問1 型）。電界の積分を直接計算しようとすると時間を消費する。
     </Callout>
+    <div id="force-energy-power" style={{ scrollMarginTop: 24 }}>
     <Callout variant="warn" title="力は 1/r²・エネルギーは 1/r — 冪がひとつ違う（H26問17(b) 実誤答）">
       <p style={{ margin: "4px 0" }}>
-        <strong>なぜ違うか：エネルギー＝力×距離だから。</strong>距離を1回掛ける分、分母の r がひとつ減る。
-        クーロン力 <Eq tex="F = \dfrac{Q_1 Q_2}{4\pi\varepsilon_0 r^2}" inline /> に逆らって電荷を r から無限遠まで引き離す仕事は、力を距離で積み上げて
-        <Eq tex="U = \int_r^{\infty} \dfrac{Q_1 Q_2}{4\pi\varepsilon_0 r'^2}\,dr' = \dfrac{Q_1 Q_2}{4\pi\varepsilon_0 r}" inline />。
-        <strong>1/r² × 距離 → 1/r</strong> になる。
+        <strong>なぜ違うか：エネルギーは「力を距離方向に積み上げた（積分した）量」だから。</strong>
+        力はその瞬間の距離だけで決まり <Eq tex="F = \dfrac{Q_1 Q_2}{4\pi\varepsilon_0 r^2}" inline />（1/r²）。一方、電荷を運ぶ仕事は、距離とともに変わる力を1点ずつ積むので
+        <Eq tex="\int_r^{\infty} \dfrac{|Q_1 Q_2|}{4\pi\varepsilon_0 r'^2}\,dr' = \dfrac{|Q_1 Q_2|}{4\pi\varepsilon_0 r}" inline />。
+        <strong>1/r² を積分すると 1/r — 冪がひとつ下がる</strong>。「エネルギー＝力×距離」の掛け算で済むのは力が一定のときだけ（mgh がその特別な場合）。逆二乗力では結果の形がたまたま F(r)×r と一致するが、主役はあくまで積分。
+      </p>
+      <p style={{ margin: "6px 0 4px" }}>
+        <strong>符号に注意：「位置エネルギー U」と「引き離すのに必要なエネルギー」は別物。</strong>
+        位置エネルギー <Eq tex="U(r) = \dfrac{Q_1 Q_2}{4\pi\varepsilon_0 r}" inline /> は Q₁・Q₂ を<strong>符号付き</strong>で入れる量：同符号なら U＞0・異符号なら U＜0。
+        H26問17 は +q_A と −q_B の異符号（q_A・q_B は大きさ＝正の値）なので <Eq tex="U(r) = -\dfrac{q_A q_B}{4\pi\varepsilon_0 r} &lt; 0" inline />。
+        無限遠まで引き離すのに必要な<strong>正の</strong>エネルギーは
+        <Eq tex="W_{\text{escape}} = U(\infty) - U(r) = 0 - \left(-\dfrac{q_A q_B}{4\pi\varepsilon_0 r}\right) = \dfrac{q_A q_B}{4\pi\varepsilon_0 r} = |U(r)|" inline />。
+        「引き離すエネルギー」を符号の説明なしに U と書かないこと。
       </p>
       <p style={{ margin: "6px 0 4px" }}>
         <strong>検算は単位で</strong>：エネルギー [J] ＝ 力 [N] × 距離 [m]。エネルギーは力より長さの次元が1つ多い＝ r の逆冪が1つ少ない。
-        重力も同じ構図（<Eq tex="F = \dfrac{GMm}{r^2}" inline /> ↔ 脱出に要するエネルギー <Eq tex="\dfrac{GMm}{r}" inline />、地表なら 力 mg × 高さ h ＝ mgh）。
+        重力も同じ構図（<Eq tex="F = \dfrac{GMm}{r^2}" inline /> ↔ 脱出に要するエネルギー <Eq tex="\dfrac{GMm}{r}" inline />）。
       </p>
       <p style={{ margin: "6px 0 4px" }}>
-        <strong>問題文での使い分け</strong>：「動き出すか・釣り合うか」＝<strong>その瞬間の力くらべ → 1/r²</strong>。「戻ってくるか・逃げ切れるか・どこまで届くか」＝<strong>道のり全体のエネルギー収支 → 1/r</strong>。
-        H26問17 は (a) 静止した B が動き出すか＝力の比較 <Eq tex="\dfrac{q_A q_B}{4\pi\varepsilon_0 r^2} &gt; m_B g" inline />、(b) 初速 v_B の B が引き戻されるか＝エネルギーの比較 <Eq tex="\dfrac{1}{2}m_B v_B^2 &lt; \dfrac{q_A q_B}{4\pi\varepsilon_0 r}" inline /> と、<strong>1問の中で両方を切り替えさせる</strong>のが罠。
+        <strong>問題文での使い分け</strong>：「動き出すか・釣り合うか・その瞬間の力／加速度」＝<strong>その瞬間の力くらべ → 1/r²</strong>。「戻ってくるか・逃げ切れるか・無限遠まで届くか・最大速度・仕事」＝<strong>道のり全体のエネルギー収支 → 1/r</strong>。言葉のマッチングだけに頼らず、<strong>運動の途中経過ぜんぶ・到達できるかを判定する問題はエネルギー</strong>、が本質。
+        H26問17 は (a) 静止した B が動き出すか＝力の比較 <Eq tex="\dfrac{q_A q_B}{4\pi\varepsilon_0 r^2} &gt; m_B g" inline />、(b) 初速 v_B の B が引き戻されるか＝エネルギーの比較 <Eq tex="\dfrac{1}{2}m_B v_B^2 &lt; W_{\text{escape}} = \dfrac{q_A q_B}{4\pi\varepsilon_0 r}" inline /> と、<strong>1問の中で両方を切り替えさせる</strong>のが罠。
       </p>
       <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--ink-soft)" }}>
-        冪の整理は「割る面・掛ける距離」で統一：電界・力は球面 4πr² に薄まるから 1/r²、電位・エネルギーはその力を距離で積み上げるから 1/r（磁界が円周 2πr で 1/r になるのと同じ発想の拡張）。
+        冪の整理は「割る面・積む距離」で統一：電界・力は球面 4πr² に薄まるから 1/r²、電位・エネルギーはその力を距離方向に積分して積むから 1/r（磁界が円周 2πr で 1/r になるのと同じ発想の拡張）。
       </p>
     </Callout>
+    </div>
     <h3>正答者 vs 誤答者</h3>
     <table className="data-table">
       <thead>
@@ -10616,7 +10629,7 @@ const CoulombFieldExplainTab = ({ onNav, switchTab }) => (
         <tr><td>誘電体の効果</td><td>ε_r を無視して ε₀ だけで計算</td><td>ε = ε₀ε_r を使い誘電体の効果を反映</td></tr>
         <tr><td>電位の重ね合わせ</td><td>ベクトル合成（向きを考慮）する</td><td>スカラー合成（代数和）する</td></tr>
         <tr><td>導体内部の電界</td><td>「導体なら電流が流れるから電界あり」</td><td>「静電平衡の導体内部の電界はゼロ」</td></tr>
-        <tr><td>力とエネルギーの冪</td><td>エネルギー比較でも 1/r² を使う</td><td>力＝1/r²・エネルギー＝力×距離＝1/r と区別する</td></tr>
+        <tr><td>力とエネルギーの冪</td><td>エネルギー比較でも 1/r² を使う・位置エネルギーを常に正と扱う・U と引き離す仕事を区別しない</td><td>力＝1/r²・エネルギー＝力の積分＝1/r。異符号電荷は U＜0・引き離す仕事は |U|</td></tr>
       </tbody>
     </table>
 
@@ -16911,6 +16924,35 @@ const PageTabs = ({ pageId, tabs, defaultTab, children }) => {
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, [pageId]);
+
+  /* #pageId:tab:sectionId の第3セグメント: タブ描画後に該当セクションへスクロール。
+     KaTeX 等の後続レンダで高さが変わり、初回ロードではブラウザのスクロール位置復元が
+     後から走って上書きすることがあるため、複数タイミング＋load 完了後にも再試行する */
+  useEffect(() => {
+    let timers = [];
+    const jumpIfTargeted = () => {
+      const parts = location.hash.replace(/^#/, '').split(':');
+      if (parts[0] !== pageId || !parts[2] || parts[1] !== activeTab) return;
+      const jump = () => {
+        const el = document.getElementById(parts[2]);
+        if (!el) return;
+        /* 既に見出し位置（scroll-margin-top=24px 相当）にあれば再スクロールしない（冪等化） */
+        const top = el.getBoundingClientRect().top;
+        if (Math.abs(top - 24) > 40) el.scrollIntoView({ block: 'start' });
+      };
+      /* KaTeX/SVG の後続レンダで文書高が安定するまで段階的に再試行 */
+      [150, 600, 1500, 3000].forEach(ms => timers.push(setTimeout(jump, ms)));
+      if (document.readyState !== 'complete') {
+        window.addEventListener('load', () => timers.push(setTimeout(jump, 250)), { once: true });
+      }
+    };
+    jumpIfTargeted();
+    window.addEventListener('hashchange', jumpIfTargeted);
+    return () => {
+      window.removeEventListener('hashchange', jumpIfTargeted);
+      timers.forEach(clearTimeout);
+    };
+  }, [pageId, activeTab]);
 
   return (
     <div className="page-tabs-container" style={{ margin: "20px 0 0 0" }}>
