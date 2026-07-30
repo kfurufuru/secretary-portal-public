@@ -1902,7 +1902,143 @@ function freqLabel(freq) {
   return { max: "出題頻度: 最頻出", high: "出題頻度: 高", mid: "出題頻度: 中", low: "出題頻度: 低" }[freq] || "—";
 }
 
-Object.assign(window, { Eq, PageHeader, Crumbs, Box, FormulaCard, PageNav, DiffBadge, HomePage, pageDeckSummary, freqLabel });
+
+/* ============================================================
+   PDCA 自己評価（riron v2 実装の逐語移植）
+   SectionCheck / SectionCheckSummary
+   localStorage key prefix: denken_check::denryoku_<pageId>:: （riron/hoki と衝突回避）
+   出所: denken3-riron-wiki.html（hoki-components.jsx 由来）
+   ============================================================ */
+
+const SectionCheck = ({ pageId, sectionId, compact = false }) => {
+  const key = `denken_check::denryoku_${pageId}::section::${sectionId}`;
+  const [status, setStatus] = useState(() => {
+    try { return localStorage.getItem(key) || ''; } catch (e) { return ''; }
+  });
+  const update = (newStatus) => {
+    const next = newStatus === status ? '' : newStatus;
+    setStatus(next);
+    try {
+      if (next) localStorage.setItem(key, next);
+      else localStorage.removeItem(key);
+      window.dispatchEvent(new CustomEvent('section-check-changed', { detail: { key, status: next } }));
+    } catch (e) { /* noop */ }
+  };
+  const buttons = [
+    { mark: '◎', label: '完璧', color: '#16a34a' },
+    { mark: '○', label: 'OK',   color: '#3b82f6' },
+    { mark: '△', label: '微妙', color: '#f59e0b' },
+    { mark: '×', label: '未',   color: '#dc2626' },
+  ];
+  return (
+    <div style={{
+      margin: compact ? '4px 0 12px' : '6px 0 18px',
+      padding: '8px 12px',
+      background: 'var(--bg-elev)',
+      border: '1px solid var(--rule)',
+      borderRadius: 6,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      flexWrap: 'wrap',
+    }}>
+      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-soft)' }}>📊 このセクションの理解度:</span>
+      {buttons.map(b => (
+        <button
+          key={b.mark}
+          onClick={() => update(b.mark)}
+          aria-label={`理解度 ${b.label}`}
+          style={{
+            padding: '4px 10px',
+            minWidth: 36,
+            background: status === b.mark ? b.color : 'transparent',
+            color: status === b.mark ? '#fff' : 'var(--ink)',
+            border: status === b.mark ? `1px solid ${b.color}` : '1px solid var(--rule)',
+            borderRadius: 4,
+            cursor: 'pointer',
+            fontWeight: 700,
+            fontSize: 14,
+            transition: 'all 0.1s',
+          }}
+        >{b.mark}</button>
+      ))}
+      {status && (
+        <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>前回: <strong style={{ color: 'var(--ink)' }}>{status}</strong></span>
+      )}
+    </div>
+  );
+};
+
+const SectionCheckSummary = ({ pageId, sections, onJump }) => {
+  const [scores, setScores] = useState({});
+  useEffect(() => {
+    const refresh = () => {
+      const result = {};
+      sections.forEach(s => {
+        const k = `denken_check::denryoku_${pageId}::section::${s.id}`;
+        try { result[s.id] = localStorage.getItem(k) || ''; } catch (e) { result[s.id] = ''; }
+      });
+      setScores(result);
+    };
+    refresh();
+    window.addEventListener('section-check-changed', refresh);
+    return () => window.removeEventListener('section-check-changed', refresh);
+  }, [pageId, sections]);
+
+  const total = sections.length;
+  const counts = { '◎': 0, '○': 0, '△': 0, '×': 0, '未': 0 };
+  sections.forEach(s => {
+    const v = scores[s.id];
+    if (v && counts[v] !== undefined) counts[v]++; else counts['未']++;
+  });
+  const weak = sections.filter(s => ['△', '×'].includes(scores[s.id]) || !scores[s.id]);
+
+  return (
+    <div style={{
+      background: 'var(--bg-elev)',
+      border: '1px solid var(--rule)',
+      borderRadius: 6,
+      padding: '14px 18px',
+      marginBottom: 16,
+    }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)', marginBottom: 10 }}>
+        📊 理解度サマリ（{total} セクション中）
+      </div>
+      <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 12, fontSize: 12 }}>
+        <span><strong style={{ color: '#16a34a' }}>◎ {counts['◎']}</strong></span>
+        <span><strong style={{ color: '#3b82f6' }}>○ {counts['○']}</strong></span>
+        <span><strong style={{ color: '#f59e0b' }}>△ {counts['△']}</strong></span>
+        <span><strong style={{ color: '#dc2626' }}>× {counts['×']}</strong></span>
+        <span><strong style={{ color: 'var(--ink-soft)' }}>未 {counts['未']}</strong></span>
+      </div>
+      {weak.length > 0 ? (
+        <>
+          <div style={{ fontSize: 12, color: 'var(--warn)', marginBottom: 6, fontWeight: 600 }}>
+            🔁 弱点セクション（△・×・未） — 再読推奨
+          </div>
+          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, lineHeight: 1.8 }}>
+            {weak.map(s => (
+              <li key={s.id}>
+                <a
+                  href={`#${s.id}`}
+                  onClick={(e) => { e.preventDefault(); if (onJump) onJump(s.id); else { const el = document.getElementById(s.id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }}
+                  style={{ color: 'var(--accent-ink)', textDecoration: 'underline' }}
+                >{s.label} →</a>
+                {scores[s.id] && <span style={{ marginLeft: 8, color: 'var(--ink-soft)' }}>（{scores[s.id]}）</span>}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <div style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
+          ✨ すべてのセクションが ◎ または ○ です。お疲れさまでした！
+        </div>
+      )}
+    </div>
+  );
+};
+
+Object.assign(window, { Eq, PageHeader, Crumbs, Box, FormulaCard, PageNav, DiffBadge, HomePage, pageDeckSummary, freqLabel, SectionCheck, SectionCheckSummary });
 
 </script>
 <script type="text/babel">
@@ -2081,6 +2217,8 @@ const HaidenPage = ({ data, onNav }) => (
         </table></div>
       </Box>
 
+      <SectionCheck pageId="haiden" sectionId="intro" />
+
       <h2 id="houshiki"><span className="h-num">2.</span>配電方式の比較</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>方式</th><th>構成</th><th>信頼性</th><th>主な用途</th></tr></thead>
@@ -2244,6 +2382,8 @@ const HaidenPage = ({ data, onNav }) => (
         </ul>
       </Box>
 
+      <SectionCheck pageId="haiden" sectionId="houshiki" />
+
       <h2 id="shihyo"><span className="h-num">3.</span>負荷の指標（需要率・負荷率・不等率）</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>指標</th><th>定義</th><th>値の範囲</th><th>意味</th></tr></thead>
@@ -2256,6 +2396,8 @@ const HaidenPage = ({ data, onNav }) => (
       <Box kind="warn" label="不等率は「1以上」— 1以下と思い込む引っかけ">
         <p>各需要家の最大需要は同時刻に発生しない（A工場は朝、C家庭は夕方など時間帯がずれる）。よって合成最大は「各最大の単純な和」より必ず小さくなり、<Eq tex="\text{不等率} = \dfrac{\sum (\text{各最大})}{\text{合成最大}} \geq 1" /> となる。「率」から100%以下と誤解しやすいが、不等率だけは1以上。分子と分母を逆にする誤りも頻出。</p>
       </Box>
+
+      <SectionCheck pageId="haiden" sectionId="shihyo" />
 
       <h2 id="formula"><span className="h-num">4.</span>公式マップ（最重要）</h2>
       <p>方式で電圧降下の係数が変わる。<strong>単相2線=2 / 単相3線=1 / 三相3線=√3</strong> を取り違えないこと。</p>
@@ -2351,6 +2493,8 @@ const HaidenPage = ({ data, onNav }) => (
         </figcaption>
       </figure>
 
+      <SectionCheck pageId="haiden" sectionId="formula" />
+
       <h2 id="kaiho"><span className="h-num">5.</span>解法パターン</h2>
       <Box kind="tip" label="① 電圧降下の計算">
         <ol>
@@ -2367,6 +2511,8 @@ const HaidenPage = ({ data, onNav }) => (
         </ol>
       </Box>
 
+      <SectionCheck pageId="haiden" sectionId="kaiho" />
+
       <h2 id="trap"><span className="h-num">6.</span>引っかけ・誤答ポイント</h2>
       <Box kind="warn" label="頻出トラップ">
         <ul>
@@ -2375,6 +2521,8 @@ const HaidenPage = ({ data, onNav }) => (
           <li><strong>力率改善の主効果を「電圧上昇」と誤解</strong> — 本質は電流削減。電圧改善・損失低減はその結果。</li>
         </ul>
       </Box>
+
+      <SectionCheck pageId="haiden" sectionId="trap" />
 
       <h2 id="seigo"><span className="h-num">7.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -2388,6 +2536,8 @@ const HaidenPage = ({ data, onNav }) => (
           <tr><td>力率改善で電力損失は力率の2乗に反比例して減る</td><td><strong>正</strong></td><td>Ploss ∝ I² ∝ (1/cosφ)²</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="haiden" sectionId="seigo" />
 
       <h2 id="kakomon"><span className="h-num">8.</span>出題実績（約85問・科目最多）</h2>
       <p>計算・論説・穴埋めのすべてで出題。特に電圧降下・力率改善の計算は毎年のように問われる。</p>
@@ -2413,6 +2563,27 @@ const HaidenPage = ({ data, onNav }) => (
       <Box kind="tip" label="R08予測">
         <p>R07でも計算問題が複数（問16・問17）。力率改善・電圧降下の計算は継続が濃厚。論説はスポットネットワーク／バンキング方式の比較、分散型電源の配電系統連系が有力。</p>
       </Box>
+
+      <h2 id="related"><span className="h-num">9.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("jikayou-chiraku"); }}>4.2 自家用受電設備の地絡保護</a> — 配電線からの引込み以降（PAS・GR/DGR・もらい事故）を扱う需要家側の続き</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("kakuu-souden"); }}>3.1 架空送電線路</a> — 送電側の線路特性と対比して覚える（電圧降下・損失の式の型は共通）</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("henatsuki"); }}>2.1 変圧器（基礎ハブ）</a> — 柱上変圧器の本体（変圧比・結線・損失）</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">10.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="haiden" sections={[
+        { id: "intro", label: "1. 直感的理解 — 3つのロス対策" },
+        { id: "houshiki", label: "2. 配電方式の比較" },
+        { id: "shihyo", label: "3. 負荷の指標（需要率・負荷率・不等率）" },
+        { id: "formula", label: "4. 公式マップ（最重要）" },
+        { id: "kaiho", label: "5. 解法パターン" },
+        { id: "trap", label: "6. 引っかけ・誤答ポイント" },
+        { id: "seigo", label: "7. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -2453,6 +2624,8 @@ const JikayouChirakuPage = ({ data, onNav }) => (
         <p>GR は大きさだけ → ケーブルの充電電流で&nbsp;<strong>もらい事故</strong>。DGR は大きさ＋方向 → 構外地絡では不動作で&nbsp;<strong>波及・もらいを防ぐ</strong>。</p>
       </Box>
 
+      <SectionCheck pageId="jikayou-chiraku" sectionId="intro" />
+
       <h2 id="setsubi"><span className="h-num">2.</span>設備を歩く（地絡保護の骨格）</h2>
       <Box kind="tip" label="高圧受電設備の主要機器">
         <ul>
@@ -2465,6 +2638,8 @@ const JikayouChirakuPage = ({ data, onNav }) => (
       <Box kind="warn" label="GR と DGR の入力の違い（見分けの第一歩）">
         <p><strong>GR（地絡過電流継電器）＝ ZCT のみ</strong>（I₀ の大きさだけ）。<strong>DGR（地絡方向継電器）＝ ZCT ＋ EVT</strong>（I₀ の大きさ ＋ V₀ との位相関係）。<strong>EVT が付くか付かないか</strong>が GR と DGR の見分けの第一歩。DGR は「① I₀ が整定値以上」かつ「② V₀ に対する I₀ の位相が構内方向」の両方を満たすときトリップする。</p>
       </Box>
+
+      <SectionCheck pageId="jikayou-chiraku" sectionId="setsubi" />
 
       <h2 id="gr-dgr"><span className="h-num">3.</span>GR と DGR の比較表（最重要）</h2>
       <div className="table-wrap"><table className="data">
@@ -2482,6 +2657,8 @@ const JikayouChirakuPage = ({ data, onNav }) => (
       <Box kind="warn" label="出題の核心：なぜ DGR が必要か">
         <p>「構内の高圧ケーブルが長い（対地静電容量が大きい）ほど、構外地絡時に GR が誤動作しやすい」→ だから&nbsp;<strong>方向判定する DGR</strong>&nbsp;を用いる、という因果が穴埋・論説の頻出論点。</p>
       </Box>
+
+      <SectionCheck pageId="jikayou-chiraku" sectionId="gr-dgr" />
 
       <h2 id="morai"><span className="h-num">4.</span>もらい事故（波及事故）のメカニズム</h2>
       <Box kind="example" label="構外地絡時に GR が誤動作する流れ">
@@ -2505,6 +2682,8 @@ const JikayouChirakuPage = ({ data, onNav }) => (
       </table></div>
       <p>構外地絡では電流の向きが「構外向き（充電電流）」になるため、位相で除外できる。これが DGR がもらい事故を防ぐ原理。</p>
 
+      <SectionCheck pageId="jikayou-chiraku" sectionId="morai" />
+
       <h2 id="formula"><span className="h-num">5.</span>公式マップ</h2>
       <FormulaCard num="01" name="対地静電容量に流れる地絡電流（容量分）" eq="I_{gc} = 2\pi f\, C_3\, E \,[\text{A}]"
         note="C₃＝3線一括の対地静電容量[F]、E＝事故前の対地電圧（相電圧 V/√3）。1線地絡で健全相の対地電圧が上昇し、各相の対地静電容量を通じて充電電流が大地へ流れる。充電電流 ωCV と同型で、ケーブルの C が大きいほど大きい。" />
@@ -2517,6 +2696,8 @@ const JikayouChirakuPage = ({ data, onNav }) => (
       <Box kind="tip" label="なぜ高圧ケーブルで地絡電流が大きいか（地中送電からの帰結）">
         <p>高圧ケーブル（CVT 等）は導体と遮へい層の距離が数 mm と非常に近く、対地静電容量が架空電線に比べ桁違いに大きい。したがって構内ケーブルが長いほど、対地静電容量に流れる地絡電流（充電電流分）が大きくなり、もらい事故のリスクが上がる。</p>
       </Box>
+
+      <SectionCheck pageId="jikayou-chiraku" sectionId="formula" />
 
       <h2 id="cvt-earth"><span className="h-num">6.</span>CVT 遮へい銅テープの接地と ZCT の関係（実務頻出）</h2>
       <Box kind="warn" label="最頻出ミス：接地線を ZCT に通すか通さないか">
@@ -2592,6 +2773,8 @@ const JikayouChirakuPage = ({ data, onNav }) => (
         </figcaption>
       </figure>
 
+      <SectionCheck pageId="jikayou-chiraku" sectionId="cvt-earth" />
+
       <h2 id="kaiho"><span className="h-num">7.</span>解法パターン</h2>
       <Box kind="tip" label="① GR と DGR を見分ける（EVT の有無）">
         <p>「EVT があるか」「方向判定するか」「もらい事故を防げるか」の3点セットで判断する。EVT/ZPD なし・大きさのみ・もらい事故を防げない＝GR。EVT/ZPD あり・大きさ＋方向・もらい事故を防げる＝DGR。</p>
@@ -2621,6 +2804,8 @@ const JikayouChirakuPage = ({ data, onNav }) => (
         </ol>
       </Box>
 
+      <SectionCheck pageId="jikayou-chiraku" sectionId="kaiho" />
+
       <h2 id="trap"><span className="h-num">8.</span>引っかけパターン</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>誤った記述</th><th>正しい記述</th></tr></thead>
@@ -2632,6 +2817,8 @@ const JikayouChirakuPage = ({ data, onNav }) => (
           <tr><td>GR 付 PAS は短絡電流も遮断できる遮断器である</td><td><strong>誤</strong>：PAS は負荷開閉器で短絡電流の遮断能力はない。短絡時は蓄勢ロックし無電圧確認後に開放（SO動作）。地絡電流（数A）は即時開放できる（G動作）</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="jikayou-chiraku" sectionId="trap" />
 
       <h2 id="seigo"><span className="h-num">9.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -2649,6 +2836,8 @@ const JikayouChirakuPage = ({ data, onNav }) => (
           <tr><td>EVT 二次の制限抵抗は地絡電流の位相を安定させ DGR を確実動作させるためにある</td><td><strong>正</strong></td><td>抵抗分を確保して位相を整える</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="jikayou-chiraku" sectionId="seigo" />
 
       <h2 id="kakomon"><span className="h-num">10.</span>出題実績</h2>
       <div className="table-wrap"><table className="data">
@@ -2671,6 +2860,29 @@ const JikayouChirakuPage = ({ data, onNav }) => (
           <li><strong>地中送電・電力ケーブル</strong> — 対地静電容量が大きい理由（導体–遮へい間が近い）の母体。</li>
         </ul>
       </Box>
+
+      <h2 id="related"><span className="h-num">11.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("haiden"); }}>4.1 配電線路</a> — 引込み元の配電線路（柱上変圧器・配電方式・PAS の位置づけ）</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("keiki-hensei"); }}>2.3 計器用変成器（VT・CT）</a> — ZCT・EVT など零相検出センサーの本体解説</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("hogo-keiden"); }}>2.5 保護継電器</a> — GR・DGR を含む保護継電器の種類と整定の全体像</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">12.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="jikayou-chiraku" sections={[
+        { id: "intro", label: "1. 直感的理解" },
+        { id: "setsubi", label: "2. 設備を歩く（地絡保護の骨格）" },
+        { id: "gr-dgr", label: "3. GR と DGR の比較表（最重要）" },
+        { id: "morai", label: "4. もらい事故（波及事故）のメカニズム" },
+        { id: "formula", label: "5. 公式マップ" },
+        { id: "cvt-earth", label: "6. CVT 遮へい銅テープの接地と ZCT の関係（実務頻出）" },
+        { id: "kaiho", label: "7. 解法パターン" },
+        { id: "trap", label: "8. 引っかけパターン" },
+        { id: "seigo", label: "9. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -2776,6 +2988,8 @@ const KakuuSoudenPage = ({ data, onNav }) => (
         <p>電力損失は <Eq tex="P_{\text{loss}} = 3I^2R" />。電圧を10倍にすれば電流は <Eq tex="1/10" />、損失は <Eq tex="1/100" /> になる。だから 275 kV・500 kV の超高圧で送り、変電所で降圧して配電する。送電端電圧は <Eq tex="V_s = V_r + \Delta V" /> で、<Eq tex="\Delta V" /> は「抵抗成分（有効分）＋リアクタンス成分（無効分）」からなる。</p>
       </Box>
 
+      <SectionCheck pageId="kakuu-souden" sectionId="intro" />
+
       <h2 id="setsubi"><span className="h-num">2.</span>構成要素</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>機器</th><th>正式名・略称</th><th>役割</th><th>ポイント</th></tr></thead>
@@ -2786,6 +3000,8 @@ const KakuuSoudenPage = ({ data, onNav }) => (
           <tr><td>架空地線</td><td>OPGW（光ファイバ複合）</td><td>直撃雷から導体を保護・通信兼用</td><td>鉄塔頂部に設置。遮蔽角を小さくするほど保護効果大</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="kakuu-souden" sectionId="setsubi" />
 
       <h2 id="tokusei"><span className="h-num">3.</span>線路定数と短距離/長距離モデル</h2>
       <div className="table-wrap"><table className="data">
@@ -2800,6 +3016,8 @@ const KakuuSoudenPage = ({ data, onNav }) => (
       <Box kind="tip" label="モデルの使い分け">
         <p><strong>短距離（集中定数・R と X のみ）</strong>が電験3種の主戦場。数十km程度までの短距離線路では充電電流が小さく B を無視できる（100km程度の中距離になると C を考慮したπ形・T形回路で扱う）。<strong>長距離（分布定数）</strong>では B が効き、フェランチ効果など特有の現象が現れる。</p>
       </Box>
+
+      <SectionCheck pageId="kakuu-souden" sectionId="tokusei" />
 
       <h2 id="shougai"><span className="h-num">4.</span>障害と対策</h2>
       <div className="table-wrap"><table className="data">
@@ -2941,6 +3159,8 @@ const KakuuSoudenPage = ({ data, onNav }) => (
         <p>通常は「導体（高電位）→がいし→鉄塔（接地）」へ絶縁破壊が進む。だが鉄塔の<strong>接地抵抗が高い</strong>と、落雷時に塔基部の電位が <Eq tex="V = I_{\text{雷}} \times R_{\text{接地}}" /> だけ上昇し、塔電位が導体電位を上回って「鉄塔→がいし→導体」へ逆向きに破壊が進む。だから対策は<strong>接地抵抗の低減</strong>。コロナは逆に、導体が細いほど表面電界（1/r で減衰）が高くなり発生しやすいので、多導体で等価半径を大きくして電界を下げる。</p>
       </Box>
 
+      <SectionCheck pageId="kakuu-souden" sectionId="shougai" />
+
       <h2 id="tarumi"><span className="h-num">5.</span>たるみ（弛度）と実長（計算頻出）</h2>
       <p>電線は支持点間で必ずたるむ。張力を上げればたるみは減るが、電線・支持物への負担は増える。この関係を式で扱うのが弛度計算。</p>
       <FormulaCard num="D1" name="弛度（たるみ）" eq="D = \dfrac{WS^2}{8T}\,[\text{m}]"
@@ -3021,6 +3241,8 @@ const KakuuSoudenPage = ({ data, onNav }) => (
           <Eq tex="D = \dfrac{WS^2}{8T}" /> は「<strong>張力を張るほどたるみは減る</strong>」、<Eq tex="L - S = \dfrac{8D^2}{3S}" /> は「<strong>たるみが2倍なら伸びは4倍</strong>」。計算の急所は <span className="marker">W が鉛直（自重＋氷雪）と水平（風圧）の直角合成</span>である点で、<strong>代数和にすると必ず過大になる</strong>。D は支持点を結ぶ直線から測った距離であって地上高ではなく、風があるときは <strong>W の向き</strong>に測る（鉛直方向の値そのものではない）。
         </figcaption>
       </figure>
+
+      <SectionCheck pageId="kakuu-souden" sectionId="tarumi" />
 
       <h2 id="corona"><span className="h-num">6.</span>円筒導体の電界とコロナ放電</h2>
       <p>送電線は断面が円い<strong>円筒（円柱）導体</strong>。電荷を帯びた円筒導体のまわりには、中心から外向きに放射状の<strong>電界</strong>が広がる。線電荷密度を <Eq tex="\lambda\,[\text{C/m}]" />、真空（空気）の誘電率を <Eq tex="\varepsilon_0" /> とすると、中心軸から距離 <Eq tex="r" /> の点の電界の大きさは次式で表される。</p>
@@ -3105,6 +3327,8 @@ const KakuuSoudenPage = ({ data, onNav }) => (
       <Box kind="tip" label="地中ケーブルでも同じ円筒の電界（→地中送電・電力ケーブル）">
         <p>この 1/r の円筒電界は、地中ケーブルの<strong>同軸円筒構造</strong>にも現れる。ただしケーブルは遮へいで閉じているため電界が絶縁体内で完結し、導体表面の電位傾度が絶縁設計を左右する。詳細は「地中送電・電力ケーブル」ページの<strong>同軸円筒ケーブルの電界分布と電位傾度</strong>を参照。</p>
       </Box>
+
+      <SectionCheck pageId="kakuu-souden" sectionId="corona" />
 
       <h2 id="formula"><span className="h-num">7.</span>公式マップ（最重要）</h2>
       <FormulaCard num="01" name="電圧降下（三相3線式）" eq="\Delta V = \sqrt{3}\,I(R\cos\theta + X\sin\theta)\,[\text{V}]"
@@ -3201,6 +3425,8 @@ const KakuuSoudenPage = ({ data, onNav }) => (
         </figcaption>
       </figure>
 
+      <SectionCheck pageId="kakuu-souden" sectionId="formula" />
+
       <h2 id="kaiho"><span className="h-num">8.</span>解法パターン（三相電圧降下）</h2>
       <Box kind="example" label="例題: Vr=66kV・20MW・力率0.8(遅れ)・R=10Ω・X=15Ω → 送電端電圧は？">
         <p>① 線電流を求める：</p>
@@ -3212,6 +3438,8 @@ const KakuuSoudenPage = ({ data, onNav }) => (
       <Box kind="warn" label="R の定義を誤解する引っかけ">
         <p>R は「1線あたりの抵抗」。「1kmあたり0.1Ω・線路長50km」なら R = 5Ω。三相3線式で往復分を足してはいけない（<Eq tex="3I^2R" /> の「3」が既に3線分）。Δ結線では線電流 <Eq tex="I_L = \sqrt{3}\,I_P" /> に変換してから使う。</p>
       </Box>
+
+      <SectionCheck pageId="kakuu-souden" sectionId="kaiho" />
 
       <h2 id="seigo"><span className="h-num">9.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -3225,6 +3453,8 @@ const KakuuSoudenPage = ({ data, onNav }) => (
           <tr><td>逆フラッシオーバー防止に接地抵抗低減が有効</td><td><strong>正</strong></td><td>雷撃時の塔電位上昇を抑制</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="kakuu-souden" sectionId="seigo" />
 
       <h2 id="kakomon"><span className="h-num">10.</span>出題実績（送電分野 最頻出・A問題は論説／B問題は計算）</h2>
       <p><strong>A問題（問8〜10）は論説が中心</strong>で、構成要素・雷害・振動・コロナ・塩害が循環的に出題される。<strong>一方 B問題（問16・問17）は計算が主戦場</strong>で、<strong>フェランチ現象が R01問16・R06下問17 と2回</strong>、<strong>弛度（実長・水平張力）が R03問16</strong>、調相設備容量が R04下問16 と出ている。論説の並びだけを見て「架空送電は暗記中心」と判断しないこと。</p>
@@ -3250,6 +3480,29 @@ const KakuuSoudenPage = ({ data, onNav }) => (
       <Box kind="tip" label="R08予測">
         <p>R07で振動・雷害が連続出題。R08はコロナ（R05上以来未出）か塩害の論説が有力。<strong>B問題は フェランチ（R01・R06下の2回）と 弛度（R03）が周期的に回ってくる枠</strong>で、直近2回（R07上・R07下）はどちらも出ていないため R08 は要警戒。</p>
       </Box>
+
+      <h2 id="related"><span className="h-num">11.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("chichuu-souden"); }}>3.2 地中送電・電力ケーブル</a> — 架空⇔地中の比較の相手側（ケーブル特有の充電電流・フェランチ効果）</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("denki-zairyou"); }}>5.1 電気材料</a> — 電線（硬銅線・ACSR）・がいし材料の物性側</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("haiden"); }}>4.1 配電線路</a> — 需要家へ届ける配電線路（電圧降下式の使い分け）</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">12.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="kakuu-souden" sections={[
+        { id: "intro", label: "1. 直感的理解 — なぜ超高圧で送るか" },
+        { id: "setsubi", label: "2. 構成要素" },
+        { id: "tokusei", label: "3. 線路定数と短距離/長距離モデル" },
+        { id: "shougai", label: "4. 障害と対策" },
+        { id: "tarumi", label: "5. たるみ（弛度）と実長（計算頻出）" },
+        { id: "corona", label: "6. 円筒導体の電界とコロナ放電" },
+        { id: "formula", label: "7. 公式マップ（最重要）" },
+        { id: "kaiho", label: "8. 解法パターン（三相電圧降下）" },
+        { id: "seigo", label: "9. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -3355,6 +3608,8 @@ const KaryokuPage = ({ data, onNav }) => (
           <li><strong>1 kWh = 3,600 kJ</strong>（必ず覚える換算定数）</li>
         </ul>
       </Box>
+
+      <SectionCheck pageId="karyoku" sectionId="intro" />
 
       <h2 id="setsubi"><span className="h-num">2.</span>設備（蒸気の流れ）</h2>
       <div className="table-wrap"><table className="data">
@@ -3474,6 +3729,8 @@ const KaryokuPage = ({ data, onNav }) => (
         </figcaption>
       </figure>
 
+      <SectionCheck pageId="karyoku" sectionId="setsubi" />
+
       <h2 id="cycle"><span className="h-num">3.</span>熱サイクルと発電方式</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>サイクル/方式</th><th>特徴</th><th>熱効率</th></tr></thead>
@@ -3498,6 +3755,8 @@ const KaryokuPage = ({ data, onNav }) => (
           <tr><td>ディーゼル発電</td><td>30〜40%程度</td><td>非常に短い（数秒〜分）</td><td>軽油・重油</td><td>非常用電源・離島</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="karyoku" sectionId="cycle" />
 
       <h2 id="formula"><span className="h-num">4.</span>公式マップ（最重要）</h2>
       <FormulaCard num="01" name="発電端熱効率（必須）" eq="\eta_{\text{gen}} = \dfrac{3600}{H_r}"
@@ -3526,6 +3785,8 @@ const KaryokuPage = ({ data, onNav }) => (
         <tbody><tr><td>熱効率 η</td><td>36.0%</td><td>40.0%</td><td>45.0%</td><td>50.0%</td><td>60.0%</td></tr></tbody>
       </table></div>
 
+      <SectionCheck pageId="karyoku" sectionId="formula" />
+
       <h2 id="kaiho"><span className="h-num">5.</span>解法パターン（例題つき）</h2>
       <Box kind="example" label="① 燃料消費量: 100MW・η=0.40・石炭 Hl=25,000kJ/kg">
         <p><Eq tex="H_r = \dfrac{3600}{0.40} = 9000\,\text{kJ/kWh}" /></p>
@@ -3541,6 +3802,8 @@ const KaryokuPage = ({ data, onNav }) => (
         <p><Eq tex="M_{CO_2} = 1000 \times 0.85 \times \dfrac{44}{12} \approx 3117\,\text{kg} \approx 3.1\,\text{t}" display /></p>
         <p>係数 <strong>44/12 ≒ 3.67</strong> を覚えておく：燃やした炭素の約3.7倍の質量のCO₂が出る。理論空気量を問う型では、C 12kg（1kmol）の燃焼に酸素 22.4m³N が要り、空気中の酸素は約21%なので<strong>理論空気量＝必要酸素量 ÷ 0.21</strong> で求める。</p>
       </Box>
+
+      <SectionCheck pageId="karyoku" sectionId="kaiho" />
 
       <h2 id="turbine"><span className="h-num">6.</span>タービンの種類と環境対策（論説の急所）</h2>
       <div className="table-wrap"><table className="data">
@@ -3564,6 +3827,8 @@ const KaryokuPage = ({ data, onNav }) => (
       </table></div>
       <p>煙道での並び順は <strong>ボイラ → 脱硝 → 空気予熱器 → 電気集じん器 → 脱硫 → 煙突</strong> が石炭（微粉炭）火力の代表構成（燃料・方式で変わる）（脱硝は高温側・脱硫は低温側が化学的に有利、という因果で覚える）。</p>
 
+      <SectionCheck pageId="karyoku" sectionId="turbine" />
+
       <h2 id="trap"><span className="h-num">7.</span>勘違いTOP3・引っかけ</h2>
       <Box kind="warn" label="頻出トラップ">
         <ul>
@@ -3574,6 +3839,8 @@ const KaryokuPage = ({ data, onNav }) => (
           <li><strong>燃料量の「毎時」と「総量」を混同</strong> — 式02は <Eq tex="[\text{kg/h}]" inline />、式04は <Eq tex="[\text{kg}]" inline />。設問が「1日あたり」「年間」なら時間を掛ける。[t]・[kL] 指定なら最後に換算する。</li>
         </ul>
       </Box>
+
+      <SectionCheck pageId="karyoku" sectionId="trap" />
 
       <h2 id="seigo"><span className="h-num">8.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -3587,6 +3854,8 @@ const KaryokuPage = ({ data, onNav }) => (
           <tr><td>過熱器はタービン通過後の蒸気を再加熱する</td><td><strong>誤</strong></td><td>それは再熱器。過熱器はボイラー内</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="karyoku" sectionId="seigo" />
 
       <h2 id="kakomon"><span className="h-num">9.</span>出題実績（約60問）</h2>
       <p>論説（熱効率向上対策・コンバインド・タービン）と計算（熱効率・重油消費量・CO₂）が両輪。</p>
@@ -3604,6 +3873,28 @@ const KaryokuPage = ({ data, onNav }) => (
       <Box kind="tip" label="R08予測">
         <p>熱効率・燃料/CO₂計算は毎年級の頻度。論説はコンバインド・タービン種別・熱効率向上対策が循環。</p>
       </Box>
+
+      <h2 id="related"><span className="h-num">10.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("genshiryoku"); }}>1.3 原子力発電</a> — 蒸気タービン以降は同じ型（熱サイクル・熱効率の流用先）</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("shin-energy"); }}>1.4 新エネルギー発電</a> — コンバインドサイクル・燃料電池など効率計算の応用先</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("suiryoku"); }}>1.1 水力発電</a> — 「出力＝入力×効率」の型の原点（発電方式の比較出題）</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">11.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="karyoku" sections={[
+        { id: "intro", label: "1. 直感的理解 — 熱効率とは" },
+        { id: "setsubi", label: "2. 設備（蒸気の流れ）" },
+        { id: "cycle", label: "3. 熱サイクルと発電方式" },
+        { id: "formula", label: "4. 公式マップ（最重要）" },
+        { id: "kaiho", label: "5. 解法パターン（例題つき）" },
+        { id: "turbine", label: "6. タービンの種類と環境対策（論説の急所）" },
+        { id: "trap", label: "7. 勘違いTOP3・引っかけ" },
+        { id: "seigo", label: "8. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -3645,6 +3936,8 @@ const HenatsukiPage = ({ data, onNav }) => (
         <p>理由：換算後 <Eq tex="V_1=aV_2,\ I_1=I_2/a" /> なので <Eq tex="Z_1 = V_1/I_1 = a^2 Z_2" />。「一次に換算した二次抵抗は <Eq tex="a^2" /> 倍＝正／二次に換算した一次抵抗は <Eq tex="1/a^2" /> 倍」— 主語と換算方向を必ず読む。</p>
       </Box>
 
+      <SectionCheck pageId="henatsuki" sectionId="ratio" />
+
       <h2 id="loss"><span className="h-num">2.</span>損失の分類（鉄損は一定・銅損は α²）</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>損失</th><th>別名</th><th>発生場所</th><th>負荷依存性</th></tr></thead>
@@ -3664,6 +3957,8 @@ const HenatsukiPage = ({ data, onNav }) => (
         <p><strong>無負荷試験</strong>（定格電圧・二次開放）→ 励磁電流のみで銅損≈0、測定値≈<strong>鉄損 Pi</strong>。<strong>短絡試験</strong>（二次短絡・インピーダンス電圧で定格電流）→ 磁束密度数%で鉄損≈0、測定値≈<strong>定格銅損 Pc,full</strong> ＋ <Eq tex="\%Z = \dfrac{V_s}{V_n}\times100,\ \%R = \dfrac{P_s}{S_n}\times100,\ \%X = \sqrt{\%Z^2-\%R^2}" /> も得る。</p>
       </Box>
 
+      <SectionCheck pageId="henatsuki" sectionId="loss" />
+
       <h2 id="eff"><span className="h-num">3.</span>効率と最大効率（鉄損＝銅損）</h2>
       <FormulaCard num="02" name="効率（皮相容量 Sn・負荷率 α 基準）" eq="\eta = \dfrac{\alpha S_n \cos\theta}{\alpha S_n \cos\theta + P_i + \alpha^2 P_{c,full}} \times 100\,[\%]"
         note="出力 Pout=α·Sn·cosθ。銅損は Pc(α)=α²·Pc,full。" />
@@ -3674,6 +3969,8 @@ const HenatsukiPage = ({ data, onNav }) => (
         <p>最大効率の負荷率（Pi=100W・Pc,full=400W の場合）：<Eq tex="\alpha_m = \sqrt{100/400} = 0.5" /></p>
       </Box>
 
+      <SectionCheck pageId="henatsuki" sectionId="eff" />
+
       <h2 id="henka"><span className="h-num">4.</span>電圧変動率</h2>
       <FormulaCard num="04" name="電圧変動率" eq="\varepsilon \approx \varepsilon_r \cos\theta + \varepsilon_x \sin\theta\,[\%]"
         note="εr=Pc,full/Sn×100（%抵抗）、εx=%リアクタンス。εr の分母は皮相 Sn（有効出力ではない）。" />
@@ -3681,11 +3978,15 @@ const HenatsukiPage = ({ data, onNav }) => (
         <p><Eq tex="\varepsilon = 2\times0.8 + 4\times0.6 = 1.6 + 2.4 = 4.0\%" /></p>
       </Box>
 
+      <SectionCheck pageId="henatsuki" sectionId="henka" />
+
       <h2 id="heikou"><span className="h-num">5.</span>並行運転（分担は 1/%Z に比例）</h2>
       <p>並行運転の条件：<strong>変圧比・%Z・極性・相回転・位相変位・結線群</strong>の一致。違うと循環電流や偏った分担が起きる。</p>
       <Box kind="warn" label="%Z が違うと容量比どおりに分担されない">
         <p>分担電流はインピーダンスに反比例＝<strong>分担 ∝ 1/%Z</strong>。同容量で A(%Z=4%)・B(%Z=6%) を並列すると <Eq tex="I_A:I_B = \tfrac{1}{4}:\tfrac{1}{6} = 6:4" />。負荷100Aなら A=60A・B=40A で、容量比1:1なのに<strong>%Z の小さい A が過負荷</strong>。異容量機は基準容量を揃えて比較する。</p>
       </Box>
+
+      <SectionCheck pageId="henatsuki" sectionId="heikou" />
 
       <h2 id="ketsusen"><span className="h-num">6.</span>三相結線とV結線</h2>
       <div className="table-wrap"><table className="data">
@@ -3786,6 +4087,8 @@ const HenatsukiPage = ({ data, onNav }) => (
         </figcaption>
       </figure>
 
+      <SectionCheck pageId="henatsuki" sectionId="ketsusen" />
+
       <h2 id="tanraku"><span className="h-num">7.</span>短絡電流（%Z 使用）</h2>
       <FormulaCard num="05" name="短絡電流" eq="I_s = I_n \times \dfrac{100}{\%Z}\,[\text{A}]"
         note="In=定格電流。%Z に反比例＝%Z が小さいほど短絡電流大→遮断器の遮断容量を大きく。" />
@@ -3794,6 +4097,8 @@ const HenatsukiPage = ({ data, onNav }) => (
         <p><Eq tex="I_s = 1375 \times \dfrac{100}{5} = 27{,}500\,\text{A} = 27.5\,\text{kA}" display /></p>
         <p>定格電流の20倍。電源側%Zが与えられたら 合成%Z=変圧器%Z+電源%Z で計算。</p>
       </Box>
+
+      <SectionCheck pageId="henatsuki" sectionId="tanraku" />
 
       <h2 id="seigo"><span className="h-num">8.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -3813,6 +4118,8 @@ const HenatsukiPage = ({ data, onNav }) => (
         <p>タップ切換装置の<strong>無電圧切換（オフロードタップチェンジャー）</strong>は、変圧器を<strong>停止してから</strong>切り換える。停止が不要なのは<strong>負荷時タップ切換装置（オンロードタップチェンジャー）</strong>。名称の「無電圧」は「電圧が印加されていない状態で切り換える」という意味であり、「電圧を中断せずに（切らずに）切り換える」という意味ではない。この誤読を突く正誤問題が頻出。</p>
       </Box>
 
+      <SectionCheck pageId="henatsuki" sectionId="seigo" />
+
       <h2 id="kakomon"><span className="h-num">9.</span>出題実績（基礎ハブ・約27問＋変電周辺）</h2>
       <p>効率・最大効率・並行運転・短絡（遮断器選定）の計算が頻出。論説は結線方式・タップ切換・種類。深い全日効率は損失深掘りページへ。</p>
       <div className="table-wrap"><table className="data">
@@ -3830,6 +4137,28 @@ const HenatsukiPage = ({ data, onNav }) => (
       <Box kind="tip" label="R08予測">
         <p>効率・最大効率の単独計算、V結線（H30以来の周期）、並行運転負荷分担（R05上・R06上で連続）が有力。</p>
       </Box>
+
+      <h2 id="related"><span className="h-num">10.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("henatsuki-loss"); }}>2.2 変圧器の損失・効率</a> — 全日効率・アモルファス鉄心など損失・効率計算の実戦編</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("keiki-hensei"); }}>2.3 計器用変成器（VT・CT）</a> — 同じ変圧の原理を「計測用に縮小する」方向で使う VT・CT</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("haiden"); }}>4.1 配電線路</a> — 柱上変圧器・単相3線式としての配電現場での使われ方</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">11.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="henatsuki" sections={[
+        { id: "ratio", label: "1. 巻数比（5秒で思い出す）" },
+        { id: "loss", label: "2. 損失の分類（鉄損は一定・銅損は α²）" },
+        { id: "eff", label: "3. 効率と最大効率（鉄損＝銅損）" },
+        { id: "henka", label: "4. 電圧変動率" },
+        { id: "heikou", label: "5. 並行運転（分担は 1/%Z に比例）" },
+        { id: "ketsusen", label: "6. 三相結線とV結線" },
+        { id: "tanraku", label: "7. 短絡電流（%Z 使用）" },
+        { id: "seigo", label: "8. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -3993,6 +4322,8 @@ const SuiryokuPage = ({ data, onNav }) => (
         </figcaption>
       </figure>
 
+      <SectionCheck pageId="suiryoku" sectionId="intro" />
+
       <h2 id="suisha"><span className="h-num">2.</span>水車の種類（衝動 vs 反動）</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>項目</th><th>衝動水車（ペルトン）</th><th>反動水車（フランシス/カプラン）</th></tr></thead>
@@ -4065,6 +4396,8 @@ const SuiryokuPage = ({ data, onNav }) => (
         </tbody>
       </table></div>
 
+      <SectionCheck pageId="suiryoku" sectionId="suisha" />
+
       <h2 id="formula"><span className="h-num">3.</span>公式マップ（最重要）</h2>
       <FormulaCard num="01" name="発電出力（必須）" eq="P = 9.8\,Q\,H\,\eta\,[\text{kW}]"
         note="Q=流量[m³/s]、H=有効落差=総落差−損失水頭[m]、η=水車効率×発電機効率。" />
@@ -4097,6 +4430,8 @@ const SuiryokuPage = ({ data, onNav }) => (
         <p><strong>判別法</strong>：流量 Q は最初から「毎秒」＝時間の情報を含むので P[kW] になり、あとは時間を掛けるだけ。総量 V は時間の情報を持たないので、秒→時間の換算（÷3600）が要る。<strong>両方やると桁が3600倍ずれる</strong>。</p>
         <p><strong>[GW·h] で問われたら</strong>：kWh を出してから <Eq tex="10^6" inline /> で割る（<Eq tex="1\,\text{GWh} = 10^3\,\text{MWh} = 10^6\,\text{kWh}" inline />）。式08と合わせると <Eq tex="W\,[\text{GWh}] = 9.8\,V H \eta / (3.6\times10^9)" inline />。</p>
       </Box>
+
+      <SectionCheck pageId="suiryoku" sectionId="formula" />
 
       <h2 id="kaiho"><span className="h-num">4.</span>解法パターン（例題つき）</h2>
       <Box kind="example" label="① 出力: Q=50・H=100・η=0.85">
@@ -4135,6 +4470,8 @@ const SuiryokuPage = ({ data, onNav }) => (
         </ul>
       </Box>
 
+      <SectionCheck pageId="suiryoku" sectionId="kaiho" />
+
       <h2 id="trap"><span className="h-num">5.</span>引っかけ・誤答ポイント</h2>
       <Box kind="warn" label="頻出トラップ">
         <ul>
@@ -4150,6 +4487,8 @@ const SuiryokuPage = ({ data, onNav }) => (
           <li><strong>[GW·h] 指定で 10⁶ を忘れる</strong> — kWh を出して終わりにしない。<Eq tex="1\,\text{GWh}=10^6\,\text{kWh}" inline />。単位の指定は必ず最後に読み直す。</li>
         </ul>
       </Box>
+
+      <SectionCheck pageId="suiryoku" sectionId="trap" />
 
       <h2 id="seigo"><span className="h-num">6.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -4169,6 +4508,8 @@ const SuiryokuPage = ({ data, onNav }) => (
         </tbody>
       </table></div>
 
+      <SectionCheck pageId="suiryoku" sectionId="seigo" />
+
       <h2 id="hoki-cross"><span className="h-num">7.</span>法規科目との横断（同じ「水力」でも問われ方が違う）</h2>
       <p>水力発電は<strong>電力・法規の両科目で出る</strong>が、問われる知識は別物。このページは<strong>物理と計算</strong>を扱い、<strong>法令の出力境界・保安装置・手続は法規科目の担当</strong>。数値の出所を一本化するため、条文の具体的な数値は法規Wiki側を正（SoT）とし、ここでは論点名だけを示す。</p>
       <div className="table-wrap"><table className="data">
@@ -4187,6 +4528,8 @@ const SuiryokuPage = ({ data, onNav }) => (
         <p>設問に <strong>[kW] や [m³/s] の「境界値」と「〜できる／できない」</strong> が出てきたら法規側の知識。<strong>数値を式に代入して答えを出す</strong>なら電力側の知識。<a href="denken-hoki-wiki.html">📗 法規Wiki</a> の「常時監視をしない発電所」「発電機の保護」「小出力発電設備」の各項で確認する。</p>
         <p><strong>ただし法規のB問題（問11〜13）は例外</strong>：法令知識ではなく<strong>このページの計算がそのまま出る</strong>ことがある（R06下 問11＝流込式の年間可能発電電力量）。「法規だから条文暗記」と構えず、<strong>水力の計算は法規のB問題対策も兼ねる</strong>と考える。</p>
       </Box>
+
+      <SectionCheck pageId="suiryoku" sectionId="hoki-cross" />
 
       <h2 id="kakomon"><span className="h-num">8.</span>出題実績（約37問・うち R01〜R07 は全20問）</h2>
       <p>理論出力・有効落差・揚水・比速度の計算と、水車種別・発電所分類の論説/穴埋めが循環。<strong>R01〜R07 の全20問</strong>と、それぞれがこのページのどの節に対応するかを突き合わせる（未対応の節があれば穴）。</p>
@@ -4219,6 +4562,27 @@ const SuiryokuPage = ({ data, onNav }) => (
       <Box kind="tip" label="R08予測">
         <p>理論出力・揚水・比速度の計算は毎年級。論説は水車種別・発電所分類・水撃/サージタンクが循環。</p>
       </Box>
+
+      <h2 id="related"><span className="h-num">9.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("karyoku"); }}>1.2 火力発電</a> — 熱効率計算の型の展開先（発電方式の比較出題）</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("denryoku-keitou"); }}>5.2 電力系統・需給運用</a> — 揚水発電が担う需給調整・周波数制御の系統側</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("shin-energy"); }}>1.4 新エネルギー発電</a> — 設備利用率・年間発電電力量の計算つながり</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">10.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="suiryoku" sections={[
+        { id: "intro", label: "1. 直感的理解 — P=9.8QHη" },
+        { id: "suisha", label: "2. 水車の種類（衝動 vs 反動）" },
+        { id: "formula", label: "3. 公式マップ（最重要）" },
+        { id: "kaiho", label: "4. 解法パターン（例題つき）" },
+        { id: "trap", label: "5. 引っかけ・誤答ポイント" },
+        { id: "seigo", label: "6. 正誤判定の急所" },
+        { id: "hoki-cross", label: "7. 法規科目との横断（同じ「水力」でも問われ方が違う）" },
+      ]} />
 
     </div>
     <PageNav
@@ -4253,6 +4617,8 @@ const DenkiZairyouPage = ({ data, onNav }) => (
         <p><strong>架空送電線＝軽量化が最優先</strong>：電線重量は鉄塔張力＝設計コストに直結。アルミは比重が銅の約1/3で、同じ重さなら多くの断面積を取れる。<strong>変電機器の導体（バスバー・巻線）＝高導電率優先</strong>：据付で重さは問題にならず、高導電率の銅を使う。</p>
       </Box>
 
+      <SectionCheck pageId="denki-zairyou" sectionId="intro" />
+
       <h2 id="douden"><span className="h-num">2.</span>導電材料</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>材料</th><th>導電率(銅比)</th><th>比重</th><th>融点</th><th>用途</th></tr></thead>
@@ -4266,6 +4632,8 @@ const DenkiZairyouPage = ({ data, onNav }) => (
       <Box kind="example" label="同一質量ならアルミが有利">
         <p>同一断面積なら銅の導電率が高いが、<strong>同一質量</strong>ではアルミの方が多くの電流を流せる（比重1/3で断面積を3倍取れる）。長距離送電は重量＝張力コストに直結するため ACSR が主流。「アルミは導電率が低いから送電線に使えない」は誤り。</p>
       </Box>
+
+      <SectionCheck pageId="denki-zairyou" sectionId="douden" />
 
       <h2 id="zetsuen"><span className="h-num">3.</span>絶縁材料（耐熱クラス）</h2>
       <div className="table-wrap"><table className="data">
@@ -4299,6 +4667,8 @@ const DenkiZairyouPage = ({ data, onNav }) => (
         </ul>
       </Box>
 
+      <SectionCheck pageId="denki-zairyou" sectionId="zetsuen" />
+
       <h2 id="jisei"><span className="h-num">4.</span>磁性材料</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>材料</th><th>磁性</th><th>特徴</th><th>用途</th></tr></thead>
@@ -4313,10 +4683,14 @@ const DenkiZairyouPage = ({ data, onNav }) => (
         <p>珪素(Si)を鉄に添加 → <strong>電気抵抗率が上昇</strong> → 渦電流が流れにくい → <strong>渦電流損が減少 → 鉄損が減少</strong>。実用は3〜5%（増やしすぎると脆くなる）。「珪素を増やすと鉄損が増える」は方向が逆で誤り。方向性珪素鋼板はさらに低鉄損。</p>
       </Box>
 
+      <SectionCheck pageId="denki-zairyou" sectionId="jisei" />
+
       <h2 id="handouden"><span className="h-num">5.</span>半導電材料・ZnO 素子（避雷器）</h2>
       <Box kind="tip" label="ZnO 素子が避雷器に使われる理由">
         <p>酸化亜鉛(ZnO)は <strong>非直線性抵抗（バリスタ特性）</strong>：低電圧では高抵抗でほぼ絶縁、雷サージで急激に低抵抗化して大電流を流しサージを大地へ逃がす。この特性で直列ギャップなしの<strong>ギャップレスアレスタ</strong>が実現する。CVケーブルの半導電層は電界均一化用。</p>
       </Box>
+
+      <SectionCheck pageId="denki-zairyou" sectionId="handouden" />
 
       <h2 id="trap"><span className="h-num">6.</span>引っかけ・誤答ポイント</h2>
       <Box kind="warn" label="頻出トラップ">
@@ -4327,6 +4701,8 @@ const DenkiZairyouPage = ({ data, onNav }) => (
           <li><strong>絶縁クラスFは180℃</strong> → 誤。F=155℃・H=180℃。</li>
         </ul>
       </Box>
+
+      <SectionCheck pageId="denki-zairyou" sectionId="trap" />
 
       <h2 id="seigo"><span className="h-num">7.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -4340,6 +4716,8 @@ const DenkiZairyouPage = ({ data, onNav }) => (
           <tr><td>純鉄より珪素鋼板の方が変圧器鉄心に適する</td><td><strong>正</strong></td><td>渦電流損が少なく鉄損が小さい</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="denki-zairyou" sectionId="seigo" />
 
       <h2 id="kakomon"><span className="h-num">8.</span>出題実績（約36問・毎年 問14）</h2>
       <p>導電材料(銅/Al/ACSR)・絶縁材料(SF₆/絶縁油/気体固体)・磁性材料(鉄心/アモルファス)が問14で循環出題。論説が中心。</p>
@@ -4357,6 +4735,27 @@ const DenkiZairyouPage = ({ data, onNav }) => (
       <Box kind="tip" label="R08予測">
         <p>問14は導電/絶縁/磁性のローテーション。SF₆(無毒・温暖化)、F/Hクラス、珪素鋼板/アモルファス、ACSR は定番論点。</p>
       </Box>
+
+      <h2 id="related"><span className="h-num">9.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("kakuu-souden"); }}>3.1 架空送電線路</a> — 電線・がいしが実際に使われる架空送電の現場</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("chichuu-souden"); }}>3.2 地中送電・電力ケーブル</a> — CVケーブル絶縁（架橋ポリエチレン）の実戦編</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("henatsuki-loss"); }}>2.2 変圧器の損失・効率</a> — 鉄心材料（けい素鋼板・アモルファス）と鉄損の関係</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">10.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="denki-zairyou" sections={[
+        { id: "intro", label: "1. 直感的理解 — 材料選択の4軸" },
+        { id: "douden", label: "2. 導電材料" },
+        { id: "zetsuen", label: "3. 絶縁材料（耐熱クラス）" },
+        { id: "jisei", label: "4. 磁性材料" },
+        { id: "handouden", label: "5. 半導電材料・ZnO 素子（避雷器）" },
+        { id: "trap", label: "6. 引っかけ・誤答ポイント" },
+        { id: "seigo", label: "7. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -4464,6 +4863,8 @@ const GenshiryokuPage = ({ data, onNav }) => (
         </tbody>
       </table></div>
 
+      <SectionCheck pageId="genshiryoku" sectionId="intro" />
+
       <h2 id="yoso"><span className="h-num">2.</span>原子炉の4要素</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>要素</th><th>役割</th><th>代表材料</th></tr></thead>
@@ -4477,6 +4878,8 @@ const GenshiryokuPage = ({ data, onNav }) => (
       <Box kind="tip" label="なぜ減速材が要るか">
         <p>核分裂で出る中性子は高速すぎて U-235 に吸収されにくい。減速材で熱中性子（低速）に落として連鎖反応を持続させる。軽水炉（PWR/BWR）は<strong>軽水が減速材と冷却材を兼ねる</strong>。</p>
       </Box>
+
+      <SectionCheck pageId="genshiryoku" sectionId="yoso" />
 
       <h2 id="rogata"><span className="h-num">3.</span>原子炉の種類（PWR / BWR が中心）</h2>
       <div className="table-wrap"><table className="data">
@@ -4505,6 +4908,8 @@ const GenshiryokuPage = ({ data, onNav }) => (
         <p><strong>燃料構造</strong>：ペレット（UO₂ 焼結体）→ 燃料棒（ジルカロイ被覆管）→ 燃料集合体（数百本を束ねたもの）。使用済み燃料の再処理で回収した Pu を混ぜたのが <strong>MOX 燃料</strong>。</p>
       </Box>
 
+      <SectionCheck pageId="genshiryoku" sectionId="rogata" />
+
       <h2 id="rinkai"><span className="h-num">4.</span>臨界と反応度</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>状態</th><th>中性子増倍率 k</th><th>意味</th></tr></thead>
@@ -4517,6 +4922,8 @@ const GenshiryokuPage = ({ data, onNav }) => (
       <Box kind="tip" label="超臨界は爆発状態ではない">
         <p>起動時は必ず超臨界（出力増加）を経て定格に達する。危険なのは制御棒が追いつかない<strong>「即発超臨界」</strong>で、超臨界とは別概念。</p>
       </Box>
+
+      <SectionCheck pageId="genshiryoku" sectionId="rinkai" />
 
       <h2 id="keisan"><span className="h-num">5.</span>核分裂エネルギーの計算（R06上 問4・R05上 問4 型）</h2>
       <p>問4の計算型はほぼこの1パターン：<strong>ウランの核分裂エネルギーを求め、化石燃料の発熱量と比較する</strong>。</p>
@@ -4535,6 +4942,8 @@ const GenshiryokuPage = ({ data, onNav }) => (
         </ul>
       </Box>
 
+      <SectionCheck pageId="genshiryoku" sectionId="keisan" />
+
       <h2 id="trap"><span className="h-num">6.</span>引っかけ・誤答ポイント</h2>
       <Box kind="warn" label="頻出トラップ">
         <ul>
@@ -4544,6 +4953,8 @@ const GenshiryokuPage = ({ data, onNav }) => (
           <li><strong>減速材と制御棒材料の混同</strong> — 軽水は減速材・冷却材。制御棒はハフニウム・ホウ素・カドミウム。</li>
         </ul>
       </Box>
+
+      <SectionCheck pageId="genshiryoku" sectionId="trap" />
 
       <h2 id="seigo"><span className="h-num">7.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -4557,6 +4968,8 @@ const GenshiryokuPage = ({ data, onNav }) => (
           <tr><td>PWRの冷却水系統はBWRより多い</td><td><strong>正</strong></td><td>PWR=2系統・BWR=1系統</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="genshiryoku" sectionId="seigo" />
 
       <h2 id="kakomon"><span className="h-num">8.</span>出題実績（約26問・毎年 問4）</h2>
       <p>核燃料サイクル・原子炉型(PWR/BWR)・4要素・臨界の論説/穴埋めが中心。計算はウランと石炭/重油の発熱量比較。</p>
@@ -4574,6 +4987,26 @@ const GenshiryokuPage = ({ data, onNav }) => (
       <Box kind="tip" label="学習優先順位">
         <p>① PWR vs BWR（系統数・蒸気発生）② 4要素の材料（特に制御棒）③ 臨界/未臨界/超臨界 ④ CANDU・高速増殖炉は概要のみ。</p>
       </Box>
+
+      <h2 id="related"><span className="h-num">9.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("karyoku"); }}>1.2 火力発電</a> — 蒸気側（タービン・復水器・熱効率）は火力と同じ型</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("shin-energy"); }}>1.4 新エネルギー発電</a> — 電源としての対比（変動電源側から見た出力一定電源）</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">10.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="genshiryoku" sections={[
+        { id: "intro", label: "1. 直感的理解 — 火力との違いは熱源だけ" },
+        { id: "yoso", label: "2. 原子炉の4要素" },
+        { id: "rogata", label: "3. 原子炉の種類（PWR / BWR が中心）" },
+        { id: "rinkai", label: "4. 臨界と反応度" },
+        { id: "keisan", label: "5. 核分裂エネルギーの計算（R06上 問4・R05上 問4 型）" },
+        { id: "trap", label: "6. 引っかけ・誤答ポイント" },
+        { id: "seigo", label: "7. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -4676,6 +5109,8 @@ const ShinEnergyPage = ({ data, onNav }) => (
         <p>FIT（固定価格買取制度）で固定価格・一定期間の買取義務を負うのは <strong>電力会社（一般送配電事業者等）側</strong>。発電事業者ではない。2022年からは市場価格に一定のプレミアムを上乗せする <strong>FIP制度</strong> も導入され、大規模電源はFITからFIPへ移行が進む（制度名の取り違えに注意）。</p>
       </Box>
 
+      <SectionCheck pageId="shin-energy" sectionId="intro" />
+
       <h2 id="houshiki"><span className="h-num">2.</span>発電方式の比較</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>方式</th><th>変換原理</th><th>設備利用率</th><th>頻出ポイント</th></tr></thead>
@@ -4689,12 +5124,16 @@ const ShinEnergyPage = ({ data, onNav }) => (
       </table></div>
       <p>設備利用率の大小：<strong>地熱(60〜80%) &gt; 風力(20〜30%) &gt; 太陽光(10〜15%)</strong>。</p>
 
+      <SectionCheck pageId="shin-energy" sectionId="houshiki" />
+
       <h2 id="taiyou"><span className="h-num">3.</span>太陽光発電</h2>
       <Box kind="example" label="温度が上がると効率が「下がる」理由">
         <p>p-n接合に光子が当たり電子-正孔対が生成 → 内部電界で分離して起電力。<strong>温度上昇 → 開放電圧 Voc が低下 → 最大出力が低下</strong>（温度係数 約 −0.3〜−0.5%/℃）。短絡電流 Isc はわずかに増えるが Voc 低下が支配的。夏は日射が多くても効率(%)は落ちる。</p>
       </Box>
       <FormulaCard num="01" name="年間発電量（設備利用率）" eq="E = P_{\text{設備}} \times (\text{設備利用率}) \times 8760\,[\text{kWh}]"
         note="8760=24h×365日。PCS は DC→AC変換・MPPT制御・単独運転防止の系統連系保護を担う。" />
+
+      <SectionCheck pageId="shin-energy" sectionId="taiyou" />
 
       <h2 id="furyoku"><span className="h-num">4.</span>風力発電（P は風速の3乗）</h2>
       <FormulaCard num="02" name="風力エネルギー（必須）" eq="P = \dfrac{1}{2}\,\rho A v^3\,[\text{W}]"
@@ -4716,6 +5155,8 @@ const ShinEnergyPage = ({ data, onNav }) => (
         <p><strong>3600 は出てこない</strong>：<Eq tex="\tfrac{1}{2}\rho A v^3" inline /> は最初から「毎秒」の量＝仕事率なので、年間量は <strong>運転時間[h] を掛けるだけ</strong>（水力の総水量ルートのような秒→時間の換算は不要）。</p>
       </Box>
 
+      <SectionCheck pageId="shin-energy" sectionId="furyoku" />
+
       <h2 id="nenryo"><span className="h-num">5.</span>燃料電池（カルノー非依存）</h2>
       <Box kind="example" label="カルノー効率の制約を受けない理由">
         <p>反応は <Eq tex="\mathrm{H_2 + \tfrac{1}{2}O_2 \rightarrow H_2O}" />（水の電気分解の逆）。熱機関は <Eq tex="\eta = 1 - T_{\text{低}}/T_{\text{高}}" /> で上限が決まるが、燃料電池は<strong>熱を経由せず化学エネルギーを直接電気に変換</strong>するためカルノー制約を受けず、理論効率はギブズ自由エネルギー変化で決まる（理論上80%超も可）。蓄電池ではなく<strong>発電装置</strong>（燃料供給が続く限り発電）。</p>
@@ -4730,6 +5171,8 @@ const ShinEnergyPage = ({ data, onNav }) => (
         </tbody>
       </table></div>
 
+      <SectionCheck pageId="shin-energy" sectionId="nenryo" />
+
       <h2 id="trap"><span className="h-num">6.</span>引っかけ・誤答ポイント</h2>
       <Box kind="warn" label="頻出トラップ">
         <ul>
@@ -4743,6 +5186,8 @@ const ShinEnergyPage = ({ data, onNav }) => (
         </ul>
       </Box>
 
+      <SectionCheck pageId="shin-energy" sectionId="trap" />
+
       <h2 id="seigo"><span className="h-num">7.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>命題</th><th>判定</th><th>理由</th></tr></thead>
@@ -4755,6 +5200,8 @@ const ShinEnergyPage = ({ data, onNav }) => (
           <tr><td>燃料電池のSOFCは動作温度が最も低い</td><td><strong>誤</strong></td><td>SOFCは最高温(700〜1000℃)。最低はPEFC</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="shin-energy" sectionId="seigo" />
 
       <h2 id="kakomon"><span className="h-num">8.</span>出題実績（約24問・毎年 問5）</h2>
       <p>風力・太陽光・燃料電池・地熱・バイオマスの原理と得失が問5で循環。論説中心、計算は風力の軸出力。</p>
@@ -4772,6 +5219,27 @@ const ShinEnergyPage = ({ data, onNav }) => (
       <Box kind="tip" label="学習優先順位">
         <p>① 風速3乗(P=½ρAv³) ② 太陽電池の温度特性 ③ 燃料電池カルノー非依存 ④ 設備利用率の大小（地熱&gt;風力&gt;太陽光）。</p>
       </Box>
+
+      <h2 id="related"><span className="h-num">9.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("suiryoku"); }}>1.1 水力発電</a> — 設備利用率・年間発電電力量計算の型の原点</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("karyoku"); }}>1.2 火力発電</a> — コンバインドサイクルなど火力側の高効率化との比較</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("denryoku-keitou"); }}>5.2 電力系統・需給運用</a> — 再エネ大量連系時の周波数調整・単独運転防止の系統側</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">10.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="shin-energy" sections={[
+        { id: "intro", label: "1. 直感的理解 — 共通課題は出力変動" },
+        { id: "houshiki", label: "2. 発電方式の比較" },
+        { id: "taiyou", label: "3. 太陽光発電" },
+        { id: "furyoku", label: "4. 風力発電（P は風速の3乗）" },
+        { id: "nenryo", label: "5. 燃料電池（カルノー非依存）" },
+        { id: "trap", label: "6. 引っかけ・誤答ポイント" },
+        { id: "seigo", label: "7. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -4814,6 +5282,8 @@ const HenatsukiLossPage = ({ data, onNav }) => (
         <p>瞬時効率は <Eq tex="P_i = \alpha^2 P_{c,full}" /> で最大化（鉄損＝銅損／基礎ハブの最大効率条件）。全日効率は24hの負荷パターンに依存するため、軽負荷時間が長い変圧器では<strong>鉄損を小さくした機種</strong>（アモルファスなど）が有利になる。この差異が出題の核心。</p>
       </Box>
 
+      <SectionCheck pageId="henatsuki-loss" sectionId="intro" />
+
       <h2 id="zenjitsu"><span className="h-num">2.</span>全日効率の本格計算</h2>
       <FormulaCard num="01" name="全日効率（24h積分）" eq="\eta_{day} = \dfrac{\sum_k P_{out,k}\,t_k}{\sum_k P_{out,k}\,t_k + 24 P_i + \sum_k \alpha_k^2 P_{c,full}\,t_k} \times 100\,[\%]"
         note="Pout,k=Sn·αk·cosθ（時間帯kの出力）、tk=時間帯kの時間[h]（Σtk=24h）、Pi=鉄損[W]（一定）、Pc,full=定格時の銅損[W]。" />
@@ -4848,6 +5318,8 @@ const HenatsukiLossPage = ({ data, onNav }) => (
         <p>鉄損12kWhは時間が長い深夜帯にも一定で支配的になりがち。銅損14.88kWhは昼間6hで9kWhを稼ぐ（負荷率1.0×6h×1.5kW）。軽負荷の深夜が長い設備では鉄損比率が上がる → アモルファス変圧器の利得が大きい。</p>
       </Box>
 
+      <SectionCheck pageId="henatsuki-loss" sectionId="zenjitsu" />
+
       <h2 id="nenkan"><span className="h-num">3.</span>年間損失電力量と電気代換算</h2>
       <FormulaCard num="02" name="年間損失電力量（季節変動なしの仮定）" eq="W_{loss,year} = (24 P_i + \sum \alpha_k^2 P_{c,full}\,t_k) \times 365\,[\mathrm{Wh/yr}]"
         note="負荷パターンが季節で変わらないと仮定し、1日の損失を365倍する。" />
@@ -4858,6 +5330,8 @@ const HenatsukiLossPage = ({ data, onNav }) => (
         <p>年間損失額：<Eq tex="9{,}811 \times 20 \approx 196{,}000\,\mathrm{JPY/yr}" /></p>
       </Box>
 
+      <SectionCheck pageId="henatsuki-loss" sectionId="nenkan" />
+
       <h2 id="koushin"><span className="h-num">4.</span>更新経済性評価（旧機→新機）</h2>
       <FormulaCard num="04" name="更新による年間損失削減" eq="\Delta W_{year} = \{(24 P_{i,old} + \sum \alpha_k^2 P_{c,old}\,t_k) - (24 P_{i,new} + \sum \alpha_k^2 P_{c,new}\,t_k)\}\times365"
         note="旧機（old）から新機（new）への更新で、年間損失電力量の差を取る。" />
@@ -4866,6 +5340,8 @@ const HenatsukiLossPage = ({ data, onNav }) => (
       <Box kind="warn" label="鉄損改善は「24h × 365日」で効く">
         <p>新機で鉄損が半分になれば、その効果は <Eq tex="\Delta P_i \times 8760" /> h（24h×365日）で年間に効く（負荷率に無関係）。軽負荷時間が長い変圧器ほど鉄損改善のインパクトが大きい。</p>
       </Box>
+
+      <SectionCheck pageId="henatsuki-loss" sectionId="koushin" />
 
       <h2 id="amorphous"><span className="h-num">5.</span>アモルファス変圧器とトップランナー規制</h2>
       <div className="table-wrap"><table className="data">
@@ -4901,6 +5377,8 @@ const HenatsukiLossPage = ({ data, onNav }) => (
         </table></div>
         <p>500kV·Aちょうどの機器は<strong>「以下」グループ＝負荷率40%評価</strong>。問題文に「○○kV·A以下／超／以上／未満」があったら境界値を含むか必ず判定する。規制値は施行年で変わるため、試験では問題文に明示された値（基準エネルギー消費効率・達成率）をそのまま使う。</p>
       </Box>
+
+      <SectionCheck pageId="henatsuki-loss" sectionId="amorphous" />
 
       <h2 id="r04"><span className="h-num">6.</span>R04下 問12 個別解説（施設管理B問題）</h2>
       <Box kind="example" label="共通条件（500kV·A・更新前後）">
@@ -4944,6 +5422,8 @@ const HenatsukiLossPage = ({ data, onNav }) => (
         <p>正答 (3) 以外は、いずれも「皮相換算」「銅損の二乗」「無負荷損の扱い」のどこかを1つ落とすと辿り着く値。誤答の道筋を逆算しておくと、本番で自分の計算がどの罠に落ちたか即座に気づける。</p>
       </Box>
 
+      <SectionCheck pageId="henatsuki-loss" sectionId="r04" />
+
       <h2 id="trap"><span className="h-num">7.</span>引っかけ・誤答ポイント</h2>
       <Box kind="warn" label="頻出トラップ">
         <ul>
@@ -4955,6 +5435,8 @@ const HenatsukiLossPage = ({ data, onNav }) => (
           <li><strong>瞬時効率最大の負荷率と全日効率最大の負荷パターンを混同</strong> → 誤。瞬時効率最大は <Eq tex="P_i=\alpha^2 P_c" />、全日効率最大は24hの負荷パターン全体で評価する別概念。</li>
         </ul>
       </Box>
+
+      <SectionCheck pageId="henatsuki-loss" sectionId="trap" />
 
       <h2 id="seigo"><span className="h-num">8.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -4969,6 +5451,8 @@ const HenatsukiLossPage = ({ data, onNav }) => (
           <tr><td>鉄損改善の年間効果は負荷率に比例する</td><td><strong>誤</strong></td><td>鉄損は24h×365日＝8760hで効き負荷率に無関係</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="henatsuki-loss" sectionId="seigo" />
 
       <h2 id="kakomon"><span className="h-num">9.</span>出題実績（損失・効率・更新経済性 関連）</h2>
       <p>鉄損材料（アモルファス）の論説と、全日効率・更新経済性の計算B問題が循環。R04下問12 が本ページの中心題。</p>
@@ -4987,6 +5471,27 @@ const HenatsukiLossPage = ({ data, onNav }) => (
       <Box kind="tip" label="R08予測">
         <p>R03以降は変圧器の効率・最大効率の単独計算が少なく、関連計算は遮断器定格や並行運転に組み込まれる傾向（基礎ハブ参照）。R08では<strong>全日効率／年間損失／更新経済性</strong>の派生型が法規B問題で再出題される可能性が高い。</p>
       </Box>
+
+      <h2 id="related"><span className="h-num">10.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("henatsuki"); }}>2.1 変圧器（基礎ハブ）</a> — 変圧器本体（変圧比・並行運転・結線）の基礎ハブ</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("denki-zairyou"); }}>5.1 電気材料</a> — アモルファス・けい素鋼板など鉄心材料の物性側</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">11.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="henatsuki-loss" sections={[
+        { id: "intro", label: "1. 直感的理解 — なぜ「全日効率」を別概念にするか" },
+        { id: "zenjitsu", label: "2. 全日効率の本格計算" },
+        { id: "nenkan", label: "3. 年間損失電力量と電気代換算" },
+        { id: "koushin", label: "4. 更新経済性評価（旧機→新機）" },
+        { id: "amorphous", label: "5. アモルファス変圧器とトップランナー規制" },
+        { id: "r04", label: "6. R04下 問12 個別解説（施設管理B問題）" },
+        { id: "trap", label: "7. 引っかけ・誤答ポイント" },
+        { id: "seigo", label: "8. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -5024,6 +5529,8 @@ const KeikiHenseiPage = ({ data, onNav }) => (
       <Box kind="tip" label="5秒で思い出す">
         <p>VT ＝ 高電圧用センサー（<strong>並列</strong>・110 V 取出）／CT ＝ 大電流用センサー（<strong>直列</strong>・5 A 取出）。<strong>VT は短絡 NG・CT は開放 NG</strong>（左右対称で覚える）。</p>
       </Box>
+
+      <SectionCheck pageId="keiki-hensei" sectionId="intro" />
 
       <h2 id="setsubi"><span className="h-num">2.</span>設備（構造と諸元）</h2>
       <p>系統内では <strong>CT は主回路に直列挿入</strong>して大電流を 5 A に、<strong>VT は線間または対地に並列接続</strong>して高電圧を 110 V に縮小し、それぞれ電流計・OCR・電圧計・UVR・電力計へ渡す。</p>
@@ -5086,6 +5593,8 @@ const KeikiHenseiPage = ({ data, onNav }) => (
         </figcaption>
       </figure>
 
+      <SectionCheck pageId="keiki-hensei" sectionId="setsubi" />
+
       <h2 id="shurui"><span className="h-num">3.</span>種類の比較（CT・VT の種別）</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>CT 種別</th><th>構造</th><th>主用途</th><th>特記</th></tr></thead>
@@ -5108,6 +5617,8 @@ const KeikiHenseiPage = ({ data, onNav }) => (
       <Box kind="example" label="ZCT と EVT の関係（因果理解）">
         <p><strong>ZCT</strong> は<strong>零相電流 I0</strong> を、<strong>EVT</strong> は<strong>零相電圧 V0</strong> を検出する。非接地系（高圧配電のΔ系）では地絡時に I0 と V0 が同時に発生するため、両者を組み合わせて方向判定（DGR）に使う。地絡方向継電器の入力は ZCT＋EVT のセットが定石。</p>
       </Box>
+
+      <SectionCheck pageId="keiki-hensei" sectionId="shurui" />
 
       <h2 id="formula"><span className="h-num">4.</span>公式マップ（変成比・誤差・残留回路）</h2>
       <FormulaCard num="01" name="変流比（CT）" eq="K_n = \dfrac{I_1}{I_2} = \dfrac{N_2}{N_1}"
@@ -5203,6 +5714,8 @@ const KeikiHenseiPage = ({ data, onNav }) => (
         </figcaption>
       </figure>
 
+      <SectionCheck pageId="keiki-hensei" sectionId="formula" />
+
       <h2 id="kaiho"><span className="h-num">5.</span>解法パターン（例題つき）</h2>
       <Box kind="example" label="① 変流比から一次電流を求める">
         <p>変流比 400/5 の CT で二次電流計が 3.5 A を示した。一次電流は？</p>
@@ -5236,6 +5749,8 @@ const KeikiHenseiPage = ({ data, onNav }) => (
         <p>取扱注意問題は4基準で判別：VT 二次は<strong>並列・短絡 NG</strong>／CT 二次は<strong>直列・開放 NG</strong>／接地は<strong>二次側1点</strong>（多点接地は循環電流発生）／計器負担は定格 VA を超えない。1つでも違反する選択肢が「誤り」。極性は CT の K 端子と電力計の電流端子、VT の K 端子と電力計の電圧端子の極性側（±）を一致させる。逆だと電力指示が負・誤値になり、差動継電器（87）では誤動作につながる。</p>
       </Box>
 
+      <SectionCheck pageId="keiki-hensei" sectionId="kaiho" />
+
       <h2 id="trap"><span className="h-num">6.</span>引っかけパターン</h2>
       <Box kind="warn" label="頻出トラップ（左右対称・因果の取り違え）">
         <ul>
@@ -5249,6 +5764,8 @@ const KeikiHenseiPage = ({ data, onNav }) => (
       <Box kind="warn" label="CT 二次開放がなぜ危険か（最頻出の因果）">
         <p>通電中の CT 二次を不用意に開放すると、一次電流が全量励磁電流化して鉄心が磁気飽和し、<strong>数千 V の異常高電圧</strong>が二次に発生する。絶縁破壊・感電・焼損につながる。試験論点としても実務安全としても最頻出。</p>
       </Box>
+
+      <SectionCheck pageId="keiki-hensei" sectionId="trap" />
 
       <h2 id="seigo"><span className="h-num">7.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -5269,6 +5786,8 @@ const KeikiHenseiPage = ({ data, onNav }) => (
         </tbody>
       </table></div>
 
+      <SectionCheck pageId="keiki-hensei" sectionId="seigo" />
+
       <h2 id="kakomon"><span className="h-num">8.</span>出題実績（5年で3〜4問）</h2>
       <p>取扱注意（開放禁止／短絡禁止／接地）の穴埋・論説が中核。変流比・残留回路の計算も出る。問7枠の固定論点になりつつある。</p>
       <div className="table-wrap"><table className="data">
@@ -5283,6 +5802,27 @@ const KeikiHenseiPage = ({ data, onNav }) => (
       <Box kind="tip" label="R08予測">
         <p>R06下・R05上・R03 の継続出題実績から、計器用変成器は問7枠の固定論点。R08 でも取扱注意（開放禁止／短絡禁止／接地）の穴埋・論説が継続出題される見込み。</p>
       </Box>
+
+      <h2 id="related"><span className="h-num">9.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("hogo-keiden"); }}>2.5 保護継電器</a> — VT・CT の二次出力を受けて動作を判断する継電器側</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("jikayou-chiraku"); }}>4.2 自家用受電設備の地絡保護</a> — ZCT・GR/DGR の需要家での実戦（もらい事故対策）</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("kaihei-hogo"); }}>2.6 開閉装置・保護継電器（hub）</a> — センサー→判断→実行の3役割マップ（このページはセンサー担当）</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">10.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="keiki-hensei" sections={[
+        { id: "intro", label: "1. 直感的理解 — なぜ「縮小」するか" },
+        { id: "setsubi", label: "2. 設備（構造と諸元）" },
+        { id: "shurui", label: "3. 種類の比較（CT・VT の種別）" },
+        { id: "formula", label: "4. 公式マップ（変成比・誤差・残留回路）" },
+        { id: "kaiho", label: "5. 解法パターン（例題つき）" },
+        { id: "trap", label: "6. 引っかけパターン" },
+        { id: "seigo", label: "7. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -5327,11 +5867,15 @@ const ShadankiPage = ({ data, onNav }) => (
         <p>断路器（DS）は<strong>電流遮断能力を持たない</strong>。DSの接触子はアーク消弧機能を持たないため、電流が流れた状態で開放するとアーク放電が持続し機器を破損する。投入時はまずDSを閉じて回路を形成し、その後CBを閉じる。電流はCBが入った瞬間から流れ始めるため、DSはゼロ電流の状態で操作できる。開放時は先にCBを開いて電流をゼロにしてからDSを開く。逆にするとDSがアーク電流を遮断しようとして焼損する。<strong>「入はD→C・切はC→D」</strong>と5秒で書き出してから選択肢と照合する。</p>
       </Box>
 
+      <SectionCheck pageId="shadanki" sectionId="intro" />
+
       <h2 id="haichi"><span className="h-num">2.</span>設備を歩く — 系統内の配置と物理構造</h2>
       <p>CBの前後にDSを配置するのが標準。保守時にはCBを開放してから両端のDSを開き、保守区間を完全に系統から切り離す。系統側から「DS → CB → DS → 負荷側」と並び、OCR等の継電器がトリップ指令をCBに送る。</p>
       <Box kind="tip" label="遮断器の共通動作（消弧で種類が決まる）">
         <p>トリップ指令 → 操作機構（バネ／油圧／電磁）が動作 → 接触子が開離 → その瞬間に<strong>アーク</strong>が発生 → 消弧媒体（油／空気／SF6／真空）で消弧 → 電流遮断完了、という流れは全遮断器に共通。このアークを<strong>どう消弧するか</strong>で遮断器の種類が決まる。</p>
       </Box>
+
+      <SectionCheck pageId="shadanki" sectionId="haichi" />
 
       <h2 id="kaihei"><span className="h-num">3.</span>開閉装置の比較表（最重要）</h2>
       <div className="table-wrap"><table className="data">
@@ -5351,6 +5895,8 @@ const ShadankiPage = ({ data, onNav }) => (
         <p>LBS・PAS・UGSは<strong>負荷電流は開放できる</strong>が<strong>短絡電流は遮断不可</strong>。短絡電流はCBに任せる構成が前提（PAS・UGSのSOG動作は、地絡＝即時開放／短絡＝上位CB遮断後に無電圧開放）</p>
       </Box>
 
+      <SectionCheck pageId="shadanki" sectionId="kaihei" />
+
       <h2 id="shurui"><span className="h-num">4.</span>遮断器の種類比較（消弧媒体）</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>種類</th><th>略称</th><th>消弧媒体</th><th>特徴</th><th>主な用途</th><th>主流度</th></tr></thead>
@@ -5365,6 +5911,8 @@ const ShadankiPage = ({ data, onNav }) => (
         <p>OCB（戦前〜1970年代）→ ABB（〜1980年代）→ GCB／VCB（1990年代〜現在）の順で主流が移行。理由は<strong>消弧性能・小型化・環境負荷</strong>の3軸。</p>
       </Box>
 
+      <SectionCheck pageId="shadanki" sectionId="shurui" />
+
       <h2 id="shouko"><span className="h-num">5.</span>消弧物理（GIS・VCBが主流になった理由）</h2>
       <Box kind="tip" label="VCB（真空遮断器）">
         <p><strong>真空中では気体分子がないためアークを維持できず</strong>、電流がゼロになる瞬間に消弧する。保守が少なく、油も不要で環境負荷が小さい。接触子の摩耗も小さく、開閉寿命が長い。</p>
@@ -5378,6 +5926,8 @@ const ShadankiPage = ({ data, onNav }) => (
       <Box kind="warn" label="SF6ガスの環境問題（近年論点）">
         <p>SF6は<strong>100年GWP（地球温暖化係数）がCO2の約23,500倍</strong>（IPCC AR5。AR6では25,200に更新）と非常に高い。漏洩防止・回収・再使用の管理が国際的に厳格化されている。試験では直接問われにくいが、近年の論点として頭の片隅に。</p>
       </Box>
+
+      <SectionCheck pageId="shadanki" sectionId="shouko" />
 
       <h2 id="kaiho"><span className="h-num">6.</span>解法パターン</h2>
       <Box kind="example" label="① DSとCBの操作順序を選ぶ（R05下問8型）">
@@ -5429,6 +5979,8 @@ const ShadankiPage = ({ data, onNav }) => (
         <p><strong>操作順序の逆転</strong>と<strong>消弧媒体の取り違え</strong>が出題の7割。</p>
       </Box>
 
+      <SectionCheck pageId="shadanki" sectionId="kaiho" />
+
       <h2 id="trap"><span className="h-num">7.</span>引っかけパターン</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>論点</th><th>誤った記述</th><th>正しい記述</th></tr></thead>
@@ -5441,6 +5993,8 @@ const ShadankiPage = ({ data, onNav }) => (
           <tr><td>VCBの消弧媒体</td><td>「VCBはSF6ガスで消弧する」</td><td><strong>誤</strong>：真空で消弧。SF6ガスはGCB</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="shadanki" sectionId="trap" />
 
       <h2 id="seigo"><span className="h-num">8.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -5456,6 +6010,8 @@ const ShadankiPage = ({ data, onNav }) => (
           <tr><td>VCBは保守性が高く環境負荷が小さい</td><td><strong>正</strong></td><td>真空シール構造・油不要・SF6不要</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="shadanki" sectionId="seigo" />
 
       <h2 id="kakomon"><span className="h-num">9.</span>出題実績（問8の固定論点）</h2>
       <p>遮断器・断路器系は問8の固定論点。操作順序／GISの絶縁媒体／VCBの特徴／LBS・PASの遮断能力が穴埋・論説で繰り返し問われる。</p>
@@ -5474,6 +6030,28 @@ const ShadankiPage = ({ data, onNav }) => (
       <Box kind="tip" label="R08予測">
         <p>R08でも操作順序／GISの絶縁媒体／VCBの特徴／LBS・PASの遮断能力のいずれかが穴埋・論説で継続出題見込み。</p>
       </Box>
+
+      <h2 id="related"><span className="h-num">10.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("hogo-keiden"); }}>2.5 保護継電器</a> — 「切れ」を指令する判断装置側（継電器）</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("kaihei-hogo"); }}>2.6 開閉装置・保護継電器（hub）</a> — 開閉装置全体の役割分担（DS・LBS との使い分けマップ）</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("keiki-hensei"); }}>2.3 計器用変成器（VT・CT）</a> — 事故電流を検出して知らせるセンサー側</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">11.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="shadanki" sections={[
+        { id: "intro", label: "1. 直感的理解 — CBは「切れる」DSは「切れない」" },
+        { id: "haichi", label: "2. 設備を歩く — 系統内の配置と物理構造" },
+        { id: "kaihei", label: "3. 開閉装置の比較表（最重要）" },
+        { id: "shurui", label: "4. 遮断器の種類比較（消弧媒体）" },
+        { id: "shouko", label: "5. 消弧物理（GIS・VCBが主流になった理由）" },
+        { id: "kaiho", label: "6. 解法パターン" },
+        { id: "trap", label: "7. 引っかけパターン" },
+        { id: "seigo", label: "8. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -5507,6 +6085,8 @@ const HogoKeidenPage = ({ data, onNav }) => (
         <p>継電器は「<strong>整定値</strong>」と呼ばれる動作の閾値を持つ。例えば OCR の整定値が二次 4 A なら、CT 二次に 4 A 以上流れた瞬間（または時限後）にトリップする。整定値は <strong>現場で調整可能</strong>で、系統条件・負荷変動・上下流継電器の協調を考えて設定する。</p>
       </Box>
 
+      <SectionCheck pageId="hogo-keiden" sectionId="intro" />
+
       <h2 id="setsubi"><span className="h-num">2.</span>設備を歩く — CT/VT → 継電器 → CB</h2>
       <p>複数の継電器が同じ CT・VT の二次出力を共有することが多い（OCR・差動・電力計が同一 CT を、UVR・電圧計が同一 VT を共有等）。接続継電器の合計 VA である <strong>CT 負担</strong>が定格を超えないよう注意する（詳細は計器用変成器ページ）。</p>
       <Box kind="tip" label="入力源と継電器の対応">
@@ -5516,6 +6096,8 @@ const HogoKeidenPage = ({ data, onNav }) => (
           <li><strong>ZCT（零相電流）＋ EVT（零相電圧）</strong> → DGR(67G) の方向判定セット</li>
         </ul>
       </Box>
+
+      <SectionCheck pageId="hogo-keiden" sectionId="setsubi" />
 
       <h2 id="hikaku"><span className="h-num">3.</span>保護継電器の比較表（最重要）</h2>
       <div className="table-wrap"><table className="data">
@@ -5533,6 +6115,8 @@ const HogoKeidenPage = ({ data, onNav }) => (
       <Box kind="tip" label="制御器具番号（JEM 1090）は ANSI/IEEE デバイス番号と共通">
         <p>51（過電流）・87（差動）・21（距離）等の番号は <strong>米国 ANSI/IEEE C37.2</strong> のデバイス番号で国際標準。試験では番号と日本語名・略称を結びつけて問われる。<strong>51・87・21 の 3 つは暗記必須</strong>。</p>
       </Box>
+
+      <SectionCheck pageId="hogo-keiden" sectionId="hikaku" />
 
       <h2 id="tokusei"><span className="h-num">4.</span>動作特性 — 定限時・反限時・差動・距離・方向</h2>
       <h3 className="h-sub">定限時 vs 反限時（OCR）</h3>
@@ -5686,6 +6270,8 @@ const HogoKeidenPage = ({ data, onNav }) => (
       </table></div>
       <p>DGR の入力は <strong>ZCT（零相電流）＋ EVT（零相電圧）</strong> のセット（詳細は計器用変成器ページ）。</p>
 
+      <SectionCheck pageId="hogo-keiden" sectionId="tokusei" />
+
       <h2 id="seitei"><span className="h-num">5.</span>整定の考え方 — 時限協調・方向・比率差動</h2>
       <h3 className="h-sub">OCR の整定（時限協調）</h3>
       <p>直列に複数の OCR が並ぶ系統では、<strong>下流が先に動作・上流が後で動作</strong> する時限差をつける（<strong>時限協調</strong>）。下流の OCR が先にトリップして事故区間だけを切り離し、上流の健全区間は通電を継続。下流が動作失敗した場合のバックアップとして上流が動作する（例：上流 OCR 0.6s／下流 OCR 0.3s）。</p>
@@ -5695,6 +6281,8 @@ const HogoKeidenPage = ({ data, onNav }) => (
           <li><strong>差動（87）</strong>：不平衡電流許容値＝CT 誤差・タップ位置による差を吸収する余裕／<strong>比率差動特性</strong>＝負荷電流に比例して動作感度を変え、外部事故時の誤動作を防止</li>
         </ul>
       </Box>
+
+      <SectionCheck pageId="hogo-keiden" sectionId="seitei" />
 
       <h2 id="kaiho"><span className="h-num">6.</span>解法パターン</h2>
       <Box kind="example" label="① 略称・器具番号・用途を結びつける（R06上問8型）">
@@ -5710,6 +6298,8 @@ const HogoKeidenPage = ({ data, onNav }) => (
         <p>「誤っているものを選べ」型のチェックリスト：(1) OCR の時限協調＝下流先動作・上流バックアップ（下流時限＜上流時限）／(2) 87＝内部故障のみ動作／(3) 21＝インピーダンス（V/I）で判定・物理距離ではない／(4) DGR＝ZCT＋EVT で自構内/構外を仕分け／(5) 段階保護＝距離継電器は 1 段（瞬時）・2 段（短時限）・3 段（長時限）。<strong>保護範囲の誤認</strong>と <strong>方向判定の有無</strong>が出題の約7割。</p>
       </Box>
 
+      <SectionCheck pageId="hogo-keiden" sectionId="kaiho" />
+
       <h2 id="trap"><span className="h-num">7.</span>引っかけパターン</h2>
       <Box kind="warn" label="頻出トラップ TOP5">
         <ul>
@@ -5720,6 +6310,8 @@ const HogoKeidenPage = ({ data, onNav }) => (
           <li><strong>反限時と定限時の取り違え</strong> — 「定限時は電流が大きいほど早く動作する」は誤。定限時は <strong>一定時間</strong>。電流が大きいほど早いのは <strong>反限時</strong>。</li>
         </ul>
       </Box>
+
+      <SectionCheck pageId="hogo-keiden" sectionId="trap" />
 
       <h2 id="seigo"><span className="h-num">8.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -5740,6 +6332,8 @@ const HogoKeidenPage = ({ data, onNav }) => (
         </tbody>
       </table></div>
 
+      <SectionCheck pageId="hogo-keiden" sectionId="seigo" />
+
       <h2 id="kakomon"><span className="h-num">9.</span>出題実績</h2>
       <p>論説（差動・距離の動作原理、保護継電器方式）と穴埋（種類・用途・器具番号）が中心。OCR・OCGR は遮断器ページの問8枠にも頻出するため横断学習を推奨。</p>
       <div className="table-wrap"><table className="data">
@@ -5753,6 +6347,28 @@ const HogoKeidenPage = ({ data, onNav }) => (
       <Box kind="tip" label="R08予測">
         <p>保護継電器単独の論点は <strong>4-7年周期</strong>の番外ポジション（R06上・R04上・R01）。R08 では DGR の方向判定／反限時特性／差動原理／距離継電器の段階保護のいずれかが論説で出る可能性。OCR・OCGR は遮断器ページの問8枠にも頻出するため横断学習を推奨。</p>
       </Box>
+
+      <h2 id="related"><span className="h-num">10.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("keiki-hensei"); }}>2.3 計器用変成器（VT・CT）</a> — 入力側センサー（CT・VT・ZCT）の変成原理</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("shadanki"); }}>2.4 遮断器・断路器（CB・DS）</a> — 指令を受けて実際に電流を切る遮断器側</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("jikayou-chiraku"); }}>4.2 自家用受電設備の地絡保護</a> — GR/DGR の整定・もらい事故防止の実戦</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">11.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="hogo-keiden" sections={[
+        { id: "intro", label: "1. 直感的理解 — 検出して指令を出す装置" },
+        { id: "setsubi", label: "2. 設備を歩く — CT/VT → 継電器 → CB" },
+        { id: "hikaku", label: "3. 保護継電器の比較表（最重要）" },
+        { id: "tokusei", label: "4. 動作特性 — 定限時・反限時・差動・距離・方向" },
+        { id: "seitei", label: "5. 整定の考え方 — 時限協調・方向・比率差動" },
+        { id: "kaiho", label: "6. 解法パターン" },
+        { id: "trap", label: "7. 引っかけパターン" },
+        { id: "seigo", label: "8. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -5788,6 +6404,8 @@ const KaiheiHogoPage = ({ data, onNav }) => (
         <p>検出から遮断までは数十〜数百ミリ秒。継電器自身は電流を切らず、CB に「切れ」を指令するだけである点に注意。</p>
       </Box>
 
+      <SectionCheck pageId="kaihei-hogo" sectionId="intro" />
+
       <h2 id="bunpan"><span className="h-num">2.</span>3役割の分担表</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>役割</th><th>アナロジー</th><th>機能</th><th>代表機器</th><th>詳細ページ</th></tr></thead>
@@ -5800,6 +6418,8 @@ const KaiheiHogoPage = ({ data, onNav }) => (
       <Box kind="warn" label="「継電器が電流を切る」と書いたら誤り">
         <p>切るのは <strong>遮断器（CB）</strong>。継電器は CT・VT の二次信号を見て整定値と比較し、トリップ指令を出すだけ。「判断」と「実行」を必ず分けて読むこと。逆に断路器（DS）は判断も電流遮断もできず、無電流時の電路分離専用である。</p>
       </Box>
+
+      <SectionCheck pageId="kaihei-hogo" sectionId="bunpan" />
 
       <h2 id="setsubi"><span className="h-num">3.</span>機器の比較（センサー・判断・実行）</h2>
       <p>ハブ視点で3役割の代表機器を一望する。各機器の深い動作原理は機能別ページへ。</p>
@@ -5850,6 +6470,8 @@ const KaiheiHogoPage = ({ data, onNav }) => (
         <p>GIS の絶縁・消弧媒体は <strong>SF6（六フッ化硫黄）ガス</strong>で、圧縮空気を使う ABB との取り違えが最多。VCB は真空中で気体分子がなくアークを維持できず、電流ゼロ点で消弧する。</p>
       </Box>
 
+      <SectionCheck pageId="kaihei-hogo" sectionId="setsubi" />
+
       <h2 id="formula"><span className="h-num">4.</span>公式マップ（センサーの換算）</h2>
       <p>本ハブの計算はセンサー（計器用変成器）の換算が中心。「比は一次/二次」を必ず確認すること。</p>
       <FormulaCard num="01" name="変流比・変圧比（一次値の換算）" eq="I_1 = I_2 \times K_n,\quad V_1 = V_2 \times K_v"
@@ -5863,6 +6485,8 @@ const KaiheiHogoPage = ({ data, onNav }) => (
         <p>④ 一線地絡電流 <Eq tex="I_g = 3 I_0 = 3 \times 8 = 24\,\text{A}" display /></p>
         <p>「3で割って 40倍して 3倍する」と覚える（数学的には二次の <Eq tex="3I_0" /> に変流比を掛けて一次へ写すのと同じ）。</p>
       </Box>
+
+      <SectionCheck pageId="kaihei-hogo" sectionId="formula" />
 
       <h2 id="kaiho"><span className="h-num">5.</span>解法パターン（学習ガイド）</h2>
       <Box kind="tip" label="① 初学者向け（順序学習）">
@@ -5886,6 +6510,8 @@ const KaiheiHogoPage = ({ data, onNav }) => (
         </table></div>
       </Box>
 
+      <SectionCheck pageId="kaihei-hogo" sectionId="kaiho" />
+
       <h2 id="trap"><span className="h-num">6.</span>引っかけ・誤答ポイント</h2>
       <Box kind="warn" label="3役割を横断する頻出トラップ">
         <ul>
@@ -5896,6 +6522,8 @@ const KaiheiHogoPage = ({ data, onNav }) => (
           <li><strong>差動継電器(87)が外部短絡でも動作と誤認</strong> — 87 は内部故障のみ動作。外部短絡では一次・二次の差が出ず誤動作しない（保護範囲が内部に限定）。</li>
         </ul>
       </Box>
+
+      <SectionCheck pageId="kaihei-hogo" sectionId="trap" />
 
       <h2 id="seigo"><span className="h-num">7.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -5913,6 +6541,8 @@ const KaiheiHogoPage = ({ data, onNav }) => (
           <tr><td>OCR の反限時特性は電流が大きいほど短時間で動作する</td><td><strong>正</strong></td><td>重大事故ほど早期遮断の論理</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="kaihei-hogo" sectionId="seigo" />
 
       <h2 id="kakomon"><span className="h-num">8.</span>出題実績インデックス（5年10回で14問・ほぼ毎回の固定枠）</h2>
       <p>問8枠（遮断器・継電器系）は毎年確実に出題。問7枠（計器用変成器）は R03・R05上・R06下と固定論点化。各機器の詳細・解説は機能別の3ページへ。</p>
@@ -5938,6 +6568,18 @@ const KaiheiHogoPage = ({ data, onNav }) => (
       <Box kind="tip" label="頻度サマリと R08 予測">
         <p>問8枠（遮断器・継電器系）は R01〜R07 で 11 問、問7枠（計器用変成器）は R03・R05上・R06下と直近5年で3回出題。合計14問/5年（10回実施）がこのハブ配下で、ほぼ毎回1〜2問を占める固定枠。R08 も操作順序／GIS の絶縁媒体／CT 二次開放禁止／DGR の方向判定のいずれかが穴埋・論説で継続出題濃厚。</p>
       </Box>
+
+      <h2 id="self-check"><span className="h-num">9.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="kaihei-hogo" sections={[
+        { id: "intro", label: "1. 直感的理解 — センサー → 判断 → 切る" },
+        { id: "bunpan", label: "2. 3役割の分担表" },
+        { id: "setsubi", label: "3. 機器の比較（センサー・判断・実行）" },
+        { id: "formula", label: "4. 公式マップ（センサーの換算）" },
+        { id: "kaiho", label: "5. 解法パターン（学習ガイド）" },
+        { id: "trap", label: "6. 引っかけ・誤答ポイント" },
+        { id: "seigo", label: "7. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -6000,6 +6642,8 @@ const ChichuuSoudenPage = ({ data, onNav }) => (
         </ul>
       </Box>
 
+      <SectionCheck pageId="chichuu-souden" sectionId="intro" />
+
       <h2 id="setsubi"><span className="h-num">2.</span>設備を歩く — CVケーブルの断面構造</h2>
       <p>主流の CV ケーブル（架橋ポリエチレン絶縁ビニルシース）は、内側から外側へ次の6層で構成される。</p>
       <div className="table-wrap"><table className="data">
@@ -6016,6 +6660,8 @@ const ChichuuSoudenPage = ({ data, onNav }) => (
       <Box kind="example" label="半導電層が絶縁体の内外両側にある理由（因果理解）">
         <p>導体の断面は完全な真円でなく表面に微小な凹凸があり、導体の角や凸部には電界が集中する（尖った導体ほど電荷密度が高くなるガウスの法則の帰結）。<strong>内部半導電層</strong>は導体と絶縁体の間に均一な電位面を作る緩衝層として働き、電界集中を防いで絶縁体への局所的なストレスを抑える。<strong>外部半導電層</strong>も絶縁体外面の電界を均一化し、遮へい層との界面での電界集中を防ぐ。両側に設けることで絶縁体全体に均一な電界が印加され、絶縁寿命が向上する。</p>
       </Box>
+
+      <SectionCheck pageId="chichuu-souden" sectionId="setsubi" />
 
       <h2 id="denkai"><span className="h-num">3.</span>同軸円筒ケーブルの電界分布と電位傾度</h2>
       <p>電力ケーブルは、中心の<strong>円筒導体</strong>を絶縁体が包み、その外を<strong>遮へい層（外側の円筒）</strong>が同心状に覆う<strong>同軸円筒構造</strong>。導体と遮へいの間（絶縁体の中）には架空送電線と同じく放射状の電界ができるが、外側が遮へいで閉じている点が違う。導体半径を <Eq tex="d/2" />、遮へい内半径を <Eq tex="D/2" /> とすると、絶縁体内の距離 <Eq tex="r" /> の点の電界は次式で表される。</p>
@@ -6079,6 +6725,8 @@ const ChichuuSoudenPage = ({ data, onNav }) => (
         <p>絶縁層を薄く（D/d を 1 に近づける）すると静電容量 <Eq tex="C = 2\pi\varepsilon/\ln(D/d)" /> は大きくなるが、同時に <Eq tex="E_{\max} = 2V/(d\ln(D/d))" /> も大きくなり絶縁破壊しやすくなる。実務では導体径・絶縁厚を、<Eq tex="E_{\max}" /> が絶縁材料の耐電界以下に収まるよう設計する。3種では「導体表面で電界最大・薄い絶縁ほど電位傾度が大きい」という定性関係を押さえれば十分。</p>
       </Box>
 
+      <SectionCheck pageId="chichuu-souden" sectionId="denkai" />
+
       <h2 id="hikaku"><span className="h-num">4.</span>架空送電 vs 地中送電 比較表（最重要）</h2>
       <p>架空線と地中ケーブルで <strong>L・C・フェランチ効果のしやすさが逆転</strong>する点が試験の急所。</p>
       <div className="table-wrap"><table className="data">
@@ -6097,6 +6745,8 @@ const ChichuuSoudenPage = ({ data, onNav }) => (
         </tbody>
       </table></div>
 
+      <SectionCheck pageId="chichuu-souden" sectionId="hikaku" />
+
       <h2 id="cable"><span className="h-num">5.</span>ケーブルの種類比較（CV と OF）</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>種類</th><th>絶縁材料</th><th>誘電正接 tanδ</th><th>最高使用温度</th><th>特徴</th></tr></thead>
@@ -6109,6 +6759,8 @@ const ChichuuSoudenPage = ({ data, onNav }) => (
       <Box kind="example" label="CV が OF より誘電損が少ない理由（因果理解）">
         <p>誘電損 <Eq tex="P_d = \omega C V^2 \tan\delta" /> から、絶縁材料の誘電正接 <Eq tex="\tan\delta" /> が誘電損を左右する。OFケーブルの絶縁体（浸油紙）は油を含む有機紙で、双極子（分子の正負の電荷の中心がずれた構造）が交番電界で向きを変えるたびにエネルギーを消費する。この分子レベルの摩擦が誘電損の正体。XLPE は分子構造が均一で双極子が少なく <Eq tex="\tan\delta" /> が桁違いに小さいため、同じ電圧・静電容量でも誘電損が OF の数分の一になる。最高使用温度も CV（90℃）が OF（75〜85℃）より高く、CV の方が許容電流を大きく取れる。</p>
       </Box>
+
+      <SectionCheck pageId="chichuu-souden" sectionId="cable" />
 
             <h2 id="zukan"><span className="h-num">6.</span>見た目で見分けるケーブル・電線図鑑（全種横断）</h2>
       <p>電験では名称・用途だけでなく、<strong>断面や外観のイメージ</strong>から種類を問われることがある。<strong>低圧・一般用／高圧・特別高圧／その他の線材・導体</strong>の3群に分け、外観と見分けポイントを整理する。第5節の CV / OF 比較と合わせ、<strong>外観 → 名称 → 用途</strong>を一続きで覚えるとよい。</p>
@@ -6155,6 +6807,8 @@ const ChichuuSoudenPage = ({ data, onNav }) => (
         </ul>
       </Box>
 
+      <SectionCheck pageId="chichuu-souden" sectionId="zukan" />
+
       <h2 id="fusetsu"><span className="h-num">7.</span>布設方式の3分類（管路式・暗きょ式・直接埋設式）</h2>
       <p>地中電線路の布設方式は<strong>管路式・暗きょ式・直接埋設式</strong>の3つ。当Wikiの分野別集計では近年の下期に布設方式を含む地中電線路の論説が続けて挙がっている（<strong>年度・問番号は試験センター公表の過去問で要確認</strong>）。<strong>「放熱（許容電流）」と「外傷・保守性」が裏返しのトレードオフになる</strong>点が狙われる。（施設基準の条文そのものは法規科目の範囲）</p>
       <div className="table-wrap"><table className="data">
@@ -6172,6 +6826,8 @@ const ChichuuSoudenPage = ({ data, onNav }) => (
         <p><strong>直接埋設式は最も安く工期も短いのに、管路式より放熱が良く許容電流を大きく取れる</strong>。ケーブルが土に直接触れて熱が逃げるため。逆に管路式は<strong>管内の空気層が断熱材のように働き、放熱が悪く許容電流が小さくなる</strong>。「管路で保護されている＝性能も上」と考えると逆を選ばされる。（同一条件・少条数での比較。直接埋設でも多条を近接させれば相互加熱で許容電流は下がる）</p>
         <p>ただし直接埋設式は<strong>外傷を受けやすく、増設・事故復旧に掘削が必要</strong>という弱点があり、これが管路式・暗きょ式の長所とちょうど裏返しになる。<strong>「安い・放熱良い」と「守られている・保守しやすい」はセットで手に入らない</strong>と押さえる。</p>
       </Box>
+
+      <SectionCheck pageId="chichuu-souden" sectionId="fusetsu" />
 
       <h2 id="formula"><span className="h-num">8.</span>公式マップ（最重要）</h2>
       <FormulaCard num="01" name="充電電流（ケーブルはコンデンサ）" eq="I_c = \omega C V = 2\pi f C V\,[\text{A}]"
@@ -6193,6 +6849,8 @@ const ChichuuSoudenPage = ({ data, onNav }) => (
         <p><strong>シース回路損（循環電流）の低減策＝クロスボンド接地</strong>。ケーブルの<strong>大区間（メジャーセクション）を3等分した小区間ごとに3相のシースを順番に入れ替えて接続</strong>すると、大区間トータルでシースの誘起電圧の和がほぼゼロになり、循環電流が流れなくなる（短距離線路では<strong>片端接地</strong>も用いられる）。なお<strong>渦電流損はクロスボンドでは消えない</strong>点に注意</p>
       </Box>
 
+      <SectionCheck pageId="chichuu-souden" sectionId="formula" />
+
       <h2 id="kaiho"><span className="h-num">9.</span>解法パターン（充電電流の計算）</h2>
       <Box kind="tip" label="充電電流 Ic=ωCV の見分け方と手順">
         <p><strong>見分け方</strong>：「地中ケーブル」「静電容量 ○ μF/km」「充電電流」のキーワードが揃っている。</p>
@@ -6211,6 +6869,8 @@ const ChichuuSoudenPage = ({ data, onNav }) => (
         <p><Eq tex="I_c = 314 \times 2\times10^{-6} \times 38{,}105 \approx 23.9\,\text{A}" display /></p>
       </Box>
 
+      <SectionCheck pageId="chichuu-souden" sectionId="kaiho" />
+
       <h2 id="trap"><span className="h-num">10.</span>引っかけ・誤答ポイント</h2>
       <Box kind="warn" label="【頻出1】L と C の大小が架空と逆">
         <p>「地中ケーブルは架空送電線よりインダクタンス L が大きく、静電容量 C が小さい」→ <strong>誤り</strong>。導体間距離が小さいため <strong>L は小さく・C は大きい</strong>。架空線とまったく逆になる点が狙われる。</p>
@@ -6224,6 +6884,8 @@ const ChichuuSoudenPage = ({ data, onNav }) => (
       <Box kind="warn" label="【頻出4】事故復旧時間は信頼性とは別の指標">
         <p>「地中ケーブルの事故復旧は架空送電線より短時間で済む」→ <strong>誤り</strong>。事故<strong>頻度</strong>（信頼性）は地中の方が低い（高信頼）が、一度事故が起きると掘削が必要なため<strong>復旧時間は長い</strong>。信頼性と復旧時間を混同させる引っかけ。</p>
       </Box>
+
+      <SectionCheck pageId="chichuu-souden" sectionId="trap" />
 
       <h2 id="seigo"><span className="h-num">11.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -6239,6 +6901,8 @@ const ChichuuSoudenPage = ({ data, onNav }) => (
           <tr><td>充電電流は静電容量と周波数に比例する</td><td><strong>正</strong></td><td>Ic=ωCV=2πfCV（f と C に比例）</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="chichuu-souden" sectionId="seigo" />
 
       <h2 id="kakomon"><span className="h-num">12.</span>出題実績</h2>
       <p>架空送電線との比較（L大小・C大小・フェランチ効果）が頻出。CV と OF の tanδ・最高温度の比較も定番で、充電電流 <Eq tex="I_c = \omega C V" /> の数値計算も出題される。</p>
@@ -6260,6 +6924,30 @@ const ChichuuSoudenPage = ({ data, onNav }) => (
       <Box kind="tip" label="R08予測">
         <p>架空線との比較（L小・C大・フェランチ効果が起きやすい）と、CV・OF の誘電損／最高使用温度の比較が循環の本命。充電電流 <Eq tex="I_c = \omega C V" /> の計算は単位換算（μF/km→F、線間→相電圧）を確実に。フェランチ効果は「地中＞架空」の理由まで説明できるようにすること。</p>
       </Box>
+
+      <h2 id="related"><span className="h-num">13.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("kakuu-souden"); }}>3.1 架空送電線路</a> — 架空⇔地中比較の相手側（このページの比較表と対で覚える）</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("denki-zairyou"); }}>5.1 電気材料</a> — 架橋ポリエチレンなど絶縁材料の物性側</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">14.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="chichuu-souden" sections={[
+        { id: "intro", label: "1. 直感的理解 — 地中ケーブルの3大問題" },
+        { id: "setsubi", label: "2. 設備を歩く — CVケーブルの断面構造" },
+        { id: "denkai", label: "3. 同軸円筒ケーブルの電界分布と電位傾度" },
+        { id: "hikaku", label: "4. 架空送電 vs 地中送電 比較表（最重要）" },
+        { id: "cable", label: "5. ケーブルの種類比較（CV と OF）" },
+        { id: "zukan", label: "6. 見た目で見分けるケーブル・電線図鑑（全種横断）" },
+        { id: "fusetsu", label: "7. 布設方式の3分類（管路式・暗きょ式・直接埋設式）" },
+        { id: "formula", label: "8. 公式マップ（最重要）" },
+        { id: "kaiho", label: "9. 解法パターン（充電電流の計算）" },
+        { id: "trap", label: "10. 引っかけ・誤答ポイント" },
+        { id: "seigo", label: "11. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -6355,6 +7043,8 @@ const YudoShougaiPage = ({ data, onNav }) => (
       </div>
 
       {/* 2. 静電誘導 */}
+      <SectionCheck pageId="yudo-shougai" sectionId="conclusion" />
+
       <h2 id="seiden"><span className="h-num">2.</span>静電誘導 — 電圧由来（容量結合）</h2>
       <p><strong>静電誘導</strong>＝送電線の<strong>対地電圧</strong>が、送電線と通信線の間の<strong>静電容量（相互容量）</strong>を介して通信線に電圧を誘起する現象。電線と通信線の間に「目に見えないコンデンサ」があり、通信線と大地の間にもコンデンサがあるため、通信線が分圧されて電位をもつ。<strong>電流が流れていなくても、電圧がかかっていれば常時発生</strong>する（無負荷・充電状態でも生じる）点が急所。</p>
 
@@ -6420,6 +7110,8 @@ const YudoShougaiPage = ({ data, onNav }) => (
       </Box>
 
       {/* 3. 電磁誘導 */}
+      <SectionCheck pageId="yudo-shougai" sectionId="seiden" />
+
       <h2 id="denji"><span className="h-num">3.</span>電磁誘導 — 電流由来（磁気結合）・地絡時に急増</h2>
       <p><strong>電磁誘導</strong>＝送電線の<strong>電流</strong>が作る<strong>磁束</strong>が、並行する通信線と鎖交し、<strong>相互インダクタンス M</strong>を介して誘導起電力を生じさせる現象（変圧器と同じ原理）。平常時は<strong>三相電流のベクトル和がほぼゼロ</strong>（Ia＋Ib＋Ic≈0）で磁束が打ち消し合うため誘導は小さい。ところが<strong>地絡事故</strong>が起きると三相の対称性が崩れ、大きな<strong>零相電流</strong>（残留電流 3I₀＝地絡電流）が流れて磁束が打ち消されず、通信線に大きな誘導電圧が現れる。<strong>電磁誘導障害が問題になるのは、この地絡事故時</strong>。</p>
 
@@ -6466,6 +7158,8 @@ const YudoShougaiPage = ({ data, onNav }) => (
       </Box>
 
       {/* 4. 比較表 */}
+      <SectionCheck pageId="yudo-shougai" sectionId="denji" />
+
       <h2 id="hikaku"><span className="h-num">4.</span>静電誘導 vs 電磁誘導（対比表・裏返り防止）</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>項目</th><th>静電誘導</th><th>電磁誘導</th></tr></thead>
@@ -6481,6 +7175,8 @@ const YudoShougaiPage = ({ data, onNav }) => (
       </table></div>
 
       {/* 5. 裏返り防止 */}
+      <SectionCheck pageId="yudo-shougai" sectionId="hikaku" />
+
       <h2 id="anti-reverse"><span className="h-num">5.</span>なぜ反対に間違えるのか — 名前を分解して固定する</h2>
       <Box kind="example" label="名前がそのまま原因を指している">
         <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
@@ -6491,6 +7187,8 @@ const YudoShougaiPage = ({ data, onNav }) => (
       </Box>
 
       {/* 6. 対策 */}
+      <SectionCheck pageId="yudo-shougai" sectionId="anti-reverse" />
+
       <h2 id="taisaku"><span className="h-num">6.</span>誘導障害の対策</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>区分</th><th>対策</th><th>効く理由</th></tr></thead>
@@ -6509,6 +7207,8 @@ const YudoShougaiPage = ({ data, onNav }) => (
       </Box>
 
       {/* 7. 正誤判定 */}
+      <SectionCheck pageId="yudo-shougai" sectionId="taisaku" />
+
       <h2 id="seigo"><span className="h-num">7.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>命題</th><th>判定</th><th>理由</th></tr></thead>
@@ -6523,6 +7223,8 @@ const YudoShougaiPage = ({ data, onNav }) => (
       </table></div>
 
       {/* 8. 出題実績 */}
+      <SectionCheck pageId="yudo-shougai" sectionId="seigo" />
+
       <h2 id="kakomon"><span className="h-num">8.</span>出題実績（論説中心・取り違えを問う）</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>年度</th><th>問</th><th>テーマ</th><th>形式</th></tr></thead>
@@ -6545,6 +7247,18 @@ const YudoShougaiPage = ({ data, onNav }) => (
           <li>法規Wiki「電技省令 第27条（架空電線路からの静電誘導作用又は電磁誘導作用による感電の防止）」— 同じ静電／電磁の区別を<strong>人体感電防止</strong>の側から規定（「<strong>特別高圧</strong>架空電線路は通常の使用状態で地表上1mの電界強度3kV/m以下」の数値は<strong>省令第27条第1項に直接規定</strong>（低圧・高圧は対象外）。現行の解釈第52条は通信障害防止の条文で、この数値の根拠ではない）</li>
         </ul>
       </Box>
+
+      <h2 id="self-check"><span className="h-num">10.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="yudo-shougai" sections={[
+        { id: "conclusion", label: "1. まず結論 — 「電圧由来」か「電流由来」かで割る" },
+        { id: "seiden", label: "2. 静電誘導 — 電圧由来（容量結合）" },
+        { id: "denji", label: "3. 電磁誘導 — 電流由来（磁気結合）・地絡時に急増" },
+        { id: "hikaku", label: "4. 静電誘導 vs 電磁誘導（対比表・裏返り防止）" },
+        { id: "anti-reverse", label: "5. なぜ反対に間違えるのか — 名前を分解して固定する" },
+        { id: "taisaku", label: "6. 誘導障害の対策" },
+        { id: "seigo", label: "7. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
@@ -6578,6 +7292,8 @@ const DenryokuKeitouPage = ({ data, onNav }) => (
         </ul>
       </Box>
 
+      <SectionCheck pageId="denryoku-keitou" sectionId="intro" />
+
       <h2 id="zentaizou"><span className="h-num">2.</span>電力系統の全体像と電圧区分</h2>
       <p>発電所の出力を昇圧変圧器で超高圧に上げ、送電・変電を経て段階的に降圧し、最後に需要家へ届ける。高電圧で送る理由は損失低減にある。</p>
       <div className="table-wrap"><table className="data">
@@ -6597,6 +7313,8 @@ const DenryokuKeitouPage = ({ data, onNav }) => (
         <p>送電線の電力損失は <Eq tex="P_{\text{loss}} = I^2 R" />。同じ電力 <Eq tex="P = VI" /> を送るとき、電圧 V を高くすると電流 <Eq tex="I = P/V" /> が小さくなり、線路抵抗による損失 <Eq tex="I^2 R" /> が電流の2乗で大幅に減る。さらに電流が小さければ電線も細くでき材料コストも下がる。これが超高圧送電のねらい。</p>
       </Box>
 
+      <SectionCheck pageId="denryoku-keitou" sectionId="zentaizou" />
+
       <h2 id="jukyu"><span className="h-num">3.</span>需給運用の仕組み</h2>
       <div className="table-wrap"><table className="data">
         <thead><tr><th>制御</th><th>略称</th><th>目的・内容</th><th>応答速度</th></tr></thead>
@@ -6613,6 +7331,8 @@ const DenryokuKeitouPage = ({ data, onNav }) => (
         <p>揚水発電所はポンプ水車と同期電動機/発電機を兼ねる可逆設備。<strong>夜間（需要谷）</strong>は系統の余剰電力でポンプ水車を駆動し、下池の水を上池へ汲み上げて位置エネルギーとして蓄える（電力を消費）。<strong>昼間（需要ピーク）</strong>は上池から放水して発電する（電力を供給）。揚水効率は約70〜80%で、20〜30%は損失だが、出力調整が難しい夜間の余剰電力を活かせる大規模貯蔵手段として価値が高い。</p>
       </Box>
 
+      <SectionCheck pageId="denryoku-keitou" sectionId="jukyu" />
+
       <h2 id="anteido"><span className="h-num">4.</span>系統安定度</h2>
       <p>同期発電機は系統全体で同じ速度で回転している。安定度とは「外乱（負荷急変・短絡等）が起きても同期を失わず（脱調せず）元の運転状態に戻れるか」の指標。</p>
       <div className="table-wrap"><table className="data">
@@ -6626,6 +7346,8 @@ const DenryokuKeitouPage = ({ data, onNav }) => (
       <Box kind="tip" label="定態 vs 過渡（因果で覚える）">
         <p><strong>定態安定度</strong>は小さな負荷変動に対する復元力。送電電力の上限（定態安定限界）を超えて運用しなければよい。<strong>過渡安定度</strong>は短絡事故のような大きな擾乱で、発電機が加速して他機との位相差が急拡大する前に素早く遮断（高速遮断）し、位相差が大きくなる前に系統を切り離して脱調を防ぐ。</p>
       </Box>
+
+      <SectionCheck pageId="denryoku-keitou" sectionId="anteido" />
 
       <h2 id="hinshitsu"><span className="h-num">5.</span>電力品質の管理基準（数値は暗記）</h2>
       <div className="table-wrap"><table className="data">
@@ -6641,6 +7363,8 @@ const DenryokuKeitouPage = ({ data, onNav }) => (
       <Box kind="warn" label="低圧100V系の適正範囲（頻出引っかけ）">
         <p>「低圧100V系の適正範囲は100V±10Vである」→ <strong>誤り</strong>。適正範囲は <strong>101V±6V</strong>（95〜107V）。基準値が100Vではなく<strong>101V</strong>であること、幅が±10Vではなく±6Vであることをセットで覚える。法定根拠は電気事業法第26条＋施行規則第38条。<strong>数値範囲が法定されている電圧は標準電圧100V・200Vに対する101±6V・202±20Vのみ</strong>（周波数は「標準周波数に等しい値」と定められ、第26条第1項は一般送配電事業者の<strong>努力義務</strong>「維持するように努めなければならない」）。6.6kV高圧側に法定値はなく、柱上変圧器のタップ調整等で低圧側基準を満たすよう運用する。なお表の周波数±0.2Hz・高調波5%・不平衡率3%は法定値ではなく運用目標・指針値。</p>
       </Box>
+
+      <SectionCheck pageId="denryoku-keitou" sectionId="hinshitsu" />
 
       <h2 id="chuseiten"><span className="h-num">6.</span>中性点接地方式（地絡電流と異常電圧のトレードオフ）</h2>
       <p>変圧器の中性点をどう接地するかで、1線地絡時の<strong>地絡電流の大きさ</strong>と<strong>健全相の電圧上昇</strong>が正反対に変わる。「地絡電流を抑えるほど健全相の電圧上昇は大きくなる」トレードオフが全体を貫く軸。</p>
@@ -6659,6 +7383,8 @@ const DenryokuKeitouPage = ({ data, onNav }) => (
       <Box kind="warn" label="頻出引っかけ（R04下 問10 型）">
         <p>「非接地方式は地絡電流が最大」→<strong>誤り</strong>（最大は直接接地）。「直接接地は健全相の電圧上昇が大きい」→<strong>誤り</strong>（最小）。<strong>地絡電流：直接＞抵抗＞非接地＞消弧リアクトル／電圧上昇はその逆順</strong>とセットで覚える。大小はあくまで<strong>代表的傾向</strong>（抵抗接地は抵抗値、非接地はケーブルこう長＝対地静電容量、消弧リアクトルは離調状態で変わる）。地絡電流 3I₀ と誘導障害の関係は <a href="#" onClick={(e) => { e.preventDefault(); onNav("yudo-shougai"); }}>3.3 誘導障害</a> を参照。</p>
       </Box>
+
+      <SectionCheck pageId="denryoku-keitou" sectionId="chuseiten" />
 
       <h2 id="renkei"><span className="h-num">7.</span>系統連系と単独運転防止</h2>
       <p>太陽光・風力・小水力等の分散型電源を系統につなぐには、系統連系規程（JEAG 9701）に沿った要件を満たす必要がある。</p>
@@ -6701,6 +7427,8 @@ const DenryokuKeitouPage = ({ data, onNav }) => (
         <p>「太陽光発電を大量に系統連系すると系統の慣性力が増す」→ <strong>誤り</strong>。太陽光発電はインバータ（直流→交流変換器）経由で接続されるため、同期発電機の回転体がもつ慣性力（イナーシャ）に相当するものがない。太陽光比率が上がると系統全体の慣性力が<strong>低下</strong>し、周波数が変動しやすくなる。対策は蓄電池（BESS）・揚水との組み合わせ、需要側制御（DR）。</p>
       </Box>
 
+      <SectionCheck pageId="denryoku-keitou" sectionId="renkei" />
+
       <h2 id="formula"><span className="h-num">8.</span>公式マップと負荷持続曲線</h2>
       <FormulaCard num="01" name="設備利用率" eq="U = \dfrac{W}{P \times 8760} \times 100\,[\%]"
         note="U=設備利用率、W=年間発電電力量[kWh]、P=設備容量[kW]、8760=1年の時間[h]。高いほど設備を有効活用。太陽光は約12〜18%、火力は約50〜80%。" />
@@ -6725,6 +7453,8 @@ const DenryokuKeitouPage = ({ data, onNav }) => (
         </ul>
       </Box>
 
+      <SectionCheck pageId="denryoku-keitou" sectionId="formula" />
+
       <h2 id="trap"><span className="h-num">9.</span>引っかけ・誤答ポイント</h2>
       <Box kind="warn" label="頻出トラップ">
         <ul>
@@ -6734,6 +7464,8 @@ const DenryokuKeitouPage = ({ data, onNav }) => (
           <li><strong>低圧100V系を100V±10Vと誤認</strong> — 正しくは<strong>101V±6V</strong>（95〜107V）。</li>
         </ul>
       </Box>
+
+      <SectionCheck pageId="denryoku-keitou" sectionId="trap" />
 
       <h2 id="seigo"><span className="h-num">10.</span>正誤判定の急所</h2>
       <div className="table-wrap"><table className="data">
@@ -6749,6 +7481,8 @@ const DenryokuKeitouPage = ({ data, onNav }) => (
           <tr><td>供給予備率が高いほど電力供給の安定性が高い</td><td><strong>正</strong></td><td>需要変動・設備故障に対応しやすい</td></tr>
         </tbody>
       </table></div>
+
+      <SectionCheck pageId="denryoku-keitou" sectionId="seigo" />
 
       <h2 id="kakomon"><span className="h-num">11.</span>出題実績（毎年 問10 級で出題）</h2>
       <p>「周波数低下＝需要過多」の因果は毎回のように確認される。揚水の昼夜、設備利用率・供給予備率の計算、系統連系・単独運転防止が循環的に出題される。</p>
@@ -6769,6 +7503,29 @@ const DenryokuKeitouPage = ({ data, onNav }) => (
       <Box kind="tip" label="R08予測">
         <p>「周波数低下＝需要過多」の因果と揚水の昼夜は最優先で固める。再エネ普及を背景に系統連系・単独運転防止・慣性力低下の論説が増加傾向。設備利用率・供給予備率は計算で出る可能性があるので公式を即出せるように。</p>
       </Box>
+
+      <h2 id="related"><span className="h-num">12.</span>関連ページ</h2>
+      <Box kind="tip" label="つながる知識（点と点を結ぶ）">
+        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", lineHeight: 2.0 }}>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("suiryoku"); }}>1.1 水力発電</a> — 需給調整の実行部隊＝揚水発電の本体</li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); onNav("shin-energy"); }}>1.4 新エネルギー発電</a> — 出力変動する再エネの連系（周波数・電圧への影響元）</li>
+        </ul>
+      </Box>
+
+      <h2 id="self-check"><span className="h-num">13.</span>理解度チェック（弱点の洗い出し）</h2>
+      <p>各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。</p>
+      <SectionCheckSummary pageId="denryoku-keitou" sections={[
+        { id: "intro", label: "1. 直感的理解 — 需給バランスと周波数" },
+        { id: "zentaizou", label: "2. 電力系統の全体像と電圧区分" },
+        { id: "jukyu", label: "3. 需給運用の仕組み" },
+        { id: "anteido", label: "4. 系統安定度" },
+        { id: "hinshitsu", label: "5. 電力品質の管理基準（数値は暗記）" },
+        { id: "chuseiten", label: "6. 中性点接地方式（地絡電流と異常電圧のトレードオフ）" },
+        { id: "renkei", label: "7. 系統連系と単独運転防止" },
+        { id: "formula", label: "8. 公式マップと負荷持続曲線" },
+        { id: "trap", label: "9. 引っかけ・誤答ポイント" },
+        { id: "seigo", label: "10. 正誤判定の急所" },
+      ]} />
 
     </div>
     <PageNav
