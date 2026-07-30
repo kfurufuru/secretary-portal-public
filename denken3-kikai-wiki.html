@@ -2224,6 +2224,477 @@ Object.assign(window, { Eq, PageHeader, Crumbs, Box, FormulaCard, PageNav, HomeP
 
 </script>
 <script type="text/babel">
+/* kikai-check.jsx */
+/* ============================================================
+   想起・PDCA コンポーネント（riron v2 パターンの機械移植）
+   SectionCheck / SectionCheckSummary / ConceptQuizItem / ConceptQuiz
+   - localStorage key prefix: denken_check::kikai_<pageId>:: （hoki/riron と衝突回避）
+   - 間違いノート: hoki 側 (denken-hoki-wiki.html#chokuzen-machigai) が
+     denken_check:: prefix 全キーを走査して自動集約する
+   - 出題ソース: KIKAI_DAILY_POOL（本ページ既存記述にアンカー・捏造ゼロ）
+   ============================================================ */
+
+const KIKAI_DAILY_POOL = [
+  // ─── 三相誘導電動機 induction-machine (7) ───
+  { id:'k01', topic:'誘導機', rank:'S',
+    q:'三相誘導電動機の同期速度 Ns [min⁻¹] を表す式はどれか（f: 電源周波数 [Hz]、p: 極数）。',
+    choices:[{key:'A',label:'Ns = 120f/p',correct:true},{key:'B',label:'Ns = 120p/f',correct:false},{key:'C',label:'Ns = 60f/p',correct:false},{key:'D',label:'Ns = fp/120',correct:false}],
+    tags:['#公式','#頻出S'],
+    explanation:'Ns = 120f/p。50Hz・4極なら 120×50/4 = 1500 min⁻¹。60f/p は p を「極対数」で数えた場合の形で、三種の p は極数が標準。極数と極対数の混同が定番の失点源。',
+    evidence:['本ページ セクション1 公式01（同期速度）'], verified:'high',
+    wikiPageId:'induction-machine' },
+  { id:'k02', topic:'誘導機', rank:'S',
+    q:'滑り s の定義として正しいものはどれか（Ns: 同期速度、N: 回転子の実回転速度）。',
+    choices:[{key:'A',label:'s = (Ns − N) / Ns',correct:true},{key:'B',label:'s = (N − Ns) / Ns',correct:false},{key:'C',label:'s = (Ns − N) / N',correct:false},{key:'D',label:'s = N / Ns',correct:false}],
+    tags:['#公式','#頻出S'],
+    explanation:'s = (Ns − N)/Ns。分母は同期速度 Ns。電動機域は 0 < s < 1、s < 0 は誘導発電機、s > 1 は制動域。',
+    evidence:['本ページ セクション1 公式02（滑り）'], verified:'high',
+    wikiPageId:'induction-machine' },
+  { id:'k03', topic:'誘導機', rank:'S',
+    q:'二次入力 P₂、滑り s のとき、二次銅損 Pc2 はどれか。',
+    choices:[{key:'A',label:'Pc2 = s · P₂',correct:true},{key:'B',label:'Pc2 = (1−s) · P₂',correct:false},{key:'C',label:'Pc2 = P₂ / s',correct:false},{key:'D',label:'Pc2 = s² · P₂',correct:false}],
+    tags:['#公式','#頻出S','#B問題頻出'],
+    explanation:'P₂ : Pc2 : Pm = 1 : s : (1−s)。二次銅損は s 倍、機械的出力は (1−s) 倍。1つ与えられれば残り2つが即座に出る、B問題の軸。',
+    evidence:['本ページ セクション2「重要な比率」・公式03'], verified:'high',
+    wikiPageId:'induction-machine' },
+  { id:'k04', topic:'誘導機', rank:'A',
+    q:'Y-Δ 始動では、始動電流と始動トルクは全電圧（直入れ）始動と比べてそれぞれ何倍になるか。',
+    choices:[{key:'A',label:'電流・トルクとも 1/3',correct:true},{key:'B',label:'電流 1/√3・トルク 1/3',correct:false},{key:'C',label:'電流・トルクとも 1/√3',correct:false},{key:'D',label:'電流 1/3・トルク 1/9',correct:false}],
+    tags:['#ひっかけ注意','#頻出A'],
+    explanation:'ともに 1/3。Y では相電圧が 1/√3 になり、トルクは電圧の2乗に比例するので 1/3。電流も 1/3。「電流は 1/√3」は線電流と相電流の混同による定番の誤答。',
+    evidence:['本ページ セクション4「頻出の誤答」Box'], verified:'high',
+    wikiPageId:'induction-machine' },
+  { id:'k05', topic:'誘導機', rank:'A',
+    q:'巻線形誘導電動機で二次抵抗を 2 倍にすると、同一トルクを生じる滑りはどうなるか（比例推移）。',
+    choices:[{key:'A',label:'2 倍になる',correct:true},{key:'B',label:'1/2 になる',correct:false},{key:'C',label:'変わらない',correct:false},{key:'D',label:'4 倍になる',correct:false}],
+    tags:['#考え方','#頻出A'],
+    explanation:'二次抵抗を k 倍にすると同一トルクの滑りも k 倍（比例推移）。停動滑りも k 倍になるため始動トルクを大きくできる。かご形では二次抵抗を変えられないので巻線形のみ。',
+    evidence:['本ページ セクション3「比例推移（巻線形のみ）」'], verified:'high',
+    wikiPageId:'induction-machine' },
+  { id:'k06', topic:'誘導機', rank:'B',
+    q:'電源電圧が 0.9 倍に低下すると、誘導電動機のトルクはおよそ何倍になるか。',
+    choices:[{key:'A',label:'0.81 倍（電圧の2乗に比例）',correct:true},{key:'B',label:'0.9 倍（電圧に比例）',correct:false},{key:'C',label:'変わらない',correct:false},{key:'D',label:'0.73 倍（電圧の3乗に比例）',correct:false}],
+    tags:['#考え方'],
+    explanation:'トルクは電圧の2乗に比例（T ∝ V₁²）。0.9² = 0.81 倍。電圧低下時のトルク不足を問う論説・計算の両方で使う。',
+    evidence:['本ページ セクション3 公式04（トルク式）'], verified:'high',
+    wikiPageId:'induction-machine' },
+  { id:'k07', topic:'誘導機', rank:'B',
+    q:'インバータによる V/f 一定制御で、電圧と周波数の比を一定に保つ目的はどれか。',
+    choices:[{key:'A',label:'磁束を一定に保ち鉄心の飽和を避ける',correct:true},{key:'B',label:'電流を一定に保つ',correct:false},{key:'C',label:'滑りをゼロにする',correct:false},{key:'D',label:'力率を1に保つ',correct:false}],
+    tags:['#考え方','#パワエレ連携'],
+    explanation:'磁束は Φ ∝ V/f。周波数だけ下げると磁束が増えて鉄心が飽和し、励磁電流が急増する。V/f を一定に保てば磁束一定で最大トルクを維持できる。',
+    evidence:['本ページ セクション5 公式05（V/f 一定制御）'], verified:'high',
+    wikiPageId:'induction-machine' },
+
+  // ─── 変圧器 transformer (7) ───
+  { id:'k08', topic:'変圧器', rank:'S',
+    q:'巻数比 a = N₁/N₂ の理想変圧器で正しい関係はどれか。',
+    choices:[{key:'A',label:'V₁/V₂ = a、I₂/I₁ = a（電流は巻数比の逆比）',correct:true},{key:'B',label:'V₁/V₂ = a、I₁/I₂ = a（電流も巻数比に比例）',correct:false},{key:'C',label:'V₂/V₁ = a、I₂/I₁ = a',correct:false},{key:'D',label:'V₁/V₂ = a²、I₂/I₁ = a',correct:false}],
+    tags:['#公式','#頻出S'],
+    explanation:'a = N₁/N₂ = V₁/V₂ = I₂/I₁。電圧は巻数比に比例、電流は逆比。インピーダンスの一次換算は a² 倍になることもセットで覚える。',
+    evidence:['本ページ セクション2 公式01・02'], verified:'high',
+    wikiPageId:'transformer' },
+  { id:'k09', topic:'変圧器', rank:'S',
+    q:'変圧器の効率が最大になる条件はどれか。',
+    choices:[{key:'A',label:'鉄損（無負荷損）＝銅損（負荷損）のとき',correct:true},{key:'B',label:'定格負荷（負荷率100%）のとき',correct:false},{key:'C',label:'鉄損が最小のとき',correct:false},{key:'D',label:'力率が1のとき',correct:false}],
+    tags:['#頻出S','#ひっかけ注意'],
+    explanation:'鉄損＝銅損のとき効率最大。そのときの負荷率は x = √(Pi/PcN)。一般に定格より低い負荷率でピークになる。「定格負荷で最大」が定番の誤答。',
+    evidence:['本ページ セクション7・付録D セクション5（最大効率の条件）'], verified:'high',
+    wikiPageId:'transformer' },
+  { id:'k10', topic:'変圧器', rank:'S',
+    q:'全負荷銅損 PcN の変圧器を負荷率 50% で運転すると、銅損はいくらになるか。',
+    choices:[{key:'A',label:'0.25 × PcN（負荷率の2乗）',correct:true},{key:'B',label:'0.5 × PcN（負荷率に比例）',correct:false},{key:'C',label:'PcN（負荷によらず一定）',correct:false},{key:'D',label:'0.7 × PcN',correct:false}],
+    tags:['#公式','#頻出S','#ひっかけ注意'],
+    explanation:'銅損は I²R なので負荷率の2乗に比例。50% 負荷では 0.5² = 0.25 倍。「負荷半分なら銅損も半分」は誤り。一定なのは鉄損の方。',
+    evidence:['本ページ セクション7 公式06（銅損は負荷率の2乗）'], verified:'high',
+    wikiPageId:'transformer' },
+  { id:'k11', topic:'変圧器', rank:'A',
+    q:'%Z = 5% の変圧器の端子直近で短絡すると、短絡電流は定格電流のおよそ何倍か（上位系統のインピーダンスは無視）。',
+    choices:[{key:'A',label:'20 倍（Is = 100/%Z × In）',correct:true},{key:'B',label:'5 倍',correct:false},{key:'C',label:'1/20 倍',correct:false},{key:'D',label:'100 倍',correct:false}],
+    tags:['#公式','#頻出A'],
+    explanation:'Is = (100/%Z) × In = 100/5 = 20 倍。%Z が小さいほど短絡電流は大きい（電圧変動は小さいが遮断器の負担は重い）という逆向きの関係も頻出。',
+    evidence:['本ページ セクション9 公式14（短絡電流）'], verified:'high',
+    wikiPageId:'transformer' },
+  { id:'k12', topic:'変圧器', rank:'A',
+    q:'鉄損 Pi の変圧器を定格電圧で24時間通電し、うち12時間だけ負荷運転（残り12時間は無負荷のまま通電）した。1日の鉄損電力量 Wi はどれか。',
+    choices:[{key:'A',label:'Wi = Pi × 24（通電中は負荷ゼロでも発生）',correct:true},{key:'B',label:'Wi = Pi × 12（負荷運転中のみ）',correct:false},{key:'C',label:'Wi = 0（無負荷では発生しない）',correct:false},{key:'D',label:'Wi = Pi × 24 × 負荷率²',correct:false}],
+    tags:['#全日効率','#ひっかけ注意','#頻出A'],
+    explanation:'鉄損は電圧が加わっている間ずっと発生する（負荷によらずほぼ一定）。「無負荷」＝電圧印加のまま負荷ゼロであり、鉄損は消えない。ゼロになるのは電源から切り離したときだけ。負荷率²が掛かるのは銅損。',
+    evidence:['本ページ セクション7「無負荷と電源切離しは別物」Box・24時間タイムライン図'], verified:'high',
+    wikiPageId:'transformer' },
+  { id:'k13', topic:'変圧器', rank:'B',
+    q:'2台の変圧器の並行運転で、無負荷なのに巻線間に循環電流が流れる原因はどれか。',
+    choices:[{key:'A',label:'変圧比（巻数比）が等しくない',correct:true},{key:'B',label:'%Z が等しくない',correct:false},{key:'C',label:'X/R 比が等しくない',correct:false},{key:'D',label:'定格容量が等しくない',correct:false}],
+    tags:['#考え方','#論説'],
+    explanation:'変圧比が違うと二次起電力に差が生じ、無負荷でも循環電流が流れる。%Z の不一致は「負荷時の分担が容量に比例しない」原因、X/R 比の不一致は「分担電流に位相差が出る」原因で、それぞれ現象が違う。',
+    evidence:['本ページ セクション10「並行運転の条件」'], verified:'high',
+    wikiPageId:'transformer' },
+  { id:'k14', topic:'変圧器', rank:'B',
+    q:'変圧器の誘導起電力 E = 4.44 f N Φm から、鉄心の最大磁束 Φm は何に比例するか。',
+    choices:[{key:'A',label:'V/f（電圧に比例・周波数に反比例）',correct:true},{key:'B',label:'V·f（電圧×周波数）',correct:false},{key:'C',label:'V のみ（周波数によらない）',correct:false},{key:'D',label:'f/V',correct:false}],
+    tags:['#公式','#考え方'],
+    explanation:'Φm = E/(4.44fN) より Φm ∝ V/f。周波数だけ下げると磁束が増えて飽和に近づく。これが V/f 一定制御の根拠で、誘導機のインバータ駆動にもつながる横断論点。',
+    evidence:['本ページ セクション3（誘導起電力と磁束）'], verified:'high',
+    wikiPageId:'transformer' },
+
+  // ─── 同期機 synchronous (6) ───
+  { id:'k15', topic:'同期機', rank:'S',
+    q:'同期電動機の定常運転時の滑りはいくらか。',
+    choices:[{key:'A',label:'ゼロ（常に同期速度で回転）',correct:true},{key:'B',label:'0 < s < 1',correct:false},{key:'C',label:'s < 0',correct:false},{key:'D',label:'負荷により変化する',correct:false}],
+    tags:['#頻出S','#誘導機との対比'],
+    explanation:'同期機は常に同期速度 Ns = 120f/p で回り、滑りは存在しない。滑りがあるのは誘導機。同期速度の式は共通だが、滑りの有無が両者を分ける核心。',
+    evidence:['本ページ セクション1・セクション3「混同に注意」Box'], verified:'high',
+    wikiPageId:'synchronous' },
+  { id:'k16', topic:'同期機', rank:'S',
+    q:'同期発電機が遅れ力率の負荷を負うときの電機子反作用はどれか。',
+    choices:[{key:'A',label:'減磁作用（電圧低下）',correct:true},{key:'B',label:'増磁作用（電圧上昇）',correct:false},{key:'C',label:'交差磁化作用',correct:false},{key:'D',label:'反作用は生じない',correct:false}],
+    tags:['#頻出S','#ひっかけ注意'],
+    explanation:'発電機では遅れ力率＝減磁・進み力率＝増磁・力率1＝交差磁化。同期電動機では対応が逆（遅れ＝増磁）になるため、「発電機か電動機か」の主語を必ず付けて覚える。',
+    evidence:['本ページ セクション2（電機子反作用）'], verified:'high',
+    wikiPageId:'synchronous' },
+  { id:'k17', topic:'同期機', rank:'A',
+    q:'同期電動機の V カーブ（横軸: 界磁電流 If、縦軸: 電機子電流 Ia）の底点はどのような運転状態か。',
+    choices:[{key:'A',label:'力率1で電機子電流が最小',correct:true},{key:'B',label:'力率1で電機子電流が最大',correct:false},{key:'C',label:'遅れ力率で電流最小',correct:false},{key:'D',label:'進み力率で電流最小',correct:false}],
+    tags:['#頻出A'],
+    explanation:'底点は力率1・電機子電流最小。左側（不足励磁）が遅れ力率、右側（過励磁）が進み力率。過励磁で進み電流を取れる性質が同期調相機の力率改善に使われる。',
+    evidence:['本ページ セクション3（V カーブと位相特性）'], verified:'high',
+    wikiPageId:'synchronous' },
+  { id:'k18', topic:'同期機', rank:'A',
+    q:'短絡比 Ks が大きい同期発電機の特徴として正しいものはどれか。',
+    choices:[{key:'A',label:'同期リアクタンスが小さく、安定度が高い・電圧変動が小さい',correct:true},{key:'B',label:'同期リアクタンスが大きく、安定度が低い',correct:false},{key:'C',label:'短絡電流が小さい',correct:false},{key:'D',label:'界磁電流が不要になる',correct:false}],
+    tags:['#公式','#頻出A'],
+    explanation:'Ks ≈ 1/xs[p.u.]。短絡比大 ⇔ 同期リアクタンス小で、安定度が高く電圧変動が小さい。短絡電流は Is = Ks × In なのでむしろ大きくなる点に注意。',
+    evidence:['本ページ セクション3 公式02（短絡比）・例題1.3.1'], verified:'high',
+    wikiPageId:'synchronous' },
+  { id:'k19', topic:'同期機', rank:'B',
+    q:'円筒形同期発電機の出力 P = (EV/xs) sinδ が最大になる内部相差角 δ はどれか。',
+    choices:[{key:'A',label:'δ = π/2（90°）',correct:true},{key:'B',label:'δ = π（180°）',correct:false},{key:'C',label:'δ = π/4（45°）',correct:false},{key:'D',label:'δ = 0',correct:false}],
+    tags:['#公式'],
+    explanation:'sinδ が最大となる δ = π/2 で出力最大。実運転はそれより十分小さい δ で行い、δ が大きすぎると同期外れ（脱調）につながる。',
+    evidence:['本ページ セクション3 公式03（出力）'], verified:'high',
+    wikiPageId:'synchronous' },
+  { id:'k20', topic:'同期機', rank:'B',
+    q:'同期電動機がそのままでは自力始動できない理由はどれか。',
+    choices:[{key:'A',label:'始動トルクがない（静止した回転子は回転磁界に追従できない）',correct:true},{key:'B',label:'始動電流が流れないため',correct:false},{key:'C',label:'滑りが大きすぎるため',correct:false},{key:'D',label:'界磁が飽和するため',correct:false}],
+    tags:['#考え方','#論説'],
+    explanation:'同期電動機は始動トルクを持たない。制動巻線をかご形導体として使う自己始動法（始動中は界磁巻線を抵抗経由で短絡）、始動電動機法、低周波始動などを用いる。',
+    evidence:['本ページ セクション5（始動法・乱調・自己励磁）'], verified:'high',
+    wikiPageId:'synchronous' },
+];
+
+/* ---- SectionCheck: セクション末尾の4ボタン自己評価（◎○△×） ---- */
+const SectionCheck = ({ pageId, sectionId, compact = false }) => {
+  const key = `denken_check::kikai_${pageId}::section::${sectionId}`;
+  const [status, setStatus] = React.useState(() => {
+    try { return localStorage.getItem(key) || ''; } catch (e) { return ''; }
+  });
+  const update = (newStatus) => {
+    const next = newStatus === status ? '' : newStatus;
+    setStatus(next);
+    try {
+      if (next) localStorage.setItem(key, next);
+      else localStorage.removeItem(key);
+      window.dispatchEvent(new CustomEvent('section-check-changed', { detail: { key, status: next } }));
+    } catch (e) { /* noop */ }
+  };
+  const buttons = [
+    { mark: '◎', label: '完璧', color: '#16a34a' },
+    { mark: '○', label: 'OK',   color: '#3b82f6' },
+    { mark: '△', label: '微妙', color: '#f59e0b' },
+    { mark: '×', label: '未',   color: '#dc2626' },
+  ];
+  return (
+    <div style={{
+      margin: compact ? '4px 0 12px' : '6px 0 18px',
+      padding: '8px 12px',
+      background: 'var(--bg-elev)',
+      border: '1px solid var(--rule)',
+      borderRadius: 6,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      flexWrap: 'wrap',
+    }}>
+      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-soft)' }}>📊 このセクションの理解度:</span>
+      {buttons.map(b => (
+        <button
+          key={b.mark}
+          onClick={() => update(b.mark)}
+          aria-label={`理解度 ${b.label}`}
+          style={{
+            padding: '4px 10px',
+            minWidth: 36,
+            background: status === b.mark ? b.color : 'transparent',
+            color: status === b.mark ? '#fff' : 'var(--ink)',
+            border: status === b.mark ? `1px solid ${b.color}` : '1px solid var(--rule)',
+            borderRadius: 4,
+            cursor: 'pointer',
+            fontWeight: 700,
+            fontSize: 14,
+            transition: 'all 0.1s',
+          }}
+        >{b.mark}</button>
+      ))}
+      {status && (
+        <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>前回: <strong style={{ color: 'var(--ink)' }}>{status}</strong></span>
+      )}
+    </div>
+  );
+};
+
+/* ---- SectionCheckSummary: ページ末尾の理解度サマリ＝弱点セクションへの再読リンク（Act） ---- */
+const SectionCheckSummary = ({ pageId, sections, onJump }) => {
+  const [scores, setScores] = React.useState({});
+  React.useEffect(() => {
+    const refresh = () => {
+      const result = {};
+      sections.forEach(s => {
+        const k = `denken_check::kikai_${pageId}::section::${s.id}`;
+        try { result[s.id] = localStorage.getItem(k) || ''; } catch (e) { result[s.id] = ''; }
+      });
+      setScores(result);
+    };
+    refresh();
+    window.addEventListener('section-check-changed', refresh);
+    return () => window.removeEventListener('section-check-changed', refresh);
+  }, [pageId, sections]);
+
+  const total = sections.length;
+  const counts = { '◎': 0, '○': 0, '△': 0, '×': 0, '未': 0 };
+  sections.forEach(s => {
+    const v = scores[s.id];
+    if (v && counts[v] !== undefined) counts[v]++; else counts['未']++;
+  });
+  const weak = sections.filter(s => ['△', '×'].includes(scores[s.id]) || !scores[s.id]);
+
+  return (
+    <div style={{
+      background: 'var(--bg-elev)',
+      border: '1px solid var(--rule)',
+      borderRadius: 6,
+      padding: '14px 18px',
+      marginBottom: 16,
+    }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)', marginBottom: 10 }}>
+        📊 理解度サマリ（{total} セクション中）
+      </div>
+      <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 12, fontSize: 12 }}>
+        <span><strong style={{ color: '#16a34a' }}>◎ {counts['◎']}</strong></span>
+        <span><strong style={{ color: '#3b82f6' }}>○ {counts['○']}</strong></span>
+        <span><strong style={{ color: '#f59e0b' }}>△ {counts['△']}</strong></span>
+        <span><strong style={{ color: '#dc2626' }}>× {counts['×']}</strong></span>
+        <span><strong style={{ color: 'var(--ink-soft)' }}>未 {counts['未']}</strong></span>
+      </div>
+      {weak.length > 0 ? (
+        <>
+          <div style={{ fontSize: 12, color: 'var(--warn)', marginBottom: 6, fontWeight: 600 }}>
+            🔁 弱点セクション（△・×・未） — 再読推奨
+          </div>
+          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, lineHeight: 1.8 }}>
+            {weak.map(s => (
+              <li key={s.id}>
+                <a
+                  href={`#${pageId}/${s.id}`}
+                  onClick={(e) => { e.preventDefault(); if (onJump) onJump(s.id); else { location.hash = `${pageId}/${s.id}`; } }}
+                  style={{ color: 'var(--accent-ink)', textDecoration: 'underline' }}
+                >{s.label} →</a>
+                {scores[s.id] && <span style={{ marginLeft: 8, color: 'var(--ink-soft)' }}>（{scores[s.id]}）</span>}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <div style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
+          ✨ すべてのセクションが ◎ または ○ です。お疲れさまでした！
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ---- ConceptQuizItem: 1問分の確認問題（正誤判定 → localStorage → 間違いノート集約） ---- */
+const ConceptQuizItem = ({ q, pageId, pageTitle, required }) => {
+  const key = `denken_check::kikai_${pageId}::quiz::${q.id}`;
+  const [selected, setSelected] = React.useState(null);
+  const [revealed, setRevealed] = React.useState(false);
+  const [prev, setPrev] = React.useState(null);
+  const [confidence, setConfidence] = React.useState(null); // 'sure' | 'unsure' | null(スキップ可・自信度較正)
+  const [missed, setMissed] = React.useState(false); // 同一セッションで一度でも不正解したか（即時再正解を克服扱いしない）
+  const [recallNote, setRecallNote] = React.useState(''); // 不正解時「正しい考えを自分の言葉で1行」＝再生(retrieval)で丸暗記を矯正
+  const [errorTag, setErrorTag] = React.useState(null); // 不正解の原因タグ（公式忘れ/条件読み違い/計算ミス/概念不理解）=弱点類型の可視化
+  React.useEffect(() => {
+    try { const raw = localStorage.getItem(key); if (raw) setPrev(JSON.parse(raw)); } catch (e) {}
+  }, [key]);
+  const correctKey = (q.choices.find(c => c.correct) || {}).key;
+  const ERR_LABELS = { formula: '公式忘れ', condition: '条件読み違い', calc: '計算ミス', concept: '概念不理解' };
+  const fmtMemo = (b) => (b.memoBase || '') + (b.recallNote ? '・正答メモ:' + b.recallNote : '') + (ERR_LABELS[b.error_tag] ? '・原因:' + ERR_LABELS[b.error_tag] : '');
+  const choose = (k) => {
+    if (revealed) return;
+    setSelected(k);
+    setRevealed(true);
+    const isCorrect = k === correctKey;
+    const rescued = isCorrect && missed; // 同一セッションで不正解→再回答正解＝丸暗記の疑い・克服にしない
+    if (!isCorrect) setMissed(true);
+    // 遅延再生の原則: 即時リベンジ正解は understood にせず review(後日再提示)止まり。別の日に初回正解で初めて克服。
+    const status = isCorrect ? (missed ? 'review' : 'understood') : 'wrong';
+    const overconfident = confidence === 'sure' && !isCorrect; // 自信あり×不正解=過信
+    const memoBase = (required ? '必須' : '任意') + (overconfident ? '・⚠過信' : '') + (rescued ? '・⚠即時再正解(丸暗記疑い)' : '');
+    try {
+      const raw = localStorage.getItem(key);
+      const base = raw ? (JSON.parse(raw) || {}) : {};
+      const now = new Date().toISOString();
+      const rec = Object.assign({}, base, {
+        status: status,
+        updatedAt: now,
+        firstSeenAt: base.firstSeenAt || now,
+        reviewCount: (base.reviewCount || 0) + 1,
+        source: 'kikai-concept',
+        itemType: 'concept-quiz',
+        articleTitle: '機械 確認問題 — ' + pageTitle,
+        itemTitle: (q.q.length > 44 ? q.q.slice(0, 44) + '…' : q.q),
+        articleUrl: 'denken3-kikai-wiki.html#' + pageId,
+        confidence: confidence || 'skip',
+        overconfident: overconfident,
+        rescued: rescued,
+        memoBase: memoBase,
+        recallNote: base.recallNote || '',
+        error_tag: base.error_tag || null,
+        memo: fmtMemo({ memoBase: memoBase, recallNote: base.recallNote, error_tag: base.error_tag }),
+      });
+      localStorage.setItem(key, JSON.stringify(rec));
+      window.dispatchEvent(new CustomEvent('section-check-changed', { detail: { key, status } }));
+    } catch (e) {}
+  };
+  const saveRecall = (text) => {
+    const t = (text || '').replace(/\n+/g, ' ').trim().slice(0, 200);
+    try {
+      const raw = localStorage.getItem(key);
+      const base = raw ? (JSON.parse(raw) || {}) : {};
+      const rec = Object.assign({}, base, { recallNote: t, updatedAt: new Date().toISOString() });
+      rec.memo = fmtMemo(rec);
+      localStorage.setItem(key, JSON.stringify(rec));
+      window.dispatchEvent(new CustomEvent('section-check-changed', { detail: { key, status: base.status } }));
+    } catch (e) {}
+  };
+  const saveErrorTag = (tag) => {
+    try {
+      const raw = localStorage.getItem(key);
+      const base = raw ? (JSON.parse(raw) || {}) : {};
+      const rec = Object.assign({}, base, { error_tag: tag, updatedAt: new Date().toISOString() });
+      rec.memo = fmtMemo(rec);
+      localStorage.setItem(key, JSON.stringify(rec));
+      window.dispatchEvent(new CustomEvent('section-check-changed', { detail: { key, status: base.status } }));
+    } catch (e) {}
+  };
+  const retry = () => { setSelected(null); setRevealed(false); };
+  const isCorrect = revealed && selected === correctKey;
+  const rescuedView = isCorrect && missed; // 同一セッション再回答での正解＝克服ではない（表示用）
+  return (
+    <div style={{ border: '1px solid var(--rule)', borderRadius: 8, padding: '14px 16px', margin: '10px 0', background: 'var(--bg-elev)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, color: '#fff', background: required ? '#dc2626' : '#3b82f6' }}>{required ? '必須' : '任意'}</span>
+        {(q.tags || []).map(t => (<span key={t} style={{ fontSize: 11, color: 'var(--ink-soft)' }}>{t}</span>))}
+        {prev && (<span style={{ fontSize: 11, color: 'var(--ink-mute)' }}>· 前回: {prev.status === 'understood' ? '○正解' : '×不正解'}</span>)}
+      </div>
+      <p style={{ margin: '0 0 10px', lineHeight: 1.7 }}><strong>Q.</strong> {q.q}</p>
+      {!revealed && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 11, color: 'var(--ink-mute)' }}>答える前に（任意）:</span>
+          {[['sure', '💪 自信あり'], ['unsure', '🤔 自信なし']].map(([v, label]) => (
+            <button key={v} onClick={() => setConfidence(confidence === v ? null : v)}
+              style={{ padding: '2px 10px', fontSize: 11, borderRadius: 4, cursor: 'pointer',
+                background: confidence === v ? 'var(--accent)' : 'transparent',
+                color: confidence === v ? 'var(--bg)' : 'var(--ink-soft)',
+                border: confidence === v ? '1px solid var(--accent)' : '1px solid var(--rule)' }}>{label}</button>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {q.choices.map(c => {
+          let bg = 'transparent', bd = '1px solid var(--rule)';
+          if (revealed) {
+            if (c.correct) { bg = 'rgba(22,163,74,0.12)'; bd = '1px solid #16a34a'; }
+            else if (c.key === selected) { bg = 'rgba(220,38,38,0.12)'; bd = '1px solid #dc2626'; }
+          }
+          return (
+            <button key={c.key} onClick={() => choose(c.key)} disabled={revealed}
+              style={{ textAlign: 'left', padding: '8px 12px', background: bg, border: bd, color: 'var(--ink)', borderRadius: 6, cursor: revealed ? 'default' : 'pointer', fontSize: 14 }}>
+              <strong>{c.key}.</strong> {c.label}
+              {revealed && c.correct && <span style={{ color: '#16a34a', fontWeight: 700 }}> ← 正解</span>}
+            </button>
+          );
+        })}
+      </div>
+      {revealed && (
+        <div style={{ marginTop: 10, padding: '10px 12px', borderRadius: 6, background: 'var(--bg-sunken)', fontSize: 13, lineHeight: 1.7 }}>
+          <strong style={{ color: isCorrect ? (rescuedView ? '#d97706' : '#16a34a') : '#dc2626' }}>{isCorrect ? (rescuedView ? '△ 再回答で正解' : '◎ 正解') : '× 不正解'}</strong>
+          {!isCorrect && <span style={{ color: 'var(--ink-soft)' }}> → 間違いノートに記録しました</span>}
+          {rescuedView && <span style={{ color: '#d97706', fontWeight: 700 }}> → 初回不正解のため「要復習」。後日また出題します（その場の正解＝丸暗記の可能性）</span>}
+          {confidence === 'sure' && !isCorrect && <span style={{ color: '#dc2626', fontWeight: 700 }}> ⚠ 過信注意（自信ありで不正解）</span>}
+          {confidence === 'unsure' && isCorrect && !rescuedView && <span style={{ color: '#16a34a' }}> 💡 自信なしで正解＝実力は足りている</span>}
+          <p style={{ margin: '6px 0 0' }}>{q.explanation}</p>
+          {!isCorrect && (
+            <div style={{ marginTop: 10 }}>
+              <label style={{ fontSize: 12, color: 'var(--ink-soft)', display: 'block', marginBottom: 4 }}>✍ 正しい考えを自分の言葉で1行（任意・書くと定着が上がる＝丸暗記対策）</label>
+              <input type="text" defaultValue={recallNote} maxLength={120}
+                onBlur={(e) => { setRecallNote(e.target.value); saveRecall(e.target.value); }}
+                placeholder="例: 銅損は電流の2乗。負荷半分なら銅損は1/4"
+                style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--rule)', borderRadius: 4, fontSize: 12, fontFamily: 'inherit', boxSizing: 'border-box' }} />
+            </div>
+          )}
+          {!isCorrect && (
+            <div style={{ marginTop: 8 }}>
+              <span style={{ fontSize: 12, color: 'var(--ink-soft)', marginRight: 6 }}>原因（任意・1タップ）:</span>
+              {[['formula', '公式忘れ'], ['condition', '条件読み違い'], ['calc', '計算ミス'], ['concept', '概念不理解']].map(([k, label]) => (
+                <button key={k} onClick={() => { setErrorTag(k); saveErrorTag(k); }}
+                  style={{ padding: '3px 10px', fontSize: 11, borderRadius: 4, cursor: 'pointer', marginRight: 6, marginTop: 4,
+                    background: errorTag === k ? '#dc2626' : 'transparent',
+                    color: errorTag === k ? '#fff' : 'var(--ink-soft)',
+                    border: errorTag === k ? '1px solid #dc2626' : '1px solid var(--rule)' }}>{label}</button>
+              ))}
+            </div>
+          )}
+          <button onClick={retry} style={{ marginTop: 8, padding: '4px 10px', background: 'transparent', border: '1px solid var(--rule)', borderRadius: 4, cursor: 'pointer', fontSize: 12, color: 'var(--ink-soft)' }}>もう一度</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ---- ConceptQuiz: ページ冒頭の「まず腕試し」ブロック（テスト効果＝先に思い出す） ---- */
+const ConceptQuiz = ({ pageId, pageTitle }) => {
+  const pool = (KIKAI_DAILY_POOL || []).filter(q => q.wikiPageId === pageId);
+  if (!pool.length) return null;
+  const required = pool.filter(q => q.rank === 'S' || q.rank === 'A');
+  const optional = pool.filter(q => q.rank !== 'S' && q.rank !== 'A');
+  return (
+    <div style={{ border: '2px solid var(--accent)', borderRadius: 12, padding: '16px 18px', margin: '0 0 24px', background: 'var(--bg)' }}>
+      <h3 style={{ margin: '0 0 4px', fontSize: 16 }}>🎯 確認問題（まず腕試し）</h3>
+      <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: '0 0 12px' }}>
+        <strong style={{ color: '#dc2626' }}>必須</strong>＝落とすと失点する頻出ポイント・<strong style={{ color: '#3b82f6' }}>任意</strong>＝解くと理解が深まる発展。間違えると<strong>間違いノート</strong>に自動集約され、後で弱点だけ復習できる。
+      </p>
+      <p style={{ fontSize: 12, margin: '0 0 14px' }}>
+        <a href="denken-hoki-wiki.html#chokuzen-machigai" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>
+          📕 間違えた問題・⚠過信した問題を「間違いノート」でまとめて復習 →
+        </a>
+      </p>
+      {required.map(q => (<ConceptQuizItem key={q.id} q={q} pageId={pageId} pageTitle={pageTitle} required={true} />))}
+      {optional.length > 0 && (
+        <details style={{ marginTop: 8 }}>
+          <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)' }}>＋ 任意問題（理解を深める {optional.length}問）</summary>
+          <div style={{ marginTop: 8 }}>
+            {optional.map(q => (<ConceptQuizItem key={q.id} q={q} pageId={pageId} pageTitle={pageTitle} required={false} />))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+};
+
+Object.assign(window, { KIKAI_DAILY_POOL, SectionCheck, SectionCheckSummary, ConceptQuizItem, ConceptQuiz });
+
+</script>
+<script type="text/babel">
 /* page-induction.jsx */
 /* ============================================================
    Induction Machine page (featured / deepest unit)
@@ -2455,6 +2926,7 @@ const InductionMachinePage = ({ data, onNav }) => (
 
     <div className="content">
       <InductionMachineLayers />
+      <ConceptQuiz pageId="induction-machine" pageTitle="三相誘導電動機" />
       <h2 id="overview"><span className="h-num">1.</span>動作原理</h2>
       <p>三相交流を巻線に流すと <span className="marker">固定子内に回転磁界が生じる</span>。この磁界が回転子導体を切り、電磁誘導によって回転子に電流が誘起される。電流と磁束の相互作用（フレミング左手の法則）によりトルクが発生し、回転子は磁界と同方向に回転する。</p>
 
@@ -2482,6 +2954,8 @@ const InductionMachinePage = ({ data, onNav }) => (
         note={<>N は回転子の実回転速度。0&lt;s&lt;1 が電動機域、s&lt;0 が発電機域、s&gt;1 が制動域。</>}
       />
 
+      <SectionCheck pageId="induction-machine" sectionId="overview" />
+
       <h2 id="circuit"><span className="h-num">2.</span>等価回路と電力の流れ</h2>
       <p>一相分の T 形等価回路は次の通り。一次側に <Eq tex="r_1, jx_1" />、励磁回路に <Eq tex="r_0, jx_0" />、二次側に <Eq tex="jx_2'" /> と <Eq tex="r_2'/s" /> を持つ。<strong>滑り s が分母にある二次抵抗が誘導機の本質</strong> であり、機械的出力は <Eq tex="r_2'(1-s)/s" /> で表される負荷抵抗が消費する電力に相当する。</p>
 
@@ -2499,6 +2973,8 @@ const InductionMachinePage = ({ data, onNav }) => (
         eq="\dfrac{P_{c2}}{P_2} = s \quad,\quad \dfrac{P_m}{P_2} = 1-s"
         note="効率や出力計算で軸となる関係。"
       />
+
+      <SectionCheck pageId="induction-machine" sectionId="circuit" />
 
       <h2 id="torque"><span className="h-num">3.</span>トルク特性</h2>
       <p>滑り s に対するトルク T の関係は、典型的な「山形」の曲線となる。停動トルク Tmax を境に、左側（高滑り域）が始動領域、右側（低滑り域）が安定運転領域である。</p>
@@ -2518,6 +2994,8 @@ const InductionMachinePage = ({ data, onNav }) => (
       <Box kind="tip" label="比例推移の使い道">
         <p>「始動時のみ二次抵抗を挿入し、加速後に短絡」という二次抵抗始動法はこの性質を利用したもの。かご形では原理的に二次抵抗を変化できないため、二重かご形・深溝形が用いられる。</p>
       </Box>
+
+      <SectionCheck pageId="induction-machine" sectionId="torque" />
 
       <h2 id="start"><span className="h-num">4.</span>始動方式</h2>
       <div className="table-wrap">
@@ -2549,6 +3027,8 @@ const InductionMachinePage = ({ data, onNav }) => (
         Y 結線では相電流＝線電流、Δ 結線では相電流の <Eq tex="\sqrt{3}" /> 倍が線電流。Y では相電圧が <Eq tex="1/\sqrt{3}" /> となり、トルクは電圧の二乗 ⇒ <Eq tex="1/3" />。電流も <Eq tex="1/3" />。</p>
       </Box>
 
+      <SectionCheck pageId="induction-machine" sectionId="start" />
+
       <h2 id="speed"><span className="h-num">5.</span>速度制御</h2>
       <ul>
         <li><strong>周波数制御（VVVF）</strong> — 最も広く使われる方式。<Eq tex="V/f = \mathrm{const}" /> で磁束を一定に保つ。低速で電圧降下を補正する <strong>トルクブースト</strong> も併用。</li>
@@ -2563,6 +3043,8 @@ const InductionMachinePage = ({ data, onNav }) => (
         eq="\dfrac{V}{f} = \mathrm{const} \;\Rightarrow\; \phi \;\approx\; \mathrm{const}"
         note={<>磁束を定格値に保ち、最大トルクを維持しながら可変速運転を行う。基底周波数以上では弱め界磁制御に移行。</>}
       />
+
+      <SectionCheck pageId="induction-machine" sectionId="speed" />
 
       <h2 id="example"><span className="h-num">6.</span>例題</h2>
 
@@ -2587,6 +3069,8 @@ const InductionMachinePage = ({ data, onNav }) => (
         eq="\eta \;\approx\; (1-s) \times \dfrac{P_2}{P_1} \;\le\; (1-s)"
         note="鉄損・一次銅損・機械損を無視した上限値。実機では (1-s) からさらに数%低下する。"
       />
+
+      <SectionCheck pageId="induction-machine" sectionId="example" />
 
       <h2 id="trends"><span className="h-num">7.</span>過去問の出題傾向</h2>
       <p>直近10年の出題パターン。計算問題と理論問題が概ね半々で、計算は等価回路から効率を求める問題、理論は始動方式・速度制御の比較が定番。</p>
@@ -2625,6 +3109,20 @@ const InductionMachinePage = ({ data, onNav }) => (
         <details><summary>二次入力 P₂ の電力配分比は？</summary>P₂ : P_c2 : P_m = <strong>1 : s : (1−s)</strong>（二次銅損は s 倍、機械出力は (1−s) 倍）</details>
         <details><summary>Y-Δ 始動で始動電流・トルクは全電圧始動の何倍？</summary><strong>1/3</strong>（始動電流・始動トルクともに 1/3）</details>
       </div>
+      <SectionCheck pageId="induction-machine" sectionId="quick-review" />
+
+      <SectionCheckSummary
+        pageId="induction-machine"
+        sections={[
+          { id: "overview", label: "1. 動作原理" },
+          { id: "circuit", label: "2. 等価回路と電力の流れ" },
+          { id: "torque", label: "3. トルク特性" },
+          { id: "start", label: "4. 始動方式" },
+          { id: "speed", label: "5. 速度制御" },
+          { id: "example", label: "6. 例題" },
+          { id: "quick-review", label: "9. 1分復習（即答チェック）" },
+        ]}
+      />
     </div>
 
     <PageNav
@@ -3216,6 +3714,7 @@ const SynchronousPage = ({ onNav }) => (
       meta={[{ label: "出題頻度", value: "高" }, { label: "難易度", value: "★★★★☆" }]} />
     <div className="content">
       <SynchronousLayers />
+      <ConceptQuiz pageId="synchronous" pageTitle="同期機" />
       <h2 id="structure"><span className="h-num">1.</span>構造と動作</h2>
       <p>固定子（電機子）に三相巻線、回転子に界磁を持つ。回転子は <span className="marker">常に同期速度</span> <Eq tex="N_s = 120f/p" /> で回る。<span className="marker">誘導機と異なり滑りはゼロ</span>。</p>
 
@@ -3224,6 +3723,8 @@ const SynchronousPage = ({ onNav }) => (
         <p>周波数は回転速度と極数で決まる：<Eq tex="f=\dfrac{p N_s}{120}" />（同期速度 <Eq tex="N_s=120f/p" /> の裏返し）。「同期速度で回す → 決まった周波数の正弦波起電力」という機械の動作は、理論の <strong>電磁誘導＋磁束鎖交</strong> を回転体に適用しただけ、と捉えると腑に落ちる。</p>
         <p style={{margin:"8px 0 0"}}><a href="https://kfurufuru.github.io/secretary-portal-public/denken3-riron-wiki.html#inductance" target="_blank" rel="noopener">→ 理論Wiki「3.1 インダクタンス・電磁誘導」でファラデー則・磁束鎖交を深掘り</a></p>
       </Box>
+
+      <SectionCheck pageId="synchronous" sectionId="structure" />
 
       <h2 id="reaction"><span className="h-num">2.</span>電機子反作用</h2>
       <p><strong>同期発電機では</strong>、負荷力率により電機子起磁力の作用が変わる:</p>
@@ -3237,6 +3738,8 @@ const SynchronousPage = ({ onNav }) => (
       <Box kind="mistake" label="発電機と電動機で逆になる（定番ひっかけ）">
         <p><span className="marker">同期電動機では対応が逆</span>：遅れ力率=増磁・進み力率=減磁。「遅れ=減磁」は<strong>発電機の場合</strong>と、必ず主語を付けて覚える。</p>
       </Box>
+
+      <SectionCheck pageId="synchronous" sectionId="reaction" />
 
       <h2 id="vcurve"><span className="h-num">3.</span>V カーブと位相特性</h2>
       <p>同期電動機の <strong>V カーブ</strong> は界磁電流 If を横軸、電機子電流 Ia を縦軸にとった V 字曲線。底点で電機子電流が最小となり力率1、左側（不足励磁）で遅れ・右側（過励磁）で進み力率となる。</p>
@@ -3273,6 +3776,8 @@ const SynchronousPage = ({ onNav }) => (
         <p>同期機の <strong>同期速度</strong> は誘導機と同じ <Eq tex="N_s = 120f/p" />。しかし <span className="marker">滑りは存在しない</span>。誘導機の式を流用してはならない。</p>
       </Box>
 
+      <SectionCheck pageId="synchronous" sectionId="vcurve" />
+
       <h2 id="parallel"><span className="h-num">4.</span>並列運転の条件</h2>
       <ol>
         <li>電圧の大きさが等しい</li>
@@ -3282,12 +3787,16 @@ const SynchronousPage = ({ onNav }) => (
         <li>相回転が同一</li>
       </ol>
 
+      <SectionCheck pageId="synchronous" sectionId="parallel" />
+
       <h2 id="start-hunting"><span className="h-num">5.</span>始動法・乱調・自己励磁（頻出理論論点）</h2>
       <ul>
         <li><strong>始動法</strong> — 同期電動機は<span className="marker">始動トルクがない</span>（回転磁界に静止した回転子が追従できない）。<strong>自己始動法</strong>（制動巻線をかご形導体として利用。始動中は界磁巻線を抵抗経由で短絡し高電圧誘起を防ぐ）／始動電動機法／低周波（インバータ）始動。</li>
         <li><strong>乱調</strong> — 負荷急変で内部相差角 δ が振動する現象。<strong>制動巻線</strong>が滑りに応じた誘導トルクで振動を<strong>減衰</strong>させる。はずみ車は慣性を増して急変を緩やかにする補助で、それ自体は減衰要素ではない。</li>
         <li><strong>自己励磁現象</strong> — 無負荷の長距離送電線など<strong>容量性負荷</strong>を接続すると、残留磁気と進み電流の増磁作用で電圧が異常上昇する現象。同じ線路条件で比較すれば、<strong>短絡比が大きい</strong>（同期リアクタンスが小さい）発電機ほど起こりにくい。</li>
       </ul>
+
+      <SectionCheck pageId="synchronous" sectionId="start-hunting" />
 
       <h2 id="example"><span className="h-num">6.</span>例題</h2>
       <Box kind="example" label="例題 1.3.1（短絡比と短絡電流）">
@@ -3296,6 +3805,8 @@ const SynchronousPage = ({ onNav }) => (
         <Eq display tex="I_n = \dfrac{5000{\times}10^3}{\sqrt{3}\times 6600} \approx 437\;[\mathrm{A}] \quad\Rightarrow\quad I_s = K_s \times I_n = 1.25 \times 437 \approx 547\;[\mathrm{A}]" />
         <p style={{margin:"8px 0 0"}}>💡 短絡比は「短絡電流が定格電流の何倍か」そのもの（<Eq tex="I_s = K_s I_n" />）。<Eq tex="x_s = 1/K_s" /> の逆数関係とセットで覚える。この値は界磁電流を無負荷定格電圧相当に保ったときの<strong>定常（持続）短絡電流</strong>で、突発短絡直後の電流はこれより大きい。</p>
       </Box>
+
+      <SectionCheck pageId="synchronous" sectionId="example" />
 
       <h2 id="quick-review"><span className="h-num">7.</span>1分復習（即答チェック）</h2>
       <div className="box">
@@ -3307,6 +3818,20 @@ const SynchronousPage = ({ onNav }) => (
         <details><summary>同期電動機の始動法は？なぜ自力始動できない？</summary>始動トルクがないため、制動巻線による自己始動法／始動電動機法／低周波始動を使う。始動中は界磁巻線を抵抗経由で短絡</details>
         <details><summary>乱調とは？その対策は？</summary>負荷急変で内部相差角 δ が振動する現象。制動巻線の誘導トルクで減衰させる（はずみ車は慣性で急変を緩和する補助）</details>
       </div>
+      <SectionCheck pageId="synchronous" sectionId="quick-review" />
+
+      <SectionCheckSummary
+        pageId="synchronous"
+        sections={[
+          { id: "structure", label: "1. 構造と動作" },
+          { id: "reaction", label: "2. 電機子反作用" },
+          { id: "vcurve", label: "3. V カーブと位相特性" },
+          { id: "parallel", label: "4. 並列運転の条件" },
+          { id: "start-hunting", label: "5. 始動法・乱調・自己励磁" },
+          { id: "example", label: "6. 例題" },
+          { id: "quick-review", label: "7. 1分復習（即答チェック）" },
+        ]}
+      />
     </div>
     <PageNav prev={{ id: "induction-machine", title: "1.2 三相誘導電動機" }} next={{ id: "single-phase-im", title: "1.4 単相誘導電動機" }} onNav={onNav} />
   </>
@@ -3971,6 +4496,7 @@ const TransformerPage = ({ onNav }) => (
       meta={[{ label: "出題頻度", value: "最頻出（編集者集計・概算）" }, { label: "難易度", value: "★★★★☆" }]} />
     <div className="content">
       <TransformerLayers />
+      <ConceptQuiz pageId="transformer" pageTitle="変圧器" />
 
       <h2 id="scope"><span className="h-num">1.</span>このページで得点できる問題</h2>
       <p>変圧器は「1つの等価回路」から枝分かれして出題される。どの問いも、下の6つのどれかに帰着する。</p>
@@ -4027,6 +4553,8 @@ const TransformerPage = ({ onNav }) => (
       <FormulaCard num="02 / 15" name="一次換算（二次側の量を一次側へ寄せる）" eq="r_2' = a^2 r_2,\quad x_2' = a^2 x_2,\quad I_2' = I_2 / a,\quad V_2' = a V_2"
         note={<>インピーダンスは <Eq tex="a^2" /> 倍、電流は <Eq tex="1/a" /> 倍、電圧は <Eq tex="a" /> 倍。<span className="marker">一次換算と二次換算を計算の途中で混ぜない</span>（どちら側に統一したかを必ず先に決める）。</>} />
 
+      <SectionCheck pageId="transformer" sectionId="basic" />
+
       <h2 id="emf"><span className="h-num">3.</span>誘導起電力と磁束</h2>
       <p>巻線に生じる起電力の実効値は、鉄心を通る磁束の最大値 <Eq tex="\Phi_m" /> と周波数で決まる。</p>
       <FormulaCard num="03 / 15" name="誘導起電力" eq="E = 4.44\, f\, N\, \Phi_m\;[\mathrm{V}]"
@@ -4051,6 +4579,8 @@ const TransformerPage = ({ onNav }) => (
         </div>
         <p style={{ margin: 0 }}>だから<strong>電圧を下げずに周波数だけ下げてはいけない</strong>。インバータで電動機を可変速駆動するとき <span className="marker"><Eq tex="V/f" /> を一定に保つ</span>のは、磁束を一定にして飽和を避けるためである。<strong>逆に周波数が上がる</strong>と磁束は減り、鉄損は減るがトルクも落ちる。</p>
       </Box>
+
+      <SectionCheck pageId="transformer" sectionId="emf" />
 
       <h2 id="equiv"><span className="h-num">4.</span>実際の変圧器と等価回路</h2>
       <p>理想変圧器に、無視していた4つ（巻線抵抗・漏れリアクタンス・鉄損・励磁電流）を回路素子として描き足したものが等価回路。<strong>電圧変動率・効率・短絡電流・並行運転はすべてこの1枚から導かれる</strong>。</p>
@@ -4129,6 +4659,8 @@ const TransformerPage = ({ onNav }) => (
         <p style={{margin:"8px 0 0"}}><a href="https://kfurufuru.github.io/secretary-portal-public/denken3-riron-wiki.html#inductance" target="_blank" rel="noopener">→ 理論Wiki「3.1 インダクタンス」で相互M・結合係数k・和動/差動を深掘り</a></p>
       </Fold>
 
+      <SectionCheck pageId="transformer" sectionId="equiv" />
+
       <h2 id="oc-test"><span className="h-num">5.</span>無負荷試験（開放試験）</h2>
       <Box kind="tip" label="何を測って何を得るか">
         <p style={{ margin: 0 }}><strong>二次側を開放し、一次側に定格電圧を加える</strong>。負荷電流が流れないので直列の <Eq tex="r_1,x_1" /> による降下はごくわずかで、測るのは実質<strong>励磁回路だけ</strong>。得られるのは <span className="marker">鉄損 <Eq tex="P_i" /> と励磁枝 <Eq tex="r_0,\ x_0" /></span>。</p>
@@ -4206,6 +4738,8 @@ const TransformerPage = ({ onNav }) => (
         <p style={{ margin: "8px 0 0" }}><strong>ひっかけ注意:</strong> <span className="marker"><Eq tex="r_0" /> の分母は <Eq tex="I_0" /> ではなく <Eq tex="I_w" /></span>。<Eq tex="V_1/I_0 = 200/2.5 = 80\,\Omega" /> としてしまうのが典型的な誤り（それは励磁インピーダンスの大きさであって鉄損抵抗ではない）。また <Eq tex="P_0" /> は<strong>鉄損</strong>であって銅損ではない。</p>
       </Box>
 
+      <SectionCheck pageId="transformer" sectionId="oc-test" />
+
       <h2 id="sc-test"><span className="h-num">6.</span>短絡試験（インピーダンス試験）</h2>
       <Box kind="tip" label="何を測って何を得るか">
         <p style={{ margin: 0 }}><strong>二次側を短絡し、一次側に低い電圧を加えて定格電流を流す</strong>。印加電圧が定格の数 % と低いので<span className="marker">磁束が小さく鉄損は無視できる</span>。測るのは実質<strong>直列インピーダンスだけ</strong>。得られるのは <span className="marker">全負荷銅損 <Eq tex="P_{cN}" /> と <Eq tex="Z_e,\ R_e,\ X_e" />、そして %Z</span>。</p>
@@ -4259,6 +4793,8 @@ const TransformerPage = ({ onNav }) => (
         <p style={{ margin: "8px 0 0" }}><strong>ここから電圧変動率へ直結する:</strong> 力率 0.8 の定格負荷なら、<Eq tex="\varepsilon \approx p\cos\theta + q\sin\theta = 2.0\times0.8 + 4.58\times0.6 \approx 4.35\;[\%]" />（遅れ）。進みなら <Eq tex="2.0\times0.8 - 4.58\times0.6 \approx -1.15\;[\%]" /> で<span className="marker">符号が反転する</span>。<strong>短絡試験1つから %Z・銅損・短絡電流・電圧変動率がすべて出る</strong>のがこの試験の価値。</p>
         <p style={{ margin: "8px 0 0" }}><strong>ひっかけ注意:</strong> <Eq tex="R_e" /> の分母は <Eq tex="I_s^{\,2}" /> であって <Eq tex="I_s" /> ではない（<Eq tex="P = I^2R" /> だから）。また <Eq tex="X_e = Z_e - R_e" /> は誤り（<span className="marker">直角合成なので二乗の差の平方根</span>）。<Eq tex="5-2=3" /> としないこと（正しくは 4.58）。</p>
       </Box>
+
+      <SectionCheck pageId="transformer" sectionId="sc-test" />
 
       <h2 id="loss"><span className="h-num">7.</span>損失・通常効率・全日効率</h2>
 
@@ -4600,6 +5136,8 @@ const TransformerPage = ({ onNav }) => (
         <p style={{ margin: "8px 0 0" }}>通常効率の <Eq tex="P_i = P_c" /> と形は同じだが、<strong>比べているのは電力 [kW] ではなく電力量 [kWh]</strong>。主線では両者を混同しないこと。</p>
       </Fold>
 
+      <SectionCheck pageId="transformer" sectionId="loss" />
+
       <h2 id="vreg"><span className="h-num">8.</span>電圧変動率</h2>
       <p><strong>何を求めるか</strong>：負荷をかけたときに二次端子電圧がどれだけ下がるか。まず定義から押さえる。</p>
       <FormulaCard num="11 / 15" name="電圧変動率の定義" eq="\varepsilon = \dfrac{V_{20} - V_2}{V_2}\times 100\;[\%]"
@@ -4624,6 +5162,8 @@ const TransformerPage = ({ onNav }) => (
         <Eq display tex="(2)\;\; \varepsilon \approx 2 \times 0.8 - 5 \times 0.6 = 1.6 - 3.0 = -1.4\;[\%]" />
         <p style={{ margin: "8px 0 0" }}>(2) は負。<strong>進み力率では端子電圧が無負荷時より上がる</strong>。<span className="marker"><Eq tex="q" /> が <Eq tex="p" /> より大きい変圧器ほど、この符号反転は起こりやすい</span>（実機の変圧器は一般に <Eq tex="q > p" />）。</p>
       </Box>
+
+      <SectionCheck pageId="transformer" sectionId="vreg" />
 
       <h2 id="pz"><span className="h-num">9.</span>百分率インピーダンスと短絡電流</h2>
       <p><strong>何を求めるか</strong>：変圧器の内部インピーダンスの「大きさの程度」を、容量や電圧が違っても比較できる共通のものさしで表す。</p>
@@ -4677,6 +5217,8 @@ const TransformerPage = ({ onNav }) => (
         </ul>
         <p style={{ margin: "8px 0 0" }}>合成インピーダンスは必ず変圧器単独より大きくなるので、<strong>実際の短絡電流は簡易式の値より小さくなる</strong>。遮断器の選定では簡易式で安全側に見積もったうえで、詳細計算で確認する。</p>
       </Fold>
+
+      <SectionCheck pageId="transformer" sectionId="pz" />
 
       <h2 id="parallel"><span className="h-num">10.</span>並行運転</h2>
       <p><strong>何を求めるか</strong>：2台以上の変圧器を並列につないだとき、それぞれが何 kV·A を負担するか。</p>
@@ -4779,6 +5321,8 @@ const TransformerPage = ({ onNav }) => (
         <Eq display tex="S_A : S_B = \frac{200}{5} : \frac{100}{5} = 2 : 1 \;\Rightarrow\; S_A = 100,\; S_B = 50\;[\mathrm{kV\cdot A}]" />
         <p style={{ margin: 0 }}>容量比 2:1 そのままで分担し、<strong>両器とも負荷率 50 %</strong> でそろう。これが「%Z をそろえる」ことの実利。</p>
       </Box>
+
+      <SectionCheck pageId="transformer" sectionId="parallel" />
 
       <h2 id="vconn"><span className="h-num">11.</span>V結線・単巻変圧器（頻出小論点）</h2>
       <ul>
@@ -4933,6 +5477,8 @@ const TransformerPage = ({ onNav }) => (
         ▶ 結線方式そのものの比較（Y-Y / Δ-Δ / Y-Δ / Δ-Y の位相変位・第3高調波・用途）は <a href="https://kfurufuru.github.io/secretary-portal-public/denken3-denryoku-wiki.html#henatsuki" target="_blank" rel="noopener">電力Wiki「2.1 変圧器（基礎ハブ）」の三相結線とV結線</a>へ。
       </p>
 
+      <SectionCheck pageId="transformer" sectionId="v-fault" />
+
       <h2 id="traps"><span className="h-num">13.</span>過去問での解き方とひっかけ注意</h2>
 
       <h3 id="traps-flow">どの式を使うか — 問題文のキーワードから引く</h3>
@@ -4973,6 +5519,8 @@ const TransformerPage = ({ onNav }) => (
         </tbody>
       </table></div>
 
+      <SectionCheck pageId="transformer" sectionId="traps" />
+
       <h2 id="quick-review"><span className="h-num">14.</span>1分復習（即答チェック）</h2>
       <div className="box">
         <details><summary>巻数比 a と電圧・電流の関係は？</summary>a = N₁/N₂ = V₁/V₂ = I₂/I₁（電流は巻数比の逆比）</details>
@@ -4995,6 +5543,25 @@ const TransformerPage = ({ onNav }) => (
         <details><summary>V結線で線間電圧が3つとも得られるのはなぜ？</summary>3つの線間電圧の和はゼロ（V̇ab+V̇bc+V̇ca=0）なので、2つを2台で作れば残り1つは V̇bc=−(V̇ab+V̇ca) として定まる（実負荷では電圧降下の分だけ不平衡が出る）</details>
         <details><summary>V結線の2台で「等しいもの」と「偏るもの」は？</summary>等しい＝皮相電力 V_L·I_L と巻線電流（同一仕様器なら損失・温度上昇もほぼ同等）／偏る＝個別力率と有効・無効電力の分担（有効電力係数は cos(30°−θ) と cos(30°+θ)）。有効分担が等しいのは力率1のときだけ</details>
       </div>
+      <SectionCheck pageId="transformer" sectionId="quick-review" />
+
+      <SectionCheckSummary
+        pageId="transformer"
+        sections={[
+          { id: "basic", label: "2. 理想変圧器と巻数比" },
+          { id: "emf", label: "3. 誘導起電力と磁束" },
+          { id: "equiv", label: "4. 実際の変圧器と等価回路" },
+          { id: "oc-test", label: "5. 無負荷試験（開放試験）" },
+          { id: "sc-test", label: "6. 短絡試験（インピーダンス試験）" },
+          { id: "loss", label: "7. 損失・通常効率・全日効率" },
+          { id: "vreg", label: "8. 電圧変動率" },
+          { id: "pz", label: "9. 百分率インピーダンスと短絡電流" },
+          { id: "parallel", label: "10. 並行運転" },
+          { id: "v-fault", label: "11–12. V結線・単巻変圧器／Δ-Δ 1台故障" },
+          { id: "traps", label: "13. 過去問での解き方とひっかけ注意" },
+          { id: "quick-review", label: "14. 1分復習（即答チェック）" },
+        ]}
+      />
     </div>
     <PageNav prev={{ id: "single-phase-im", title: "1.4 単相誘導電動機" }} next={{ id: "power-elec", title: "2.2 パワーエレクトロニクス" }} onNav={onNav} />
   </>
