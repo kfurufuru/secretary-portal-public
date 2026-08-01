@@ -12227,8 +12227,28 @@ const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
         <tr><td>無限長直線（距離 r）</td><td><Eq tex="H = I/(2\pi r)" inline /></td><td>あり（分母）</td><td>R06上問4 / H26問4</td></tr>
         <tr><td>半径 r の円形コイル中心（N ターン）</td><td><Eq tex="H = NI/(2r)" inline /></td><td>なし</td><td>H30問4 / H19問1</td></tr>
         <tr><td>環状ソレノイド（磁路長 l、N ターン）</td><td><Eq tex="H = NI/l" inline /></td><td>l=2πr_avg にあり</td><td>R01問4</td></tr>
+        <tr><td><strong>点磁荷 m [Wb]（距離 r）＝棒磁石の磁極</strong></td><td><Eq tex="H = m/(4\pi\mu_0 r^2)" inline /></td><td>あり（4π と μ₀ がセット）</td><td>H30問3</td></tr>
       </tbody>
     </table>
+    <Callout variant="warn" title="1/r か 1/r² かは「電流か磁石か」ではなく「線源か点源か」で決まる">
+      <p style={{ marginTop: 0 }}>
+        上表の上3行はすべて<strong>電流</strong>が源で、電流は<strong>線</strong>に沿って流れる。磁界は線のまわりの<strong>円筒面（2πr）</strong>に配られるので <Eq tex="1/r" inline /> になる。
+        いっぽう最下行の<strong>磁極 m は点</strong>で、そこから出る磁力線は<strong>球面（4πr²）</strong>に配られるので <Eq tex="1/r^2" inline /> になる。
+        <strong>「磁界だから 1/r」は誤り</strong> — 棒磁石には電流 I が存在しないので <Eq tex="H = I/(2\pi r)" inline /> は最初から使えない（問題文に I [A] が出てこないのが tell）。
+      </p>
+      <table className="data-table" style={{ marginTop: 10 }}>
+        <thead>
+          <tr><th>源</th><th>広がる面</th><th>電気</th><th>磁気</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>線（電流）</td><td>円筒 2πr</td><td>—</td><td><Eq tex="H = I/(2\pi r)" inline /></td></tr>
+          <tr><td>点（電荷・磁荷）</td><td>球 4πr²</td><td><Eq tex="E = Q/(4\pi\varepsilon_0 r^2)" inline /></td><td><Eq tex="H = m/(4\pi\mu_0 r^2)" inline /></td></tr>
+        </tbody>
+      </table>
+      <p style={{ fontSize: 12, color: "var(--ink-soft)", marginBottom: 0 }}>
+        点源どうしは完全な双対で、<strong>Q → m、ε₀ → μ₀ と置き換えるだけ</strong>。力の式も <Eq tex="F = m_1 m_2/(4\pi\mu_0 r^2)" inline />（磁気のクーロンの法則）と同型。実際の解き方は <a href="#" onClick={(e) => { e.preventDefault(); switchTab('learn'); }} style={{ textDecoration: "underline" }}>学習タブ 5節「H30 問3 解法カード」</a> へ。
+      </p>
+    </Callout>
     <p style={{ fontSize: "12px", color: "var(--ink-soft)" }}>
       ▶ 各公式の物理的起源（なぜ π が消えたり残ったり）は <a href="#" onClick={(e) => { e.preventDefault(); switchTab('explain'); }} style={{ textDecoration: "underline" }}>解説タブ 6節</a> へ
     </p>
@@ -12802,7 +12822,109 @@ const ElectromagneticForceLearnTab = ({ onNav, switchTab }) => (
       </ol>
     </Callout>
 
-    <h2 id="z-3conditions"><span className="h-num">5</span>3条件即答チェック（限界的練習ゾーン）</h2>
+    <h2 id="h30-q3"><span className="h-num">5</span>H30 問3 解法カード — 棒磁石（点磁荷ペア）が作る合成磁界</h2>
+    <SectionCheck pageId="electromagnetic-force" sectionId="h30-q3" />
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
+      本ページで唯一「電流が源ではない」磁界の問題。<strong>棒磁石＝両端の点磁荷 ±m</strong> と読み替え、<Eq tex="H = m/(4\pi\mu_0 r^2)" inline /> を使う。公式の選択と<strong>ベクトルの向き</strong>の2段で落とせる問題なので、両方を型にする（公式の位置づけは <a href="#" onClick={(e) => { e.preventDefault(); switchTab('formulas'); }} style={{ textDecoration: "underline" }}>公式タブ 4節 形状別磁界の比較表</a>）。
+    </p>
+    <div style={{ textAlign: "center", margin: "16px 0" }}>
+      <svg viewBox="0 0 480 300" width="100%" style={{ maxWidth: "480px", height: "auto" }} role="img" aria-label="左は配置図。一辺2mの正三角形ABCのうち辺BC上に長さ2mの棒磁石が置かれ、頂点BがN極、頂点CがS極である。頂点Aが磁界を求める点。右はベクトル合成図。点AでN極による磁界は右上向き、S極による磁界は右下向きで、両者のなす角は120度。頭と尾をつなぐと3辺の等しい正三角形になり、合成磁界の大きさは各磁界と等しく、向きはNからSへ水平方向になる">
+        {/* ===== 左パネル: 配置図 ===== */}
+        <text x="125" y="100" fontSize="11" textAnchor="middle" fill="var(--ink-soft)">配置（一辺 2 m の正三角形）</text>
+        {/* 正三角形（幾何関係の補助線） */}
+        <path d="M125 130 L55 251 L195 251 Z" fill="none" stroke="var(--ink-soft)" strokeWidth="1" strokeDasharray="4 3" />
+        {/* 棒磁石 */}
+        <rect x="55" y="243" width="70" height="16" fill="var(--danger-soft)" stroke="var(--ink)" strokeWidth="1" />
+        <rect x="125" y="243" width="70" height="16" fill="var(--ok-soft)" stroke="var(--ink)" strokeWidth="1" />
+        <text x="90" y="256" fontSize="12" textAnchor="middle" fill="var(--ink)">N</text>
+        <text x="160" y="256" fontSize="12" textAnchor="middle" fill="var(--ink)">S</text>
+        {/* 磁極（点磁荷）と評価点 */}
+        <circle cx="55" cy="251" r="4" fill="var(--danger)" />
+        <circle cx="195" cy="251" r="4" fill="var(--ok)" />
+        <circle cx="125" cy="130" r="4" fill="var(--ink)" />
+        {/* ラベル */}
+        <text x="125" y="122" fontSize="12" textAnchor="middle" fill="var(--ink)">A</text>
+        <text x="47" y="240" fontSize="12" textAnchor="end" fill="var(--ink)">B</text>
+        <text x="203" y="240" fontSize="12" textAnchor="start" fill="var(--ink)">C</text>
+        <text x="66" y="184" fontSize="11" textAnchor="end" fill="var(--ink-soft)">2 m</text>
+        <text x="184" y="184" fontSize="11" textAnchor="start" fill="var(--ink-soft)">2 m</text>
+        <text x="125" y="277" fontSize="11" textAnchor="middle" fill="var(--ink-soft)">2 m</text>
+        {/* 仕切り */}
+        <line x1="247" y1="100" x2="247" y2="270" stroke="var(--rule)" strokeWidth="1" />
+        {/* ===== 右パネル: ベクトル合成 ===== */}
+        <text x="367" y="100" fontSize="11" textAnchor="middle" fill="var(--ink-soft)">点 A でのベクトル合成</text>
+        {/* 三角形の底辺（補助） */}
+        <line x1="312" y1="190" x2="374" y2="190" stroke="var(--ink-soft)" strokeWidth="1" strokeDasharray="4 3" />
+        {/* H_B: N極による磁界（B→A 方向・右上） */}
+        <line x1="312" y1="190" x2="337" y2="146.7" stroke="var(--danger)" strokeWidth="2.4" />
+        <polygon points="343,136.3 333.5,142.2 340.5,146.2" fill="var(--danger)" />
+        {/* H_C: S極による磁界（A→C 方向・右下）を平行移動 */}
+        <line x1="343" y1="136.3" x2="368" y2="179.6" stroke="var(--ok)" strokeWidth="2.4" />
+        <polygon points="374,190 367,180 360.5,183.9" fill="var(--ok)" />
+        {/* 起点・終点 */}
+        <circle cx="312" cy="190" r="3.5" fill="var(--ink)" />
+        {/* 合成ベクトル（下にオフセット表示） */}
+        <line x1="312" y1="190" x2="312" y2="206" stroke="var(--ink-faint)" strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="374" y1="190" x2="374" y2="206" stroke="var(--ink-faint)" strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="312" y1="206" x2="366" y2="206" stroke="var(--accent)" strokeWidth="3" />
+        <polygon points="374,206 364,201.5 364,210.5" fill="var(--accent)" />
+        {/* ラベル */}
+        <text x="304" y="194" fontSize="11" textAnchor="end" fill="var(--ink)">点A</text>
+        <text x="318" y="160" fontSize="11" textAnchor="end" fill="var(--danger)">H_B</text>
+        <text x="368" y="160" fontSize="11" textAnchor="start" fill="var(--ok)">H_C</text>
+        <text x="343" y="224" fontSize="11" textAnchor="middle" fill="var(--accent-ink)">合成 H（N→S 向き）</text>
+        <text x="367" y="248" fontSize="11" textAnchor="middle" fill="var(--ink-soft)">3辺が等しい ⇒ 合成も同じ大きさ</text>
+      </svg>
+      <div style={{ fontSize: "11px", color: "var(--ink-soft)", marginTop: 4, lineHeight: 1.7 }}>
+        図：左＝原問の配置（B が N極 <Eq tex="+1\times10^{-4}" inline /> Wb・C が S極 <Eq tex="-1\times10^{-4}" inline /> Wb、AB = AC = BC = 2 m）。右＝点 A での合成。<strong>N極の磁界は B から離れる向き（B→A）・S極の磁界は C へ向かう向き（A→C）</strong>で、なす角は 60° ではなく <strong>120°</strong>。頭と尾をつなぐと3辺の等しい正三角形になるので、合成の大きさは各成分と同じになる。
+      </div>
+    </div>
+    <ExamQuestion
+      year="平成30年"
+      qNum="3"
+      question="長さ 2 m の直線状の棒磁石があり、その両端の磁極は点磁荷とみなすことができ、その強さは、N極が 1×10⁻⁴ Wb、S極が −1×10⁻⁴ Wb である。図のように、この棒磁石を点 B・C 間に置いた。このとき、点 A の磁界の大きさの値 [A/m] として、最も近いものはどれか。ただし、点 A、B、C は、一辺を 2 m とする正三角形の各頂点に位置し、真空中にあるものとする。真空の透磁率は μ₀ = 4π×10⁻⁷ H/m とする。また、N極、S極の各点磁荷以外の部分から点 A への影響はないものとする。"
+      choices={[
+        "① 0",
+        "② 0.79",
+        "③ 1.05",
+        "④ 1.58 ← 正解",
+        "⑤ 3.16",
+      ]}
+      note="出典: 電験王『過去問_理論』p.120（平成30年 問3・難易度★★☆☆☆）。設問文・選択肢5つ・正答④・公式を同PDFで一次照合。設問文は読点等を当Wikiで整えたもので図番号の参照のみ書き換えた。図は原問の配置を当Wikiで作図したもの。"
+    />
+    <SolveFlow
+      type="点磁荷ペアの合成磁界（磁気のクーロン ＋ 120° 合成）"
+      steps={[
+        "① 源を見分ける：問題文に電流 I [A] が一つも出てこない ⇒ 電流の式 H=I/(2πr) は使えない。磁極 m [Wb] が与えられている ⇒ 点磁荷の式 H = m/(4πμ₀r²)（球面 4πr² に配られるので 1/r²）",
+        "② 1極分を計算：H_B = m/(4πμ₀r²) = 1×10⁻⁴ /(4π × 4π×10⁻⁷ × 2²) = 1×10⁻⁴ / 6.32×10⁻⁵ ≒ 1.58 A/m。係数 1/(4πμ₀) = 10⁷/(16π²) ≒ 6.33×10⁴ を覚えておくと速い",
+        "③ もう1極も同じ大きさ：S極は m の符号が違うだけで絶対値も距離も同じ ⇒ H_C も 1.58 A/m。ここまでは掛け算1回で済む",
+        "④ 向きを決める（本問の山）：N極の磁界は極から離れる向き＝B→A、S極の磁界は極へ向かう向き＝A→C。正三角形の内角は 60° だが、片方が湧き出し・片方が吸い込みなので2ベクトルのなす角は 180°−60° = 120°",
+        "⑤ 120° の合成：大きさの等しい2ベクトルなら |H| = 2H cos(120°/2) = 2H cos60° = H。つまり合成も 1.58 A/m。図のように頭と尾をつなぐと3辺の等しい正三角形になる、と見ても同じ",
+        "⑥ 答えと検算：H ≒ 1.58 A/m ＝ ④。向きは B→C（N→S）で棒磁石と平行 — 磁力線が N から出て S に入る描像と一致する",
+      ]}
+    />
+    <ExamAnswer
+      correct="④ 1.58"
+      explanations={[
+        { choice: "①", mark: "×", reason: "「＋m と −m だから打ち消して 0」とした誤り。打ち消すのは2ベクトルが正反対（180°）のときで、本問は 120° なので消えない。0 になるのは点 A が BC の垂直二等分線上かつ両極が同符号のような特殊配置に限る" },
+        { choice: "②", mark: "×", reason: "1.58 のちょうど半分。1極分を出した後に「対称だから半分」など、根拠のない係数を掛けた値。合成の係数は 2cos(θ/2) であって 1/2 ではない" },
+        { choice: "③", mark: "×", reason: "1.58 と 3.16 の間に置かれた撹乱肢。導出過程が対応する自然な誤りは無く、係数の取り違えで着地しやすい値" },
+        { choice: "④", mark: "○", reason: "正解。H_B = H_C = 1×10⁻⁴/(4π×4π×10⁻⁷×2²) ≒ 1.58 A/m で、なす角 120° の合成は 2H cos60° = H ＝ 1.58 A/m。向きは N→S で棒磁石に平行" },
+        { choice: "⑤", mark: "×", reason: "1.58 の2倍＝本問最大の罠。向きを見ずに「2極あるから2倍」とした値。2倍になるのは2ベクトルが同じ向き（0°）のときだけ" },
+      ]}
+    />
+    <Callout variant="warn" title="本問の急所（5項目）">
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.8 }}>
+        <li><strong>H = I/(2πr) を使ってしまう</strong>：棒磁石に電流は流れていない。<strong>問題文に I [A] が無い＝電流の公式は候補外</strong>という判定を最初に済ませる。使うのは <Eq tex="H = m/(4\pi\mu_0 r^2)" inline /></li>
+        <li><strong>単純に2倍する</strong>：⑤ 3.16 に直行する。磁界はベクトルなので、必ず向きを図に描いてから合成する</li>
+        <li><strong>なす角を 60° と誤る</strong>：正三角形の内角は 60° だが、<strong>一方が湧き出し・他方が吸い込み</strong>なので開くのは 120°。もし両端が同符号（両方 N極）なら 60° で合成は <Eq tex="2H\cos 30^\circ = \sqrt{3}H \fallingdotseq 2.74" inline /> になる（本問の選択肢には無い）</li>
+        <li><strong>μ₀ を分母に入れ忘れる</strong>：電界の <Eq tex="E = Q/(4\pi\varepsilon_0 r^2)" inline /> と同型で、<strong>ε₀ の位置に μ₀ が入る</strong>。<Eq tex="4\pi\mu_0 = 4\pi \times 4\pi\times10^{-7}" inline /> と 4π が二重に出るのが躓きどころ</li>
+        <li><strong>距離を磁石の長さと混同する</strong>：使う r は<strong>各磁極から点 A まで</strong>の 2 m（＝正三角形の辺）。棒磁石の長さ 2 m と数値が同じなので、たまたま一致しているだけだと意識しておく</li>
+      </ol>
+      <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 8, marginBottom: 0 }}>※ 各選択肢と誤りの対応は誤答値から逆算した推定であり、公表された出題意図ではない。</p>
+    </Callout>
+
+    <h2 id="z-3conditions"><span className="h-num">6</span>3条件即答チェック（限界的練習ゾーン）</h2>
     <SectionCheck pageId="electromagnetic-force" sectionId="z-3conditions" />
     <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginBottom: "10px" }}>
       「解ける／解けない」の境界を強制発火させる練習。<strong>B=1 T・I=10 A・L=0.5 m 固定 × θ 3条件（30° / 60° / 90°）</strong>で F を即答し、典型誤答3択でセルフ判定。<strong>3条件すべて正答できれば B 問題対応 OK</strong> の目安。
@@ -12839,7 +12961,7 @@ const ElectromagneticForceLearnTab = ({ onNav, switchTab }) => (
       <p><strong>3条件すべて即答できた</strong> ⇒ B 問題（電磁力＋誘導起電力連鎖）でも止まらない。<strong>1問でも誤答</strong> ⇒ <a href="#" onClick={(e) => { e.preventDefault(); switchTab('explain'); }} style={{ textDecoration: "underline" }}>解説タブ 3〜4節 フレミングと4視点</a>で復習。</p>
     </Callout>
 
-    <h2 id="kakomon"><span className="h-num">6</span>出題実績（H18〜R07上期）</h2>
+    <h2 id="kakomon"><span className="h-num">7</span>出題実績（H18〜R07上期）</h2>
     <SectionCheck pageId="electromagnetic-force" sectionId="kakomon" />
     <p style={{ fontSize: "12px", color: "var(--ink-soft)" }}>
       出典: 電験王3（denken-ou.com）H18〜R07上期。電磁気（磁気）から電磁力・電磁誘導・平行導体の力に関する問題を抽出。磁気回路は <a href="#" onClick={(e) => { e.preventDefault(); onNav('magnetic-circuit'); }} style={{ textDecoration: "underline" }}>magnetic-circuit</a>、インダクタンスは <a href="#" onClick={(e) => { e.preventDefault(); onNav('inductance'); }} style={{ textDecoration: "underline" }}>inductance</a> を参照。
@@ -12858,7 +12980,7 @@ const ElectromagneticForceLearnTab = ({ onNav, switchTab }) => (
         <tr><td>R03</td><td>問4</td><td>計算</td><td>コイルと磁石を用いた電磁誘導</td><td>✅ 本ページ完結（解説タブ 5節）</td></tr>
         <tr><td>R02</td><td>問3</td><td>計算</td><td>磁界が電流ループに及ぼす電磁力</td><td>✅ 本ページ完結（公式タブ 1節 F=BIL）</td></tr>
         <tr><td>R01</td><td>問4</td><td>計算</td><td>環状ソレノイド内の磁界</td><td>✅ 本ページ完結（公式タブ 2節 H=NI/l）</td></tr>
-        <tr><td>H30</td><td>問3</td><td>計算</td><td>棒磁石の両端を点磁荷とみなした点の磁界（磁気のクーロン）</td><td>❌ 捨て候補（14年1回・H=m/(4πμ₀r²) の点磁荷重ね合わせ）</td></tr>
+        <tr><td>H30</td><td>問3</td><td>計算</td><td>棒磁石の両端を点磁荷とみなした点の磁界（磁気のクーロン）</td><td>✅ 本ページ完結（セクション5 解法カード）</td></tr>
         <tr><td>H30</td><td>問4</td><td>論説</td><td>円形導体ループ電流による磁界の強さ</td><td>✅ 本ページ完結（公式タブ 2節 H=NI/(2r)）</td></tr>
         <tr><td>H27</td><td>問5</td><td>計算</td><td>誘導起電力</td><td>✅ 本ページ完結（公式タブ 1節 e=BLv）</td></tr>
         <tr><td>H26</td><td>問4</td><td>計算</td><td>アンペアの周回積分の法則</td><td>✅ 本ページ完結（解説タブ 6節）</td></tr>
@@ -12876,7 +12998,7 @@ const ElectromagneticForceLearnTab = ({ onNav, switchTab }) => (
       → 出題頻度: ★★★★（毎年度1〜2問、問3・問4から出題）
     </p>
 
-    <h2 id="related"><span className="h-num">7</span>関連項目</h2>
+    <h2 id="related"><span className="h-num">8</span>関連項目</h2>
     <SectionCheck pageId="electromagnetic-force" sectionId="related" />
     <ul>
       <li><a href="#" onClick={(e) => { e.preventDefault(); onNav('coulomb-field'); }} style={{ textDecoration: "underline" }}>1.1 静電気・クーロンの法則</a>：電界 E[V/m] の概念（電磁力の対：磁界 H[A/m] と双対）</li>
@@ -12886,7 +13008,7 @@ const ElectromagneticForceLearnTab = ({ onNav, switchTab }) => (
       <li><a href="#" onClick={(e) => { e.preventDefault(); onNav('ac-basics'); }} style={{ textDecoration: "underline" }}>2.2 交流の基礎</a>：誘導リアクタンス X_L=ωL（インダクタンス＋交流）の前提</li>
     </ul>
 
-    <h2 id="act-summary"><span className="h-num">8</span>🔄 弱点セクション再読</h2>
+    <h2 id="act-summary"><span className="h-num">9</span>🔄 弱点セクション再読</h2>
     <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
       △ / × / 未 のセクションを優先して再読しよう。
     </p>
@@ -12897,9 +13019,10 @@ const ElectromagneticForceLearnTab = ({ onNav, switchTab }) => (
         { id: "examples", label: "2. 基本例題（F = BIL の典型）" },
         { id: "r06s-q4", label: "3. R06下 問4 解法カード（平行導体方向）" },
         { id: "r06j-q4", label: "4. R06上 問4 解法カード（合成磁界ゼロ）" },
-        { id: "z-3conditions", label: "5. 3条件即答チェック（限界練習）" },
-        { id: "kakomon", label: "6. 出題実績" },
-        { id: "related", label: "7. 関連項目" },
+        { id: "h30-q3", label: "5. H30 問3 解法カード（棒磁石・点磁荷ペア）" },
+        { id: "z-3conditions", label: "6. 3条件即答チェック（限界練習）" },
+        { id: "kakomon", label: "7. 出題実績" },
+        { id: "related", label: "8. 関連項目" },
       ]}
       onJump={(id) => {
         location.hash = 'electromagnetic-force:learn';
