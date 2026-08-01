@@ -11993,6 +11993,85 @@ const ElectromagneticForceLayers = () => (
   </>
 );
 
+// フレミング指対応の3秒ドリル。
+// 学習記録(records.json)で、フレミングの指対応は4回連続で未定着（直近は ng
+// 「力なのに右手を使用」・error_tag=概念不理解）。これは空間把握でなく“ペア連合の想起”の失敗なので、
+// 図や対話シミュレータでは直らない（可視化の射程外）。短い想起の反復だけが効く。
+const FLEMING_DRILL = [
+  { q: "左手（モーター）の親指は何を指す？", c: ["力 F", "動き v", "磁界 B"], a: 0, why: "左＝力。親指が「出力（力）」" },
+  { q: "右手（発電機）の親指は何を指す？", c: ["力 F", "動き v", "電流 I"], a: 1, why: "右＝発電。親指が「入力（動かす）」" },
+  { q: "左手の人差し指は？", c: ["電流 I", "磁界 B", "力 F"], a: 1, why: "人差し指は左右とも磁界 B（共通）" },
+  { q: "右手の人差し指は？", c: ["磁界 B", "起電力 e", "動き v"], a: 0, why: "人差し指は左右とも磁界 B（共通）" },
+  { q: "左手の中指は？", c: ["起電力 e", "電流 I", "力 F"], a: 1, why: "左手は電流 I を与えて力を得る" },
+  { q: "右手の中指は？", c: ["起電力 e", "電流 I（与える）", "力 F"], a: 0, why: "右手は起電力 e が出てくる側" },
+  { q: "モーター（電気→運動）はどちらの手？", c: ["左手", "右手"], a: 0, why: "左＝モーター・力" },
+  { q: "発電機（運動→電気）はどちらの手？", c: ["左手", "右手"], a: 1, why: "右＝発電機・起電力" },
+  { q: "「導体が受ける力の向き」を聞かれた。どちらの手？", c: ["左手", "右手"], a: 0, why: "力を問われたら左手。ここが最頻の取り違え" },
+  { q: "「動かしたときに生じる起電力の向き」を聞かれた。どちらの手？", c: ["左手", "右手"], a: 1, why: "起電力を問われたら右手" },
+];
+
+const FlemingFingerDrill = () => {
+  const [i, setI] = useState(0);
+  const [picked, setPicked] = useState(null);
+  const [score, setScore] = useState({ ok: 0, n: 0 });
+  const item = FLEMING_DRILL[i];
+  const done = picked !== null;
+  const correct = picked === item.a;
+
+  const pick = (k) => {
+    if (done) return;
+    setPicked(k);
+    setScore(s => ({ ok: s.ok + (k === item.a ? 1 : 0), n: s.n + 1 }));
+  };
+  const next = () => {
+    setPicked(null);
+    setI(prev => {
+      let k = prev;
+      while (k === prev && FLEMING_DRILL.length > 1) k = Math.floor(Math.random() * FLEMING_DRILL.length);
+      return k;
+    });
+  };
+
+  return (
+    <div style={{ margin: "14px 0", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 8, padding: "14px 16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent-ink)" }}>⏱ 3秒ドリル — 指と量の対応</span>
+        <span style={{ fontSize: 12, color: "var(--ink-soft)", fontFamily: "var(--font-mono)" }}>{score.n > 0 && `${score.ok} / ${score.n} 正解`}</span>
+      </div>
+      <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "0 0 10px" }}>
+        表を見ずに<strong>3秒で</strong>答える。ここは理解ではなく<strong>想起の速さ</strong>を作る場所（表を読み直すと定着しない）。
+      </p>
+      <p style={{ fontSize: 14, fontWeight: 700, margin: "0 0 10px" }}>{item.q}</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {item.c.map((c, k) => {
+          const isAns = k === item.a;
+          const bg = !done ? "var(--bg)" : (isAns ? "var(--ok-soft)" : (k === picked ? "var(--danger-soft)" : "var(--bg)"));
+          const bd = !done ? "var(--rule)" : (isAns ? "var(--ok)" : (k === picked ? "var(--danger)" : "var(--rule)"));
+          return (
+            <button key={k} type="button" onClick={() => pick(k)} disabled={done}
+              style={{ padding: "8px 14px", fontSize: 13, borderRadius: 6, border: `1.5px solid ${bd}`, background: bg, color: "var(--ink)", cursor: done ? "default" : "pointer", fontWeight: done && isAns ? 700 : 400 }}>
+              {done && isAns ? "○ " : (done && k === picked ? "✗ " : "")}{c}
+            </button>
+          );
+        })}
+      </div>
+      {done && (
+        <div style={{ marginTop: 10, fontSize: 12.5 }}>
+          <span style={{ color: correct ? "var(--ok)" : "var(--danger)", fontWeight: 700 }}>{correct ? "○ 正解" : "✗ 不正解"}</span>
+          <span style={{ color: "var(--ink-soft)" }}>　{item.why}</span>
+          <div style={{ marginTop: 8 }}>
+            <button type="button" onClick={next}
+              style={{ padding: "6px 14px", fontSize: 12.5, fontWeight: 700, borderRadius: 6, border: "none", background: "var(--accent)", color: "var(--bg)", cursor: "pointer" }}>
+              次の1問
+            </button>
+            {!correct && <span style={{ marginLeft: 10, fontSize: 12, color: "var(--ink-mute)" }}>間違えた項目は、下の対応表で1行だけ確認してすぐ次へ</span>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
   <>
     <ElectromagneticForceLayers />
@@ -12058,6 +12137,104 @@ const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
         },
       ]}
     />
+
+    <figure id="formula-scenes" style={{ margin: "16px 0", background: "var(--bg-elev)", borderRadius: 8, padding: "12px 8px 8px" }}>
+      <svg viewBox="0 0 720 500" role="img" aria-label="レイヤーA の4公式が、それぞれどんな場面の式かを4コマで対比した図。①は磁界中の導体に電流を流して力を得る場面でF=BILsinθ、②は同じ磁界中で導体を速度vで動かして起電力を得る場面でe=BLvsinθ、③は導体は動かさずコイルを貫く磁束が時間変化する場面でe=マイナスNdΦdt、④は導線ではなく荷電粒子1個が磁界中を運動する場面でF=qvBsinθ。①②④の磁界はいずれも紙面の奥向きで共通" style={{ display: "block", width: "100%", height: "auto", maxWidth: "720px", margin: "0 auto" }}>
+        <defs>
+          <marker id="efScInk" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 z" fill="var(--ink)" />
+          </marker>
+          <marker id="efScWarn" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 z" fill="var(--warn)" />
+          </marker>
+          <marker id="efScOk" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 z" fill="var(--ok)" />
+          </marker>
+          <marker id="efScAcc" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 z" fill="var(--accent)" />
+          </marker>
+        </defs>
+
+        <text x="360" y="20" textAnchor="middle" fontSize="11.5" fill="var(--ink-mute)">⊗ ＝ 磁界 B が<tspan fontWeight="700">紙面の奥</tspan>を向いている印（①②④は同じ磁界の中の話・③だけ磁束そのものが変化する）</text>
+
+        {/* ⊗（磁界 B が奥向き）＝ ①②④ で共通 */}
+        {[[70, 104], [115, 104], [245, 104], [290, 104], [70, 160], [115, 160], [245, 160], [290, 160],
+          [420, 104], [465, 104], [620, 104], [665, 104], [420, 160], [465, 160], [620, 160], [665, 160],
+          [425, 336], [470, 336], [610, 336], [655, 336], [425, 400], [470, 400], [610, 400], [655, 400]].map(([cx, cy], i) => (
+          <g key={i} stroke="var(--ink-mute)" strokeWidth="1.3">
+            <circle cx={cx} cy={cy} r="6" fill="none" />
+            <line x1={cx - 4.2} y1={cy - 4.2} x2={cx + 4.2} y2={cy + 4.2} />
+            <line x1={cx + 4.2} y1={cy - 4.2} x2={cx - 4.2} y2={cy + 4.2} />
+          </g>
+        ))}
+
+        {/* ===== ① F = BIL ===== */}
+        <text x="180" y="52" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">① 磁界の中の導体に電流を流す</text>
+        <text x="180" y="70" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">合図：「電流 I を流したとき導体が受ける力は」</text>
+        <line x1="40" y1="132" x2="316" y2="132" stroke="var(--ink)" strokeWidth="3" markerEnd="url(#efScInk)" />
+        <text x="330" y="128" fontSize="11.5" fontWeight="700" fill="var(--ink)">I</text>
+        <line x1="180" y1="128" x2="180" y2="94" stroke="var(--warn)" strokeWidth="2.6" markerEnd="url(#efScWarn)" />
+        <text x="194" y="100" fontSize="11.5" fontWeight="700" fill="var(--warn)">F（力）</text>
+        <text x="180" y="148" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">導体 長さ L</text>
+        <text x="180" y="194" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">電流を<tspan fontWeight="700">与える</tspan> → 力が出る（モータ）</text>
+        <text x="180" y="220" textAnchor="middle" fontSize="13.5" fontWeight="700" fill="var(--accent-ink)">F = BIL sinθ</text>
+        <text x="180" y="240" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">θ ＝ B と I のなす角／向き＝<tspan fontWeight="700">左手</tspan></text>
+
+        {/* ===== ② e = BLv ===== */}
+        <text x="540" y="52" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">② 同じ磁界の中で導体を動かす</text>
+        <text x="540" y="70" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">合図：「導体を速度 v で動かしたときの起電力は」</text>
+        <line x1="540" y1="96" x2="540" y2="168" stroke="var(--ink)" strokeWidth="3" />
+        <text x="530" y="100" textAnchor="end" fontSize="12" fontWeight="700" fill="var(--danger)">＋</text>
+        <text x="530" y="172" textAnchor="end" fontSize="12" fontWeight="700" fill="var(--ink-soft)">－</text>
+        <line x1="552" y1="132" x2="600" y2="132" stroke="var(--ok)" strokeWidth="2.6" markerEnd="url(#efScOk)" />
+        <text x="576" y="124" textAnchor="middle" fontSize="11.5" fontWeight="700" fill="var(--ok)">v</text>
+        <text x="552" y="164" fontSize="11" fill="var(--ink-soft)">導体 長さ L</text>
+        <text x="540" y="194" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">運動を<tspan fontWeight="700">与える</tspan> → 起電力が出る（発電機）</text>
+        <text x="540" y="220" textAnchor="middle" fontSize="13.5" fontWeight="700" fill="var(--accent-ink)">e = BLv sinθ</text>
+        <text x="540" y="240" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">θ ＝ v と B のなす角／向き＝<tspan fontWeight="700">右手</tspan></text>
+
+        {/* ===== ③ e = −N dΦ/dt ===== */}
+        <text x="180" y="286" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">③ 導体は動かさず、貫く磁束が変わる</text>
+        <text x="180" y="304" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">合図：「磁石を近づける」「Φ が Δt で ΔΦ 変化」</text>
+        <rect x="88" y="344" width="35" height="28" fill="var(--ink-mute)" opacity="0.18" stroke="var(--ink-soft)" strokeWidth="1.2" />
+        <rect x="123" y="344" width="35" height="28" fill="var(--danger)" opacity="0.18" stroke="var(--ink-soft)" strokeWidth="1.2" />
+        <text x="105" y="364" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">S</text>
+        <text x="140" y="364" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">N</text>
+        <line x1="100" y1="388" x2="158" y2="388" stroke="var(--ok)" strokeWidth="2.4" markerEnd="url(#efScOk)" />
+        <text x="129" y="404" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ok)">近づける</text>
+        {[200, 222, 244, 266].map((cx, i) => (
+          <ellipse key={i} cx={cx} cy="358" rx="7" ry="26" fill="none" stroke="var(--ink)" strokeWidth="1.7" opacity="0.6" />
+        ))}
+        <line x1="166" y1="358" x2="298" y2="358" stroke="var(--accent)" strokeWidth="2" strokeDasharray="5 3" markerEnd="url(#efScAcc)" />
+        <text x="306" y="354" fontSize="12" fontWeight="700" fill="var(--accent-ink)">Φ</text>
+        <text x="233" y="404" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">コイル N 回巻き</text>
+        <text x="180" y="428" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--danger)">導体は動いていない → 右手則は使えない</text>
+        <text x="180" y="454" textAnchor="middle" fontSize="13.5" fontWeight="700" fill="var(--accent-ink)">e = −N dΦ/dt</text>
+        <text x="180" y="474" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">向き＝<tspan fontWeight="700">レンツ</tspan>（変化を打ち消す側）</text>
+
+        {/* ===== ④ F = qvB ===== */}
+        <text x="540" y="286" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">④ 導線ではなく荷電粒子1個</text>
+        <text x="540" y="304" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">合図：「電子（電荷 q）が磁界中を速度 v で」</text>
+        <circle cx="500" cy="370" r="10" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1.8" />
+        <text x="500" y="374" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">+q</text>
+        <line x1="514" y1="370" x2="576" y2="370" stroke="var(--ok)" strokeWidth="2.6" markerEnd="url(#efScOk)" />
+        <text x="545" y="362" textAnchor="middle" fontSize="11.5" fontWeight="700" fill="var(--ok)">v</text>
+        <line x1="500" y1="357" x2="500" y2="325" stroke="var(--warn)" strokeWidth="2.6" markerEnd="url(#efScWarn)" />
+        <text x="512" y="332" fontSize="11.5" fontWeight="700" fill="var(--warn)">F</text>
+        <text x="540" y="428" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">電荷1個で見た力（束ねると ① の F=BIL）</text>
+        <text x="540" y="454" textAnchor="middle" fontSize="13.5" fontWeight="700" fill="var(--accent-ink)">F = qvB sinθ</text>
+        <text x="540" y="474" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">電子（q&lt;0）なら F は<tspan fontWeight="700">逆向き</tspan></text>
+
+        <line x1="360" y1="34" x2="360" y2="488" stroke="var(--rule)" strokeWidth="1" strokeDasharray="4 4" />
+        <line x1="16" y1="262" x2="704" y2="262" stroke="var(--rule)" strokeWidth="1" strokeDasharray="4 4" />
+      </svg>
+      <figcaption style={{ fontSize: "12.5px", color: "var(--ink-mute)", marginTop: 8, lineHeight: 1.6 }}>
+        図：<strong>4公式は「何が与えられている場面か」で選ぶ</strong>。① と ② は<strong>まったく同じ配置の裏返し</strong>で、電流を与えて力を取り出すのが ①（モータ・左手）、運動を与えて起電力を取り出すのが ②（発電機・右手）。<br />
+        <strong>最頻出の分かれ道は ② と ③</strong>：どちらも「起電力」だが、<strong>導体そのものが磁界を横切って動く</strong>なら e = BLv（右手で向きが決まる）、<strong>導体は止まっていてコイルを貫く磁束が時間変化する</strong>なら e = −N dΦ/dt（右手は使えず、レンツの法則で向きを決める）。問題文が「動かす」なのか「磁石を近づける／電流を変化させる」なのかが判別語になる。<br />
+        ④ は ① を電荷1個まで分解したもので、<strong>導線が出てこない（真空中の電子・イオン）ときはこちら</strong>。電子は q&lt;0 なので、同じ速度でも力の向きは正電荷と逆になる。<br />
+        <strong>sinθ の θ は式ごとに相手が違う</strong>：① は B と I のなす角、② と ④ は v と B のなす角。いずれも<strong>平行（θ=0）なら力・起電力はゼロ</strong>、<strong>直交（θ=90°）で最大</strong>。向きの決め方そのものは<strong>次のセクション3（フレミング左右手）</strong>と<strong>解説タブのレンツの法則</strong>で扱う。
+      </figcaption>
+    </figure>
 
     <h2 id="formulas-b"><span className="h-num">2</span>形状別磁界・応用公式</h2>
     <SectionCheck pageId="electromagnetic-force" sectionId="formulas-b" />
@@ -12179,6 +12356,7 @@ const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
     </figure>
 
     <h2 id="fleming-table"><span className="h-num">3</span>フレミング左手 vs 右手（指の対応表）</h2>
+    <FlemingFingerDrill />
     <table className="data-table">
       <thead>
         <tr><th>指</th><th>左手（モーター）</th><th>右手（発電機）</th></tr>
@@ -12280,6 +12458,210 @@ const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
 );
 
 /* 解説タブ */
+// 磁界領域を横切るコイル：Φ・運動起電力・レンツ則の予測ゲート付きシミュレータ
+// 誤モデル: ①磁界の中を動けば必ず起電力 ②Φが大きいほど e が大きい
+//           ③レンツのマイナス＝誘導電流は常に B と逆向き
+// e=BLv と e=-NdΦ/dt が「別現象」でなく同じ現象の別表現であることも数値で接続する。
+const CoilCrossingFieldSim = () => {
+  const [xc, setXc] = useState(-0.15);   // コイル左端 [m]
+  const [v, setV] = useState(0.5);       // 速度 [m/s]（+は右）
+  const [B, setB] = useState(0.5);       // 磁束密度 [T]
+  const [N, setN] = useState(10);        // 巻数
+  const [predE, setPredE] = useState(null);
+  const [predDir, setPredDir] = useState(null);
+  const [revealed, setRevealed] = useState(false);
+
+  const W = 0.20, H = 0.20, R = 0.50;    // コイル幅・高さ・磁界領域幅（固定）
+  const ov = Math.max(0, Math.min(xc + W, R) - Math.max(xc, 0));   // 重なり幅 a(x)
+  const phi = B * H * ov;                 // 1巻きあたり Φ = B・(重なり面積)
+  // da/dx: 進入中 +1／完全内部 0／退出中 -1／領域外 0
+  const dadx = (xc < 0 && xc + W > 0) ? 1 : ((xc < R && xc + W > R) ? -1 : 0);
+  const dphidt = B * H * dadx * v;        // dΦ/dt
+  const emf = -N * dphidt;                // e = -N dΦ/dt
+  const blv = B * H * Math.abs(v);        // 片側導体1本の BLv（L=コイル高さ）
+
+  const state = ov === 0 ? "out" : (dadx === 0 ? "in" : (dadx > 0 ? "enter" : "exit"));
+  const stateLabel = { out: "磁界の外", enter: "進入中", in: "完全に内部", exit: "退出中" }[state];
+  // 磁界は奥向き(⊗)。奥向きの Φ が増える→打ち消すため反時計回り／減る→維持のため時計回り
+  const cur = Math.abs(dphidt) < 1e-12 ? "zero" : (dphidt > 0 ? "ccw" : "cw");
+  const curLabel = { zero: "流れない", ccw: "反時計回り", cw: "時計回り" }[cur];
+
+  // 画面座標（物理 x: -0.25..0.75 → 30..350）
+  const sx = (x) => 30 + ((x + 0.25) / 1.0) * 320;
+  const AY = 108, CH = 54;                 // コイル中心線・コイル高さ(px)
+
+  const Slider = ({ label, value, min, max, step, unit, onChange }) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+        <span style={{ color: "var(--ink-soft)" }}>{label}</span>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-ink)" }}>{value}{unit}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={value} aria-label={label}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ width: "100%", accentColor: "var(--accent)", cursor: "pointer" }} />
+    </div>
+  );
+
+  const PBtn = ({ val, cur: c, set, children }) => (
+    <button type="button" onClick={() => set(val)} aria-pressed={c === val}
+      style={{
+        padding: "6px 10px", fontSize: 12.5, borderRadius: 6, cursor: "pointer",
+        border: c === val ? "2px solid var(--accent)" : "1px solid var(--rule)",
+        background: c === val ? "var(--accent-soft)" : "var(--bg)",
+        color: c === val ? "var(--accent-ink)" : "var(--ink)", fontWeight: c === val ? 700 : 400,
+      }}>{children}</button>
+  );
+
+  const eOK = predE === "zero";        // 正解：完全内部では e=0
+  const dOK = predDir === "opposite";  // 正解：進入と退出で逆向き
+
+  // Φ-x グラフ（台形）の頂点
+  const GY0 = 214, GH = 34;
+  const gp = [[-0.25, 0], [-0.20, 0], [0, 0], [W, 1], [R - W, 1], [R, 0], [0.75, 0]]
+    .map(([x, f]) => `${sx(x)},${GY0 - f * GH}`).join(" ");
+
+  return (
+    <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "14px 16px", border: "1px solid var(--rule)" }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--accent-ink)", marginBottom: 4 }}>
+        ▶ 予測してから動かす — <span style={{ fontFamily: "var(--font-mono)" }}>e = −N dΦ/dt</span>
+      </div>
+      <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "0 0 12px" }}>
+        奥向きの一様磁界の「帯」を、コイルが左から右へ通り抜ける。<strong>先に予測してから</strong>動かすこと。
+      </p>
+
+      {!revealed && (
+        <div style={{ background: "var(--accent-soft)", borderRadius: 6, padding: "12px 14px", marginBottom: 12 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--accent-ink)", marginBottom: 8 }}>
+            予測① コイルが<strong>完全に磁界の中</strong>に入った状態で動かし続けると、起電力は？
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+            <PBtn val="zero" cur={predE} set={setPredE}>ゼロになる</PBtn>
+            <PBtn val="max" cur={predE} set={setPredE}>最大になる</PBtn>
+            <PBtn val="prop" cur={predE} set={setPredE}>Φ に比例する</PBtn>
+          </div>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--accent-ink)", marginBottom: 8 }}>
+            予測② <strong>進入中と退出中</strong>で、誘導電流の向きは？
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+            <PBtn val="same" cur={predDir} set={setPredDir}>同じ向き</PBtn>
+            <PBtn val="opposite" cur={predDir} set={setPredDir}>逆向き</PBtn>
+            <PBtn val="bdep" cur={predDir} set={setPredDir}>磁界の向きで決まる</PBtn>
+          </div>
+          <button type="button" disabled={!predE || !predDir} onClick={() => setRevealed(true)}
+            style={{
+              padding: "8px 16px", fontSize: 13, fontWeight: 700, borderRadius: 6, border: "none",
+              cursor: (!predE || !predDir) ? "not-allowed" : "pointer",
+              background: (!predE || !predDir) ? "var(--rule)" : "var(--accent)",
+              color: (!predE || !predDir) ? "var(--ink-mute)" : "var(--bg)",
+            }}>答え合わせして動かす</button>
+          <button type="button" onClick={() => { setPredE("zero"); setPredDir("opposite"); setRevealed(true); }}
+            style={{ marginLeft: 12, fontSize: 11.5, background: "none", border: "none", color: "var(--ink-mute)", textDecoration: "underline", cursor: "pointer" }}>予測をとばす</button>
+        </div>
+      )}
+
+      {revealed && (
+        <div style={{ background: (eOK && dOK) ? "var(--ok-soft)" : "var(--warn-soft)", border: "1px solid var(--rule)", borderRadius: 6, padding: "10px 12px", marginBottom: 12, fontSize: 12.5 }}>
+          <div style={{ marginBottom: 4 }}>
+            <strong style={{ color: eOK ? "var(--ok)" : "var(--danger)" }}>{eOK ? "○" : "✗"} 予測①</strong>：正解は<strong>ゼロになる</strong>
+            {!eOK && <span style={{ color: "var(--ink-soft)" }}>（誤モデル：<strong>磁束があれば起電力／Φ が大きいほど e が大きい</strong>。起電力を作るのは Φ ではなく Φ の<strong>変化</strong>）</span>}
+          </div>
+          <div>
+            <strong style={{ color: dOK ? "var(--ok)" : "var(--danger)" }}>{dOK ? "○" : "✗"} 予測②</strong>：正解は<strong>逆向き</strong>
+            {!dOK && <span style={{ color: "var(--ink-soft)" }}>（誤モデル：<strong>レンツのマイナス＝常に B と逆向き</strong>。決めるのは B の向きではなく Φ が<strong>増えているか減っているか</strong>）</span>}
+          </div>
+          {(!eOK || !dOK) && <div style={{ marginTop: 6, color: "var(--ink-soft)" }}>外した項目は、このセクションの自己評価で <strong>△（要確認）</strong> を押して弱点に残すこと。</div>}
+        </div>
+      )}
+
+      <svg viewBox="0 0 380 240" role="img"
+        aria-label="奥向き一様磁界の帯を矩形コイルが左から右へ横切る図。コイルと磁界領域の重なり面積、誘導電流の回転向き、そして下部に位置に対する磁束の台形グラフを表示する"
+        style={{ display: "block", width: "100%", height: "auto", maxWidth: "520px", margin: "0 auto", background: "var(--bg)", border: "1px dashed var(--rule)", borderRadius: 6 }}>
+        <defs>
+          <marker id="ccArr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--ok)" /></marker>
+        </defs>
+        <text x="190" y="16" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">⊗ ＝ 磁界 B は紙面の奥向き（帯の中だけ・外はゼロ）</text>
+
+        {/* 磁界の帯 */}
+        <rect x={sx(0)} y={AY - CH / 2 - 12} width={sx(R) - sx(0)} height={CH + 24} fill="var(--accent)" opacity="0.08" stroke="var(--accent)" strokeWidth="1" strokeDasharray="4 3" />
+        {[0.07, 0.17, 0.27, 0.37, 0.47].map((x, i) => [AY - 18, AY + 18].map((y, j) => (
+          <g key={`${i}-${j}`} stroke="var(--ink-mute)" strokeWidth="1.2">
+            <circle cx={sx(x)} cy={y} r="5" fill="none" />
+            <line x1={sx(x) - 3.5} y1={y - 3.5} x2={sx(x) + 3.5} y2={y + 3.5} />
+            <line x1={sx(x) + 3.5} y1={y - 3.5} x2={sx(x) - 3.5} y2={y + 3.5} />
+          </g>
+        )))}
+
+        {/* 重なり部分 */}
+        {revealed && ov > 0 && (
+          <rect x={sx(Math.max(xc, 0))} y={AY - CH / 2} width={sx(Math.max(xc, 0) + ov) - sx(Math.max(xc, 0))} height={CH} fill="var(--warn)" opacity="0.22" />
+        )}
+
+        {/* コイル */}
+        <rect x={sx(xc)} y={AY - CH / 2} width={sx(xc + W) - sx(xc)} height={CH} fill="none" stroke="var(--ink)" strokeWidth="2.4" />
+        <text x={sx(xc + W / 2)} y={AY - CH / 2 - 6} textAnchor="middle" fontSize="10.5" fill="var(--ink)">コイル {N} 回巻き</text>
+
+        {/* 速度 */}
+        {v !== 0 && (
+          <g>
+            <line x1={sx(xc + W / 2)} y1={AY + CH / 2 + 16} x2={sx(xc + W / 2) + (v > 0 ? 34 : -34)} y2={AY + CH / 2 + 16} stroke="var(--ok)" strokeWidth="2.6" markerEnd="url(#ccArr)" />
+            <text x={sx(xc + W / 2)} y={AY + CH / 2 + 32} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--ok)">速度 {v} m/s</text>
+          </g>
+        )}
+
+        {/* 誘導電流の向き */}
+        {revealed && (
+          <text x={Math.max(52, Math.min(328, sx(xc + W / 2)))} y={AY - CH / 2 - 20} textAnchor="middle" fontSize="11.5" fontWeight="700" fill={cur === "zero" ? "var(--ink-mute)" : "var(--danger)"}>
+            {cur === "zero" ? "誘導電流 0" : `誘導電流 ${curLabel}`}
+          </text>
+        )}
+
+        {/* Φ-x グラフ */}
+        <text x="30" y={GY0 + 18} fontSize="10" fill="var(--ink-mute)">1巻きあたりの磁束 Φ ─ 傾きがある所だけ起電力が出る</text>
+        <polyline points={gp} fill="none" stroke="var(--accent)" strokeWidth="2" />
+        <line x1="30" y1={GY0} x2="350" y2={GY0} stroke="var(--ink-mute)" strokeWidth="1" />
+        {revealed && (
+          <circle cx={sx(xc)} cy={GY0 - (ov / W) * GH} r="4" fill="var(--warn)" stroke="var(--bg)" strokeWidth="1.5" />
+        )}
+        <text x="352" y={GY0 + 4} fontSize="10" fill="var(--ink-mute)">位置</text>
+      </svg>
+
+      {revealed && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginTop: 14 }}>
+          <Slider label="コイルの位置" value={xc} min={-0.2} max={0.5} step={0.01} unit=" m" onChange={setXc} />
+          <Slider label="速度" value={v} min={-1} max={1} step={0.1} unit=" m/s" onChange={setV} />
+          <Slider label="磁束密度 B" value={B} min={0.1} max={1} step={0.1} unit=" T" onChange={setB} />
+          <Slider label="巻数 N" value={N} min={1} max={50} step={1} unit=" 回" onChange={setN} />
+        </div>
+      )}
+
+      {revealed && (
+        <div role="status" aria-live="polite" style={{ marginTop: 12, fontSize: 12.5, lineHeight: 1.9 }}>
+          <div>状態：<strong>{stateLabel}</strong>／重なり幅 <strong style={{ fontFamily: "var(--font-mono)" }}>{ov.toFixed(2)} m</strong></div>
+          <div>1巻きあたりの磁束 Φ：<strong style={{ fontFamily: "var(--font-mono)" }}>{(phi * 1000).toFixed(2)} mWb</strong>／鎖交磁束 NΦ：<strong style={{ fontFamily: "var(--font-mono)" }}>{(N * phi * 1000).toFixed(1)} mWb</strong></div>
+          <div>Φ の変化率 dΦ/dt：<strong style={{ fontFamily: "var(--font-mono)" }}>{(dphidt * 1000).toFixed(1)} mWb/s</strong></div>
+          <div style={{ borderTop: "1px solid var(--rule)", marginTop: 6, paddingTop: 6 }}>
+            起電力 e ＝ −N dΦ/dt ＝ <strong style={{ fontFamily: "var(--font-mono)", color: "var(--accent-ink)" }}>{emf.toFixed(3)} V</strong>／誘導電流：<strong>{curLabel}</strong>
+          </div>
+          <div style={{ color: "var(--ink-soft)" }}>
+            片側の導体1本で見た BLv ＝ <strong style={{ fontFamily: "var(--font-mono)" }}>{blv.toFixed(3)} V</strong>
+            {state === "enter" || state === "exit"
+              ? <span>　→ <strong>N 倍すると |e| に一致する</strong>（{(N * blv).toFixed(3)} V）。<strong>e=BLv と e=−N dΦ/dt は同じ現象</strong></span>
+              : <span>　→ 今は両側の導体がどちらも磁界の中（または外）なので、一周では打ち消し合って e=0</span>}
+          </div>
+        </div>
+      )}
+
+      <figcaption style={{ fontSize: "12.5px", color: "var(--ink-mute)", marginTop: 12, lineHeight: 1.7 }}>
+        <strong>この図で壊す3つの思い込み。</strong>
+        ① <strong>磁界の中を動けば起電力が出る</strong>——コイルを完全に帯の中へ入れて速度を上げても <strong>e は 0.000 V のまま</strong>。両側の導体が同じ磁界にいるので一周では打ち消し合う。<br />
+        ② <strong>Φ が大きいほど e が大きい</strong>——完全内部が Φ 最大なのに e は最小（ゼロ）。<strong>起電力を作るのは Φ ではなく Φ の変化率</strong>。下のグラフで「傾きがある所だけ e が出る」ことを確認する。<br />
+        ③ <strong>レンツのマイナス＝常に B と逆向き</strong>——B の向きを変えていないのに、<strong>進入中と退出中で誘導電流が反転</strong>する。向きを決めるのは B ではなく「Φ が増えているか減っているか」。<br />
+        <span style={{ fontSize: "12px" }}>※ 磁界の境界が階段状に変わる理想モデル（実機では端部で滑らかに変化する）。接続する過去問：R04上 問4・H27 問5（e=BLv）・H22 問3（起電力から誘導電流を求める連鎖）・R06下 問3（鎖交磁束の変化）・R03 問4（コイルと磁石）。</span>
+      </figcaption>
+    </figure>
+  );
+};
+
 const ElectromagneticForceExplainTab = ({ onNav, switchTab }) => (
   <>
     <ElectromagneticForceSymbolLegend />
@@ -12465,6 +12847,8 @@ const ElectromagneticForceExplainTab = ({ onNav, switchTab }) => (
       </figcaption>
     </figure>
 
+    <CoilCrossingFieldSim />
+
     <h2 id="parallel-conductors"><span className="h-num">6</span>平行導体間の力・形状別磁界の物理</h2>
     <h3>平行導体間の力（R04下問4・R05下問4・H22問4 頻出）</h3>
     <p>
@@ -12584,6 +12968,275 @@ const ElectromagneticForceExplainTab = ({ onNav, switchTab }) => (
 );
 
 /* 学習タブ */
+// 2本の平行導体：合成磁界・零点・導体間力の探針シミュレータ（予測ゲート付き）
+// 誤モデル: ①磁界を大きさだけで足す ②零点は常に中点/常に間 ③観測点の磁界がゼロなら力もゼロ
+const ParallelWireFieldProbe = () => {
+  const [IA, setIA] = useState(1.2);
+  const [IB, setIB] = useState(3.0);
+  const [same, setSame] = useState(false);   // 既定は R06上問4 と同じ「逆方向」
+  const [d, setD] = useState(0.45);
+  const [px, setPx] = useState(-0.30);
+  const [predZone, setPredZone] = useState(null);
+  const [predForce, setPredForce] = useState(null);
+  const [revealed, setRevealed] = useState(false);
+
+  const MU0 = 4 * Math.PI * 1e-7;
+  const s = same ? 1 : -1;                    // B の電流向き（+1: A と同方向）
+
+  // 軸上（2導体を結ぶ直線上）の磁界は必ず ±y。符号付きスカラーで閉じた式になる。
+  const Hy = (x) => IA / (2 * Math.PI * x) + (s * IB) / (2 * Math.PI * (x - d));
+  const HA = IA / (2 * Math.PI * px);
+  const HB = (s * IB) / (2 * Math.PI * (px - d));
+  const Hsum = HA + HB;
+
+  const denom = IA + s * IB;
+  const zeroX = Math.abs(denom) < 1e-9 ? null : (IA * d) / denom;
+  const zeroZone = zeroX === null ? "none" : (zeroX < 0 ? "outA" : (zeroX > d ? "outB" : "between"));
+  const zoneLabel = { between: "2導体の間", outA: "A の外側", outB: "B の外側", none: "存在しない（無限遠）" }[zeroZone];
+  const forceKind = same ? "attract" : "repel";
+  const forceLabel = same ? "吸引（引き合う）" : "反発（押し合う）";
+  const FperL = (MU0 * IA * IB) / (2 * Math.PI * d);   // [N/m]
+
+  const nearWire = Math.abs(px) < 0.03 || Math.abs(px - d) < 0.03;
+
+  // ── 画面座標 ───────────────────────────────────────────────
+  const XL = -0.85, XR = 1.45, SX0 = 26, SX1 = 354, AXY = 150;
+  const sx = (x) => SX0 + ((x - XL) / (XR - XL)) * (SX1 - SX0);
+  const xA = sx(0), xB = sx(d), xP = sx(px);
+  const Hmax = Math.max(Math.abs(HA), Math.abs(HB), Math.abs(Hsum), 1e-9);
+  const alen = (h) => Math.max(6, Math.min(46, (Math.abs(h) / Hmax) * 46));
+  const sumIsZero = Math.abs(Hsum) / Hmax < 0.02;   // 合成ゼロは矢印でなくバッジで示す
+  const fmt = (v) => (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(3));
+
+  const Slider = ({ label, value, min, max, step, unit, onChange, disabled }) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 3, opacity: disabled ? 0.45 : 1 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+        <span style={{ color: "var(--ink-soft)" }}>{label}</span>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-ink)" }}>{value}{unit}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={value} disabled={disabled}
+        aria-label={label}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ width: "100%", accentColor: "var(--accent)", cursor: disabled ? "not-allowed" : "pointer" }} />
+    </div>
+  );
+
+  const PredBtn = ({ group, val, cur, set, children }) => (
+    <button type="button" onClick={() => set(val)}
+      aria-pressed={cur === val}
+      style={{
+        padding: "6px 10px", fontSize: 12.5, borderRadius: 6, cursor: "pointer",
+        border: cur === val ? "2px solid var(--accent)" : "1px solid var(--rule)",
+        background: cur === val ? "var(--accent-soft)" : "var(--bg)",
+        color: cur === val ? "var(--accent-ink)" : "var(--ink)",
+        fontWeight: cur === val ? 700 : 400,
+      }}>{children}</button>
+  );
+
+  // 導体まわりの同心円ガイド（磁界は導体を「囲む円の接線」＝放射状ではない）
+  const guides = (cx) => [17, 31, 45].map((r, i) => (
+    <circle key={i} cx={cx} cy={AXY} r={r} fill="none" stroke="var(--accent)" strokeWidth="1" opacity={0.16} />
+  ));
+
+  const wireGlyph = (cx, out, label) => (
+    <g>
+      <circle cx={cx} cy={AXY} r="9" fill="var(--bg-elev)" stroke="var(--ink)" strokeWidth="2" />
+      {out
+        ? <circle cx={cx} cy={AXY} r="2.6" fill="var(--ink)" />
+        : <g stroke="var(--ink)" strokeWidth="2"><line x1={cx - 5} y1={AXY - 5} x2={cx + 5} y2={AXY + 5} /><line x1={cx + 5} y1={AXY - 5} x2={cx - 5} y2={AXY + 5} /></g>}
+      <text x={cx} y={AXY - 16} textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">{label}</text>
+    </g>
+  );
+
+  // orient="auto" が線の向きに合わせて矢じりを回すので、上向き/下向きで marker を分けない
+  const vArrow = (x, h, color, width, mid) => {
+    if (h === 0 || !isFinite(h)) return null;
+    const L = alen(h);
+    const y2 = h > 0 ? AXY - L : AXY + L;   // h>0 は物理の +y ＝画面の上
+    return <line x1={x} y1={AXY} x2={x} y2={y2} stroke={color} strokeWidth={width} markerEnd={`url(#${mid})`} />;
+  };
+
+  const resetGate = () => { setPredZone(null); setPredForce(null); setRevealed(false); };
+  const flipDir = (v) => { setSame(v); resetGate(); };
+
+  const zoneOK = predZone === zeroZone;
+  const forceOK = predForce === forceKind;
+
+  return (
+    <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "14px 16px", border: "1px solid var(--rule)" }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--accent-ink)", marginBottom: 4 }}>
+        ▶ 予測してから動かす — <span style={{ fontFamily: "var(--font-mono)" }}>H = I/(2πr) の重ね合わせ</span>
+      </div>
+      <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "0 0 12px" }}>
+        初期値は <strong>R06上 問4</strong> と同じ（逆方向・1.2 A と 3 A・間隔 0.45 m）。
+        <strong>先に予測を答えてから</strong>グラフを開くこと（答えを見てから納得しても定着しない）。
+      </p>
+
+      {!revealed && (
+        <div style={{ background: "var(--accent-soft)", borderRadius: 6, padding: "12px 14px", marginBottom: 12 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--accent-ink)", marginBottom: 8 }}>
+            予測① 合成磁界がゼロになる点はどこ？（現在：{same ? "同方向" : "逆方向"}・A={IA} A・B={IB} A）
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+            <PredBtn val="between" cur={predZone} set={setPredZone}>2導体の間</PredBtn>
+            <PredBtn val="outA" cur={predZone} set={setPredZone}>A の外側</PredBtn>
+            <PredBtn val="outB" cur={predZone} set={setPredZone}>B の外側</PredBtn>
+            <PredBtn val="none" cur={predZone} set={setPredZone}>存在しない</PredBtn>
+          </div>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--accent-ink)", marginBottom: 8 }}>
+            予測② 2本の導体に働く力は？
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+            <PredBtn val="attract" cur={predForce} set={setPredForce}>吸引</PredBtn>
+            <PredBtn val="repel" cur={predForce} set={setPredForce}>反発</PredBtn>
+            <PredBtn val="zero" cur={predForce} set={setPredForce}>働かない</PredBtn>
+          </div>
+          <button type="button" disabled={!predZone || !predForce} onClick={() => setRevealed(true)}
+            style={{
+              padding: "8px 16px", fontSize: 13, fontWeight: 700, borderRadius: 6,
+              border: "none", cursor: (!predZone || !predForce) ? "not-allowed" : "pointer",
+              background: (!predZone || !predForce) ? "var(--rule)" : "var(--accent)",
+              color: (!predZone || !predForce) ? "var(--ink-mute)" : "var(--bg)",
+            }}>答え合わせして動かす</button>
+          <button type="button" onClick={() => { setPredZone(zeroZone); setPredForce(forceKind); setRevealed(true); }}
+            style={{ marginLeft: 12, fontSize: 11.5, background: "none", border: "none", color: "var(--ink-mute)", textDecoration: "underline", cursor: "pointer" }}>
+            予測をとばす
+          </button>
+        </div>
+      )}
+
+      {revealed && (
+        <div style={{ background: (zoneOK && forceOK) ? "var(--ok-soft, var(--bg))" : "var(--warn-soft, var(--bg))", border: "1px solid var(--rule)", borderRadius: 6, padding: "10px 12px", marginBottom: 12, fontSize: 12.5 }}>
+          <div style={{ marginBottom: 4 }}>
+            <strong style={{ color: zoneOK ? "var(--ok)" : "var(--danger)" }}>{zoneOK ? "○" : "✗"} 予測①</strong>
+            ：正解は<strong>{zoneLabel}</strong>
+            {!zoneOK && <span style={{ color: "var(--ink-soft)" }}>（誤モデル：<strong>零点は常に中点・常に間にある</strong>）</span>}
+          </div>
+          <div>
+            <strong style={{ color: forceOK ? "var(--ok)" : "var(--danger)" }}>{forceOK ? "○" : "✗"} 予測②</strong>
+            ：正解は<strong>{forceLabel}</strong>
+            {!forceOK && <span style={{ color: "var(--ink-soft)" }}>（誤モデル：<strong>観測点の磁界がゼロなら力もゼロ</strong>／同方向と逆方向の取り違え）</span>}
+          </div>
+          {(!zoneOK || !forceOK) && (
+            <div style={{ marginTop: 6, color: "var(--ink-soft)" }}>
+              外した項目は、このセクションの自己評価で <strong>△（要確認）</strong> を押して弱点に残すこと。
+            </div>
+          )}
+        </div>
+      )}
+
+      <svg viewBox="0 0 380 250" role="img"
+        aria-label="2本の平行導体の断面図。導体AとBを結ぶ直線上に観測点Pがあり、Aが作る磁界・Bが作る磁界・その合成の3本の縦矢印と、合成磁界がゼロになる点、各導体に働く力の矢印を表示する"
+        style={{ display: "block", width: "100%", height: "auto", maxWidth: "520px", margin: "0 auto", background: "var(--bg)", border: "1px dashed var(--rule)", borderRadius: 6 }}>
+        <defs>
+          <marker id="pwAcc" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--accent)" /></marker>
+          <marker id="pwOk" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--ok)" /></marker>
+          <marker id="pwWarn" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--warn)" /></marker>
+          <marker id="pwF" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--warn)" /></marker>
+        </defs>
+
+        {revealed && guides(xA)}
+        {revealed && guides(xB)}
+
+        <line x1="14" y1={AXY} x2="366" y2={AXY} stroke="var(--ink-mute)" strokeWidth="1.2" />
+        {wireGlyph(xA, true, "A")}
+        {wireGlyph(xB, same, "B")}
+
+        {/* 導体間隔 */}
+        <line x1={xA} y1={AXY + 56} x2={xB} y2={AXY + 56} stroke="var(--ink-mute)" strokeWidth="1" />
+        <text x={(xA + xB) / 2} y={AXY + 70} textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">間隔 {d.toFixed(2)} m</text>
+
+        {/* 観測点 P */}
+        <line x1={xP} y1={AXY - 78} x2={xP} y2={AXY + 30} stroke="var(--ink-mute)" strokeWidth="1" strokeDasharray="3 3" />
+        <text x={xP} y={AXY + 42} textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">P</text>
+
+        {revealed && !nearWire && (
+          <g>
+            {vArrow(xP - 13, HA, "var(--accent)", 2.2, "pwAcc")}
+            {vArrow(xP + 13, HB, "var(--ok)", 2.2, "pwOk")}
+            {sumIsZero
+              ? <g>
+                  <circle cx={xP} cy={AXY - 60} r="9" fill="var(--bg-elev)" stroke="var(--warn)" strokeWidth="2" />
+                  <line x1={xP - 5} y1={AXY - 60} x2={xP + 5} y2={AXY - 60} stroke="var(--warn)" strokeWidth="2" />
+                  <text x={xP} y={AXY - 72} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--warn)">合成 0</text>
+                </g>
+              : vArrow(xP, Hsum, "var(--warn)", 3.4, "pwWarn")}
+          </g>
+        )}
+        {revealed && nearWire && (
+          <text x="190" y={AXY - 44} textAnchor="middle" fontSize="11.5" fontWeight="700" fill="var(--danger)">導体に近すぎ（理想線電流では発散）</text>
+        )}
+
+        {/* 合成ゼロ点 */}
+        {revealed && zeroX !== null && zeroX > XL && zeroX < XR && (
+          <g>
+            <polygon points={`${sx(zeroX) - 6},${AXY - 96} ${sx(zeroX) + 6},${AXY - 96} ${sx(zeroX)},${AXY - 86}`} fill="var(--accent-ink)" />
+            <text x={sx(zeroX)} y={AXY - 100} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">合成ゼロ</text>
+          </g>
+        )}
+        {revealed && zeroX === null && (
+          <text x="190" y={AXY - 96} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">合成ゼロ点なし（無限遠へ）</text>
+        )}
+
+        {/* 導体に働く力 */}
+        {revealed && (
+          <g>
+            <line x1={xA} y1={AXY + 18} x2={xA + (forceKind === "attract" ? 20 : -20)} y2={AXY + 18} stroke="var(--warn)" strokeWidth="2.6" markerEnd="url(#pwF)" />
+            <line x1={xB} y1={AXY + 18} x2={xB + (forceKind === "attract" ? -20 : 20)} y2={AXY + 18} stroke="var(--warn)" strokeWidth="2.6" markerEnd="url(#pwF)" />
+            <text x="190" y="238" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--warn)">導体に働く力：{forceLabel}</text>
+          </g>
+        )}
+        <text x="190" y="16" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">薄い円＝導体を囲む磁界の輪。磁界はこの輪の<tspan fontWeight="700">接線</tspan>（放射状ではない）</text>
+        <text x="190" y="31" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">導体の記号：⊙＝電流が紙面の<tspan fontWeight="700">手前</tspan>向き／⊗＝紙面の<tspan fontWeight="700">奥</tspan>向き</text>
+      </svg>
+
+      {revealed && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginTop: 14 }}>
+          <Slider label="A の電流" value={IA} min={0.5} max={5} step={0.1} unit=" A" onChange={setIA} />
+          <Slider label="B の電流" value={IB} min={0.5} max={5} step={0.1} unit=" A" onChange={setIB} />
+          <Slider label="導体の間隔" value={d} min={0.2} max={1.2} step={0.05} unit=" m" onChange={setD} />
+          <Slider label="観測点 P の位置" value={px} min={-0.8} max={1.4} step={0.05} unit=" m" onChange={setPx} />
+        </div>
+      )}
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12, alignItems: "center" }}>
+        <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>B の電流の向き：</span>
+        <PredBtn val={false} cur={same} set={flipDir}>逆方向</PredBtn>
+        <PredBtn val={true} cur={same} set={flipDir}>同方向</PredBtn>
+        {revealed && (
+          <button type="button"
+            onClick={() => { setSame(true); setIA(2.0); setIB(2.0); setD(0.4); setPx(0.2); setPredZone(null); setPredForce(null); setRevealed(false); }}
+            style={{ marginLeft: "auto", fontSize: 11.5, padding: "5px 10px", borderRadius: 6, border: "1px solid var(--warn)", background: "var(--bg)", color: "var(--warn)", fontWeight: 700, cursor: "pointer" }}>
+            ⚡ 中点のワナを試す
+          </button>
+        )}
+      </div>
+
+      {revealed && (
+        <div role="status" aria-live="polite" style={{ marginTop: 12, fontSize: 12.5, lineHeight: 1.9 }}>
+          <div><span style={{ color: "var(--accent)", fontWeight: 700 }}>■</span> A が P に作る磁界：<strong style={{ fontFamily: "var(--font-mono)" }}>{nearWire ? "—" : fmt(Math.abs(HA))} A/m</strong>{!nearWire && <span>（{HA > 0 ? "上向き" : "下向き"}）</span>}</div>
+          <div><span style={{ color: "var(--ok)", fontWeight: 700 }}>■</span> B が P に作る磁界：<strong style={{ fontFamily: "var(--font-mono)" }}>{nearWire ? "—" : fmt(Math.abs(HB))} A/m</strong>{!nearWire && <span>（{HB > 0 ? "上向き" : "下向き"}）</span>}</div>
+          <div><span style={{ color: "var(--warn)", fontWeight: 700 }}>■</span> 合成磁界：<strong style={{ fontFamily: "var(--font-mono)" }}>{nearWire ? "—" : fmt(Math.abs(Hsum))} A/m</strong>{!nearWire && <span>（{sumIsZero ? "ほぼゼロ" : (Hsum > 0 ? "上向き" : "下向き")}）</span>}</div>
+          {nearWire && <div style={{ color: "var(--danger)" }}>観測点が導体に重なっている（理想線電流モデルでは H が発散するため計算しない）</div>}
+          <div style={{ color: "var(--ink-soft)" }}>合成ゼロ点：<strong>{zoneLabel}</strong>{zeroX !== null && <span>（{zeroZone === "outA" ? `A の外側 ${(-zeroX).toFixed(3)} m` : zeroZone === "outB" ? `B の外側 ${(zeroX - d).toFixed(3)} m` : `A から ${zeroX.toFixed(3)} m ／ B から ${(d - zeroX).toFixed(3)} m`}）</span>}</div>
+          <div style={{ color: "var(--ink-soft)" }}>ゼロ点の条件：A の電流 ÷ A までの距離 ＝ B の電流 ÷ B までの距離</div>
+          <div style={{ borderTop: "1px solid var(--rule)", marginTop: 6, paddingTop: 6 }}>
+            導体1 m あたりに働く力：<strong style={{ fontFamily: "var(--font-mono)" }}>{(FperL * 1e6).toFixed(2)} μN/m</strong>（{forceLabel}）
+          </div>
+        </div>
+      )}
+
+      <figcaption style={{ fontSize: "12.5px", color: "var(--ink-mute)", marginTop: 12, lineHeight: 1.7 }}>
+        <strong>この図で壊す3つの思い込み。</strong>
+        ① <strong>磁界は導体から放射状に出る</strong>——薄い円で示したとおり、磁界は導体を<strong>囲む輪の接線</strong>。だから軸上のどこでも上下を向く。<br />
+        ② <strong>合成ゼロ点は中点にある／常に2導体の間にある</strong>——同方向なら間（電流の<strong>小さい側に寄る</strong>）、<strong>逆方向なら外側</strong>（電流の<strong>小さい側の外</strong>）。<strong>どちらも「弱い電流の近く」で釣り合う</strong>（弱い電流でも近づけば強いから）。等しい電流の逆方向ではゼロ点が消える。R06上 問4 の選択肢⑤（1.05）は、逆方向なのに「間」と誤認した人が着地する値。<br />
+        ③ <strong>磁界がゼロなら力もゼロ</strong>——「⚡ 中点のワナ」を押すと、同方向・等電流で P を中点に置いた状態になる。<strong>P の合成磁界はゼロなのに、導体には吸引力が働いている</strong>。力を決めるのは観測点 P の磁界ではなく、<strong>相手の導体が「自分の位置」に作る磁界</strong>だから。<br />
+        <span style={{ fontSize: "12px" }}>※ 無限長・理想線電流のモデル。導体自身の位置では H が発散するため、力の計算には自分の磁界を含めない。接続する過去問：R06上 問4（本セクション）・R06下 問4 と H22 問4（同方向＝吸引）・H24 問4（力の大きさ）・R04下 問4（3本へのベクトル和拡張）。</span>
+      </figcaption>
+    </figure>
+  );
+};
+
 const ElectromagneticForceLearnTab = ({ onNav, switchTab }) => (
   <>
     <ElectromagneticForceSymbolLegend />
@@ -12816,6 +13469,9 @@ const ElectromagneticForceLearnTab = ({ onNav, switchTab }) => (
       ]}
       note="逆方向電流の合成ゼロ点は2導体の『外側』・電流の小さい A 側の外。H_A=H_B より I_A/r_A = I_B/r_B。"
     />
+    {/* 配置は「問題を読んだ直後・解き方を開く前」。note が既定 closed になったので、
+        問題 → 予測して手を動かす → 解き方 → 答え の順が成立する。 */}
+    <ParallelWireFieldProbe />
     <SolveFlow
       type="合成磁界ゼロ（逆方向電流は外側）"
       steps={[
@@ -17710,7 +18366,18 @@ const ExamQuestion = ({ year, qNum, question, choices, note }) => (
         ))}
       </ol>
     )}
-    {note && <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 10 }}>{window.renderSubSup(note)}</div>}
+    {/* note は多くが「解法の着眼点」＝答えそのもの（例: R06上問4「逆方向の零点は外側」）。
+        問題と同時に無条件表示されていたため、#918(choices のマーカー除去)・#921(SolveFlow 既定
+        closed) と同じ「先に答えが見える」経路になっていた。柱4に従い既定 closed にする。
+        退避キー 'riron_exam_reveal' は ExamAnswer / SolveFlow と共有。 */}
+    {note && (
+      <details open={_rironExamRevealOpen()} style={{ marginTop: 10 }}>
+        <summary style={{ cursor: 'pointer', fontSize: 11.5, color: 'var(--accent-ink)', fontWeight: 700 }}>
+          ヒント・出典を見る
+        </summary>
+        <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 6 }}>{window.renderSubSup(note)}</div>
+      </details>
+    )}
   </div>
 );
 
