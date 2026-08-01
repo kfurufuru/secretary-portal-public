@@ -6688,7 +6688,7 @@ const CapacitorLearnTab = ({ onNav, switchTab }) => (
     <h2 id="related"><span className="h-num">6</span>関連項目</h2>
     <SectionCheck pageId="capacitor" sectionId="related" />
     <ul>
-      <li>静電気（1.1）— クーロン力・電界・電位の基礎</li>
+      <li>静電気（1.1）— クーロン力・電界・電位の基礎。とくに <a href="#" onClick={(e) => { e.preventDefault(); onNav('coulomb-field'); }} style={{ textDecoration: "underline" }}>解説タブ 9節「等電位線で解く」</a>は本ページの土台（<strong>極板が等電位面だから V = Ed</strong>／<strong>½CV² の 1/2 は「運ぶ途中で電圧が 0→V に上がる」から</strong>）</li>
       <li>直流回路（2.1）— コンデンサの充放電（過渡現象につながる）</li>
       <li>交流回路（2.2/2.3）— 容量性リアクタンス・力率改善用コンデンサ</li>
       <li>インダクタンス（3.1）— 双対の概念（電界 ↔ 磁界）</li>
@@ -10342,6 +10342,134 @@ const CoulombFieldFormulasTab = ({ onNav, switchTab }) => (
 );
 
 /* 解説タブ */
+const CoulombFieldEquipotentialSVG = () => (
+  <div style={{ textAlign: "center", margin: "16px 0" }}>
+    <svg viewBox="0 0 470 300" width="100%" style={{ maxWidth: "470px", height: "auto" }} role="img" aria-label="右向きの平等電界の中で点電荷を点Aから電界に逆らって1.0m離れた点Bへ移動させ、続いて電界の向きに0.3m・電界に垂直に0.4m離れた点Cへ移動させる図。等電位線は電界に直交する縦の破線で、点Aを0Vの基準にすると点Cは7V、点Bは10Vの等電位線上にある">
+      {/* 電気力線（横・右向き） */}
+      <line x1="30" y1="80" x2="432" y2="80" stroke="var(--ink-mute)" strokeWidth="1.2" />
+      <polygon points="440,80 431,76 431,84" fill="var(--ink-mute)" />
+      <line x1="30" y1="140" x2="432" y2="140" stroke="var(--ink-mute)" strokeWidth="1.2" />
+      <polygon points="440,140 431,136 431,144" fill="var(--ink-mute)" />
+      <line x1="30" y1="212" x2="432" y2="212" stroke="var(--ink-mute)" strokeWidth="1.2" />
+      <polygon points="440,212 431,208 431,216" fill="var(--ink-mute)" />
+      <line x1="30" y1="262" x2="432" y2="262" stroke="var(--ink-mute)" strokeWidth="1.2" />
+      <polygon points="440,262 431,258 431,266" fill="var(--ink-mute)" />
+      <text x="430" y="70" fontSize="12" textAnchor="end" fill="var(--ink-mute)">電界 E</text>
+      {/* 等電位線（縦の破線） */}
+      <line x1="210" y1="58" x2="210" y2="280" stroke="var(--ok)" strokeWidth="1" strokeDasharray="5 4" />
+      <line x1="264" y1="58" x2="264" y2="280" stroke="var(--ok)" strokeWidth="1" strokeDasharray="5 4" />
+      <line x1="390" y1="58" x2="390" y2="280" stroke="var(--ok)" strokeWidth="1" strokeDasharray="5 4" />
+      <text x="210" y="50" fontSize="12" textAnchor="middle" fill="var(--ok)">10 V</text>
+      <text x="264" y="50" fontSize="12" textAnchor="middle" fill="var(--ok)">7 V</text>
+      <text x="390" y="50" fontSize="12" textAnchor="middle" fill="var(--ok)">0 V</text>
+      {/* 寸法 1.0 m */}
+      <line x1="212" y1="114" x2="388" y2="114" stroke="var(--ink-soft)" strokeWidth="1" />
+      <polygon points="210,114 219,110 219,118" fill="var(--ink-soft)" />
+      <polygon points="390,114 381,110 381,118" fill="var(--ink-soft)" />
+      <text x="300" y="107" fontSize="12" textAnchor="middle" fill="var(--ink-soft)">1.0 m</text>
+      {/* 寸法 0.3 m */}
+      <line x1="212" y1="240" x2="262" y2="240" stroke="var(--ink-soft)" strokeWidth="1" />
+      <polygon points="210,240 219,236 219,244" fill="var(--ink-soft)" />
+      <polygon points="264,240 255,236 255,244" fill="var(--ink-soft)" />
+      <text x="272" y="244" fontSize="12" textAnchor="start" fill="var(--ink-soft)">0.3 m</text>
+      {/* 寸法 0.4 m（B→C の垂直成分。C の隣に置く＝A の真下に置くと「A から 0.4 m」と誤読される） */}
+      <line x1="300" y1="142" x2="300" y2="210" stroke="var(--ink-soft)" strokeWidth="1" />
+      <polygon points="300,140 296,149 304,149" fill="var(--ink-soft)" />
+      <polygon points="300,212 296,203 304,203" fill="var(--ink-soft)" />
+      <text x="308" y="180" fontSize="12" textAnchor="start" fill="var(--ink-soft)">0.4 m</text>
+      {/* 移動経路 */}
+      <line x1="390" y1="140" x2="219" y2="140" stroke="var(--accent-ink)" strokeWidth="2.5" />
+      <polygon points="210,140 221,135 221,145" fill="var(--accent-ink)" />
+      <line x1="210" y1="140" x2="258" y2="204" stroke="var(--accent-ink)" strokeWidth="2.5" />
+      <polygon points="264,212 254,206 260,199" fill="var(--accent-ink)" />
+      <circle cx="390" cy="140" r="4.5" fill="var(--accent-ink)" />
+      <circle cx="210" cy="140" r="4.5" fill="var(--accent-ink)" />
+      <circle cx="264" cy="212" r="4.5" fill="var(--accent-ink)" />
+      <text x="397" y="133" fontSize="13" fontWeight="700" textAnchor="start" fill="var(--ink)">A</text>
+      <text x="203" y="133" fontSize="13" fontWeight="700" textAnchor="end" fill="var(--ink)">B</text>
+      <text x="272" y="206" fontSize="13" fontWeight="700" textAnchor="start" fill="var(--ink)">C</text>
+    </svg>
+    <div style={{ fontSize: "11px", color: "var(--ink-soft)", marginTop: 4, lineHeight: 1.7 }}>
+      図：R02 問1 の配置を「電位の地図」で読んだもの。横の実線が電気力線、<strong style={{ color: "var(--ok)" }}>縦の破線が等電位線</strong>。A を 0 V の基準にすると B は 10 V・C は 7 V の線上。B→C の <strong>0.4 m は 7 V の等電位線に沿う移動</strong>なので仕事はゼロ。効くのは電界方向の <strong>1.0 − 0.3 = 0.7 m</strong> だけ。
+    </div>
+  </div>
+);
+
+const CoulombFieldApolloniusSVG = () => (
+  <div style={{ textAlign: "center", margin: "16px 0" }}>
+    <svg viewBox="0 0 470 290" width="100%" style={{ maxWidth: "470px", height: "auto" }} role="img" aria-label="x軸上の点B(−d,0)に−Q、点A(2d,0)に2Qを置いたときV=0となる等電位線。中心(−2d,0)・半径2dの円で、x軸を原点と−4dで切り、内側に−Qを含む。円周上の点Pから−Qまでの距離r1と2Qまでの距離2r1が常に1対2になる">
+      {/* V=0 の円（アポロニウスの円） */}
+      <circle cx="194" cy="165" r="96" fill="var(--accent-soft)" fillOpacity="0.4" stroke="var(--accent)" strokeWidth="2" />
+      {/* x軸 */}
+      <line x1="40" y1="165" x2="444" y2="165" stroke="var(--ink)" strokeWidth="1.2" />
+      <polygon points="452,165 443,161 443,169" fill="var(--ink)" />
+      <text x="458" y="169" fontSize="12" fill="var(--ink)">x</text>
+      {/* 半径（中心から上へ） */}
+      <line x1="194" y1="163" x2="194" y2="71" stroke="var(--accent)" strokeWidth="1" strokeDasharray="4 3" />
+      <text x="200" y="110" fontSize="11" textAnchor="start" fill="var(--accent-ink)">半径 2d</text>
+      {/* 目盛 */}
+      <line x1="98" y1="161" x2="98" y2="169" stroke="var(--ink)" strokeWidth="1" />
+      <line x1="194" y1="161" x2="194" y2="169" stroke="var(--ink)" strokeWidth="1" />
+      <line x1="290" y1="161" x2="290" y2="169" stroke="var(--ink)" strokeWidth="1" />
+      <text x="90" y="182" fontSize="11" textAnchor="end" fill="var(--ink-soft)">−4d</text>
+      <text x="194" y="182" fontSize="11" textAnchor="middle" fill="var(--ink-soft)">−2d</text>
+      <text x="242" y="182" fontSize="11" textAnchor="middle" fill="var(--ink-soft)">−d</text>
+      <text x="296" y="182" fontSize="11" textAnchor="start" fill="var(--ink-soft)">0</text>
+      <text x="386" y="182" fontSize="11" textAnchor="middle" fill="var(--ink-soft)">2d</text>
+      {/* 点電荷（ラベルは軸の上・移動線は軸の下＝交差させない） */}
+      <circle cx="386" cy="165" r="6" fill="var(--danger)" />
+      <text x="386" y="150" fontSize="12" textAnchor="middle" fill="var(--danger)">2Q</text>
+      <circle cx="242" cy="165" r="6" fill="var(--accent-ink)" />
+      <text x="242" y="150" fontSize="12" textAnchor="middle" fill="var(--accent-ink)">−Q</text>
+      {/* 円周上の点 P と距離比（円の下側に配置） */}
+      <line x1="146" y1="248" x2="242" y2="165" stroke="var(--ink-soft)" strokeWidth="1.4" />
+      <line x1="146" y1="248" x2="386" y2="165" stroke="var(--ink-soft)" strokeWidth="1.4" strokeDasharray="5 4" />
+      <circle cx="146" cy="248" r="4" fill="var(--ink)" />
+      <text x="136" y="262" fontSize="12" textAnchor="end" fill="var(--ink)">P</text>
+      <text x="186" y="202" fontSize="11" textAnchor="end" fill="var(--ink-soft)">r₁</text>
+      <text x="290" y="222" fontSize="11" textAnchor="start" fill="var(--ink-soft)">2r₁</text>
+      {/* 内外の符号 */}
+      <text x="150" y="140" fontSize="11" textAnchor="middle" fill="var(--accent-ink)">内側 V&lt;0</text>
+      <text x="410" y="248" fontSize="11" textAnchor="middle" fill="var(--ink-soft)">外側 V&gt;0</text>
+    </svg>
+    <div style={{ fontSize: "11px", color: "var(--ink-soft)", marginTop: 4, lineHeight: 1.7 }}>
+      図：H28 問1 の V = 0 等電位線。<strong>中心 (−2d, 0)・半径 2d の円</strong>で、x 軸を <strong>x = 0</strong> と <strong>x = −4d</strong> で切り、<strong>弱いほうの電荷 −Q を囲む</strong>。円周上のどの点 P でも「−Q までの距離 : 2Q までの距離 = 1 : 2」＝電荷量の比と一致する（アポロニウスの円）。
+    </div>
+  </div>
+);
+
+const CoulombFieldV0E0SVG = () => (
+  <div style={{ textAlign: "center", margin: "16px 0" }}>
+    <svg viewBox="0 0 470 175" width="100%" style={{ maxWidth: "470px", height: "auto" }} role="img" aria-label="x軸上でV=0となる点はx=−4dとx=0の2点、E=0となる点はx≒−8.24dの1点だけで、位置がまったく違うことを示す数直線">
+      <text x="40" y="40" fontSize="12" textAnchor="start" fill="var(--warn)">V = 0 と E = 0 は別物・場所も違う</text>
+      <line x1="40" y1="85" x2="437" y2="85" stroke="var(--ink)" strokeWidth="1.2" />
+      <polygon points="445,85 436,81 436,89" fill="var(--ink)" />
+      {/* E=0（1点だけ・ずっと外側） */}
+      <circle cx="66" cy="85" r="5.5" fill="var(--bg-elev)" stroke="var(--warn)" strokeWidth="2" />
+      <text x="66" y="66" fontSize="11" textAnchor="middle" fill="var(--warn)">E = 0</text>
+      <text x="66" y="128" fontSize="11" textAnchor="middle" fill="var(--ink-soft)">x ≈ −8.24d</text>
+      {/* V=0（2点） */}
+      <polygon points="202,78 209,85 202,92 195,85" fill="var(--ok)" />
+      <polygon points="330,78 337,85 330,92 323,85" fill="var(--ok)" />
+      <text x="202" y="66" fontSize="11" textAnchor="middle" fill="var(--ok)">V = 0</text>
+      <text x="330" y="66" fontSize="11" textAnchor="middle" fill="var(--ok)">V = 0</text>
+      <text x="202" y="128" fontSize="11" textAnchor="middle" fill="var(--ink-soft)">−4d</text>
+      <text x="330" y="128" fontSize="11" textAnchor="middle" fill="var(--ink-soft)">0</text>
+      {/* 点電荷 */}
+      <circle cx="298" cy="85" r="6" fill="var(--accent-ink)" />
+      <circle cx="394" cy="85" r="6" fill="var(--danger)" />
+      <text x="298" y="108" fontSize="11" textAnchor="middle" fill="var(--accent-ink)">−Q</text>
+      <text x="394" y="108" fontSize="11" textAnchor="middle" fill="var(--danger)">2Q</text>
+      {/* 因果 */}
+      <text x="40" y="158" fontSize="11" textAnchor="start" fill="var(--warn)">E は 1/r² → 比 √2（遠い）</text>
+      <text x="445" y="158" fontSize="11" textAnchor="end" fill="var(--ok)">V は 1/r → 比 2（近い）</text>
+    </svg>
+    <div style={{ fontSize: "11px", color: "var(--ink-soft)", marginTop: 4, lineHeight: 1.7 }}>
+      図：同じ2電荷でも <strong>V = 0</strong>（x = −4d と 0）と <strong>E = 0</strong>（x ≈ −8.24d の1点）は場所がまったく違う。E は 1/r² で急に減るので、<strong>電荷量2倍の差を距離で埋めるのに √2 倍しか要らない</strong>＝比が1に近い＝ずっと外側になる。
+    </div>
+  </div>
+);
+
 const CoulombFieldExplainTab = ({ onNav, switchTab }) => (
   <>
     <h2 id="principle"><span className="h-num">1</span>原理（なぜ起きるか）</h2>
@@ -10385,7 +10513,7 @@ const CoulombFieldExplainTab = ({ onNav, switchTab }) => (
     </p>
     <ul>
       <li>電位が高くても変化が緩やかなら電界は<strong>弱い</strong>。電位が低くても急勾配なら電界は<strong>強い</strong></li>
-      <li>等電位面上では電位変化がゼロ → その方向に電界は存在しない → <strong>電界（力線）は常に等電位面と垂直</strong></li>
+      <li>等電位面上では電位変化がゼロ → その方向に電界は存在しない → <strong>電界（力線）は常に等電位面と垂直</strong>（この性質を計算に使う手順は 9節）</li>
       <li>マイナス符号の意味：電界は「電位が下がる向き」を向く（山を下る向き）</li>
     </ul>
     <Callout variant="warn" title="頻出の罠文章（電位と電界の関係）">
@@ -10673,6 +10801,135 @@ const CoulombFieldExplainTab = ({ onNav, switchTab }) => (
     <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
       理解の確認は <a href="#" onClick={(e)=>{e.preventDefault(); switchTab('learn');}} style={{ textDecoration: "underline" }}>学習タブ</a> の限界的練習ゾーンへ。
     </p>
+
+    <h2 id="equipotential-skeleton"><span className="h-num">9</span>等電位線で解く — 平等電界の万能骨格</h2>
+    <p>
+      3節で「電界は電位の勾配」と見た。これを<strong>平等電界</strong>（コンデンサの極板間・偏向板の間など、電験で出る電界のほとんど）に当てはめると、計算がほぼ機械作業になる。平等電界とは<strong>傾きが一定の坂</strong>のことで、等電位線はその<strong>等高線</strong>にあたる。
+    </p>
+    <Analogy type="gravity" icon="🌍">
+      電位は「電気的な高さ」。E の矢印が下り坂の向き。荷物を持って<strong>等高線に沿って水平に歩いても位置エネルギーは変わらない</strong>のと同じで、等電位線に沿った移動では仕事が発生しない。坂を登った分だけがエネルギーになる。
+    </Analogy>
+    <Callout variant="tip" title="⚡ 平等電界の3原則（この3つだけで解ける）">
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.9 }}>
+        <li><strong>仕事は始点と終点だけで決まる</strong>（静電気力は保存力）。途中の経路・寄り道は式に入らない → <Eq tex="W = q\,(V_{\text{終}} - V_{\text{始}})" inline /></li>
+        <li><strong>等電位線に沿った移動は仕事ゼロ</strong>。等高線を歩いても高さは変わらない</li>
+        <li>だから斜め移動が出たら<strong>電界方向の成分だけに射影</strong>して、始点と終点の座標差を読む。斜辺の長さは使わない</li>
+      </ol>
+    </Callout>
+    <p>
+      <strong>なぜ等電位線は電界に必ず直交するのか</strong>（背理法で一発）：もし直交していなければ、等電位線に沿う向きに電界の成分が残る。すると線に沿って電荷を動かすだけで仕事が発生し、電位が変わってしまう。それは「等電位」という前提と矛盾する。だから<strong>直交する以外にない</strong>。原則2はこの定理の言い換えであって、覚える話ではない。
+    </p>
+    <p>
+      そもそも「電位」というスカラーの地図が作れるのは、静電気力が<strong>保存力</strong>（一周して戻ると仕事の合計がゼロ）だから。もし「同じ地点でも、たどってきた道によって高さが違う」なら、地図に数字を書き込めない。<strong>保存力であることが、電位という概念の存在許可証</strong>になっている。
+    </p>
+    <CoulombFieldEquipotentialSVG />
+    <Callout variant="info" title="この見方だと E を求めずに済むことがある">
+      <p style={{ margin: "4px 0" }}>
+        平等電界では<strong>電位差が電界方向の距離に比例</strong>する。上図で <Eq tex="W = q\,V_{CA}" inline /> から <Eq tex="V_{CA} = 14/2 = 7\,\text{V}" inline /> が出たら、あとは比を取るだけ：<Eq tex="V_{BA} = 7 \times \dfrac{1.0}{0.7} = 10\,\text{V}" inline />。
+      </p>
+      <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--ink-soft)" }}>
+        単位もこの見方と一体：<strong>1 V = 1 J/C</strong>（1 C あたり 1 J のエネルギーを持つ高さ）。だから 2 C × 7 V = 14 J は定義をそのまま読んだだけ。<strong>V/m = N/C</strong> が成り立つのも同じ理由（公式タブ 2節）。
+      </p>
+    </Callout>
+
+    <h3 style={{ margin: "18px 0 8px", fontSize: 15 }}>この骨格が再登場する4か所</h3>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 8 }}>
+      「平等電界＝一定勾配の坂」「等電位線方向は仕事ゼロ」の2点は、静電気のここだけの話ではない。理論の主要テーマを縦に貫いている。
+    </p>
+    <table className="data-table">
+      <thead>
+        <tr><th>テーマ</th><th>骨格のどこが使われるか</th><th>詰まりやすい点</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="#" onClick={(e) => { e.preventDefault(); onNav('capacitor'); }} style={{ textDecoration: "underline" }}>平行平板コンデンサ（1.2）</a></td>
+          <td>極板間が平等電界＝一定勾配の坂。<strong>導体の極板そのものが等電位面</strong>。だから <Eq tex="V = Ed" inline />・<Eq tex="E = V/d" inline /></td>
+          <td>d は極板間距離（極板の大きさではない）。誘電体を挟むと層ごとに E が変わり、<strong>V は各層の Ed の和</strong>になる</td>
+        </tr>
+        <tr>
+          <td><a href="#" onClick={(e) => { e.preventDefault(); onNav('electron-motion'); }} style={{ textDecoration: "underline" }}>電子の加速（5.4）</a></td>
+          <td>電位差 V の坂を落ちた分がそのまま運動エネルギーになる：<Eq tex="eV = \dfrac{1}{2}mv^2" inline />。左辺は本節の <Eq tex="W = q\Delta V" inline /> そのもの</td>
+          <td>電子は<strong>負電荷</strong>なので受ける力が電界と逆向き＝低電位側から高電位側へ加速される。＋電荷の直感をそのまま持ち込まない</td>
+        </tr>
+        <tr>
+          <td><a href="#" onClick={(e) => { e.preventDefault(); onNav('electron-motion'); }} style={{ textDecoration: "underline" }}>電界中の電子の運動（5.4）</a></td>
+          <td><strong>電界方向＝等加速度／等電位線方向＝等速</strong>。この2方向分解がそのまま放物線を生む</td>
+          <td>本節の 0.3 と 0.4 の分解と<strong>まったく同じ操作</strong>。等電位線方向には力が働かないので速度が変わらない</td>
+        </tr>
+        <tr>
+          <td><a href="#" onClick={(e) => { e.preventDefault(); onNav('capacitor'); }} style={{ textDecoration: "underline" }}>静電エネルギー（1.2）</a></td>
+          <td>電荷を少しずつ坂の上へ運ぶ仕事の積算。運ぶ途中で電圧が 0→V に上がるので平均は V/2 → <Eq tex="W = \dfrac{QV}{2} = \dfrac{1}{2}CV^2" inline /></td>
+          <td>1/2 の正体がここ。<Eq tex="W = q\Delta V" inline /> を「電圧 V のまま全部運ぶ」と適用すると<strong>1/2 を落とす</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <Callout variant="warn" title="射程 — どこまで使えるか（混ぜると事故る）">
+      <ul style={{ margin: "4px 0", paddingLeft: 20, lineHeight: 1.8 }}>
+        <li><strong><Eq tex="V = Ed" inline /> が使えるのは E が一様なときだけ</strong>。点電荷のまわりは E ∝ 1/r²・V ∝ 1/r で、掛け算では出ない（→ 3節のグラフ）</li>
+        <li>一方<strong>「保存力だから経路によらない」は電界一般で成立</strong>する。点電荷のまわりでも <Eq tex="W = q\Delta V" inline /> は使える。この2つは射程が違う</li>
+        <li>電位はスカラー・電界はベクトル。複数電荷では<strong>電位は代数和・電界はベクトル和</strong>（→ 5節）</li>
+      </ul>
+    </Callout>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+      実際の解き方は <a href="#" onClick={(e)=>{e.preventDefault(); switchTab('learn');}} style={{ textDecoration: "underline" }}>学習タブ 4節「R02 問1 解法カード」</a>へ。
+    </p>
+
+    <h2 id="apollonius"><span className="h-num">10</span>点電荷2個の等電位線 — V=0 は「円」になる</h2>
+    <p>
+      9節の射程ブロックが指していた反対側がここ。<strong>電界が一様でないとき、等電位線は直線ではなく円になる</strong>。平等電界の感覚のまま「まっすぐな線」を探すと外す。
+    </p>
+    <p>
+      2つの点電荷 <Eq tex="Q_A" inline />（距離 <Eq tex="r_A" inline />）と <Eq tex="Q_B" inline />（距離 <Eq tex="r_B" inline />）が作る電位はスカラーなので単純な足し算：
+    </p>
+    <p style={{ textAlign: "center", margin: "8px 0" }}>
+      <Eq tex="V = \dfrac{1}{4\pi\varepsilon_0}\left(\dfrac{Q_A}{r_A} + \dfrac{Q_B}{r_B}\right) = 0 \;\Longrightarrow\; \dfrac{r_A}{r_B} = \left|\dfrac{Q_A}{Q_B}\right|" />
+    </p>
+    <p>
+      つまり <strong>V = 0 の条件は「2点からの距離の比が電荷量の比に等しい」</strong>という、純粋に幾何の条件になる。距離の比が一定の点の集合は<strong>円</strong>（アポロニウスの円）。だから <strong>V = 0 の等電位線は必ず円</strong>で、放物線やハート形にはならない。
+    </p>
+    <Callout variant="tip" title="⚡ 比が 1 のときだけ直線になる">
+      <p style={{ margin: "4px 0" }}>
+        電荷量が等しい異符号（+Q と −Q）なら比が 1 になり、円が無限大に膨らんで<strong>2点の垂直二等分線</strong>に退化する。教科書で最初に見る「直線の等電位線」はこの特殊ケース。<strong>電荷量が違えば必ず円</strong>で、しかも<strong>弱いほうの電荷を囲む</strong>（強いほうの近くは電位が高いままなので囲めない）。
+      </p>
+    </Callout>
+    <p>
+      H28 問1 の配置（A(2d, 0) に 2Q・B(−d, 0) に −Q）で実際に計算すると：
+    </p>
+    <p style={{ textAlign: "center", margin: "8px 0" }}>
+      <Eq tex="(x-2d)^2 + y^2 = 4\left[(x+d)^2 + y^2\right] \;\Longrightarrow\; (x+2d)^2 + y^2 = (2d)^2" />
+    </p>
+    <CoulombFieldApolloniusSVG />
+    <Callout variant="info" title="本番は円の式を出さない（30秒で選択肢が割れる）">
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.9 }}>
+        <li><strong>強いほうの電荷を囲む図は捨てる</strong>。V = 0 は必ず<strong>弱いほうの電荷側</strong>に寄る</li>
+        <li><strong>電荷量が違うのに直線の図は捨てる</strong>（直線は比 1 の特殊ケース）</li>
+        <li>残った図は、<strong>x 軸上で距離の比が 2 : 1 になる 2 点</strong>だけ確かめる。<strong>x = 0</strong>（r_A = 2d, r_B = d）と <strong>x = −4d</strong>（r_A = 6d, r_B = 3d）。この2点を通る円が答え</li>
+      </ol>
+    </Callout>
+
+    <h3 style={{ margin: "18px 0 8px", fontSize: 15 }}>最大の混同ペア — V = 0 と E = 0 は別物</h3>
+    <p>
+      同じ2電荷でも、電位がゼロになる場所と電界がゼロになる場所は<strong>まったく違う</strong>。冪が違うからで、これは 3節「E は V の勾配」の裏返し。
+    </p>
+    <table className="data-table">
+      <thead>
+        <tr><th></th><th>V = 0（スカラー和）</th><th>E = 0（ベクトル和）</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>条件</td><td><Eq tex="\dfrac{2Q}{r_A} = \dfrac{Q}{r_B}" inline /> → <Eq tex="r_A = 2r_B" inline /></td><td><Eq tex="\dfrac{2Q}{r_A^2} = \dfrac{Q}{r_B^2}" inline /> → <Eq tex="r_A = \sqrt{2}\,r_B" inline /></td></tr>
+        <tr><td>距離の比</td><td><strong>2 倍</strong></td><td><strong>約 1.41 倍</strong></td></tr>
+        <tr><td>どこにあるか</td><td>電荷の近く。<strong>円（x = 0 と x = −4d を通る）</strong></td><td>比が 1 に近い＝両電荷がほぼ等距離に見える<strong>ずっと外側の1点だけ</strong>（x ≈ −8.24d）</td></tr>
+        <tr><td>足し算の型</td><td>符号付きの<strong>代数和</strong></td><td><strong>ベクトル和</strong>（向きも打ち消す必要）</td></tr>
+      </tbody>
+    </table>
+    <CoulombFieldV0E0SVG />
+    <p>
+      因果は1行で足りる。<strong>E は 1/r² で急に減るので、電荷量2倍の差を距離で埋めるのに √2 倍しか要らない。比が1に近いということは、両方から遠い場所でしか起きない</strong>。既存の引っかけ「電位が高い点ほど電界が強い（誤り）」と同じ根から出ている。
+    </p>
+    <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+      実際の解き方は <a href="#" onClick={(e)=>{e.preventDefault(); switchTab('learn');}} style={{ textDecoration: "underline" }}>学習タブ 5節「H28 問1 解法カード」</a>へ。
+    </p>
   </>
 );
 
@@ -10819,7 +11076,104 @@ const CoulombFieldLearnTab = ({ onNav, switchTab }) => (
       </ol>
     </Callout>
 
-    <h2 id="z-3conditions"><span className="h-num">4</span>3条件即答チェック（限界的練習ゾーン）</h2>
+    <h2 id="r2-q1"><span className="h-num">4</span>R02 問1 解法カード — 平等電界中の斜め移動と電位差</h2>
+    <SectionCheck pageId="coulomb-field" sectionId="r2-q1" />
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
+      解説タブ 9節「等電位線で解く」の実戦版。<strong>斜め移動を電界方向に射影する</strong>操作を1問で身につける。
+    </p>
+    <ExamQuestion
+      year="令和2年"
+      qNum="1"
+      question="紙面に平行な平面内の平等電界 E [V/m] 中で 2 C の点電荷を点Aから点Bまで移動させ、さらに点Bから点Cまで移動させた。この移動に、外力による仕事 W = 14 J を要した。図では A→B が電界と逆向きに 1.0 m、B→C は電界の向きに 0.3 m かつ電界に垂直な向きに 0.4 m。点Aの電位に対する点Bの電位 V_BA [V] の値として最も近いものはどれか。"
+      choices={[
+        "① 5",
+        "② 7",
+        "③ 10 ← 正解",
+        "④ 14",
+        "⑤ 20",
+      ]}
+      note="図には 0.3 m と 0.4 m の成分だけが与えられ、角度の記載はない（BC = 0.5 m は 3:4:5 から作れる値で、電界となす角は約 53.1°・cos = 0.6）。出典: 電験王3 (denken-ou.com/rironr2-1)"
+    />
+    <SolveFlow
+      type="平等電界・射影して座標差を読む"
+      steps={[
+        "静電気力は保存力 → 外力の仕事は始点と終点だけで決まる。経由点 B は無視してよい",
+        "B→C の垂直 0.4 m は等電位線に沿う移動 → 仕事ゼロ。式に入れない",
+        "電界方向の正味距離: A→B で電界に逆らって 1.0 m、B→C で電界の向きに 0.3 m 戻る → 1.0 − 0.3 = 0.7 m",
+        "W = q·V_CA より 14 = 2 × V_CA → V_CA = 7 V（これは A-C 間であって A-B 間ではない）",
+        "電位差は電界方向の距離に比例 → V_BA = 7 × (1.0/0.7) = 10 V。E を経由するなら E = 14/(2×0.7) = 10 V/m → V_BA = 10 × 1.0 = 10 V",
+      ]}
+    />
+    <ExamAnswer
+      correct="③ 10"
+      explanations={[
+        { choice: "①", mark: "×", reason: "5 V。垂直の 0.4 m を電界方向と誤認して足した場合（1.0+0.4 = 1.4 m → E = 14/(2×1.4) = 5 V/m）。0.4 m は等電位線に沿う移動で仕事ゼロ" },
+        { choice: "②", mark: "×", reason: "7 V。W/q = 7 は A-C 間の電位差であって A-B 間ではない。または B→C を丸ごと無視して 1.0 m とした場合（E = 7 V/m）" },
+        { choice: "③", mark: "○", reason: "10 V。電界方向の正味距離 0.7 m から V_CA = 7 V、比例で V_BA = 7×(1.0/0.7) = 10 V。検算: E = 10 V/m なら 0.7 m で 7 V、2 C を運ぶ仕事 2×7 = 14 J で問題文と一致" },
+        { choice: "④", mark: "×", reason: "14 V。BC の斜辺 0.5 m をそのまま引いた場合（1.0−0.5 = 0.5 m → E = 14 V/m）。引くのは斜辺ではなく電界方向成分 0.3 m" },
+        { choice: "⑤", mark: "×", reason: "20 V。電荷 q = 2 C で割り忘れた場合（14/0.7 = 20）。W = qV の q を落とす典型" },
+      ]}
+    />
+    <Callout variant="warn" title="本問のひっかけポイント（5項目）">
+      <ol>
+        <li><strong>斜辺を使ってしまう</strong>：BC = 0.5 m は図に書かれていない（0.3 と 0.4 から作れる値）。使うのは電界方向成分の 0.3 m。斜辺を引くと選択肢④ 14 V に着地する</li>
+        <li><strong>角度を 60° と思い込む</strong>：cos = 0.3/0.5 = <strong>0.6</strong> なので約 53.1°（3:4:5 の直角三角形）。60° と仮定すると 0.5×cos60° = 0.25 → 9.33 V となり<strong>選択肢のどれにも当たらない</strong>。これが誤解釈の早期検出になる</li>
+        <li><strong>足すか引くかの符号</strong>：B→C の水平成分は電界と<strong>同じ向き</strong>＝電気力が押す向きで、手はブレーキ役。外力の仕事は負なので<strong>引く</strong>。判定は「E の矢印と同じ向きに動いた分は引く」の1行でよい</li>
+        <li><strong>W/q = 7 で止まる</strong>：7 V は A-C 間の電位差。問われているのは A-B 間。選択肢②がここに用意されている</li>
+        <li><strong>0.4 m を計算に入れる</strong>：等電位線に沿う移動なので仕事に一切寄与しない。足すと選択肢①</li>
+      </ol>
+      <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 8 }}>※ 各選択肢と誤りの対応は誤答値から逆算した推定であり、公表された出題意図ではない。</p>
+    </Callout>
+
+    <h2 id="h28-q1"><span className="h-num">5</span>H28 問1 解法カード — 点電荷2個の V=0 等電位線（図を選ぶ）</h2>
+    <SectionCheck pageId="coulomb-field" sectionId="h28-q1" />
+    <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
+      解説タブ 10節「V=0 は円になる」の実戦版。<strong>計算せずに選択肢を割る</strong>タイプで、電界が一様でない場合の等電位線を扱う。
+    </p>
+    <ExamQuestion
+      year="平成28年"
+      qNum="1"
+      question="真空中において、x軸上で距離 3d [m] 隔てた点A(2d, 0) に 2Q [C]、点B(−d, 0) に −Q [C] の点電荷が置かれている。このとき、xy平面上で電位が 0 V となる等電位線を表す図として、最も近いものはどれか。"
+      choices={[
+        "① y軸に平行な1本の直線",
+        "② B の左側へ開いた放物線状の曲線",
+        "③ B を囲むハート形（原点付近で尖り、左側がくびれた閉曲線）",
+        "④ 原点を通り B を囲む円 ← 正解",
+        "⑤ A と B をそれぞれ囲み、原点で接する2つの円",
+      ]}
+      note="選択肢は5つとも図（曲線の形）で与えられる。上記は各図の形状を文章化したもの。出典: 電験王3 (denken-ou.com/rironh28-1) ／ 配置・正答・円の中心半径は電験教室 (momoyoshiblog.com/h28-riron-1) と2系統で一致、代数も当Wikiで再導出済み"
+    />
+    <SolveFlow
+      type="点電荷2個の V=0 等電位線（アポロニウスの円）"
+      steps={[
+        "電位はスカラー和 → V = 0 は 2Q/r_A = Q/r_B、つまり r_A = 2r_B（距離の比が電荷量の比）",
+        "距離の比が一定の点の集合は円（アポロニウスの円）→ 放物線・ハート形の選択肢は形の時点で消える",
+        "電荷量が違うので直線にはならない（直線は比 1 = 電荷量が等しい異符号の特殊ケース）→ ①も消える",
+        "V=0 は弱いほうの電荷（−Q）側に寄る。2Q 側を囲む閉曲線は存在しない → ⑤も消える",
+        "残りは x軸上で比 2:1 になる2点で確定: x=0（2d:d）と x=−4d（6d:3d）→ この2点を通り B を囲む円 = ④",
+      ]}
+    />
+    <ExamAnswer
+      correct="④ 原点を通り B を囲む円"
+      explanations={[
+        { choice: "①", mark: "×", reason: "直線（垂直二等分線）になるのは電荷量が等しい異符号（+Q と −Q）のとき＝距離の比が 1 の特殊ケース。ここは 2:1 なので円" },
+        { choice: "②", mark: "×", reason: "放物線は「2点からの距離の比が一定」の軌跡ではない。V=0 の軌跡は円か直線のどちらかにしかならない" },
+        { choice: "③", mark: "×", reason: "ハート形も距離比一定の軌跡ではない。r_A/r_B = 2 を座標で展開すると (x+2d)²+y²=(2d)² という完全な円になる" },
+        { choice: "④", mark: "○", reason: "中心 (−2d, 0)・半径 2d の円。x軸との交点は x=0 と x=−4d で、どちらも −Q からの距離 : 2Q からの距離 = 1:2（d:2d と 3d:6d）。中心から B(−d,0) までは d < 2d なので B を内側に含む" },
+        { choice: "⑤", mark: "×", reason: "2Q の近くは常に V>0（強い正電荷に近い）ので、A 側に V=0 の閉曲線は存在しない。V=0 の軌跡はこの1つの円だけ" },
+      ]}
+    />
+    <Callout variant="warn" title="本問の急所（V=0 と E=0 の取り違えが本命）">
+      <ol>
+        <li><strong>V=0 と E=0 を混同する</strong>：V=0 は距離の比が <strong>2 倍</strong>（電荷の近く・x=0 と x=−4d）、E=0 は距離の比が <strong>√2 ≒ 1.41 倍</strong>（ずっと外側・x ≈ −8.24d の1点だけ）。冪が 1/r と 1/r² で違うため場所がまったく違う（解説タブ 10節の対比表）</li>
+        <li><strong>強いほうの電荷を囲むと思い込む</strong>：V=0 は必ず<strong>弱いほうの電荷</strong>を囲む。2Q 側は近づくほど電位が高く、ゼロに戻る場所がない</li>
+        <li><strong>「等電位線＝直線」の刷り込み</strong>：平等電界（解説タブ 9節）では等電位線は直線だが、点電荷2個では円。<strong>直線は電荷量が等しいときだけ</strong></li>
+        <li><strong>円の式を律儀に展開して時間切れ</strong>：A問題で図を選ぶだけなら、x軸上の2点の距離比を暗算するだけで足りる</li>
+        <li><strong>電位をベクトル扱いする</strong>：V はスカラーなので符号付きの足し算。分解も合成も要らない（既存の弱点②と同根）</li>
+      </ol>
+    </Callout>
+
+    <h2 id="z-3conditions"><span className="h-num">6</span>3条件即答チェック（限界的練習ゾーン）</h2>
     <SectionCheck pageId="coulomb-field" sectionId="z-3conditions" />
     <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
       「解ける／解けない」の境界を強制発火させる練習。<strong>同一の点電荷で F・E・V の3量</strong>を即答し、典型誤答3択でセルフ判定。<strong>3条件すべて正答できれば A 問題対応 OK</strong> の目安。
@@ -10853,7 +11207,7 @@ const CoulombFieldLearnTab = ({ onNav, switchTab }) => (
       <p><strong>3条件すべて即答</strong> ⇒ A 問題対応 OK。<strong>1 問でも誤答</strong> ⇒ <a href="#" onClick={(e)=>{e.preventDefault(); switchTab('explain');}} style={{ textDecoration: "underline" }}>解説タブ 2節（メタ認知）</a>で自分の脳内バグを特定してから公式タブ 1節へ。</p>
     </Callout>
 
-    <h2 id="kakomon"><span className="h-num">5</span>出題実績（H18〜R07上期）</h2>
+    <h2 id="kakomon"><span className="h-num">7</span>出題実績（H18〜R07上期）</h2>
     <SectionCheck pageId="coulomb-field" sectionId="kakomon" />
     <p style={{ fontSize: "12px", color: "var(--ink-soft)" }}>
       出典: 電験王3（denken-ou.com）H18〜R07上期。電磁気（静電界）からクーロン力・電界・電位を抽出。コンデンサ系は <a href="#" onClick={(e)=>{e.preventDefault(); onNav('capacitor');}} style={{ textDecoration: "underline" }}>1.2 コンデンサ</a> を参照。
@@ -10873,13 +11227,13 @@ const CoulombFieldLearnTab = ({ onNav, switchTab }) => (
         <tr><td>R04下</td><td>問17</td><td>計算</td><td>導体球間に加わる力及び力が釣り合う位置の導出</td><td>✅ 本ページ完結（セクション3 と同型）</td></tr>
         <tr><td>R04上</td><td>問2</td><td>計算</td><td>クーロンの法則による点電荷に加わる力の導出</td><td>✅ 本ページ完結</td></tr>
         <tr><td>R03</td><td>問2</td><td>論説</td><td>絶縁体の液体で満たしたときの小球間に働く静電力</td><td>✅ 本ページ完結（解説タブ 7節）</td></tr>
-        <tr><td>R02</td><td>問1</td><td>計算</td><td>点電荷に加わるエネルギーによる電位の変化</td><td>✅ 本ページ完結（W=QΔV）</td></tr>
+        <tr><td>R02</td><td>問1</td><td>計算</td><td>点電荷に加わるエネルギーによる電位の変化（平等電界中の斜め移動）</td><td>✅ 本ページ完結（セクション4 解法カード・解説タブ 9節）</td></tr>
         <tr><td>R02</td><td>問2</td><td>論説</td><td>十分に長い導体円柱の電気力線の様子</td><td>△ 力線の性質はカバー・円柱対称の式は範囲外</td></tr>
         <tr><td>R01</td><td>問1</td><td>計算</td><td>点電荷がつくる電位差の導出</td><td>✅ 本ページ完結</td></tr>
         <tr><td>R01</td><td>問15</td><td>計算</td><td>静電界における電気力線及び仕事量</td><td>✅ 本ページ完結</td></tr>
         <tr><td>H30</td><td>問1</td><td>計算</td><td>帯電した導体球に関する計算</td><td>✅ 本ページ完結</td></tr>
         <tr><td>H29</td><td>問1</td><td>論説</td><td>電気力線に関する論説</td><td>✅ 本ページ完結（公式タブ 3節）</td></tr>
-        <tr><td>H28</td><td>問1</td><td>計算</td><td>点電荷の等電位面</td><td>✅ 本ページ完結（解説タブ 3節）</td></tr>
+        <tr><td>H28</td><td>問1</td><td>計算</td><td>点電荷2個がつくる V=0 の等電位線（図の選択）</td><td>✅ 本ページ完結（セクション5 解法カード・解説タブ 10節）</td></tr>
         <tr><td>H26</td><td>問2</td><td>穴埋</td><td>静電気に関する空欄穴埋</td><td>✅ 本ページ完結</td></tr>
         <tr><td>H26</td><td>問17</td><td>計算</td><td>(a)クーロン力と重力の力比較・(b)運動エネルギーと静電エネルギーの収支比較</td><td>✅ 本ページ完結（解説タブ 7節：力は1/r²・エネルギーは1/r）</td></tr>
         <tr><td>H25</td><td>問2</td><td>計算</td><td>クーロンの法則</td><td>✅ 本ページ完結</td></tr>
@@ -10895,7 +11249,7 @@ const CoulombFieldLearnTab = ({ onNav, switchTab }) => (
     </table>
     <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>→ 出題頻度: <strong>★★★★</strong>（毎年度 1〜2 問・問1・問2・問17 から出題。理論の開幕テーマ）</p>
 
-    <h2 id="interleaving"><span className="h-num">6</span>混同しやすい他テーマ（Interleaving）</h2>
+    <h2 id="interleaving"><span className="h-num">8</span>混同しやすい他テーマ（Interleaving）</h2>
     <SectionCheck pageId="coulomb-field" sectionId="interleaving" />
     <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
       本テーマと<strong>並ぶと迷う</strong>他テーマを Top 3 で並置。同じ問題形式でも判別ポイントが違う点を明示し、themed silo を打破する。
@@ -10931,7 +11285,7 @@ const CoulombFieldLearnTab = ({ onNav, switchTab }) => (
       </tbody>
     </table>
 
-    <h2 id="act-summary"><span className="h-num">7</span>🔄 弱点セクション再読</h2>
+    <h2 id="act-summary"><span className="h-num">9</span>🔄 弱点セクション再読</h2>
     <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
       △ / × / 未 のセクションを優先して再読しよう。理解度ボタンを更新すると自動で再集計される。
     </p>
@@ -10941,10 +11295,12 @@ const CoulombFieldLearnTab = ({ onNav, switchTab }) => (
         { id: "solver-flow",   label: "1. 解法フロー" },
         { id: "examples",      label: "2. 例題" },
         { id: "r07k-q17",      label: "3. R07上問17 解法カード" },
-        { id: "z-3conditions", label: "4. 3条件即答チェック" },
-        { id: "kakomon",       label: "5. 出題実績" },
-        { id: "interleaving",  label: "6. 混同テーマ" },
-        { id: "exam-5sec",     label: "8. 本番5秒チェック" },
+        { id: "r2-q1",         label: "4. R02問1 解法カード" },
+        { id: "h28-q1",        label: "5. H28問1 解法カード" },
+        { id: "z-3conditions", label: "6. 3条件即答チェック" },
+        { id: "kakomon",       label: "7. 出題実績" },
+        { id: "interleaving",  label: "8. 混同テーマ" },
+        { id: "exam-5sec",     label: "10. 本番5秒チェック" },
       ]}
       onJump={(id) => {
         location.hash = 'coulomb-field:learn';
@@ -10952,7 +11308,7 @@ const CoulombFieldLearnTab = ({ onNav, switchTab }) => (
       }}
     />
 
-    <h2 id="exam-5sec"><span className="h-num">8</span>本番5秒チェック（試験トリアージ）</h2>
+    <h2 id="exam-5sec"><span className="h-num">10</span>本番5秒チェック（試験トリアージ）</h2>
     <SectionCheck pageId="coulomb-field" sectionId="exam-5sec" />
     <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
       本番で<strong>静電気が出た瞬間に開く3点</strong>。知識ではなく「最初に何を見るか」の手順で失点を防ぐ。
@@ -21715,7 +22071,7 @@ const ElectronMotionLearnTab = ({ onNav, switchTab }) => (
     <h2 id="related"><span className="h-num">9</span>関連項目</h2>
     <ul>
       <li><a onClick={() => onNav('electromagnetic-force')} style={{ color: "var(--accent-ink)", cursor: "pointer", textDecoration: "underline" }}>1.3 電磁力</a>：ローレンツ力 F=qv×B の本体・フレミング左手の使い方</li>
-      <li><a onClick={() => onNav('coulomb-field')} style={{ color: "var(--accent-ink)", cursor: "pointer", textDecoration: "underline" }}>1.1 静電気・クーロンの法則</a>：電界 E と力 F=qE の根拠</li>
+      <li><a onClick={() => onNav('coulomb-field')} style={{ color: "var(--accent-ink)", cursor: "pointer", textDecoration: "underline" }}>1.1 静電気・クーロンの法則</a>：電界 E と力 F=qE の根拠。<strong>解説タブ 9節「等電位線で解く」</strong>が本ページの土台（<strong>eV=½mv² の左辺は W=qΔV そのもの</strong>／<strong>放物線は「電界方向＝等加速度・等電位線方向＝等速」の2方向分解</strong>）</li>
       <li><a onClick={() => onNav('capacitor')} style={{ color: "var(--accent-ink)", cursor: "pointer", textDecoration: "underline" }}>1.2 コンデンサ</a>：平行平板の電界 E=V/d</li>
       <li><a onClick={() => onNav('semiconductor')} style={{ color: "var(--accent-ink)", cursor: "pointer", textDecoration: "underline" }}>5.1 半導体・ダイオード</a>：電子放出・電子デバイスの基礎</li>
     </ul>
