@@ -17663,22 +17663,31 @@ const MixedQuiz = ({ onNav }) => {
   );
 };
 
+// 解法手順は「問題の直下に開いたまま」だと、答えを隠していても意味がない
+// （ExamQuestion と隠し ExamAnswer の“間”に解法が全文見えていた＝26/26 で実測・PR #918 の続き）。
+// 柱4「折りたたみの初期状態は学習価値を最大化する（問題=open／解答・解説=closed）」に従い既定 closed。
+// これで 問題を読む → 自分で手を動かす → 解き方を開く → 答えを開く の2段階になる。
+// 全問即表示の退避（localStorage 'riron_exam_reveal'='open'）は ExamAnswer と共有し、
+// 「過去問は常に即表示にする」を選んだ人には解法も最初から開いた状態で出す。
 const SolveFlow = ({ type, steps }) => (
-  <div style={{
-    border: '1px solid var(--rule)',
-    borderRadius: 6,
-    padding: '16px 20px',
-    marginBottom: 24,
-  }}>
-    <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--accent-ink)', marginBottom: 12, letterSpacing: '0.05em' }}>
-      解き方・判断手順 {type && `（${type}）`}
-    </div>
-    <ol style={{ paddingLeft: 20, margin: 0 }}>
+  <details
+    open={_rironExamRevealOpen()}
+    style={{
+      border: '1px solid var(--rule)',
+      borderRadius: 6,
+      padding: '12px 20px',
+      marginBottom: 24,
+    }}
+  >
+    <summary style={{ cursor: 'pointer', fontWeight: 700, fontSize: 12, color: 'var(--accent-ink)', letterSpacing: '0.05em' }}>
+      解き方・判断手順を見る {type && `（${type}）`}
+    </summary>
+    <ol style={{ paddingLeft: 20, margin: '12px 0 0' }}>
       {steps.map((step, i) => (
         <li key={i} style={{ fontSize: 13, lineHeight: 1.8, paddingBottom: 4 }}>{window.renderSubSup(step)}</li>
       ))}
     </ol>
-  </div>
+  </details>
 );
 
 const ExamQuestion = ({ year, qNum, question, choices, note }) => (
