@@ -19142,7 +19142,8 @@ const InductanceFormulasTab = ({ onNav, switchTab }) => (
         <tbody>
           <tr><td>① 磁束 <Eq tex="\Phi" inline /> が与えられる</td><td><Eq tex="L = N\Phi / I" inline /></td></tr>
           <tr><td>② 磁路長 ℓ・断面積 S・透磁率 μ・巻数 N（＝鉄心の構造）</td><td><Eq tex="L = \mu_0\mu_r N^2 S / \ell" inline /></td></tr>
-          <tr><td>③ 電流変化 <Eq tex="\Delta I/\Delta t" inline />・端子電圧・逆起電力</td><td><Eq tex="e = -L\,\Delta I/\Delta t" inline /></td></tr>
+          <tr><td>③ 電流変化 <Eq tex="\Delta I/\Delta t" inline /> と<strong>端子電圧</strong>（KVL・回路解析）</td><td><Eq tex="v = L\,\Delta I/\Delta t" inline /></td></tr>
+          <tr><td>③' 電流変化 <Eq tex="\Delta I/\Delta t" inline /> と<strong>逆起電力</strong>（レンツの法則）</td><td><Eq tex="e = -L\,\Delta I/\Delta t" inline /></td></tr>
           <tr><td>④ 蓄えられるエネルギーが問われる</td><td><Eq tex="W = \tfrac{1}{2}L I^2" inline /></td></tr>
           <tr><td>⑤ コイルが<strong>2つ</strong> → 相互インダクタンス M</td><td>下で分岐 ↓</td></tr>
           <tr><td>　└ 鉄心の構造（μ・S・ℓ）＋巻数 N₁,N₂ が与えられる</td><td><Eq tex="M = \mu_0\mu_r N_1 N_2 S / \ell" inline /></td></tr>
@@ -19567,6 +19568,11 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
           <td>「変な電圧が出る」と感覚的に処理</td>
           <td>e = -L di/dt（セクション3）の<strong>「電流を止めるな」原理 = 流れを守る慣性</strong>として理解</td>
         </tr>
+        <tr>
+          <td><strong>⑦ 電圧を「電流の大きさ」から出そうとする</strong></td>
+          <td>「コイルの電圧＝ωL × そのときの電流」と、抵抗の v = Ri と同じ形で処理する</td>
+          <td>コイル電圧は<strong>電流の大きさではなく変化の速さ</strong>で決まる（v = L di/dt）。ωL が使えるのは<strong>単一周波数の正弦波で、かつ ω が特定できるときだけ</strong>（セクション4「ωL の射程」）。折れ線波形なら <Eq tex="v = L\,\Delta I/\Delta t" inline /></td>
+        </tr>
       </tbody>
     </table>
 
@@ -19625,7 +19631,8 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
       <tbody>
         <tr><td><strong>直流定常</strong></td><td>di/dt = 0</td><td>誘導起電力なし ＝ <strong>短絡</strong>（v=0）</td><td>L を無視し抵抗だけで解く</td></tr>
         <tr><td><strong>直流の投入／遮断</strong></td><td>di/dt が大</td><td>大きな<strong>逆起電力・サージ</strong></td><td><Eq tex="e = -L\,di/dt" inline />（接点火花・SPD対策）</td></tr>
-        <tr><td><strong>交流（定常）</strong></td><td>常に変化</td><td>電流を妨げる ＝ <strong>誘導リアクタンス</strong></td><td><Eq tex="X_L = \omega L" inline />、電流は電圧より90°遅れ</td></tr>
+        <tr><td><strong>電流が波形で与えられる</strong><br/>（折れ線・ランプ・パルス。<strong>非正弦の交流もここ</strong>）</td><td>区間ごとに一定<br/>＝ ΔI/Δt</td><td>各区間で<strong>一定の電圧</strong>（階段状）</td><td><Eq tex="v = L\,\Delta I/\Delta t" inline />、最大は<strong>傾きが最も急な区間</strong>（→ 学習タブ セクション4）</td></tr>
+        <tr><td><strong>交流（定常）</strong></td><td>常に変化<br/><span style={{ fontSize: 11, color: "var(--ink-soft)" }}>※単一周波数の正弦波に限る。三角波・方形波など非正弦の交流は<strong>1つ上の行</strong>で扱う</span></td><td>電流を妨げる ＝ <strong>誘導リアクタンス</strong></td><td><Eq tex="X_L = \omega L" inline />、電流は電圧より90°遅れ</td></tr>
         <tr><td><strong>過渡</strong></td><td>変化の途中</td><td>電流は<strong>瞬時に変われない</strong></td><td><Eq tex="i(t)=\tfrac{V}{R}(1-e^{-t/\tau})" inline />, τ=L/R</td></tr>
       </tbody>
     </table>
@@ -19645,6 +19652,11 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
     <p>
       交流電圧は <Eq tex="V = X_L I = \omega L I" inline />、最大値は <Eq tex="V_m = \omega L I_m" inline />。<strong>周波数 f が高いほど X_L は大きく、電流を流しにくい</strong>。逆に直流（f = 0）では X_L = 0 で短絡近似と整合する。
     </p>
+    <Callout variant="warn" title="⚠️ ωL の射程：正弦波専用の“娘公式”であって、v = L di/dt と対等ではない">
+      <p><Eq tex="V = \omega L I" inline /> は独立した公式ではなく、<strong>下の位相導出のとおり <Eq tex="v = L\,di/dt" inline /> に <Eq tex="i = I_m\sin\omega t" inline /> を代入して初めて出てくる</strong>。したがって使える条件は「<strong>電流が単一周波数の正弦波</strong>で、<strong>その ω が特定できる</strong>」の2つを同時に満たすときだけ。ω の出どころは問題文の「ω＝」表記に限らず、<strong>f・周期 T・<Eq tex="\sin(100t)" inline /> の係数・回転速度と極数</strong>などから作れれば足りる。</p>
+      <p style={{ margin: "8px 0 0" }}>電流が折れ線グラフ・パルス・ランプで与えられていて <strong>ω も f も無い</strong>なら、<strong>この波形に当てはめられる ω が1つに決まらない＝ωL という1つの数を作れない</strong>。この場合は親の式に戻って <Eq tex="v = L\,\Delta I/\Delta t" inline /> で解く。<span className="marker">迷ったら「ω はどこから持ってくるのか」を自問する</span>——出所が言えなければ ωL は使えない。</p>
+      <p style={{ margin: "8px 0 0" }}>さらに一段きつい条件がある。<strong>周期波形で ω が定義できても、正弦波でなければ ωL は使えない</strong>。三角波・方形波は<strong>いろいろな周波数の正弦波の重ね合わせ</strong>で、成分ごとにリアクタンスが違う（第 n 高調波は nωL）ため、<strong>1つの実数リアクタンスに潰せない</strong>。<Eq tex="X_L = \omega L" inline /> が「1つの値」として書けるのは<strong>単一周波数の正弦波定常</strong>だけ、と覚える。</p>
+    </Callout>
 
     <h3 id="phase-derivation">位相：v = L di/dt から「電圧が90°進む」を導く</h3>
     <p>
@@ -19974,8 +19986,8 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
     </p>
 
     <div style={{ background: "var(--accent-soft)", borderLeft: "4px solid var(--accent-ink)", borderRadius: "6px", padding: "12px 14px", margin: "10px 0 14px 0" }}>
-      <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--accent-ink)", marginBottom: 8, letterSpacing: "0.04em" }}>⚡ 問題を見た瞬間の初動判断（3分岐）</div>
-      <p style={{ fontSize: "13px", margin: "0 0 8px 0" }}>「L がある」と気づいたら、まず次の3分岐で<strong>使う式を確定</strong>させる。これで①以降の手順が選択できる。</p>
+      <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--accent-ink)", marginBottom: 8, letterSpacing: "0.04em" }}>⚡ 問題を見た瞬間の初動判断（4分岐）</div>
+      <p style={{ fontSize: "13px", margin: "0 0 8px 0" }}>「L がある」と気づいたら、まず次の4分岐で<strong>使う式を確定</strong>させる。これで①以降の手順が選択できる。<strong>分岐は「電流がどう変化するか」で決まる</strong>ので、先に<span className="marker">電流の与えられ方（数式か・グラフか・スイッチか）</span>を見ること。</p>
       <table className="data-table" style={{ marginTop: 6 }}>
         <thead>
           <tr><th>問題が言う状態</th><th>L の振る舞い</th><th>使う式</th></tr>
@@ -19987,9 +19999,14 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
             <td>L 無視・抵抗だけで解く</td>
           </tr>
           <tr>
-            <td><strong>交流定常</strong>（正弦波）</td>
+            <td><strong>交流定常</strong>（単一周波数の正弦波・<strong>ω が特定できる</strong>）<br /><span style={{ fontSize: 11, color: "var(--ink-soft)" }}>※ ω は「ω＝」表記だけでなく f・周期 T・sin(100t) の係数などから作れれば可</span></td>
             <td>誘導リアクタンス <strong>X_L = ωL</strong></td>
             <td>V = ωLI、V_m = ωLI_m、電流は電圧より 90°遅れ</td>
+          </tr>
+          <tr>
+            <td><strong>電流波形がグラフで与えられる</strong>（折れ線・パルス・ランプ／直流電流源）</td>
+            <td>各区間で<strong>傾きに比例した一定電圧</strong></td>
+            <td><strong>v = L·ΔI/Δt</strong>、最大値は<strong>傾きが最も急な区間</strong>（→ 下記セクション4）<br /><span style={{ fontSize: 11, color: "var(--ink-soft)" }}>※ ΔI/Δt が瞬時値になるのは<strong>直線（一定傾斜）の区間</strong>だから。曲線なら各点の接線の傾き</span></td>
           </tr>
           <tr>
             <td><strong>過渡</strong>（スイッチ投入直後/開放）</td>
@@ -19999,7 +20016,7 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
         </tbody>
       </table>
       <p style={{ fontSize: "11px", color: "var(--ink-soft)", margin: "8px 0 0 0" }}>
-        ※ この3分岐の根拠は解説タブ セクション4「直流・交流でのコイル挙動」参照。型判別後、下記5ステップへ進む。
+        ※ この4分岐の根拠は解説タブ セクション4「直流・交流でのコイル挙動」参照。型判別後、下記5ステップへ進む。<strong>ωL は2行目の条件を満たすときだけ</strong>使える（→ 解説タブ「ωL の射程」）。
       </p>
     </div>
 
@@ -20030,7 +20047,7 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
       </ol>
     </div>
     <Callout variant="tip" title="このフローが効く理由">
-      <p>過去問の95%以上は「自己 L か相互 M か」「和動か差動か」「交流かエネルギーか」の <strong>3つの分岐</strong> で解ける。<strong>「公式を覚える」のではなく「分岐を覚える」</strong>と、新しい問題でも手が止まらない（R04上問3 / R05上問10 / R07上問3 で実証済み）。</p>
+      <p>過去問の95%以上は「自己 L か相互 M か」「和動か差動か」「電流はどう変化するか（正弦波かグラフか）」の <strong>3つの分岐</strong> で解ける。<strong>「公式を覚える」のではなく「分岐を覚える」</strong>と、新しい問題でも手が止まらない（R04上問3＝和動/差動 / R05上問10＝グラフ波形 / R07上問3＝自己 L の構造計算 で実証済み）。</p>
     </Callout>
 
     <h2 id="test-widget"><span className="h-num">2</span>概念チェック</h2>
@@ -20106,19 +20123,20 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
       <p style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: 8 }}><strong>別解（自己 L 経由でも同じ）</strong>：Λ = μ₀μᵣS/ℓ = 32π×10⁻⁸ とおくと、L₁ = Λ·N₁² = 32π×10⁻⁸×10⁶ ≈ 1.0H、L₂ = Λ·N₂² = 32π×10⁻⁸×4×10⁶ ≈ 4.0H。k=1 より M = √(L₁L₂) = √(1.0×4.0) = <strong>2.0H</strong>。どちらの筋でも一致する。<strong>「相互インダクタンス」＋「同一鉄心・漏れなし」を見たら μ₀μᵣS/ℓ に N₁N₂ を掛ける</strong>——これが取り出せれば即答できる。</p>
     </details>
 
-    <h3 style={{ marginTop: 22 }}>⚠️ 失点7分類（UNIT / SIGN / MODEL / SCALE / CAUSE / LABEL / FORM）</h3>
+    <h3 style={{ marginTop: 22 }}>⚠️ 失点8分類（UNIT / SIGN / MODEL / MODEL-2 / SCALE / CAUSE / LABEL / FORM）</h3>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 6, fontSize: 11, color: "var(--ink-soft)", margin: "4px 0 10px", padding: "8px 10px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6, lineHeight: 1.55 }}>
       <div>📍 <strong>今なにを</strong>：インダクタンスで“やりがちな失点”を型で潰す</div>
       <div>🎯 <strong>いつ使う</strong>：例題を解き終えた直後の見直しチェックとして</div>
       <div>➡️ <strong>次どこへ</strong>：詰まった型は解説タブの該当節へ戻る</div>
     </div>
-    <p style={{ fontSize: 13, marginBottom: 8 }}>インダクタンスの失点は原因で5つに分類できる。「自分はどれをやりがちか」を意識すると再発が止まる：</p>
+    <p style={{ fontSize: 13, marginBottom: 8 }}>インダクタンスの失点は原因で8つに分類できる。「自分はどれをやりがちか」を意識すると再発が止まる：</p>
     <table className="data-table">
       <thead><tr><th>コード</th><th>誤答パターン</th><th>正しい理解</th></tr></thead>
       <tbody>
         <tr><td><strong>UNIT</strong></td><td>cm²→m² を忘れ、cm のまま代入する</td><td>1 cm²=10⁻⁴ m²、1 cm=10⁻² m。代入前に必ず SI に揃える（→ 例題 問3・問5）</td></tr>
         <tr><td><strong>SIGN</strong></td><td>e = −L·di/dt のマイナスを「電圧が負」と誤解する</td><td>マイナスは<strong>向き（変化を妨げる）</strong>の意味。大きさは |L·di/dt|、KVL では v = L·di/dt。<strong>符号を消すと永久機関になる</strong>（→ 解説タブ 第3節）</td></tr>
         <tr><td><strong>MODEL</strong></td><td><Eq tex="M=k\sqrt{L_1L_2}" inline /> と <Eq tex="M=\mu N_1N_2 S/\ell" inline /> を取り違える</td><td>L・k が与えられたら k√、鉄心構造が与えられたら μN₁N₂S/ℓ（→ 解説タブ 第5節 使い分け表）</td></tr>
+        <tr><td><strong>MODEL-2</strong><br/>（射程外れ）</td><td>電流が<strong>折れ線グラフ</strong>で与えられているのに <Eq tex="V = \omega L I" inline /> を使い、瞬時値を代入する</td><td>ωL は<strong>単一周波数の正弦波で、ω が特定できるときだけ</strong>成立する娘公式。ω の出所が言えないなら親の式 <Eq tex="v = L\,\Delta I/\Delta t" inline /> に戻り、<strong>最も急な区間</strong>を探す（→ 下記セクション4 R05上問10）</td></tr>
         <tr><td><strong>SCALE</strong></td><td>巻数2倍で L も2倍と誤解する</td><td><Eq tex="L \propto N^2" inline /> なので<strong>4倍</strong>。相互は <Eq tex="M \propto N_1 N_2" inline /></td></tr>
         <tr><td><strong>CAUSE</strong></td><td>「電流があるから起電力が出る」と誤解する</td><td>起電力は<strong>電流の変化</strong>で出る。直流定常（di/dt=0）では起電力ゼロ（→ 解説タブ 第4節）</td></tr>
         <tr><td><strong>LABEL</strong></td><td>発電機なのに<strong>「フレミング左手」</strong>と答える（＝中身は合っているのに左右のラベルだけ逆）</td><td><span className="marker">発電機は右手</span>。指の対応「親＝動く方向 v・人＝磁界 B・中＝起電力 e」は<strong>そのまま右手で正しい</strong>ので、貼り替えるのは<strong>左右の名前だけ</strong>。左手にすると親指が<strong>力 F</strong> に変わる。合言葉は<strong>「押されるなら左・生み出すなら右」</strong>（→ <a onClick={() => onNav('electromagnetic-force')} style={{ cursor: "pointer", color: "var(--accent-ink)", textDecoration: "underline" }}>1.3 電磁力</a> の指の対応表）</td></tr>
@@ -20129,31 +20147,110 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
       <p style={{ margin: 0 }}>この2型は、正しい記述を読んだ直後は必ず正しく見えるため<strong>受動的な再読では矯正されない</strong>。右列を隠し、左の誤答だけを見て<span className="marker">「どこが逆か」「なぜその式は存在しないか」を声に出してから</span>開くこと。詰まったらリンク先の元表へ戻る。</p>
     </Callout>
 
-    <h2 id="r05-q10"><span className="h-num">4</span>R05上問10 解法カード — 相互結合コイル電圧最大値</h2>
+    <h2 id="r05-q10"><span className="h-num">4</span>R05上問10 解法カード — 電流がグラフで与えられたときの電圧最大値</h2>
     <SectionCheck pageId="inductance" sectionId="r05-q10" />
     <Callout variant="info" title="問題パターン">
-      <p>2つのコイル L₁、L₂（相互インダクタンス M）が和動または差動で直列接続された回路に交流電流 <Eq tex="i = I_m \sin\omega t" inline /> が流れるとき、回路の端子電圧の最大値を求める。</p>
+      <p>自己インダクタンス <strong>L = 5 H</strong> のコイルに<strong>直流電流源</strong>が電流 i [mA] を供給する。i の時間変化が<strong>折れ線グラフ</strong>で与えられ、コイルの端子間電圧の大きさ <Eq tex="|v|" inline /> の<strong>最大値</strong>を求める。選択肢は 0.25 / 0.5 / 1 / 1.25 / 1.5 V。</p>
     </Callout>
-    <p><strong>解法手順</strong>:</p>
+    <Callout variant="warn" title="⚠️ まずやりがちな初動ミス：ωL を持ち出す">
+      <p><strong>「最大値」と書いてあるので反射的に <Eq tex="V_m = \omega L I_m" inline /> を使ってしまう</strong>——これが典型的な出だしのつまずき（フェーザで書けば <Eq tex="\dot{V} = j\omega L \dot{I}" inline />、その大きさが <Eq tex="|\dot{V}| = \omega L\,|\dot{I}|" inline />。<strong>jωL はフェーザの式・ωL はその大きさ</strong>で別物）。しかしこの問題は<strong>直流電流源</strong>で、問題文のどこにも <strong>ω も f も正弦波も無い</strong>。<strong>この波形に当てはめられる ω が1つに決まらない</strong>ので、代入する値そのものが作れない。</p>
+      <p style={{ margin: "8px 0 0" }}>ここで問われている「最大値」は<span className="marker">正弦波のピーク値ではなく、区間ごとに変わる電圧のうち一番大きいもの</span>。<strong>電流の瞬時値ではなく、電流の変化 ΔI と所要時間 Δt を拾う</strong>のが正しい初動（→ 上記4分岐の3行目 ／ <a href="#" onClick={(e) => { e.preventDefault(); switchTab('explain'); }} style={{ textDecoration: "underline" }}>解説タブ「ωL の射程」</a>）。</p>
+    </Callout>
+    <p><strong>解法手順（3ステップ）</strong>:</p>
     <ol style={{ lineHeight: 1.9 }}>
-      <li>合成インダクタンスを計算する
-        <ul>
-          <li>和動：<Eq tex="L = L_1 + L_2 + 2M" inline /></li>
-          <li>差動：<Eq tex="L = L_1 + L_2 - 2M" inline /></li>
-        </ul>
-      </li>
-      <li>誘導リアクタンスを計算する：<Eq tex="X_L = \omega L" inline /></li>
-      <li>電流最大値 I_m と X_L を掛けて電圧最大値：<Eq tex="V_m = X_L \cdot I_m = \omega L \cdot I_m" inline /></li>
+      <li><strong>区間に切る</strong>：折れ線の折れ点で区切ると、各区間の傾き ΔI/Δt は一定 → 各区間で電圧は<strong>一定値</strong>になる（電圧波形は階段状）</li>
+      <li><strong>区間ごとに傾きを出す</strong>：<Eq tex="\left|\dfrac{\Delta I}{\Delta t}\right|" inline />。<strong>mA/ms ＝ A/s</strong> なので、グラフの数値をそのまま割ってよい（10⁻³ どうしが約分される）</li>
+      <li><strong>最も急な区間だけ L 倍する</strong>：<Eq tex="|v|_{\max} = L\left|\dfrac{\Delta I}{\Delta t}\right|_{\max}" inline /></li>
     </ol>
-    <details>
-      <summary>なぜ V_m = ωL·I_m になるか</summary>
-      <p>交流電流 <Eq tex="i = I_m \sin\omega t" inline /> をコイルに流すと、電圧は：</p>
-      <p style={{ textAlign: "center" }}><Eq tex="v = L \frac{di}{dt} = L \cdot I_m \omega \cos\omega t" /></p>
-      <p>最大値は <Eq tex="\cos\omega t = 1" inline /> のとき → <Eq tex="V_m = \omega L I_m" inline /></p>
-    </details>
-    <Callout variant="warn" title="引っかかりやすいポイント">
-      <p>問題に M が与えられると「どう使うのか？」で迷いがちだが、<strong>まず合成インダクタンスを作って、あとは単一コイルと同じ手順で計算する</strong>。</p>
+    <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+      <svg viewBox="0 0 470 268" role="img" aria-label="R05上期問10の電流波形：0-5msで0から1.0mAへ上昇、5-10ms一定、10-15msで0.5mAへ下降、15-20ms一定、20-22msで0へ下降。最後の2ms区間が最も傾きが急で、コイル電圧は5H×0.25A/s=1.25Vとなり最大" style={{ display: "block", width: "100%", height: "auto", maxWidth: "470px", margin: "0 auto" }}>
+        <defs>
+          <marker id="ind-r5-arr" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+            <path d="M0,1 L8,4.5 L0,8 z" fill="var(--ink-mute)" />
+          </marker>
+        </defs>
+        <text x="235" y="18" textAnchor="middle" fontSize="12" fontWeight="bold" fill="var(--accent-ink)">① 電流 i の折れ線グラフ（L ＝ 5 H・直流電流源）</text>
+        <text x="235" y="36" textAnchor="middle" fontSize="11.5" fontWeight="bold" fill="var(--warn)">② 電圧は「高さ」でなく「傾きの急さ」＝ |v| ＝ L·|ΔI/Δt|</text>
+        {/* 軸 */}
+        <line x1="56" y1="100" x2="56" y2="208" stroke="var(--ink-mute)" strokeWidth="1.2" />
+        <line x1="48" y1="200" x2="446" y2="200" stroke="var(--ink-mute)" strokeWidth="1.2" markerEnd="url(#ind-r5-arr)" />
+        <text x="34" y="96" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">i [mA]</text>
+        <text x="240" y="232" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">t [ms]</text>
+        {/* 目盛 */}
+        <line x1="52" y1="110" x2="60" y2="110" stroke="var(--ink-mute)" />
+        <line x1="52" y1="155" x2="60" y2="155" stroke="var(--ink-mute)" />
+        <text x="48" y="114" textAnchor="end" fontSize="10" fill="var(--ink-mute)">1.0</text>
+        <text x="48" y="159" textAnchor="end" fontSize="10" fill="var(--ink-mute)">0.5</text>
+        <text x="48" y="204" textAnchor="end" fontSize="10" fill="var(--ink-mute)">0</text>
+        <line x1="140.5" y1="196" x2="140.5" y2="204" stroke="var(--ink-mute)" />
+        <line x1="225.1" y1="196" x2="225.1" y2="204" stroke="var(--ink-mute)" />
+        <line x1="309.6" y1="196" x2="309.6" y2="204" stroke="var(--ink-mute)" />
+        <line x1="394.2" y1="196" x2="394.2" y2="204" stroke="var(--ink-mute)" />
+        <text x="56" y="216" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">0</text>
+        <text x="140.5" y="216" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">5</text>
+        <text x="225.1" y="216" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">10</text>
+        <text x="309.6" y="216" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">15</text>
+        <text x="394.2" y="216" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">20</text>
+        <text x="428" y="216" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">22</text>
+        {/* 波形本体 */}
+        <polyline points="56,200 140.5,110 225.1,110 309.6,155 394.2,155 428,200" fill="none" stroke="var(--accent)" strokeWidth="2.4" strokeLinejoin="round" />
+        {/* 誤答候補の区間（変化量は最大だが傾きは2番手） */}
+        <line x1="56" y1="200" x2="140.5" y2="110" stroke="var(--warn)" strokeWidth="4" strokeLinecap="round" opacity="0.85" />
+        {/* 正解の区間（最急） */}
+        <line x1="394.2" y1="155" x2="428" y2="200" stroke="var(--ok)" strokeWidth="4.5" strokeLinecap="round" />
+        {/* 注釈ボックス */}
+        <rect x="56" y="52" width="172" height="34" rx="6" fill="var(--bg-elev)" stroke="var(--warn)" strokeWidth="1.2" />
+        <text x="142" y="66" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--warn)">Δi＝1.0mA ／ Δt＝5ms → 1.00 V</text>
+        <text x="142" y="79" textAnchor="middle" fontSize="10" fill="var(--ink-soft)">変化量は最大。でも傾きは2番手</text>
+        <line x1="110" y1="86" x2="99" y2="148" stroke="var(--warn)" strokeWidth="1" strokeDasharray="4 3" />
+        <rect x="274" y="52" width="172" height="34" rx="6" fill="var(--bg-elev)" stroke="var(--ok)" strokeWidth="1.2" />
+        <text x="360" y="66" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--ok)">Δi＝0.5mA ／ Δt＝2ms → 1.25 V</text>
+        <text x="360" y="79" textAnchor="middle" fontSize="10" fill="var(--ink-soft)">短時間で変わる ＝ 最も急</text>
+        <line x1="400" y1="86" x2="411" y2="172" stroke="var(--ok)" strokeWidth="1" strokeDasharray="4 3" />
+        {/* 結論 */}
+        <rect x="34" y="238" width="402" height="26" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1" />
+        <text x="235" y="255" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">③ |v|max ＝ L×(最急の傾き) ＝ 5 × 0.25 ＝ 1.25 V</text>
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+        電流の<strong>高さ</strong>が最大なのは 5〜10 ms の平坦部（1.0 mA）だが、そこは傾き 0 なので電圧は <strong>0 V</strong>。<strong>変化量</strong>が最大なのは 0〜5 ms（1.0 mA）だが 5 ms かけているので 1.00 V。<strong>傾きの急さ</strong>が最大なのは 20〜22 ms（0.5 mA をわずか 2 ms で）で 1.25 V。「高さ」「変化量」「傾きの急さ」の3つを取り違えないことがこの問題の全て。<br />
+        <strong>※「傾きが最大」ではなく「傾きの<span className="marker">急さ</span>（絶対値）が最大」</strong>と言い切ること。符号まで込めた傾きの最大は <strong>0〜5 ms の +0.20 A/s</strong>（下降区間は負）なので、「傾き最大の区間」と読むと<strong>そのまま罠の 1.00 V に着地する</strong>。問われているのは <Eq tex="|v|" inline /> ＝ 絶対値どうしの比較。
+      </figcaption>
+    </figure>
+    <p style={{ fontSize: 13, margin: "0 0 6px" }}><strong>全区間の計算（これを表にすれば必ず当たる）</strong>：</p>
+    <table className="data-table">
+      <thead><tr><th>区間 [ms]</th><th>Δi [mA]</th><th>Δt [ms]</th><th>|ΔI/Δt| [A/s]</th><th>|v| ＝ L×傾き [V]</th></tr></thead>
+      <tbody>
+        <tr><td>0 〜 5</td><td>+1.0</td><td>5</td><td>0.20</td><td>1.00（選択肢③の罠）</td></tr>
+        <tr><td>5 〜 10</td><td>0</td><td>5</td><td>0</td><td>0</td></tr>
+        <tr><td>10 〜 15</td><td>−0.5</td><td>5</td><td>0.10</td><td>0.50</td></tr>
+        <tr><td>15 〜 20</td><td>0</td><td>5</td><td>0</td><td>0</td></tr>
+        <tr><td><strong>20 〜 22</strong></td><td><strong>−0.5</strong></td><td><strong>2</strong></td><td><strong>0.25</strong></td><td><strong>1.25 ← 最大（正解④）</strong></td></tr>
+      </tbody>
+    </table>
+    <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "6px 0 12px" }}>
+      <strong>選択肢の作られ方</strong>（(1)(2)(3) は表の中の数字がそのまま置いてある）：<strong>(3) 1</strong> ＝ 変化量が最大の 0〜5 ms を選んだ誤答。<strong>(2) 0.5</strong> ＝ 10〜15 ms を選んだ誤答。<strong>(1) 0.25</strong> ＝ 最急の傾き <strong>0.25 A/s</strong> まで正しく出しながら <strong>L＝5 を掛け忘れた</strong>誤答。<span className="marker">傾きの数値がそのまま選択肢にある問題は、L 倍を忘れた瞬間に「ある選択肢に着地してしまう」</span>ので、最後に単位が V になっているかを確認する。<span style={{ fontSize: 11 }}>（出題意図そのものは公表されていない。ここで言えるのは「途中で止まった値が選択肢と一致する」という事実まで）</span>
+    </p>
+    <Callout variant="tip" title="単位のショートカット：mA/ms ＝ A/s">
+      <p>0.5 mA ÷ 2 ms ＝ (0.5×10⁻³ A) ÷ (2×10⁻³ s) ＝ 0.25 A/s。<strong>10⁻³ が上下で約分される</strong>ので、グラフの目盛の数字をそのまま割って A/s と読んでよい。これを知らないと 10⁻³ の付け外しで事故る（UNIT 型失点）。</p>
     </Callout>
+    <Callout variant="warn" title="この型の見分け方（次に同じ問題を落とさないために）">
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.8 }}>
+        <li><strong>電源が「直流電流源」</strong>と書いてある、または<strong>電流が波形グラフで与えられている</strong> → ωL は使えない。<Eq tex="v = L\,\Delta I/\Delta t" inline /> 一択</li>
+        <li><strong>「最大値」＝最も急な区間</strong>を探す作業。電流が最大の点でも、変化量が最大の区間でもない</li>
+        <li><strong>電圧の向き（符号）は問われていない</strong>ことが多い（|v| を問う）。減少区間でも大きさは L|ΔI/Δt| でよい。<strong>ただしこれは本問のように電圧の項が1つだけ（または全項が同符号）の回路に限る</strong>——R と直列（v = Ri + L di/dt）や相互 M あり（v₁ = L₁di₁/dt ± M di₂/dt）では、<span className="marker">符号付きで足してから絶対値を取る</span>（先に絶対値にすると打ち消しを取り逃がす）</li>
+      </ol>
+    </Callout>
+    <details style={{ marginTop: 12 }}>
+      <summary style={{ cursor: "pointer", fontWeight: 600 }}>参考：ωL を使うのが正しい型（交流・相互結合コイルの電圧最大値）</summary>
+      <p style={{ marginTop: 8 }}>2つのコイル L₁、L₂（相互インダクタンス M）が和動または差動で直列接続され、<strong>交流電流 <Eq tex="i = I_m \sin\omega t" inline /> が流れる</strong>と明示された場合は、ωL を使う型になる。上の R05上問10 と<strong>取り違えないよう並べて確認</strong>すること。</p>
+      <ol style={{ lineHeight: 1.9 }}>
+        <li>合成インダクタンス：和動 <Eq tex="L = L_1 + L_2 + 2M" inline />／差動 <Eq tex="L = L_1 + L_2 - 2M" inline /></li>
+        <li>誘導リアクタンス：<Eq tex="X_L = \omega L" inline /></li>
+        <li>電圧最大値：<Eq tex="V_m = X_L \cdot I_m = \omega L \cdot I_m" inline /></li>
+      </ol>
+      <p><strong>なぜ V_m = ωL·I_m になるか</strong>：<Eq tex="v = L \frac{di}{dt} = L I_m \omega \cos\omega t" inline /> で、最大は <Eq tex="\cos\omega t = 1" inline /> のとき。<strong>結局この型も v = L di/dt から出ている</strong>——正弦波という条件が加わって初めて ωL の形になる。</p>
+      <p style={{ fontSize: "12px", color: "var(--ink-soft)" }}>M が与えられて迷ったら、<strong>まず合成インダクタンスを作り、あとは単一コイルと同じ手順</strong>で計算する。</p>
+    </details>
 
     <h2 id="z-3conditions"><span className="h-num">5</span>3条件Z即答チェック（限界的練習ゾーン）</h2>
     <SectionCheck pageId="inductance" sectionId="z-3conditions" />
@@ -20209,7 +20306,7 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
         <tr><td>R07上</td><td>問14</td><td>論説</td><td>電気・磁気に関する量と単位記号の組合せ（誤りを選ぶ）</td><td>✅ <a href="#" onClick={(e) => { e.preventDefault(); onNav('magnetic-circuit'); }} style={{ textDecoration: "underline" }}>磁気回路 単位記号表</a></td></tr>
         <tr><td>R06下</td><td>問14</td><td>論説</td><td>固有の名称をもつSI組立単位の記号と他の表し方の組合せ（誤りを選ぶ）</td><td>✅ <a href="#" onClick={(e) => { e.preventDefault(); onNav('magnetic-circuit'); }} style={{ textDecoration: "underline" }}>磁気回路 単位記号表</a></td></tr>
         <tr><td>R06上</td><td>問3</td><td>論説</td><td>磁気に関する量とその単位記号の組合せ</td><td>✅ <a href="#" onClick={(e) => { e.preventDefault(); onNav('magnetic-circuit'); }} style={{ textDecoration: "underline" }}>磁気回路 単位記号表</a></td></tr>
-        <tr><td>R05上</td><td>問10</td><td>計算</td><td>コイルを接続した回路に現れる電圧の最大値</td><td>✅ 本ページ完結（解法カードあり）</td></tr>
+        <tr><td>R05上</td><td>問10</td><td>計算</td><td>コイルを接続した回路に現れる電圧の最大値（<strong>直流電流源＋折れ線波形</strong>から v = L·ΔI/Δt）</td><td>✅ 本ページ完結（学習タブ セクション4 解法カード）</td></tr>
         <tr><td>R04上</td><td>問3</td><td>計算</td><td>自己L 40mH・10mH と和動合成 86mH から結合係数 k=0.9 を逆算（単一測定）</td><td>✅ 本ページ完結（学習タブ 問2-B）</td></tr>
         <tr><td>H30</td><td>問14</td><td>論説</td><td>SI 組立単位と基本単位に関する論説</td><td>✅ <a href="#" onClick={(e) => { e.preventDefault(); onNav('magnetic-circuit'); }} style={{ textDecoration: "underline" }}>磁気回路 単位記号表</a></td></tr>
         <tr><td>H29</td><td>問3</td><td>計算</td><td>合成インダクタンス</td><td>✅ 本ページ完結</td></tr>
@@ -20259,7 +20356,7 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
       sections={[
         { id: "solver-flow",   label: "1. 解法フロー" },
         { id: "examples",      label: "3. 例題" },
-        { id: "r05-q10",       label: "4. R05上問10 解法カード" },
+        { id: "r05-q10",       label: "4. R05上問10 解法カード（グラフ波形）" },
         { id: "z-3conditions", label: "5. 3条件Z即答チェック" },
         { id: "kakomon",       label: "6. 出題実績" },
         { id: "related",       label: "7. 関連項目" },
@@ -20279,9 +20376,9 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
     </p>
     <Callout variant="warn" title="⏱️ 本番でこのテーマが出たら">
       <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.9 }}>
-        <li><strong>まず何を見る</strong>：<strong>自己誘導か相互誘導か</strong>。コイルは単独か結合(M,k)か。直列なら<strong>和動か差動か</strong>。</li>
+        <li><strong>まず何を見る</strong>：<strong>電流がどう与えられているか</strong>（正弦波の式か・グラフか・スイッチ操作か）。グラフなら <strong>v = L·ΔI/Δt</strong> で ωL は使わない。次に<strong>自己誘導か相互誘導か</strong>、直列なら<strong>和動か差動か</strong>。</li>
         <li><strong>絶対に見落とせない条件</strong>：e=-L·di/dt（電流変化に逆らう）。M=k√(L1·L2)・0≤k≤1。直列合成 <strong>L=L1+L2±2M</strong>（和動+/差動−）。W=½LI²。</li>
-        <li><strong>典型ひっかけ</strong>：<strong>和動と差動で±2M を取り違える</strong>／L と M の混同／直流定常でコイルは短絡(電圧0)になるのを忘れる。</li>
+        <li><strong>典型ひっかけ</strong>：<strong>和動と差動で±2M を取り違える</strong>／L と M の混同／直流定常でコイルは短絡(電圧0)になるのを忘れる／<strong>波形グラフ問題で ωL を持ち出す</strong>（ω を1つに特定できないので使えない・R05上問10）。</li>
       </ol>
     </Callout>
   </>
