@@ -12470,6 +12470,44 @@ const CoilCrossingFieldSim = () => {
   const [predE, setPredE] = useState(null);
   const [predDir, setPredDir] = useState(null);
   const [revealed, setRevealed] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [stepIdx, setStepIdx] = useState(0);
+  const rafRef = useRef(0);
+
+  // dΦ/dt は時間微分なので、スライダーの離散ジャンプでは概念と表現形式が食い違う。
+  // 「1回だけ・ループなし・ユーザー起動」の再生でのみ通過を時系列として見せる。
+  // 進入2.5s → 境界で0.5s停止 → 内部2.0s → 境界で0.5s停止 → 退出2.5s（計8s のスロー再生）。
+  // 実時間ではない（e の値は v スライダーから計算する）ことは figcaption に明記。
+  const PLAY_SEGS = [
+    { t: 2.5, a: -0.20, b: 0 }, { t: 0.5, a: 0, b: 0 },
+    { t: 2.0, a: 0, b: 0.30 }, { t: 0.5, a: 0.30, b: 0.30 },
+    { t: 2.5, a: 0.30, b: 0.50 },
+  ];
+  const PLAY_TOTAL = 8.0;
+  const STEPS = [-0.20, -0.10, 0, 0.15, 0.30, 0.40, 0.50];   // reduced-motion 用のコマ送り
+  const reduceMotion = typeof window !== "undefined" && window.matchMedia
+    ? window.matchMedia("(prefers-reduced-motion: reduce)").matches : false;
+
+  useEffect(() => {
+    if (!playing) return;
+    const t0 = performance.now();
+    const posAt = (el) => {
+      let t = el;
+      for (const s of PLAY_SEGS) {
+        if (t <= s.t) return s.a + (s.b - s.a) * (s.t ? t / s.t : 1);
+        t -= s.t;
+      }
+      return 0.50;
+    };
+    const tick = (now) => {
+      const el = (now - t0) / 1000;
+      if (el >= PLAY_TOTAL) { setXc(0.50); setPlaying(false); return; }
+      setXc(Number(posAt(el).toFixed(2)));
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [playing]);
 
   const W = 0.20, H = 0.20, R = 0.50;    // コイル幅・高さ・磁界領域幅（固定）
   const ov = Math.max(0, Math.min(xc + W, R) - Math.max(xc, 0));   // 重なり幅 a(x)
@@ -12481,10 +12519,21 @@ const CoilCrossingFieldSim = () => {
   const blv = B * H * Math.abs(v);        // 片側導体1本の BLv（L=コイル高さ）
 
   const state = ov === 0 ? "out" : (dadx === 0 ? "in" : (dadx > 0 ? "enter" : "exit"));
-  const stateLabel = { out: "磁界の外", enter: "進入中", in: "完全に内部", exit: "退出中" }[state];
+  // 状態名は「位置」ではなく dΦ/dt の符号で決める。位置だけで「進入中」と呼ぶと、
+  // 速度を負にした（左へ戻している）ときに Φ は減っているのに「進入中」と表示され、
+  // ラベルと物理が矛盾する。起電力を決めるのは位置ではなく Φ の増減。
+  const fluxTrend = Math.abs(dphidt) < 1e-12 ? "flat" : (dphidt > 0 ? "up" : "down");
+  const posLabel = { out: "帯の外", enter: "左端をまたいでいる", in: "コイル全体が帯の中", exit: "右端をまたいでいる" }[state];
+  const trendLabel = { up: "Φ が増えている", flat: "Φ は一定", down: "Φ が減っている" }[fluxTrend];
   // 磁界は奥向き(⊗)。奥向きの Φ が増える→打ち消すため反時計回り／減る→維持のため時計回り
-  const cur = Math.abs(dphidt) < 1e-12 ? "zero" : (dphidt > 0 ? "ccw" : "cw");
+  const cur = fluxTrend === "flat" ? "zero" : (fluxTrend === "up" ? "ccw" : "cw");
   const curLabel = { zero: "流れない", ccw: "反時計回り", cw: "時計回り" }[cur];
+  // 誘導電流が作る磁界の向き（反時計＝手前向き ⊙／時計＝奥向き ⊗）
+  const indLabel = { zero: "—", ccw: "手前向き ⊙（増加を打ち消す）", cw: "奥向き ⊗（減少を補う）" }[cur];
+
+  // 0.2 秒前の位置（閉じた式）。破線コイルとして残し「動いている」を静止画で示す
+  const xPrev = xc - v * 0.2;
+  const ovPrev = Math.max(0, Math.min(xPrev + W, R) - Math.max(xPrev, 0));
 
   // 画面座標（物理 x: -0.25..0.75 → 30..350）
   const sx = (x) => 30 + ((x + 0.25) / 1.0) * 320;
@@ -12524,6 +12573,15 @@ const CoilCrossingFieldSim = () => {
   // （マーカーは正しい ov で描くため、進入中ずっと点が曲線から浮いていた）。
   const gp = [[-0.25, 0], [-W, 0], [0, 1], [R - W, 1], [R, 0], [0.75, 0]]
     .map(([x, f]) => `${sx(x)},${GY0 - f * GH}`).join(" ");
+
+  // e(x) の矩形パルス。e = -N dΦ/dt で dΦ/dx は 進入 +1／内部 0／退出 -1 なので、
+  // v>0 なら進入区間で e<0・退出区間で e>0 の矩形になる（教科書の「台形Φ の下に矩形 e」）。
+  const EY0 = 264, EH = 18;               // e グラフの中心線と振幅(px)
+  const eSign = v >= 0 ? 1 : -1;
+  const ePulses = [
+    { x0: -W, x1: 0, s: -eSign },         // 進入区間
+    { x0: R - W, x1: R, s: eSign },       // 退出区間
+  ];
 
   return (
     <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "14px 16px", border: "1px solid var(--rule)" }}>
@@ -12578,11 +12636,12 @@ const CoilCrossingFieldSim = () => {
         </div>
       )}
 
-      <svg viewBox="0 0 380 240" role="img"
-        aria-label="奥向き一様磁界の帯を矩形コイルが左から右へ横切る図。コイルと磁界領域の重なり面積、誘導電流の回転向き、そして下部に位置に対する磁束の台形グラフを表示する"
+      <svg viewBox="0 0 380 296" role="img"
+        aria-label="奥向き一様磁界の帯を矩形コイルが左から右へ横切る図。0.2秒前の位置を破線で残し、コイル4辺に誘導電流の矢印、中央に誘導磁界の記号を描く。下部は位置に対する磁束の台形グラフと、その傾きに対応する起電力の矩形パルスを縦の同期線で結んで表示する"
         style={{ display: "block", width: "100%", height: "auto", maxWidth: "520px", margin: "0 auto", background: "var(--bg)", border: "1px dashed var(--rule)", borderRadius: 6 }}>
         <defs>
           <marker id="ccArr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--ok)" /></marker>
+          <marker id="ccCur" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="var(--danger)" /></marker>
         </defs>
         <text x="190" y="16" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">⊗ ＝ 磁界 B は紙面の奥向き（帯の中だけ・外はゼロ）</text>
 
@@ -12596,43 +12655,104 @@ const CoilCrossingFieldSim = () => {
           </g>
         )))}
 
-        {/* 重なり部分 */}
+        {/* 0.2秒前の重なり（薄）と現在の重なり（濃）＝面積が増えたのか減ったのかを並置で見せる */}
+        {revealed && ovPrev > 0 && (
+          <rect x={sx(Math.max(xPrev, 0))} y={AY - CH / 2} width={sx(Math.max(xPrev, 0) + ovPrev) - sx(Math.max(xPrev, 0))} height={CH} fill="var(--warn)" opacity="0.10" />
+        )}
         {revealed && ov > 0 && (
-          <rect x={sx(Math.max(xc, 0))} y={AY - CH / 2} width={sx(Math.max(xc, 0) + ov) - sx(Math.max(xc, 0))} height={CH} fill="var(--warn)" opacity="0.22" />
+          <rect x={sx(Math.max(xc, 0))} y={AY - CH / 2} width={sx(Math.max(xc, 0) + ov) - sx(Math.max(xc, 0))} height={CH} fill="var(--warn)" opacity="0.26" />
+        )}
+
+        {/* 0.2秒前のコイル（破線ゴースト） */}
+        {revealed && v !== 0 && (
+          <rect x={sx(xPrev)} y={AY - CH / 2} width={sx(xPrev + W) - sx(xPrev)} height={CH} fill="none" stroke="var(--ink-mute)" strokeWidth="1.2" strokeDasharray="4 3" opacity="0.7" />
         )}
 
         {/* コイル */}
         <rect x={sx(xc)} y={AY - CH / 2} width={sx(xc + W) - sx(xc)} height={CH} fill="none" stroke="var(--ink)" strokeWidth="2.4" />
         <text x={sx(xc + W / 2)} y={AY - CH / 2 - 6} textAnchor="middle" fontSize="10.5" fill="var(--ink)">コイル {N} 回巻き</text>
 
-        {/* 速度 */}
+        {/* コイル4辺の誘導電流矢印（向きが絵で反転する）＋中央に誘導磁界の記号 */}
+        {revealed && cur !== "zero" && (() => {
+          const L = sx(xc), Rt = sx(xc + W), T = AY - CH / 2, Bt = AY + CH / 2;
+          const mx = (L + Rt) / 2, my = AY;
+          // ccw（反時計）: 上辺←・左辺↓・下辺→・右辺↑ ／ cw はその逆
+          const segs = cur === "ccw"
+            ? [[mx + 10, T, mx - 10, T], [L, my - 10, L, my + 10], [mx - 10, Bt, mx + 10, Bt], [Rt, my + 10, Rt, my - 10]]
+            : [[mx - 10, T, mx + 10, T], [L, my + 10, L, my - 10], [mx + 10, Bt, mx - 10, Bt], [Rt, my - 10, Rt, my + 10]];
+          return (
+            <g>
+              {segs.map(([x1, y1, x2, y2], i) => (
+                <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--danger)" strokeWidth="2.2" markerEnd="url(#ccCur)" />
+              ))}
+              <text x={mx} y={my + 4} textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--danger)">{cur === "ccw" ? "⊙" : "⊗"}</text>
+            </g>
+          );
+        })()}
+
+        {/* 速度（長さを |v| に比例させる） */}
         {v !== 0 && (
           <g>
-            <line x1={sx(xc + W / 2)} y1={AY + CH / 2 + 16} x2={sx(xc + W / 2) + (v > 0 ? 34 : -34)} y2={AY + CH / 2 + 16} stroke="var(--ok)" strokeWidth="2.6" markerEnd="url(#ccArr)" />
+            <line x1={sx(xc + W / 2)} y1={AY + CH / 2 + 16} x2={sx(xc + W / 2) + (v > 0 ? 1 : -1) * (12 + 24 * Math.abs(v))} y2={AY + CH / 2 + 16} stroke="var(--ok)" strokeWidth="2.6" markerEnd="url(#ccArr)" />
             <text x={sx(xc + W / 2)} y={AY + CH / 2 + 32} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--ok)">速度 {v} m/s</text>
           </g>
         )}
 
-        {/* 誘導電流の向き */}
+        {/* 誘導電流の向き（文字） */}
         {revealed && (
           <text x={Math.max(52, Math.min(328, sx(xc + W / 2)))} y={AY - CH / 2 - 20} textAnchor="middle" fontSize="11.5" fontWeight="700" fill={cur === "zero" ? "var(--ink-mute)" : "var(--danger)"}>
             {cur === "zero" ? "誘導電流 0" : `誘導電流 ${curLabel}`}
           </text>
         )}
 
+        {/* 上の図と下のグラフを結ぶ縦の同期線（同じ横軸であることを示す） */}
+        {revealed && (
+          <line x1={sx(xc)} y1={AY + CH / 2 + 4} x2={sx(xc)} y2={EY0 + EH + 4} stroke="var(--warn)" strokeWidth="1" strokeDasharray="3 3" opacity="0.8" />
+        )}
+
         {/* Φ-x グラフ */}
-        <text x="30" y={GY0 + 18} fontSize="10" fill="var(--ink-mute)">1巻きあたりの磁束 Φ ─ 傾きがある所だけ起電力が出る</text>
+        <text x="30" y={GY0 + 14} fontSize="10" fill="var(--ink-mute)">磁束 Φ（1巻き）</text>
         <polyline points={gp} fill="none" stroke="var(--accent)" strokeWidth="2" />
         <line x1="30" y1={GY0} x2="350" y2={GY0} stroke="var(--ink-mute)" strokeWidth="1" />
         {revealed && (
           <circle cx={sx(xc)} cy={GY0 - (ov / W) * GH} r="4" fill="var(--warn)" stroke="var(--bg)" strokeWidth="1.5" />
         )}
-        <text x="352" y={GY0 + 4} fontSize="10" fill="var(--ink-mute)">位置</text>
+
+        {/* e-x グラフ（Φ の傾きに対応する矩形パルス） */}
+        <line x1="30" y1={EY0} x2="350" y2={EY0} stroke="var(--ink-mute)" strokeWidth="1" />
+        {ePulses.map((p, i) => (
+          <rect key={i} x={sx(p.x0)} y={p.s > 0 ? EY0 - EH : EY0} width={sx(p.x1) - sx(p.x0)} height={EH}
+            fill="var(--danger)" opacity="0.18" stroke="var(--danger)" strokeWidth="1.2" />
+        ))}
+        <text x="30" y={EY0 + EH + 12} fontSize="10" fill="var(--ink-mute)">起電力 e ＝ Φ の傾き（水平な区間では e＝0）</text>
+        <text x="352" y={EY0 + 4} fontSize="10" fill="var(--ink-mute)">位置</text>
       </svg>
 
       {revealed && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
+          {!reduceMotion ? (
+            <button type="button" onClick={() => { if (playing) { setPlaying(false); } else { setXc(-0.20); setPlaying(true); } }}
+              style={{ padding: "7px 14px", fontSize: 12.5, fontWeight: 700, borderRadius: 6, border: "none", background: playing ? "var(--rule)" : "var(--accent)", color: playing ? "var(--ink)" : "var(--bg)", cursor: "pointer" }}>
+              {playing ? "■ 停止" : "▶ 通過を1回再生"}
+            </button>
+          ) : (
+            <>
+              <button type="button" onClick={() => { const i = Math.max(0, stepIdx - 1); setStepIdx(i); setXc(STEPS[i]); }}
+                style={{ padding: "7px 12px", fontSize: 12.5, fontWeight: 700, borderRadius: 6, border: "1px solid var(--rule)", background: "var(--bg)", color: "var(--ink)", cursor: "pointer" }}>◀ 前</button>
+              <button type="button" onClick={() => { const i = Math.min(STEPS.length - 1, stepIdx + 1); setStepIdx(i); setXc(STEPS[i]); }}
+                style={{ padding: "7px 12px", fontSize: 12.5, fontWeight: 700, borderRadius: 6, border: "none", background: "var(--accent)", color: "var(--bg)", cursor: "pointer" }}>次 ▶</button>
+              <span style={{ fontSize: 11.5, color: "var(--ink-mute)" }}>コマ送り（{stepIdx + 1} / {STEPS.length}）</span>
+            </>
+          )}
+          <span style={{ fontSize: 11.5, color: "var(--ink-mute)" }}>
+            {reduceMotion ? "動きを減らす設定のため、代表位置のコマ送りに切り替えています。" : "スロー再生（実時間ではない）。e の値は速度スライダーから計算します。"}
+          </span>
+        </div>
+      )}
+
+      {revealed && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginTop: 14 }}>
-          <Slider label="コイルの位置" value={xc} min={-0.2} max={0.5} step={0.01} unit=" m" onChange={setXc} />
+          <Slider label="コイルの位置" value={xc} min={-0.2} max={0.5} step={0.01} unit=" m" onChange={(x) => { setPlaying(false); setXc(x); }} />
           <Slider label="速度" value={v} min={-1} max={1} step={0.1} unit=" m/s" onChange={setV} />
           <Slider label="磁束密度 B" value={B} min={0.1} max={1} step={0.1} unit=" T" onChange={setB} />
           <Slider label="巻数 N" value={N} min={1} max={50} step={1} unit=" 回" onChange={setN} />
@@ -12641,7 +12761,11 @@ const CoilCrossingFieldSim = () => {
 
       {revealed && (
         <div role="status" aria-live="polite" style={{ marginTop: 12, fontSize: 12.5, lineHeight: 1.9 }}>
-          <div>状態：<strong>{stateLabel}</strong>／重なり幅 <strong style={{ fontFamily: "var(--font-mono)" }}>{ov.toFixed(2)} m</strong></div>
+          <div>
+            状態：<strong style={{ color: fluxTrend === "flat" ? "var(--ink-soft)" : "var(--danger)" }}>{trendLabel}</strong>
+            <span style={{ color: "var(--ink-soft)" }}>（{posLabel}）</span>／重なり幅 <strong style={{ fontFamily: "var(--font-mono)" }}>{ov.toFixed(2)} m</strong>
+          </div>
+          <div style={{ color: "var(--ink-soft)" }}>誘導電流が作る磁界：<strong>{indLabel}</strong></div>
           <div>1巻きあたりの磁束 Φ：<strong style={{ fontFamily: "var(--font-mono)" }}>{(phi * 1000).toFixed(2)} mWb</strong>／鎖交磁束 NΦ：<strong style={{ fontFamily: "var(--font-mono)" }}>{(N * phi * 1000).toFixed(1)} mWb</strong></div>
           <div>Φ の変化率 dΦ/dt：<strong style={{ fontFamily: "var(--font-mono)" }}>{(dphidt * 1000).toFixed(1)} mWb/s</strong></div>
           <div style={{ borderTop: "1px solid var(--rule)", marginTop: 6, paddingTop: 6 }}>
@@ -13008,9 +13132,20 @@ const ParallelWireFieldProbe = () => {
   const XL = -0.85, XR = 1.45, SX0 = 26, SX1 = 354, AXY = 150;
   const sx = (x) => SX0 + ((x - XL) / (XR - XL)) * (SX1 - SX0);
   const xA = sx(0), xB = sx(d), xP = sx(px);
-  const Hmax = Math.max(Math.abs(HA), Math.abs(HB), Math.abs(Hsum), 1e-9);
-  const alen = (h) => Math.max(6, Math.min(46, (Math.abs(h) / Hmax) * 46));
-  const sumIsZero = Math.abs(Hsum) / Hmax < 0.02;   // 合成ゼロは矢印でなくバッジで示す
+  // 矢印長を「毎回その場の最大値で正規化」してはいけない。正規化すると最長矢印が常に 46px に
+  // なり、P を導体へ近づけても遠ざけても絵の見た目が変わらず、H=I/(2πr) の主役である
+  // 「近いほど強い」が原理的に読み取れない（数値を読まないと分からない図になる）。
+  // 固定の圧縮写像 46|H|/(|H|+H0) を使う。単調増加なので大小関係が絵で保たれ、
+  // 導体の近くでも 46px で飽和して発散しない。
+  const H0 = 0.6;                                    // 代表磁界 [A/m]（既定条件の |H_A| 相当）
+  const alen = (h) => Math.max(3, 46 * Math.abs(h) / (Math.abs(h) + H0));
+  const Href = Math.max(Math.abs(HA), Math.abs(HB), 1e-9);
+  const sumIsZero = Math.abs(Hsum) / Href < 0.02;   // 合成ゼロは矢印でなくバッジで示す
+
+  // 相手の導体が「この導体の位置」に作る磁界＝力の原因。観測点 P とは無関係。
+  const HBatA = (s * IB) / (2 * Math.PI * (0 - d));
+  const HAatB = IA / (2 * Math.PI * d);
+  const flen = 12 + 26 * (FperL / (FperL + 2e-6));   // 力の矢印長も条件で伸縮させる
   const fmt = (v) => (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(3));
 
   const Slider = ({ label, value, min, max, step, unit, onChange, disabled }) => (
@@ -13038,10 +13173,24 @@ const ParallelWireFieldProbe = () => {
       }}>{children}</button>
   );
 
-  // 導体まわりの同心円ガイド（磁界は導体を「囲む円の接線」＝放射状ではない）
-  const guides = (cx) => [17, 31, 45].map((r, i) => (
-    <circle key={i} cx={cx} cy={AXY} r={r} fill="none" stroke="var(--accent)" strokeWidth="1" opacity={0.16} />
-  ));
+  // 導体まわりの同心円ガイド（磁界は導体を「囲む円の接線」＝放射状ではない）。
+  // 向きなしの円だけだと右ねじ則が絵にならないので、真ん中の円に矢じり付きの弧を足す。
+  // ⊙（電流が手前向き）は画面上で反時計回り、⊗（奥向き）は時計回り。
+  // 根拠：H = (I/2πr)·φ̂、φ̂ = ẑ×r̂。導体の右側(r̂=+x̂)では φ̂=+ŷ＝画面の上になる。
+  const guides = (cx, out) => [17, 31, 45].map((r, i) => {
+    const a1 = out ? -18 : -72, a2 = out ? -72 : -18;
+    const pt = (a) => [cx + r * Math.cos(a * Math.PI / 180), AXY + r * Math.sin(a * Math.PI / 180)];
+    const [x1, y1] = pt(a1), [x2, y2] = pt(a2);
+    return (
+      <g key={i}>
+        <circle cx={cx} cy={AXY} r={r} fill="none" stroke="var(--accent)" strokeWidth="1" opacity={0.16} />
+        {i === 1 && (
+          <path d={`M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 0 ${out ? 0 : 1} ${x2.toFixed(1)} ${y2.toFixed(1)}`}
+            fill="none" stroke="var(--accent)" strokeWidth="1.6" opacity="0.8" markerEnd="url(#pwAcc)" />
+        )}
+      </g>
+    );
+  });
 
   const wireGlyph = (cx, out, label) => (
     <g>
@@ -13130,26 +13279,44 @@ const ParallelWireFieldProbe = () => {
         </div>
       )}
 
-      <svg viewBox="0 0 380 250" role="img"
-        aria-label="2本の平行導体の断面図。導体AとBを結ぶ直線上に観測点Pがあり、Aが作る磁界・Bが作る磁界・その合成の3本の縦矢印と、合成磁界がゼロになる点、各導体に働く力の矢印を表示する"
+      <svg viewBox="0 0 380 286" role="img"
+        aria-label="2本の平行導体の断面図。軸上の磁界分布を曲線で重ね、導体まわりの同心円には磁界が回る向きの矢じりを付ける。観測点Pにはaが作る磁界・bが作る磁界・その合成の3本の縦矢印、合成磁界がゼロになる点、相手の導体位置に作る磁界、そして各導体に働く力の矢印を表示する"
         style={{ display: "block", width: "100%", height: "auto", maxWidth: "520px", margin: "0 auto", background: "var(--bg)", border: "1px dashed var(--rule)", borderRadius: 6 }}>
         <defs>
           <marker id="pwAcc" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--accent)" /></marker>
           <marker id="pwOk" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--ok)" /></marker>
           <marker id="pwWarn" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--warn)" /></marker>
-          <marker id="pwF" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--warn)" /></marker>
+          <marker id="pwF" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--danger)" /></marker>
+          <marker id="pwCause" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="var(--accent-ink)" /></marker>
         </defs>
 
-        {revealed && guides(xA)}
-        {revealed && guides(xB)}
+        {/* 軸上の磁界分布 Hy(x)（符号付き）。零点は「答えの印」ではなく
+            "曲線が軸を横切る場所" として見える。閉じた式のサンプリングのみ。 */}
+        {revealed && (() => {
+          const CLIP = 22, K = 11;
+          return [[XL, -0.012], [0.012, d - 0.012], [d + 0.012, XR]].map(([a, b], si) => {
+            if (b <= a) return null;
+            const pts = [];
+            for (let k = 0; k <= 60; k++) {
+              const x = a + (b - a) * k / 60;
+              const h = Hy(x);
+              if (!isFinite(h)) continue;
+              pts.push(`${sx(x).toFixed(1)},${(AXY - Math.max(-CLIP, Math.min(CLIP, h * K))).toFixed(1)}`);
+            }
+            return <polyline key={si} points={pts.join(" ")} fill="none" stroke="var(--accent)" strokeWidth="1.3" opacity="0.45" />;
+          });
+        })()}
+
+        {revealed && guides(xA, true)}
+        {revealed && guides(xB, same)}
 
         <line x1="14" y1={AXY} x2="366" y2={AXY} stroke="var(--ink-mute)" strokeWidth="1.2" />
         {wireGlyph(xA, true, "A")}
         {wireGlyph(xB, same, "B")}
 
         {/* 導体間隔 */}
-        <line x1={xA} y1={AXY + 56} x2={xB} y2={AXY + 56} stroke="var(--ink-mute)" strokeWidth="1" />
-        <text x={(xA + xB) / 2} y={AXY + 70} textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">間隔 {d.toFixed(2)} m</text>
+        <line x1={xA} y1={AXY + 22} x2={xB} y2={AXY + 22} stroke="var(--ink-mute)" strokeWidth="1" />
+        <text x={(xA + xB) / 2} y={AXY + 36} textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">間隔 {d.toFixed(2)} m</text>
 
         {/* 観測点 P */}
         <line x1={xP} y1={AXY - 78} x2={xP} y2={AXY + 30} stroke="var(--ink-mute)" strokeWidth="1" strokeDasharray="3 3" />
@@ -13182,13 +13349,38 @@ const ParallelWireFieldProbe = () => {
         {revealed && zeroX === null && (
           <text x="190" y={AXY - 96} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">合成ゼロ点なし（無限遠へ）</text>
         )}
+        {/* 零点が画面外のときは「印が無い」＝「存在しない」と誤読されるので、端に外向きの案内を出す */}
+        {revealed && zeroX !== null && (zeroX <= XL || zeroX >= XR) && (
+          <g>
+            <text x={zeroX <= XL ? 96 : 284} y={AXY - 100} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">
+              {zeroX <= XL ? "◀ 合成ゼロ点は画面の左外" : "合成ゼロ点は画面の右外 ▶"}
+            </text>
+            <text x={zeroX <= XL ? 96 : 284} y={AXY - 87} textAnchor="middle" fontSize="10" fill="var(--ink-mute)">
+              A から {Math.abs(zeroX).toFixed(2)} m {zeroX < 0 ? "左" : "右"}
+            </text>
+          </g>
+        )}
+
+        {/* 力の原因＝相手が「この導体の位置」に作る磁界。P を動かしても変わらない。
+            これを描かないと「P で磁界ゼロなのに力がある」が文章でしか伝わらない。 */}
+        {revealed && (
+          <g>
+            {[[xA, HBatA], [xB, HAatB]].map(([x, h], i) => (
+              <line key={i} x1={x} y1={AXY + 66} x2={x} y2={AXY + 66 - (h > 0 ? 1 : -1) * Math.min(14, alen(h) * 0.4)}
+                stroke="var(--accent-ink)" strokeWidth="2.2" markerEnd="url(#pwCause)" />
+            ))}
+            <text x="190" y={AXY + 84} textAnchor="middle" fontSize="10" fill="var(--accent-ink)">
+              ↑ 相手が<tspan fontWeight="700">この導体の位置</tspan>に作る磁界＝力の原因（P とは無関係）
+            </text>
+          </g>
+        )}
 
         {/* 導体に働く力 */}
         {revealed && (
           <g>
-            <line x1={xA} y1={AXY + 18} x2={xA + (forceKind === "attract" ? 20 : -20)} y2={AXY + 18} stroke="var(--warn)" strokeWidth="2.6" markerEnd="url(#pwF)" />
-            <line x1={xB} y1={AXY + 18} x2={xB + (forceKind === "attract" ? -20 : 20)} y2={AXY + 18} stroke="var(--warn)" strokeWidth="2.6" markerEnd="url(#pwF)" />
-            <text x="190" y="238" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--warn)">導体に働く力：{forceLabel}</text>
+            <line x1={xA} y1={AXY + 100} x2={xA + (forceKind === "attract" ? flen : -flen)} y2={AXY + 100} stroke="var(--danger)" strokeWidth="3" markerEnd="url(#pwF)" />
+            <line x1={xB} y1={AXY + 100} x2={xB + (forceKind === "attract" ? -flen : flen)} y2={AXY + 100} stroke="var(--danger)" strokeWidth="3" markerEnd="url(#pwF)" />
+            <text x="190" y={AXY + 120} textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--danger)">導体に働く力：{forceLabel}（矢印の長さは F/l に対応）</text>
           </g>
         )}
         <text x="190" y="16" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">薄い円＝導体を囲む磁界の輪。磁界はこの輪の<tspan fontWeight="700">接線</tspan>（放射状ではない）</text>
