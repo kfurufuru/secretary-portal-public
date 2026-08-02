@@ -4,7 +4,7 @@
  * localStorage (bsk_tracker) に自動永続化するブリッジ。
  *
  * 段階評価: 0=まったくできていない / 1=やろうとしている
- *           2=たまにできている    / 3=いつもできている
+ *           3=たまにできている    / 4=いつもできている
  *
  * 依存: skill-tracker.js (window.SkillTracker)
  * 既存の onchange="updateScore()" は破壊しない（チェックボックスは非表示で保持）
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // boolean旧データ: true→2（たまに）, false→0
   function toRating(v) {
     if (v === true) return 2;
-    if (typeof v === 'number' && v >= 0 && v <= 3) return v;
+    if (typeof v === 'number' && v >= 0 && v <= 4) return v;
     return 0;
   }
 
@@ -87,7 +87,8 @@ document.addEventListener('DOMContentLoaded', function () {
       btn.textContent = lv.label;
       if (currentRating === lv.val) btn.classList.add(lv.cls);
 
-      btn.addEventListener('click', function () {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
         group.querySelectorAll('button').forEach(function (b) {
           b.className = '';
         });
@@ -166,9 +167,9 @@ document.addEventListener('DOMContentLoaded', function () {
   memoWrap.appendChild(memoArea);
 
   // メモ欄をどこに挿入するか:
-  // section がある場合は section の末尾に、なければ最後のチェックボックスの親の末尾に
-  if (section) {
-    section.appendChild(memoWrap);
+  // sections がある場合は最後の section の末尾に、なければ最後のチェックボックスの親の末尾に
+  if (sections.length > 0) {
+    sections[sections.length - 1].appendChild(memoWrap);
   } else if (checkboxes.length > 0) {
     var lastCb = checkboxes[checkboxes.length - 1];
     var insertTarget = lastCb.closest('.selfcheck-section') || lastCb.closest('section') || lastCb.parentNode;
@@ -177,8 +178,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ダッシュボードへ戻るフローティングボタン
   var backBtn = document.createElement('a');
-  backBtn.href = '../index.html';
-  backBtn.title = '個人能力ダッシュボードへ戻る';
+  backBtn.href = '../public-portal.html';
+  backBtn.title = '学習ポータルへ戻る';
   backBtn.style.cssText = [
     'position:fixed', 'bottom:24px', 'right:24px', 'z-index:9999',
     'display:flex', 'align-items:center', 'gap:6px',
@@ -190,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function () {
     'box-shadow:0 4px 16px rgba(0,0,0,0.5)',
     'transition:transform 0.15s,box-shadow 0.15s'
   ].join(';');
-  backBtn.innerHTML = '&#8592; ダッシュボード';
+  backBtn.innerHTML = '&#8592; ポータル';
   backBtn.addEventListener('mouseenter', function () {
     backBtn.style.transform = 'translateY(-2px)';
     backBtn.style.boxShadow = '0 6px 20px rgba(56,189,248,0.25)';

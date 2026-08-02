@@ -440,7 +440,7 @@ body {
       <div class="quiz-prog-bar-wrap">
         <div class="quiz-prog-bar" id="progBar" style="width:0%"></div>
       </div>
-      <div class="quiz-prog-text" id="progText">0 / 11</div>
+      <div class="quiz-prog-text" id="progText">0 / 18</div>
     </div>
     <div class="quiz-card" id="quizCard">
       <!-- dynamically filled -->
@@ -520,7 +520,7 @@ body {
       <div class="world-cards">
         <div class="world-card wc-mckinsey">
           <div class="world-card-name">McKinsey社員</div>
-          <div class="world-card-avg">4.6<span style="font-size:1rem;font-weight:400;color:var(--text-dim)">/5</span></div>
+          <div class="world-card-avg"><span id="wcAvgMckinsey">4.6</span><span style="font-size:1rem;font-weight:400;color:var(--text-dim)">/5</span></div>
           <div class="world-card-traits">
             <div class="world-card-trait">✦ 構造化・論理化が呼吸レベル</div>
             <div class="world-card-trait">✦ 問題解決フレームが高速起動</div>
@@ -531,7 +531,7 @@ body {
         </div>
         <div class="world-card wc-gafa">
           <div class="world-card-name">GAFA PM</div>
-          <div class="world-card-avg">4.1<span style="font-size:1rem;font-weight:400;color:var(--text-dim)">/5</span></div>
+          <div class="world-card-avg"><span id="wcAvgGafa">4.1</span><span style="font-size:1rem;font-weight:400;color:var(--text-dim)">/5</span></div>
           <div class="world-card-traits">
             <div class="world-card-trait">✦ 優先順位付けが戦略レベル</div>
             <div class="world-card-trait">✦ 不確実性下での高速判断</div>
@@ -542,7 +542,7 @@ body {
         </div>
         <div class="world-card wc-jp">
           <div class="world-card-name">日本の優秀な管理職</div>
-          <div class="world-card-avg">3.1<span style="font-size:1rem;font-weight:400;color:var(--text-dim)">/5</span></div>
+          <div class="world-card-avg"><span id="wcAvgJp">3.1</span><span style="font-size:1rem;font-weight:400;color:var(--text-dim)">/5</span></div>
           <div class="world-card-traits">
             <div class="world-card-trait">✦ 段取り力・実行力が安定的に高い</div>
             <div class="world-card-trait">✦ チーム推進力と調整力に優れる</div>
@@ -784,14 +784,40 @@ const BENCHMARKS = {
   }
 };
 
-// Category groupings (indices into SKILLS)
+// F-dash-03: single source of truth — thresholds & world-card display both derive from these arrays
+function benchmarkAvg(key) {
+  const s = BENCHMARKS[key].scores;
+  return s.reduce((a, b) => a + b, 0) / s.length;
+}
+const BENCHMARK_AVG = {
+  mckinsey: benchmarkAvg('mckinsey'),
+  gafa: benchmarkAvg('gafa'),
+  jp: benchmarkAvg('jp'),
+};
+
+// Category groupings (indices into SKILLS) — F-dash-01: all 18 questions covered
 const CATEGORIES = [
-  { label: '認知', indices: [0, 1, 2] },
-  { label: '判断', indices: [3, 4, 5] },
+  { label: '認知', indices: [0, 1, 2, 15] },
+  { label: '判断', indices: [3, 4, 5, 14] },
   { label: '実行', indices: [6, 7, 8] },
-  { label: '伝達・習得', indices: [9, 10] },
+  { label: '伝達・習得', indices: [9, 10, 16] },
   { label: '人間力', indices: [11] },
+  { label: 'セルフ', indices: [12] },
+  { label: '学習', indices: [13] },
+  { label: 'AI活用', indices: [17] },
 ];
+
+// Weak-link filter fix: dashboard category label → index.html data-filter value (F-dash-03 related)
+const CATEGORY_FILTER_MAP = {
+  '認知': '思考・認知',
+  '判断': '思考・認知',
+  '実行': '生産性',
+  '伝達・習得': 'コミュニケーション',
+  '人間力': 'セルフマネジメント',
+  'セルフ': 'セルフマネジメント',
+  '学習': '学習',
+  'AI活用': 'AI活用',
+};
 
 // ── World Cases Data ──
 const WORLD_CASES = {
@@ -873,10 +899,11 @@ function renderCases(skillKey) {
 
 function initCaseTabs() {
   const tabs = document.getElementById('caseTabs');
-  tabs.innerHTML = SKILLS.map(s =>
+  const casedSkills = SKILLS.filter(s => WORLD_CASES[s.key]);
+  tabs.innerHTML = casedSkills.map(s =>
     `<button class="skill-tab-btn" data-key="${s.key}" onclick="renderCases('${s.key}')">${s.name}</button>`
   ).join('');
-  renderCases(SKILLS[0].key);
+  if (casedSkills.length) renderCases(casedSkills[0].key);
 }
 
 // ── State ──
@@ -996,6 +1023,13 @@ function showPrevResult() {
   }
 })();
 
+// ── Init: world-card averages from BENCHMARK_AVG (F-dash-03 single source of truth) ──
+(function() {
+  document.getElementById('wcAvgMckinsey').textContent = BENCHMARK_AVG.mckinsey.toFixed(2);
+  document.getElementById('wcAvgGafa').textContent = BENCHMARK_AVG.gafa.toFixed(2);
+  document.getElementById('wcAvgJp').textContent = BENCHMARK_AVG.jp.toFixed(2);
+})();
+
 // ── Results ──
 function showResults() {
   showScreen('screen-result');
@@ -1021,26 +1055,27 @@ function showResults() {
 
   // Determine rank
   let rank, rankClass, nextLabel, nextColor, nextPct, nextText;
-  if (userAvg >= 4.2) {
+  const MCK_T = BENCHMARK_AVG.mckinsey, GAFA_T = BENCHMARK_AVG.gafa, JP_T = BENCHMARK_AVG.jp;
+  if (userAvg >= MCK_T) {
     rank = 'McKinsey社員レベル'; rankClass = 'rank-mckinsey';
     nextLabel = '世界最高水準へ';
-    nextColor = '#f43f5e'; nextPct = Math.min(100, ((userAvg - 4.2) / (5 - 4.2)) * 100);
+    nextColor = '#f43f5e'; nextPct = Math.min(100, ((userAvg - MCK_T) / (5 - MCK_T)) * 100);
     nextText = `McKinseyトップ層（5.0）まであと <strong>${(5.0 - userAvg).toFixed(2)}点</strong>`;
-  } else if (userAvg >= 3.4) {
+  } else if (userAvg >= GAFA_T) {
     rank = 'GAFA PMレベル'; rankClass = 'rank-gafa';
     nextLabel = 'McKinseyレベルへ';
-    nextColor = '#f59e0b'; nextPct = ((userAvg - 3.4) / (4.2 - 3.4)) * 100;
-    nextText = `McKinseyレベル（4.2）まであと <strong>${(4.2 - userAvg).toFixed(2)}点</strong>`;
-  } else if (userAvg >= 2.5) {
+    nextColor = '#f59e0b'; nextPct = ((userAvg - GAFA_T) / (MCK_T - GAFA_T)) * 100;
+    nextText = `McKinseyレベル（${MCK_T.toFixed(2)}）まであと <strong>${(MCK_T - userAvg).toFixed(2)}点</strong>`;
+  } else if (userAvg >= JP_T) {
     rank = '日本の優秀な管理職レベル'; rankClass = 'rank-jp';
     nextLabel = 'GAFA PMレベルへ';
-    nextColor = '#10b981'; nextPct = ((userAvg - 2.5) / (3.4 - 2.5)) * 100;
-    nextText = `GAFA PMレベル（3.4）まであと <strong>${(3.4 - userAvg).toFixed(2)}点</strong>`;
+    nextColor = '#10b981'; nextPct = ((userAvg - JP_T) / (GAFA_T - JP_T)) * 100;
+    nextText = `GAFA PMレベル（${GAFA_T.toFixed(2)}）まであと <strong>${(GAFA_T - userAvg).toFixed(2)}点</strong>`;
   } else {
     rank = '一般管理職レベル'; rankClass = 'rank-below';
     nextLabel = 'まず基礎固めを';
-    nextColor = '#94a3b8'; nextPct = (userAvg / 2.5) * 100;
-    nextText = `日本の優秀な管理職レベル（2.5）まであと <strong>${(2.5 - userAvg).toFixed(2)}点</strong>`;
+    nextColor = '#94a3b8'; nextPct = (userAvg / JP_T) * 100;
+    nextText = `日本の優秀な管理職レベル（${JP_T.toFixed(2)}）まであと <strong>${(JP_T - userAvg).toFixed(2)}点</strong>`;
   }
 
   const rankBadge = document.getElementById('rankBadge');
@@ -1183,7 +1218,7 @@ function showWeakCategoryLinks(categories, scores) {
   // Add buttons for each weak category
   weakCategories.forEach(cat => {
     const a = document.createElement('a');
-    a.href = 'index.html?filter=' + encodeURIComponent(cat.label);
+    a.href = 'index.html?filter=' + encodeURIComponent(CATEGORY_FILTER_MAP[cat.label] || cat.label);
     a.style.cssText = 'font-size:0.72rem;padding:3px 10px;border-radius:99px;background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.3);color:#f43f5e;text-decoration:none;font-weight:600;white-space:nowrap;transition:var(--transition);';
     a.textContent = cat.label + ' (' + cat.score.toFixed(1) + ')';
     a.onmouseover = () => { a.style.background = 'rgba(244,63,94,0.2)'; a.style.borderColor = '#f43f5e'; };

@@ -18,8 +18,9 @@
  */
 
 function _ratingVal(v) {
-  if (v === true) return 1;
-  if (typeof v === 'number') return Math.max(0, Math.min(3, v));
+  // boolean旧データ: true→2（selfcheck-bridge.js toRating() と同一の意図的マッピング。たまに=2）
+  if (v === true) return 2;
+  if (typeof v === 'number') return Math.max(0, Math.min(4, v));
   return 0;
 }
 
