@@ -1622,10 +1622,12 @@ window.WIKI_DATA = {
       def: "電界を加えると分極する絶縁物。コンデンサの極板間に入れると静電容量が比誘電率倍になる。挿入時は電圧一定か電荷一定かで結果が変わる。" },
     { term: "誘導形計器", reading: "INDUCTION INSTRUMENT", letter: "や",
       def: "回転磁界による渦電流で円板を回す計器。交流専用で、積算電力量計に使われる。" },
+    { term: "誘導起電力", reading: "INDUCED EMF", letter: "や",
+      def: "磁束の変化によって生じる電圧。導体が動く運動起電力は e = BLv·sinθ [V]（θ は速度vと磁界Bのなす角・向きはフレミング右手）、コイルの磁束が変化する型は e = −N·dφ/dt。式に入るのは v であって I ではない（導体を動かしただけでは電流は現れない）。単位が [N] になったら電磁力 F = BIL·sinθ と取り違えている。" },
 
     // ラ行
     { term: "ローレンツ力", reading: "LORENTZ FORCE", letter: "ら",
-      def: "電荷を持つ粒子が電磁界から受ける力。導体では F = BIL·sinθ [N]。電動機の回転力・ホール効果のキャリア偏向の機構。" },
+      def: "電荷を持つ粒子が電磁界から受ける力。導体では F = BIL·sinθ [N]（θ は電流Iと磁界Bのなす角）。電動機の回転力・ホール効果のキャリア偏向の機構。求めるのが起電力なら別の式（誘導起電力 e = BLv·sinθ [V]）。" },
     { term: "リアクタンス", reading: "REACTANCE", letter: "ら",
       def: "交流回路のコイル・コンデンサによる抵抗成分。XL = ωL、XC = 1/(ωC) [Ω]。周波数に依存する。" },
     { term: "力率", reading: "POWER FACTOR", letter: "ら",
@@ -4363,7 +4365,8 @@ const Last3DaysPage = ({ onNav }) => (
           <tr><td>クーロンの法則</td><td><Eq tex="F = kQ_1Q_2/r^2,\ k = 1/(4\pi\varepsilon_0)" /></td></tr>
           <tr><td>コンデンサエネルギー</td><td><Eq tex="W = CV^2/2 = Q^2/(2C)" /></td></tr>
           <tr><td>磁気抵抗</td><td><Eq tex="R_m = l/(\mu_0\mu_r A)" />（空隙は <Eq tex="\mu_r = 1" />）</td></tr>
-          <tr><td>誘導起電力</td><td><Eq tex="e = BLv\sin\theta" />（速度と磁界の角）</td></tr>
+          <tr><td>電磁力</td><td><Eq tex="F = BIL\sin\theta" /> [N]（θ = <strong>電流と磁界</strong>の角・原因は I）</td></tr>
+          <tr><td>誘導起電力</td><td><Eq tex="e = BLv\sin\theta" /> [V]（θ = <strong>速度と磁界</strong>の角・原因は v）</td></tr>
           <tr><td>インピーダンス合成</td><td><Eq tex="Z = \sqrt{R^2 + (X_L - X_C)^2}" />（ベクトル）</td></tr>
           <tr><td>共振条件</td><td><Eq tex="X_L = X_C \Rightarrow f_0 = 1/(2\pi\sqrt{LC})" /></td></tr>
           <tr><td>三相電力</td><td><Eq tex="P = \sqrt{3}V_LI_L\cos\phi" /></td></tr>
@@ -4779,8 +4782,13 @@ const ExamOperationPage = ({ onNav }) => (
           <tr><td>静電エネルギー</td><td>J</td><td>½CV² → [A·s/V]×[V²]=[V·A·s]=[W·s]=[J]</td></tr>
           <tr><td>電力 P</td><td>W = V·A</td><td>VI ・ I²R ・ V²/R はすべて [W] になる</td></tr>
           <tr><td>インピーダンス Z</td><td>Ω</td><td>√(R²+X²) も [Ω]（R・X と同じ次元どうしの和）</td></tr>
+          <tr><td>電磁力 F</td><td>N</td><td>BIL → [Wb/m²]×[A]×[m] = [N]。<strong>式に I が居る＝力の式</strong></td></tr>
+          <tr><td>誘導起電力 e</td><td>V</td><td>BLv → [Wb/m²]×[m]×[m/s] = [Wb/s] = [V]。<strong>式に v が居る＝起電力の式</strong></td></tr>
         </tbody>
       </table>
+      <Callout variant="warn" title="単位でしか捕まらないミスがある">
+        <p style={{ margin: 0 }}>F = BIL sinθ と e = BLv sinθ は 4 記号中 3 つを共有し、<strong>数値だけ見ても取り違えに気づけない</strong>（同じ数字が出ることさえある）。<strong>量が違えば単位が違う</strong>ので、起電力を問われて [N] が出た時点で力の式を書いていると分かる。<a href="#" onClick={(e) => { e.preventDefault(); onNav('electromagnetic-force'); }} style={{ textDecoration: "underline" }}>1.3 電磁力</a> の学習タブ 8節に、この 2 式を続けて即答する練習がある。</p>
+      </Callout>
       <Callout variant="tip" title="使い方（3手順）">
         <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.8 }}>
           <li>出した答えの単位が、問われた量の単位と一致するか確認する</li>
@@ -5245,7 +5253,9 @@ const GuidePage = ({ onNav }) => (
         <strong>エネルギー W = CV²/2 = Q²/(2C)</strong>
       </Callout>
       <Callout variant="tip" title="電磁力">
-        <strong>F = BIL（電磁力）、e = BLv（誘導起電力）、左手 = 力（モータ）、右手 = 起電力（発電）</strong>
+        <strong>F = BIL sinθ [N]（θ = I と B・原因は I・左手＝力／モータ）</strong><br/>
+        <strong>e = BLv sinθ [V]（θ = v と B・原因は v・右手＝起電力／発電）</strong><br/>
+        <span style={{ fontSize: 12 }}>取り違え検出は<strong>単位</strong>：起電力を問われて [N] が出たら力の式を書いている。</span>
       </Callout>
       <Callout variant="tip" title="磁気回路">
         <strong>φ = NI/Rm（磁束 = 起磁力/磁気抵抗）、電気回路との対応（φ↔I、NI↔V、Rm↔R）</strong>
@@ -12223,7 +12233,7 @@ const CoulombFieldPage = ({ onNav }) => (
 
 const ElectromagneticForceSymbolLegend = () => (
   <p style={{ fontSize: "12px", color: "var(--ink-soft)", lineHeight: 1.7, margin: "0 0 12px 0", padding: "8px 12px", background: "var(--bg-elev)", border: "1px dashed var(--rule)", borderRadius: "4px" }}>
-    <strong>使う記号</strong>: <strong>F</strong>（力・N）／<strong>B</strong>（磁束密度・T）／<strong>I</strong>（電流・A）／<strong>L</strong>（磁界中の有効長・m）／<strong>θ</strong>（B と I or B と v のなす角）／<strong>e</strong>（誘導起電力・V）／<strong>v</strong>（導体速度・m/s）／<strong>N</strong>（コイル巻数・無次元）／<strong>Φ</strong>（磁束・Wb）／<strong>H</strong>（磁界の強さ・A/m）／<strong>μ₀</strong>=4π×10⁻⁷（真空透磁率・H/m）／<strong>μ_r</strong>（比透磁率・無次元）／<strong>r</strong>（距離・半径・m）／<strong>d</strong>（平行導体間隔・m）／<strong>l</strong>（磁路長・m）
+    <strong>使う記号</strong>: <strong>F</strong>（力・N）／<strong>B</strong>（磁束密度・T）／<strong>I</strong>（電流・A）／<strong>L</strong>（磁界中の有効長・m）／<strong>θ</strong>（なす角。<strong>F = BIL では I と B</strong>／<strong>e = BLv では v と B</strong>＝式ごとに相手が違う）／<strong>e</strong>（誘導起電力・V）／<strong>v</strong>（導体速度・m/s）／<strong>N</strong>（コイル巻数・無次元）／<strong>Φ</strong>（磁束・Wb）／<strong>H</strong>（磁界の強さ・A/m）／<strong>μ₀</strong>=4π×10⁻⁷（真空透磁率・H/m）／<strong>μ_r</strong>（比透磁率・無次元）／<strong>r</strong>（距離・半径・m）／<strong>d</strong>（平行導体間隔・m）／<strong>l</strong>（磁路長・m。平行導体の F/l だけは「単位長さあたり」の意で、導体の有効長 L とは別物）
   </p>
 );
 
@@ -12271,7 +12281,7 @@ const ElectromagneticForceLayers = () => (
 
     {/* ===== 森：ページ固有の位置づけ図 ===== */}
     <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
-      <svg viewBox="0 0 480 170" role="img" aria-label="電磁力の位置づけ：電流が作る磁界・磁束密度から来て、電磁力で F=BIl と e=Blv を押さえ、モータ・発電機（電磁誘導）・磁気回路へつながる俯瞰図" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+      <svg viewBox="0 0 480 170" role="img" aria-label="電磁力の位置づけ：電流が作る磁界・磁束密度から来て、電磁力で F=BILsinθ と e=BLvsinθ を押さえ、モータ・発電機（電磁誘導）・磁気回路へつながる俯瞰図" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
         <defs>
           <marker id="emf-mori-arr" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
             <path d="M0,1 L8,4.5 L0,8 z" fill="var(--ink-mute)" />
@@ -12289,8 +12299,8 @@ const ElectromagneticForceLayers = () => (
         {/* 中央（強調） */}
         <rect x="162" y="32" width="156" height="102" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="2" />
         <text x="240" y="55" textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--accent-ink)">電磁力</text>
-        <text x="240" y="77" textAnchor="middle" fontSize="12" fill="var(--ink)">F = BIl sinθ</text>
-        <text x="240" y="95" textAnchor="middle" fontSize="12" fill="var(--ink)">e = Blv</text>
+        <text x="240" y="77" textAnchor="middle" fontSize="12" fill="var(--ink)">F = BIL sinθ</text>
+        <text x="240" y="95" textAnchor="middle" fontSize="12" fill="var(--ink)">e = BLv sinθ</text>
         <text x="240" y="113" textAnchor="middle" fontSize="12" fill="var(--ink)">F = qvB（電荷1個）</text>
         <line x1="320" y1="83" x2="353" y2="83" stroke="var(--ink-mute)" strokeWidth="2" markerEnd="url(#emf-mori-arr)" />
         {/* 出口3タグ */}
@@ -12303,7 +12313,7 @@ const ElectromagneticForceLayers = () => (
         <text x="240" y="154" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">磁界×電流＝力（モータ）・磁界×運動＝起電力（発電機）——電気と運動の変換原理</text>
       </svg>
       <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
-        森（俯瞰）：電流が磁界 H・磁束密度 B を作ることを土台に、電磁力は「磁界中の電流が受ける力 F = BIl」と「磁界中を動く導体に生じる起電力 e = Blv」の2本柱。モータ・発電機の原理そのもので、磁気回路へ続く。
+        森（俯瞰）：電流が磁界 H・磁束密度 B を作ることを土台に、電磁力は「磁界中の電流が受ける力 F = BIL sinθ [N]」と「磁界中を動く導体に生じる起電力 e = BLv sinθ [V]」の2本柱。モータ・発電機の原理そのもので、磁気回路へ続く。
       </figcaption>
     </figure>
 
@@ -12315,12 +12325,12 @@ const ElectromagneticForceLayers = () => (
         <tr>
           <td><strong>ミクロ</strong><br/>（なぜ）</td>
           <td>動く電荷（電流）1個が磁界から<strong>ローレンツ力</strong>を受ける。導体中の電荷を足し合わせると導体全体の力になる（↓図解）</td>
-          <td><Eq tex="F = qvB" inline />（電荷1個）→ <Eq tex="F = BIl" inline />（導体）</td>
+          <td><Eq tex="F = qvB" inline />（電荷1個）→ <Eq tex="F = BIL" inline />（導体）</td>
         </tr>
         <tr>
           <td><strong>マクロ</strong><br/>（解く）</td>
           <td>電子1個ずつは追わず<strong>測れる量</strong>で扱う。向きはフレミング左右手。試験はここ</td>
-          <td><Eq tex="F = BIl\sin\theta" inline />（力・モータ）・<Eq tex="e = Blv" inline />（起電力・発電機）</td>
+          <td><Eq tex="F = BIL\sin\theta" inline /> [N]（力・モータ）・<Eq tex="e = BLv\sin\theta" inline /> [V]（起電力・発電機）</td>
         </tr>
         <tr>
           <td><strong>実務</strong><br/>（意味づけ）</td>
@@ -12330,10 +12340,10 @@ const ElectromagneticForceLayers = () => (
       </tbody>
     </table>
 
-    {/* ===== ミクロ：ローレンツ力の集団化（なぜ qvB が BIl になるか） ===== */}
-    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent-ink)", margin: "16px 0 4px" }}>▼ ミクロを図で掘り下げる：なぜ電荷1個の f = qvB が導体の F = BIl になるか</p>
+    {/* ===== ミクロ：ローレンツ力の集団化（なぜ qvB が BIL になるか） ===== */}
+    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent-ink)", margin: "16px 0 4px" }}>▼ ミクロを図で掘り下げる：なぜ電荷1個の f = qvB が導体の F = BIL になるか</p>
     <figure style={{ margin: "6px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
-      <svg viewBox="0 0 470 272" role="img" aria-label="ローレンツ力の集団化：①磁石が作る外部磁界B（紙面の奥向き⊗）の中を、②導体中の正電荷qが右向きに速度vで動く（＝電流I）と、③電荷1個ずつが上向きのローレンツ力f=qvBを受け（フレミング左手）、④長さl内の全電荷のfを足し合わせるとF=BIlになる機構図（電流と磁界が直角の場合）" style={{ display: "block", width: "100%", height: "auto", maxWidth: "470px", margin: "0 auto" }}>
+      <svg viewBox="0 0 470 272" role="img" aria-label="ローレンツ力の集団化：①磁石が作る外部磁界B（紙面の奥向き⊗）の中を、②導体中の正電荷qが右向きに速度vで動く（＝電流I）と、③電荷1個ずつが上向きのローレンツ力f=qvBを受け（フレミング左手）、④長さL内の全電荷のfを足し合わせるとF=BILになる機構図（電流と磁界が直角の場合）" style={{ display: "block", width: "100%", height: "auto", maxWidth: "470px", margin: "0 auto" }}>
         <defs>
           <marker id="emf-micro-f" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
             <path d="M0,1 L8,4.5 L0,8 z" fill="var(--ok)" />
@@ -12384,21 +12394,21 @@ const ElectromagneticForceLayers = () => (
         {/* ④ 結果（集団化・2行） */}
         <rect x="34" y="224" width="402" height="40" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1" />
         <text x="235" y="241" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">
-          <tspan x="235" dy="0">④ 長さ l に入る全電荷の f を足し合わせる →</tspan>
-          <tspan x="235" dy="18">F = BIl（f = qvB の集団版・電流⊥磁界のとき）</tspan>
+          <tspan x="235" dy="0">④ 長さ L に入る全電荷の f を足し合わせる →</tspan>
+          <tspan x="235" dy="18">F = BIL（f = qvB の集団版・電流⊥磁界のとき）</tspan>
         </text>
       </svg>
       <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
-        ミクロ（なぜ）：磁石が作る磁界 B（紙面の奥向き）の中を、導体中の電荷 q が速度 v で動くと、1個ずつがローレンツ力 f = qvB を受ける（向きはフレミング左手）。長さ l の導体に入る全電荷の f は同じ向きなので、足し合わせて導体全体の力 F = BIl になる（電流と磁界が直角の場合。斜めなら F = BIl sinθ）。
+        ミクロ（なぜ）：磁石が作る磁界 B（紙面の奥向き）の中を、導体中の電荷 q が速度 v で動くと、1個ずつがローレンツ力 f = qvB を受ける（向きはフレミング左手）。長さ L の導体に入る全電荷の f は同じ向きなので、足し合わせて導体全体の力 F = BIL になる（電流と磁界が直角の場合。斜めなら F = BIL sinθ）。
       </figcaption>
     </figure>
     <div style={{ background: "var(--accent-soft)", borderRadius: "6px", padding: "12px 14px", margin: "14px 0" }}>
-      <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--accent-ink)", marginBottom: 8, letterSpacing: "0.04em" }}>🔬 ミクロの因果（なぜ F = BIl か）</div>
+      <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--accent-ink)", marginBottom: 8, letterSpacing: "0.04em" }}>🔬 ミクロの因果（なぜ F = BIL か）</div>
       <ol style={{ margin: 0, paddingLeft: 24, lineHeight: 1.9 }}>
         <li><strong>磁石・電磁石が外部磁界 B</strong> を作る（この図では紙面の奥向きで固定）</li>
         <li>導体中の<strong>電荷 q が速度 v で動く</strong>（＝電流 I）と、1個ずつがローレンツ力 <Eq tex="f = qvB" inline /> を受ける（向きはフレミング左手）</li>
-        <li><strong>長さ l の導体に入る全電荷が同じ向きの f</strong> を受けるので、足し合わせて導体全体の力になる</li>
-        <li>結果、<strong>F = BIl</strong>（電流⊥磁界のとき。斜めなら <Eq tex="F = BIl\sin\theta" inline />）</li>
+        <li><strong>長さ L の導体に入る全電荷が同じ向きの f</strong> を受けるので、足し合わせて導体全体の力になる</li>
+        <li>結果、<strong>F = BIL</strong>（電流⊥磁界のとき。斜めなら <Eq tex="F = BIL\sin\theta" inline />）</li>
       </ol>
     </div>
     <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "0 0 4px" }}>
@@ -12496,13 +12506,13 @@ const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
         磁界の中に置いた導体に電流を流すと、導体は力を受ける。これが <strong>電磁力 F</strong>（モーターの原理そのもの）：
       </p>
       <p style={{ textAlign: "center", margin: "8px 0" }}>
-        <Eq tex="F = BIl\sin\theta\;[\mathrm{N}] \quad\text{（電荷1個では } F = qvB\text{）}" />
+        <Eq tex="F = BIL\sin\theta\;[\mathrm{N}] \quad\text{（電荷1個では } F = qvB\text{）}" />
       </p>
       <p style={{ margin: "0 0 8px 0" }}>
         単位は <strong>N（ニュートン）</strong>。磁束密度 B [T = Wb/m²] は「磁界の濃さ」で、<strong>1 T の磁界中で 1 A・1 m の導体が受ける力が 1 N</strong>。θ は電流と磁界のなす角（直角で最大・平行でゼロ）。
       </p>
       <p style={{ margin: 0 }}>
-        因果でつなぐと <strong>B 濃い／I 大きい／l 長い → F 大</strong>、向きは <strong>フレミング左手</strong>（中=電流・人差し=磁界・親指=力）。発電は同じ構造の逆向き（運動→起電力・右手）で、<strong>「左手モーター・右手発電機」のペア</strong>で覚えると混同しない。F = qvB は同じ力を電荷1個分で見たミクロ表現（F = BIl は qvB の集団版）。
+        因果でつなぐと <strong>B 濃い／I 大きい／L 長い → F 大</strong>、向きは <strong>フレミング左手</strong>（中=電流・人差し=磁界・親指=力）。発電は同じ構造の逆向き（運動→起電力・右手）で、<strong>「左手モーター・右手発電機」のペア</strong>で覚えると混同しない。F = qvB は同じ力を電荷1個分で見たミクロ表現（F = BIL は qvB の集団版）。<strong>θ は電流 I と磁界 B のなす角</strong>——起電力 e = BLv sinθ の θ（速度 v と B）とは相手が違う。
       </p>
     </DefinitionCallout>
 
@@ -12512,8 +12522,8 @@ const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
       <p style={{ marginBottom: 8 }}>電磁力 ＝ <strong>電流が磁界から受ける力（左手モーター）</strong>と<strong>磁界中で導体を動かしたときの起電力（右手発電機）</strong>の2本柱。同じ「指と方向」のルールを<strong>欲しい量で左右を切り替える</strong>。</p>
       <p style={{ margin: "0 0 8px", fontSize: 12.5, color: "var(--ink-soft)" }}>⚠ <strong>「起電力ならいつでも右手」ではない</strong>。フレミング右手が使えるのは<strong>導体を動かして生じる運動起電力（e = BLv）</strong>だけ。<strong>コイルを貫く磁束が時間変化して生じる起電力（e = −N dΦ/dt）は、指ではなくレンツの法則で向きを決める</strong>（磁石を近づける・電流を変化させる型）。<strong>「導体が動くか／磁束が変わるか」で判断法が分かれる</strong>。</p>
       <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.75 }}>
-        <li><strong>電磁力</strong>：F = BIL sinθ [N]・左手（電流→力）</li>
-        <li><strong>誘導起電力</strong>：e = BLv sinθ [V]・右手（運動→起電力）</li>
+        <li><strong>電磁力</strong>：F = BIL sinθ ｜<strong>[N]</strong>｜原因は <strong>I</strong>｜θ = I と B ｜左手（電流→力）</li>
+        <li><strong>誘導起電力</strong>：e = BLv sinθ ｜<strong>[V]</strong>｜原因は <strong>v</strong>｜θ = v と B ｜右手（運動→起電力）</li>
         <li><strong>ファラデー</strong>：e = −N dΦ/dt（磁束の変化が起電力を生む・レンツ符号）</li>
         <li><strong>形状別磁界</strong>：直線 H=I/(2πr) ／ 円形 H=NI/(2r) ／ 環状 H=NI/l</li>
         <li><strong>平行導体</strong>：F/l = μ₀ I₁I₂/(2πd)・同方向＝吸引・逆方向＝反発</li>
@@ -12551,6 +12561,11 @@ const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
         },
       ]}
     />
+
+    <Callout variant="tip" title="e を意味から復元する（式を忘れたときの戻り道）">
+      <p style={{ marginBottom: 6 }}><strong>e は「1 秒あたりに切る磁束」</strong>。長さ L の導体が速度 v で動くと、1 秒で <strong>L × v</strong> [m²/s] の面積を掃く。そこに磁束密度 B [Wb/m²] を掛ければ <strong>B·L·v</strong> [Wb/s] ＝ <strong>[V]</strong>。単位が電圧になることまで含めて組み直せる。<strong>ここで復元できるのは v ⊥ B の基本形</strong>——斜めのときは、導体が<strong>掃く面を垂直に貫く成分が B sinθ</strong>（θ は v と B のなす角）になるので <strong>e = BLv sinθ</strong>。導体が v と B の両方に直交している配置での話。</p>
+      <p style={{ margin: 0 }}><strong>導体を動かしただけでは I は現れない</strong>（閉回路があって初めて電流が流れる＝結果であって原因ではない）。だから <span className="marker">e の式に I は入らない</span>。<strong>式に I が居たらそれは力の式</strong>で、答えの単位も [V] ではなく [N] になる。BIL と BLv は 4 記号中 3 つが同じなので、文字列の暗記は崩れる。崩れたらこの意味から戻る。</p>
+    </Callout>
 
     <figure id="formula-scenes" style={{ margin: "16px 0", background: "var(--bg-elev)", borderRadius: 8, padding: "12px 8px 8px" }}>
       <svg viewBox="0 0 720 500" role="img" aria-label="レイヤーA の4公式が、それぞれどんな場面の式かを4コマで対比した図。①は磁界中の導体に電流を流して力を得る場面でF=BILsinθ、②は同じ磁界中で導体を速度vで動かして起電力を得る場面でe=BLvsinθ、③は導体は動かさずコイルを貫く磁束が時間変化する場面でe=マイナスNdΦdt、④は導線ではなく荷電粒子1個が磁界中を運動する場面でF=qvBsinθ。①②④の磁界はいずれも紙面の奥向きで共通" style={{ display: "block", width: "100%", height: "auto", maxWidth: "720px", margin: "0 auto" }}>
@@ -13235,7 +13250,7 @@ const ElectromagneticForceExplainTab = ({ onNav, switchTab }) => (
 
     <h2 id="why-confuse"><span className="h-num">2</span>なぜ電磁力で詰まりやすいか（メタ認知）</h2>
     <p style={{ fontSize: "13px", color: "var(--ink-soft)" }}>
-      電磁力は電験3種で「指のルールを覚えてもどちらの手か毎回迷う」典型テーマ。原因は<strong>計算ミスではなく認知上の壁</strong>。<strong>症状と誤モデルを1表で対応付け</strong>、3節以降を読む前に「自分が今どこで詰まっているか」を意識する。
+      電磁力は電験3種で「指のルールを覚えてもどちらの手か毎回迷う」典型テーマ。原因は<strong>計算ミスではなく認知上の壁</strong>。<strong>症状と誤モデルを1表で対応付け</strong>、3節以降を読む前に「自分が今どこで詰まっているか」を意識する。詰まりは<strong>2クラスある</strong>——<strong>①〜⑦は「どちらの手か」（向きの取り違え）</strong>、<strong>⑧は「そもそもどの式か」（量ごとの取り違え）</strong>で、必要な対策が別物。
     </p>
     <table className="data-table">
       <thead>
@@ -13276,6 +13291,11 @@ const ElectromagneticForceExplainTab = ({ onNav, switchTab }) => (
           <td><strong>⑦ 電子のローレンツ力で電流と速度の符号を取り違える</strong></td>
           <td>「電荷が動く向き＝電流の向き」と正電荷の感覚で当てる</td>
           <td>電子は負電荷なので<strong>電流の向きは運動 v と逆</strong>。<Eq tex="F = qv \times B" inline /> の q が負になるので<strong>力の向きも反転する</strong>（向きを論じるときは大きさの式 F=qvB ではなく外積の形で書く）（→<a href="#" onClick={(e) => { e.preventDefault(); onNav('electron-motion'); }} style={{ color: "var(--accent-ink)", cursor: "pointer", textDecoration: "underline" }}>5.4 電子の運動</a>）</td>
+        </tr>
+        <tr>
+          <td><strong>⑧ 求めたい量とは別の量の式が丸ごと出てくる</strong>（e を求める場面で F = BIL sinθ を書く）</td>
+          <td>BIL と BLv を「B・L・sinθ ＋ 何か」という<strong>1つの骨格として圧縮</strong>して覚えており、<strong>F↔I・e↔v の結びつきが抜け落ちている</strong>。手の左右以前に、式そのものが別物になっている</td>
+          <td><strong>量・単位・原因変数を1組で固定</strong>する：<strong>F ｜[N]｜原因 I</strong> ／ <strong>e ｜[V]｜原因 v</strong>。検出は<strong>単位</strong>（起電力を問われて [N] が出たら力の式）。矯正は「見て見分ける」では効かず、<strong>単独で書き出す練習</strong>が要る（→ 学習タブ 8節 セットⅠ・Ⅱ／公式タブ 1節「e を意味から復元する」）</td>
         </tr>
       </tbody>
     </table>
@@ -13713,7 +13733,7 @@ const ElectromagneticForceExplainTab = ({ onNav, switchTab }) => (
       <strong>前項の「力の向き」とつながる</strong>：同方向でゼロ点が<strong>間</strong>にできるのは、2導体の間で磁界が打ち消し合っているから。これは前項の「同方向＝間で弱く外側で強い ⇒ 吸引」と<strong>同じ事実の別表現</strong>で、片方を覚えていればもう片方を作り直せる。数値を動かして確かめるなら <a href="#" onClick={(e)=>{e.preventDefault(); location.hash = 'electromagnetic-force:learn';}} style={{ textDecoration: "underline", fontWeight: 600 }}>学習タブの「2本の平行導体シミュレータ」</a>（零点の位置と導体間の力を同時に表示）。
     </p>
 
-    <h2 id="traps"><span className="h-num">7</span>よくある勘違い（引っかけ集 9項目）</h2>
+    <h2 id="traps"><span className="h-num">7</span>よくある勘違い（引っかけ集 11項目）</h2>
     <Callout variant="warn" title="① 左手と右手のどちらか毎回考え直す（最頻出）">
       <p>❌ 「F も e も同じ手で OK」と単一化したい欲求。✅ <strong>欲しい量で手を選ぶ</strong>：力 F なら左手（モーター）・起電力 e なら右手（発電機）。試験中に迷ったら<strong>「電動機か発電機か」</strong>を先に確認。</p>
     </Callout>
@@ -13750,10 +13770,10 @@ const ElectromagneticForceExplainTab = ({ onNav, switchTab }) => (
       <p>❌ 一様磁界中のループは合力が 0 だから何も起きない。✅ <strong>大きさが等しく逆向きでも、作用線がずれていれば偶力（回転）が残る</strong>。合力とモーメントは別勘定で、<strong>合力 0 かつモーメント 0 のときだけ「力が働かない」</strong>。</p>
       <p style={{ marginBottom: 0 }}>磁界が<strong>一様</strong>なら合力 0・モーメントだけ残る（R02問3 ＝ モータが回る理由）。磁界が<strong>場所で変わる</strong>（直線導体のそば）なら近い辺と遠い辺で大きさが違い<strong>合力も残る</strong>（R05下問4）。<strong>「一様か不均一か」で結論が入れ替わる</strong>のが電磁力ループ問題の分岐点。</p>
     </Callout>
-    <Callout variant="warn" title="⑩ e = Blv の l を「導体棒の長さ」と思い込む（H22問3・回路に入る区間だけが有効長）">
-      <p>❌ 「棒が動いて起電力を出すのだから、l は棒の長さ」。✅ <strong>l は閉回路に含まれる区間の長さ</strong>＝2本のレール（平行導線）の間隔。<strong>棒がレールの外へはみ出していても、その部分は回路に入っていないので電流に寄与しない</strong>。</p>
-      <p><strong>なぜそうなるか（2通りの筋道が同じ答えに着く）</strong>：① <strong>力の側から</strong>——棒の全長にわたって単位電荷あたり <Eq tex="v \times B" inline /> の力が働くので、はみ出し部にも電位差そのものは生じる。しかしそこは行き止まりで電流の経路がなく、<strong>電位が持ち上がるだけで回路の起電力にならない</strong>。② <strong>磁束の側から</strong>——回路が囲む面積の変化率は <Eq tex="d\Phi/dt = B \, l \, v" inline /> で、この <Eq tex="l" inline /> は<strong>回路の境界であるレール間隔</strong>。<strong>棒の物理長は式にそもそも現れない</strong>。</p>
-      <p style={{ marginBottom: 0 }}><strong>H22問3</strong>（レール間隔 0.6 m・<Eq tex="B = 6 \times 10^{-2}" inline /> T・<Eq tex="v = 4" inline /> m/s・R = 10 Ω）は<strong>問題文に棒の長さを書いていない</strong>。0.6 m はレール間隔で、それが回路に含まれる区間だから <Eq tex="e = Blv = 6 \times 10^{-2} \times 0.6 \times 4 = 0.144" inline /> V、<Eq tex="I = e/R = 0.0144" inline /> A（正答(4)）。<strong>「長さが1つしか与えられていない＝それが有効長」と機械的に代入するのではなく、「回路のどこが磁界を横切っているか」を図で確かめてから代入する</strong>。</p>
+    <Callout variant="warn" title="⑩ e = BLv の L を「導体棒の長さ」と思い込む（H22問3・回路に入る区間だけが有効長）">
+      <p>❌ 「棒が動いて起電力を出すのだから、L は棒の長さ」。✅ <strong>L は閉回路に含まれる区間の長さ</strong>＝2本のレール（平行導線）の間隔。<strong>棒がレールの外へはみ出していても、その部分は回路に入っていないので電流に寄与しない</strong>。</p>
+      <p><strong>なぜそうなるか（2通りの筋道が同じ答えに着く）</strong>：① <strong>力の側から</strong>——棒の全長にわたって単位電荷あたり <Eq tex="v \times B" inline /> の力が働くので、はみ出し部にも電位差そのものは生じる。しかしそこは行き止まりで電流の経路がなく、<strong>電位が持ち上がるだけで回路の起電力にならない</strong>。② <strong>磁束の側から</strong>——回路が囲む面積の変化率は <Eq tex="d\Phi/dt = B \, L \, v" inline /> で、この <Eq tex="L" inline /> は<strong>回路の境界であるレール間隔</strong>。<strong>棒の物理長は式にそもそも現れない</strong>。</p>
+      <p style={{ marginBottom: 0 }}><strong>H22問3</strong>（レール間隔 0.6 m・<Eq tex="B = 6 \times 10^{-2}" inline /> T・<Eq tex="v = 4" inline /> m/s・R = 10 Ω）は<strong>問題文に棒の長さを書いていない</strong>。0.6 m はレール間隔で、それが回路に含まれる区間だから <Eq tex="e = BLv = 6 \times 10^{-2} \times 0.6 \times 4 = 0.144" inline /> V、<Eq tex="I = e/R = 0.0144" inline /> A（正答(4)）。<strong>「長さが1つしか与えられていない＝それが有効長」と機械的に代入するのではなく、「回路のどこが磁界を横切っているか」を図で確かめてから代入する</strong>。</p>
     </Callout>
 
     <div style={{ background: "var(--accent-soft)", borderLeft: "4px solid var(--accent-ink)", padding: "12px 16px", margin: "14px 0 0", borderRadius: "6px", fontSize: "14px", lineHeight: 1.75 }}>
@@ -13764,11 +13784,16 @@ const ElectromagneticForceExplainTab = ({ onNav, switchTab }) => (
         <tbody>
           <tr><td><strong>⑥</strong> <Eq tex="F = BIL" inline /></td><td><strong>部材軸</strong>（部材のどこまでか）</td><td>コイル全長ではなく、磁界中にある辺はどれか</td><td>—</td></tr>
           <tr><td><strong>⑧</strong> <Eq tex="e = BL(t)v" inline /></td><td><strong>時間軸</strong>（いつの長さか）</td><td>境界上の幅は時間とともに変わるか</td><td>H27問5</td></tr>
-          <tr><td><strong>⑩</strong> <Eq tex="e = Blv" inline /></td><td><strong>回路軸</strong>（回路のどこまでか）</td><td>その区間は閉回路に入っているか</td><td>H22問3</td></tr>
+          <tr><td><strong>⑩</strong> <Eq tex="e = BLv" inline /></td><td><strong>回路軸</strong>（回路のどこまでか）</td><td>その区間は閉回路に入っているか</td><td>H22問3</td></tr>
         </tbody>
       </table>
       <p style={{ margin: "10px 0 0", fontSize: "13px", color: "var(--ink-soft)" }}>※ <strong>H22問3（回路軸）と H27問5（時間軸）は対になる出題</strong>。どちらも「L に何を入れるか」を問うており、公式を覚えていても図を読み直さないと外す。</p>
     </div>
+
+    <Callout variant="warn" title="⑪ 起電力を求めているのに、式に I が入っている（量ごと取り違える型）">
+      <p>❌ e を出すつもりで <strong>F = BIL sinθ</strong> を書く。手の左右ではなく<span className="marker">式そのものが別の量のもの</span>という誤り。BIL と BLv は 4 記号中 3 つを共有するので、<strong>強く練習したほうの式が先に思い出される</strong>（①②の「手の取り違え」とは別クラス）。</p>
+      <p style={{ marginBottom: 0 }}>✅ <strong>検出は単位で行う</strong>。求めたのが起電力なら答えは [V]。<strong>[N] が出たら力の式を書いている</strong>。見分けの1点は<strong>能動変数</strong>——<strong>式に I が居れば力・v が居れば起電力</strong>。思い出せないときは公式タブ 1節の「e を意味から復元する」で <strong>B ×（L·v）＝ 1 秒に切る磁束</strong> から組み直す（→ 学習タブ 8節 セットⅡ で産出練習）。<span style={{ fontSize: 12 }}>※ ⑥⑧⑩ が「<strong>L に何を入れるか</strong>」の3方向なのに対し、⑪は「<strong>そもそもどちらの式か</strong>」＝1段手前の取り違え。</span></p>
+    </Callout>
 
     <h2 id="maxwell"><span className="h-num">8</span>拡張：マクスウェル方程式との接続（参考・Level 2）</h2>
     <details style={{ marginTop: 12, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: "6px" }}>
@@ -14701,13 +14726,13 @@ const ElectromagneticForceLearnTab = ({ onNav, switchTab }) => (
       出典: 設問文・選択肢・正答③は <strong>電験王3</strong>（denken-ou.com）と <strong>電験三種まとめました</strong>（yaku-tik.com）の掲載内容を相互照合し、本カードの導出（M = F × h ＝ Ih²B₀・1巻きループのトルク T=BIA と一致）と一致することを確認した。<strong>電気技術者試験センター公表の原典 PDF は掲載期間終了により未照合</strong>（原典入手後に逐語照合する）。図は原問の図をそのまま写したものではなく、電流の向きを A→B→C→D→A と置いて当Wikiで作図した（<strong>電流の向きが逆でも力の大きさと偶力モーメントの大きさは変わらず、回転の向きだけが反転する</strong>）。
     </p>
 
-    <h2 id="z-3conditions"><span className="h-num">8</span>3条件即答チェック（限界的練習ゾーン）</h2>
+    <h2 id="z-3conditions"><span className="h-num">8</span>即答チェック（限界的練習ゾーン・2セット×3条件＋判別テスト）</h2>
     <SectionCheck pageId="electromagnetic-force" sectionId="z-3conditions" />
     <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginBottom: "10px" }}>
-      「解ける／解けない」の境界を強制発火させる練習。<strong>B=1 T・I=10 A・L=0.5 m 固定 × θ 3条件（30° / 60° / 90°）</strong>で F を即答し、典型誤答3択でセルフ判定。<strong>3条件すべて正答できれば B 問題対応 OK</strong> の目安。
+      「解ける／解けない」の境界を強制発火させる練習。<strong>セットⅠ（電磁力 F）とセットⅡ（誘導起電力 e）を必ず2つセットで回す</strong>。片方だけ即答できても、<strong>もう片方を求める場面で強いほうの式が侵入してくる事故</strong>は防げない（→ <a href="#" onClick={(e) => { e.preventDefault(); switchTab('explain'); }} style={{ textDecoration: "underline" }}>解説タブ 2節 メタ認知</a>）。
     </p>
-    <Callout variant="info" title="共通設定">
-      <p><strong>B = 1 T・I = 10 A・L = 0.5 m 固定</strong>。B と I のなす角 θ を 30° / 60° / 90° で振り、F = BIL sinθ を即答。sin 30° = 0.5・sin 60° ≈ 0.866・sin 90° = 1。</p>
+    <Callout variant="info" title="セットⅠ｜電磁力 F を求める">
+      <p><strong>B = 1 T・I = 10 A・L = 0.5 m 固定</strong>。<strong>I と B のなす角</strong> θ を 30° / 60° / 90° で振り、F = BIL sinθ を即答。sin 30° = 0.5・sin 60° ≈ 0.866・sin 90° = 1。</p>
     </Callout>
     <p style={{ marginTop: 12 }}><strong>即答してから下の解答を開くこと</strong>（暗算 30 秒目安）。</p>
     <table className="data-table">
@@ -14721,21 +14746,68 @@ const ElectromagneticForceLearnTab = ({ onNav, switchTab }) => (
       </tbody>
     </table>
     <details style={{ marginTop: 10, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: "6px" }}>
-      <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答の導出（3条件まとめて）</summary>
+      <summary style={{ cursor: "pointer", fontWeight: 600 }}>セットⅠ 解答の導出（3条件まとめて）</summary>
       <p style={{ marginTop: 8 }}><strong>① θ = 30°</strong>: F = 1 × 10 × 0.5 × sin 30° = 5 × 0.5 = 2.5 N</p>
       <p><strong>② θ = 60°</strong>: F = 1 × 10 × 0.5 × sin 60° = 5 × (√3/2) ≈ 5 × 0.866 ≈ 4.33 N</p>
       <p><strong>③ θ = 90°</strong>: F = 1 × 10 × 0.5 × sin 90° = 5 × 1 = 5 N（最大）</p>
       <p style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: 8 }}>※ <strong>θ=90° が最大・θ=0° がゼロ</strong>（B と I が平行で力なし）。sin 30°=0.5・sin 45°=√2/2≈0.707・sin 60°=√3/2≈0.866 の典型値を覚えておくと即答できる。</p>
     </details>
-    <Callout variant="warn" title="典型誤答3択（自己採点用）">
+    <Callout variant="warn" title="典型誤答3択（セットⅠ・自己採点用）">
       <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.8 }}>
         <li><strong>sinθ ではなく cosθ を使う</strong>（誤）⇒ F = BIL の sinθ は<strong>B と I のなす角の sin</strong>。cosθ にすると θ=90° で F=0 になる致命誤答</li>
         <li><strong>θ=0° で F が最大と思う</strong>（誤）⇒ <strong>θ=90°（B⊥I）で F 最大・θ=0°（B∥I）で F=0</strong>。直線導体が磁界と平行なら力を受けない</li>
         <li><strong>sin 60°=0.5、sin 30°=0.866 と逆に覚える</strong>（誤）⇒ <strong>sin 30°=0.5・sin 60°=√3/2≈0.866</strong>。三角関数の基本値</li>
       </ol>
     </Callout>
-    <Callout variant="tip" title="セルフ判定">
-      <p><strong>3条件すべて即答できた</strong> ⇒ B 問題（電磁力＋誘導起電力連鎖）でも止まらない。<strong>1問でも誤答</strong> ⇒ <a href="#" onClick={(e) => { e.preventDefault(); switchTab('explain'); }} style={{ textDecoration: "underline" }}>解説タブ 3〜4節 フレミングと4視点</a>で復習。</p>
+
+    <Callout variant="info" title="セットⅡ｜誘導起電力 e を求める">
+      <p><strong>B = 1 T・v = 10 m/s・L = 0.5 m 固定</strong>（導体を速度 v で動かす）。<strong>v と B のなす角</strong> θ を 30° / 60° / 90° で振り、e = BLv sinθ を即答。<strong>電流 I は与えられていない</strong>——それでも e は求まる。</p>
+      <p style={{ margin: "6px 0 0" }}>答えるのは<strong>3つセット：①式 ②数値 ③単位</strong>。<span className="marker">数値だけでは自己採点にならない</span>——この設定では数字が 1 つしか与えられていないので、<strong>誤って F = BIL の式を使っても同じ数値が出る</strong>（下の④で確かめる）。誤りが出るのは<strong>式と単位</strong>だけ。</p>
+    </Callout>
+    <p style={{ marginTop: 12 }}><strong>セットⅠを見返さずに即答すること</strong>（見返すと「選ぶ」練習になり、思い出す練習にならない）。</p>
+    <table className="data-table">
+      <thead>
+        <tr><th>条件</th><th>sinθ</th><th>e = BLv sinθ [V]</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>① θ = 30°</strong></td><td>0.5</td><td>1 × 0.5 × 10 × 0.5 = <strong>2.5 V</strong></td></tr>
+        <tr><td><strong>② θ = 60°</strong></td><td>√3/2 ≈ 0.866</td><td>1 × 0.5 × 10 × 0.866 ≈ <strong>4.33 V</strong></td></tr>
+        <tr><td><strong>③ θ = 90°</strong></td><td>1</td><td>1 × 0.5 × 10 × 1 = <strong>5 V</strong></td></tr>
+      </tbody>
+    </table>
+    <details style={{ marginTop: 10, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: "6px" }}>
+      <summary style={{ cursor: "pointer", fontWeight: 600 }}>セットⅡ 解答の導出（3条件まとめて）</summary>
+      <p style={{ marginTop: 8 }}><strong>① θ = 30°</strong>: e = 1 × 0.5 × 10 × sin 30° = 5 × 0.5 = 2.5 V</p>
+      <p><strong>② θ = 60°</strong>: e = 1 × 0.5 × 10 × sin 60° = 5 × (√3/2) ≈ 5 × 0.866 ≈ 4.33 V</p>
+      <p><strong>③ θ = 90°</strong>: e = 1 × 0.5 × 10 × sin 90° = 5 × 1 = 5 V（最大）</p>
+      <p style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: 8 }}>※ <strong>θ=90°（v⊥B）で最大・θ=0°（v∥B）でゼロ</strong>。磁束を横切らない向きに動かしても、切る磁束が増えないので起電力は生じない。</p>
+    </details>
+    <Callout variant="warn" title="典型誤答3択（セットⅡ・自己採点用）">
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.8 }}>
+        <li><strong>v ではなく I を掛ける</strong>（誤）⇒ <span className="marker">起電力を求めているのに F = BIL sinθ を書く型</span>。<strong>導体を動かしただけでは I は現れない</strong>（閉回路があって初めて電流が流れる＝結果）。<strong>式に I が居たらそれは力の式</strong>で、答えの単位も [N] になる</li>
+        <li><strong>θ を「v と導体のなす角」と取る</strong>（誤）⇒ θ は <strong>v と B のなす角</strong>。導体は v と B の両方に直交する向きが基準で、角度の相手ではない</li>
+        <li><strong>e = −N dΦ/dt を使おうとして N が無くて詰まる</strong>（誤）⇒ <strong>導体1本が動く型は e = BLv</strong>。−N dΦ/dt は N 巻きコイルを貫く磁束が変化する型で、この設定では巻数が与えられていない（→ 公式タブ 1節 notWhen）</li>
+      </ol>
+    </Callout>
+
+    <Callout variant="info" title="④ 仕上げ：I と v が両方あるとき（判別テスト）">
+      <p style={{ marginBottom: 6 }}><strong>一様磁界 B = 1 T の中で、有効長 L = 0.5 m の直線導体を v = 10 m/s で動かす。同時にこの導体には I = 4 A が流れている。</strong><strong>B・v・導体の3方向は互いに直交</strong>。次の2つを即答する。</p>
+      <p style={{ marginBottom: 6 }}>(a) この導体に生じる<strong>誘導起電力 e</strong>　(b) この導体が受ける<strong>電磁力 F</strong></p>
+      <details style={{ padding: "8px 12px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6 }}>
+        <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答</summary>
+        <p style={{ marginTop: 8 }}>(a) e = BLv sinθ、θ は <strong>v と B</strong> のなす角＝90°（sin = 1）。e = 1 × 0.5 × 10 = <strong>5 V</strong>（使うのは <strong>v</strong>）</p>
+        <p style={{ marginBottom: 6 }}>(b) F = BIL sinθ、θ は <strong>I と B</strong> のなす角。電流は<strong>導体に沿って</strong>流れ、導体は B と直交しているので、こちらも 90°（sin = 1）。F = 1 × 4 × 0.5 = <strong>2 N</strong>（使うのは <strong>I</strong>）</p>
+        <p style={{ margin: 0, fontSize: 12, color: "var(--ink-soft)" }}>※ <strong>2つの θ は定義が違う</strong>（一方は v と B、他方は I と B）。この配置では<strong>たまたま両方 90°</strong>になるだけで、同じ角ではない。θ が 90° でない設定では別々に取り直す。</p>
+      </details>
+      <p style={{ margin: "8px 0 0" }}>ここでは <strong>I と v が両方与えられている</strong>ので、<span className="marker">式を取り違えると数値まで変わる（5 と 2）</span>。①〜③で数値が判別に使えなかったのは、数字が1つしか無かったから。<strong>本番の問題文は両方与えてくれるとは限らない</strong>——だから頼るべきは数値ではなく<strong>「求める量 → 単位 → 能動変数」の順</strong>。</p>
+    </Callout>
+    <Callout variant="warn" title="セットⅠとⅡで答えの数字が一致することの意味">
+      <p style={{ margin: 0 }}>①〜③はセットⅠとⅡで答えの数字が<strong>完全に一致する</strong>（2.5 / 4.33 / 5）。I = 10 A と v = 10 m/s を揃えたためだが、数字を変えても事情は同じで、<span className="marker">「e を求める場面で F = BIL を想起し、与えられた v の値をそのまま I の枠に代入する」型の取り違えは、数値の大きさでは捕まらない</span>（B・L・sinθ が共通なので同じ数が出る）。捕まえられるのは<strong>単位</strong>（Ⅰ は [N]、Ⅱ は [V]）、<strong>書いた式そのもの</strong>、そして④のように<strong>識別値が両方与えられた場合の数値</strong>。だから<strong>答えを書く前に単位を出す</strong>。起電力を問われて [N] が出たら、その時点で力の式を書いている。<br/><span style={{ fontSize: 12 }}>※ 逆に言えば「I が与えられていないのに I の式を使おうとしている」と気づけた時点で誤りは止まる。数値が出てしまうのは、記号を確かめずに手が動いたときだけ。</span></p>
+    </Callout>
+    <Callout variant="tip" title="セルフ判定（2段・射程を限定して読むこと）">
+      <p style={{ marginBottom: 6 }}><strong>セットⅠの3条件すべて即答</strong> ⇒ <strong>電磁力の大きさ計算だけ</strong>確認済み（起電力側は未検証）。</p>
+      <p style={{ marginBottom: 6 }}><strong>ⅠとⅡ＋④すべて即答</strong> ⇒ <strong>F と e の式の選び分け・対応する量と単位・一様磁界で角が既知のときの一段の大きさ計算</strong>までは止まらない。<span className="marker">確認できるのはここまで</span>——B 問題の連鎖（e → I = e/R → F）・<strong>向きの判定</strong>（フレミング／レンツ）・力のつり合いは本節では1問も練習していないので、別に確認すること（→ <a href="#" onClick={(e) => { e.preventDefault(); switchTab('learn'); }} style={{ textDecoration: "underline" }}>本タブの解法カード各節</a>・<a href="#" onClick={(e) => { e.preventDefault(); switchTab('explain'); }} style={{ textDecoration: "underline" }}>解説タブ 向き判定フロー</a>）。</p>
+      <p style={{ margin: 0 }}><strong>Ⅰで誤答</strong> ⇒ <a href="#" onClick={(e) => { e.preventDefault(); switchTab('explain'); }} style={{ textDecoration: "underline" }}>解説タブ 3〜4節 フレミングと4視点</a>へ。<strong>Ⅱ・④で誤答（特に v の代わりに I を掛けた）</strong> ⇒ <a href="#" onClick={(e) => { e.preventDefault(); switchTab('formulas'); }} style={{ textDecoration: "underline" }}>公式タブ 1節 基本公式と「e を意味から復元する」</a>へ。</p>
     </Callout>
 
     <h2 id="kakomon"><span className="h-num">9</span>出題実績（H18〜R07上期）</h2>
@@ -14799,7 +14871,7 @@ const ElectromagneticForceLearnTab = ({ onNav, switchTab }) => (
         { id: "h30-q3", label: "5. H30 問3 解法カード（棒磁石・点磁荷ペア）" },
         { id: "r05s-q4", label: "6. R05下 問4 解法カード（直線導体×方形ループ）" },
         { id: "r02-q3", label: "7. R02 問3 解法カード（一様磁界中のループ＝偶力）" },
-        { id: "z-3conditions", label: "8. 3条件即答チェック（限界練習）" },
+        { id: "z-3conditions", label: "8. 即答チェック（F と e の2セット＋判別テスト）" },
         { id: "kakomon", label: "9. 出題実績" },
         { id: "related", label: "10. 関連項目" },
       ]}
@@ -15766,7 +15838,7 @@ const MagneticCircuitLearnTab = ({ onNav, switchTab }) => (
         <tr>
           <td><a onClick={() => onNav('electromagnetic-force')} style={{ cursor: "pointer", color: "var(--accent-ink)" }}>1.3 電磁力</a></td>
           <td>どちらも H・B・NI が出てきて、磁界の「発生」と磁路の「流れ」を取り違える</td>
-          <td><strong>力 F=BIl（電磁力）か、磁束 Φ=NI/Rm（磁気回路）か</strong>。何を求めるか</td>
+          <td><strong>力 F=BIL（電磁力）か、磁束 Φ=NI/Rm（磁気回路）か</strong>。何を求めるか</td>
           <td>R05上 問4（電流が作る磁界・磁束）</td>
         </tr>
         <tr>
