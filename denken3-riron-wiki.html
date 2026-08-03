@@ -18691,7 +18691,10 @@ const ConceptQuizItem = ({ q, pageId, pageTitle, required }) => {
     try { const raw = localStorage.getItem(key); if (raw) setPrev(JSON.parse(raw)); } catch (e) {}
   }, [key]);
   const correctKey = (q.choices.find(c => c.correct) || {}).key;
-  const ERR_LABELS = { formula: '公式忘れ', condition: '条件読み違い', calc: '計算ミス', concept: '概念不理解' };
+  // select（公式選択ミス）= 式は知っていたが選び違えた・適用先/射程を間違えた。
+  // formula（公式忘れ）= そもそも式が出てこない。別クラスなので混ぜない。
+  // ※ 表示ボタンは下の配列が SoT。ここは memo 整形用なので両方に足すこと。
+  const ERR_LABELS = { select: '公式選択ミス', formula: '公式忘れ', condition: '条件読み違い', calc: '計算ミス', concept: '概念不理解' };
   const fmtMemo = (b) => (b.memoBase || '') + (b.recallNote ? '・正答メモ:' + b.recallNote : '') + (ERR_LABELS[b.error_tag] ? '・原因:' + ERR_LABELS[b.error_tag] : '');
   const choose = (k) => {
     if (revealed) return;
@@ -18811,7 +18814,10 @@ const ConceptQuizItem = ({ q, pageId, pageTitle, required }) => {
           {!isCorrect && (
             <div style={{ marginTop: 8 }}>
               <span style={{ fontSize: 12, color: 'var(--ink-soft)', marginRight: 6 }}>原因（任意・1タップ）:</span>
-              {[['formula', '公式忘れ'], ['condition', '条件読み違い'], ['calc', '計算ミス'], ['concept', '概念不理解']].map(([k, label]) => (
+              <div style={{ fontSize: 11, color: 'var(--ink-mute)', margin: '4px 0 2px', lineHeight: 1.6 }}>
+                正しい式は<strong>候補に挙がっていたが選び違えた／適用先・射程を間違えた</strong>→公式選択ミス ／ そもそも式が出てこなかった→公式忘れ ／ 式は正しく条件（v=0・直列/並列・境界値）を落とした→条件読み違い
+              </div>
+              {[['select', '公式選択ミス'], ['formula', '公式忘れ'], ['condition', '条件読み違い'], ['calc', '計算ミス'], ['concept', '概念不理解']].map(([k, label]) => (
                 <button key={k} onClick={() => { setErrorTag(k); saveErrorTag(k); }}
                   style={{ padding: '3px 10px', fontSize: 11, borderRadius: 4, cursor: 'pointer', marginRight: 6, marginTop: 4,
                     background: errorTag === k ? '#dc2626' : 'transparent',
