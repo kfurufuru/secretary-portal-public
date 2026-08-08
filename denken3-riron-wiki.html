@@ -19982,6 +19982,11 @@ const ExamAnswer = ({ correct, explanations }) => {
    ============================================================ */
 const PageTabs = ({ pageId, tabs, defaultTab, children }) => {
   const tabIds = tabs.map(t => t.id);
+  /* 学習タブの確認問題数。既定タブは「公式」なので、着地時点では確認問題の存在自体が
+     見えない（ConceptQuiz は学習タブ内）。タブに件数を出して存在だけは初見で分かるようにする。
+     ※ 既定タブは変えない — 公式を引きに来た学習者をクイズに着地させないため。
+     RIRON_DAILY_POOL の参照時点は render 後なので TDZ にかからない（ConceptQuiz と同じ）。 */
+  const quizCount = (RIRON_DAILY_POOL || []).filter(q => q.wikiPageId === pageId).length;
   const [activeTab, setActiveTab] = useState(() => {
     const h = location.hash.replace(/^#/, '');
     const hashTab = h.includes(':') ? h.split(':')[1] : null;
@@ -20077,6 +20082,26 @@ const PageTabs = ({ pageId, tabs, defaultTab, children }) => {
             >
               {tab.icon && <span style={{ marginRight: 6 }}>{tab.icon}</span>}
               {tab.label}
+              {tab.id === 'learn' && quizCount > 0 && (
+                <span
+                  aria-label={`確認問題 ${quizCount}問`}
+                  style={{
+                    display: "inline-block",
+                    marginLeft: 6,
+                    padding: "1px 7px",
+                    borderRadius: 999,
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    lineHeight: 1.6,
+                    verticalAlign: "middle",
+                    whiteSpace: "nowrap",
+                    background: isActive ? "var(--accent-ink)" : "var(--accent-soft)",
+                    color: isActive ? "var(--bg)" : "var(--accent-ink)",
+                  }}
+                >
+                  {quizCount}問
+                </span>
+              )}
             </button>
           );
         })}
