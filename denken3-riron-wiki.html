@@ -33,6 +33,17 @@
   --ok-soft: oklch(0.97 0.010 155);
   --danger: oklch(0.50 0.12 25);
   --danger-soft: oklch(0.97 0.010 25);
+  /* 「黄色＝問われるところ」の色を1か所に集約する（hue 95 系・accent 非依存＝
+     アクセント4系統に追従させない）。用途は2変種:
+       --mark-pen : .marker（論述で問われるポイント・本文中175箇所）のペン風下線グラデ
+       --mark-bg  : Hl（過去問の空欄・タップで開示）のベタ塗り
+     light は同じ黄色なので --mark-pen は --mark-bg を参照する（リテラル重複を作らない）。
+     dark だけは別値: .marker は地色に重ねる半透明ペン（alpha 0.55）、Hl は文字を載せる
+     ベタ塗りなので不透明にする必要がある＝意図的に分岐している。
+     --mark-ink のコントラストは scripts/check_theme_contrast.py の PAIRS で AA 4.5:1 を機械保証。 */
+  --mark-bg: oklch(0.92 0.18 95);
+  --mark-ink: oklch(0.30 0.04 95);
+  --mark-pen: var(--mark-bg);
 
   --font-serif: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
   --font-sans: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
@@ -64,6 +75,9 @@
   --ok-soft: oklch(0.25 0.025 155);
   --danger: oklch(0.75 0.10 25);
   --danger-soft: oklch(0.28 0.028 25);
+  --mark-bg: oklch(0.48 0.14 95);
+  --mark-ink: oklch(0.97 0.02 95);
+  --mark-pen: oklch(0.55 0.16 95 / 0.55);
 }
 
 [data-accent="forest"]  { --accent: oklch(0.45 0.10 155); --accent-soft: oklch(0.92 0.04 155); --accent-ink: oklch(0.32 0.11 155); }
@@ -441,15 +455,13 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 }
 .content p strong { color: var(--ink); font-weight: 700; }
 
-/* 論述で問われるポイント — 黄色マーカー */
+/* 論述で問われるポイント — 黄色マーカー。
+   色は --mark-pen（:root / [data-theme="dark"] で定義）に集約したので、
+   dark 用の .marker 上書きルールは不要になった（トークンが切り替わる）。 */
 .marker {
-  background: linear-gradient(transparent 55%, oklch(0.92 0.18 95) 55%);
+  background: linear-gradient(transparent 55%, var(--mark-pen) 55%);
   padding: 0 2px;
   font-weight: 600;
-  color: var(--ink);
-}
-[data-theme="dark"] .marker {
-  background: linear-gradient(transparent 55%, oklch(0.55 0.16 95 / 0.55) 55%);
   color: var(--ink);
 }
 .content ul, .content ol { padding-left: 22px; margin: 6px 0 16px; }
@@ -2575,6 +2587,85 @@ const Callout = ({ variant = "info", title, children }) => {
       )}
       <div style={{ color: "var(--ink)", lineHeight: "1.75" }}>{children}</div>
     </aside>
+  );
+};
+
+/* ============================================================
+   1.4 Hl — 過去問で問われた箇所の黄色マーカー（初期は伏せ・タップで開示）
+   なぜ伏せるか: 答えを常時表示すると先に答えが見えてテスト効果がゼロになる
+   （柱4「折りたたみ初期状態は学習価値を最大化」）。過去問文を本文に置いて
+   反復接触させる利点は保ったまま、毎回 active recall を働かせる。
+   伏せ状態でも children を visibility:hidden で DOM に残すため、開示時に
+   行が伸び縮みしない（レイアウトシフト防止）。
+   ※ 視覚的に隠すだけで DOM には残る＝ページ全体をコピーすると答えも含まれる。
+   ============================================================ */
+
+const Hl = ({ label, children }) => {
+  const [open, setOpen] = React.useState(false);
+  const toggle = () => {
+    // 解答を書き写そうとドラッグ選択すると mouseup で click が飛び、開いた答えが
+    // 消えてしまう。選択中はトグルしない。
+    try {
+      const sel = window.getSelection();
+      if (sel && String(sel).length > 0) return;
+    } catch (e) {}
+    setOpen((o) => !o);
+  };
+  return (
+    <mark
+      role="button"
+      tabIndex={0}
+      aria-expanded={open}
+      aria-label={open ? `空欄（${label || "?"}）の解答。タップで隠す` : `空欄（${label || "?"}）タップで解答を表示`}
+      title={open ? "タップで隠す" : "タップで解答を表示"}
+      onClick={toggle}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggle();
+        }
+      }}
+      style={{
+        position: "relative",
+        display: "inline-block",
+        // nowrap は必須。inline-block の shrink-to-fit 幅は min-content を下限に取るが、
+        // 和文は1文字ごとに改行可能なので min-content=1字幅になり、「和動接続」のような
+        // 和語の解答が縦4行に分断されて巨大な黄色ブロックになる（実測: 高さ105px）。
+        // 記号だけの解答（√(L₁L₂)）は改行機会が無いため無傷＝目視だと見落とす類のバグ。
+        // 代償として解答は分割不能になる。**短い語（目安10文字以内）専用**の部品として使う。
+        // 本ページ最長の「和動接続」で 70px（375px 幅で実測・はみ出しなし）。
+        whiteSpace: "nowrap",
+        // 伏せ字ラベル「（ア）」は絶対配置で親の幅に寄与しないため、解答が短いと
+        // ラベルが枠外へはみ出す（実測: 解答「2乗」で 12.3px 超過＝黄色枠の外に文字が出る）。
+        // box-sizing:border-box なので padding 込みで最低幅を確保する（12px×3字≈36px＋padding）。
+        minWidth: "3.2em",
+        cursor: "pointer",
+        background: "var(--mark-bg)",
+        color: "var(--mark-ink)",
+        borderRadius: "3px",
+        padding: "0 5px",
+        margin: "0 2px",
+        fontWeight: 600,
+      }}
+    >
+      <span style={{ visibility: open ? "visible" : "hidden" }}>{children}</span>
+      {!open && (
+        <span
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "12px",
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+          }}
+        >
+          （{label || "?"}）
+        </span>
+      )}
+    </mark>
   );
 };
 
@@ -21895,6 +21986,64 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
         ※ これらはすべて「<strong>コイルは流れている電流を守る（変化を妨げる）</strong>」セクション1 一言の現れ。理論の計算に加え、変圧器（機械）・CT二次開放（法規/保守）まで一本の性質でつながる。
       </p>
     </details>
+
+    <h2 id="h24-q3"><span className="h-num">9</span>過去問の文章で総ざらい（H24 問3・穴埋）</h2>
+    <p style={{ fontSize: "13px", color: "var(--ink-soft)", margin: "0 0 10px" }}>
+      平成24年度 第三種電気主任技術者試験 理論 問3（電気技術者試験センター公表問題）／難易度 ★★★★☆。
+      このページで扱った内容が<strong>そのまま5つの空欄</strong>になった回。出題された文章を繰り返し読むこと自体が復習になるので、
+      <strong>まず空欄を自分で埋めてから</strong>マーカーをタップして答え合わせをする。
+    </p>
+    <Callout variant="note" title="問題文（原文）— 黄色マーカーをタップすると解答が出る">
+      <p>次の文章は，コイルのインダクタンスに関する記述である。ここで，鉄心の磁気飽和は，無視するものとする。</p>
+      <p style={{ marginTop: 10 }}>均質で等断面の環状鉄心に被覆電線を巻いてコイルを作製した。このコイルの自己インダクタンスは，巻数の <Hl label="ア">2乗</Hl> に比例し，磁路の <Hl label="イ">長さ</Hl> に反比例する。</p>
+      <p style={{ marginTop: 10 }}>同じ鉄心にさらに被覆電線を巻いて別のコイルを作ると，これら二つのコイル間には相互インダクタンスが生じる。相互インダクタンスの大きさは，漏れ磁束が <Hl label="ウ">多く</Hl> なるほど小さくなる。それぞれのコイルの自己インダクタンスを L₁ [H]，L₂ [H] とすると，相互インダクタンスの最大値は <Hl label="エ">√(L₁L₂)</Hl> [H] である。</p>
+      <p style={{ marginTop: 10 }}>これら二つのコイルを <Hl label="オ">和動接続</Hl> とすると合成インダクタンスの値は，それぞれの自己インダクタンスの合計値よりも大きくなる。</p>
+    </Callout>
+
+    <details style={{ border: "1px solid var(--rule)", borderRadius: "6px", padding: "10px 14px", margin: "12px 0" }}>
+      <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: "13px" }}>選択肢と正答を見る（5つとも自分で埋めてから開く）</summary>
+      <table className="data-table" style={{ marginTop: 10 }}>
+        <thead>
+          <tr><th></th><th>(ア)</th><th>(イ)</th><th>(ウ)</th><th>(エ)</th><th>(オ)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>(1)</td><td>1乗</td><td>断面積</td><td>少なく</td><td>L₁+L₂</td><td>差動接続</td></tr>
+          <tr><td>(2)</td><td>2乗</td><td>長さ</td><td>多く</td><td>L₁+L₂</td><td>和動接続</td></tr>
+          <tr><td>(3)</td><td>1乗</td><td>長さ</td><td>多く</td><td>√(L₁L₂)</td><td>和動接続</td></tr>
+          <tr><td>(4)</td><td>2乗</td><td>断面積</td><td>少なく</td><td>L₁+L₂</td><td>差動接続</td></tr>
+          <tr style={{ background: "var(--ok-soft)" }}><td><strong>(5)</strong></td><td><strong>2乗</strong></td><td><strong>長さ</strong></td><td><strong>多く</strong></td><td><strong>√(L₁L₂)</strong></td><td><strong>和動接続</strong></td></tr>
+        </tbody>
+      </table>
+      <p style={{ fontSize: "13px", marginTop: 8 }}>正答: <strong>(5)</strong>。5つのうち1つでも外すと組合せ問題なので落ちる。下の表で外した空欄の節に戻る。</p>
+    </details>
+
+    <table className="data-table">
+      <thead>
+        <tr><th>空欄</th><th>なぜそうなるか</th><th>戻る先</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>(ア) 2乗</strong><br /><strong>(イ) 長さ</strong></td>
+          <td>環状鉄心コイルは <Eq tex="L = \mu N^2 S / l" inline />（S＝断面積、l＝磁路長）。N が2乗で効く理由（電流を一定としたとき、起磁力 NI で磁束 Φ が N 倍 → その Φ を N 回巻きが鎖交してさらに N 倍）は公式タブに2段分解で書いてある。<strong>(イ) の罠は「断面積」との取り違え</strong>で、断面積 S は<strong>比例</strong>の相手であって反比例ではない</td>
+          <td><a href="#" onClick={(e) => { e.preventDefault(); switchTab('formulas'); }} style={{ textDecoration: "underline", whiteSpace: "nowrap" }}>公式タブ 2節</a></td>
+        </tr>
+        <tr>
+          <td><strong>(ウ) 多く</strong></td>
+          <td>漏れ磁束が多い → 結合が悪い → 結合係数 k が小さい → <Eq tex="M = k\sqrt{L_1 L_2}" inline /> が小さい、の連鎖。「少なく」と入れると関係が逆向きになり成立しない</td>
+          <td><a href="#mutual-induction" style={{ textDecoration: "underline", whiteSpace: "nowrap" }}>解説 5節</a></td>
+        </tr>
+        <tr>
+          <td><strong>(エ) √(L₁L₂)</strong></td>
+          <td><Eq tex="M = k\sqrt{L_1 L_2}" inline />・<Eq tex="0 \leq k \leq 1" inline /> なので、「最大値」と聞かれたら <strong>k=1 を代入</strong>する。L₁+L₂ が答えにならないのは、<strong>M は k=1 でも √(L₁L₂) までしか届かない</strong>うえ、<strong>√(L₁L₂) は L₁・L₂ の大きい方を超えない</strong>（例: L₁=9・L₂=1 なら √(L₁L₂)=3 に対し L₁+L₂=10）ので、和である L₁+L₂ には決して到達しないから</td>
+          <td><a href="#mutual-induction" style={{ textDecoration: "underline", whiteSpace: "nowrap" }}>解説 5節</a></td>
+        </tr>
+        <tr>
+          <td><strong>(オ) 和動接続</strong></td>
+          <td>「合計値より大きくなる」＝ <Eq tex="L_0 = L_1 + L_2 + 2M" inline /> ＝ 磁束が強め合う ＝ 和動接続。差動接続は −2M で合計より小さくなる。同名端子（●）の向きで決まる</td>
+          <td><a href="#discriminate" style={{ textDecoration: "underline", whiteSpace: "nowrap" }}>解説 6節</a></td>
+        </tr>
+      </tbody>
+    </table>
   </>
 );
 
@@ -22237,7 +22386,7 @@ const InductanceLearnTab = ({ onNav, switchTab }) => (
         <tr><td>H30</td><td>問14</td><td>論説</td><td>SI 組立単位と基本単位に関する論説</td><td>✅ <a href="#" onClick={(e) => { e.preventDefault(); onNav('magnetic-circuit'); }} style={{ textDecoration: "underline" }}>磁気回路 単位記号表</a></td></tr>
         <tr><td>H29</td><td>問3</td><td>計算</td><td>合成インダクタンス</td><td>✅ 本ページ完結</td></tr>
         <tr><td>H28</td><td>問3</td><td>計算</td><td>ビオ・サバールの法則</td><td>❌ 捨て候補（14年1回・<a href="#" onClick={(e) => { e.preventDefault(); onNav('electromagnetic-force'); }} style={{ textDecoration: "underline" }}>電磁力</a>）</td></tr>
-        <tr><td>H24</td><td>問3</td><td>穴埋</td><td>コイルのインダクタンス</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>H24</td><td>問3</td><td>穴埋</td><td>コイルのインダクタンス</td><td>✅ 本ページ完結（解説タブ 9節に問題文＋空欄マーカー）</td></tr>
         <tr><td>H23</td><td>問4</td><td>計算</td><td>正方形のコイルと円形コイルの比較</td><td>❌ 捨て候補</td></tr>
         <tr><td>H21</td><td>問4</td><td>計算</td><td>扇形導線が作る磁界の大きさ</td><td>❌ 捨て候補</td></tr>
         <tr><td>H20</td><td>問4</td><td>計算</td><td>環状鉄心に巻くコイルの自己インダクタンスと巻数の関係</td><td>✅ 本ページ完結</td></tr>
