@@ -17580,7 +17580,8 @@ const DcCircuitExplainTab = ({ onNav, switchTab }) => (
       </figcaption>
     </figure>
     <Callout variant="warn" title="覚え方（因果で）">
-      <p>「圧力（Vth）を測る → <strong>負荷を外す</strong>（邪魔を取る）」<br/>「抵抗（Rth）を測る → <strong>電源を外す</strong>（邪魔を取る）」<br/>どちらも「<strong>測りたいもの以外の邪魔を取る</strong>」共通ロジック。</p>
+      <p>「圧力（Vth）を測る → <strong>負荷を外す</strong>（邪魔を取る）」<br/>「抵抗（Rth）を測る → <strong>電源の力を消す</strong>（電圧源は<strong>短絡</strong>・電流源は<strong>開放</strong>）」<br/>どちらも「<strong>測りたいもの以外の邪魔を取る</strong>」共通ロジック。</p>
+      <p style={{ margin: "6px 0 0", fontSize: 12.5 }}>⚠ 語呂を揃えて「電源も<strong>外す</strong>」と覚えないこと。<strong>電圧源を外す＝開放にすると枝が行き止まりになり、R<sub>th</sub> が求まらない</strong>（例題①なら <strong>40 Ω 同士・60 Ω 同士</strong>の並列が作れず、<Eq tex="(40\parallel40)+(60\parallel60)=50\,\Omega" inline /> に到達しない）。消すのは「電源の<strong>力</strong>」であって「電源<strong>そのもの</strong>」ではない ― <a href="#why-confuse" style={{ textDecoration: "underline" }}>2 節の誤モデル⑥「電圧源と電流源のゼロ化を逆にする」</a>がまさにこれ。</p>
     </Callout>
 
     <h3 id="vth-open">開放電圧 V<sub>th</sub> の求め方 ― 4手順に固定する</h3>
@@ -17588,10 +17589,10 @@ const DcCircuitExplainTab = ({ onNav, switchTab }) => (
       <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.9 }}>
         <li><strong>負荷を外す</strong>（求めたい R<sub>L</sub> を回路から取り去る）</li>
         <li><strong>基準点（0 V）を決める</strong>（下側の共通線に取るのが定石）</li>
-        <li><strong>V<sub>a</sub> と V<sub>b</sub> を別々に求める</strong>（片方ずつ・まず分圧を探す）</li>
+        <li><strong>V<sub>a</sub> と V<sub>b</sub> を<u>同じ基準から</u>求める</strong>（多くは片側ずつ分圧で足りる。開放後も a と b が内部で結びついたままなら、下の<strong>探索順序の表の③「節点法・KVL/KCL」で同時に</strong>求める）</li>
         <li><strong>最後に差を取る</strong>：<Eq tex="V_{th} = V_{ab} = V_a - V_b" inline /></li>
       </ol>
-      <p style={{ margin: "6px 0 0" }}><strong>端子間電圧をいきなり求めようとしない。</strong>各端子の電位を出してから最後に引く ― 初見の回路でも崩れない順番はこれだけ。</p>
+      <p style={{ margin: "6px 0 0" }}><strong>端子間電圧をいきなり求めようとしない。</strong>各端子の電位を出してから最後に引く ― <strong>この 4 手順の骨格は初見の回路でも崩れない</strong>（問題ごとに変わるのは③で使う道具だけ）。</p>
     </Callout>
 
     <h4>① 「開放」＝ a-b 間の電流が 0。回路全体が 0 ではない</h4>
@@ -17881,7 +17882,7 @@ const DcCircuitExplainTab = ({ onNav, switchTab }) => (
       <summary>公表解答は「重ね合わせ」で解いている（同じ答えに着く）</summary>
       <p>H25問6 の模範解答は重ね合わせを使う。60 V だけ生かすと 10 Ω に <Eq tex="I_1 = 0.5\,\mathrm{A}" inline />（a→b の向き）、80 V だけ生かすと <Eq tex="I_2 \approx 0.6667\,\mathrm{A}" inline />（b→a の向き）が流れ、向きに注意して</p>
       <p style={{ textAlign: "center", margin: "8px 0" }}><Eq tex="I = I_2 - I_1 = 0.6667 - 0.5 \approx 0.1667\,\mathrm{A}, \qquad P = RI^2 = 10 \times 0.1667^2 \approx 0.2779 \to 0.28\,\mathrm{W}" /></p>
-      <p><strong>テブナンの 1/6 A と完全に一致する</strong>。どちらでも解けるが、<strong>「10 Ω だけ知りたい」ならテブナンのほうが工程が短い</strong>（重ね合わせは電源の数だけ回路を解き直す）。逆に電源が 3 つ以上あるとテブナンの V<sub>th</sub> 側で結局重ね合わせが要る → <a href="#superposition" style={{ textDecoration: "underline" }}>セクション4</a>・<a href="#" onClick={(e) => { e.preventDefault(); switchTab('formulas'); }} style={{ textDecoration: "underline" }}>公式タブ 5節「キルヒホッフ vs テブナン」の使い分け表</a>。</p>
+      <p><strong>テブナンの 1/6 A と完全に一致する</strong>。どちらでも解けるが、<strong>「10 Ω だけ知りたい」ならテブナンのほうが工程が短い</strong>（重ね合わせは電源の数だけ回路を解き直す）。逆に<strong>電源が増えると V<sub>th</sub> を出す工程そのものが重くなる</strong>ので、そこは重ね合わせで整理してもよいし、<strong>節点法・KVL/KCL で全電源を同時に扱ってもよい</strong>（＝探索順序の③④。<strong>重ね合わせが必須になるわけではない</strong>）→ <a href="#superposition" style={{ textDecoration: "underline" }}>セクション4</a>・<a href="#" onClick={(e) => { e.preventDefault(); switchTab('formulas'); }} style={{ textDecoration: "underline" }}>公式タブ 5節「キルヒホッフ vs テブナン」の使い分け表</a>。</p>
     </details>
     <Callout variant="tip" title="🔑 開放電圧 Vth の4手順（試験直前はこれだけ）">
       <p style={{ margin: "0 0 6px" }}><strong>① 負荷を外す → ② 0 V の基準点を決める → ③ V<sub>a</sub>・V<sub>b</sub> をそれぞれ求める → ④ <Eq tex="V_{th}=V_a-V_b" inline /></strong></p>
@@ -17892,7 +17893,7 @@ const DcCircuitExplainTab = ({ onNav, switchTab }) => (
     <Callout variant="info" title="出題実績：令和2年 問7（電験王の難易度 ★★★★☆・公表解答 (1) 0.10 A）">
       <p style={{ margin: 0 }}>図のように、直流電源にスイッチ S と抵抗 5 個を接続したブリッジ回路がある。<strong>S を開いたとき、S の両端間の電圧は 1 V であった</strong>。S を閉じたときに 8 Ω の抵抗に流れる電流 I の値 [A] として最も近いものを選べ。<br/>(1) 0.10　(2) 0.75　(3) 1.0　(4) 1.4　(5) 2.0</p>
     </Callout>
-    <p><strong>まず気づくべき一文が問題文に埋め込まれている。</strong>「S を開いたときの S の両端間の電圧」＝<strong>負荷（S と 8 Ω）を外したときの端子間電圧</strong>＝ そのまま <Eq tex="|V_{th}| = 1\,\mathrm{V}" inline />。4手順の①〜④が<strong>済んだ状態で与えられている</strong>ので、残りは R<sub>th</sub> だけ。</p>
+    <p><strong>まず気づくべき一文が問題文に埋め込まれている。</strong>「S を開いたときの S の両端間の電圧」＝<strong>負荷（S と 8 Ω）を外したときの端子間電圧</strong>＝ そのまま <Eq tex="|V_{th}| = 1\,\mathrm{V}" inline />。つまり問題文が<strong>4手順の答えを「大きさだけ」先に渡してくれている</strong>。電流の<strong>大きさ</strong>を答えるだけなら、残りは R<sub>th</sub> の計算だけでよい。<strong>向きまで要るなら</strong>、①〜④を自分でたどって（基準点を決めて V<sub>a</sub>・V<sub>b</sub> を求めて）符号を確定させる必要がある。</p>
     <p style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>※ この読み替えが成り立つ理由：<strong>S を開くと同じ枝の 8 Ω にも電流が流れない</strong>ので、8 Ω の電圧降下が 0。だから S の両端に現れる電圧が、そのまま端子 a-b 間の開放電圧になる。<strong>S と 8 Ω が直列だから言えること</strong>で、S に並列な素子がある回路ではこの読み替えは効かない。</p>
     <p style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>本試験の原図は電源が左・抵抗が縦に4段という<strong>横倒しの形</strong>で描かれている。<strong>見慣れたひし形に描き直す</strong>のが最初の一手（下図D）。ブリッジは形を変えて出題されるので、書き換えられれば得点源になる。</p>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12, margin: "12px 0" }}>
@@ -17984,7 +17985,7 @@ const DcCircuitExplainTab = ({ onNav, switchTab }) => (
     <SolveFlow
       type="R02問7"
       steps={[
-        "STEP1 負荷（S と 8 Ω）を外す＝S を開く。問題文の「S の両端間の電圧 1 V」がそのまま Vth",
+        "STEP1 負荷（S と 8 Ω）を外す＝S を開く。問題文の「S の両端間の電圧 1 V」がそのまま |Vth|（符号は STEP4 で確定する）",
         "STEP2 電源の右側を 0 V に取る（自分で決める。接地されているわけではない）",
         "STEP3 分圧で検算: Va = 5 × 4/(1+4) = 4 V ／ Vb = 5 × 3/(2+3) = 3 V",
         "STEP4 差を取る: Vth = Va − Vb = 4 − 3 = +1 V → 問題文の 1 V と一致し、向きは a が高電位（ここまでが4手順）",
