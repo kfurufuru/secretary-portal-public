@@ -133,7 +133,8 @@
 | クーロンの法則 | $F = kQ_1Q_2/r^2,\ k = 1/(4\pi\varepsilon_0)$ |
 | コンデンサエネルギー | $W = CV^2/2 = Q^2/(2C)$ |
 | 磁気抵抗 | $R_m = l/(\mu_0\mu_r A)$ （空隙は $\mu_r = 1$ ） |
-| 誘導起電力 | $e = BLv\sin\theta$ （速度と磁界の角） |
+| 電磁力 | $F = BIL\sin\theta$ [N]（θ = 電流と磁界の角・原因は I） |
+| 誘導起電力 | $e = BLv\sin\theta$ [V]（θ = 速度と磁界の角・原因は v） |
 | インピーダンス合成 | $Z = \sqrt{R^2 + (X_L - X_C)^2}$ （ベクトル） |
 | 共振条件 | $X_L = X_C \Rightarrow f_0 = 1/(2\pi\sqrt{LC})$ |
 | 三相電力 | $P = \sqrt{3}V_LI_L\cos\phi$ |
