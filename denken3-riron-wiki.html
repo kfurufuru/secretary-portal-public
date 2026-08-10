@@ -17575,6 +17575,302 @@ const DcCircuitExplainTab = ({ onNav, switchTab }) => (
       <p>「圧力（Vth）を測る → <strong>負荷を外す</strong>（邪魔を取る）」<br/>「抵抗（Rth）を測る → <strong>電源を外す</strong>（邪魔を取る）」<br/>どちらも「<strong>測りたいもの以外の邪魔を取る</strong>」共通ロジック。</p>
     </Callout>
 
+    <h3 id="vth-open">開放電圧 V<sub>th</sub> の求め方 ― 4手順に固定する</h3>
+    <Callout variant="tip" title="🔑 まず覚える結論（この順番だけ）">
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.9 }}>
+        <li><strong>負荷を外す</strong>（求めたい R<sub>L</sub> を回路から取り去る）</li>
+        <li><strong>基準点（0 V）を決める</strong>（下側の共通線に取るのが定石）</li>
+        <li><strong>V<sub>a</sub> と V<sub>b</sub> を別々に求める</strong>（片方ずつ・まず分圧を探す）</li>
+        <li><strong>最後に差を取る</strong>：<Eq tex="V_{th} = V_{ab} = V_a - V_b" inline /></li>
+      </ol>
+      <p style={{ margin: "6px 0 0" }}><strong>端子間電圧をいきなり求めようとしない。</strong>各端子の電位を出してから最後に引く ― 初見の回路でも崩れない順番はこれだけ。</p>
+    </Callout>
+
+    <h4>① 「開放」＝ a-b 間の電流が 0。回路全体が 0 ではない</h4>
+    <p>負荷を外すと <strong>a-b 間を渡る電流だけ</strong>がゼロになる。電源と抵抗で閉回路が残っていれば、<strong>その閉回路には電流が流れ続ける</strong>。V<sub>th</sub> が電源電圧そのものではなく分圧値になるのは、まさに内部で電流が流れているから。</p>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12, margin: "12px 0" }}>
+      <figure style={{ margin: 0, background: "var(--bg-elev)", borderRadius: "8px", padding: "10px 8px 8px" }}>
+        <svg viewBox="0 0 360 258" role="img" aria-label="負荷10オームを接続した元の回路。左は60ボルト電源と40オーム2本の直列、右は80ボルト電源と60オーム2本の直列、下側は共通の0ボルト線。中央のa-b間に10オームの負荷がつながっている" style={{ display: "block", width: "100%", height: "auto", maxWidth: "360px", margin: "0 auto" }}>
+          <text x="180" y="16" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">図A: 負荷 10 Ω あり（元の回路）</text>
+          {/* 左：60 V 電源 */}
+          <line x1="40" y1="56" x2="112" y2="56" stroke="var(--ink)" strokeWidth="1.8" />
+          <line x1="40" y1="56" x2="40" y2="126" stroke="var(--ink)" strokeWidth="1.8" />
+          <line x1="28" y1="126" x2="52" y2="126" stroke="var(--warn)" strokeWidth="2.4" />
+          <line x1="33" y1="135" x2="47" y2="135" stroke="var(--warn)" strokeWidth="2.4" />
+          <text x="20" y="124" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--warn)">＋</text>
+          <text x="56" y="152" fontSize="11" fill="var(--ink-soft)">60 V</text>
+          <line x1="40" y1="135" x2="40" y2="216" stroke="var(--ink)" strokeWidth="1.8" />
+          {/* 左：40 Ω × 2 と端子 a */}
+          <line x1="112" y1="56" x2="112" y2="74" stroke="var(--ink)" strokeWidth="1.8" />
+          <rect x="104" y="74" width="16" height="32" fill="var(--bg)" stroke="var(--ok)" strokeWidth="1.6" />
+          <text x="126" y="94" fontSize="11" fill="var(--ok)">40 Ω</text>
+          <line x1="112" y1="106" x2="112" y2="146" stroke="var(--ink)" strokeWidth="1.8" />
+          <circle cx="112" cy="126" r="3.8" fill="var(--ink)" />
+          <text x="116" y="119" fontSize="12" fontWeight="700" fill="var(--ink)">a</text>
+          <rect x="104" y="146" width="16" height="32" fill="var(--bg)" stroke="var(--ok)" strokeWidth="1.6" />
+          <text x="126" y="166" fontSize="11" fill="var(--ok)">40 Ω</text>
+          <line x1="112" y1="178" x2="112" y2="216" stroke="var(--ink)" strokeWidth="1.8" />
+          {/* 中央：負荷 10 Ω */}
+          <line x1="112" y1="126" x2="160" y2="126" stroke="var(--ink)" strokeWidth="1.8" />
+          <rect x="160" y="118" width="40" height="16" fill="var(--danger-soft)" stroke="var(--danger)" strokeWidth="1.6" />
+          <line x1="200" y1="126" x2="248" y2="126" stroke="var(--ink)" strokeWidth="1.8" />
+          <text x="180" y="111" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--danger)">10 Ω</text>
+          <text x="180" y="150" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">負荷（これを外す）</text>
+          {/* 右：60 Ω × 2 と端子 b */}
+          <line x1="248" y1="56" x2="248" y2="74" stroke="var(--ink)" strokeWidth="1.8" />
+          <rect x="240" y="74" width="16" height="32" fill="var(--bg)" stroke="var(--ok)" strokeWidth="1.6" />
+          <text x="234" y="94" textAnchor="end" fontSize="11" fill="var(--ok)">60 Ω</text>
+          <line x1="248" y1="106" x2="248" y2="146" stroke="var(--ink)" strokeWidth="1.8" />
+          <circle cx="248" cy="126" r="3.8" fill="var(--ink)" />
+          <text x="244" y="119" textAnchor="end" fontSize="12" fontWeight="700" fill="var(--ink)">b</text>
+          <rect x="240" y="146" width="16" height="32" fill="var(--bg)" stroke="var(--ok)" strokeWidth="1.6" />
+          <text x="234" y="166" textAnchor="end" fontSize="11" fill="var(--ok)">60 Ω</text>
+          <line x1="248" y1="178" x2="248" y2="216" stroke="var(--ink)" strokeWidth="1.8" />
+          {/* 右：80 V 電源 */}
+          <line x1="320" y1="56" x2="248" y2="56" stroke="var(--ink)" strokeWidth="1.8" />
+          <line x1="320" y1="56" x2="320" y2="126" stroke="var(--ink)" strokeWidth="1.8" />
+          <line x1="308" y1="126" x2="332" y2="126" stroke="var(--warn)" strokeWidth="2.4" />
+          <line x1="313" y1="135" x2="327" y2="135" stroke="var(--warn)" strokeWidth="2.4" />
+          <text x="342" y="124" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--warn)">＋</text>
+          <text x="304" y="152" textAnchor="end" fontSize="11" fill="var(--ink-soft)">80 V</text>
+          <line x1="320" y1="135" x2="320" y2="216" stroke="var(--ink)" strokeWidth="1.8" />
+          {/* 共通 0 V 線 */}
+          <line x1="40" y1="216" x2="320" y2="216" stroke="var(--ink)" strokeWidth="1.8" />
+          <line x1="180" y1="216" x2="180" y2="228" stroke="var(--ink)" strokeWidth="1.8" />
+          <line x1="168" y1="228" x2="192" y2="228" stroke="var(--ink)" strokeWidth="2" />
+          <line x1="172" y1="233" x2="188" y2="233" stroke="var(--ink)" strokeWidth="2" />
+          <line x1="176" y1="238" x2="184" y2="238" stroke="var(--ink)" strokeWidth="2" />
+          <text x="180" y="253" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">0 V（基準点）</text>
+        </svg>
+        <figcaption style={{ fontSize: "11.5px", color: "var(--ink-mute)", textAlign: "left", marginTop: "6px", lineHeight: 1.6 }}>
+          図A：10 Ω を介して a と b がつながっているので<strong>左右が影響し合う</strong>。この状態の実際の電位は <strong>V<sub>a</sub> = 100/3 ≒ 33.3 V・V<sub>b</sub> = 35 V</strong>（節点法で解いた値）で、分圧の 30 V・40 V とは<strong>一致しない</strong>。
+        </figcaption>
+      </figure>
+      <figure style={{ margin: 0, background: "var(--bg-elev)", borderRadius: "8px", padding: "10px 8px 8px" }}>
+        <svg viewBox="0 0 360 258" role="img" aria-label="10オームの負荷を外して開放した回路。a-b間は切り離されて電流0だが、左の閉回路には0.75アンペア、右の閉回路には約0.67アンペアが流れており、左右が独立した分圧回路になってVa=30ボルト、Vb=40ボルトとなる" style={{ display: "block", width: "100%", height: "auto", maxWidth: "360px", margin: "0 auto" }}>
+          <defs>
+            <marker id="vthopen-cur" markerWidth="5" markerHeight="4" refX="4.06" refY="2" orient="auto"><path d="M0,0 L5,2 L0,4 z" fill="var(--accent-ink)" /></marker>
+          </defs>
+          <text x="180" y="16" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">図B: 負荷を外した（開放）</text>
+          {/* 閉回路に流れる電流 */}
+          <line x1="58" y1="42" x2="94" y2="42" stroke="var(--accent-ink)" strokeWidth="2" markerEnd="url(#vthopen-cur)" />
+          <text x="76" y="32" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">I₁ = 0.75 A</text>
+          <line x1="302" y1="42" x2="266" y2="42" stroke="var(--accent-ink)" strokeWidth="2" markerEnd="url(#vthopen-cur)" />
+          <text x="284" y="32" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">I₂ ≒ 0.67 A</text>
+          {/* 左：60 V 電源 */}
+          <line x1="40" y1="56" x2="112" y2="56" stroke="var(--ink)" strokeWidth="1.8" />
+          <line x1="40" y1="56" x2="40" y2="126" stroke="var(--ink)" strokeWidth="1.8" />
+          <line x1="28" y1="126" x2="52" y2="126" stroke="var(--warn)" strokeWidth="2.4" />
+          <line x1="33" y1="135" x2="47" y2="135" stroke="var(--warn)" strokeWidth="2.4" />
+          <text x="20" y="124" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--warn)">＋</text>
+          <text x="56" y="152" fontSize="11" fill="var(--ink-soft)">60 V</text>
+          <line x1="40" y1="135" x2="40" y2="216" stroke="var(--ink)" strokeWidth="1.8" />
+          {/* 左：40 Ω × 2 と端子 a */}
+          <line x1="112" y1="56" x2="112" y2="74" stroke="var(--ink)" strokeWidth="1.8" />
+          <rect x="104" y="74" width="16" height="32" fill="var(--bg)" stroke="var(--ok)" strokeWidth="1.6" />
+          <text x="126" y="94" fontSize="11" fill="var(--ok)">40 Ω</text>
+          <line x1="112" y1="106" x2="112" y2="146" stroke="var(--ink)" strokeWidth="1.8" />
+          <circle cx="112" cy="126" r="4.2" fill="var(--ok)" />
+          <text x="116" y="119" fontSize="12" fontWeight="700" fill="var(--ok)">a</text>
+          <rect x="104" y="146" width="16" height="32" fill="var(--bg)" stroke="var(--ok)" strokeWidth="1.6" />
+          <text x="126" y="166" fontSize="11" fill="var(--ok)">40 Ω</text>
+          <line x1="112" y1="178" x2="112" y2="216" stroke="var(--ink)" strokeWidth="1.8" />
+          <text x="126" y="197" fontSize="11" fontWeight="700" fill="var(--ok)">V<tspan dy="0.2em" fontSize="0.72em">a</tspan><tspan dy="-0.2em"></tspan> = 30 V</text>
+          {/* 中央：開放（切り離し） */}
+          <line x1="112" y1="126" x2="152" y2="126" stroke="var(--ink)" strokeWidth="1.8" />
+          <circle cx="152" cy="126" r="4" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.8" />
+          <circle cx="208" cy="126" r="4" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.8" />
+          <line x1="208" y1="126" x2="248" y2="126" stroke="var(--ink)" strokeWidth="1.8" />
+          <text x="180" y="111" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--danger)">開放</text>
+          <text x="180" y="150" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--danger)">a-b 間だけ I = 0</text>
+          {/* 右：60 Ω × 2 と端子 b */}
+          <line x1="248" y1="56" x2="248" y2="74" stroke="var(--ink)" strokeWidth="1.8" />
+          <rect x="240" y="74" width="16" height="32" fill="var(--bg)" stroke="var(--ok)" strokeWidth="1.6" />
+          <text x="234" y="94" textAnchor="end" fontSize="11" fill="var(--ok)">60 Ω</text>
+          <line x1="248" y1="106" x2="248" y2="146" stroke="var(--ink)" strokeWidth="1.8" />
+          <circle cx="248" cy="126" r="4.2" fill="var(--accent)" />
+          <text x="244" y="119" textAnchor="end" fontSize="12" fontWeight="700" fill="var(--accent-ink)">b</text>
+          <rect x="240" y="146" width="16" height="32" fill="var(--bg)" stroke="var(--ok)" strokeWidth="1.6" />
+          <text x="234" y="166" textAnchor="end" fontSize="11" fill="var(--ok)">60 Ω</text>
+          <line x1="248" y1="178" x2="248" y2="216" stroke="var(--ink)" strokeWidth="1.8" />
+          <text x="234" y="197" textAnchor="end" fontSize="11" fontWeight="700" fill="var(--accent-ink)">V<tspan dy="0.2em" fontSize="0.72em">b</tspan><tspan dy="-0.2em"></tspan> = 40 V</text>
+          {/* 右：80 V 電源 */}
+          <line x1="320" y1="56" x2="248" y2="56" stroke="var(--ink)" strokeWidth="1.8" />
+          <line x1="320" y1="56" x2="320" y2="126" stroke="var(--ink)" strokeWidth="1.8" />
+          <line x1="308" y1="126" x2="332" y2="126" stroke="var(--warn)" strokeWidth="2.4" />
+          <line x1="313" y1="135" x2="327" y2="135" stroke="var(--warn)" strokeWidth="2.4" />
+          <text x="342" y="124" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--warn)">＋</text>
+          <text x="304" y="152" textAnchor="end" fontSize="11" fill="var(--ink-soft)">80 V</text>
+          <line x1="320" y1="135" x2="320" y2="216" stroke="var(--ink)" strokeWidth="1.8" />
+          {/* 共通 0 V 線 */}
+          <line x1="40" y1="216" x2="320" y2="216" stroke="var(--ink)" strokeWidth="1.8" />
+          <line x1="180" y1="216" x2="180" y2="228" stroke="var(--ink)" strokeWidth="1.8" />
+          <line x1="168" y1="228" x2="192" y2="228" stroke="var(--ink)" strokeWidth="2" />
+          <line x1="172" y1="233" x2="188" y2="233" stroke="var(--ink)" strokeWidth="2" />
+          <line x1="176" y1="238" x2="184" y2="238" stroke="var(--ink)" strokeWidth="2" />
+          <text x="180" y="253" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">0 V（基準点）</text>
+        </svg>
+        <figcaption style={{ fontSize: "11.5px", color: "var(--ink-mute)", textAlign: "left", marginTop: "6px", lineHeight: 1.6 }}>
+          図B：a-b 間は電流ゼロ。しかし<strong>左右の閉回路にはそれぞれ電流が流れている</strong>（I₁ = 60/80 = 0.75 A・I₂ = 80/120 ≒ 0.67 A）。左右が切り離されたので、<strong>それぞれ独立した分圧回路</strong>として計算できる。
+        </figcaption>
+      </figure>
+    </div>
+    <Callout variant="warn" title="誤り①: 「開放したから回路全体の電流が 0」">
+      <p>ゼロになるのは<strong>外した端子を渡る電流だけ</strong>。図B のとおり左右の閉回路には 0.75 A・0.67 A が流れており、その電流が抵抗で電圧降下を作るからこそ V<sub>a</sub>・V<sub>b</sub> に差がつく。「全体ゼロ」と思うと V<sub>th</sub> を電源電圧そのもの（60 V や 80 V）と答えてしまう。</p>
+    </Callout>
+
+    <h4>② 基準点（0 V）を決める ― 電圧は 2 点間の「電位の差」</h4>
+    <p>電位は標高と同じで、<strong>海面（0 V）を決めて初めて数値になる</strong>。下側の共通線を 0 V に取れば、V<sub>a</sub> は「a 点の標高」、V<sub>b</sub> は「b 点の標高」。求めたい V<sub>ab</sub> はその<strong>標高差</strong>にすぎない。</p>
+    <figure style={{ margin: "12px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "10px 8px 8px" }}>
+      <svg viewBox="0 0 360 250" role="img" aria-label="電位を標高に見立てた図。0ボルトを海面とし、a点は30ボルト、b点は40ボルトの高さにある。bのほうが10ボルト高いので、Vab = 30 - 40 = マイナス10ボルト、Vba = プラス10ボルトとなる" style={{ display: "block", width: "100%", height: "auto", maxWidth: "360px", margin: "0 auto" }}>
+        <defs>
+          <marker id="vthpot-diff" markerWidth="5" markerHeight="4" refX="4.06" refY="2" orient="auto"><path d="M0,0 L5,2 L0,4 z" fill="var(--danger)" /></marker>
+        </defs>
+        <text x="180" y="16" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">図C: 電位の標高（0 V を海面に取る）</text>
+        <text x="56" y="32" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">電位</text>
+        <line x1="56" y1="40" x2="56" y2="190" stroke="var(--ink-mute)" strokeWidth="1.4" />
+        {/* 40 V（b） */}
+        <line x1="56" y1="50" x2="320" y2="50" stroke="var(--accent)" strokeWidth="2" />
+        <text x="48" y="54" textAnchor="end" fontSize="11" fontWeight="700" fill="var(--accent-ink)">40 V</text>
+        <circle cx="272" cy="50" r="4.5" fill="var(--accent)" />
+        <text x="272" y="39" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">b</text>
+        <line x1="272" y1="50" x2="272" y2="190" stroke="var(--accent)" strokeWidth="1.2" strokeDasharray="4 4" />
+        <text x="278" y="140" fontSize="11" fontWeight="700" fill="var(--accent-ink)">V<tspan dy="0.2em" fontSize="0.72em">b</tspan><tspan dy="-0.2em"></tspan> = 40 V</text>
+        {/* 30 V（a） */}
+        <line x1="56" y1="85" x2="230" y2="85" stroke="var(--ok)" strokeWidth="2" />
+        <text x="48" y="89" textAnchor="end" fontSize="11" fontWeight="700" fill="var(--ok)">30 V</text>
+        <circle cx="170" cy="85" r="4.5" fill="var(--ok)" />
+        <text x="170" y="74" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ok)">a</text>
+        <line x1="170" y1="85" x2="170" y2="190" stroke="var(--ok)" strokeWidth="1.2" strokeDasharray="4 4" />
+        <text x="164" y="140" textAnchor="end" fontSize="11" fontWeight="700" fill="var(--ok)">V<tspan dy="0.2em" fontSize="0.72em">a</tspan><tspan dy="-0.2em"></tspan> = 30 V</text>
+        {/* 差（10 V） */}
+        <line x1="225" y1="85" x2="225" y2="54" stroke="var(--danger)" strokeWidth="2" markerEnd="url(#vthpot-diff)" />
+        <line x1="225" y1="50" x2="225" y2="81" stroke="var(--danger)" strokeWidth="2" markerEnd="url(#vthpot-diff)" />
+        <text x="231" y="72" fontSize="11" fontWeight="700" fill="var(--danger)">10 V</text>
+        {/* 0 V */}
+        <line x1="56" y1="190" x2="320" y2="190" stroke="var(--ink-mute)" strokeWidth="1.6" />
+        <text x="48" y="194" textAnchor="end" fontSize="11" fill="var(--ink-soft)">0 V</text>
+        <text x="188" y="207" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">基準点（下側の共通線）</text>
+        <text x="180" y="228" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">V<tspan dy="0.2em" fontSize="0.72em">ab</tspan><tspan dy="-0.2em"></tspan> = 30 − 40 = −10 V</text>
+        <text x="180" y="245" textAnchor="middle" fontSize="11" fill="var(--ink-soft)">V<tspan dy="0.2em" fontSize="0.72em">ba</tspan><tspan dy="-0.2em"></tspan> = 40 − 30 = +10 V</text>
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "left", marginTop: "6px", lineHeight: 1.6 }}>
+        図C：<strong>b のほうが 10 V 高い</strong>。同じ状態でも <strong>V<sub>ab</sub> = −10 V</strong>・<strong>V<sub>ba</sub> = +10 V</strong> と符号が逆になる ― <strong>電圧には向き（極性）がある</strong>ので、どちらを正に取ったかを答案に書いてから計算する。大きさだけを問われたら |V<sub>th</sub>| = 10 V。
+      </figcaption>
+    </figure>
+    <p style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>※ 二重添字の規則（<Eq tex="V_{ab} = V_a - V_b" inline />＝前 引く 後ろ）と、負の答えを「やり直さない」作法はセクション6にまとめてある。</p>
+
+    <h4>③ 開放したら、まず「分圧」を探す</h4>
+    <p>開放後の V<sub>a</sub>・V<sub>b</sub> は、次の順に当てはめれば大半が①か②で片づく。<strong>①から順に試すのが最短</strong>。</p>
+    <table className="data-table">
+      <thead>
+        <tr><th>順</th><th>使う道具</th><th>使える条件（見分け方）</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>①</strong></td><td><strong>分圧</strong> <Eq tex="V_a = E\,\dfrac{R_2}{R_1+R_2}" inline /></td><td>端子から基準点まで<strong>枝分かれなし</strong>でたどれる（＝2本の抵抗に同じ電流が流れる）</td></tr>
+        <tr><td><strong>②</strong></td><td>オームの法則 <Eq tex="V = IR" inline /></td><td>その枝の電流が先に確定する（電流源がある・単一ループ）</td></tr>
+        <tr><td><strong>③</strong></td><td>節点法・KVL/KCL</td><td>開放してもなお枝が 3 本以上集まる（ブリッジ状）</td></tr>
+        <tr><td><strong>④</strong></td><td>重ね合わせ</td><td>電源を 1 つずつにすると①の分圧に落ちる</td></tr>
+      </tbody>
+    </table>
+    <p style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>①で見ているのは「端子につながる抵抗」ではなく、<strong>基準点から端子までの電位</strong>。だから分子に置くのは<strong>基準点側の抵抗</strong>（a と 0 V の間にある抵抗）。本節の例は上下とも同じ抵抗値なので取り違えても同じ数字が出てしまうが、たとえば上 40 Ω・下 20 Ω なら正解は <Eq tex="60 \times \frac{20}{60} = 20\,\mathrm{V}" inline />・取り違えると <Eq tex="60 \times \frac{40}{60} = 40\,\mathrm{V}" inline /> で<strong>倍違う</strong> → <a href="#voltage-divider" style={{ textDecoration: "underline" }}>セクション5 分圧の法則</a>。</p>
+
+    <h3 id="vth-example">例題：左右に電源がある回路の V<sub>th</sub></h3>
+    <p>図A の回路（左＝60 V・40 Ω・40 Ω／右＝80 V・60 Ω・60 Ω／a-b 間に負荷 10 Ω）で、<strong>10 Ω に流れる電流と消費電力</strong>を求める。</p>
+    <SolveFlow
+      type="開放電圧 Vth"
+      steps={[
+        "STEP1 負荷 10 Ω を外す（図B）→ a-b 間の電流が 0 になり、左右が独立する",
+        "STEP2 下側の共通線を 0 V に取る",
+        "STEP3 左を分圧: Va = 60 × 40/(40+40) = 30 V ／ 右を分圧: Vb = 80 × 60/(60+60) = 40 V",
+        "STEP4 差を取る: Vth = Vab = Va − Vb = 30 − 40 = −10 V（大きさは 10 V・b のほうが高い）",
+      ]}
+    />
+    <p style={{ textAlign: "center", margin: "10px 0" }}>
+      <Eq tex="V_a = 60 \times \frac{40}{40+40} = 30\,\mathrm{V}, \qquad V_b = 80 \times \frac{60}{60+60} = 40\,\mathrm{V}" />
+    </p>
+    <p style={{ textAlign: "center", margin: "10px 0" }}>
+      <Eq tex="V_{th} = V_{ab} = V_a - V_b = 30 - 40 = -10\,\mathrm{V}" />
+    </p>
+    <Callout variant="info" title="符号の整理（ここを言い切ってから次へ進む）">
+      <table className="data-table">
+        <thead>
+          <tr><th>問われ方</th><th>答え</th><th>意味</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>a→b を正としたときの <Eq tex="V_{th}" inline /></td><td><strong>−10 V</strong></td><td>a のほうが 10 V <strong>低い</strong></td></tr>
+          <tr><td>b→a を正としたとき（<Eq tex="V_{ba}" inline />）</td><td><strong>+10 V</strong></td><td>同じ状態を逆向きに読んだだけ</td></tr>
+          <tr><td>電力計算など<strong>大きさだけ</strong>必要なとき</td><td><Eq tex="|V_{th}| = 10\,\mathrm{V}" inline /></td><td>符号は電流の向きに引き継ぐ</td></tr>
+        </tbody>
+      </table>
+    </Callout>
+
+    <h4>なぜ負荷を外すと「左右を別々に分圧」できるのか</h4>
+    <p><strong>分圧の法則が成り立つ条件は「直列の 2 本に同じ電流が流れること」</strong>。この一点だけで説明がつく。</p>
+    <ul style={{ margin: "6px 0", paddingLeft: 20, lineHeight: 1.9 }}>
+      <li><strong>負荷あり（図A）</strong>：節点 a で電流が 10 Ω 側へ分かれるので、上の 40 Ω と下の 40 Ω の電流が<strong>一致しない</strong> → 分圧則の前提が崩れる。実測すると上 <Eq tex="\tfrac{2}{3} \approx 0.667" inline /> A・下 <Eq tex="\tfrac{5}{6} \approx 0.833" inline /> A で、その差 <Eq tex="\tfrac{5}{6}-\tfrac{2}{3}=\tfrac{1}{6} \approx 0.167" inline /> A が 10 Ω 側から節点 a へ流れ込んでいる。</li>
+      <li><strong>開放（図B）</strong>：a から外へ出る道が消えるので、上下の 40 Ω に<strong>必ず同じ電流</strong>が流れる → 単純な直列回路になり、分圧則がそのまま使える。右側も同じ。</li>
+    </ul>
+    <p style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>※ 負荷を外すと<strong>各枝の電流値そのものも変わる</strong>（左枝は 上 0.667 A・下 0.833 A → 開放後は上下とも 0.75 A に揃う）。図A と図B で数字が違うのは誤植ではなく、これが「負荷を外した」効果そのもの。</p>
+    <Callout variant="tip" title="🔑 1行で覚える">
+      <p style={{ margin: "0 0 6px" }}><strong>開放は「左右をつなぐ唯一の枝を断つ操作」。断てたから、片側ずつ分圧で解ける。</strong></p>
+      <p style={{ margin: 0, fontSize: 12.5 }}>⚠ 一般には「負荷を外す＝左右が独立する」とは限らない。左右を結ぶ枝が<strong>負荷だけ</strong>の回路（本例）でこう言えるだけで、他にも経路がある回路では開放後もつながったまま。そのときは探索順序の<strong>③（節点法・KVL/KCL）</strong>に降りる。</p>
+    </Callout>
+
+    <h3 id="vth-traps">開放電圧のよくある誤答 3 つ</h3>
+    <table className="data-table">
+      <thead>
+        <tr><th>誤答</th><th>なぜ違うか</th><th>正しい処理</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>① 開放したから回路全体の電流が 0</strong></td>
+          <td>ゼロなのは a-b 間だけ。閉回路が残っていればそこには電流が流れる（図B の 0.75 A・0.67 A）</td>
+          <td>「外した端子を渡る電流だけ 0」と読み替える</td>
+        </tr>
+        <tr>
+          <td><strong>② V<sub>a</sub>=30・V<sub>b</sub>=40 だから 30+40 = 70 V</strong></td>
+          <td>どちらも<strong>同じ 0 V を基準にした電位</strong>。電圧を足すのは、同じ向きの<strong>起電力を直列につないだとき</strong>（1.5 V の電池 2 個直列で 3 V）や、<strong>重ね合わせで各電源の寄与を合成するとき</strong>。いずれも「同一基準から測った 2 点の電位」を足す話ではない</td>
+          <td><Eq tex="V_{ab}=V_a-V_b=30-40=-10\,\mathrm{V}" inline /> と<strong>引く</strong></td>
+        </tr>
+        <tr>
+          <td><strong>③ 10 Ω をつないだまま左右を分圧</strong></td>
+          <td>10 Ω を通じて左右が干渉し、直列 2 本の電流が揃わない。実際の値は V<sub>a</sub> ≒ 33.3 V・V<sub>b</sub> = 35 V で 30/40 ではない</td>
+          <td>V<sub>th</sub> を求めるときは<strong>対象の負荷を最初に外す</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 id="vth-flow">開放電圧から負荷電力まで（テブナン全体フロー）</h3>
+    <p>開放電圧は単独の知識ではなく、<strong>負荷電力を出すための第1ステップ</strong>。同じ例題を最後まで通す。</p>
+    <SolveFlow
+      type="テブナン全体"
+      steps={[
+        "STEP1 負荷 RL を外す",
+        "STEP2 開放電圧 Vth を求める（本節の4手順）→ |Vth| = 10 V",
+        "STEP3 独立電源をゼロにして Rth（電圧源→短絡・電流源→開放）→ Rth = (40∥40) + (60∥60) = 20 + 30 = 50 Ω",
+        "STEP4 Vth と Rth の等価回路に RL を戻す → I = 10/(50+10) = 1/6 A ≒ 0.167 A（b→a の向き）",
+        "STEP5 P = I²RL = (1/6)² × 10 ≒ 0.28 W",
+      ]}
+    />
+    <p style={{ textAlign: "center", margin: "10px 0" }}>
+      <Eq tex="R_{th} = \frac{40 \times 40}{40+40} + \frac{60 \times 60}{60+60} = 20 + 30 = 50\,\Omega" />
+    </p>
+    <p style={{ textAlign: "center", margin: "10px 0" }}>
+      <Eq tex="I = \frac{|V_{th}|}{R_{th}+R_L} = \frac{10}{50+10} = \frac{1}{6} \approx 0.167\,\mathrm{A}, \qquad P = I^2 R_L = \left(\tfrac{1}{6}\right)^2 \times 10 \approx 0.28\,\mathrm{W}" />
+    </p>
+    <p style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>R<sub>th</sub> が<strong>直列</strong>になる理由：電源を短絡すると各枝の上側配線が 0 V 線と同電位になり、上下の抵抗が並列になる（a 側 40 Ω∥40 Ω = 20 Ω・b 側 60 Ω∥60 Ω = 30 Ω）。a→b の向きに試験電流を流すと、その<strong>同じ電流</strong>が <strong>20 Ω → 共通節点（0 V 線）→ 30 Ω</strong> と両方を通るので直列（b→a に流せば順序が逆になるだけで R<sub>th</sub> は同じ）。<strong>a と b が導線で直結されるわけではない</strong>（直結なら R<sub>th</sub> = 0 Ω になってしまう）。</p>
+    <details>
+      <summary>検算（節点法で元回路を直接解いて一致を確認）</summary>
+      <p>10 Ω をつないだまま図A を節点法で解くと <Eq tex="V_a = \tfrac{100}{3} \approx 33.3\,\mathrm{V}" inline />・<Eq tex="V_b = 35\,\mathrm{V}" inline />。10 Ω の電流は（丸めずに厳密値で）</p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}><Eq tex="I_{ab} = \frac{V_a - V_b}{10} = \frac{100/3 - 35}{10} = \frac{-5/3}{10} = -\frac{1}{6} \approx -0.167\,\mathrm{A}" /></p>
+      <p>負号は「a→b と仮定したが実際は b→a」の意味で、大きさ 1/6 A はテブナンの結果と一致する。<strong>結論（電流の大きさ）だけでなく途中の電位まで突き合わせる</strong>のが検算の作法 ― 符号の取り違えは 2 か所あると打ち消し合って結論だけ合ってしまう。</p>
+    </details>
+    <Callout variant="tip" title="🔑 開放電圧 Vth の4手順（試験直前はこれだけ）">
+      <p style={{ margin: "0 0 6px" }}><strong>① 負荷を外す → ② 0 V の基準点を決める → ③ V<sub>a</sub>・V<sub>b</sub> をそれぞれ求める → ④ <Eq tex="V_{th}=V_a-V_b" inline /></strong></p>
+      <p style={{ margin: 0 }}>ショートカット：<strong>負荷を外したら、まず分圧を探す</strong>。分圧で書けたらその場で数値が出る。</p>
+    </Callout>
+
     <h2 id="superposition"><span className="h-num">4</span>重ね合わせの原理（H30問7）</h2>
     <p>複数の電源がある線形回路では、各電源を 1 つずつ生かして残りをゼロにした場合の電流を求め、最後に足し合わせる。</p>
     <SolveFlow
