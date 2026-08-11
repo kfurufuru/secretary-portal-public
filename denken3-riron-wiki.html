@@ -17382,11 +17382,12 @@ const DcCircuitFormulasTab = ({ onNav, switchTab }) => (
         { formula: "I = \\frac{V_{th}}{R_{th} + R_L}", meaning: "テブナン等価回路から負荷電流（▶ 解説タブで2ステップの意味）", when: "線形回路・特定負荷着目", notWhen: "非線形回路" },
         { formula: "R_s = R_1 + R_2", meaning: "直列合成（足し算・電流が共通）", when: "直列接続", notWhen: "並列接続" },
         { formula: "\\frac{1}{R_p} = \\frac{1}{R_1} + \\frac{1}{R_2}", meaning: "並列合成（逆数の和の逆数・電圧が共通）", when: "並列接続", notWhen: "直列接続" },
-        { formula: "V_{ab} = \\frac{\\sum E_k/R_k}{\\sum 1/R_k}", meaning: "ミルマンの定理（複数電圧源の並列を節点電圧で一発）", when: "各枝が電圧源+直列抵抗", notWhen: "電流源混在・直列回路" },
+        { formula: "V_{ab} = \\frac{\\sum E_k/R_k}{\\sum 1/R_k}", meaning: "ミルマンの定理（節点電圧を一発。分子＝各枝の短絡電流の和・分母＝コンダクタンスの和）", when: "全枝が同じ2点の間に横並び（電圧源+直列抵抗／抵抗のみ）。同じ2点間に並列な定電流源は分子にそのまま加算（拡張形）", notWhen: "枝の途中に電位未知の中間節点がある回路（1本の式では閉じない）" },
       ]}
     />
     <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: -8 }}>
-      ▶ テブナンの「なぜ電源をゼロにするか」は <a href="#" onClick={(e) => { e.preventDefault(); switchTab('explain'); }} style={{ textDecoration: "underline" }}>解説タブ</a> へ
+      ▶ テブナンの「なぜ電源をゼロにするか」は <a href="#" onClick={(e) => { e.preventDefault(); switchTab('explain'); }} style={{ textDecoration: "underline" }}>解説タブ</a> へ／
+      ミルマンを<strong>実際に使う練習</strong>（過去問6題・回路図つき）は <a href="#" onClick={(e) => { e.preventDefault(); switchTab('learn'); }} style={{ textDecoration: "underline" }}>学習タブ 4節「ミルマンの定理 実戦6題」</a> へ
     </p>
 
     <h2 id="source-conversion"><span className="h-num">4</span>電圧源 ↔ 電流源 等価変換</h2>
@@ -17484,7 +17485,7 @@ const DcCircuitExplainTab = ({ onNav, switchTab }) => (
         <tr>
           <td><strong>③ 最大電力 ＝ 最大効率と混同</strong></td>
           <td>「R<sub>L</sub>=R<sub>th</sub> で電力最大 → 効率も最大」</td>
-          <td>R<sub>L</sub>=R<sub>th</sub> は<strong>負荷電力最大</strong>・効率は 50%。電力最大≠効率最大（→ 6節引っかけ④・学習タブ 4節）</td>
+          <td>R<sub>L</sub>=R<sub>th</sub> は<strong>負荷電力最大</strong>・効率は 50%。電力最大≠効率最大（→ 6節引っかけ④・学習タブ 5節）</td>
         </tr>
         <tr>
           <td><strong>④ KCL で I=−2A を「誤り」と判断</strong></td>
@@ -18170,6 +18171,116 @@ const DcCircuitExplainTab = ({ onNav, switchTab }) => (
 );
 
 /* 学習タブ */
+/* ============================================================
+   ミルマン演習用の共通回路図
+   「節点 a と 基準 b の2点の間に、枝が横並びになっている」という
+   ミルマンが使える形そのものを毎回同じ絵で見せるための部品。
+   branches: [{ e, r, flip, tag, kind }]
+     e    … 起電力 [V]（null なら電源なし枝＝分母にだけ効く）
+     r    … 抵抗の表示文字列（"5 Ω" / "10 kΩ"）
+     flip … true で電源の極性を反転（分子で符号が負になる枝）
+     kind … "isrc" なら定電流源枝（拡張形）
+   ============================================================ */
+const MillmanFig = ({ branches, ariaLabel, caption, vLabel = "V", vSub = null }) => {
+  const gap = 134;
+  const bx = (k) => 96 + k * gap;
+  const last = bx(branches.length - 1);
+  const W = last + 134;
+  const yT = 70, yB = 216;
+  const vx = last + 68;
+  // 添字つきラベル（V_R 等）は <text> の外で組み立てる。<text> 内に入れ子の JSX 波括弧を
+  // 置くと scripts/check_svg_raw_subscript.py のフラグメント分割が再帰で落ちるため。
+  const vNode = vSub
+    ? <>{vLabel}<tspan dy="0.2em" fontSize="0.72em">{vSub}</tspan><tspan dy="-0.2em"></tspan></>
+    : vLabel;
+  return (
+    <figure style={{ margin: "12px 0", background: "var(--bg-elev)", borderRadius: 8, padding: "10px 8px 8px" }}>
+      <svg viewBox={`0 0 ${W} 268`} role="img" aria-label={ariaLabel}
+           style={{ display: "block", width: "100%", height: "auto", maxWidth: `${W}px`, margin: "0 auto" }}>
+        {/* 上下2本のレール ＝ 節点 a（上）と基準 b（下）。ミルマンはこの2点間の電圧を出す */}
+        <line x1={bx(0) - 48} y1={yT} x2={last + 78} y2={yT} stroke="var(--ink)" strokeWidth="2.2" />
+        <line x1={bx(0) - 48} y1={yB} x2={last + 78} y2={yB} stroke="var(--ink)" strokeWidth="2.2" />
+        <text x={bx(0) - 48} y={yT - 14} textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--accent-ink)">節点 a</text>
+        {/* 基準（接地）記号 */}
+        <line x1={bx(0) - 48} y1={yB} x2={bx(0) - 48} y2={yB + 14} stroke="var(--ink-soft)" strokeWidth="1.8" />
+        <line x1={bx(0) - 60} y1={yB + 14} x2={bx(0) - 36} y2={yB + 14} stroke="var(--ink-soft)" strokeWidth="2.2" />
+        <line x1={bx(0) - 55} y1={yB + 20} x2={bx(0) - 41} y2={yB + 20} stroke="var(--ink-soft)" strokeWidth="1.8" />
+        <line x1={bx(0) - 51} y1={yB + 26} x2={bx(0) - 45} y2={yB + 26} stroke="var(--ink-soft)" strokeWidth="1.6" />
+        <text x={bx(0) - 28} y={yB + 26} textAnchor="start" fontSize="12" fill="var(--ink-soft)">基準 b（0 V）</text>
+        {branches.map((b, k) => {
+          const x = bx(k);
+          const yBatT = yT + 30, yBatB = yT + 44;
+          const yLong = b.flip ? yBatB : yBatT;
+          const yShort = b.flip ? yBatT : yBatB;
+          const yResT = yT + 62, yResB = yT + 92;
+          return (
+            <g key={k}>
+              {/* 枝のタグ（①②③） */}
+              <text x={x} y={yT - 14} textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--ink-mute)">{b.tag}</text>
+              {/* 導線 */}
+              {b.sw ? (
+                <g>
+                  <line x1={x} y1={yT} x2={x} y2={yT + 8} stroke="var(--ink)" strokeWidth="1.8" />
+                  <circle cx={x} cy={yT + 8} r="3" fill="var(--ink)" />
+                  <line x1={x} y1={yT + 8} x2={x + 13} y2={yT + 22} stroke="var(--warn)" strokeWidth="2.4" strokeLinecap="round" />
+                  <circle cx={x} cy={yT + 24} r="3" fill="var(--ink)" />
+                  <text x={x + 18} y={yT + 16} textAnchor="start" fontSize="12.5" fontWeight="700" fill="var(--warn)">S</text>
+                  <line x1={x} y1={yT + 24} x2={x} y2={b.e == null && b.kind !== "isrc" ? yResT : yBatT - 8} stroke="var(--ink)" strokeWidth="1.8" />
+                </g>
+              ) : (
+                <line x1={x} y1={yT} x2={x} y2={b.e == null && b.kind !== "isrc" ? yResT : yBatT - 8} stroke="var(--ink)" strokeWidth="1.8" />
+              )}
+              <line x1={x} y1={yResB} x2={x} y2={yB} stroke="var(--ink)" strokeWidth="1.8" />
+              {b.kind === "isrc" ? (
+                <g>
+                  {/* 定電流源：丸の中に上向き矢印（節点 a へ電流を押し込む向き） */}
+                  <circle cx={x} cy={yT + 37} r="17" fill="var(--bg)" stroke="var(--accent)" strokeWidth="2" />
+                  <line x1={x} y1={yT + 47} x2={x} y2={yT + 29} stroke="var(--accent)" strokeWidth="2" />
+                  <path d={`M${x - 5},${yT + 33} L${x + 5},${yT + 33} L${x},${yT + 25} z`} fill="var(--accent)" />
+                  <line x1={x} y1={yT + 54} x2={x} y2={yResT} stroke="var(--ink)" strokeWidth="1.8" />
+                  <text x={x - 24} y={yT + 42} textAnchor="end" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">{b.e}</text>
+                </g>
+              ) : b.e != null ? (
+                <g>
+                  {/* 電池記号：長い細線＝＋極 / 短い太線＝−極 */}
+                  <line x1={x - 16} y1={yLong} x2={x + 16} y2={yLong} stroke="var(--ink)" strokeWidth="2" />
+                  <line x1={x - 8} y1={yShort} x2={x + 8} y2={yShort} stroke="var(--ink)" strokeWidth="5" />
+                  <line x1={x} y1={yBatB} x2={x} y2={yResT} stroke="var(--ink)" strokeWidth="1.8" />
+                  <text x={x + 21} y={yLong + 4} textAnchor="start" fontSize="12.5" fontWeight="700" fill={b.flip ? "var(--danger)" : "var(--accent-ink)"}>＋</text>
+                  <text x={x + 21} y={yShort + 5} textAnchor="start" fontSize="12.5" fill="var(--ink-mute)">−</text>
+                  <text x={x - 22} y={yT + 41} textAnchor="end" fontSize="12.5" fontWeight="700" fill={b.flip ? "var(--danger)" : "var(--accent-ink)"}>{b.e}</text>
+                </g>
+              ) : null}
+              {/* 抵抗（r が無い枝＝定電流源だけの枝は導線でつなぐ） */}
+              {b.r ? (
+                <g>
+                  <rect x={x - 16} y={yResT} width="32" height="30" rx="3" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.8" />
+                  <text x={x + 23} y={yResT + 20} textAnchor="start" fontSize="12.5" fill="var(--ink)">{b.r}</text>
+                </g>
+              ) : (
+                <line x1={x} y1={yResT} x2={x} y2={yResB} stroke="var(--ink)" strokeWidth="1.8" />
+              )}
+              {/* 節点ドット */}
+              <circle cx={x} cy={yT} r="3.6" fill="var(--ink)" />
+              <circle cx={x} cy={yB} r="3.6" fill="var(--ink)" />
+            </g>
+          );
+        })}
+        {/* 求める電圧 V（a−b 間） */}
+        <line x1={vx} y1={yT + 10} x2={vx} y2={yB - 10} stroke="var(--accent)" strokeWidth="1.6" strokeDasharray="5 4" />
+        <path d={`M${vx - 5},${yT + 14} L${vx + 5},${yT + 14} L${vx},${yT + 4} z`} fill="var(--accent)" />
+        <path d={`M${vx - 5},${yB - 14} L${vx + 5},${yB - 14} L${vx},${yB - 4} z`} fill="var(--accent)" />
+        <text x={vx + 10} y={(yT + yB) / 2 + 5} textAnchor="start" fontSize="14" fontWeight="700" fill="var(--accent-ink)">{vNode}</text>
+      </svg>
+      {caption && (
+        <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.7 }}>
+          {caption}
+        </figcaption>
+      )}
+    </figure>
+  );
+};
+
 const DcCircuitLearnTab = ({ onNav, switchTab }) => (
   <>
     <ConceptQuiz pageId="dc-circuit" pageTitle="直流回路" />
@@ -18264,7 +18375,315 @@ const DcCircuitLearnTab = ({ onNav, switchTab }) => (
       </p>
     </Callout>
 
-    <h2 id="z-3conditions"><span className="h-num">4</span>3条件即答チェック（限界的練習ゾーン）— 最大電力 vs 効率</h2>
+    <h2 id="millman-drills"><span className="h-num">4</span>ミルマンの定理 実戦6題 — 「1行で終わる」過去問だけ集めた</h2>
+    <SectionCheck pageId="dc-circuit" sectionId="millman-drills" />
+    <Callout variant="tip" title="まず覚える結論 — ミルマンは「電流の割り勘」">
+      <p style={{ textAlign: "center", margin: "6px 0 10px" }}>
+        <Eq tex="V_{ab} \;=\; \dfrac{\sum E_k / R_k}{\sum 1/R_k} \;=\; \dfrac{I_{\text{総}}}{G_{\text{総}}}" />
+      </p>
+      <ul style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.9 }}>
+        <li><strong>分子</strong>＝各枝が<strong>押し込もうとする電流</strong>の合計（<Eq tex="E/R" inline /> ＝その枝の短絡電流）</li>
+        <li><strong>分母</strong>＝各枝の<strong>コンダクタンス</strong>の合計（＝電流の流れやすさの合計）</li>
+        <li>だから <Eq tex="V = I/G" inline /> ＝ <strong>オームの法則そのもの</strong>。新しい公式を1つ増やすのではなく、KCL を節点で1回書いただけ</li>
+      </ul>
+      <p style={{ margin: "8px 0 0", fontSize: 13 }}>
+        テブナン・重ね合わせが<strong>「図を描き直す」</strong>解法なのに対し、ミルマンは<strong>「図をそのまま数式に写す」</strong>解法。工程が短いぶん、B 問題で時間を買える。
+      </p>
+    </Callout>
+
+    <Callout variant="info" title="使えるかを3秒で判定する — 見るのは1点だけ">
+      <p style={{ margin: "0 0 6px" }}>
+        <strong>「電源も抵抗も、全部が同じ2点（上のレールと下のレール）の間に横並びになっているか」</strong>——これだけ。なっていれば使える。下の6題は全部この形に描き直せる。
+      </p>
+      <p style={{ margin: 0, fontSize: 13, color: "var(--ink-soft)" }}>
+        逆に、<strong>他の枝がつながっている中間節点</strong>がある回路（＝橋渡しの枝に電流が流れている状態）は、1本の式では閉じない。⑥ がその境界例。<br />
+        <span style={{ fontSize: 12 }}>※ 電源と直列抵抗のつなぎ目も電位は未知だが、そこには他の枝が来ていない（枝の内部）ので、1本の枝としてまとめられる。効いてくるのは<strong>「他の枝が刺さっている」節点</strong>だけ。</span>
+      </p>
+    </Callout>
+
+    <h3>① R05下 問6 <span style={{ fontSize: "0.8em", color: "var(--ink-soft)" }}>★☆☆☆☆</span> — 素直な3枝。まずこの形を体に入れる</h3>
+    <MillmanFig
+      branches={[
+        { tag: "①", e: "21 V", r: "5 Ω" },
+        { tag: "②", e: null, r: "6 Ω" },
+        { tag: "③", e: "14 V", r: "10 Ω" },
+      ]}
+      ariaLabel="節点 a と基準 b の間に3つの枝が並列に並んだ直流回路。左の枝は起電力21ボルトの電源と5オームの抵抗の直列、中央の枝は6オームの抵抗のみ、右の枝は起電力14ボルトの電源と10オームの抵抗の直列。2つの電源はどちらも節点a側がプラス極。求めるのは中央の6オームの端子電圧V"
+      caption="2つの電源はどちらも節点 a 側が＋（同じ向き）。中央の6Ω枝には電源が無いので、分子には 0 として入り、分母にだけ効く。"
+    />
+    <p style={{ margin: "10px 0 0" }}>
+      <strong>問</strong>：図のような直流回路において、抵抗 6 Ω の端子間電圧の大きさ <Eq tex="V" inline /> の値 [V] として、最も近いものはどれか。<br />
+      <span style={{ color: "var(--ink-soft)" }}>(1) 2　(2) 5　(3) 7　(4) 12　(5) 15</span>
+    </p>
+    <details style={{ marginTop: 8, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6 }}>
+      <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答（ミルマンなら1行）</summary>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="V=\dfrac{\frac{21}{5}+\frac{0}{6}+\frac{14}{10}}{\frac{1}{5}+\frac{1}{6}+\frac{1}{10}}=\dfrac{5.6}{\frac{7}{15}}=12\ \text{V}" />
+      </p>
+      <p style={{ margin: "6px 0 0" }}><strong>正答 (4) 12 V</strong>。</p>
+      <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--ink-soft)" }}>
+        ※ <strong>H15 問5 からの再出題</strong>（電験王の解説にも「ミルマンの定理が最もすっきりして解ける」と明記されている）。<strong>6Ω枝を分母から落とすと分母が小さくなり、電圧が過大に出る</strong>（落とすと 5.6÷0.3 ≒ 18.7 V となり、選択肢 (5) 15 のさらに外へ飛ぶ）。
+      </p>
+    </details>
+
+    <h3>② H20 問7 ＝ R06下 問6 <span style={{ fontSize: "0.8em", color: "var(--ink-soft)" }}>★★☆☆☆</span> — 逆極性の符号。ここが最頻の失点源</h3>
+    <MillmanFig
+      branches={[
+        { tag: "①", e: "4 V", r: "4 Ω" },
+        { tag: "②", e: "2 V", r: "2 Ω", flip: true },
+        { tag: "③", e: null, r: "5 Ω" },
+      ]}
+      ariaLabel="節点 a と基準 b の間に3つの枝が並列に並んだ直流回路。左の枝は起電力4ボルトの電源と4オームの抵抗の直列で節点a側がプラス極。中央の枝は起電力2ボルトの電源と2オームの抵抗の直列だが極性が逆で基準b側がプラス極。右の枝は5オームの抵抗のみ。各抵抗を流れる電流を求める"
+      caption="② の電源だけ極性が逆（＋が下）。ミルマンの分子ではこの枝が −2/2 として入る。図の＋−を見ずに全部足すとここで壊れる。"
+    />
+    <p style={{ margin: "10px 0 0" }}>
+      <strong>問</strong>：図の回路において、3つの抵抗を流れる電流 <Eq tex="I_1,\ I_2,\ I_3" inline /> [A] の組合せとして正しいものはどれか。<br />
+      <span style={{ color: "var(--ink-soft)" }}>(選択肢は5組。正しい組は <Eq tex="I_1=1,\ I_2=1,\ I_3=0" inline />)</span>
+    </p>
+    <details style={{ marginTop: 8, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6 }}>
+      <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答（0 V を先に見抜くと以降の計算が消える）</summary>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="V=\dfrac{\frac{4}{4}-\frac{2}{2}+\frac{0}{5}}{\frac{1}{4}+\frac{1}{2}+\frac{1}{5}}=\dfrac{0}{0.95}=0\ \text{V}\quad\Longrightarrow\quad I_3=\dfrac{0}{5}=0\ \text{A}" />
+      </p>
+      <p style={{ margin: "6px 0" }}>
+        5 Ω に電流が流れないので、その枝は<strong>外して考えてよい</strong>。残るのは 4 V と 2 V が 4 Ω＋2 Ω を通って一巡するだけの単純な直列回路：
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="I_1=I_2=\dfrac{4+2}{4+2}=1\ \text{A}" />
+      </p>
+      <p style={{ margin: "6px 0 0" }}><strong>正答は <Eq tex="I_1=1,\ I_2=1,\ I_3=0" inline /></strong>（H20 では選択肢 (3)・R06下 では選択肢 (4)）。</p>
+      <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--ink-soft)" }}>
+        ※ この 1 A は<strong>ループを一巡する1つの電流</strong>。節点 a を基準に向きを見ると、①の枝は<strong>下から a へ</strong>、②の枝は<strong>a から下へ</strong>流れており、2枝の電流は互いに逆向き。<strong>「両方 ＋1 A」なのは図の矢印がループに沿って描かれているから</strong>で、同じ向きに2 A 流れているわけではない。
+      </p>
+      <Callout variant="warn" title="この2問は「そのまま再出題」だが、正答番号は違う">
+        <p style={{ margin: 0 }}>
+          H20 問7 と R06下 問6 は<strong>数値も選択肢の中身も同一</strong>。しかし<strong>選択肢の並び順だけが入れ替えられており</strong>、正答番号は (3) → (4) に変わっている。<strong>「答えは③」と番号で覚える勉強は、再出題で正面から外れる</strong>。
+        </p>
+      </Callout>
+    </details>
+
+    <h3>③ H28 問5 <span style={{ fontSize: "0.8em", color: "var(--ink-soft)" }}>★★★☆☆</span> — 電池の並列。等価変換を1行で飛ばす</h3>
+    <MillmanFig
+      branches={[
+        { tag: "①", e: "9 V", r: "0.1 Ω" },
+        { tag: "②", e: "9 V", r: "0.1 Ω" },
+        { tag: "③", e: "9 V", r: "0.1 Ω" },
+        { tag: "④", e: "9 V", r: "0.1 Ω" },
+        { tag: "負荷", e: null, r: "0.5 Ω" },
+      ]}
+      ariaLabel="節点 a と基準 b の間に5つの枝が並列に並んだ直流回路。左から4本は起電力9ボルト内部抵抗0.1オームの電池で、すべて節点a側がプラス極の同じ向き。右端の枝は負荷抵抗0.5オームのみ。負荷で消費される電力を求める"
+      caption="内部抵抗つき電池4個の並列＋負荷。電池も「起電力＋直列抵抗の枝」なので、負荷枝と全く同じ扱いで1本の式に入る。"
+    />
+    <p style={{ margin: "10px 0 0" }}>
+      <strong>問</strong>：内部抵抗 <Eq tex="r=0.1\ \Omega" inline />、起電力 <Eq tex="E=9\ \text{V}" inline /> の電池4個を並列に接続した電源に、抵抗 <Eq tex="R=0.5\ \Omega" inline /> の負荷を接続した。<Eq tex="R" inline /> で消費される電力の値 [W] は。<br />
+      <span style={{ color: "var(--ink-soft)" }}>(1) 50　(2) 147　(3) 253　(4) 820　(5) 4050</span>
+    </p>
+    <details style={{ marginTop: 8, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6 }}>
+      <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答（端子電圧 → 電流 → 電力の3手）</summary>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="V=\dfrac{4\times\frac{9}{0.1}}{\frac{4}{0.1}+\frac{1}{0.5}}=\dfrac{360}{42}=\dfrac{60}{7}\fallingdotseq 8.57\ \text{V}" />
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="I=\dfrac{V}{R}=\dfrac{120}{7}\fallingdotseq 17.1\ \text{A},\qquad P=RI^2=\dfrac{7200}{49}\fallingdotseq 147\ \text{W}" />
+      </p>
+      <p style={{ margin: "6px 0 0" }}><strong>正答 (2) 147 W</strong>。</p>
+      <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--ink-soft)" }}>
+        ※ 電験王の本解は「電圧源→電流源に等価変換して図を2枚描く」（<Eq tex="I=360" inline /> A・<Eq tex="r'=0.025" inline /> Ω の電流源にしてから分流）。<strong>同じ答えに2経路で着く</strong>ことを確認しておくと、ミルマンが等価変換の結果を先取りしている道具だと腑に落ちる。<strong>電池が同一起電力・同一内部抵抗で同じ向き</strong>だから <Eq tex="4\times 9/0.1" inline /> とまとめられる点に注意（起電力が違えば1枝ずつ足す）。
+      </p>
+    </details>
+
+    <h3>④ H24 問17(b) <span style={{ fontSize: "0.8em", color: "var(--ink-soft)" }}>★★★☆☆</span> — 電圧計の指示。計測との合わせ技</h3>
+    <MillmanFig
+      branches={[
+        { tag: "①", e: "16 V", r: "10 kΩ" },
+        { tag: "②", e: "4 V", r: "30 kΩ" },
+        { tag: "電圧計", e: null, r: "15 kΩ" },
+      ]}
+      ariaLabel="節点 a と基準 b の間に3つの枝が並列に並んだ直流回路。左の枝は起電力16ボルトの電源と10キロオームの抵抗の直列、中央の枝は起電力4ボルトの電源と30キロオームの抵抗の直列で、どちらも節点a側がプラス極。右の枝は内部抵抗と倍率器を合わせて15キロオームとなる電圧計。電圧計の指示値を求める"
+      caption="電圧計の枝は「内部抵抗 1 kΩ ＋ 倍率器 14 kΩ ＝ 15 kΩ」（小問(a)の答え）。電圧計も抵抗1本の枝として分母に入る。"
+    />
+    <p style={{ margin: "10px 0 0" }}>
+      <strong>問</strong>：最大目盛 1 V・内部抵抗 <Eq tex="r_v=1000\ \Omega" inline /> の電圧計に倍率器 <Eq tex="R_m=14\ \text{k}\Omega" inline /> を付けて最大目盛 15 V としたものを図のように接続した。電圧計の指示 [V] は。<br />
+      <span style={{ color: "var(--ink-soft)" }}>(1) 7.2　(2) 8.7　(3) 9.4　(4) 11.3　(5) 13.1</span>
+    </p>
+    <details style={{ marginTop: 8, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6 }}>
+      <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答（mA・kΩ で計算すると分数が軽い）</summary>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="V=\dfrac{\frac{16}{10}+\frac{4}{30}}{\frac{1}{10}+\frac{1}{15}+\frac{1}{30}}=\dfrac{\frac{26}{15}}{\frac{1}{5}}=\dfrac{26}{3}\fallingdotseq 8.7\ \text{V}" />
+      </p>
+      <p style={{ margin: "6px 0 0" }}><strong>正答 (2) 8.7 V</strong>。</p>
+      <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--ink-soft)" }}>
+        ※ 電験王の解説が<strong>「別解のミルマンの定理を用いると最も速く解ける」</strong>と明記している問題。本解の重ね合わせは「16 V 側で 8 V」「4 V 側で 0.667 V」を別々に出して足す2工程（<Eq tex="8+0.667\fallingdotseq 8.7" inline />）。<br />
+        <strong>学びの本体は「電圧計の内部抵抗が分母に入る」こと</strong>＝<strong>測ること自体が回路を変える</strong>。もし理想電圧計（内部抵抗 ∞）なら電圧計枝は分母から消え、<Eq tex="V=\frac{26}{15}\div\frac{2}{15}=13\ \text{V}" inline /> になる（選択肢 (5) 13.1 はここに吸い込ませる罠）。
+      </p>
+    </details>
+
+    <h3>⑤ H30 問7 <span style={{ fontSize: "0.8em", color: "var(--ink-soft)" }}>★★★★☆</span> — 電流源が混ざる（拡張形）</h3>
+    <MillmanFig
+      branches={[
+        { tag: "①", e: "10 V", r: "1 Ω", sw: true },
+        { tag: "②", e: "2 A", kind: "isrc", r: null },
+        { tag: "③", e: null, r: "R" },
+      ]}
+      vLabel="V" vSub="R"
+      ariaLabel="節点 a と基準 b の間に3つの枝が並列に並んだ直流回路。左の枝はスイッチSと起電力10ボルトの電源と1オームの抵抗の直列。中央の枝は節点aへ向かって2アンペアを流し込む定電流源。右の枝は未知抵抗R。スイッチを閉じるとRの電流が2倍になる条件からRを求める"
+      caption="② は定電流源（丸の中の矢印が電流の向き＝節点 a へ押し込む）。S は① の枝にあり、開いていると①は切り離される。"
+    />
+    <p style={{ margin: "10px 0 0" }}>
+      <strong>問</strong>：直流電圧 <Eq tex="E=10\ \text{V}" inline /> の定電圧源、直流電流 <Eq tex="I=2\ \text{A}" inline /> の定電流源、スイッチ S、<Eq tex="r=1\ \Omega" inline /> と <Eq tex="R\ [\Omega]" inline /> の抵抗からなる回路がある。S を閉じたとき、<Eq tex="R" inline /> に流れる電流 <Eq tex="I_R" inline /> が S を閉じる前に比べて2倍に増加した。<Eq tex="R" inline /> の値 [Ω] は。<br />
+      <span style={{ color: "var(--ink-soft)" }}>(1) 2　(2) 3　(3) 8　(4) 10　(5) 11</span>
+    </p>
+    <details style={{ marginTop: 8, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6 }}>
+      <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答（電流源は分子にそのまま足す）</summary>
+      <p style={{ margin: "6px 0" }}>
+        S 開のときは電流源の 2 A が全部 R へ流れるので <Eq tex="I_R=2" inline /> A。題意より S 閉で <Eq tex="I_R=4" inline /> A。
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="V_R=\dfrac{\frac{E}{r}+I}{\frac{1}{r}+\frac{1}{R}}=\dfrac{10+2}{1+\frac{1}{R}}\ ,\qquad I_R=\dfrac{V_R}{R}=\dfrac{12}{R+1}=4" />
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="\Longrightarrow\quad R+1=3\quad\Longrightarrow\quad R=2\ \Omega" />
+      </p>
+      <p style={{ margin: "6px 0 0" }}><strong>正答 (1) 2 Ω</strong>。</p>
+      <p style={{ margin: "8px 0 0", fontSize: 13 }}>
+        <strong>検算（KCL が閉じるか）</strong>：<Eq tex="R=2" inline /> のとき <Eq tex="V_R=12\div1.5=8" inline /> V。① の枝を流れる電流は <Eq tex="(10-8)/1=2" inline /> A、電流源が 2 A、合計 4 A が R へ ＝ <Eq tex="I_R=8/2=4" inline /> A で一致する。
+      </p>
+      <Callout variant="warn" title="「電流源があるとミルマンは使えない」は半分しか正しくない">
+        <p style={{ margin: 0 }}>
+          ミルマンの<strong>標準形</strong>（<Eq tex="\sum E/R \div \sum 1/R" inline />）は「電圧源＋直列抵抗」の枝だけを前提にしている。しかし定理の正体は<strong>節点での KCL</strong>なので、<strong>同じ2点間に並列に入っている定電流源は、分子にその電流をそのまま足すだけ</strong>でよい（向きが逆なら引く）。<strong>本問の公表解説は重ね合わせで図を2枚描いている</strong>が、拡張形なら式1本で終わる。
+        </p>
+      </Callout>
+    </details>
+
+    <h3>⑥ R02 問7 <span style={{ fontSize: "0.8em", color: "var(--ink-soft)" }}>★★★★☆</span> — 単独では解けない。テブナンの下ごしらえに使う</h3>
+    <figure style={{ margin: "12px 0", background: "var(--bg-elev)", borderRadius: 8, padding: "10px 8px 8px" }}>
+      <svg viewBox="0 0 520 300" role="img"
+           aria-label="不平衡ブリッジ回路。5ボルトの直流電源に、1オームと4オームを直列にした分圧枝と、2オームと3オームを直列にした分圧枝が並列に接続されている。1オームと4オームの中点が節点a、2オームと3オームの中点が節点b。節点aと節点bの間にスイッチSと8オームの抵抗が直列に入っている。スイッチを閉じたとき8オームに流れる電流を求める"
+           style={{ display: "block", width: "100%", height: "auto", maxWidth: "520px", margin: "0 auto" }}>
+        {/* レール */}
+        <line x1="70" y1="60" x2="400" y2="60" stroke="var(--ink)" strokeWidth="2.2" />
+        <line x1="70" y1="240" x2="400" y2="240" stroke="var(--ink)" strokeWidth="2.2" />
+        {/* 電源 */}
+        <line x1="70" y1="60" x2="70" y2="136" stroke="var(--ink)" strokeWidth="1.8" />
+        <line x1="54" y1="136" x2="86" y2="136" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="62" y1="150" x2="78" y2="150" stroke="var(--ink)" strokeWidth="5" />
+        <line x1="70" y1="150" x2="70" y2="240" stroke="var(--ink)" strokeWidth="1.8" />
+        <text x="46" y="132" textAnchor="end" fontSize="13" fontWeight="700" fill="var(--accent-ink)">5 V</text>
+        <text x="92" y="140" textAnchor="start" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">＋</text>
+        <text x="92" y="155" textAnchor="start" fontSize="12.5" fill="var(--ink-mute)">−</text>
+        {/* 左の分圧枝（1Ω / 4Ω・中点 a） */}
+        <line x1="215" y1="60" x2="215" y2="92" stroke="var(--ink)" strokeWidth="1.8" />
+        <rect x="199" y="92" width="32" height="28" rx="3" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.8" />
+        <text x="193" y="111" textAnchor="end" fontSize="12.5" fill="var(--ink)">1 Ω</text>
+        <line x1="215" y1="120" x2="215" y2="180" stroke="var(--ink)" strokeWidth="1.8" />
+        <rect x="199" y="180" width="32" height="28" rx="3" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.8" />
+        <text x="193" y="199" textAnchor="end" fontSize="12.5" fill="var(--ink)">4 Ω</text>
+        <line x1="215" y1="208" x2="215" y2="240" stroke="var(--ink)" strokeWidth="1.8" />
+        <circle cx="215" cy="150" r="4" fill="var(--accent)" />
+        <text x="205" y="145" textAnchor="end" fontSize="13" fontWeight="700" fill="var(--accent-ink)">a</text>
+        {/* 右の分圧枝（2Ω / 3Ω・中点 b） */}
+        <line x1="400" y1="60" x2="400" y2="92" stroke="var(--ink)" strokeWidth="1.8" />
+        <rect x="384" y="92" width="32" height="28" rx="3" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.8" />
+        <text x="422" y="111" textAnchor="start" fontSize="12.5" fill="var(--ink)">2 Ω</text>
+        <line x1="400" y1="120" x2="400" y2="180" stroke="var(--ink)" strokeWidth="1.8" />
+        <rect x="384" y="180" width="32" height="28" rx="3" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.8" />
+        <text x="422" y="199" textAnchor="start" fontSize="12.5" fill="var(--ink)">3 Ω</text>
+        <line x1="400" y1="208" x2="400" y2="240" stroke="var(--ink)" strokeWidth="1.8" />
+        <circle cx="400" cy="150" r="4" fill="var(--accent)" />
+        <text x="410" y="145" textAnchor="start" fontSize="13" fontWeight="700" fill="var(--accent-ink)">b</text>
+        {/* a−b 間：スイッチ S ＋ 8Ω */}
+        <line x1="215" y1="150" x2="252" y2="150" stroke="var(--ink)" strokeWidth="1.8" />
+        <circle cx="252" cy="150" r="3" fill="var(--ink)" />
+        <line x1="252" y1="150" x2="272" y2="136" stroke="var(--warn)" strokeWidth="2.4" strokeLinecap="round" />
+        <circle cx="276" cy="150" r="3" fill="var(--ink)" />
+        <text x="258" y="128" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--warn)">S</text>
+        <line x1="276" y1="150" x2="290" y2="150" stroke="var(--ink)" strokeWidth="1.8" />
+        <rect x="290" y="136" width="36" height="28" rx="3" fill="var(--bg)" stroke="var(--ink)" strokeWidth="1.8" />
+        <text x="308" y="180" textAnchor="middle" fontSize="12.5" fill="var(--ink)">8 Ω</text>
+        <line x1="326" y1="150" x2="400" y2="150" stroke="var(--ink)" strokeWidth="1.8" />
+        <line x1="340" y1="132" x2="366" y2="132" stroke="var(--accent)" strokeWidth="1.8" />
+        <path d="M362,127 L372,132 L362,137 z" fill="var(--accent)" />
+        <text x="352" y="122" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">I</text>
+        {/* 節点ドット */}
+        <circle cx="215" cy="60" r="3.6" fill="var(--ink)" />
+        <circle cx="400" cy="60" r="3.6" fill="var(--ink)" />
+        <circle cx="215" cy="240" r="3.6" fill="var(--ink)" />
+        <circle cx="400" cy="240" r="3.6" fill="var(--ink)" />
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.7 }}>
+        1×3 ≠ 4×2 なので<strong>不平衡ブリッジ</strong>（a と b の電位は等しくない）。S が開いている間は、左右の分圧枝がそれぞれ「電源の2点間に並んだ独立な回路」になる。だから <strong>a と b を別々にミルマンで叩ける</strong>。S を閉じた瞬間に a−b が結ばれ、1本の式では閉じなくなる。
+      </figcaption>
+    </figure>
+    <p style={{ margin: "10px 0 0" }}>
+      <strong>問</strong>：図のブリッジ回路で、S を開いたとき S の両端間の電圧は 1 V であった。S を閉じたときに 8 Ω の抵抗に流れる電流 <Eq tex="I" inline /> の値 [A] は。<br />
+      <span style={{ color: "var(--ink-soft)" }}>(1) 0.10　(2) 0.75　(3) 1.0　(4) 1.4　(5) 2.0</span>
+    </p>
+    <details style={{ marginTop: 8, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6 }}>
+      <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答（ミルマンで <Eq tex="V_{th}" inline /> を作り、テブナンで仕上げる）</summary>
+      <p style={{ margin: "6px 0" }}>電源の負極側を 0 V の基準にとって、a 点と b 点を<strong>別々に</strong>叩く：</p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="V_a=\dfrac{\frac{5}{1}+\frac{0}{4}}{\frac{1}{1}+\frac{1}{4}}=\dfrac{5}{1.25}=4\ \text{V},\qquad V_b=\dfrac{\frac{5}{2}+\frac{0}{3}}{\frac{1}{2}+\frac{1}{3}}=\dfrac{2.5}{\frac{5}{6}}=3\ \text{V}" />
+      </p>
+      <p style={{ margin: "6px 0" }}>
+        よって開放電圧 <Eq tex="V_{th}=V_a-V_b=1" inline /> V ＝ <strong>問題文の「S の両端 1 V」と一致</strong>（自分の計算が合っている確認になる）。電源を短絡して a−b から見た抵抗は
+      </p>
+      <p style={{ textAlign: "center", margin: "8px 0" }}>
+        <Eq tex="R_{th}=(1\parallel 4)+(2\parallel 3)=0.8+1.2=2\ \Omega,\qquad I=\dfrac{V_{th}}{8+R_{th}}=\dfrac{1}{10}=0.10\ \text{A}" />
+      </p>
+      <p style={{ margin: "6px 0 0" }}><strong>正答 (1) 0.10 A</strong>。</p>
+      <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--ink-soft)" }}>
+        ※ <strong>ミルマンは「単独で答えを出す道具」とは限らない</strong>。⑥ のように<strong>負荷を外すと各部分が既知電位（5 V と 0 V）の間の独立した枝に分解できる場合</strong>は、多節点の回路でも各節点電圧をローカルに1行で出せる（<strong>どんな多節点回路でも分解できるわけではない</strong>）。分圧の法則（<Eq tex="4/(1+4)\times 5" inline />）と同じ答えになるのは当然で、<strong>分圧の法則はミルマンの2枝の特別な場合</strong>だから。
+      </p>
+    </details>
+
+    <h3>まとめ — この5つを外さなければ事故らない</h3>
+    <table className="data-table">
+      <thead>
+        <tr><th>#</th><th>ルール</th><th>外したときに起きること</th><th>本節の該当</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>使えるのは<strong>全枝が同じ2点の間に横並び</strong>のとき。未知電位の中間節点があると1本では閉じない</td>
+          <td>橋渡し枝に電流が流れている状態で無理に1本の式を書き、答えが合わない</td>
+          <td>⑥（分解すれば使える）</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><strong>極性が逆の枝は分子で符号を反転</strong>する</td>
+          <td>符号ミス。②では答えが 0 V ではなくなり、<Eq tex="I_3=0" inline /> の見抜きが丸ごと消える</td>
+          <td>②</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><strong>電源のない抵抗枝も分母に必ず入れる</strong>（分子は 0/R = 0）</td>
+          <td>分母が小さくなり<strong>電圧が過大</strong>に出る（①なら 12 V → 約 18.7 V）</td>
+          <td>①②④</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><strong>同じ2点間に並列な定電流源は分子にそのまま加算</strong>（逆向きなら減算）</td>
+          <td>「電流源だから使えない」と誤判定し、重ね合わせで図を2枚描く遠回りをする</td>
+          <td>⑤</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>符号は<strong>「節点 a に流れ込む向きを正」と最初に決めてから</strong>全部書く</td>
+          <td>途中で基準を変えて分子の符号が壊れる</td>
+          <td>②⑤</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 10 }}>
+      <strong>出典と検証</strong>：③④⑤⑥ は電験王の過去問 PDF（H23〜H30・R02・R03 収録）で問題文・選択肢・正答・解説まで一次照合。①② は同 PDF の収録年度外のため電験王の解説ページで照合した。全問、<strong>公表正答と本ページの再計算が一致すること</strong>を確認済み。
+    </p>
+    <Callout variant="info" title="ミルマンが本来の主戦場とする「三相不平衡の中性点電位」について">
+      <p style={{ margin: 0 }}>
+        ミルマンは本来、<strong>三相3線式・不平衡負荷の中性点電位</strong>を求める道具として有名だが、<strong>電験3種の出題は今回の調査範囲では確認できていない</strong>（確認できたのは電験1種の出題）。3種の三相不平衡は<strong>中性線のある4線式</strong>で出ることが多く、その場合は各相を独立した単相回路として扱える。ここは断定せず、<strong>未確認のまま置く</strong>。
+      </p>
+    </Callout>
+
+    <h2 id="z-3conditions"><span className="h-num">5</span>3条件即答チェック（限界的練習ゾーン）— 最大電力 vs 効率</h2>
     <SectionCheck pageId="dc-circuit" sectionId="z-3conditions" />
     <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
       「解ける／解けない」の境界を強制発火させる練習。<strong>同一テブナン等価（V<sub>th</sub>=12V, R<sub>th</sub>=4Ω）で負荷 R<sub>L</sub> を3条件</strong>変えて即答し、典型誤答3択でセルフ判定。<strong>3条件すべて正答できれば最大電力定理 B 問題対応 OK</strong>の目安。
@@ -18377,7 +18796,7 @@ const DcCircuitLearnTab = ({ onNav, switchTab }) => (
       <p><strong>3条件すべて即答</strong> ⇒ R03問7・R06上問7（最大電力・ジュール熱最大）級の B 問題対応 OK。ただし実問は <strong>R<sub>th</sub> を自分で作る工程つき</strong>（R03問7 は電池 n 個直列で R<sub>th</sub>=nr・R06上問7 は r∥R₁）— 3節末の tip で確認。<strong>1問でも誤答</strong> ⇒ 解説タブ 6節引っかけ④（最大電力≠最大効率）を再読。</p>
     </Callout>
 
-    <h2 id="kakomon"><span className="h-num">5</span>出題実績（H18〜R07上期）</h2>
+    <h2 id="kakomon"><span className="h-num">6</span>出題実績（H18〜R07上期）</h2>
     <SectionCheck pageId="dc-circuit" sectionId="kakomon" />
     <p style={{ fontSize: 12, color: "var(--ink-soft)" }}>
       出典: 電験王3（denken-ou.com）。問5〜問7 から毎年 1〜3 問・最頻出単元。<br/>
@@ -18392,26 +18811,29 @@ const DcCircuitLearnTab = ({ onNav, switchTab }) => (
         <tr><td>R07上</td><td>問7</td><td>計算</td><td>直流回路の電流変化からの未知抵抗値の導出（H8問5 からの再出題）</td><td>✅ 本ページ完結</td></tr>
         <tr><td>R06下</td><td>問6</td><td>計算</td><td>直流電源と抵抗を直並列させた回路の抵抗に流れる電流（H20問7 からの再出題・問題文と正答値は同一だが選択肢の並びが変更＝正答番号は別）</td><td>✅ 本ページ完結</td></tr>
         <tr><td>R06下</td><td>問7</td><td>計算</td><td>合成抵抗 Rab=1.8R から未知抵抗 Rx を逆算（R＋R∥Rx → Rx=4R）</td><td>✅ 本ページ完結（公式 3節 直並列）</td></tr>
+        <tr><td>R06下</td><td>問6</td><td>計算</td><td>2電源3抵抗の直並列で各抵抗の電流 I₁ I₂ I₃ を問う（H20問7 と同一問題＝選択肢の並びだけ変更・正答番号は別）</td><td>✅ 本ページ完結（学習 4節 <strong>ミルマン②</strong>）</td></tr>
         <tr><td>R06上</td><td>問5</td><td>計算</td><td>2つの電源から構成される回路の抵抗で消費される電力（R05上問5・H25問6 と同一問題＝3回出題）</td><td>✅ 本ページ完結（解説 3節 <strong>例題①</strong>＝テブナン／解説 4節 重ね合わせ の2解法）</td></tr>
         <tr><td>R06上</td><td>問6</td><td>計算</td><td>3つの電源と抵抗の直並列回路で、既知電流 0.3A から抵抗 R を逆算</td><td>✅ 本ページ完結（KVL/KCL 連立）</td></tr>
-        <tr><td>R06上</td><td>問7</td><td>計算</td><td>抵抗から発生するジュール熱が最大となる条件（H19問5 からの再出題・問題文と正答式 rR₁/(r+R₁) は同一だが選択肢の並びが変更＝正答番号は別）</td><td>✅ 本ページ完結（4節 限界的練習）</td></tr>
+        <tr><td>R06上</td><td>問7</td><td>計算</td><td>抵抗から発生するジュール熱が最大となる条件（H19問5 からの再出題・問題文と正答式 rR₁/(r+R₁) は同一だが選択肢の並びが変更＝正答番号は別）</td><td>✅ 本ページ完結（5節 限界的練習）</td></tr>
         <tr><td>R05下</td><td>問7</td><td>計算</td><td>スイッチ切換時の電流値からの未知の抵抗値の導出（H20問6 からの再出題）</td><td>✅ 本ページ完結</td></tr>
+        <tr><td>R05下</td><td>問6</td><td>計算</td><td>3並列枝（21V+5Ω／6Ω／14V+10Ω）で 6 Ω の端子電圧を問う（H15問5 からの再出題）</td><td>✅ 本ページ完結（学習 4節 <strong>ミルマン①</strong>）</td></tr>
         <tr><td>R05上</td><td>問5</td><td>計算</td><td>2つの電源から構成される回路の抵抗で消費される電力（R06上問5 で同一問題が再出題・初出 H25問6）</td><td>✅ 本ページ完結（解説 3節 <strong>例題①</strong>＝テブナン／解説 4節 重ね合わせ の2解法）</td></tr>
         <tr><td>R05上</td><td>問6</td><td>計算</td><td>電圧源と電流源を含む回路の抵抗に流れる電流（本ページ featured・H9問5 からの再出題）</td><td>✅ 本ページ完結（3節 解法カード）</td></tr>
         <tr><td>R05上</td><td>問7</td><td>計算</td><td>抵抗温度が 20→120°C になったとき電流が何%変化するかを答える（R が 1.5 倍 → 33%減少）</td><td>✅ 本ページ完結（公式 2節 温度係数）</td></tr>
         <tr><td>R04下</td><td>問7</td><td>計算</td><td>抵抗温度係数からの抵抗値の変化率の導出（H23問5 と同一問題）</td><td>✅ 本ページ完結（公式 2節 温度係数）</td></tr>
         <tr><td>R04上</td><td>問5</td><td>計算</td><td>直並列の直流回路における電流値の導出</td><td>✅ 本ページ完結</td></tr>
-        <tr><td>R03</td><td>問7</td><td>計算</td><td>電池 n 個直列＋可変抵抗で、消費電力最大時の回路電流 I を式で答える（R=nr → I=E/2r）</td><td>✅ 本ページ完結（4節 限界的練習＋3節末 tip「R=nr」— Rth を自分で合計する工程はこの tip が急所）</td></tr>
+        <tr><td>R03</td><td>問7</td><td>計算</td><td>電池 n 個直列＋可変抵抗で、消費電力最大時の回路電流 I を式で答える（R=nr → I=E/2r）</td><td>✅ 本ページ完結（5節 限界的練習＋3節末 tip「R=nr」— Rth を自分で合計する工程はこの tip が急所）</td></tr>
         <tr><td>R02</td><td>問5</td><td>計算</td><td>断面積と材質の異なる電線の抵抗の大きさの比較</td><td>✅ 本ページ完結（公式 2節 抵抗材料公式）</td></tr>
-        <tr><td>R02</td><td>問7</td><td>計算</td><td>不平衡ブリッジで、S 開放時の両端電圧 1 V（＝V<sub>th</sub>）が与えられ、S を閉じたときの 8 Ω の電流を問う</td><td>✅ 本ページ完結（解説 3節 <strong>例題②</strong>）／平衡条件は <span className="marker">6.2 ブリッジ</span></td></tr>
+        <tr><td>R02</td><td>問7</td><td>計算</td><td>不平衡ブリッジで、S 開放時の両端電圧 1 V（＝V<sub>th</sub>）が与えられ、S を閉じたときの 8 Ω の電流を問う</td><td>✅ 本ページ完結（解説 3節 <strong>例題②</strong>／学習 4節 <strong>ミルマン⑥</strong>）／平衡条件は <span className="marker">6.2 ブリッジ</span></td></tr>
         <tr><td>R01</td><td>問5</td><td>計算</td><td>直流回路の電位計算</td><td>✅ 本ページ完結（解説 5節 電位計算）</td></tr>
-        <tr><td>H30</td><td>問7</td><td>計算</td><td>スイッチ閉で電流が2倍になる条件から未知抵抗 R を逆算（重ね合わせ）</td><td>✅ 本ページ完結（解説 4節 重ね合わせ）</td></tr>
+        <tr><td>H30</td><td>問7</td><td>計算</td><td>スイッチ閉で電流が2倍になる条件から未知抵抗 R を逆算（重ね合わせ）</td><td>✅ 本ページ完結（解説 4節 重ね合わせ／学習 4節 <strong>ミルマン⑤</strong>＝拡張形1行）</td></tr>
+        <tr><td>H28</td><td>問5</td><td>計算</td><td>内部抵抗 0.1 Ω・起電力 9 V の電池4個を並列にした電源に 0.5 Ω 負荷。負荷の消費電力を問う</td><td>✅ 本ページ完結（学習 4節 <strong>ミルマン③</strong>）</td></tr>
         <tr><td>H24</td><td>問5</td><td>計算</td><td>電圧源回路を電流源回路へ等価変換したときの電流 I（=短絡電流）とコンダクタンス G の式を答える</td><td>✅ 本ページ完結（公式 4節 等価変換＋解説 9節 ノートン「短絡電流」）</td></tr>
       </tbody>
     </table>
     <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>→ 出題頻度: <strong>★★★★★</strong>（毎年度 2〜3 問・問5/6/7 最頻出。理論で最重要単元）</p>
 
-    <h2 id="related"><span className="h-num">6</span>関連項目</h2>
+    <h2 id="related"><span className="h-num">7</span>関連項目</h2>
     <SectionCheck pageId="dc-circuit" sectionId="related" />
     <ul>
       <li>交流の基礎（2.2）— オームの法則を複素数に拡張したものがインピーダンス</li>
@@ -18421,7 +18843,7 @@ const DcCircuitLearnTab = ({ onNav, switchTab }) => (
       <li>インダクタンス（3.1）— 直流定常状態で電圧ゼロ・双対の概念</li>
     </ul>
 
-    <h2 id="act-summary"><span className="h-num">7</span>🔄 弱点セクション再読</h2>
+    <h2 id="act-summary"><span className="h-num">8</span>🔄 弱点セクション再読</h2>
     <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
       △ / × / 未 のセクションを優先して再読しよう。理解度ボタンを更新すると自動で再集計される。
     </p>
@@ -18431,10 +18853,11 @@ const DcCircuitLearnTab = ({ onNav, switchTab }) => (
         { id: "solver-flow",   label: "1. 解法フロー" },
         { id: "examples",      label: "2. 例題" },
         { id: "r05-q6",        label: "3. R05上問6 解法カード（電圧源+電流源）" },
-        { id: "z-3conditions", label: "4. 3条件即答チェック（最大電力 vs 効率）" },
-        { id: "kakomon",       label: "5. 出題実績" },
-        { id: "related",       label: "6. 関連項目" },
-        { id: "exam-5sec",     label: "8. 本番5秒チェック" },
+        { id: "millman-drills", label: "4. ミルマンの定理 実戦6題" },
+        { id: "z-3conditions", label: "5. 3条件即答チェック（最大電力 vs 効率）" },
+        { id: "kakomon",       label: "6. 出題実績" },
+        { id: "related",       label: "7. 関連項目" },
+        { id: "exam-5sec",     label: "9. 本番5秒チェック" },
       ]}
       onJump={(id) => {
         location.hash = 'dc-circuit:learn';
@@ -18442,7 +18865,7 @@ const DcCircuitLearnTab = ({ onNav, switchTab }) => (
       }}
     />
 
-    <h2 id="exam-5sec"><span className="h-num">8</span>本番5秒チェック（試験トリアージ）</h2>
+    <h2 id="exam-5sec"><span className="h-num">9</span>本番5秒チェック（試験トリアージ）</h2>
     <SectionCheck pageId="dc-circuit" sectionId="exam-5sec" />
     <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
       本番で<strong>直流回路が出た瞬間に開く3点</strong>。知識ではなく「最初に何を見るか」の手順で失点を防ぐ。
@@ -19999,9 +20422,7 @@ const RlcResonanceExplainTab = ({ onNav, switchTab }) => (
 
     <h2 id="h24-q7"><span className="h-num">9</span>過去問の文章で総ざらい（H24 問7・穴埋）</h2>
     <p style={{ fontSize: "13px", color: "var(--ink-soft)", margin: "0 0 10px" }}>
-      平成24年度 第三種電気主任技術者試験 理論 問7（電気技術者試験センター公表問題）／難易度 ★★☆☆☆。
-      <strong>R05上 問8 で同一問題がそのまま再出題</strong>された回で、このページの内容が6つの空欄になっている。
-      出題された文章を繰り返し読むこと自体が復習になるので、<strong>まず空欄を自分で埋めてから</strong>マーカーをタップして答え合わせをする。
+      難易度 ★★☆☆☆／<strong>R05上 問8 で同一問題がそのまま再出題</strong>。
     </p>
     <Callout variant="note" title="問題文（原文）— 黄色マーカーをタップすると解答が出る">
       <p>次の文章は，RLC 直列共振回路に関する記述である。</p>
@@ -22475,9 +22896,7 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
 
     <h2 id="h24-q3"><span className="h-num">9</span>過去問の文章で総ざらい（H24 問3・穴埋）</h2>
     <p style={{ fontSize: "13px", color: "var(--ink-soft)", margin: "0 0 10px" }}>
-      平成24年度 第三種電気主任技術者試験 理論 問3（電気技術者試験センター公表問題）／難易度 ★★★★☆。
-      このページで扱った内容が<strong>そのまま5つの空欄</strong>になった回。出題された文章を繰り返し読むこと自体が復習になるので、
-      <strong>まず空欄を自分で埋めてから</strong>マーカーをタップして答え合わせをする。
+      難易度 ★★★★☆。
     </p>
     <Callout variant="note" title="問題文（原文）— 黄色マーカーをタップすると解答が出る">
       <p>次の文章は，コイルのインダクタンスに関する記述である。ここで，鉄心の磁気飽和は，無視するものとする。</p>
