@@ -21362,26 +21362,28 @@ const ConceptQuizItem = ({ q, pageId, pageTitle, required }) => {
 /* ConceptQuizScore: 確認問題の回答結果を localStorage から集計して常時表示する。
    これが無いと「答えた記録が残らない」＝解いた本人が Check できない（柱5 PDCA の D 層が欠ける）。
    ConceptQuizItem が書込時に飛ばす 'section-check-changed' を購読して即時再集計する。
-   ※ pool は親の filter で毎 render 新配列になるため、依存配列には id 文字列を置く（配列を直接置くと無限ループ）。 */
-const ConceptQuizScore = ({ pageId, pool }) => {
-  const ids = pool.map(q => q.id).join(',');
+   ※ keys は親で毎 render 新配列になるため、依存配列には連結文字列を置く（配列を直接置くと無限ループ）。
+   キーの配列を受け取る形にしてあるのは、ミックス確認（テーマ横断で pageId が問ごとに違う）でも
+   同じ集計を使い回すため。テーマページは1ページ分、ミックスは引いた回の分を渡す。 */
+const ConceptQuizScore = ({ quizKeys, title }) => {
+  const joined = quizKeys.join('|');
   const [recs, setRecs] = React.useState({});
   React.useEffect(() => {
     const refresh = () => {
       const r = {};
-      ids.split(',').filter(Boolean).forEach(id => {
+      joined.split('|').filter(Boolean).forEach(k => {
         try {
-          const raw = localStorage.getItem(`denken_check::riron_${pageId}::quiz::${id}`);
-          r[id] = raw ? (JSON.parse(raw) || {}) : null;
-        } catch (e) { r[id] = null; }
+          const raw = localStorage.getItem(k);
+          r[k] = raw ? (JSON.parse(raw) || {}) : null;
+        } catch (e) { r[k] = null; }
       });
       setRecs(r);
     };
     refresh();
     window.addEventListener('section-check-changed', refresh);
     return () => window.removeEventListener('section-check-changed', refresh);
-  }, [pageId, ids]);
-  const total = pool.length;
+  }, [joined]);
+  const total = quizKeys.length;
   let ok = 0, review = 0, ng = 0, over = 0, latest = '';
   Object.keys(recs).forEach(id => {
     const r = recs[id];
@@ -21398,7 +21400,7 @@ const ConceptQuizScore = ({ pageId, pool }) => {
   return (
     <div style={{ border: '1px solid var(--rule)', borderRadius: 8, padding: '10px 12px', margin: '0 0 12px', background: 'var(--bg-elev)' }}>
       <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
-        📈 あなたの記録 — 全 {total} 問中 {answered} 問 回答済み
+        {title || '📈 あなたの記録'} — 全 {total} 問中 {answered} 問 回答済み
       </div>
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: 12, marginBottom: 6 }}>
         <span><strong style={{ color: '#16a34a' }}>◎ 正解 {ok}</strong></span>
@@ -21428,7 +21430,7 @@ const ConceptQuiz = ({ pageId, pageTitle }) => {
       <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: '0 0 12px' }}>
         <strong style={{ color: '#dc2626' }}>必須</strong>＝落とすと失点する頻出ポイント・<strong style={{ color: '#3b82f6' }}>任意</strong>＝解くと理解が深まる発展。間違えると<strong>間違いノート</strong>に自動集約され、後で弱点だけ復習できる。
       </p>
-      <ConceptQuizScore pageId={pageId} pool={pool} />
+      <ConceptQuizScore quizKeys={pool.map(q => `denken_check::riron_${pageId}::quiz::${q.id}`)} />
       <p style={{ fontSize: 12, margin: '0 0 14px' }}>
         <a href="denken-hoki-wiki.html#chokuzen-machigai" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>
           📕 間違えた問題・⚠過信した問題を「間違いノート」でまとめて復習 →
@@ -21469,6 +21471,14 @@ const MixedQuiz = ({ onNav }) => {
         {items.length ? ('別の' + MIXED_QUIZ_COUNT + '問を引く') : (MIXED_QUIZ_COUNT + '問スタート')}
       </button>
       <div style={{ marginTop: 12 }}>
+        {/* 引いた回の成績。テーマページ側の記録と同じキーを読むので、ここで解いた分も
+            各テーマの「あなたの記録」に反映される（二重集計ではなく同一 SoT の別ビュー）。 */}
+        {items.length > 0 && (
+          <ConceptQuizScore
+            quizKeys={items.map(q => `denken_check::riron_${q.wikiPageId}::quiz::${q.id}`)}
+            title={'📈 この' + items.length + '問の結果'}
+          />
+        )}
         {items.map((q, i) => (
           <div key={'mix-' + q.id + '-' + i}>
             <div style={{ fontSize: 11, color: 'var(--ink-mute)', marginTop: 8 }}>{(i + 1) + ' / ' + items.length + '　テーマ: ' + q.topic}</div>
