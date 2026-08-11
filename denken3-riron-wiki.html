@@ -18233,10 +18233,12 @@ const MillmanFig = ({ branches, ariaLabel, caption, vLabel = "V", vSub = null })
               <line x1={x} y1={yResB} x2={x} y2={yB} stroke="var(--ink)" strokeWidth="1.8" />
               {b.kind === "isrc" ? (
                 <g>
-                  {/* 定電流源：丸の中に上向き矢印（節点 a へ電流を押し込む向き） */}
+                  {/* 定電流源：丸の中の矢印が電流の向き。down なら節点 a から電流を引き出す向き */}
                   <circle cx={x} cy={yT + 37} r="17" fill="var(--bg)" stroke="var(--accent)" strokeWidth="2" />
-                  <line x1={x} y1={yT + 47} x2={x} y2={yT + 29} stroke="var(--accent)" strokeWidth="2" />
-                  <path d={`M${x - 5},${yT + 33} L${x + 5},${yT + 33} L${x},${yT + 25} z`} fill="var(--accent)" />
+                  <line x1={x} y1={b.down ? yT + 27 : yT + 47} x2={x} y2={b.down ? yT + 45 : yT + 29} stroke="var(--accent)" strokeWidth="2" />
+                  <path d={b.down
+                    ? `M${x - 5},${yT + 41} L${x + 5},${yT + 41} L${x},${yT + 49} z`
+                    : `M${x - 5},${yT + 33} L${x + 5},${yT + 33} L${x},${yT + 25} z`} fill="var(--accent)" />
                   <line x1={x} y1={yT + 54} x2={x} y2={yResT} stroke="var(--ink)" strokeWidth="1.8" />
                   <text x={x - 24} y={yT + 42} textAnchor="end" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">{b.e}</text>
                 </g>
@@ -18270,6 +18272,9 @@ const MillmanFig = ({ branches, ariaLabel, caption, vLabel = "V", vSub = null })
         <line x1={vx} y1={yT + 10} x2={vx} y2={yB - 10} stroke="var(--accent)" strokeWidth="1.6" strokeDasharray="5 4" />
         <path d={`M${vx - 5},${yT + 14} L${vx + 5},${yT + 14} L${vx},${yT + 4} z`} fill="var(--accent)" />
         <path d={`M${vx - 5},${yB - 14} L${vx + 5},${yB - 14} L${vx},${yB - 4} z`} fill="var(--accent)" />
+        {/* 基準極性を明示（a 側が＋・b 側が−）。両向き矢印だけだと符号の基準が読めない */}
+        <text x={vx - 8} y={yT + 20} textAnchor="end" fontSize="12" fontWeight="700" fill="var(--accent-ink)">＋</text>
+        <text x={vx - 8} y={yB - 12} textAnchor="end" fontSize="12" fill="var(--ink-mute)">−</text>
         <text x={vx + 10} y={(yT + yB) / 2 + 5} textAnchor="start" fontSize="14" fontWeight="700" fill="var(--accent-ink)">{vNode}</text>
       </svg>
       {caption && (
@@ -18317,6 +18322,32 @@ const DcCircuitLearnTab = ({ onNav, switchTab }) => (
 
     <h2 id="r05-q6"><span className="h-num">3</span>R05上問6 解法カード — 電圧源と電流源が混在する回路</h2>
     <SectionCheck pageId="dc-circuit" sectionId="r05-q6" />
+    <MillmanFig
+      branches={[
+        { tag: "①", e: "4 V", r: "5 Ω" },
+        { tag: "②", e: null, r: "3 Ω" },
+        { tag: "③", e: "2 A", kind: "isrc", r: null, down: true },
+      ]}
+      vLabel="V" vSub="a"
+      ariaLabel="節点 a と接地の間に3つの枝が並列に並んだ直流回路。左の枝は起電力4ボルトの電源と5オームの抵抗R2の直列で、電源のプラス極が節点a側。中央の枝は3オームの抵抗R1のみ。右の枝は定電流源2アンペアで、矢印は下向き＝節点aから電流を引き出す向き。R1に流れる電流を求める"
+      caption={<>① が E＝4 V ＋ R<sub>2</sub>＝5 Ω の直列枝、② が R<sub>1</sub>＝3 Ω、③ が電流源 I<sub>s</sub>＝2 A（<strong>矢印は下向き＝節点 a から電流を引き出す向き</strong>）。3つとも「節点 a と接地の間」に並んでいる＝ミルマン（節点方程式）がそのまま使える形。</>}
+    />
+    <Callout variant="tip" title="なぜ電流源の矢印が「下向き」なのか（図に向きが無いと答えが決まらない）">
+      <p style={{ margin: "0 0 6px" }}>
+        問題文には「並列に接続されている」としか書かれていないが、<strong>2つの電源の向きの関係が決まらないと答えは決まらない</strong>。上の図のように<strong>電圧源の＋を節点 a 側にとると</strong>、電流源の向きは公表正答から決まる（<Eq tex="V_a" inline /> は図のとおり <strong>a 側を＋</strong>にとった符号つきの値）：
+      </p>
+      <ul style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.9 }}>
+        <li><strong>矢印が下向き</strong>（節点 a から 2 A を引き出す）→ <Eq tex="V_a=\dfrac{\frac{4}{5}-2}{\frac{1}{5}+\frac{1}{3}}=-2.25\ \text{V}" inline />、<Eq tex="|I_{R_1}|=\dfrac{2.25}{3}=0.75\ \text{A}" inline /> ＝ <strong>選択肢⑤に一致</strong></li>
+        <li>矢印が上向き（節点 a へ押し込む）→ <Eq tex="V_a=+5.25\ \text{V}" inline />、<Eq tex="|I_{R_1}|=1.75\ \text{A}" inline /> ＝ <strong>選択肢に無い</strong></li>
+      </ul>
+      <p style={{ margin: "6px 0", fontSize: 13 }}>
+        つまり<strong>「2つの駆動が R₁ で打ち消し合う」</strong>のが本問の設定。下の重ね合わせ解が <Eq tex="I=I_2-I_1" inline /> と<strong>引き算</strong>になっているのはこのため。<strong>足し算にした瞬間 1.75 A になり、選択肢のどれにも当たらない</strong>ので、本番でも「選択肢に無い＝2つの電源の向きの関係を取り違えた」と気づける。
+      </p>
+      <p style={{ margin: "6px 0 0", fontSize: 12.5, color: "var(--ink-soft)" }}>
+        ※ 決まるのは<strong>2つの電源の相対的な向き</strong>であって、絶対的な極性ではない。<strong>電圧源の＋を下、電流源を上向き</strong>にした図（＝全部を一斉に反転した図）でも <Eq tex="|I_{R_1}|=0.75" inline /> A になる。本ページは「電圧源の＋が上」を作図の約束として選んでいる。<br />
+        ※ この 0.75 A は<strong>大きさ</strong>。図の向き（a → 接地を正）で符号をつけると <Eq tex="I_{R_1}=-0.75" inline /> A ＝ 実際は<strong>接地側から節点 a へ向かって</strong>流れている。選択肢は大きさで問うているので答えは 0.75 A で正しい。
+      </p>
+    </Callout>
     <ExamQuestion
       year="令和5年上期"
       qNum="6"
