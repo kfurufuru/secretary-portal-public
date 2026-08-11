@@ -18225,10 +18225,10 @@ const MillmanFig = ({ branches, ariaLabel, caption, vLabel = "V", vSub = null })
                   <line x1={x} y1={yT + 8} x2={x + 13} y2={yT + 22} stroke="var(--warn)" strokeWidth="2.4" strokeLinecap="round" />
                   <circle cx={x} cy={yT + 24} r="3" fill="var(--ink)" />
                   <text x={x + 18} y={yT + 16} textAnchor="start" fontSize="12.5" fontWeight="700" fill="var(--warn)">S</text>
-                  <line x1={x} y1={yT + 24} x2={x} y2={b.e == null && b.kind !== "isrc" ? yResT : yBatT - 8} stroke="var(--ink)" strokeWidth="1.8" />
+                  <line x1={x} y1={yT + 24} x2={x} y2={b.e == null && b.kind !== "isrc" ? yResT : yBatT} stroke="var(--ink)" strokeWidth="1.8" />
                 </g>
               ) : (
-                <line x1={x} y1={yT} x2={x} y2={b.e == null && b.kind !== "isrc" ? yResT : yBatT - 8} stroke="var(--ink)" strokeWidth="1.8" />
+                <line x1={x} y1={yT} x2={x} y2={b.e == null && b.kind !== "isrc" ? yResT : yBatT} stroke="var(--ink)" strokeWidth="1.8" />
               )}
               <line x1={x} y1={yResB} x2={x} y2={yB} stroke="var(--ink)" strokeWidth="1.8" />
               {b.kind === "isrc" ? (
@@ -18261,6 +18261,18 @@ const MillmanFig = ({ branches, ariaLabel, caption, vLabel = "V", vSub = null })
                 </g>
               ) : (
                 <line x1={x} y1={yResT} x2={x} y2={yResB} stroke="var(--ink)" strokeWidth="1.8" />
+              )}
+              {/* 枝を流れる電流の基準向き（cur を指定した枝だけ）。設問が電流の「組」を
+                  問う問題では、矢印が無いと符号つきの答えが定義できない */}
+              {b.cur && (
+                <g>
+                  <line x1={x + 11} y1={b.curDown ? yResB + 6 : yB - 6} x2={x + 11} y2={b.curDown ? yB - 14 : yResB + 14}
+                        stroke="var(--ok)" strokeWidth="1.8" />
+                  <path d={b.curDown
+                    ? `M${x + 7},${yB - 14} L${x + 15},${yB - 14} L${x + 11},${yB - 6} z`
+                    : `M${x + 7},${yResB + 14} L${x + 15},${yResB + 14} L${x + 11},${yResB + 6} z`} fill="var(--ok)" />
+                  <text x={x + 19} y={(yResB + yB) / 2 + 4} textAnchor="start" fontSize="12.5" fontWeight="700" fill="var(--ok)">{b.cur}</text>
+                </g>
               )}
               {/* 節点ドット */}
               <circle cx={x} cy={yT} r="3.6" fill="var(--ink)" />
@@ -18374,13 +18386,16 @@ const DcCircuitLearnTab = ({ onNav, switchTab }) => (
     <ExamAnswer
       correct="⑤ 0.75"
       explanations={[
-        { choice: "①", mark: "×", reason: "0.35 は分流比または向きの取り違えによる近接値" },
-        { choice: "②", mark: "×", reason: "0.45 は分流の分子(R₂)を取り違えた等の誤り" },
-        { choice: "③", mark: "×", reason: "0.55 は I₁ と I₂ の合成を誤った近接値" },
-        { choice: "④", mark: "×", reason: "0.65 は向き(加算/減算)を取り違えた誤り" },
+        { choice: "①", mark: "×", reason: "0.35 — 選択肢は 0.35〜0.75 の 0.1 刻みの等間隔ダミー。この値に至る誤計算経路は再現できない" },
+        { choice: "②", mark: "×", reason: "0.45 — 同上。なお「分流の分子を R₁ に取り違える」と I₂ = 2×3/8 = 0.75 A となり合成は 0.25 A（引き算）か 1.25 A（足し算）で、0.45 A にはならない" },
+        { choice: "③", mark: "×", reason: "0.55 — 同上（等間隔ダミー）" },
+        { choice: "④", mark: "×", reason: "0.65 — 同上。なお「向き（加算/減算）を取り違える」と I₁ + I₂ = 0.5 + 1.25 = 1.75 A で、そもそも選択肢に無い（上の tip 参照）" },
         { choice: "⑤", mark: "○", reason: "I₂ − I₁ = 1.25 − 0.5 = 0.75 A（電流源寄与1.25Aと電圧源寄与0.5Aが R₁ で逆向き）" },
       ]}
     />
+    <p style={{ fontSize: 12.5, color: "var(--ink-soft)", margin: "8px 0 0" }}>
+      ※ 誤答選択肢に<strong>もっともらしい誤計算の理由を付けない</strong>のは意図的。本問の 0.35〜0.75 は 0.1 刻みの等間隔で、<strong>特定の誤りに対応させて作られていない</strong>。「この値になったから、たぶんあの誤り」と逆算する読み方は、<strong>本番で自分の誤りを誤診させる</strong>ので取らない。
+    </p>
     <Callout variant="warn" title="本問のひっかけポイント（5項目）">
       <ol>
         <li><strong>電源のゼロ化を逆にする</strong>：電流源→開放・電圧源→短絡。逆にすると値が全部破綻</li>
@@ -18424,7 +18439,10 @@ const DcCircuitLearnTab = ({ onNav, switchTab }) => (
 
     <Callout variant="info" title="使えるかを3秒で判定する — 見るのは1点だけ">
       <p style={{ margin: "0 0 6px" }}>
-        <strong>「電源も抵抗も、全部が同じ2点（上のレールと下のレール）の間に横並びになっているか」</strong>——これだけ。なっていれば使える。下の6題は全部この形に描き直せる。
+        <strong>「電源も抵抗も、全部が同じ2点（上のレールと下のレール）の間に横並びになっているか」</strong>——これだけ。なっていれば使える。下の <strong>①〜⑤ はそのままこの形に描き直せる</strong>（⑥ だけは負荷を外した各部分ごとにこの形になる＝境界例）。
+      </p>
+      <p style={{ margin: "6px 0 0", fontSize: 12.5, color: "var(--ink-soft)" }}>
+        正確には「各枝が<strong>『電圧源＋有限の直列抵抗』か、抵抗だけか、定電流源か</strong>のどれかで書ける」ことまで要る。内部抵抗ゼロの理想電圧源だけの枝は <Eq tex="E/R" inline /> が書けないので、この式には乗らない（電験3種の出題では、電源には必ず直列抵抗か内部抵抗が付いている）。
       </p>
       <p style={{ margin: 0, fontSize: 13, color: "var(--ink-soft)" }}>
         逆に、<strong>他の枝がつながっている中間節点</strong>がある回路（＝橋渡しの枝に電流が流れている状態）は、1本の式では閉じない。⑥ がその境界例。<br />
@@ -18460,16 +18478,16 @@ const DcCircuitLearnTab = ({ onNav, switchTab }) => (
     <h3>② H20 問7 ＝ R06下 問6 <span style={{ fontSize: "0.8em", color: "var(--ink-soft)" }}>★★☆☆☆</span> — 逆極性の符号。ここが最頻の失点源</h3>
     <MillmanFig
       branches={[
-        { tag: "①", e: "4 V", r: "4 Ω" },
-        { tag: "②", e: "2 V", r: "2 Ω", flip: true },
-        { tag: "③", e: null, r: "5 Ω" },
+        { tag: "①", e: "4 V", r: "4 Ω", cur: "I₁" },
+        { tag: "②", e: "2 V", r: "2 Ω", flip: true, cur: "I₂", curDown: true },
+        { tag: "③", e: null, r: "5 Ω", cur: "I₃", curDown: true },
       ]}
-      ariaLabel="節点 a と基準 b の間に3つの枝が並列に並んだ直流回路。左の枝は起電力4ボルトの電源と4オームの抵抗の直列で節点a側がプラス極。中央の枝は起電力2ボルトの電源と2オームの抵抗の直列だが極性が逆で基準b側がプラス極。右の枝は5オームの抵抗のみ。各抵抗を流れる電流を求める"
-      caption="② の電源だけ極性が逆（＋が下）。ミルマンの分子ではこの枝が −2/2 として入る。図の＋−を見ずに全部足すとここで壊れる。"
+      ariaLabel="節点 a と基準 b の間に3つの枝が並列に並んだ直流回路。左の枝は起電力4ボルトの電源と4オームの抵抗の直列で節点a側がプラス極、電流I1の基準向きは下から節点aへ向かう上向き。中央の枝は起電力2ボルトの電源と2オームの抵抗の直列だが極性が逆で基準b側がプラス極、電流I2の基準向きは節点aから下へ向かう下向き。右の枝は5オームの抵抗のみで電流I3の基準向きは下向き。各抵抗を流れる電流を求める"
+      caption={<>② の電源だけ極性が逆（＋が下）。ミルマンの分子ではこの枝が −2/2 として入る。図の＋−を見ずに全部足すとここで壊れる。<strong>緑の矢印が I₁ I₂ I₃ の基準向き</strong>（① だけ上向き＝ループに沿って取ってある）。</>}
     />
     <p style={{ margin: "10px 0 0" }}>
       <strong>問</strong>：図の回路において、3つの抵抗を流れる電流 <Eq tex="I_1,\ I_2,\ I_3" inline /> [A] の組合せとして正しいものはどれか。<br />
-      <span style={{ color: "var(--ink-soft)" }}>(選択肢は5組。正しい組は <Eq tex="I_1=1,\ I_2=1,\ I_3=0" inline />)</span>
+      <span style={{ color: "var(--ink-soft)" }}>(選択肢は <Eq tex="I_1,\ I_2,\ I_3" inline /> の5通りの組合せ。図の緑の矢印が各電流の基準向き)</span>
     </p>
     <details style={{ marginTop: 8, padding: "10px 14px", background: "var(--bg-elev)", border: "1px solid var(--rule)", borderRadius: 6 }}>
       <summary style={{ cursor: "pointer", fontWeight: 600 }}>解答（0 V を先に見抜くと以降の計算が消える）</summary>
@@ -18484,7 +18502,7 @@ const DcCircuitLearnTab = ({ onNav, switchTab }) => (
       </p>
       <p style={{ margin: "6px 0 0" }}><strong>正答は <Eq tex="I_1=1,\ I_2=1,\ I_3=0" inline /></strong>（H20 では選択肢 (3)・R06下 では選択肢 (4)）。</p>
       <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--ink-soft)" }}>
-        ※ この 1 A は<strong>ループを一巡する1つの電流</strong>。節点 a を基準に向きを見ると、①の枝は<strong>下から a へ</strong>、②の枝は<strong>a から下へ</strong>流れており、2枝の電流は互いに逆向き。<strong>「両方 ＋1 A」なのは図の矢印がループに沿って描かれているから</strong>で、同じ向きに2 A 流れているわけではない。
+        ※ この 1 A は<strong>ループを一巡する1つの電流</strong>。実際の向きは、①の枝が<strong>下から節点 a へ</strong>、②の枝が<strong>節点 a から下へ</strong>で、2枝は互いに逆向きに流れている。<strong>両方が ＋1 A になるのは、図の緑の矢印（基準向き）を①だけ上向きに取って、ループに沿わせているから</strong>。もし3本とも下向きを正に取れば <Eq tex="I_1=-1,\ I_2=+1,\ I_3=0" inline /> となる。<strong>「同じ向きに 2 A 流れている」わけではない</strong>。
       </p>
       <Callout variant="warn" title="この2問は「そのまま再出題」だが、正答番号は違う">
         <p style={{ margin: 0 }}>
@@ -18581,7 +18599,7 @@ const DcCircuitLearnTab = ({ onNav, switchTab }) => (
       </p>
       <Callout variant="warn" title="「電流源があるとミルマンは使えない」は半分しか正しくない">
         <p style={{ margin: 0 }}>
-          ミルマンの<strong>標準形</strong>（<Eq tex="\sum E/R \div \sum 1/R" inline />）は「電圧源＋直列抵抗」の枝だけを前提にしている。しかし定理の正体は<strong>節点での KCL</strong>なので、<strong>同じ2点間に並列に入っている定電流源は、分子にその電流をそのまま足すだけ</strong>でよい（向きが逆なら引く）。<strong>本問の公表解説は重ね合わせで図を2枚描いている</strong>が、拡張形なら式1本で終わる。
+          ミルマンの<strong>標準形</strong>（<Eq tex="\sum E/R \div \sum 1/R" inline />）は「電圧源＋直列抵抗」の枝だけを前提にしている。しかし定理の正体は<strong>節点での KCL</strong>なので、<strong>同じ2点間に並列に入っている定電流源は、分子にその電流をそのまま足すだけ</strong>でよい（向きが逆なら引く）。<strong>電験王の解説は重ね合わせで図を2枚描いている</strong>（試験センターが公表するのは正答のみで、解説は公表されない）が、拡張形なら式1本で終わる。
         </p>
       </Callout>
     </details>
@@ -18710,7 +18728,7 @@ const DcCircuitLearnTab = ({ onNav, switchTab }) => (
     </p>
     <Callout variant="info" title="ミルマンが本来の主戦場とする「三相不平衡の中性点電位」について">
       <p style={{ margin: 0 }}>
-        ミルマンは本来、<strong>三相3線式・不平衡負荷の中性点電位</strong>を求める道具として有名だが、<strong>電験3種の出題は今回の調査範囲では確認できていない</strong>（確認できたのは電験1種の出題）。3種の三相不平衡は<strong>中性線のある4線式</strong>で出ることが多く、その場合は各相を独立した単相回路として扱える。ここは断定せず、<strong>未確認のまま置く</strong>。
+        ミルマンは本来、<strong>三相3線式・不平衡負荷の中性点電位</strong>を求める道具として有名だが、<strong>電験3種の出題は今回の調査範囲では確認できていない</strong>（確認できたのは電験1種の出題）。中性線のある<strong>4線式</strong>なら各相を独立した単相回路として扱えるので、ミルマンを持ち出さずに解ける。ここは断定せず、<strong>未確認のまま置く</strong>。
       </p>
     </Callout>
 
