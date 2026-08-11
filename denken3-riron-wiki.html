@@ -21240,7 +21240,7 @@ const ConceptQuizItem = ({ q, pageId, pageTitle, required }) => {
         <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, color: '#fff', background: required ? '#dc2626' : '#3b82f6' }}>{required ? '必須' : '任意'}</span>
         {(q.tags || []).map(t => (<span key={t} style={{ fontSize: 11, color: 'var(--ink-soft)' }}>{t}</span>))}
         {q.avgRate && (<span style={{ fontSize: 11, color: 'var(--ink-mute)' }}>正答率 {q.avgRate}</span>)}
-        {prev && (<span style={{ fontSize: 11, color: 'var(--ink-mute)' }}>· 前回: {prev.status === 'understood' ? '○正解' : '×不正解'}</span>)}
+        {prev && prev.status && (<span style={{ fontSize: 11, color: 'var(--ink-mute)' }}>· 前回: {prev.status === 'understood' ? '◎正解' : prev.status === 'review' ? '△要復習' : '×不正解'}{prev.reviewCount > 1 ? `（${prev.reviewCount}回目）` : ''}</span>)}
       </div>
       <p style={{ margin: '0 0 10px', lineHeight: 1.7 }}><strong>Q.</strong> {q.q}</p>
       {!revealed && (
@@ -21310,6 +21310,64 @@ const ConceptQuizItem = ({ q, pageId, pageTitle, required }) => {
   );
 };
 
+/* ConceptQuizScore: 確認問題の回答結果を localStorage から集計して常時表示する。
+   これが無いと「答えた記録が残らない」＝解いた本人が Check できない（柱5 PDCA の D 層が欠ける）。
+   ConceptQuizItem が書込時に飛ばす 'section-check-changed' を購読して即時再集計する。
+   ※ pool は親の filter で毎 render 新配列になるため、依存配列には id 文字列を置く（配列を直接置くと無限ループ）。 */
+const ConceptQuizScore = ({ pageId, pool }) => {
+  const ids = pool.map(q => q.id).join(',');
+  const [recs, setRecs] = React.useState({});
+  React.useEffect(() => {
+    const refresh = () => {
+      const r = {};
+      ids.split(',').filter(Boolean).forEach(id => {
+        try {
+          const raw = localStorage.getItem(`denken_check::riron_${pageId}::quiz::${id}`);
+          r[id] = raw ? (JSON.parse(raw) || {}) : null;
+        } catch (e) { r[id] = null; }
+      });
+      setRecs(r);
+    };
+    refresh();
+    window.addEventListener('section-check-changed', refresh);
+    return () => window.removeEventListener('section-check-changed', refresh);
+  }, [pageId, ids]);
+  const total = pool.length;
+  let ok = 0, review = 0, ng = 0, over = 0, latest = '';
+  Object.keys(recs).forEach(id => {
+    const r = recs[id];
+    if (!r || !r.status) return;
+    if (r.status === 'understood') ok++;
+    else if (r.status === 'review') review++;
+    else ng++;
+    if (r.overconfident) over++;
+    if (r.updatedAt && r.updatedAt > latest) latest = r.updatedAt;
+  });
+  const answered = ok + review + ng;
+  const rate = answered ? Math.round((ok / answered) * 100) : 0;
+  const fmtDate = (iso) => { try { const d = new Date(iso); return (d.getMonth() + 1) + '/' + d.getDate(); } catch (e) { return ''; } };
+  return (
+    <div style={{ border: '1px solid var(--rule)', borderRadius: 8, padding: '10px 12px', margin: '0 0 12px', background: 'var(--bg-elev)' }}>
+      <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+        📈 あなたの記録 — 全 {total} 問中 {answered} 問 回答済み
+      </div>
+      <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: 12, marginBottom: 6 }}>
+        <span><strong style={{ color: '#16a34a' }}>◎ 正解 {ok}</strong></span>
+        <span><strong style={{ color: '#d97706' }}>△ 要復習 {review}</strong></span>
+        <span><strong style={{ color: '#dc2626' }}>× 不正解 {ng}</strong></span>
+        <span><strong style={{ color: 'var(--ink-soft)' }}>未回答 {total - answered}</strong></span>
+        {answered > 0 && <span style={{ color: 'var(--ink-soft)' }}>正解率 {rate}%（{ok}/{answered}）</span>}
+        {over > 0 && <span style={{ color: '#dc2626', fontWeight: 700 }}>⚠ 過信 {over}</span>}
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--ink-mute)', lineHeight: 1.6 }}>
+        ◎＝一発で正解 ／ △＝間違えた後に正解（丸暗記の疑いがあるので後日また出す） ／ ×＝不正解。
+        {latest && `　最終回答: ${fmtDate(latest)}。`}
+        記録はこの端末（ブラウザ）に保存され、別の端末・シークレットウィンドウには引き継がれない。
+      </div>
+    </div>
+  );
+};
+
 const ConceptQuiz = ({ pageId, pageTitle }) => {
   const pool = (RIRON_DAILY_POOL || []).filter(q => q.wikiPageId === pageId);
   if (!pool.length) return null;
@@ -21321,6 +21379,7 @@ const ConceptQuiz = ({ pageId, pageTitle }) => {
       <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: '0 0 12px' }}>
         <strong style={{ color: '#dc2626' }}>必須</strong>＝落とすと失点する頻出ポイント・<strong style={{ color: '#3b82f6' }}>任意</strong>＝解くと理解が深まる発展。間違えると<strong>間違いノート</strong>に自動集約され、後で弱点だけ復習できる。
       </p>
+      <ConceptQuizScore pageId={pageId} pool={pool} />
       <p style={{ fontSize: 12, margin: '0 0 14px' }}>
         <a href="denken-hoki-wiki.html#chokuzen-machigai" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>
           📕 間違えた問題・⚠過信した問題を「間違いノート」でまとめて復習 →
