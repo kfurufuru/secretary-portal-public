@@ -1373,13 +1373,13 @@ window.WIKI_DATA = {
     { term: "線間電圧", reading: "LINE VOLTAGE", letter: "さ",
       def: "三相回路の電線間の電圧 VL。Y結線では VL = √3·VP（相電圧の√3倍・位相は30°進み）、Δ結線では VL = VP。" },
     { term: "線電流", reading: "LINE CURRENT", letter: "さ",
-      def: "三相回路の電線を流れる電流 IL。Y結線では IL = IP、Δ結線では IL = √3·IP。電圧側と電流側のどちらに√3が付くかを結線で固定して覚える。" },
+      def: "三相回路の電線を流れる電流 IL。Y結線では IL = IP、Δ結線では IL = √3·IP（相電流の√3倍・位相は30°遅れ）。電圧側と電流側のどちらに√3が付くかを結線で固定して覚える。" },
     { term: "選択度", reading: "SELECTIVITY", letter: "さ",
       def: "共振回路が目的の周波数だけを選び出す鋭さ。Q が大きいほど帯域幅 B = f₀/Q が狭く選択度が高い。" },
     { term: "相電圧", reading: "PHASE VOLTAGE", letter: "さ",
-      def: "三相回路の1相分（負荷1個分）にかかる電圧 VP。Y結線では VP = VL/√3、Δ結線では VP = VL。" },
+      def: "三相回路の1相分（負荷1個分）にかかる電圧 VP。Y結線では VP = VL/√3（位相は線間より30°遅れ）、Δ結線では VP = VL。Δ電源にY負荷をつなぐときは、この÷√3・−30°で「等価Y電源」に置き換えてから1相分で解く。" },
     { term: "相電流", reading: "PHASE CURRENT", letter: "さ",
-      def: "三相回路の1相分（負荷1個分）を流れる電流 IP。Y結線では IP = IL、Δ結線では IP = IL/√3。" },
+      def: "三相回路の1相分（負荷1個分）を流れる電流 IP。Y結線では IP = IL、Δ結線では IP = IL/√3（位相は線電流より30°進み）。" },
     { term: "相互コンダクタンス", reading: "TRANSCONDUCTANCE", letter: "さ",
       def: "FETの増幅能力を表す gm = ΔID/ΔVGS [S]。電圧入力を電流出力に変換する係数で、BJTの電流増幅率 hFE に相当する立ち位置。" },
     { term: "ソレノイド", reading: "SOLENOID", letter: "さ",
@@ -8640,14 +8640,70 @@ const ThreePhaseFormulasTab = ({ onNav, switchTab }) => (
         <tr><th>項目</th><th>Y結線（星形）</th><th>Δ結線（三角形）</th></tr>
       </thead>
       <tbody>
-        <tr><td>線間電圧 V<sub>L</sub> と相電圧 V<sub>P</sub></td><td><Eq tex="V_L = \sqrt{3}\,V_P" inline /></td><td><Eq tex="V_L = V_P" inline /></td></tr>
-        <tr><td>線電流 I<sub>L</sub> と相電流 I<sub>P</sub></td><td><Eq tex="I_L = I_P" inline /></td><td><Eq tex="I_L = \sqrt{3}\,I_P" inline /></td></tr>
+        <tr><td>線間電圧 V<sub>L</sub> と相電圧 V<sub>P</sub></td><td><Eq tex="\dot V_L = \sqrt{3}\,\dot V_P \angle{+}30^\circ" inline /></td><td><Eq tex="\dot V_L = \dot V_P" inline /></td></tr>
+        <tr><td>線電流 I<sub>L</sub> と相電流 I<sub>P</sub></td><td><Eq tex="\dot I_L = \dot I_P" inline /></td><td><Eq tex="\dot I_L = \sqrt{3}\,\dot I_P \angle{-}30^\circ" inline /></td></tr>
         <tr><td>√3 が出る側</td><td><strong>電圧</strong></td><td><strong>電流</strong></td></tr>
+        <tr><td><strong>30° が動く向き</strong></td><td>線間電圧は相電圧より <strong>30° 進む</strong>（＋30°）</td><td>線電流は相電流より <strong>30° 遅れる</strong>（−30°）</td></tr>
         <tr><td>中性点</td><td>あり（接地可能）</td><td>なし（ループ）</td></tr>
         <tr><td>特徴</td><td><strong>高電圧側に有利</strong>（巻線には相電圧 V<sub>L</sub>/√3 しかかからず絶縁が軽い）・中性点接地ができる</td><td><strong>低電圧・大電流側に有利</strong>（巻線電流が線電流の 1/√3）・第3高調波の環流路になる・電動機巻線で多用</td></tr>
         <tr><td>三相電力</td><td colSpan={2} style={{ textAlign: "center" }}><Eq tex="P = \sqrt{3}\,V_L I_L \cos\varphi" inline />（Y/Δ 共通の形）</td></tr>
       </tbody>
     </table>
+
+    <Callout variant="warn" title="⚠ 変換は「√3 だけ」では終わらない — 30° も必ず動く（最重要）">
+      <p style={{ marginTop: 0 }}>相量 ⇔ 線量の乗り換えは <strong>大きさ（√3）と位相（±30°）がセット</strong>。大きさだけ直して角度を 0° のまま放置するのが、極形式で答える問題（R07上問15・H24問16）の最多失点。しかも<strong>電圧と電流で符号が逆</strong>になる。</p>
+      <table className="data-table" style={{ marginTop: 8 }}>
+        <thead><tr><th>変換</th><th>大きさ</th><th>位相</th><th>式</th></tr></thead>
+        <tbody>
+          <tr><td>Y電圧：相 → 線間</td><td>×√3</td><td><strong>＋30°</strong></td><td><Eq tex="\dot V_{ab} = \sqrt{3}\,\dot V_a \angle{+}30^\circ" inline /></td></tr>
+          <tr><td><strong>Y電圧：線間 → 相</strong></td><td>÷√3</td><td><strong>−30°</strong></td><td><Eq tex="\dot V_a = \dfrac{\dot V_{ab}}{\sqrt{3}} \angle{-}30^\circ" inline /></td></tr>
+          <tr><td>Δ電流：相 → 線</td><td>×√3</td><td><strong>−30°</strong></td><td><Eq tex="\dot I_a = \sqrt{3}\,\dot I_{ab} \angle{-}30^\circ" inline /></td></tr>
+          <tr><td><strong>Δ電流：線 → 相</strong></td><td>÷√3</td><td><strong>＋30°</strong></td><td><Eq tex="\dot I_{ab} = \dfrac{\dot I_a}{\sqrt{3}} \angle{+}30^\circ" inline /></td></tr>
+        </tbody>
+      </table>
+      <p style={{ margin: "8px 0 0", fontSize: 12.5, color: "var(--ink-soft)" }}>※ <strong>前提は「正相（相順 a-b-c）」＋矢印の向き</strong>。電流側の式は <strong>Δ負荷</strong>の標準向き（相電流を a→b・b→c・c→a、線電流を頂点へ<strong>流入</strong>）で書いている。<strong>Δ電源</strong>に使うときは「相電流を b→a・c→b・a→c（各巻線が端子へ送り出す向き）、線電流を頂点から<strong>流出</strong>」と<strong>両方まとめて反転</strong>させれば、符号が 2 回ひっくり返って同じ式がそのまま成り立つ（本ページの回路図はこの向き）。<strong>片方だけ</strong>反転させると位相が 180° ずれるので、問題の図の矢印を必ず先に確認する。大きさ（√3 倍）は向きの取り方によらない。</p>
+    </Callout>
+
+    <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+      <svg viewBox="0 0 500 246" role="img" aria-label="相量と線量の変換方向まとめ図。上段は電圧のY結線で、相電圧から線間電圧へは大きさ×√3で位相＋30度、線間電圧から相電圧へは÷√3で−30度。下段は電流のΔ結線で、相電流から線電流へは×√3で−30度、線電流から相電流へは÷√3で＋30度。電圧と電流で30度の符号が逆になることを示す" style={{ display: "block", width: "100%", height: "auto", maxWidth: "500px", margin: "0 auto" }}>
+        <defs>
+          <marker id="tp-cv-fwd" markerWidth="5" markerHeight="4" refX="4.44" refY="2" orient="auto">
+            <path d="M0,0 L5,2 L0,4 z" fill="var(--accent)" />
+          </marker>
+          <marker id="tp-cv-rev" markerWidth="5" markerHeight="4" refX="4.44" refY="2" orient="auto">
+            <path d="M0,0 L5,2 L0,4 z" fill="var(--warn)" />
+          </marker>
+        </defs>
+        <text x="250" y="18" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">電圧（Y結線）— 線間は相より 30° 進む</text>
+        <rect x="24" y="30" width="120" height="44" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="84" y="58" textAnchor="middle" fontSize="12.5" fill="var(--ink)">相電圧</text>
+        <line x1="152" y1="44" x2="240" y2="44" stroke="var(--accent)" strokeWidth="2" markerEnd="url(#tp-cv-fwd)" />
+        <text x="196" y="36" textAnchor="middle" fontSize="11.5" fontWeight="700" fill="var(--accent-ink)">×√3・＋30°</text>
+        <line x1="240" y1="64" x2="152" y2="64" stroke="var(--warn)" strokeWidth="2" markerEnd="url(#tp-cv-rev)" />
+        <text x="196" y="82" textAnchor="middle" fontSize="11.5" fontWeight="700" fill="var(--warn)">÷√3・−30°</text>
+        <rect x="248" y="30" width="128" height="44" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="312" y="58" textAnchor="middle" fontSize="12.5" fill="var(--ink)">線間電圧</text>
+        <text x="440" y="52" textAnchor="middle" fontSize="11.5" fill="var(--ink-mute)">Y は電圧に</text>
+        <text x="440" y="68" textAnchor="middle" fontSize="11.5" fill="var(--ink-mute)">√3 が付く</text>
+        <line x1="24" y1="98" x2="476" y2="98" stroke="var(--rule)" strokeWidth="1" />
+        <text x="250" y="122" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--warn)">電流（Δ結線）— 線は相より 30° 遅れる</text>
+        <rect x="24" y="134" width="120" height="44" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="84" y="162" textAnchor="middle" fontSize="12.5" fill="var(--ink)">相電流</text>
+        <line x1="152" y1="148" x2="240" y2="148" stroke="var(--accent)" strokeWidth="2" markerEnd="url(#tp-cv-fwd)" />
+        <text x="196" y="140" textAnchor="middle" fontSize="11.5" fontWeight="700" fill="var(--accent-ink)">×√3・−30°</text>
+        <line x1="240" y1="168" x2="152" y2="168" stroke="var(--warn)" strokeWidth="2" markerEnd="url(#tp-cv-rev)" />
+        <text x="196" y="186" textAnchor="middle" fontSize="11.5" fontWeight="700" fill="var(--warn)">÷√3・＋30°</text>
+        <rect x="248" y="134" width="128" height="44" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="312" y="162" textAnchor="middle" fontSize="12.5" fill="var(--ink)">線電流</text>
+        <text x="440" y="156" textAnchor="middle" fontSize="11.5" fill="var(--ink-mute)">Δ は電流に</text>
+        <text x="440" y="172" textAnchor="middle" fontSize="11.5" fill="var(--ink-mute)">√3 が付く</text>
+        <rect x="24" y="200" width="452" height="34" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1" />
+        <text x="250" y="221" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">同じ「÷√3」でも 電圧は −30°／Δ電流は ＋30° — 符号が逆なのが最大の罠</text>
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+        相量 ⇔ 線量の変換方向まとめ。<strong>大きさは √3、位相は 30°</strong> がセットで動く。Y の電圧は「線間が進む」、Δ の電流は「線が遅れる」で<strong>符号が逆</strong>。正相（a-b-c）と、上の Callout に書いた矢印の向きが前提。
+      </figcaption>
+    </figure>
 
     <Callout variant="note" title="📐 √3 の正体（暗記ではなく余弦定理）">
       <p>120° ずれた等しい大きさのベクトル 2 本の差は、余弦定理から <Eq tex="|V_a - V_b|^2 = V_p^2 + V_p^2 - 2V_p^2\cos 120° = 3V_p^2" inline /> ⇒ <Eq tex="|V_a - V_b| = \sqrt{3}\,V_p" inline />。Y は電圧差（線間 = 相 a − 相 b）、Δ は電流差（線 = 相 ab − 相 ca）として同じ計算が走る。「Y は電圧、Δ は電流」は<strong>「何の差を取っているか」</strong>の違い。</p>
@@ -8864,7 +8920,7 @@ const ThreePhaseExplainTab = ({ onNav, switchTab }) => (
         <tr>
           <td><strong>③ 電源 Δ・負荷 Y の混在で固まる</strong></td>
           <td>「Δ 電源だから電圧に √3 かける」と誤適用</td>
-          <td>線間電圧は結線によらず共通。√3 が入るのは <strong>Y 結線の相電圧</strong>（÷√3）を出すときだけ（セクション4）</td>
+          <td>線間電圧は結線によらず共通。√3 が入るのは <strong>Y 結線の相電圧</strong>（÷√3・<strong>同時に −30°</strong>）を出すときだけ。Δ電源は「等価Y電源」に置き換えて 1 相分で解く（セクション4）</td>
         </tr>
         <tr>
           <td><strong>④ Y-Δ 変換で 1/3 と 3 を逆にする</strong></td>
@@ -8998,6 +9054,127 @@ const ThreePhaseExplainTab = ({ onNav, switchTab }) => (
       <p>Y も Δ も <strong>√3 の出る理由は同じ</strong>（120° ベクトル差）。違うのは「差を取る対象」が電圧か電流か。Y は中性点があるから相電圧 ⇒ 線間電圧は<strong>電圧差</strong>。Δ は電源側が線間に直結し、相電流がループを流れるから線電流は<strong>電流差</strong>。</p>
     </Callout>
 
+    <h3>逆向き（線量 → 相量）は「÷√3」と「−30°」がセット</h3>
+    <p>試験で実際に使うのは<strong>逆向き</strong>のほうが多い。上の <Eq tex="\dot V_{ab} = \sqrt{3}\,\dot V_a \angle{+}30^\circ" inline /> を <Eq tex="\dot V_a" inline /> について解くと：</p>
+    <p style={{ textAlign: "center", margin: "10px 0" }}>
+      <Eq tex="\dot V_a = \frac{\dot V_{ab}}{\sqrt{3}}\angle{-}30^\circ" />
+    </p>
+    <p>Δ の電流も同様に <Eq tex="\dot I_a = \sqrt{3}\,\dot I_{ab}\angle{-}30^\circ" inline /> を解いて <Eq tex="\dot I_{ab} = \dfrac{\dot I_a}{\sqrt{3}}\angle{+}30^\circ" inline />。<strong>大きさを ÷√3 したら、位相も必ず動かす</strong>（電圧は −30°、Δ電流は ＋30° と符号が逆）。4パターンの一覧は<a href="#" onClick={(e) => { e.preventDefault(); switchTab('formulas'); }} style={{ textDecoration: "underline" }}>公式タブ セクション3</a>の変換表へ。</p>
+
+    <h3>Δ電源は「等価Y電源」に置き換えて 1 相分で解く</h3>
+    <p>
+      <strong>電源が Δ・負荷が Y</strong> の混在回路（R07上問15 ＝ H24問16）でつまずく最大の原因は、<strong>Δ電源の 200 V をそのまま Y 負荷の 1 相にかけてしまう</strong>こと。ここを外すと大きさも位相も両方ズレる。正しい手順は「<strong>負荷を Δ に変換する</strong>」のではなく「<strong>電源を、同じ線間電圧を作る等価 Y 電源に置き換える</strong>」。
+    </p>
+
+    <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+      <svg viewBox="0 0 520 246" role="img" aria-label="Δ結線電源とY結線負荷を三相3線で接続した回路図。左は頂点a・b・cのΔ電源で、a-b巻線の起電力Eabが200∠0度V、その巻線を相電流Iabが端子aから線路へ出る向きに流れる。3本の線a・b・cが右のY負荷につながり、a線には線電流I1が流れる。Y負荷は3つのインピーダンスZが中性点Nに集まる。中性線は引き出されていない三相3線式" style={{ display: "block", width: "100%", height: "auto", maxWidth: "520px", margin: "0 auto" }}>
+        <defs>
+          <marker id="tp-dy-acc" markerWidth="5" markerHeight="4" refX="4.44" refY="2" orient="auto">
+            <path d="M0,0 L5,2 L0,4 z" fill="var(--accent)" />
+          </marker>
+          <marker id="tp-dy-ink" markerWidth="5" markerHeight="4" refX="4.44" refY="2" orient="auto">
+            <path d="M0,0 L5,2 L0,4 z" fill="var(--ink)" />
+          </marker>
+        </defs>
+        <text x="112" y="20" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">Δ結線 電源</text>
+        <text x="400" y="18" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--ok)">Y結線 負荷</text>
+        {/* Δ 電源の三角形 */}
+        <line x1="112" y1="58" x2="166" y2="152" stroke="var(--accent)" strokeWidth="2.4" />
+        <line x1="166" y1="152" x2="58" y2="152" stroke="var(--accent)" strokeWidth="2.4" />
+        <line x1="58" y1="152" x2="112" y2="58" stroke="var(--accent)" strokeWidth="2.4" />
+        <circle cx="112" cy="58" r="3.5" fill="var(--ink)" />
+        <circle cx="166" cy="152" r="3.5" fill="var(--ink)" />
+        <circle cx="58" cy="152" r="3.5" fill="var(--ink)" />
+        <text x="104" y="52" textAnchor="end" fontSize="12" fill="var(--ink-soft)">a</text>
+        <text x="174" y="171" fontSize="12" fill="var(--ink-soft)">b</text>
+        <text x="40" y="171" fontSize="12" fill="var(--ink-soft)">c</text>
+        {/* 巻線 ab の相電流（起電力の向き＝端子 a から線路へ出る向き） */}
+        <line x1="150" y1="129" x2="132" y2="98" stroke="var(--warn)" strokeWidth="2.2" markerEnd="url(#tp-dy-acc)" />
+        <text x="126" y="124" textAnchor="end" fontSize="12" fontWeight="700" fill="var(--warn)">İab</text>
+        <text x="180" y="86" fontSize="12" fontWeight="700" fill="var(--accent-ink)">Ėab = 200∠0° V</text>
+        <text x="180" y="103" fontSize="11.5" fill="var(--ink-soft)">（Δなので相電圧 Ėa ＝ 線間電圧）</text>
+        {/* 3 本の線 */}
+        <line x1="112" y1="58" x2="112" y2="36" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="112" y1="36" x2="356" y2="36" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="166" y1="152" x2="232" y2="152" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="232" y1="152" x2="232" y2="116" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="232" y1="116" x2="356" y2="116" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="58" y1="152" x2="58" y2="196" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="58" y1="196" x2="356" y2="196" stroke="var(--ink)" strokeWidth="2" />
+        {/* 線電流 İ1 */}
+        <line x1="250" y1="26" x2="292" y2="26" stroke="var(--ink)" strokeWidth="2" markerEnd="url(#tp-dy-ink)" />
+        <text x="271" y="18" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">İ₁（線電流）</text>
+        {/* Y 負荷 */}
+        <rect x="356" y="26" width="44" height="20" rx="3" fill="var(--bg)" stroke="var(--ok)" strokeWidth="2" />
+        <rect x="356" y="106" width="44" height="20" rx="3" fill="var(--bg)" stroke="var(--ok)" strokeWidth="2" />
+        <rect x="356" y="186" width="44" height="20" rx="3" fill="var(--bg)" stroke="var(--ok)" strokeWidth="2" />
+        <text x="378" y="41" textAnchor="middle" fontSize="12" fill="var(--ink)">Z</text>
+        <text x="378" y="121" textAnchor="middle" fontSize="12" fill="var(--ink)">Z</text>
+        <text x="378" y="201" textAnchor="middle" fontSize="12" fill="var(--ink)">Z</text>
+        <line x1="400" y1="36" x2="444" y2="36" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="444" y1="36" x2="444" y2="116" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="400" y1="116" x2="444" y2="116" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="400" y1="196" x2="444" y2="196" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="444" y1="196" x2="444" y2="116" stroke="var(--ink)" strokeWidth="2" />
+        <circle cx="444" cy="116" r="3.5" fill="var(--ink)" />
+        <text x="452" y="112" fontSize="12" fontWeight="700" fill="var(--ink)">N</text>
+        <text x="360" y="152" textAnchor="middle" fontSize="11.5" fill="var(--ink-soft)">Z = 5√3 + j5 = 10∠30° Ω</text>
+        <text x="250" y="232" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">三相3線式 — Δ電源に中性点は無く、負荷の N も線路に出ていない</text>
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+        元の回路。Δ電源と Y 負荷は<strong>3 本の線だけ</strong>でつながっている（中性線なし）。だから両者が共有している量は<strong>線間電圧と線電流だけ</strong>で、Δ の相電流 İ<sub>ab</sub> と Y の相電圧はそれぞれの内部の話。<br />
+        <strong>※ 向きの約束（3 本すべて明示）</strong>：İ<sub>ab</sub> は巻線 a-b の中を <strong>b → a</strong>（起電力 Ė<sub>ab</sub> が端子 a へ送り出す向き）、İ<sub>ca</sub> は巻線 c-a の中を <strong>a → c</strong>（同じ約束で端子 c へ送り出す向き）、İ₁ は<strong>端子 a から負荷へ向かう向き</strong>。この 3 つで節点 a のキルヒホッフ電流則は İ<sub>ab</sub> = İ₁ + İ<sub>ca</sub>、すなわち <strong>İ₁ = İ<sub>ab</sub> − İ<sub>ca</sub></strong> となり、Δ<strong>負荷</strong>の標準向き（枝は a→b、線電流は流入）で書いた式と<strong>同じ形</strong>になる（枝と線の両方を反転したので符号が 2 回ひっくり返る）。<strong>片方だけ</strong>逆に取ると位相が 180° ずれる。
+      </figcaption>
+    </figure>
+
+    <p><strong>置き換えの条件は「線間電圧が同じであること」だけ</strong>。外から見えるのは線間電圧と線電流しかないので、線間電圧さえ一致していれば、中身が Δ でも Y でも負荷側の計算結果は変わらない。そこで「線間 → 相」の変換をそのまま使う：</p>
+    <p style={{ textAlign: "center", margin: "10px 0" }}>
+      <Eq tex="\dot E'_a = \frac{\dot E_{ab}}{\sqrt{3}}\angle{-}30^\circ = \frac{200}{\sqrt{3}}\angle{-}30^\circ \approx 115.47\angle{-}30^\circ\ \mathrm{V}" />
+    </p>
+    <p>この <Eq tex="\dot E'_a" inline /> は<strong>実在しない仮想の電源</strong>（Δ電源に中性点は無い）。それでも、外から見た線間電圧が元と同じなので、負荷側の答えは完全に一致する。あとは平衡三相なので<strong>1 相分だけ</strong>取り出せばよい。</p>
+
+    <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+      <svg viewBox="0 0 480 212" role="img" aria-label="1相分の等価回路。左に等価Y電源E'aが115.47∠−30度V、直列にインピーダンスZが10∠30度オーム、右端が中性点N。線電流I1が電源からZを通ってNへ流れ、I1は11.55∠−60度アンペアになる単相の閉回路" style={{ display: "block", width: "100%", height: "auto", maxWidth: "480px", margin: "0 auto" }}>
+        <defs>
+          <marker id="tp-1p-ink" markerWidth="5" markerHeight="4" refX="4.44" refY="2" orient="auto">
+            <path d="M0,0 L5,2 L0,4 z" fill="var(--ink)" />
+          </marker>
+        </defs>
+        <text x="240" y="20" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">計算用の等価回路（1相分）</text>
+        <circle cx="70" cy="110" r="26" fill="var(--bg)" stroke="var(--accent)" strokeWidth="2.4" />
+        <path d="M56,110 q7,-12 14,0 q7,12 14,0" fill="none" stroke="var(--accent)" strokeWidth="2" />
+        <line x1="70" y1="84" x2="70" y2="55" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="70" y1="55" x2="160" y2="55" stroke="var(--ink)" strokeWidth="2" />
+        <rect x="160" y="41" width="86" height="28" rx="3" fill="var(--bg)" stroke="var(--ok)" strokeWidth="2" />
+        <text x="203" y="60" textAnchor="middle" fontSize="12" fill="var(--ink)">Z = 10∠30° Ω</text>
+        <line x1="246" y1="55" x2="370" y2="55" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="370" y1="55" x2="370" y2="150" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="70" y1="136" x2="70" y2="150" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="70" y1="150" x2="370" y2="150" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="280" y1="44" x2="322" y2="44" stroke="var(--ink)" strokeWidth="2" markerEnd="url(#tp-1p-ink)" />
+        <text x="301" y="80" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">İ₁</text>
+        <circle cx="370" cy="150" r="3.5" fill="var(--ink)" />
+        <text x="378" y="146" fontSize="12" fontWeight="700" fill="var(--ink)">N</text>
+        <text x="120" y="180" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">Ė′ₐ = 115.47∠−30° V</text>
+        <text x="120" y="197" textAnchor="middle" fontSize="11.5" fill="var(--ink-soft)">（Δ電源を置き換えた等価Y電源）</text>
+        <text x="358" y="180" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--ink)">İ₁ = Ė′ₐ ÷ Z = 11.55∠−60° A</text>
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+        平衡三相なので<strong>1 相だけ取り出して単相回路として解ける</strong>（残り 2 相は ±120° 回すだけで、計算し直す必要がない）。Y 負荷では<strong>線電流＝相電流</strong>なので、この回路で求めた電流がそのまま求める線電流 İ₁ になる。
+      </figcaption>
+    </figure>
+
+    <Callout variant="note" title="この置き換えで求まるもの・求まらないもの（射程）">
+      <p style={{ marginTop: 0 }}>等価Y電源が保証するのは<strong>端子から外側（線間電圧・線電流・負荷側の電圧電流・電力）</strong>だけ。中性点 N は計算のために置いた仮想点で、実際の Δ 電源の中には存在しない。</p>
+      <p style={{ margin: "8px 0 0" }}>したがって <strong>Δ電源の巻線を流れる相電流 İ<sub>ab</sub> は、この 1 相分等価回路からは出てこない</strong>。(b) を答えるときは<strong>Δ の構造に戻って</strong>、線電流から <Eq tex="\dot I_{ab} = \dfrac{\dot I_1}{\sqrt{3}}\angle{+}30^\circ" inline /> で換算する（対称三相・対称巻線＝<strong>Δ ループの循環電流ゼロ</strong>という電験3種の標準前提のもとでの逆算。この前提の中身は下のセクション6の Δ-Y 比較 Callout に書いた）。「等価Y電源に直したから内部もY」と読み替えないこと。</p>
+    </Callout>
+
+    <Callout variant="warn" title="⚠ Δ電源の 200 V を、そのまま Y 負荷の 1 相にかけてはいけない">
+      <p style={{ marginTop: 0 }}>Δ結線では <Eq tex="V_{\text{相}} = V_{\text{線間}}" inline /> なので、<Eq tex="\dot E_a = 200\,\mathrm{V}" inline /> は<strong>Δ電源の内部から見れば相電圧</strong>だが、<strong>外（線路）から見れば線間電圧 200 V</strong>。一方 <strong>平衡</strong> Y 負荷の 1 相にかかるのは <Eq tex="V_{\text{相}} = V_{\text{線間}}/\sqrt{3}" inline /> しかない（<strong>不平衡</strong>の 3 線式では中性点電位がずれてこの関係は崩れる ⇒ <a href="#" onClick={(e) => { e.preventDefault(); switchTab('formulas'); }} style={{ textDecoration: "underline" }}>公式タブ セクション6</a>）。</p>
+      <p style={{ margin: "8px 0 0" }}>したがって <Eq tex="\dot I = \dfrac{200}{Z} = 20\ \mathrm{A}" inline /> <strong>としてはいけない</strong>（正解の 11.55 A の √3 倍になる）。</p>
+      <p style={{ margin: "8px 0 0" }}><strong>順番で覚える</strong>：<strong>①「線間電圧はいくらか」を電源側の結線で決める</strong>（Δ電源なら相電圧＝線間電圧で 200 V／Y電源で相電圧 200 V なら線間は 200√3 V ＝別問題）→ <strong>② その線間電圧から、負荷 1 相にかかる電圧を負荷側の結線で決める</strong>（Y なら ÷√3・−30°／Δ ならそのまま）。<strong>①と②を1段に潰して「Δだから 200 をそのまま使う」とやるのが失点源</strong>。</p>
+    </Callout>
+
     <h2 id="three-phase-power"><span className="h-num">5</span>三相電力 P = √3 V<sub>L</sub> I<sub>L</sub> cosφ の導出</h2>
     <SectionCheck pageId="three-phase" sectionId="three-phase-power" />
     <p>
@@ -9033,6 +9210,32 @@ const ThreePhaseExplainTab = ({ onNav, switchTab }) => (
     </Callout>
     <Callout variant="warn" title="不平衡では使えない">
       <p>Z_Y = Z_Δ / 3 は<strong>平衡三相専用</strong>。各相のインピーダンスが異なる不平衡負荷には一般の Y-Δ 変換式（3 抵抗の積/和）が必要だが、電験 3 種ではほぼ出ない。</p>
+    </Callout>
+
+    <Callout variant="warn" title="🚨 「Δ-Y変換」という言葉は 2 つある — 混同すると係数を取り違える">
+      <p style={{ marginTop: 0 }}>Δ電源・Y負荷の混在問題で「Δ-Y変換するんだよね」と言うとき、<strong>まったく別の 2 つの操作</strong>が同じ名前で呼ばれている。片方は <strong>÷√3 と −30°</strong>、もう片方は <strong>÷3 で位相は動かない</strong>。混ぜると答えが合わない。</p>
+      <table className="data-table" style={{ marginTop: 8 }}>
+        <thead><tr><th>種類</th><th>何を変換するか</th><th>目的</th><th>代表式</th><th>位相</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>① 電源の Δ → 等価 Y 表現</strong></td>
+            <td><strong>電源（電圧源）</strong></td>
+            <td>三相回路を 1 相分の単相回路にして解く</td>
+            <td><Eq tex="\dot V_Y = \dfrac{V_{LL}}{\sqrt{3}}\angle{-}30^\circ" inline /></td>
+            <td><strong>−30° 動く</strong></td>
+          </tr>
+          <tr>
+            <td><strong>② 負荷インピーダンスの Δ-Y 変換</strong></td>
+            <td><strong>負荷（インピーダンス）</strong></td>
+            <td>Δ負荷を Y に直して Y-Y 形にする</td>
+            <td><Eq tex="Z_Y = \dfrac{Z_\Delta}{3}" inline /></td>
+            <td><strong>動かない</strong>（実数倍）</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style={{ margin: "10px 0 0" }}><strong>R07上問15（Δ電源・Y負荷）の主解法で使うのは ① だけ</strong>。負荷はもともと Y なので、主解法のどの段でも ②（Z/3）は登場しない。「Δ が出てきたから 3 で割る」は誤り。</p>
+      <p style={{ margin: "8px 0 0", fontSize: 13 }}><strong>ただし ② の逆向き（Y → Δ）を使う別解もあり、独立検算に使える</strong>：Y 負荷を Δ 等価に直すと <Eq tex="Z_\Delta = 3Z_Y = 30\angle 30^\circ\ \Omega" inline />。この Δ 負荷の枝 a-b には線間電圧がそのままかかるので <Eq tex="\dot I_{ab} = \dfrac{200\angle 0^\circ}{30\angle 30^\circ} = 6.67\angle{-}30^\circ\ \mathrm{A}" inline />、線電流は <Eq tex="\dot I_1 = \sqrt{3}\,\dot I_{ab}\angle{-}30^\circ = 11.55\angle{-}60^\circ\ \mathrm{A}" inline /> で ① と完全に一致する。<strong>使い分けは「主解法は ①、検算は ② の逆向き」</strong>で、混ぜないこと。</p>
+      <p style={{ margin: "8px 0 0", fontSize: 12.5, color: "var(--ink-soft)" }}>※ この検算で出た <strong>Δ等価負荷の枝電流が、そのまま Δ電源巻線の相電流 İ<sub>ab</sub> になる</strong>のは、線路インピーダンスがゼロで、節点 a のキルヒホッフ電流則が電源側・負荷側の両方で <Eq tex="\dot I_1 = \dot I_{ab} - \dot I_{ca}" inline /> の同じ形になり、かつ <strong>Δ ループの循環電流がゼロ</strong>だから。ここで<strong>「循環電流ゼロ」は前提であって、回路図だけから導ける結論ではない</strong>：巻線インピーダンスをゼロと置いた理想 Δ 電源では、<Eq tex="\dot E_{ab} + \dot E_{bc} + \dot E_{ca} = 0" inline /> のためループの方程式が縮退し、循環電流は式の上で不定になる（線電流はどの値でも同じになるので、外からは区別できない）。電験3種は<strong>対称三相・対称巻線＝循環電流ゼロ</strong>を暗黙の前提に出題されるので、この前提で答えて構わない。</p>
     </Callout>
 
     <Callout variant="info" title="🧑 2 電力計法の原理（Blondel定理→公式導出・監修者 input 反映 2026-05-29）">
@@ -9098,7 +9301,7 @@ const ThreePhaseExplainTab = ({ onNav, switchTab }) => (
       <p>1 相分×3 が使えるのは<strong>平衡三相</strong>のみ。不平衡では各相を個別に計算してベクトル合成。中性線電流も 0 にならない。</p>
     </Callout>
     <Callout variant="warn" title="⑤ 電源Δ・負荷Y の混在で「Δ電源だから電圧に √3」と誤適用">
-      <p>線間電圧は結線によらず共通の基準。√3 が入るのは<strong>Y 結線の相電圧を出すとき（÷√3）</strong>だけ。Δ 電源 → 線間電圧そのまま → Y 負荷の相電圧は V<sub>L</sub> / √3。</p>
+      <p>線間電圧は結線によらず共通の基準。√3 が入るのは<strong>Y 結線の相電圧を出すとき（÷√3）</strong>だけ。Δ 電源 → 線間電圧そのまま → Y 負荷の相電圧は V<sub>L</sub> / √3。<strong>このとき位相も −30° 動く</strong>（極形式で答える問題では大きさだけ直すと不正解）。手順としては「Δ電源を、同じ線間電圧を出す<strong>等価Y電源</strong> <Eq tex="\dot E'_a = (V_L/\sqrt{3})\angle{-}30^\circ" inline /> に置き換えて 1 相分で解く」と覚える（セクション4）。</p>
     </Callout>
     <Callout variant="warn" title="⑥ 2 電力計法で負の指示を正のまま計算（R02 関連）">
       <p>平衡三相で力率が 0.5 未満になると、<strong>2台のうち一方が逆振れ</strong>する（どちらが負になるかは接続・相順・遅れ/進みで決まる。セクション6 の特殊ケース表の接続・相順 a-b-c・遅れ負荷なら W₂ 側）。「逆接続で測定した」と認識し、<strong>その指示を負値として公式に代入</strong>する。<Eq tex="P = W_1 + W_2" inline /> で負値のまま足し、tanφ も <Eq tex="\tan\varphi = \sqrt{3}(W_1-W_2)/(W_1+W_2)" inline /> に負値のまま反映させる。</p>
@@ -9148,6 +9351,42 @@ const ThreePhaseLearnTab = ({ onNav, switchTab }) => (
     <Callout variant="tip" title="このフローが効く理由">
       <p>過去 23 問の三相問題は <strong>「結線型 × 平衡 or 不平衡 × 求めるもの（電流/電力/力率）」</strong>の組合せでほぼ網羅できる。<strong>「公式を覚える」のではなく「結線判定 → 換算 → 適用」の手順を覚える</strong>と、新しい問題でも手が止まらない（R07上問15 / H30問15 / R05下問15 で実証済み）。</p>
     </Callout>
+
+    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent-ink)", margin: "16px 0 4px" }}>▼ 問題を見た瞬間に確認する順番（判断フロー）</p>
+    <figure style={{ margin: "6px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+      <svg viewBox="0 0 340 496" role="img" aria-label="三相交流問題の判断フロー。上から順に、①電源はYかΔか、②負荷はYかΔか、③与えられた電圧は相か線間か、④求める電流は相か線か、⑤平衡なら1相分に変換しΔ電源は等価Y電源へΔ負荷はZ割る3へ、⑥1相分でV割るZを計算、⑦必要なら√3と±30度で相量と線量を変換、の7ステップを矢印でつないだ縦型フロー図" style={{ display: "block", width: "100%", height: "auto", maxWidth: "340px", margin: "0 auto" }}>
+        <defs>
+          <marker id="tp-flow-arr" markerWidth="5" markerHeight="4" refX="4.06" refY="2" orient="auto">
+            <path d="M0,0 L5,2 L0,4 z" fill="var(--ink-mute)" />
+          </marker>
+        </defs>
+        <rect x="24" y="18" width="292" height="46" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="170" y="47" textAnchor="middle" fontSize="12.5" fill="var(--ink)">① 電源は Y か Δ か</text>
+        <line x1="170" y1="67" x2="170" y2="83" stroke="var(--ink-mute)" strokeWidth="2" markerEnd="url(#tp-flow-arr)" />
+        <rect x="24" y="86" width="292" height="46" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="170" y="115" textAnchor="middle" fontSize="12.5" fill="var(--ink)">② 負荷は Y か Δ か</text>
+        <line x1="170" y1="135" x2="170" y2="151" stroke="var(--ink-mute)" strokeWidth="2" markerEnd="url(#tp-flow-arr)" />
+        <rect x="24" y="154" width="292" height="46" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="170" y="183" textAnchor="middle" fontSize="12.5" fill="var(--ink)">③ 与えられた電圧は 相 か 線間 か</text>
+        <line x1="170" y1="203" x2="170" y2="219" stroke="var(--ink-mute)" strokeWidth="2" markerEnd="url(#tp-flow-arr)" />
+        <rect x="24" y="222" width="292" height="46" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="170" y="251" textAnchor="middle" fontSize="12.5" fill="var(--ink)">④ 求める電流は 相 か 線 か</text>
+        <line x1="170" y1="271" x2="170" y2="287" stroke="var(--ink-mute)" strokeWidth="2" markerEnd="url(#tp-flow-arr)" />
+        <rect x="24" y="290" width="292" height="46" rx="6" fill="var(--warn-soft)" stroke="var(--warn)" strokeWidth="1.5" />
+        <text x="170" y="310" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--ink)">⑤ 平衡なら 1 相分に変換</text>
+        <text x="170" y="327" textAnchor="middle" fontSize="11.5" fill="var(--ink-soft)">Δ電源 → 等価Y電源 ／ Δ負荷 → Z/3</text>
+        <line x1="170" y1="339" x2="170" y2="355" stroke="var(--ink-mute)" strokeWidth="2" markerEnd="url(#tp-flow-arr)" />
+        <rect x="24" y="358" width="292" height="46" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="170" y="387" textAnchor="middle" fontSize="12.5" fill="var(--ink)">⑥ 1 相分で V ÷ Z を計算</text>
+        <line x1="170" y1="407" x2="170" y2="423" stroke="var(--ink-mute)" strokeWidth="2" markerEnd="url(#tp-flow-arr)" />
+        <rect x="24" y="426" width="292" height="46" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1.5" />
+        <text x="170" y="446" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--accent-ink)">⑦ 必要なら √3 と ±30° で</text>
+        <text x="170" y="463" textAnchor="middle" fontSize="11.5" fill="var(--accent-ink)">相量 ⇔ 線量を変換</text>
+      </svg>
+      <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+        ①〜④は<strong>読み取り</strong>（式を書く前に問題文と図から確定させる）、⑤〜⑦が<strong>計算</strong>。詰まるときはたいてい ③ か ④ を飛ばしている。⑦ で <strong>√3 だけ直して 30° を忘れる</strong>のが極形式問題の最多失点。
+      </figcaption>
+    </figure>
 
     <h2 id="examples"><span className="h-num">2</span>例題（基礎3題）</h2>
     <SectionCheck pageId="three-phase" sectionId="examples" />
@@ -9204,13 +9443,57 @@ const ThreePhaseLearnTab = ({ onNav, switchTab }) => (
         { choice: "(b)(1)", mark: "×", reason: "大きさ 20.00 は (a) の誤答 20 A の流用。√3 分の 1（≈ 6.67 A）にしていない" },
       ]}
     />
-    <Callout variant="warn" title="本問のひっかけポイント（5項目）">
+    <Callout variant="tip" title="🔁 位相の流れ — なぜ −60° になるか（0° → −30° → −60°）">
+      <p style={{ marginTop: 0 }}>角度は<strong>2 段階で 30° ずつ遅れる</strong>。1 段目は「Δ電源の線間電圧 → Y 負荷の相電圧」という<strong>結線の乗り換え</strong>、2 段目は「誘導性インピーダンス Z = 10∠+30°」による<strong>負荷での遅れ</strong>。原因が別物なので、片方だけ入れる誤りが起きる。</p>
+      <figure style={{ margin: "10px 0 0", background: "transparent", padding: 0 }}>
+        <svg viewBox="0 0 420 300" role="img" aria-label="位相の流れの図。Δ電源の線間電圧200∠0度Vから、÷√3と−30度の変換でY負荷の相電圧115.47∠−30度Vになり、さらにZ=10∠+30度で割ることで30度遅れて線電流11.55∠−60度Aになる、3段の縦型フロー" style={{ display: "block", width: "100%", height: "auto", maxWidth: "420px", margin: "0 auto" }}>
+          <defs>
+            <marker id="tp-ph-arr" markerWidth="5" markerHeight="4" refX="4.06" refY="2" orient="auto">
+              <path d="M0,0 L5,2 L0,4 z" fill="var(--warn)" />
+            </marker>
+          </defs>
+          <rect x="70" y="18" width="280" height="48" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+          <text x="210" y="40" textAnchor="middle" fontSize="12" fill="var(--ink-soft)">Δ電源の線間電圧（＝Δの相電圧）</text>
+          <text x="210" y="59" textAnchor="middle" fontSize="13.5" fontWeight="700" fill="var(--ink)">200∠0° V</text>
+          <line x1="210" y1="68" x2="210" y2="104" stroke="var(--warn)" strokeWidth="2.2" markerEnd="url(#tp-ph-arr)" />
+          <text x="222" y="81" fontSize="11.5" fill="var(--ink-soft)">線間 → Y相電圧</text>
+          <text x="222" y="97" fontSize="11.5" fontWeight="700" fill="var(--warn)">÷√3、−30°</text>
+          <rect x="70" y="108" width="280" height="48" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+          <text x="210" y="130" textAnchor="middle" fontSize="12" fill="var(--ink-soft)">Y負荷の相電圧</text>
+          <text x="210" y="149" textAnchor="middle" fontSize="13.5" fontWeight="700" fill="var(--ink)">115.47∠−30° V</text>
+          <line x1="210" y1="158" x2="210" y2="194" stroke="var(--warn)" strokeWidth="2.2" markerEnd="url(#tp-ph-arr)" />
+          <text x="222" y="171" fontSize="11.5" fill="var(--ink-soft)">Z = 10∠+30° で割る</text>
+          <text x="222" y="187" fontSize="11.5" fontWeight="700" fill="var(--warn)">電流はさらに 30° 遅れる</text>
+          <rect x="70" y="198" width="280" height="48" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1.5" />
+          <text x="210" y="220" textAnchor="middle" fontSize="12" fill="var(--ink-soft)">線電流 İ₁</text>
+          <text x="210" y="239" textAnchor="middle" fontSize="13.5" fontWeight="700" fill="var(--accent-ink)">11.55∠−60° A</text>
+          <text x="210" y="270" textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--accent-ink)">0° → −30° → −60°</text>
+          <text x="210" y="290" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">前半の −30° は結線の乗り換え／後半の −30° は誘導性負荷</text>
+        </svg>
+        <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+          <Eq tex="Z = 5\sqrt3 + j5" inline /> は <Eq tex="+jX" inline /> ＝<strong>誘導性</strong>なので、電流は負荷の相電圧より 30° 遅れる。この 30° と、線間 → 相の 30° は<strong>別の原因の別の 30°</strong>（偶然どちらも遅れ側）。
+        </figcaption>
+      </figure>
+    </Callout>
+
+    <Callout variant="note" title="🔍 独立ルートで検算する（負荷を Δ 等価に直す）">
+      <p style={{ marginTop: 0 }}>上の解法は<strong>電源を等価 Y に置き換える</strong>ルート。逆に<strong>負荷を Δ 等価に置き換える</strong>ルートでも解け、答えが一致すれば計算違い・位相の取り違えをまとめて検出できる。</p>
+      <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.9 }}>
+        <li>Y 負荷を Δ 等価へ：<Eq tex="Z_\Delta = 3Z = 30\angle 30^\circ\ \Omega" inline />（<strong>ここで初めて「インピーダンスの Δ-Y 変換」を使う</strong>）</li>
+        <li>Δ 負荷の枝 a-b には線間電圧がそのままかかる：<Eq tex="\dot I_{ab} = \dfrac{200\angle 0^\circ}{30\angle 30^\circ} = 6.67\angle{-}30^\circ\ \mathrm{A}" inline /> ← <strong>(b) の答えが 1 行で出る</strong></li>
+        <li>線電流へ戻す：<Eq tex="\dot I_1 = \sqrt{3}\,\dot I_{ab}\angle{-}30^\circ = 11.55\angle{-}60^\circ\ \mathrm{A}" inline /> ← <strong>(a) と一致</strong></li>
+      </ol>
+      <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-soft)" }}>電力でも検算できる。<strong>丸めた 11.55 ではなく厳密値 <Eq tex="I_1 = 20/\sqrt{3}" inline /> を入れる</strong>と両式がぴたりと合う：<Eq tex="P = 3 I_1^2 \operatorname{Re}(Z) = 3\left(\tfrac{20}{\sqrt3}\right)^2\!\cdot 5\sqrt3 = 2000\sqrt3 \approx 3464\ \mathrm{W}" inline />、<Eq tex="P = \sqrt{3}\,V_L I_L\cos\varphi = \sqrt{3}\cdot 200\cdot \tfrac{20}{\sqrt3}\cdot \tfrac{\sqrt3}{2} = 2000\sqrt3 \approx 3464\ \mathrm{W}" inline />。<strong>丸めた 11.55 と 0.866 を電卓に入れると 3465〜3466 W になる</strong>が、これは丸め誤差で、選択肢の判別には影響しない（≈ 3.46 kW）。</p>
+    </Callout>
+
+    <Callout variant="warn" title="本問のひっかけポイント（6項目）">
       <ol>
         <li><strong>Δ電源の「相電圧」＝線間電圧</strong>: Δ結線は相電圧と線間電圧が等しい（V_L = 200 V をそのまま使う）。「電源だから √3 倍／除」は誤り。Y電源で相電圧 200 V なら線間 200√3 V となり別問題</li>
         <li><strong>Y負荷の相電圧は V_L/√3</strong>: 混在型では必ずこの 1 段を挟む（200/√3 ≈ 115.5 V）。Δ負荷なら相電圧＝線間電圧でこの段は不要</li>
-        <li><strong>30°の位相ずれを落とさない</strong>: Y結線で相電圧は線間電圧より 30°遅れ、Δ結線で線電流は相電流より 30°遅れる。極形式の角度はこの ±π/6 の積み重ね</li>
-        <li><strong>İ_1（線電流）と İ_ab（電源相電流）の取り違え</strong>: Y負荷側は線電流＝相電流、Δ電源側は線電流＝√3 × 相電流。大きさが √3 倍（11.55 ↔ 6.67）違う</li>
+        <li><strong>30°の位相ずれを落とさない</strong>: Y結線で相電圧は線間電圧より 30°遅れ、Δ結線で線電流は相電流より 30°遅れる。極形式の角度はこの ±π/6 の積み重ね。<strong>200/√3 ≈ 115.5 と大きさだけ直して角度を 0° のままにする</strong>のが最頻出の取りこぼし（選択肢に大きさだけ合う誤答が必ず用意されている）</li>
+        <li><strong>İ_1（線電流）と İ_ab（電源相電流）の取り違え</strong>: Y負荷側は線電流＝相電流、Δ電源側は線電流＝√3 × 相電流。<strong>平衡三相（循環電流ゼロ）のこの回路では</strong>大きさが √3 倍（11.55 ↔ 6.67）違う</li>
         <li><strong>|Z| と偏角を混同しない</strong>: |Z| = √((5√3)² + 5²) = 10 Ω、<strong>偏角 θ = arctan(1/√3) = π/6（＝30°）</strong>。<strong>力率 cosθ = 5√3/10 = √3/2 ≈ 0.866</strong>（力率は無次元、位相角は 30° ── 別の量なので「力率 ≒ 30°」と書かない）</li>
+        <li><strong>「Δ が出てきたから Z/3」としない</strong>: 本問の負荷はもともと <strong>Y</strong> なので、インピーダンスの Δ-Y 変換（Z_Y = Z_Δ/3）を使う場面は<strong>1 度も無い</strong>。ここでやっているのは<strong>電源</strong>を等価 Y 電源に置き換える操作（÷√3・−30°）で、<strong>÷3 でも位相そのままでもない</strong>。2 つの「Δ-Y変換」の違いは <a href="#" onClick={(e) => { e.preventDefault(); switchTab('explain'); }} style={{ textDecoration: "underline" }}>解説タブ セクション6</a> の比較表へ</li>
       </ol>
     </Callout>
 
