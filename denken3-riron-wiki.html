@@ -8447,7 +8447,7 @@ const ThreePhaseChunkHierarchy = () => (
       <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "6px 10px", background: "var(--accent-soft)", borderRadius: "4px" }}>
         <span style={{ fontWeight: 700, minWidth: 60 }}>第1層</span>
         <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>V / I</span>
-        <span style={{ fontSize: "13px", color: "var(--ink-soft)" }}>線間 vs 相 — Y は電圧に √3、Δ は電流に √3</span>
+        <span style={{ fontSize: "13px", color: "var(--ink-soft)" }}>線間 vs 相 — Y は電圧に √3、Δ は電流に √3。<strong>どちらも同時に 30° 動く</strong>（電圧は＋、Δ電流は−）</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "6px 10px", background: "var(--ok-soft)", borderRadius: "4px" }}>
         <span style={{ fontWeight: 700, minWidth: 60 }}>第2層</span>
@@ -8457,7 +8457,12 @@ const ThreePhaseChunkHierarchy = () => (
       <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "6px 10px", background: "var(--warn-soft)", borderRadius: "4px" }}>
         <span style={{ fontWeight: 700, minWidth: 60 }}>第3層</span>
         <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>Z_Y ↔ Z_Δ</span>
-        <span style={{ fontSize: "13px", color: "var(--ink-soft)" }}>Y-Δ 等価変換 — Z_Y = Z_Δ / 3（平衡三相のみ）</span>
+        <span style={{ fontSize: "13px", color: "var(--ink-soft)" }}><strong>負荷</strong>インピーダンスの Δ-Y 変換 — Z_Y = Z_Δ / 3（<strong>÷3・位相は動かない</strong>・平衡のみ）</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "6px 10px", background: "var(--warn-soft)", borderRadius: "4px" }}>
+        <span style={{ fontWeight: 700, minWidth: 60 }}>第4層</span>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>Δ電源 → Y</span>
+        <span style={{ fontSize: "13px", color: "var(--ink-soft)" }}><strong>電源</strong>の等価Y表現 — Ė′ = (V<sub>L</sub>/√3)∠−30°（<strong>÷√3・30°動く</strong>）。第3層と<strong>別物</strong></span>
       </div>
     </div>
     <div style={{ marginTop: 10, fontSize: "12px", color: "var(--ink-soft)" }}>
@@ -8607,10 +8612,11 @@ const ThreePhaseFormulasTab = ({ onNav, switchTab }) => (
       <p style={{ marginBottom: 8 }}>三相 ＝ 120°ずらした3相。<strong>3本線で単相の √3 倍を運ぶ送電方式</strong>。√3 は「120°ずれた等しいベクトルの差」から必然的に出る（余弦定理）。</p>
       <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.75 }}>
         <li><strong>平衡三相</strong>：位相 120° ずれた3相が対称（合成 = 0、中性線電流 = 0）</li>
-        <li><strong>Y結線</strong>：V<sub>L</sub> = √3 × V<sub>P</sub> ／ I<sub>L</sub> = I<sub>P</sub>（電圧に √3）</li>
-        <li><strong>Δ結線</strong>：V<sub>L</sub> = V<sub>P</sub> ／ I<sub>L</sub> = √3 × I<sub>P</sub>（電流に √3）</li>
+        <li><strong>Y結線</strong>：V<sub>L</sub> = √3 × V<sub>P</sub> <strong>∠+30°</strong> ／ I<sub>L</sub> = I<sub>P</sub>（電圧に √3）</li>
+        <li><strong>Δ結線</strong>：V<sub>L</sub> = V<sub>P</sub> ／ I<sub>L</sub> = √3 × I<sub>P</sub> <strong>∠−30°</strong>（電流に √3）</li>
+        <li><strong>√3 と 30° はセット</strong>：大きさだけ直して角度を 0° のまま放置しない。逆向き（線→相）は ÷√3 で、<strong>電圧は −30°・Δ電流は ＋30°（符号が逆）</strong></li>
         <li><strong>三相電力</strong>：P = √3 × V<sub>L</sub> × I<sub>L</sub> × cosφ（線間で書くと √3 が必須）</li>
-        <li><strong>Y↔Δ 変換</strong>：Z_Y = Z_Δ / 3（平衡のみ・Y側が小さい）</li>
+        <li><strong>「Δ-Y変換」は2つある</strong>：<strong>負荷</strong>のインピーダンス Z_Y = Z_Δ/3（÷3・位相そのまま）と、<strong>電源</strong>の等価Y表現 Ė′ = (V<sub>L</sub>/√3)∠−30°（÷√3・30°動く）。Δ電源＋Y負荷では<strong>後者だけ</strong>を使う</li>
       </ul>
     </Callout>
 
@@ -9675,9 +9681,9 @@ const ThreePhaseLearnTab = ({ onNav, switchTab }) => (
     </p>
     <Callout variant="warn" title="⏱️ 本番でこのテーマが出たら">
       <ol style={{ margin: "6px 0", paddingLeft: 22, lineHeight: 1.9 }}>
-        <li><strong>まず何を見る</strong>：結線が <strong>Y か Δ か</strong>。与えられた電圧・電流が「<strong>相</strong>」か「<strong>線</strong>」か。</li>
-        <li><strong>絶対に見落とせない条件</strong>：√3 が <strong>電圧側(Y)か電流側(Δ)か</strong>。電力は P=√3 V<sub>L</sub> I<sub>L</sub> cosφ（線間表現）。</li>
-        <li><strong>典型ひっかけ</strong>：相電圧を線間電圧と取り違える／√3 を <strong>二重に掛ける・掛け忘れる</strong>。</li>
+        <li><strong>まず何を見る</strong>：<strong>電源</strong>と<strong>負荷</strong>それぞれが Y か Δ か（別々に）。与えられた電圧・電流が「<strong>相</strong>」か「<strong>線</strong>」か。求めるのは相か線か。</li>
+        <li><strong>絶対に見落とせない条件</strong>：√3 が <strong>電圧側(Y)か電流側(Δ)か</strong>。電力は P=√3 V<sub>L</sub> I<sub>L</sub> cosφ（線間表現）。<strong>極形式で答えるなら √3 とセットで ±30° も動かす</strong>（Y電圧は線間が＋30°／Δ電流は線が−30°）。</li>
+        <li><strong>典型ひっかけ</strong>：相電圧を線間電圧と取り違える／√3 を <strong>二重に掛ける・掛け忘れる</strong>／<strong>大きさだけ直して角度を 0° のまま出す</strong>／<strong>Δ が出たから Z/3</strong>（負荷が Y なら使わない。Δ電源は ÷√3・−30° の等価Y電源に置き換える別操作）。</li>
       </ol>
     </Callout>
   </>
