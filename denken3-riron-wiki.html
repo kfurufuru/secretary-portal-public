@@ -5076,6 +5076,8 @@ const ExamOperationPage = ({ onNav }) => (
         <li>縦軸＝瞬時値、横軸＝時間（or 角度 ωt）。<strong>中心線から山頂まで＝最大値 Vm</strong>（山〜谷の全幅は 2Vm）。</li>
         <li><strong>実効値＝Vm/√2 は正弦波のときだけ</strong>。方形波・三角波・整流波形では係数が異なる（波形率・波高率で換算）。</li>
         <li>2波形のずれ＝位相差。周期 T、f＝1/T。<strong>進んでいる波ほど山が左に来る</strong>（フェーザの反時計回り＝進み と対応）。</li>
+        <li>位相差を測る点は山どうしに限らない。<strong>同じ向きの零点通過どうし</strong>（例：負→正に横切る点どうし）でも同じ位相差が測れる。山付近は平らで読みにくいので、目盛が細かい図では零点の方が正確。ただし<strong>向きの違う零点</strong>（負→正 と 正→負）を対にすると半周期（180°）ずれた値を読んでしまう。</li>
+        <li>横軸が時間のとき、横方向のずれ Δt は <strong>位相差 ＝ (Δt/T) × 360°</strong> で角度に直す（T＝1周期）。例：T＝20 ms（50 Hz）で Δt＝5 ms なら 90°。横軸が ωt（角度）なら、ずれの読みがそのまま位相差。</li>
       </ul>
 
       <figure id="fig-read-svg" style={{ margin: "16px 0", background: "var(--bg-elev)", borderRadius: 8, padding: "12px 8px 8px" }}>
@@ -22641,6 +22643,99 @@ const InductanceExplainTab = ({ onNav, switchTab }) => (
     <p>
       <Eq tex="e = -L\,di/dt" inline /> の<strong>マイナス</strong>は「変化を妨げる向きに起電力が発生する」というレンツの法則の表現。一方 <Eq tex="v = L\,di/dt" inline /> は「電流が流れ込む端子を正」とする受動符号規約で見たコイルの端子電圧。<strong>同じ現象を符号規約だけ変えて表しているので矛盾しない</strong>。
     </p>
+
+    <figure id="fig-selfind-sign" style={{ margin: "16px 0", background: "var(--bg-elev)", borderRadius: 8, padding: "12px 8px 8px" }}>
+      <svg viewBox="0 0 640 344" role="img" aria-label="同じコイル（端子A・B、電流はAからBへ流れ増加中）を2通りで描いた図。左：受動符号規約で端子電圧vを書く。＋の基準を電流が流れ込む端子Aに約束すると、実際の極性（Aが高電位）と一致するので v = L di/dt はプラス。右：起電力eを書く。＋の基準を電流を後押しする向き（＋をB側）に約束すると、実際の極性（レンツの法則でAが高電位）は約束と逆なので e = −L di/dt はマイナス。実際の極性はどちらの図でも同じで、違うのは＋の約束の置き方だけ" style={{ display: "block", width: "100%", height: "auto", maxWidth: "640px", margin: "0 auto" }}>
+        <defs>
+          <marker id="siOk" markerWidth="5" markerHeight="4" refX="4.6" refY="2" orient="auto">
+            <path d="M0,0 L5,2 L0,4 z" fill="var(--ok)" />
+          </marker>
+        </defs>
+
+        {/* 共通前提 */}
+        <text x="320" y="22" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--ink)">前提（両図共通）：電流の正方向を A→B と定義。いま電流は増加中（di/dt ＞ 0）</text>
+
+        <line x1="320" y1="34" x2="320" y2="300" stroke="var(--rule)" strokeWidth="1" strokeDasharray="4 4" />
+
+        {/* ===== 左：端子電圧 v（受動符号規約） ===== */}
+        <text x="160" y="54" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">① 負荷として書く：端子電圧 v</text>
+        <text x="160" y="70" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">約束：電流が流れ込む端子 A を ＋ とする（受動符号規約）</text>
+
+        <text x="118" y="92" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">約束の＋−</text>
+        <text x="202" y="92" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">実際の極性</text>
+
+        {/* 電流（ok系）とコイル */}
+        <line x1="160" y1="80" x2="160" y2="100" stroke="var(--ok)" strokeWidth="2.2" markerEnd="url(#siOk)" />
+        <text x="152" y="90" textAnchor="end" fontSize="11" fontWeight="700" fill="var(--ok)">i</text>
+        <circle cx="160" cy="106" r="3" fill="var(--ink)" />
+        <text x="149" y="110" textAnchor="end" fontSize="11.5" fontWeight="700" fill="var(--ink)">A</text>
+        <line x1="160" y1="106" x2="160" y2="128" stroke="var(--ink)" strokeWidth="2" />
+        <path d="M 160 128 c 14.7 0 14.7 22 0 22 c 14.7 0 14.7 22 0 22 c 14.7 0 14.7 22 0 22" fill="none" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="160" y1="194" x2="160" y2="216" stroke="var(--ink)" strokeWidth="2" />
+        <circle cx="160" cy="216" r="3" fill="var(--ink)" />
+        <text x="149" y="220" textAnchor="end" fontSize="11.5" fontWeight="700" fill="var(--ink)">B</text>
+        <line x1="160" y1="222" x2="160" y2="242" stroke="var(--ok)" strokeWidth="2.2" markerEnd="url(#siOk)" />
+
+        {/* 約束の基準（破線）：＋をAに */}
+        <circle cx="118" cy="106" r="9" fill="none" stroke="var(--ink-soft)" strokeWidth="1.4" strokeDasharray="3 2" />
+        <text x="118" y="110" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">＋</text>
+        <circle cx="118" cy="216" r="9" fill="none" stroke="var(--ink-soft)" strokeWidth="1.4" strokeDasharray="3 2" />
+        <text x="118" y="220" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">−</text>
+
+        {/* 実際の極性（実線・accent＝電圧系）：Aが高電位 */}
+        <circle cx="202" cy="106" r="9" fill="none" stroke="var(--accent)" strokeWidth="2" />
+        <text x="202" y="110" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">＋</text>
+        <circle cx="202" cy="216" r="9" fill="none" stroke="var(--accent)" strokeWidth="2" />
+        <text x="202" y="220" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">−</text>
+
+        <text x="160" y="264" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--ink)">v = L di/dt ＝ ＋</text>
+        <text x="160" y="282" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">実際の極性（A が＋）が約束（A が＋）と一致</text>
+        <text x="160" y="297" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">→ だから符号は ＋</text>
+
+        {/* ===== 右：起電力 e ===== */}
+        <text x="480" y="54" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--accent-ink)">② 電源として書く：起電力 e</text>
+        <text x="480" y="70" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">約束：電流を後押しする向きを ＋（＋極を B 側に置く）</text>
+
+        <text x="438" y="92" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">約束の＋−</text>
+        <text x="522" y="92" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--accent-ink)">実際の極性</text>
+
+        {/* 電流（ok系）とコイル */}
+        <line x1="480" y1="80" x2="480" y2="100" stroke="var(--ok)" strokeWidth="2.2" markerEnd="url(#siOk)" />
+        <text x="472" y="90" textAnchor="end" fontSize="11" fontWeight="700" fill="var(--ok)">i</text>
+        <circle cx="480" cy="106" r="3" fill="var(--ink)" />
+        <text x="469" y="110" textAnchor="end" fontSize="11.5" fontWeight="700" fill="var(--ink)">A</text>
+        <line x1="480" y1="106" x2="480" y2="128" stroke="var(--ink)" strokeWidth="2" />
+        <path d="M 480 128 c 14.7 0 14.7 22 0 22 c 14.7 0 14.7 22 0 22 c 14.7 0 14.7 22 0 22" fill="none" stroke="var(--ink)" strokeWidth="2" />
+        <line x1="480" y1="194" x2="480" y2="216" stroke="var(--ink)" strokeWidth="2" />
+        <circle cx="480" cy="216" r="3" fill="var(--ink)" />
+        <text x="469" y="220" textAnchor="end" fontSize="11.5" fontWeight="700" fill="var(--ink)">B</text>
+        <line x1="480" y1="222" x2="480" y2="242" stroke="var(--ok)" strokeWidth="2.2" markerEnd="url(#siOk)" />
+
+        {/* 約束の基準（破線）：＋をBに（後押し＝電池の＋がB側） */}
+        <circle cx="438" cy="106" r="9" fill="none" stroke="var(--ink-soft)" strokeWidth="1.4" strokeDasharray="3 2" />
+        <text x="438" y="110" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">−</text>
+        <circle cx="438" cy="216" r="9" fill="none" stroke="var(--ink-soft)" strokeWidth="1.4" strokeDasharray="3 2" />
+        <text x="438" y="220" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">＋</text>
+
+        {/* 実際の極性（実線・accent）：左図と同一＝Aが高電位 */}
+        <circle cx="522" cy="106" r="9" fill="none" stroke="var(--accent)" strokeWidth="2" />
+        <text x="522" y="110" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">＋</text>
+        <circle cx="522" cy="216" r="9" fill="none" stroke="var(--accent)" strokeWidth="2" />
+        <text x="522" y="220" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--accent-ink)">−</text>
+
+        <text x="480" y="264" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--ink)">e = −L di/dt ＝ −</text>
+        <text x="480" y="282" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">実際はレンツの向き（磁束の増加を妨げる＝ A が＋）で</text>
+        <text x="480" y="297" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">約束（B が＋）と逆 → だから符号は −</text>
+
+        {/* 結論 */}
+        <rect x="24" y="310" width="592" height="28" rx="6" fill="var(--bg)" stroke="var(--rule)" strokeWidth="1" />
+        <text x="320" y="329" textAnchor="middle" fontSize="11.5" fontWeight="700" fill="var(--ink)">実際の極性はどちらも「A が＋」の1つだけ。違うのは ＋ の約束の置き方 ⇒ e = −v（同じ現象の2表記・巻線抵抗を無視した理想コイル）</text>
+      </svg>
+      <figcaption style={{ fontSize: "12.5px", color: "var(--ink-mute)", marginTop: 8, lineHeight: 1.6 }}>
+        図：<strong>電圧計で測れる極性は1つ</strong>（電流増加中は A が高電位。実線の丸＝両図で同一）。式の符号が変わるのは、<strong>破線の丸＝「どこを＋と約束したか」</strong>が違うから。左は「流れ込む端子＝＋」の約束と実際が一致するので <strong>v ＝ ＋</strong>、右は「後押しの向き＝＋」の約束と実際が逆なので <strong>e ＝ −</strong>。数値で言えば L＝1 H・di/dt＝＋2 A/s のとき v＝＋2 V・e＝−2 V で、どちらも「A が B より 2 V 高い」という同じ事実を指す。
+      </figcaption>
+    </figure>
+
     <Callout variant="tip" title="使い分けの覚え方">
       <p>問題文に「逆起電力」「レンツの法則」と書いてあったら <strong>e</strong>（マイナスあり）。「端子電圧」「閉路方程式」「KVL」と書いてあったら <strong>v</strong>（マイナスなし）。<strong>問題文の言葉で判別</strong>するクセをつけると混乱しない。</p>
     </Callout>
