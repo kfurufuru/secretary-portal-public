@@ -22386,16 +22386,23 @@ const PageTabs = ({ pageId, tabs, defaultTab, children }) => {
      後から走って上書きすることがあるため、複数タイミング＋load 完了後にも再試行する */
   useEffect(() => {
     let timers = [];
-    const jumpIfTargeted = () => {
+    /* jump は**発火時に hash を読み直す**。捕捉した parts を使うと、節を続けて切り替えた
+       ときに先行アンカーのタイマーがビューポートを引き戻す（実測: 500ms 間隔で
+       fleming-table → shape-table と切り替えると、約2.5秒間 24px と 1586px を往復した）。 */
+    const jump = () => {
       const parts = location.hash.replace(/^#/, '').split(':');
       if (parts[0] !== pageId || !parts[2] || parts[1] !== activeTab) return;
-      const jump = () => {
-        const el = document.getElementById(parts[2]);
-        if (!el) return;
-        /* 既に見出し位置（scroll-margin-top=24px 相当）にあれば再スクロールしない（冪等化） */
-        const top = el.getBoundingClientRect().top;
-        if (Math.abs(top - 24) > 40) el.scrollIntoView({ block: 'start' });
-      };
+      const el = document.getElementById(parts[2]);
+      if (!el) return;
+      /* 既に見出し位置（scroll-margin-top=24px 相当）にあれば再スクロールしない（冪等化） */
+      const top = el.getBoundingClientRect().top;
+      if (Math.abs(top - 24) > 40) el.scrollIntoView({ block: 'start' });
+    };
+    const jumpIfTargeted = () => {
+      timers.forEach(clearTimeout);   /* 先行アンカーの保留タイマーを取り消す */
+      timers = [];
+      const parts = location.hash.replace(/^#/, '').split(':');
+      if (parts[0] !== pageId || !parts[2] || parts[1] !== activeTab) return;
       /* KaTeX/SVG の後続レンダで文書高が安定するまで段階的に再試行 */
       [150, 600, 1500, 3000].forEach(ms => timers.push(setTimeout(jump, ms)));
       if (document.readyState !== 'complete') {
@@ -32777,18 +32784,24 @@ const App = () => {
      KaTeX/SVG の後続レンダで文書高が変わる点は PageTabs と同じなので、再試行の刻みも揃える。 */
   useEffect(() => {
     let timers = [];
-    const jumpToAnchor = () => {
+    /* PageTabs 側と同じ理由で、jump は**発火時に hash を読み直す**（捕捉した parts を
+       使うと先行アンカーのタイマーが引き戻す）。 */
+    const jump = () => {
+      if (document.querySelector('[role="tab"]')) return;   /* タブ付きページは PageTabs の管轄 */
       const parts = location.hash.replace(/^#/, '').split(':');
       if (parts.length !== 2 || !parts[1] || parts[0] === 'glossary') return;
-      const jump = () => {
-        if (document.querySelector('[role="tab"]')) return;   /* タブ付きページは PageTabs の管轄 */
-        let id;
-        try { id = decodeURIComponent(parts[1]); } catch (e) { id = parts[1]; }
-        const el = document.getElementById(id);
-        if (!el) return;
-        const top = el.getBoundingClientRect().top;
-        if (Math.abs(top - 24) > 40) el.scrollIntoView({ block: 'start' });
-      };
+      let id;
+      try { id = decodeURIComponent(parts[1]); } catch (e) { id = parts[1]; }
+      const el = document.getElementById(id);
+      if (!el) return;
+      const top = el.getBoundingClientRect().top;
+      if (Math.abs(top - 24) > 40) el.scrollIntoView({ block: 'start' });
+    };
+    const jumpToAnchor = () => {
+      timers.forEach(clearTimeout);   /* 先行アンカーの保留タイマーを取り消す */
+      timers = [];
+      const parts = location.hash.replace(/^#/, '').split(':');
+      if (parts.length !== 2 || !parts[1] || parts[0] === 'glossary') return;
       [150, 600, 1500, 3000].forEach(ms => timers.push(setTimeout(jump, ms)));
       if (document.readyState !== 'complete') {
         window.addEventListener('load', () => timers.push(setTimeout(jump, 250)), { once: true });
