@@ -55,6 +55,7 @@
     --dgm-magenta: oklch(0.50 0.22 350);
     --dgm-teal:    oklch(0.50 0.09 210);
     --dgm-amber:   oklch(0.52 0.11 75);
+    --dgm-orange:  oklch(0.52 0.13 50);   /* 要復習/要確認マーカー（旧 #f97316）。amber(h75)と red(h27)の中間色相を維持しつつ AA 化（light worst 4.86 / dark worst 6.15・全背景トークン実測） */
     --dgm-purple:  oklch(0.48 0.18 300);
     --dgm-oncolor: oklch(0.99 0 0);   /* 固定hexの色バッジ(円/帯)上に載せる白文字。両テーマ不変（バッジ側がtheme非依存hexのため） */
     --dgm-oncolor-dark: oklch(0.20 0 0);  /* --dgm-oncolor の対。明色の固定バッジ(teal #2a8 等)上に載せる暗文字。両テーマ不変 */
@@ -173,6 +174,7 @@
     --dgm-magenta: oklch(0.70 0.20 350);
     --dgm-teal:    oklch(0.75 0.10 210);
     --dgm-amber:   oklch(0.78 0.13 75);
+    --dgm-orange:  oklch(0.76 0.15 50);
     --dgm-purple:  oklch(0.70 0.16 300);
     --accent-soft: oklch(0.30 0.05 50);
     --rank-a-bg: oklch(0.34 0.06 55);
@@ -11460,19 +11462,19 @@ function SectionCheck({
   const buttons = [{
     mark: '◎',
     label: '完璧',
-    color: '#16a34a'
+    color: 'var(--good)'
   }, {
     mark: '○',
     label: 'OK',
-    color: '#3b82f6'
+    color: 'var(--dgm-blue)'
   }, {
     mark: '△',
     label: '微妙',
-    color: '#f59e0b'
+    color: 'var(--dgm-amber)'
   }, {
     mark: '×',
     label: '未',
-    color: '#dc2626'
+    color: 'var(--dgm-red)'
   }];
   return React.createElement("div", {
     style: {
@@ -11500,7 +11502,7 @@ function SectionCheck({
       padding: '4px 10px',
       minWidth: 36,
       background: status === b.mark ? b.color : 'transparent',
-      color: status === b.mark ? '#fff' : 'var(--ink-2)',
+      color: status === b.mark ? 'var(--bg)' : 'var(--ink-2)',
       border: status === b.mark ? `1px solid ${b.color}` : '1px solid var(--line)',
       borderRadius: 4,
       cursor: 'pointer',
@@ -11588,19 +11590,19 @@ function SectionCheckSummary({
     }
   }, React.createElement("span", null, React.createElement("strong", {
     style: {
-      color: '#16a34a'
+      color: 'var(--good)'
     }
   }, "◎ ", counts['◎'])), React.createElement("span", null, React.createElement("strong", {
     style: {
-      color: '#3b82f6'
+      color: 'var(--dgm-blue)'
     }
   }, "○ ", counts['○'])), React.createElement("span", null, React.createElement("strong", {
     style: {
-      color: '#f59e0b'
+      color: 'var(--dgm-amber)'
     }
   }, "△ ", counts['△'])), React.createElement("span", null, React.createElement("strong", {
     style: {
-      color: '#dc2626'
+      color: 'var(--dgm-red)'
     }
   }, "× ", counts['×'])), React.createElement("span", null, React.createElement("strong", {
     style: {
@@ -11642,7 +11644,7 @@ function SectionCheckSummary({
   }, "（", scores[s.id], "）"))))) : React.createElement("div", {
     style: {
       fontSize: 12,
-      color: '#16a34a',
+      color: 'var(--good)',
       fontWeight: 600
     }
   }, "✨ すべてのセクションが ◎ または ○ です。お疲れさまでした！"));
@@ -11804,12 +11806,12 @@ function TrapTable({
     status: 'understood',
     label: '理解',
     icon: '✓',
-    color: '#22c55e'
+    color: 'var(--good)'
   }, {
     status: 'review',
     label: '要復習',
     icon: '⚠',
-    color: '#f97316'
+    color: 'var(--dgm-orange)'
   }];
   const loadAll = () => {
     const r = {};
@@ -11931,7 +11933,7 @@ function TrapTable({
     const correct = isChoice ? ans === trap.answer : ans === '誤';
     const prevMark = prev ? (() => {
       const ok = prev.status === 'understood';
-      const c = ok ? 'var(--good)' : '#f97316';
+      const c = ok ? 'var(--good)' : 'var(--dgm-orange)';
       const aMark = typeof prev.lastAnswerCorrect === 'boolean' ? prev.lastAnswerCorrect ? '・○正解' : '・✗不正解' : '';
       return {
         color: c,
@@ -11966,10 +11968,10 @@ function TrapTable({
       onClick: () => judge(i, ci),
       style: {
         padding: '5px 12px',
-        border: '1.5px solid #2563eb',
+        border: '1.5px solid var(--dgm-blue)',
         borderRadius: 6,
         background: 'transparent',
-        color: '#2563eb',
+        color: 'var(--dgm-blue)',
         cursor: 'pointer',
         fontSize: 12,
         fontWeight: 700,
@@ -11978,11 +11980,11 @@ function TrapTable({
     }, c)) : [{
       k: '正',
       label: '○ 正しい',
-      color: '#2563eb'
+      color: 'var(--dgm-blue)'
     }, {
       k: '誤',
       label: '✕ 誤り',
-      color: '#dc2626'
+      color: 'var(--dgm-red)'
     }].map(c => React.createElement("button", {
       key: c.k,
       type: "button",
@@ -12076,7 +12078,7 @@ function TrapTable({
           border: `1.5px solid ${b.color}`,
           borderRadius: 6,
           background: active ? b.color : 'transparent',
-          color: active ? '#fff' : b.color,
+          color: active ? 'var(--bg)' : b.color,
           cursor: 'pointer',
           fontSize: 11,
           fontWeight: 700,
@@ -12099,7 +12101,7 @@ function TrapTable({
     }
   }, React.createElement("strong", null, "答えを見る前に○✕を判定"), "するのが定着のコツ（思い出す負荷＝テスト効果）。判定後に手応えを記録し、", React.createElement("strong", {
     style: {
-      color: '#f97316'
+      color: 'var(--dgm-orange)'
     }
   }, "⚠要復習"), " を押すと ", React.createElement("strong", null, "間違いノート"), " に集約されます（もう一度押すと解除）。", React.createElement("strong", null, "再訪時は答えが再び隠れて解き直せ"), "、前回の手応え（", React.createElement("strong", {
     style: {
@@ -12107,7 +12109,7 @@ function TrapTable({
     }
   }, "✓理解"), "／", React.createElement("strong", {
     style: {
-      color: '#f97316'
+      color: 'var(--dgm-orange)'
     }
   }, "⚠要復習"), "）がマークで出ます。"));
 }
@@ -12247,7 +12249,7 @@ function ExamAnswer({
     style: {
       display: 'inline-block',
       background: 'var(--good)',
-      color: '#fff',
+      color: 'var(--bg)',
       fontWeight: '700',
       fontSize: '13px',
       padding: '4px 12px',
@@ -12306,22 +12308,22 @@ function ExamAnswer({
 const QR_STATUSES = [{
   key: 'understood',
   label: '理解した',
-  color: '#22c55e',
+  color: 'var(--good)',
   icon: '✓'
 }, {
   key: 'vague',
   label: 'うる覚え',
-  color: '#f59e0b',
+  color: 'var(--dgm-amber)',
   icon: '?'
 }, {
   key: 'review',
   label: '要確認',
-  color: '#f97316',
+  color: 'var(--dgm-orange)',
   icon: '!'
 }, {
   key: 'wrong',
   label: '間違えた',
-  color: '#dc2626',
+  color: 'var(--dgm-red)',
   icon: '✗'
 }];
 function qrDjb2(str) {
@@ -12419,7 +12421,7 @@ function QuickReview({
         marginLeft: 8,
         padding: '1px 8px',
         background: def.color,
-        color: '#fff',
+        color: 'var(--bg)',
         borderRadius: 999,
         fontSize: 11,
         fontWeight: 700,
@@ -12463,7 +12465,7 @@ function QuickReview({
           borderRadius: 999,
           border: `1.5px solid ${s.color}`,
           background: active ? s.color : 'transparent',
-          color: active ? '#fff' : s.color,
+          color: active ? 'var(--bg)' : s.color,
           cursor: 'pointer',
           fontWeight: 700,
           fontSize: 12,
@@ -14105,8 +14107,8 @@ function App() {
     .denken-wiki-cta:hover { background: var(--accent-soft); border-color: var(--accent-ink); }
     .denken-wiki-cta:active { transform: translateY(1px); }
     .denken-wiki-cta:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .freq-max  { background: color-mix(in oklch, var(--freqrank-s) 14%, var(--bg-elev)); color: var(--freqrank-s); border-radius: 4px; padding: 1px 5px; font-size: 10px; }
-    .freq-high { background: color-mix(in oklch, var(--freqrank-a) 18%, var(--bg-elev)); color: var(--freqrank-a); border-radius: 4px; padding: 1px 5px; font-size: 10px; }
+    .freq-max  { background: color-mix(in oklch, var(--freqrank-s) 14%, var(--bg-elev)); color: var(--dgm-red); border-radius: 4px; padding: 1px 5px; font-size: 10px; }
+    .freq-high { background: color-mix(in oklch, var(--freqrank-a) 18%, var(--bg-elev)); color: var(--dgm-orange); border-radius: 4px; padding: 1px 5px; font-size: 10px; }
     .nav-badge-review { color: #2980b9; font-size: 11px; }
     .priority-label { font-size: 9px; color: var(--accent-ink); font-weight: 700; }
     .toc { position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 22px 14px; border-left: 1px solid var(--line); font-size: 12px; }
@@ -16843,13 +16845,13 @@ function YomikataKataPage({
   }, React.createElement("div", {
     style: {
       ...weakStrong.box,
-      borderLeft: '3px solid #ef4444'
+      borderLeft: '3px solid var(--dgm-red)'
     }
   }, React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 13,
-      color: '#ef4444',
+      color: 'var(--dgm-red)',
       marginBottom: 6
     }
   }, "❌ 弱い覚え方（正解語句だけ覚える）"), React.createElement("div", {
@@ -16865,13 +16867,13 @@ function YomikataKataPage({
   }, "正解だけ覚えると、似た選択肢が出たとき本番で迷う。"))), React.createElement("div", {
     style: {
       ...weakStrong.box,
-      borderLeft: '3px solid #22c55e'
+      borderLeft: '3px solid var(--good)'
     }
   }, React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 13,
-      color: '#22c55e',
+      color: 'var(--good)',
       marginBottom: 6
     }
   }, "✅ 強い覚え方（なぜ他の選択肢がダメかまで言う）"), React.createElement("ul", {
@@ -17158,22 +17160,22 @@ function MachigaiNotePage({
   const STATUS_DEFS = {
     understood: {
       label: '理解した',
-      color: '#22c55e',
+      color: 'var(--good)',
       icon: '✓'
     },
     vague: {
       label: 'うる覚え',
-      color: '#f59e0b',
+      color: 'var(--dgm-amber)',
       icon: '?'
     },
     review: {
       label: '要確認',
-      color: '#f97316',
+      color: 'var(--dgm-orange)',
       icon: '!'
     },
     wrong: {
       label: '間違えた',
-      color: '#dc2626',
+      color: 'var(--dgm-red)',
       icon: '✗'
     }
   };
@@ -17479,7 +17481,7 @@ function MachigaiNotePage({
   const FILTERS = [{
     key: 'priority',
     label: '要復習',
-    color: '#dc2626',
+    color: 'var(--dgm-red)',
     count: counts.wrong + counts.review + counts.vague + cbwUnderstood
   }, {
     key: 'wrong',
@@ -17536,23 +17538,23 @@ function MachigaiNotePage({
     }
   }, "💡 各記事の理解度ボタンで「", React.createElement("strong", {
     style: {
-      color: '#dc2626'
+      color: 'var(--dgm-red)'
     }
   }, "間違えた"), " / ", React.createElement("strong", {
     style: {
-      color: '#f97316'
+      color: 'var(--dgm-orange)'
     }
   }, "要確認"), " / ", React.createElement("strong", {
     style: {
-      color: '#f59e0b'
+      color: 'var(--dgm-amber)'
     }
   }, "うる覚え"), "」を選ぶと、ここに自動で集約されます。法規wiki・電験wiki に加え「", React.createElement("strong", {
     style: {
-      color: '#8a6914'
+      color: 'var(--dgm-amber)'
     }
   }, "今日の一問"), "」(法規) と「", React.createElement("strong", {
     style: {
-      color: '#0c4a6e'
+      color: 'var(--dgm-teal)'
     }
   }, "今日の一問(理論)"), "」由来の記録も横断表示（タイトルクリックで該当セクション・理論wikiへ遷移）。"), React.createElement("div", {
     style: {
@@ -17573,7 +17575,7 @@ function MachigaiNotePage({
         borderRadius: 999,
         border: '1.5px solid ' + f.color,
         background: active ? f.color : 'transparent',
-        color: active ? '#fff' : f.color,
+        color: active ? 'var(--bg)' : f.color,
         cursor: 'pointer',
         fontSize: 12,
         fontWeight: 700,
@@ -17694,7 +17696,7 @@ function MachigaiNotePage({
         padding: '2px 10px',
         borderRadius: 999,
         background: def.color,
-        color: '#fff',
+        color: 'var(--bg)',
         fontSize: 11,
         fontWeight: 700,
         letterSpacing: '0.02em',
@@ -17709,8 +17711,8 @@ function MachigaiNotePage({
         padding: '2px 10px',
         borderRadius: 999,
         background: 'rgba(220,38,38,0.12)',
-        color: '#dc2626',
-        border: '1px solid #dc2626',
+        color: 'var(--dgm-red)',
+        border: '1px solid var(--dgm-red)',
         fontSize: 11,
         fontWeight: 700,
         lineHeight: 1.5
@@ -17758,8 +17760,8 @@ function MachigaiNotePage({
         fontSize: 11,
         padding: '2px 8px',
         borderRadius: 999,
-        background: '#dc2626',
-        color: '#fff',
+        background: 'var(--dgm-red)',
+        color: 'var(--bg)',
         fontWeight: 700,
         letterSpacing: '0.02em',
         lineHeight: 1.5
@@ -17797,7 +17799,7 @@ function MachigaiNotePage({
       style: {
         marginLeft: 10,
         fontSize: 11,
-        color: '#dc2626'
+        color: 'var(--dgm-red)'
       }
     }, "取得失敗"), React.createElement("a", {
       href: r.articleUrl,
@@ -17827,7 +17829,7 @@ function MachigaiNotePage({
       style: {
         marginLeft: 10,
         fontSize: 11,
-        color: '#f97316'
+        color: 'var(--dgm-orange)'
       }
     }, "該当ブロック未検出"), React.createElement("a", {
       href: r.articleUrl,
@@ -17897,7 +17899,7 @@ function MachigaiNotePage({
       style: {
         marginLeft: 10,
         fontSize: 11,
-        color: '#dc2626'
+        color: 'var(--dgm-red)'
       }
     }, "記事が見つかりません（404）"), React.createElement("a", {
       href: r.articleUrl,
@@ -18019,7 +18021,7 @@ function MachigaiNotePage({
           borderRadius: 999,
           border: '1.5px solid ' + sdef.color,
           background: active ? sdef.color : 'transparent',
-          color: active ? '#fff' : sdef.color,
+          color: active ? 'var(--bg)' : sdef.color,
           cursor: 'pointer',
           fontWeight: 700,
           fontSize: 11,
@@ -18061,7 +18063,7 @@ function MachigaiNotePage({
     }, formatTs(r.updatedAt)), React.createElement("span", {
       style: {
         fontVariantNumeric: 'tabular-nums',
-        color: r._urgency >= 2 ? 'var(--ink-3)' : r._urgency >= 1 ? '#f97316' : 'var(--ink-3)',
+        color: r._urgency >= 2 ? 'var(--ink-3)' : r._urgency >= 1 ? 'var(--dgm-orange)' : 'var(--ink-3)',
         fontWeight: r._urgency >= 1 && r._urgency < 2 ? 700 : 400
       }
     }, "(", relTime(r.updatedAt), ")"), React.createElement("button", {
@@ -18961,7 +18963,7 @@ function HomePage({
     const stepCards = [{
       key: 'strategy',
       icon: '🎯',
-      accent: '#2e7d32',
+      accent: 'var(--dgm-green)',
       eyebrow: 'STEP 0',
       title: '得点戦略を立てる',
       sub: 'A60/B40・65分・合格60点の地図',
@@ -18983,7 +18985,7 @@ function HomePage({
     }, {
       key: 'review',
       icon: '📓',
-      accent: '#dc2626',
+      accent: 'var(--dgm-red)',
       eyebrow: 'STEP 2',
       title: '間違いノートで復習',
       sub: mnPending > 0 ? `要復習 ${mnPending}件` : 'まだ記録ゼロ',
@@ -18991,7 +18993,7 @@ function HomePage({
     }, {
       key: 'glossary',
       icon: '💡',
-      accent: '#c8a830',
+      accent: 'var(--dgm-amber)',
       eyebrow: 'STEP 3',
       title: '用語クイズで土台固め',
       sub: yqStats.total > 0 ? `${yqStats.total}語中 習得 ${yqStats.mastered}` : '法規の基本用語',
@@ -19332,7 +19334,7 @@ function HomePage({
       alignItems: 'flex-start',
       marginBottom: 14,
       paddingLeft: 12,
-      borderLeft: '3px solid #dc2626'
+      borderLeft: '3px solid var(--dgm-red)'
     }
   }, React.createElement("div", null, React.createElement("div", {
     style: {
@@ -75220,13 +75222,13 @@ function KeitoRenkeiPage({
     y: "110",
     fontSize: "11",
     fontWeight: "600",
-    fill: "#2563eb"
+    fill: "var(--dgm-blue)"
   }, "逆潮流"), React.createElement("text", {
     x: "318",
     y: "96",
     fontSize: "12.5",
     fontWeight: "600",
-    fill: "#2563eb"
+    fill: "var(--dgm-blue)"
   }, "放電動作"), React.createElement("path", {
     d: "M430,110 L300,110 L300,162",
     fill: "none",
@@ -75499,7 +75501,7 @@ function KeitoRenkeiPage({
     y: "96",
     fontSize: "12.5",
     fontWeight: "600",
-    fill: "#2563eb"
+    fill: "var(--dgm-blue)"
   }, "放電動作"), React.createElement("path", {
     d: "M930,110 L800,110 L800,162",
     fill: "none",
@@ -79626,22 +79628,22 @@ function KakomonRecordButtons({
   const STATUSES = [{
     key: 'understood',
     label: '理解した',
-    color: '#22c55e',
+    color: 'var(--good)',
     icon: '✓'
   }, {
     key: 'vague',
     label: 'うる覚え',
-    color: '#f59e0b',
+    color: 'var(--dgm-amber)',
     icon: '?'
   }, {
     key: 'review',
     label: '要確認',
-    color: '#f97316',
+    color: 'var(--dgm-orange)',
     icon: '!'
   }, {
     key: 'wrong',
     label: '間違えた',
-    color: '#dc2626',
+    color: 'var(--dgm-red)',
     icon: '✗'
   }];
   const update = s => {
