@@ -32744,6 +32744,44 @@ const App = () => {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
+  /* タブを持たないページ（7.2 直前3日戦略 等）の #pageId:anchor 対応。
+     PageTabs 側の節ジャンプは #pageId:tab:section の**3**セグメント形式で、第2セグメントを
+     「タブ id」として解釈する。したがってタブの無いページはどう書いても節に着地できず、
+     7.2「当日朝の最重要確認表」のように**当日朝にスマホで直接開きたい節**を共有できなかった。
+
+     ページごとの tabIds 台帳をここに二重持ちすると PageTabs 側の改訂で黙ってドリフトするので、
+     判定は **DOM にタブバー（role="tab"）が無いこと**で行う（SoT は PageTabs の描画結果のまま）。
+     タブ付きページの #pageId:tab（2セグメント）を巻き込まないための条件でもある
+     ——例えば #electromagnetic-force:formulas は「公式タブを開く」であって
+     「id="formulas" の節へ飛ぶ」ではない。
+     KaTeX/SVG の後続レンダで文書高が変わる点は PageTabs と同じなので、再試行の刻みも揃える。 */
+  useEffect(() => {
+    let timers = [];
+    const jumpToAnchor = () => {
+      const parts = location.hash.replace(/^#/, '').split(':');
+      if (parts.length !== 2 || !parts[1] || parts[0] === 'glossary') return;
+      const jump = () => {
+        if (document.querySelector('[role="tab"]')) return;   /* タブ付きページは PageTabs の管轄 */
+        let id;
+        try { id = decodeURIComponent(parts[1]); } catch (e) { id = parts[1]; }
+        const el = document.getElementById(id);
+        if (!el) return;
+        const top = el.getBoundingClientRect().top;
+        if (Math.abs(top - 24) > 40) el.scrollIntoView({ block: 'start' });
+      };
+      [150, 600, 1500, 3000].forEach(ms => timers.push(setTimeout(jump, ms)));
+      if (document.readyState !== 'complete') {
+        window.addEventListener('load', () => timers.push(setTimeout(jump, 250)), { once: true });
+      }
+    };
+    jumpToAnchor();
+    window.addEventListener('hashchange', jumpToAnchor);
+    return () => {
+      window.removeEventListener('hashchange', jumpToAnchor);
+      timers.forEach(clearTimeout);
+    };
+  }, [page]);
+
   function pageIds() {
     return ['home', ...data.chapters.flatMap(c => c.pages.map(p => p.id))];
   }
