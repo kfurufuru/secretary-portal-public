@@ -4083,11 +4083,22 @@ const TrapPatternsPage = ({ onNav }) => {
    新規作図した。ラスタ画像を持たないので外部アセットも data URI も増えない。
    色の対応: 親指＝var(--ok) ／ 人差し指＝var(--ink) ／ 中指＝var(--danger)。
    accent 系統（forest/rust 等）で色が動かないよう var(--accent) は使っていない。
+
+   小図の置き方が左右で違うのは意図的（Fable 反証監査の指摘を反映）:
+   F = BIL sinθ の θ は I と B の角なので導体の向きは自由＝左は紙面内に置ける。
+   一方 e = BLv sinθ は「導体が v・B の両方に直角」を前提にした式なので、
+   右で導体まで紙面内に描くと L・v・B が同一平面になり (v×B)·L̂ = 0、
+   すなわち描いた幾何の起電力が厳密に 0 になって式と矛盾する。
+   よって右は導体を紙面に垂直（灰色の円＝断面）にしてある。
+   さらに右の小図の B は「手」の図と同じ左向きにする（監査2本目の指摘）。
+   導体を紙面垂直にすると e の向きが幾何だけで一意に決まるため、B を右向きの
+   ままにすると小図は e=紙面の奥、手は e=紙面の手前と、同一パネル内で
+   逆の答えになる（修正前は e=0 で観測できなかった退行）。
    ============================================================ */
 
 const FlemingHandsFigure = ({ children }) => (
   <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
-    <svg viewBox="0 0 700 374" role="img" aria-label="フレミングの左手の法則と右手の法則を並べた図。左は左手＝モーターで、親指が上を向いて力 F、人差し指が右を向いて磁束密度 B、中指が手前へ向いて電流 I を表し、式は F = BIL sinθ、θ は導体を流れる電流 I と磁束密度 B のなす角。右は右手＝発電機で、親指が上を向いて導体の移動速度 v、人差し指が左を向いて磁束密度 B、中指が手前へ向いて起電力 e を表し、式は e = BLv sinθ、θ は速度 v と磁束密度 B のなす角。両パネルの外側に、磁界の中へ斜めに置かれた長さ L の導体があり、左は電流 I と磁界 B、右は速度 v と磁界 B のなす角に θ が付いている" style={{ display: "block", width: "100%", height: "auto", maxWidth: "700px", margin: "0 auto" }}>
+    <svg viewBox="0 0 700 374" role="img" aria-label="フレミングの左手の法則と右手の法則を並べた図。左は左手＝モーターで、親指が上を向いて力 F、人差し指が右を向いて磁束密度 B、中指が手前へ向いて電流 I を表し、式は F = BIL sinθ、θ は導体を流れる電流 I と磁束密度 B のなす角。右は右手＝発電機で、親指が上を向いて導体の移動速度 v、人差し指が左を向いて磁束密度 B、中指が手前へ向いて起電力 e を表し、式は e = BLv sinθ、θ は速度 v と磁束密度 B のなす角。両パネルの外側に導体の小図がある。左は紙面内に斜めに置かれた長さ L の導体で、導体に沿う電流 I と磁界 B のなす角に θ が付いている。右は紙面に垂直に置かれた長さ L の導体を断面（灰色の円）で表し、紙面内の速度 v と磁界 B のなす角に θ が付いている。右の小図の磁界 B は、右手の図と同じく左向きに描いてあり、どちらで判定しても起電力は紙面の手前を向く" style={{ display: "block", width: "100%", height: "auto", maxWidth: "700px", margin: "0 auto" }}>
       <defs>
         <marker id="flem-ok" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse">
           <path d="M0,0 L10,4 L0,8 z" fill="var(--ok)" />
@@ -4103,7 +4114,7 @@ const FlemingHandsFigure = ({ children }) => (
       <line x1="350" y1="14" x2="350" y2="360" stroke="var(--rule)" strokeWidth="1" strokeDasharray="5 5" />
 
       <text x="176" y="26" textAnchor="middle" fontSize="14.5" fontWeight="700" fill="var(--ink)">左手 ＝ モーター</text>
-      <text x="176" y="45" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">電流を与えて力を得る（電気 → 運動）</text>
+      <text x="176" y="45" textAnchor="middle" fontSize="12" fill="var(--ink-mute)">電流を与えて力を得る（電気 → 運動）</text>
       <text x="176" y="74" textAnchor="middle" fontSize="16.5" fontWeight="700" fill="var(--ink)">F = BIL sinθ ［N］</text>
 
       <line x1="44" y1="116" x2="104" y2="196" stroke="var(--ink-mute)" strokeWidth="9" strokeLinecap="round" />
@@ -4114,8 +4125,8 @@ const FlemingHandsFigure = ({ children }) => (
       <text x="110" y="209" fontSize="12.5" fontWeight="700" fill="var(--danger)">I</text>
       <path d="M 94 156 A 20 20 0 0 1 86 172" fill="none" stroke="var(--ink-soft)" strokeWidth="1.6" />
       <text x="97" y="180" fontSize="12.5" fill="var(--ink-soft)">θ</text>
-      <text x="74" y="228" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">長さ L の導体</text>
-      <text x="74" y="245" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">θ は I と B のなす角</text>
+      <text x="74" y="226" textAnchor="middle" fontSize="12" fill="var(--ink-mute)">導体は紙面内</text>
+      <text x="74" y="244" textAnchor="middle" fontSize="12" fill="var(--ink-mute)">θ は I と B のなす角</text>
 
       <g opacity="0.3">
         <ellipse cx="206" cy="216" rx="42" ry="33" fill="var(--warn)" />
@@ -4130,34 +4141,34 @@ const FlemingHandsFigure = ({ children }) => (
       </g>
 
       <line x1="182" y1="200" x2="182" y2="126" stroke="var(--ok)" strokeWidth="2.6" markerEnd="url(#flem-ok)" />
-      <text x="182" y="100" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">親指</text>
+      <text x="182" y="100" textAnchor="middle" fontSize="12" fill="var(--ink-mute)">親指</text>
       <text x="182" y="116" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--ok)">F（力）</text>
 
       <line x1="212" y1="192" x2="300" y2="192" stroke="var(--ink)" strokeWidth="2.6" markerEnd="url(#flem-ink)" />
-      <text x="300" y="162" textAnchor="end" fontSize="10.5" fill="var(--ink-mute)">人差し指</text>
+      <text x="300" y="160" textAnchor="end" fontSize="12" fill="var(--ink-mute)">人差し指</text>
       <text x="300" y="178" textAnchor="end" fontSize="12.5" fontWeight="700" fill="var(--ink)">B（磁界）</text>
 
       <line x1="214" y1="240" x2="262" y2="292" stroke="var(--danger)" strokeWidth="2.6" markerEnd="url(#flem-danger)" />
-      <text x="272" y="290" fontSize="10.5" fill="var(--ink-mute)">中指</text>
+      <text x="272" y="288" fontSize="12" fill="var(--ink-mute)">中指</text>
       <text x="272" y="306" fontSize="12.5" fontWeight="700" fill="var(--danger)">I（電流）</text>
-      <text x="272" y="322" fontSize="10" fill="var(--ink-mute)">紙面の手前へ</text>
+      <text x="266" y="324" fontSize="12" fill="var(--ink-mute)">紙面の手前へ</text>
 
       <text x="176" y="356" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--ink)">フレミングの左手の法則</text>
 
       <text x="524" y="26" textAnchor="middle" fontSize="14.5" fontWeight="700" fill="var(--ink)">右手 ＝ 発電機</text>
-      <text x="524" y="45" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">動かして起電力を得る（運動 → 電気）</text>
+      <text x="524" y="45" textAnchor="middle" fontSize="12" fill="var(--ink-mute)">動かして起電力を得る（運動 → 電気）</text>
       <text x="524" y="74" textAnchor="middle" fontSize="16.5" fontWeight="700" fill="var(--ink)">e = BLv sinθ ［V］</text>
 
-      <line x1="600" y1="116" x2="660" y2="196" stroke="var(--ink-mute)" strokeWidth="9" strokeLinecap="round" />
-      <text x="584" y="138" fontSize="11.5" fontWeight="700" fill="var(--ink-mute)">L</text>
-      <line x1="596" y1="156" x2="678" y2="156" stroke="var(--ink)" strokeWidth="2.4" markerEnd="url(#flem-ink)" />
-      <text x="684" y="152" fontSize="12.5" fontWeight="700" fill="var(--ink)">B</text>
-      <line x1="630" y1="156" x2="648" y2="106" stroke="var(--ok)" strokeWidth="2.4" markerEnd="url(#flem-ok)" />
-      <text x="654" y="104" fontSize="12.5" fontWeight="700" fill="var(--ok)">v</text>
-      <path d="M 650 156 A 20 20 0 0 0 636.8 137.2" fill="none" stroke="var(--ink-soft)" strokeWidth="1.6" />
-      <text x="656" y="136" fontSize="12.5" fill="var(--ink-soft)">θ</text>
-      <text x="630" y="228" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">長さ L の導体</text>
-      <text x="630" y="245" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">θ は v と B のなす角</text>
+      <line x1="660" y1="156" x2="582" y2="156" stroke="var(--ink)" strokeWidth="2.4" markerEnd="url(#flem-ink)" />
+      <circle cx="630" cy="156" r="9" fill="var(--ink-mute)" />
+      <text x="576" y="152" textAnchor="end" fontSize="12.5" fontWeight="700" fill="var(--ink)">B</text>
+      <line x1="630" y1="156" x2="612" y2="106" stroke="var(--ok)" strokeWidth="2.4" markerEnd="url(#flem-ok)" />
+      <text x="606" y="104" textAnchor="end" fontSize="12.5" fontWeight="700" fill="var(--ok)">v</text>
+      <path d="M 610 156 A 20 20 0 0 1 623.2 137.2" fill="none" stroke="var(--ink-soft)" strokeWidth="1.6" />
+      <text x="600" y="139" textAnchor="end" fontSize="12.5" fill="var(--ink-soft)">θ</text>
+      <text x="630" y="226" textAnchor="middle" fontSize="12" fill="var(--ink-mute)">灰色の円＝導体の断面</text>
+      <text x="630" y="244" textAnchor="middle" fontSize="12" fill="var(--ink-mute)">紙面に垂直・長さ L</text>
+      <text x="630" y="262" textAnchor="middle" fontSize="12" fill="var(--ink-mute)">θ は v と B のなす角</text>
 
       <g opacity="0.3">
         <ellipse cx="494" cy="216" rx="42" ry="33" fill="var(--warn)" />
@@ -4172,17 +4183,17 @@ const FlemingHandsFigure = ({ children }) => (
       </g>
 
       <line x1="518" y1="200" x2="518" y2="126" stroke="var(--ok)" strokeWidth="2.6" markerEnd="url(#flem-ok)" />
-      <text x="518" y="100" textAnchor="middle" fontSize="10.5" fill="var(--ink-mute)">親指</text>
+      <text x="518" y="100" textAnchor="middle" fontSize="12" fill="var(--ink-mute)">親指</text>
       <text x="518" y="116" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--ok)">v（速度）</text>
 
       <line x1="488" y1="192" x2="400" y2="192" stroke="var(--ink)" strokeWidth="2.6" markerEnd="url(#flem-ink)" />
-      <text x="400" y="162" fontSize="10.5" fill="var(--ink-mute)">人差し指</text>
+      <text x="400" y="160" fontSize="12" fill="var(--ink-mute)">人差し指</text>
       <text x="400" y="178" fontSize="12.5" fontWeight="700" fill="var(--ink)">B（磁界）</text>
 
       <line x1="486" y1="240" x2="438" y2="292" stroke="var(--danger)" strokeWidth="2.6" markerEnd="url(#flem-danger)" />
-      <text x="428" y="290" textAnchor="end" fontSize="10.5" fill="var(--ink-mute)">中指</text>
+      <text x="428" y="288" textAnchor="end" fontSize="12" fill="var(--ink-mute)">中指</text>
       <text x="428" y="306" textAnchor="end" fontSize="12.5" fontWeight="700" fill="var(--danger)">e（起電力）</text>
-      <text x="428" y="322" textAnchor="end" fontSize="10" fill="var(--ink-mute)">紙面の手前へ</text>
+      <text x="434" y="324" textAnchor="end" fontSize="12" fill="var(--ink-mute)">紙面の手前へ</text>
 
       <text x="524" y="356" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--ink)">フレミングの右手の法則</text>
     </svg>
@@ -4629,6 +4640,8 @@ const Last3DaysPage = ({ onNav }) => (
         図：上の表の<strong style={{ color: "var(--ink)" }}>電磁力</strong>・<strong style={{ color: "var(--ink)" }}>誘導起電力</strong>の2行を、向きの判定ごと1枚で見るための図。
         <strong style={{ color: "var(--ink)" }}>力 F が欲しければ左手</strong>（親指 F・人差し指 B・中指 I）、<strong style={{ color: "var(--ink)" }}>起電力 e が欲しければ右手</strong>（親指 v・人差し指 B・中指 e）。
         <strong style={{ color: "var(--warn)" }}>違うのは親指だけ</strong>。導体に付いた <Eq tex="\theta" inline /> が<strong>左は I と B・右は v と B</strong> で相手が違う点も、この1枚で確認する。
+        <br />
+        ※ 図の右手は<strong>人差し指 B を左向きに置いた場合</strong>。左右で共通なのは<strong>指と量の対応</strong>であって、空間の向きまで同じという意味ではない。
       </FlemingHandsFigure>
 
       <Callout variant="tip" title="当日朝の使い方">
@@ -13897,6 +13910,11 @@ const ElectromagneticForceFormulasTab = ({ onNav, switchTab }) => (
       <br />
       <strong style={{ color: "var(--accent-ink)" }}>下の3軸図と見比べるときの注意</strong>：この図は<strong>右手側だけ人差し指 B を左向きに置いている</strong>ので、中指（起電力 e）は左手と同じく<strong>紙面の手前</strong>を向く。
       下の図は<strong>左右とも人差し指 B を右向きに揃えた場合</strong>で、そのとき右手の中指 e は<strong>紙面の奥</strong>を向く。<strong>見かけが違うのは手の置き方が違うだけ</strong>で、<Eq tex="e \propto v \times B" inline /> の関係はどちらも同じ。
+      <br />
+      <strong style={{ color: "var(--accent-ink)" }}>両端の小図で導体の置き方が違う理由</strong>：<Eq tex="F = BIL\sin\theta" inline /> の θ は I と B の角なので<strong>導体の向きは自由</strong>——左は紙面内に斜めに置いてよい。
+      対して <Eq tex="e = BLv\sin\theta" inline /> は<strong>導体が v と B の両方に直角であることを前提にした式</strong>で、右で導体まで紙面内に描くと L・v・B が同一平面になり <Eq tex="(\boldsymbol{v} \times \boldsymbol{B}) \cdot \hat{\boldsymbol{L}} = 0" inline />、
+      つまり<strong>起電力が 0 の配置</strong>になってしまう。だから右だけ導体を<strong>紙面に垂直</strong>（灰色の円＝断面）に置いている。
+      右の小図の B を<strong>左向き</strong>にしてあるのは、同じパネルの手の図（B 左向き）と<strong>判定が一致する</strong>ようにするため——どちらで確かめても <Eq tex="\boldsymbol{v} \times \boldsymbol{B}" inline /> は<strong>紙面の手前</strong>を向く。
     </FlemingHandsFigure>
     <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
       <svg viewBox="0 0 500 240" role="img" aria-label="フレミング左手（モーター）と右手（発電機）の3軸直交・指対応図。指と量の対応は、親指のみ左が力F・右が速度vで異なり、人差し指=磁界B・中指=電流系は左右共通。ただし空間の向きは鏡像で、親指が上・人差し指が右のとき、左手の中指Iは紙面の手前を向き、右手の中指eは紙面の奥を向く" style={{ display: "block", width: "100%", height: "auto", maxWidth: "500px", margin: "0 auto" }}>
