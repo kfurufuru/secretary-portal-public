@@ -41,6 +41,7 @@
   --ok: oklch(0.48 0.08 155);
   --ok-soft: oklch(0.97 0.010 155);
   --danger: oklch(0.50 0.12 25);
+  --info: oklch(0.50 0.13 255);   /* 情報・参照系の青。生の #3b82f6/#1d4ed8 を置き換える（light worst 4.55 以上・dark は下で明色化） */
   --danger-soft: oklch(0.97 0.010 25);
   /* 「黄色＝問われるところ」の色を1か所に集約する（hue 95 系・accent 非依存＝
      アクセント4系統に追従させない）。用途は2変種:
@@ -83,6 +84,7 @@
   --ok: oklch(0.75 0.09 155);
   --ok-soft: oklch(0.25 0.025 155);
   --danger: oklch(0.75 0.10 25);
+  --info: oklch(0.67 0.13 255);
   --danger-soft: oklch(0.28 0.028 25);
   --mark-bg: oklch(0.48 0.14 95);
   --mark-ink: oklch(0.97 0.02 95);
@@ -342,9 +344,9 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   text-align: center;
   margin-left: 4px;
 }
-.nav-rank.rank-S { background: #fde2e2; color: #b91c1c; }
-.nav-rank.rank-A { background: #fef3c7; color: #b45309; }
-.nav-rank.rank-B { background: #dbeafe; color: #1d4ed8; }
+.nav-rank.rank-S { background: #fde2e2; color: var(--danger); }
+.nav-rank.rank-A { background: #fef3c7; color: var(--warn); }
+.nav-rank.rank-B { background: #dbeafe; color: var(--info); }
 
 .sidebar-footer {
   margin-top: 20px;
@@ -1996,7 +1998,7 @@ window.WIKI_DATA = {
 const __TWEAKS_STYLE = `
   .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
     max-height:calc(100vh - 32px);display:flex;flex-direction:column;
-    background:rgba(250,249,247,.78);color:#29261b;
+    background:rgba(250,249,247,.78);color:var(--ink);
     -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
     border:.5px solid rgba(255,255,255,.6);border-radius:14px;
     box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
@@ -2006,7 +2008,7 @@ const __TWEAKS_STYLE = `
   .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
   .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
     width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
-  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:var(--ink)}
   .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
     overflow-y:auto;overflow-x:hidden;min-height:0;
     scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
@@ -2878,10 +2880,10 @@ const DetailLink = ({ to, onNav }) => {
    ============================================================ */
 
 const RIRON_STATUS_DEFS = {
-  understood: { label: "理解した", color: "#22c55e", icon: "✓" },
-  vague:      { label: "うる覚え", color: "#f59e0b", icon: "?" },
-  review:     { label: "要確認",   color: "#f97316", icon: "!" },
-  wrong:      { label: "間違えた", color: "#dc2626", icon: "✗" },
+  understood: { label: "理解した", color: "var(--ok)", icon: "✓" },
+  vague:      { label: "うる覚え", color: "var(--warn)", icon: "?" },
+  review:     { label: "要確認",   color: "var(--warn)", icon: "!" },
+  wrong:      { label: "間違えた", color: "var(--danger)", icon: "✗" },
 };
 
 const RIRON_TRAP_KEY = (num) => `denken_check::riron_trap-patterns::trap-${num}`;
@@ -3157,10 +3159,10 @@ const MemoField = ({ record, onSetMemo }) => {
 const ReviewSignal = ({ record }) => {
   if (!record) return null;
   const items = [];
-  if (record.lastWrongAt)      items.push({ key: "wrong",      icon: "✗", label: "最後に間違えた", at: record.lastWrongAt,      color: "#dc2626" });
-  if (record.lastReviewAt)     items.push({ key: "review",     icon: "!", label: "最後に要確認",  at: record.lastReviewAt,     color: "#f97316" });
-  if (record.lastVagueAt)      items.push({ key: "vague",      icon: "?", label: "最後にうる覚え", at: record.lastVagueAt,      color: "#f59e0b" });
-  if (record.lastUnderstoodAt) items.push({ key: "understood", icon: "✓", label: "最後に理解",   at: record.lastUnderstoodAt, color: "#22c55e" });
+  if (record.lastWrongAt)      items.push({ key: "wrong",      icon: "✗", label: "最後に間違えた", at: record.lastWrongAt,      color: "var(--danger)" });
+  if (record.lastReviewAt)     items.push({ key: "review",     icon: "!", label: "最後に要確認",  at: record.lastReviewAt,     color: "var(--warn)" });
+  if (record.lastVagueAt)      items.push({ key: "vague",      icon: "?", label: "最後にうる覚え", at: record.lastVagueAt,      color: "var(--warn)" });
+  if (record.lastUnderstoodAt) items.push({ key: "understood", icon: "✓", label: "最後に理解",   at: record.lastUnderstoodAt, color: "var(--ok)" });
   const reviewDue = isRironReviewDue(record);
   if (items.length === 0 && !reviewDue) return null;
   return (
@@ -3224,7 +3226,7 @@ const StatusHistoryChips = ({ record }) => {
         履歴:
       </span>
       {history.map((h, i) => {
-        const def = RIRON_STATUS_DEFS[h.status] || { icon: "?", color: "#888", label: h.status };
+        const def = RIRON_STATUS_DEFS[h.status] || { icon: "?", color: "var(--ink-mute)", label: h.status };
         return (
           <React.Fragment key={i}>
             {i > 0 && <span style={{ color: "var(--ink-mute)" }} aria-hidden="true">→</span>}
@@ -3921,13 +3923,13 @@ const TrapPatternsPage = ({ onNav }) => {
               ⚠ 今日復習推奨: {counts.reviewDue}件
             </span>
             <span style={{ fontSize: "12px", color: "var(--ink-mute)" }}>
-              <span style={{ color: "#dc2626", fontWeight: 600 }}>✗ 間違 {counts.wrong}</span>
+              <span style={{ color: "var(--danger)", fontWeight: 600 }}>✗ 間違 {counts.wrong}</span>
               <span style={{ margin: "0 6px", opacity: 0.4 }}>·</span>
-              <span style={{ color: "#f97316", fontWeight: 600 }}>! 要確認 {counts.review}</span>
+              <span style={{ color: "var(--warn)", fontWeight: 600 }}>! 要確認 {counts.review}</span>
               <span style={{ margin: "0 6px", opacity: 0.4 }}>·</span>
-              <span style={{ color: "#f59e0b", fontWeight: 600 }}>? うる覚え {counts.vague}</span>
+              <span style={{ color: "var(--warn)", fontWeight: 600 }}>? うる覚え {counts.vague}</span>
               <span style={{ margin: "0 6px", opacity: 0.4 }}>·</span>
-              <span style={{ color: "#22c55e", fontWeight: 600 }}>✓ 理解 {counts.understood}</span>
+              <span style={{ color: "var(--ok)", fontWeight: 600 }}>✓ 理解 {counts.understood}</span>
             </span>
           </div>
 
@@ -4024,7 +4026,7 @@ const TrapPatternsPage = ({ onNav }) => {
           {filter === "全部" ? "全" : `「${filter}」`}
           {filtered.length}件
           {reviewOnly && (
-            <span style={{ marginLeft: "8px", color: "#dc2626", fontWeight: 600 }}>
+            <span style={{ marginLeft: "8px", color: "var(--danger)", fontWeight: 600 }}>
               （要復習のみ表示中）
             </span>
           )}
@@ -4733,7 +4735,7 @@ const RetakeStrategyPage = ({ onNav }) => (
         </tbody>
       </table>
 
-      <p style={{fontSize: "0.9em", color: "#666"}}>出典: ブリュ「電験3種の出題傾向分析」<a href="https://brionac-yu-yake.jp/denken3-trend-analysis/" target="_blank" rel="noopener noreferrer">https://brionac-yu-yake.jp/denken3-trend-analysis/</a>（2026-04-26確認済み）</p>
+      <p style={{fontSize: "0.9em", color: "var(--ink-mute)"}}>出典: ブリュ「電験3種の出題傾向分析」<a href="https://brionac-yu-yake.jp/denken3-trend-analysis/" target="_blank" rel="noopener noreferrer">https://brionac-yu-yake.jp/denken3-trend-analysis/</a>（2026-04-26確認済み）</p>
 
       <Callout variant="warn" title="数値の解釈に注意">
         「完全一致率 = 数値・選択肢まで一致」と「類題含む = 同じ論点・解法」は別物。完全一致は年度により0〜100%と振れ幅が大きいため、<strong>狙うのは類題含む80%超のゾーン</strong>。つまり「同じ問題」を覚えるのではなく「同じ論点」を解けるようにすることが本質。
@@ -4854,7 +4856,7 @@ const RetakeStrategyPage = ({ onNav }) => (
         <li>電験review「過去問10年分で十分」: <a href="https://denken-review.com/archives/10730" target="_blank" rel="noopener noreferrer">https://denken-review.com/archives/10730</a></li>
       </ul>
 
-      <p style={{fontSize: "0.9em", color: "#666", marginTop: 24}}>最終更新: 2026-04-25 / 次回更新: R08試験後（2026年9月予定）</p>
+      <p style={{fontSize: "0.9em", color: "var(--ink-mute)", marginTop: 24}}>最終更新: 2026-04-25 / 次回更新: R08試験後（2026年9月予定）</p>
 
     </div>
     <PageNav
@@ -4906,7 +4908,7 @@ const ExamTimer = () => {
         <button style={btn(running ? "#6b7280" : "#16a34a")} onClick={() => setRunning((r) => !r)} disabled={done}>{running ? "一時停止" : "スタート"}</button>
         <button style={btn("#6b7280")} onClick={() => { setRunning(false); setLeft(picked); }}>リセット</button>
       </div>
-      {done && <p style={{ textAlign: "center", color: "#dc2626", fontWeight: 600, marginTop: 8, fontSize: 13 }}>⏰ 時間切れ — 本番ならここで印をつけて次の問題へ</p>}
+      {done && <p style={{ textAlign: "center", color: "var(--danger)", fontWeight: 600, marginTop: 8, fontSize: 13 }}>⏰ 時間切れ — 本番ならここで印をつけて次の問題へ</p>}
     </div>
   );
 };
@@ -21798,10 +21800,10 @@ const SectionCheck = ({ pageId, sectionId, compact = false }) => {
     } catch (e) { /* noop */ }
   };
   const buttons = [
-    { mark: '◎', label: '完璧', color: '#16a34a' },
-    { mark: '○', label: 'OK',   color: '#3b82f6' },
-    { mark: '△', label: '微妙', color: '#f59e0b' },
-    { mark: '×', label: '未',   color: '#dc2626' },
+    { mark: '◎', label: '完璧', color: 'var(--ok)' },
+    { mark: '○', label: 'OK',   color: 'var(--info)' },
+    { mark: '△', label: '微妙', color: 'var(--warn)' },
+    { mark: '×', label: '未',   color: 'var(--danger)' },
   ];
   return (
     <div style={{
@@ -21878,10 +21880,10 @@ const SectionCheckSummary = ({ pageId, sections, onJump }) => {
         📊 理解度サマリ（{total} セクション中）
       </div>
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 12, fontSize: 12 }}>
-        <span><strong style={{ color: '#16a34a' }}>◎ {counts['◎']}</strong></span>
-        <span><strong style={{ color: '#3b82f6' }}>○ {counts['○']}</strong></span>
-        <span><strong style={{ color: '#f59e0b' }}>△ {counts['△']}</strong></span>
-        <span><strong style={{ color: '#dc2626' }}>× {counts['×']}</strong></span>
+        <span><strong style={{ color: 'var(--ok)' }}>◎ {counts['◎']}</strong></span>
+        <span><strong style={{ color: 'var(--info)' }}>○ {counts['○']}</strong></span>
+        <span><strong style={{ color: 'var(--warn)' }}>△ {counts['△']}</strong></span>
+        <span><strong style={{ color: 'var(--danger)' }}>× {counts['×']}</strong></span>
         <span><strong style={{ color: 'var(--ink-soft)' }}>未 {counts['未']}</strong></span>
       </div>
       {weak.length > 0 ? (
@@ -21903,7 +21905,7 @@ const SectionCheckSummary = ({ pageId, sections, onJump }) => {
           </ul>
         </>
       ) : (
-        <div style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
+        <div style={{ fontSize: 12, color: 'var(--ok)', fontWeight: 600 }}>
           ✨ すべてのセクションが ◎ または ○ です。お疲れさまでした！
         </div>
       )}
@@ -22029,7 +22031,7 @@ const ConceptQuizItem = ({ q, pageId, pageTitle, required }) => {
             <button key={c.key} onClick={() => choose(c.key)} disabled={revealed}
               style={{ textAlign: 'left', padding: '8px 12px', background: bg, border: bd, color: 'var(--ink)', borderRadius: 6, cursor: revealed ? 'default' : 'pointer', fontSize: 14 }}>
               <strong>{c.key}.</strong> {c.label}
-              {revealed && c.correct && <span style={{ color: '#16a34a', fontWeight: 700 }}> ← 正解</span>}
+              {revealed && c.correct && <span style={{ color: 'var(--ok)', fontWeight: 700 }}> ← 正解</span>}
             </button>
           );
         })}
@@ -22038,9 +22040,9 @@ const ConceptQuizItem = ({ q, pageId, pageTitle, required }) => {
         <div style={{ marginTop: 10, padding: '10px 12px', borderRadius: 6, background: 'var(--bg-sunken)', fontSize: 13, lineHeight: 1.7 }}>
           <strong style={{ color: isCorrect ? (rescuedView ? '#d97706' : '#16a34a') : '#dc2626' }}>{isCorrect ? (rescuedView ? '△ 再回答で正解' : '◎ 正解') : '× 不正解'}</strong>
           {!isCorrect && <span style={{ color: 'var(--ink-soft)' }}> → 間違いノートに記録しました</span>}
-          {rescuedView && <span style={{ color: '#d97706', fontWeight: 700 }}> → 初回不正解のため「要復習」。後日また出題します（その場の正解＝丸暗記の可能性）</span>}
-          {confidence === 'sure' && !isCorrect && <span style={{ color: '#dc2626', fontWeight: 700 }}> ⚠ 過信注意（自信ありで不正解）</span>}
-          {confidence === 'unsure' && isCorrect && !rescuedView && <span style={{ color: '#16a34a' }}> 💡 自信なしで正解＝実力は足りている</span>}
+          {rescuedView && <span style={{ color: 'var(--warn)', fontWeight: 700 }}> → 初回不正解のため「要復習」。後日また出題します（その場の正解＝丸暗記の可能性）</span>}
+          {confidence === 'sure' && !isCorrect && <span style={{ color: 'var(--danger)', fontWeight: 700 }}> ⚠ 過信注意（自信ありで不正解）</span>}
+          {confidence === 'unsure' && isCorrect && !rescuedView && <span style={{ color: 'var(--ok)' }}> 💡 自信なしで正解＝実力は足りている</span>}
           <p style={{ margin: '6px 0 0' }}>{q.explanation}</p>
           {!isCorrect && (
             <div style={{ marginTop: 10 }}>
@@ -22117,12 +22119,12 @@ const ConceptQuizScore = ({ quizKeys, title }) => {
         {title || '📈 あなたの記録'} — 全 {total} 問中 {answered} 問 回答済み
       </div>
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: 12, marginBottom: 6 }}>
-        <span><strong style={{ color: '#16a34a' }}>◎ 正解 {ok}</strong></span>
-        <span><strong style={{ color: '#d97706' }}>△ 要復習 {review}</strong></span>
-        <span><strong style={{ color: '#dc2626' }}>× 不正解 {ng}</strong></span>
+        <span><strong style={{ color: 'var(--ok)' }}>◎ 正解 {ok}</strong></span>
+        <span><strong style={{ color: 'var(--warn)' }}>△ 要復習 {review}</strong></span>
+        <span><strong style={{ color: 'var(--danger)' }}>× 不正解 {ng}</strong></span>
         <span><strong style={{ color: 'var(--ink-soft)' }}>未回答 {total - answered}</strong></span>
         {answered > 0 && <span style={{ color: 'var(--ink-soft)' }}>正解率 {rate}%（{ok}/{answered}）</span>}
-        {over > 0 && <span style={{ color: '#dc2626', fontWeight: 700 }}>⚠ 過信 {over}</span>}
+        {over > 0 && <span style={{ color: 'var(--danger)', fontWeight: 700 }}>⚠ 過信 {over}</span>}
       </div>
       <div style={{ fontSize: 11, color: 'var(--ink-mute)', lineHeight: 1.6 }}>
         ◎＝一発で正解 ／ △＝間違えた後に正解（丸暗記の疑いがあるので後日また出す） ／ ×＝不正解。
@@ -22142,7 +22144,7 @@ const ConceptQuiz = ({ pageId, pageTitle }) => {
     <div style={{ border: '2px solid var(--accent)', borderRadius: 12, padding: '16px 18px', margin: '0 0 24px', background: 'var(--bg)' }}>
       <h3 style={{ margin: '0 0 4px', fontSize: 16 }}>🎯 確認問題（まず腕試し）</h3>
       <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: '0 0 12px' }}>
-        <strong style={{ color: '#dc2626' }}>必須</strong>＝落とすと失点する頻出ポイント・<strong style={{ color: '#3b82f6' }}>任意</strong>＝解くと理解が深まる発展。間違えると<strong>間違いノート</strong>に自動集約され、後で弱点だけ復習できる。
+        <strong style={{ color: 'var(--danger)' }}>必須</strong>＝落とすと失点する頻出ポイント・<strong style={{ color: 'var(--info)' }}>任意</strong>＝解くと理解が深まる発展。間違えると<strong>間違いノート</strong>に自動集約され、後で弱点だけ復習できる。
       </p>
       <ConceptQuizScore quizKeys={pool.map(q => `denken_check::riron_${pageId}::quiz::${q.id}`)} />
       <p style={{ fontSize: 12, margin: '0 0 14px' }}>
@@ -32613,7 +32615,7 @@ const RironDailyQuestion = ({ onNav }) => {
           <div style={{ fontSize: 11, color: 'var(--ink-mute)', marginBottom: 6 }}>{todayJpStr()}</div>
           <p style={{ margin: '0 0 8px', fontWeight: 600, lineHeight: 1.6, fontSize: 14 }}>{currentQ.q}</p>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12, fontSize: 11 }}>
-            <span style={{ padding: '1px 6px', background: currentQ.rank==='S' ? '#fef3c7' : currentQ.rank==='A' ? '#dbeafe' : '#e5e7eb', borderRadius: 3, fontWeight: 700 }}>{currentQ.rank}</span>
+            <span style={{ padding: '1px 6px', background: currentQ.rank==='S' ? '#fef3c7' : currentQ.rank==='A' ? '#dbeafe' : '#e5e7eb', color: 'oklch(0.22 0.02 260)', borderRadius: 3, fontWeight: 700 }}>{currentQ.rank}</span>
             <span style={{ padding: '1px 6px', background: 'var(--bg-sunken)', borderRadius: 3 }}>#{RIRON_DAILY_TOPIC_LABEL[currentQ.topic] || currentQ.topic}</span>
             {(currentQ.tags || []).map(t => <span key={t} style={{ padding: '1px 6px', background: 'var(--bg-sunken)', borderRadius: 3 }}>{t}</span>)}
             <span style={{ color: 'var(--ink-mute)' }}>· 平均正答率 {currentQ.avgRate}</span>
@@ -32726,7 +32728,7 @@ const RironDailyQuestion = ({ onNav }) => {
                   const ww = dailyHistory.filter(h => h.result === 'wrong').length;
                   return (
                     <div style={{ marginBottom: 10, fontSize: 11, color: 'var(--ink-mute)' }}>
-                      合計 <strong>{total}</strong> 件 · 正答率 <strong style={{ color: '#1a6b1a' }}>{Math.round(cc/total*100)}%</strong>{' '}
+                      合計 <strong>{total}</strong> 件 · 正答率 <strong style={{ color: 'var(--ok)' }}>{Math.round(cc/total*100)}%</strong>{' '}
                       (✓ {cc} / ? {vv} / ✗ {ww})
                     </div>
                   );
