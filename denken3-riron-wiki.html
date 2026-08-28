@@ -4408,11 +4408,11 @@ const Last3DaysPage = ({ onNav }) => (
     <PageHeader
       eyebrow="第7章 — STRATEGY"
       title="7.2 直前3日戦略"
-      deck="理論科目で直前3日間に確認すべき最重要公式・計算パターンをDay別に整理する。「知っているかどうか」ではなく「なぜその式になるか」を口に出して説明できるかを基準とする。"
+      deck="理論科目で直前3日間に確認すべき最重要公式・計算パターンをDay別に整理する。「知っているかどうか」ではなく「なぜその式になるか」を口に出して説明できるかを基準とする。冒頭のセクション1は学習記録で直近に×が付いたテーマだけを集めたもので、Day 3 より先に潰す。"
       meta={[
         { label: "対象期間", value: "試験3日前 〜 当日朝" },
         { label: "想定読了時間", value: "Day1あたり 60〜90分" },
-        { label: "更新", value: "2026.04" },
+        { label: "更新", value: "2026.08" },
       ]}
     />
     <Crumbs
@@ -4425,7 +4425,73 @@ const Last3DaysPage = ({ onNav }) => (
     />
     <div className="content">
 
-      <h2 id="day3"><span className="h-num">1</span>Day 3（試験3日前）— 電磁気・直流回路の公式確認</h2>
+      <h2 id="weak5"><span className="h-num">1</span>先に潰す5点 — 直近の×記録（2026年7〜8月）から</h2>
+
+      <Callout variant="warn" title="ここは「知らなかった」ではなく「取り違えた」で落としている">
+        <p>学習記録で直近に <strong>×（間違えた）</strong> が付いたテーマだけを抜き出した。Day 3 以降の一般確認より<strong>先に</strong>この5つを潰す。書いてあるのは公式そのものではなく、<strong>分かれ目（どこで取り違えるか）</strong>。</p>
+      </Callout>
+
+      <h3>① 相互インダクタンス — 和動・差動と、L が負にならない理由</h3>
+      <Callout variant="info" title="符号は端子の極性ではなく「和動か差動か」で決まる">
+        <ul>
+          <li>和動接続（磁束が助け合う）: <Eq tex="L = L_1 + L_2 + 2M" /></li>
+          <li>差動接続（磁束が打ち消し合う）: <Eq tex="L = L_1 + L_2 - 2M" /></li>
+          <li><Eq tex="M = k\sqrt{L_1 L_2}" />、結合係数は <Eq tex="0 \le k \le 1" />（<Eq tex="k=1" /> は<strong>完全結合</strong>＝漏れ磁束ゼロ。理想変圧器はさらに損失も無視した別概念）</li>
+        </ul>
+        <p><strong>差動でも合成 L は負にならない。</strong><Eq tex="k \le 1" /> より <Eq tex="M \le \sqrt{L_1 L_2}" /> なので <Eq tex="L_1 + L_2 - 2M \ge L_1 + L_2 - 2\sqrt{L_1 L_2} = (\sqrt{L_1} - \sqrt{L_2})^2 \ge 0" />。負の L はエネルギーを取り出し続けられる永久機関になるので、その選択肢は物理で切れる。</p>
+        <p>回路図の <strong>●印は端子の＋−ではなく「同極性端子」</strong>（＝両コイルの巻き方向の相対関係）を示す。<strong>●どうしから電流が入る（または両方から出る）なら和動</strong>で +2M、<strong>片方だけ●へ入るなら差動</strong>で −2M。</p>
+      </Callout>
+      <DetailLink to="inductance" onNav={onNav} />
+
+      <h3>② 磁界 — 1/r が使えるのは「無限長直線」だけ</h3>
+      <Callout variant="info" title="形状ごとに H の式が違う。思い出した式が今の形状のものか先に確認する">
+        <ul>
+          <li>無限長直線電流から距離 r: <Eq tex="H = \dfrac{I}{2\pi r}" />（<Eq tex="1/r" />）</li>
+          <li>十分長いソレノイドの内部（端から十分離れた領域）: <Eq tex="H = nI" />（n は単位長あたり巻数・<strong>位置に依らず一様</strong>、外部はほぼ0。端の付近だけは弱まる）</li>
+          <li>円形コイル（半径 a・N 巻）の中心: <Eq tex="H = \dfrac{NI}{2a}" />（1巻なら <Eq tex="I/(2a)" />）</li>
+        </ul>
+        <p>点電荷の電界が <Eq tex="1/r^2" /> で直線電流の磁界が <Eq tex="1/r" /> なのは、<strong>広がる先が球面 <Eq tex="4\pi r^2" /> か円周 <Eq tex="2\pi r" /> かの違い</strong>。分母に何が来るかで冪を復元できる。</p>
+        <p><Eq tex="B = \mu H" />（<Eq tex="\mu = \mu_0 \mu_r" />）。<strong>μ がどちらに効くかは「何が固定されているか」で変わる</strong>：起磁力 <Eq tex="NI" /> 側が固定なら <Eq tex="H" /> が決まって <Eq tex="B" /> が μ 倍、磁束 <Eq tex="\phi" /> 側が固定なら <Eq tex="B" /> が決まって <Eq tex="H" /> が <Eq tex="1/\mu" />。</p>
+      </Callout>
+      <DetailLink to="magnetic-circuit" onNav={onNav} />
+
+      <h3>③ 静電エネルギーは 1/r、力は 1/r²（冪が1つ下がる）</h3>
+      <Callout variant="info" title="「動き出すか」は力、「どこまで行くか・速さ」はエネルギー">
+        <ul>
+          <li>力: <Eq tex="F = k\dfrac{Q_1 Q_2}{r^2}" /></li>
+          <li>位置エネルギー（無限遠を基準）: <Eq tex="W = k\dfrac{Q_1 Q_2}{r}" /></li>
+          <li>両者の関係は <Eq tex="F = -\dfrac{dW}{dr}" />。<strong>距離依存だけ見れば「力を r で積分すると冪が1つ下がる」</strong>と覚えれば、<Eq tex="1/r^2" /> ↔ <Eq tex="1/r" /> を取り違えない</li>
+          <li>電位 <Eq tex="V = k\dfrac{Q}{r}" /> と電界 <Eq tex="E = k\dfrac{Q}{r^2}" /> も同じ関係</li>
+        </ul>
+        <p>設問が「静止した電荷は動き出すか／どちら向きに動くか」なら<strong>力（1/r²）の比較</strong>、「速さはいくらになるか／仕事はいくらか」なら<strong>エネルギー（1/r）の差</strong>。どちらを聞かれているかを1行書いてから式を選ぶ。</p>
+      </Callout>
+      <DetailLink to="coulomb-field" onNav={onNav} />
+
+      <h3>④ 左手・右手と「磁界は動いている電荷しか押さない」</h3>
+      <Callout variant="info" title="押されるなら左手・生み出すなら右手">
+        <ul>
+          <li>左手（電動機）: 親指=<strong>力 F</strong>・人差し指=<strong>磁束密度 B</strong>・中指=<strong>電流 I</strong></li>
+          <li>右手（発電機）: 親指=<strong>速度 v</strong>・人差し指=<strong>磁束密度 B</strong>・中指=<strong>誘導起電力 e（＝誘導電流の向き）</strong></li>
+        </ul>
+        <p><strong>電界は静止していても押す</strong>（<Eq tex="F = qE" />）。<strong>磁界は動いている電荷しか押さない</strong>（<Eq tex="F = qvB\sin\theta" /> なので <Eq tex="v = 0" /> や v が B と平行なら力はゼロ）。電子は電流と逆向きに動く点も毎回確認する。</p>
+        <p><strong>平行導体は「同じ向きの電流どうしが引き合い、逆向きは反発する」</strong>（同符号の電荷が反発するのと逆なので取り違えやすい）。空気中では単位長あたり <Eq tex="F = \dfrac{\mu_0 I_1 I_2}{2\pi r}" />（大きさ。引力か斥力かは電流の向きで判定）。</p>
+      </Callout>
+      <DetailLink to="electromagnetic-force" onNav={onNav} />
+
+      <h3>⑤ トランジスタ α・β — 分母が何かを先に置く</h3>
+      <Callout variant="info" title="I_E = I_C + I_B を書けば α と β は復元できる">
+        <ul>
+          <li>ベース接地の電流増幅率: <Eq tex="\alpha = \dfrac{I_C}{I_E}" />（エミッタが全体・コレクタはその大部分なので 1 未満）</li>
+          <li>エミッタ接地の電流増幅率: <Eq tex="\beta = \dfrac{I_C}{I_B}" />（ベース電流はごく小さいので 1 よりずっと大きい）</li>
+          <li>相互変換: <Eq tex="\alpha = \dfrac{\beta}{\beta + 1}" />、<Eq tex="\beta = \dfrac{\alpha}{1 - \alpha}" /></li>
+        </ul>
+        <p>迷ったら <Eq tex="I_E = I_C + I_B" /> を1行書いて代入すれば、暗記なしで相互変換が出る。<strong>答えが 1 未満か 1 より大きいかで、分母に置いたのが <Eq tex="I_E" /> か <Eq tex="I_B" /> かを検算</strong>できる。</p>
+      </Callout>
+      <DetailLink to="transistor" onNav={onNav} />
+
+      <hr/>
+
+      <h2 id="day3"><span className="h-num">2</span>Day 3（試験3日前）— 電磁気・直流回路の公式確認</h2>
 
       <h3>静電気・コンデンサ</h3>
       <Callout variant="info" title="クーロンの法則 F = kQ₁Q₂/r² の係数kの根拠">
@@ -4527,7 +4593,7 @@ const Last3DaysPage = ({ onNav }) => (
 
       <hr/>
 
-      <h2 id="day2"><span className="h-num">2</span>Day 2（試験2日前）— B問題の計算パターン確認</h2>
+      <h2 id="day2"><span className="h-num">3</span>Day 2（試験2日前）— B問題の計算パターン確認</h2>
 
       <h3>三相交流</h3>
       <Callout variant="info" title="Y結線とΔ結線の√3の出る場所">
@@ -4579,7 +4645,7 @@ const Last3DaysPage = ({ onNav }) => (
 
       <hr/>
 
-      <h2 id="day1"><span className="h-num">3</span>Day 1（試験前日）— R08予測テーマの重点確認</h2>
+      <h2 id="day1"><span className="h-num">4</span>Day 1（試験前日）— R08予測テーマの重点確認</h2>
 
       <h3>磁気回路（最優先：R06上〜R07下 4回連続空白）</h3>
       <Callout variant="warn" title="R08（2026年8月）最高確率テーマ">
@@ -4626,7 +4692,7 @@ const Last3DaysPage = ({ onNav }) => (
 
       <hr/>
 
-      <h2 id="morning"><span className="h-num">4</span>当日朝 — 最重要確認表（5分で黙読）</h2>
+      <h2 id="morning"><span className="h-num">5</span>当日朝 — 最重要確認表（5分で黙読）</h2>
 
       <table>
         <thead>
@@ -4647,6 +4713,10 @@ const Last3DaysPage = ({ onNav }) => (
           <tr><td>t=0直後コンデンサ</td><td>短絡（初期電荷ゼロの場合）</td></tr>
           <tr><td>t=0直後インダクタ</td><td>開放（初期電流ゼロの場合）</td></tr>
           <tr><td>反転増幅ゲイン</td><td><Eq tex="A_v = -R_f/R_i" />（マイナス符号あり）</td></tr>
+          <tr><td>相互インダクタンス</td><td><Eq tex="L = L_1 + L_2 \pm 2M" />（和動が +・差動が −）、<Eq tex="M = k\sqrt{L_1 L_2}" /></td></tr>
+          <tr><td>磁界の形状別</td><td>無限長直線 <Eq tex="H = I/(2\pi r)" /> / ソレノイド内部 <Eq tex="H = nI" />（一様）</td></tr>
+          <tr><td>静電エネルギー</td><td><Eq tex="W = kQ_1Q_2/r" />（力・電界は <Eq tex="1/r^2" />＝冪が1つ上）</td></tr>
+          <tr><td>トランジスタ α・β</td><td><Eq tex="\alpha = I_C/I_E" />（1未満）、<Eq tex="\beta = I_C/I_B" />、<Eq tex="\alpha = \beta/(\beta+1)" /></td></tr>
         </tbody>
       </table>
 
