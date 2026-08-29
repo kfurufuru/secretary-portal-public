@@ -3135,13 +3135,13 @@ const InductionMachinePage = ({ data, onNav }) => (
       <RotatingFieldDiagram />
 
       <FormulaCard
-        num="01 / 06"
+        num="01 / 07"
         name="同期速度"
         eq="N_s = \dfrac{120 f}{p} \;[\mathrm{min^{-1}}]"
         note={<>f は電源周波数 [Hz]、p は極数。50Hz・4極なら Ns = 1500 min⁻¹。</>}
       />
       <FormulaCard
-        num="02 / 06"
+        num="02 / 07"
         name="滑り（slip）"
         eq="s = \dfrac{N_s - N}{N_s}"
         note={<>N は回転子の実回転速度。0&lt;s&lt;1 が電動機域、s&lt;0 が発電機域、s&gt;1 が制動域。</>}
@@ -3161,11 +3161,29 @@ const InductionMachinePage = ({ data, onNav }) => (
       </Box>
 
       <FormulaCard
-        num="03 / 06"
+        num="03 / 07"
         name="二次銅損 / 二次入力"
         eq="\dfrac{P_{c2}}{P_2} = s \quad,\quad \dfrac{P_m}{P_2} = 1-s"
         note="効率や出力計算で軸となる関係。"
       />
+
+      <FormulaCard
+        num="04 / 07"
+        name="トルクへの換算（同期ワット）"
+        eq="T = \dfrac{P_2}{\omega_s} = \dfrac{P_m}{\omega}"
+        note={<>二次入力 <Eq tex="P_2" /> を<strong>同期</strong>角速度 <Eq tex="\omega_s" /> で割るとトルクになる。これが <Eq tex="P_2" /> を <strong>同期ワット</strong>と呼ぶ理由。機械的出力 <Eq tex="P_m" /> を<strong>実際の</strong>回転角速度 <Eq tex="\omega" /> で割っても同じ値になる（<Eq tex="P_m=(1-s)P_2" /> と <Eq tex="\omega=(1-s)\omega_s" /> の <Eq tex="(1-s)" /> が相殺するため）。角速度は <Eq tex="\omega_s = 2\pi N_s/60" />・<Eq tex="\omega = 2\pi N/60" />（<Eq tex="N" /> の単位は min⁻¹）。</>}
+      />
+
+      <Box kind="example" label="例題 — トルク換算を2通りで出して一致を確かめる">
+        <p><strong>問:</strong> 4 極・50 Hz の三相誘導電動機で、二次入力 <Eq tex="P_2 = 22.0\;\mathrm{kW}" />、滑り <Eq tex="s = 4.0\,\%" />（セクション6の例題 1.2.2 と同じ <Eq tex="P_2" />・<Eq tex="s" /> の機に、極数と周波数を与えたもの）。発生トルク <Eq tex="T" /> を求めよ。</p>
+        <p><strong>同期側から:</strong> 同期速度は <Eq tex="N_s = \dfrac{120 \times 50}{4} = 1500\;\mathrm{min^{-1}}" />、同期角速度は</p>
+        <Eq display tex="\omega_s = \dfrac{2\pi \times 1500}{60} = 50\pi \approx 157.1\;[\mathrm{rad/s}]" />
+        <Eq display tex="T = \dfrac{P_2}{\omega_s} = \dfrac{22000}{50\pi} \approx 140\;[\mathrm{N\cdot m}]" />
+        <p><strong>機械側から検算:</strong> 回転速度 <Eq tex="N = (1-s)N_s = 0.96 \times 1500 = 1440\;\mathrm{min^{-1}}" />、<Eq tex="\omega = \dfrac{2\pi \times 1440}{60} = 48\pi \approx 150.8\;\mathrm{rad/s}" />、機械的出力 <Eq tex="P_m = (1-s)P_2 = 0.96 \times 22000 = 21120\;\mathrm{W}" />。</p>
+        <Eq display tex="T = \dfrac{P_m}{\omega} = \dfrac{21120}{48\pi} \approx 140\;[\mathrm{N\cdot m}]" />
+        <p style={{margin:"8px 0 0"}}>両者は<strong>厳密に一致</strong>する（丸めの都合で近い値になっているのではない）。<Eq tex="P_m" /> と <Eq tex="\omega" /> の両方に同じ <Eq tex="(1-s)" /> が掛かって約分されるためで、<span className="marker">トルクは滑りが変わっても「二次入力 ÷ 同期角速度」で求まる</span>。だから <Eq tex="P_2" /> をワット単位のまま「トルクの代用量」として扱える＝同期ワット。</p>
+        <p style={{margin:"8px 0 0"}}>⚠️ 分母に入れるのは <strong>rad/s</strong> であって min⁻¹ ではない。<Eq tex="2\pi/60" /> の換算を忘れて <Eq tex="N_s" /> でそのまま割ると、答えが <Eq tex="60/2\pi \approx 9.55" /> 分の 1 になる（この例なら 14.7 という値が出る）。⚠️ <Eq tex="P_2" /> と組むのは <Eq tex="\omega_s" />、<Eq tex="P_m" /> と組むのは <Eq tex="\omega" />。<strong>たすき掛けにしない</strong>。</p>
+      </Box>
 
       <SectionCheck pageId="induction-machine" sectionId="circuit" />
 
@@ -3175,7 +3193,7 @@ const InductionMachinePage = ({ data, onNav }) => (
       <TorqueSlipCurve />
 
       <FormulaCard
-        num="04 / 06"
+        num="05 / 07"
         name="トルク式（簡易形）"
         eq="T \;\propto\; \dfrac{V_1^{2} \cdot (r_2'/s)}{(r_1 + r_2'/s)^2 + (x_1 + x_2')^2}"
         note={<>電圧の二乗に比例することに注意。電源電圧が 0.9 倍に低下すると、トルクは 0.81 倍となる。</>}
@@ -3237,7 +3255,7 @@ const InductionMachinePage = ({ data, onNav }) => (
       </ul>
 
       <FormulaCard
-        num="05 / 06"
+        num="06 / 07"
         name="V/f 一定制御"
         eq="\dfrac{V}{f} = \mathrm{const} \;\Rightarrow\; \phi \;\approx\; \mathrm{const}"
         note={<>磁束を定格値に保ち、最大トルクを維持しながら可変速運転を行う。基底周波数以上では弱め界磁制御に移行。</>}
@@ -3263,7 +3281,7 @@ const InductionMachinePage = ({ data, onNav }) => (
       </Box>
 
       <FormulaCard
-        num="06 / 06"
+        num="07 / 07"
         name="効率（簡易）"
         eq="\eta \;\approx\; (1-s) \times \dfrac{P_2}{P_1} \;\le\; (1-s)"
         note="鉄損・一次銅損・機械損を無視した上限値。実機では (1-s) からさらに数%低下する。"
