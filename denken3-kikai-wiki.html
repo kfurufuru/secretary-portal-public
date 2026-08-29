@@ -1729,7 +1729,9 @@ Object.assign(window, {
 
 const DiagramFrame = ({ title, caption, children, viewBox = "0 0 400 240" }) => (
   <div className="diagram">
-    <svg viewBox={viewBox} xmlns="http://www.w3.org/2000/svg" fill="none" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+    {/* 図の名前は title があればそれ、無ければ caption から作る（無名の svg を残さない） */}
+    <svg viewBox={viewBox} xmlns="http://www.w3.org/2000/svg" role="img" aria-label={title || caption}
+         fill="none" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
       {children}
     </svg>
     {caption && <div className="diagram-caption">— {caption} —</div>}
@@ -1742,10 +1744,8 @@ const RotatingFieldDiagram = () => (
     {/* Stator outer */}
     <circle cx="200" cy="130" r="100" className="diagram-stroke-soft" />
     <circle cx="200" cy="130" r="92"  className="diagram-stroke-soft" strokeDasharray="2 3" />
-    {/* Rotor */}
+    {/* Rotor（かご形。回転子自体は磁石ではない — N/S は固定子が作る合成磁界の極） */}
     <circle cx="200" cy="130" r="36" className="diagram-stroke" />
-    <line x1="200" y1="130" x2="246" y2="100" className="diagram-accent" strokeWidth="2" />
-    <polygon points="244,96 252,99 246,104" className="diagram-accent" fill="currentColor" stroke="none" style={{ fill: 'var(--accent)' }} />
     {/* Phase windings — three coils at 120° */}
     {[0, 120, 240].map((deg, i) => {
       const rad = (deg - 90) * Math.PI / 180;
@@ -1762,11 +1762,24 @@ const RotatingFieldDiagram = () => (
         </g>
       );
     })}
-    {/* N/S markers on rotor */}
-    <text x="200" y="118" textAnchor="middle" className="diagram-text" fontSize="11" fontWeight="700">N</text>
-    <text x="200" y="148" textAnchor="middle" className="diagram-text" fontSize="11" fontWeight="700">S</text>
+    {/* 合成磁界（回転磁界）の軸。三相電流がつくる磁界の合成であって、回転子の磁極ではない。
+        軸は水平から 33° 上向き（単位ベクトル 0.838, −0.546）に取り、S 側 → N 側へ矢印を引く。 */}
+    <line x1="153.1" y1="160.6" x2="246.9" y2="99.4" className="diagram-accent" strokeWidth="2" />
+    <polygon points="251.9,96.2 242.4,98.2 245.8,103.5" stroke="none" style={{ fill: 'var(--accent)' }} />
+    <text x="258" y="92" className="diagram-text" fontSize="11" fontWeight="700" style={{ fill: 'var(--accent)' }}>N</text>
+    <text x="136" y="172" textAnchor="end" className="diagram-text" fontSize="11" fontWeight="700" style={{ fill: 'var(--accent)' }}>S</text>
+    <line x1="200" y1="166" x2="200" y2="174" className="diagram-stroke-soft" strokeDasharray="3 3" />
+    <text x="200" y="184" textAnchor="middle" className="diagram-text" fontSize="10">回転子（かご形）</text>
+
+    {/* 回転方向（時計回り）。速さが Ns = 120f/p */}
+    <path d="M 126.6 149.7 A 76 76 0 0 1 137.8 86.4" className="diagram-stroke-soft" fill="none" />
+    <polygon points="137.8,86.4 136.5,95.3 129.9,90.7" className="diagram-fill" />
+    <line x1="98" y1="110" x2="126" y2="105" className="diagram-stroke-soft" strokeDasharray="3 3" />
+    <text x="94" y="113" textAnchor="end" className="diagram-text" fontSize="9.5">Ns で回転</text>
+
     {/* Caption inside */}
-    <text x="246" y="92" className="diagram-text-mono">Ns = 120f / p</text>
+    <text x="396" y="44" textAnchor="end" className="diagram-text-mono">Ns = 120f / p</text>
+    <text x="396" y="58" textAnchor="end" className="diagram-text" fontSize="9">N・S は固定子がつくる合成磁界の極</text>
   </DiagramFrame>
 );
 
@@ -1821,38 +1834,41 @@ const EquivalentCircuit = () => (
 
 /* Torque-slip curve */
 const TorqueSlipCurve = () => (
-  <DiagramFrame caption="図1.2.3  トルク特性（横軸:滑り s、縦軸:トルク T）" viewBox="0 0 420 240">
+  <DiagramFrame caption="図1.2.3  トルク特性（横軸:滑り s、縦軸:トルク T）。かご形の代表値 sm ≈ 0.2 で作図した一例で、sm は二次抵抗で動く（下の比例推移を参照）" viewBox="0 0 420 240">
     {/* Axes */}
-    <line x1="50" y1="200" x2="390" y2="200" className="diagram-stroke" />
+    <line x1="44" y1="200" x2="390" y2="200" className="diagram-stroke" />
     <line x1="50" y1="200" x2="50"  y2="30" className="diagram-stroke" />
-    <polygon points="390,200 384,196 384,204" className="diagram-fill" />
+    {/* x 軸の矢印は「s が増える向き」＝左向き。目盛り（左端 s=1・右端 s=0）と向きを一致させる */}
+    <polygon points="36,200 46,195.5 46,204.5" className="diagram-fill" />
     <polygon points="50,30 46,36 54,36" className="diagram-fill" />
-    <text x="396" y="204" className="diagram-text-mono">s</text>
+    <text x="34" y="188" textAnchor="middle" className="diagram-text-mono">s</text>
     <text x="50"  y="22" textAnchor="middle" className="diagram-text-mono">T</text>
 
-    {/* x ticks */}
+    {/* x ticks（x = 390 − 340s） */}
     <text x="50"  y="218" textAnchor="middle" className="diagram-text-mono">1</text>
     <text x="220" y="218" textAnchor="middle" className="diagram-text-mono">0.5</text>
     <text x="390" y="218" textAnchor="middle" className="diagram-text-mono">0</text>
     <text x="50"  y="232" textAnchor="middle" className="diagram-text" fontSize="9">始動</text>
     <text x="390" y="232" textAnchor="middle" className="diagram-text" fontSize="9">同期速度</text>
-    <text x="220" y="232" textAnchor="middle" className="diagram-text" fontSize="9">← s 大（低速）　　s 小（高速）→</text>
+    <text x="210" y="232" textAnchor="middle" className="diagram-text" fontSize="9">← s 大（低速）　　s 小（高速）→</text>
 
-    {/* Curve: typical induction motor torque-slip */}
-    <path d="M 50 160 C 90 160, 130 80, 170 70 C 210 65, 270 110, 320 150 C 360 180, 380 195, 390 200"
+    {/* Curve: クロスの式 T/Tmax = 2 / (s/sm + sm/s) を sm = 0.2 （かご形の代表値）で作図。
+        横軸 x = 390 − 340s、縦軸 y = 200 − 130·(T/Tmax) */}
+    <path d="M 50 150 L 84 144.9 L 118 138.8 L 152 131.3 L 186 122 L 220 110.3 L 247.2 99.1 L 271 88 L 288 80 L 301.6 74.3 L 311.8 71.3 L 322 70 L 330.5 71.2 L 339 75.2 L 345.8 81.2 L 352.6 90.2 L 359.4 102.7 L 364.5 114.5 L 369.6 128.4 L 373 138.8 L 376.4 150 L 379.8 161.9 L 383.2 174.3 L 386.6 187 L 390 200"
           className="diagram-accent" strokeWidth="2.2" style={{ fill: 'none' }} />
 
     {/* Markers */}
-    <circle cx="170" cy="70" r="4" className="diagram-accent" fill="var(--accent)" />
-    <line x1="170" y1="70" x2="170" y2="200" strokeDasharray="3 3" className="diagram-stroke-soft" />
-    <text x="170" y="60" textAnchor="middle" className="diagram-text" fontSize="11">Tmax (停動トルク)</text>
-    <text x="170" y="216" textAnchor="middle" className="diagram-text-mono">sm</text>
+    <circle cx="322" cy="70" r="4" className="diagram-accent" fill="var(--accent)" />
+    <line x1="322" y1="70" x2="322" y2="200" strokeDasharray="3 3" className="diagram-stroke-soft" />
+    <text x="322" y="58" textAnchor="middle" className="diagram-text" fontSize="11">Tmax（停動トルク）</text>
+    <text x="322" y="218" textAnchor="middle" className="diagram-text-mono">sm≈0.2</text>
 
-    <circle cx="50" cy="160" r="4" className="diagram-warn" fill="var(--warn)" />
-    <text x="58" y="180" className="diagram-text" fontSize="11">始動トルク Ts</text>
+    <circle cx="50" cy="150" r="4" className="diagram-warn" fill="var(--warn)" />
+    <text x="58" y="168" className="diagram-text" fontSize="11">始動トルク Ts（s = 1）</text>
 
-    <circle cx="350" cy="175" r="4" className="diagram-fill" />
-    <text x="320" y="170" textAnchor="end" className="diagram-text" fontSize="11">定格点</text>
+    <circle cx="376" cy="150" r="4" className="diagram-fill" />
+    <line x1="304" y1="182" x2="372" y2="152" className="diagram-stroke-soft" strokeDasharray="3 3" />
+    <text x="300" y="186" textAnchor="end" className="diagram-text" fontSize="11">定格点（s ≈ 0.03〜0.05）</text>
   </DiagramFrame>
 );
 
@@ -2051,35 +2067,41 @@ const PWMWaveform = () => (
 
 /* Bode-style block diagram */
 const BlockDiagram = () => (
-  <DiagramFrame caption="図3.1.2  単位フィードバック制御系のブロック線図" viewBox="0 0 420 160">
+  /* 本文の公式 Y/R = G/(1+GH) と 1 対 1 に対応させる。前向きに G(s)、帰還路に H(s) を置き、
+     H(s)=1 のときが単位フィードバック（本文の例題がこのケース）。 */
+  <DiagramFrame caption="図3.1.2  フィードバック制御系のブロック線図（H(s) = 1 が単位フィードバック）" viewBox="0 0 420 168">
     <line x1="20"  y1="80" x2="60"  y2="80" className="diagram-stroke" />
     <polygon points="60,80 54,76 54,84" className="diagram-fill" />
     <text x="20" y="72" className="diagram-text-mono">R(s)</text>
 
     <circle cx="76" cy="80" r="14" className="diagram-stroke diagram-fill-bg" />
-    <text x="76" y="84" textAnchor="middle" className="diagram-text-mono" fontWeight="700">+</text>
-    <text x="58" y="100" className="diagram-text-mono">−</text>
+    <text x="62" y="70" textAnchor="middle" className="diagram-text-mono" fontWeight="700">+</text>
+    <text x="92" y="104" className="diagram-text-mono" fontWeight="700">−</text>
 
-    <line x1="90" y1="80" x2="130" y2="80" className="diagram-stroke" />
-    <polygon points="130,80 124,76 124,84" className="diagram-fill" />
+    <line x1="90" y1="80" x2="150" y2="80" className="diagram-stroke" />
+    <polygon points="150,80 144,76 144,84" className="diagram-fill" />
+    <text x="118" y="72" textAnchor="middle" className="diagram-text-mono">E(s)</text>
 
-    <rect x="130" y="60" width="80" height="40" className="diagram-stroke diagram-fill-bg" />
-    <text x="170" y="84" textAnchor="middle" className="diagram-text-mono">G(s)</text>
+    <rect x="150" y="60" width="100" height="40" className="diagram-stroke diagram-fill-bg" />
+    <text x="200" y="84" textAnchor="middle" className="diagram-text-mono">G(s)</text>
+    <text x="200" y="52" textAnchor="middle" className="diagram-text" fontSize="9">前向き伝達関数</text>
 
-    <line x1="210" y1="80" x2="250" y2="80" className="diagram-stroke" />
-    <polygon points="250,80 244,76 244,84" className="diagram-fill" />
-
-    <rect x="250" y="60" width="80" height="40" className="diagram-stroke diagram-fill-bg" />
-    <text x="290" y="84" textAnchor="middle" className="diagram-text-mono">P(s)</text>
-
-    <line x1="330" y1="80" x2="400" y2="80" className="diagram-stroke" />
+    <line x1="250" y1="80" x2="400" y2="80" className="diagram-stroke" />
     <polygon points="400,80 394,76 394,84" className="diagram-fill" />
     <text x="400" y="72" textAnchor="end" className="diagram-text-mono">Y(s)</text>
 
-    {/* Feedback */}
-    <line x1="370" y1="80" x2="370" y2="130" className="diagram-stroke" />
-    <line x1="370" y1="130" x2="76"  y2="130" className="diagram-stroke" />
-    <line x1="76"  y1="130" x2="76"  y2="94"  className="diagram-stroke" />
+    {/* Feedback path — ここに H(s) が入る */}
+    <circle cx="340" cy="80" r="3" className="diagram-fill" />
+    <line x1="340" y1="80" x2="340" y2="128" className="diagram-stroke" />
+    <line x1="340" y1="128" x2="248" y2="128" className="diagram-stroke" />
+    <polygon points="248,128 254,124 254,132" className="diagram-fill" />
+
+    <rect x="168" y="110" width="80" height="36" className="diagram-stroke diagram-fill-bg" />
+    <text x="208" y="132" textAnchor="middle" className="diagram-text-mono">H(s)</text>
+    <text x="208" y="160" textAnchor="middle" className="diagram-text" fontSize="9">帰還要素（H = 1 で単位フィードバック）</text>
+
+    <line x1="168" y1="128" x2="76"  y2="128" className="diagram-stroke" />
+    <line x1="76"  y1="128" x2="76"  y2="94"  className="diagram-stroke" />
     <polygon points="76,94 72,100 80,100" className="diagram-fill" />
   </DiagramFrame>
 );
@@ -2302,7 +2324,7 @@ const HomePage = ({ data, onNav }) => {
           </ul>
         </Box>
       </div>
-      <PageNav next={{ id: "induction-machine", title: "1.2 三相誘導電動機" }} onNav={onNav} />
+      <PageNav next={{ id: "dc-machine", title: "1.1 直流機" }} onNav={onNav} />
     </>
   );
 };
@@ -2921,7 +2943,7 @@ const InductionMachineLayers = () => (
 
     <div className="table-wrap"><table className="data-table">
       <thead>
-        <tr><th>視点</th><th>何を見るか</th><th>代表する式・量</th></tr>
+        <tr><th scope="col">視点</th><th scope="col">何を見るか</th><th scope="col">代表する式・量</th></tr>
       </thead>
       <tbody>
         <tr>
@@ -3162,6 +3184,12 @@ const InductionMachinePage = ({ data, onNav }) => (
       <h3 id="hireisuii">比例推移（巻線形のみ）</h3>
       <p>巻線形誘導機において <span className="marker">二次抵抗を k 倍にすると、同一トルクを生じる滑りも k 倍</span> になる。これを比例推移という。停動滑り <Eq tex="s_m" /> も k 倍になるため、二次抵抗を増やせば <span className="marker">始動トルクを大きく</span> できる一方、運転時の効率は低下する。</p>
 
+      <Box kind="mistake" label="比例推移で「必ず」正しくなる3点と、正しくない2点">
+        <p><strong>① 最大トルクの大きさは二次抵抗によらず一定。</strong>動くのは「最大トルクを生じる滑り <Eq tex="s_m" />」だけで、山の高さ <Eq tex="T_{max}" /> は変わらない。トルク式で <Eq tex="r_2'/s" /> を1つの変数と見ると、<Eq tex="r_2'" /> と <Eq tex="s" /> が同じ倍率で動く限り式の値が変わらないためで、上の図でいえば<strong>山が横にスライドするだけで高さは同じ</strong>。<Eq tex="T_{max} \propto \dfrac{V_1^{2}}{2(x_1 + x_2')}" /> と、<Eq tex="r_2'" /> を含まない形で書けることからも読める。「二次抵抗を増やすと最大トルクが増える」は誤り。</p>
+        <p><strong>② 始動トルクが増えるのは <Eq tex="s_m" /> が 1 に達するまで。</strong><Eq tex="s_m = 1" />（始動の瞬間に山の頂点が来る）で始動トルク＝最大トルクとなり、そこからさらに二次抵抗を増やすと山は s &gt; 1 側へ抜けてしまい、<span className="marker">始動トルクは逆に減少する</span>。「抵抗を増やせば増やすほど始動トルクが大きくなる」は誤り。</p>
+        <p><strong>③ 比例推移が成り立つ量は限られる。</strong>トルクと電流（一次電流・二次電流）・力率には成り立つが、<span className="marker">出力・効率・二次銅損には成り立たない</span>。同じトルクを高い滑りで出す分だけ二次銅損 <Eq tex="P_{c2}=sP_2" /> が増え、効率は下がる（だから運転中は抵抗を短絡する）。</p>
+      </Box>
+
       <Box kind="tip" label="比例推移の使い道">
         <p>「始動時のみ二次抵抗を挿入し、加速後に短絡」という二次抵抗始動法はこの性質を利用したもの。かご形では原理的に二次抵抗を変化できないため、二重かご形・深溝形が用いられる。</p>
       </Box>
@@ -3174,11 +3202,11 @@ const InductionMachinePage = ({ data, onNav }) => (
           <caption>表1.2.1  代表的な始動方式の比較</caption>
           <thead>
             <tr>
-              <th>方式</th>
-              <th>適用</th>
-              <th className="num">始動電流</th>
-              <th className="num">始動トルク</th>
-              <th>備考</th>
+              <th scope="col">方式</th>
+              <th scope="col">適用</th>
+              <th scope="col" className="num">始動電流</th>
+              <th scope="col" className="num">始動トルク</th>
+              <th scope="col">備考</th>
             </tr>
           </thead>
           <tbody>
@@ -3361,7 +3389,7 @@ const DCMachineLayers = () => (
 
     <div className="table-wrap"><table className="data-table">
       <thead>
-        <tr><th>視点</th><th>何を見るか</th><th>代表する式・量</th></tr>
+        <tr><th scope="col">視点</th><th scope="col">何を見るか</th><th scope="col">代表する式・量</th></tr>
       </thead>
       <tbody>
         <tr>
@@ -3577,6 +3605,8 @@ const DCMachinePage = ({ onNav }) => (
       <p>固定子に <strong>界磁巻線</strong>、回転子に <strong>電機子巻線</strong> を持ち、整流子（コンミテータ）とブラシで電機子電流の方向を機械的に切り替える。これにより常に一定方向のトルクを得る。</p>
       <DCMachineCross />
 
+      <SectionCheck pageId="dc-machine" sectionId="structure" />
+
       <h2 id="emf"><span className="h-num">2.</span>誘導起電力とトルク</h2>
       <FormulaCard num="01 / 04" name="誘導起電力" eq="E = K \phi N" note="K は機械固定の定数、φ は極あたり磁束、N は回転速度。" />
       <FormulaCard num="02 / 04" name="トルク" eq="T = K' \phi I_a" note="トルクは磁束と電機子電流の積に比例。" />
@@ -3589,10 +3619,12 @@ const DCMachinePage = ({ onNav }) => (
         <p style={{margin:"8px 0 0"}}><a href="https://kfurufuru.github.io/secretary-portal-public/denken3-riron-wiki.html#inductance" target="_blank" rel="noopener">→ 理論Wiki「電磁誘導」でファラデーの法則とフレミング右手則を深掘り</a></p>
       </Box>
 
+      <SectionCheck pageId="dc-machine" sectionId="emf" />
+
       <h2 id="excitation"><span className="h-num">3.</span>励磁方式</h2>
       <div className="table-wrap">
         <table className="data">
-          <thead><tr><th>方式</th><th>結線</th><th>特徴</th><th>用途</th></tr></thead>
+          <thead><tr><th scope="col">方式</th><th scope="col">結線</th><th scope="col">特徴</th><th scope="col">用途</th></tr></thead>
           <tbody>
             <tr><td>他励式</td><td>界磁を別電源</td><td>速度安定性◎</td><td>圧延機など精密制御</td></tr>
             <tr><td>分巻式</td><td>界磁と電機子を並列</td><td>定速度特性</td><td>送風機・工作機械</td></tr>
@@ -3624,6 +3656,8 @@ const DCMachinePage = ({ onNav }) => (
         <p><span className="marker">直巻電動機は無負荷で破壊する</span>: 負荷が軽いと電流が小さくなり磁束が減少、E = KφN を保つには N が無限大に発散する。空車運転禁止。</p>
       </Box>
 
+      <SectionCheck pageId="dc-machine" sectionId="excitation" />
+
       <h2 id="speed-control"><span className="h-num">4.</span>速度制御</h2>
       <ul>
         <li><strong>電圧制御</strong> — 電機子電圧を変える。最も滑らかで効率良。</li>
@@ -3637,6 +3671,8 @@ const DCMachinePage = ({ onNav }) => (
         <Eq display tex="\dfrac{P_{cu}}{P_{in}} = \dfrac{I_a^2 R_a}{V I_a} = \dfrac{I_a R_a}{V} = \dfrac{10}{220} \approx 4.5\;\%" />
       </Box>
 
+      <SectionCheck pageId="dc-machine" sectionId="speed-control" />
+
       <h2 id="reaction"><span className="h-num">5.</span>電機子反作用と対策（補極・補償巻線）</h2>
       <ArmatureReactionFig />
       <p>負荷時に電機子電流が作る磁束が界磁磁束を歪ませる（<strong>電機子反作用</strong>）。直流機では<span className="marker">電気的中性軸が移動</span>し（発電機は回転方向へ・電動機は逆方向へ）、主磁束の<strong>減磁</strong>と<strong>整流不良（ブラシ火花）</strong>を招く。</p>
@@ -3645,6 +3681,8 @@ const DCMachinePage = ({ onNav }) => (
         <li><strong>補償巻線</strong> — 磁極片の溝に埋め込み電機子巻線と直列に接続し、磁極片下の電機子起磁力と<strong>反対向きの起磁力</strong>を作って<span className="marker">電機子反作用そのものを打ち消す</span>（大容量機・負荷変動の激しい機械）</li>
         <li><strong>ブラシ移動</strong> — 中性軸の移動に合わせてブラシ位置をずらす簡便策（負荷が変わるたびに最適位置が変わる欠点）</li>
       </ul>
+
+      <SectionCheck pageId="dc-machine" sectionId="reaction" />
 
       <h2 id="quick-review"><span className="h-num">6.</span>1分復習（即答チェック）</h2>
       <div className="box">
@@ -3655,6 +3693,19 @@ const DCMachinePage = ({ onNav }) => (
         <details><summary>定格以上の高速度域で使う速度制御は？</summary>界磁制御（弱め界磁＝磁束 φ を弱める）</details>
         <details><summary>補極と補償巻線の役割の違いは？</summary>補極=整流中の導体の起電力を打ち消し整流改善／補償巻線=磁極片に埋め込み電機子反作用そのものを打ち消す（どちらも電機子回路と直列）</details>
       </div>
+      <SectionCheck pageId="dc-machine" sectionId="quick-review" />
+
+      <SectionCheckSummary
+        pageId="dc-machine"
+        sections={[
+          { id: "structure", label: "1. 構造" },
+          { id: "emf", label: "2. 誘導起電力とトルク" },
+          { id: "excitation", label: "3. 励磁方式" },
+          { id: "speed-control", label: "4. 速度制御" },
+          { id: "reaction", label: "5. 電機子反作用と対策" },
+          { id: "quick-review", label: "6. 1分復習（即答チェック）" },
+        ]}
+      />
     </div>
     <PageNav prev={{ id: "home", title: "ホーム" }} next={{ id: "induction-machine", title: "1.2 三相誘導電動機" }} onNav={onNav} />
   </>
@@ -3707,7 +3758,7 @@ const SynchronousLayers = () => (
 
     <div className="table-wrap"><table className="data-table">
       <thead>
-        <tr><th>視点</th><th>何を見るか</th><th>代表する式・量</th></tr>
+        <tr><th scope="col">視点</th><th scope="col">何を見るか</th><th scope="col">代表する式・量</th></tr>
       </thead>
       <tbody>
         <tr>
@@ -4055,7 +4106,7 @@ const SinglePhaseIMLayers = () => (
 
     <div className="table-wrap"><table className="data-table">
       <thead>
-        <tr><th>視点</th><th>何を見るか</th><th>代表する式・量</th></tr>
+        <tr><th scope="col">視点</th><th scope="col">何を見るか</th><th scope="col">代表する式・量</th></tr>
       </thead>
       <tbody>
         <tr>
@@ -4154,10 +4205,10 @@ const SinglePhaseIMPage = ({ onNav }) => (
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "1. 回転機" }, { label: "1.4 単相誘導電動機" }]} onNav={onNav} />
     <PageHeader eyebrow="1.4  SINGLE-PHASE INDUCTION MOTOR" title="単相誘導電動機"
       deck="単相電源では回転磁界が生じないため、始動時のみ補助巻線で擬似的に二相を作って起動する。家電・小型機器に多用。"
-      meta={[{ label: "出題頻度", value: "低〜中" }]} />
+      meta={[{ label: "出題頻度", value: "低" }]} />
     <div className="content">
       <SinglePhaseIMLayers />
-      <h2><span className="h-num">1.</span>始動方式</h2>
+      <h2 id="start"><span className="h-num">1.</span>始動方式</h2>
       <ul>
         <li><strong>分相始動形</strong> — 主巻線と抵抗の大きい補助巻線で位相差を作る</li>
         <li><strong>コンデンサ始動形</strong> — 補助巻線に直列コンデンサ。始動トルク大</li>
@@ -4174,12 +4225,23 @@ const SinglePhaseIMPage = ({ onNav }) => (
         <p>始動トルクの大小（一般的傾向）: <strong>くま取り &lt; 分相 &lt; コンデンサ始動 &lt; 反発始動</strong>。家電は静音・小型のくま取り、井戸ポンプは始動トルク大のコンデンサ始動が多い。</p>
       </Box>
 
+      <SectionCheck pageId="single-phase-im" sectionId="start" />
+
       <h2 id="quick-review"><span className="h-num">2.</span>1分復習（即答チェック）</h2>
       <div className="box">
         <details><summary>単相誘導電動機が自力で始動できない理由は？</summary>単相交流は交番磁界しか作らず（二重回転磁界理論で正転・逆転トルクが打ち消し合う）、静止時（s=1）の始動トルクがゼロ</details>
         <details><summary>始動トルクの大小順は？</summary>一般的傾向として、くま取り &lt; 分相 &lt; コンデンサ始動 &lt; 反発始動</details>
         <details><summary>コンデンサ始動で位相差が作れる理由は？</summary>コンデンサで補助巻線の電流が進み（ICE）、遅れ気味の主巻線電流との間に大きな位相差ができ、擬似二相の回転磁界を作れる</details>
       </div>
+      <SectionCheck pageId="single-phase-im" sectionId="quick-review" />
+
+      <SectionCheckSummary
+        pageId="single-phase-im"
+        sections={[
+          { id: "start", label: "1. 始動方式" },
+          { id: "quick-review", label: "2. 1分復習（即答チェック）" },
+        ]}
+      />
     </div>
     <PageNav prev={{ id: "synchronous", title: "1.3 同期機" }} next={{ id: "transformer", title: "2.1 変圧器" }} onNav={onNav} />
   </>
@@ -4232,7 +4294,7 @@ const TransformerLayers = () => (
 
     <div className="table-wrap"><table className="data-table">
       <thead>
-        <tr><th>視点</th><th>何を見るか</th><th>代表する式・量</th></tr>
+        <tr><th scope="col">視点</th><th scope="col">何を見るか</th><th scope="col">代表する式・量</th></tr>
       </thead>
       <tbody>
         <tr>
@@ -4458,14 +4520,14 @@ const TransformerDailyEfficiencySimulator = () => {
         <table className="data-table" style={{ fontSize: 12.5, minWidth: 560 }}>
           <thead>
             <tr>
-              <th style={{ textAlign: "left" }}>時間帯</th>
-              <th style={{ textAlign: "right" }}>負荷 [kV·A]</th>
-              <th style={{ textAlign: "right" }}>力率 cosφ</th>
-              <th style={{ textAlign: "right" }}>時間 [h]</th>
-              <th style={{ textAlign: "right" }}>負荷率 x</th>
-              <th style={{ textAlign: "right" }}>銅損倍率 x²</th>
-              <th style={{ textAlign: "right" }}>出力 [kWh]</th>
-              <th style={{ textAlign: "right" }}>銅損 [kWh]</th>
+              <th scope="col" style={{ textAlign: "left" }}>時間帯</th>
+              <th scope="col" style={{ textAlign: "right" }}>負荷 [kV·A]</th>
+              <th scope="col" style={{ textAlign: "right" }}>力率 cosφ</th>
+              <th scope="col" style={{ textAlign: "right" }}>時間 [h]</th>
+              <th scope="col" style={{ textAlign: "right" }}>負荷率 x</th>
+              <th scope="col" style={{ textAlign: "right" }}>銅損倍率 x²</th>
+              <th scope="col" style={{ textAlign: "right" }}>出力 [kWh]</th>
+              <th scope="col" style={{ textAlign: "right" }}>銅損 [kWh]</th>
             </tr>
           </thead>
           <tbody>
@@ -4544,7 +4606,7 @@ const TransformerDailyEfficiencySimulator = () => {
             {calc.eta === null ? (
               <>
                 <div style={{ ...bandValue, color: "var(--ink-mute)" }}>算出不可（—）</div>
-                <div style={{ fontSize: 11.5, color: "var(--ink-mute)" }}>入力電力量が 0 kWh です（通電時間も負荷もゼロ）。効率は定義できません。</div>
+                <div style={{ fontSize: 11.5, color: "var(--ink-mute)" }}>入力電力量が 0 kWh のため効率を定義できません（出力・鉄損・銅損がすべて 0）。</div>
               </>
             ) : (
               <>
@@ -4672,7 +4734,7 @@ const TransformerPage = ({ onNav }) => (
       <h2 id="scope"><span className="h-num">1.</span>このページで得点できる問題</h2>
       <p>変圧器は「1つの等価回路」から枝分かれして出題される。どの問いも、下の6つのどれかに帰着する。</p>
       <div className="table-wrap"><table className="data-table">
-        <thead><tr><th>問われ方</th><th>使う道具</th><th>本ページの節</th></tr></thead>
+        <thead><tr><th scope="col">問われ方</th><th scope="col">使う道具</th><th scope="col">本ページの節</th></tr></thead>
         <tbody>
           <tr><td>一次二次の電圧・電流・インピーダンスを換算する</td><td>巻数比 <Eq tex="a" />・一次換算</td><td>2</td></tr>
           <tr><td>周波数や電圧が変わると磁束・励磁電流はどうなるか</td><td><Eq tex="E = 4.44 f N \Phi_m" /></td><td>3</td></tr>
@@ -4811,7 +4873,7 @@ const TransformerPage = ({ onNav }) => (
       </figure>
 
       <div className="table-wrap"><table className="data-table">
-        <thead><tr><th>回路素子</th><th>正体</th><th>効いてくる場所</th><th>求め方</th></tr></thead>
+        <thead><tr><th scope="col">回路素子</th><th scope="col">正体</th><th scope="col">効いてくる場所</th><th scope="col">求め方</th></tr></thead>
         <tbody>
           <tr><td><Eq tex="r_1,\ r_2'" /></td><td>巻線の抵抗</td><td><strong>銅損</strong>（負荷電流の2乗）・電圧降下</td><td rowSpan="2">短絡試験</td></tr>
           <tr><td><Eq tex="x_1,\ x_2'" /></td><td>漏れ磁束によるリアクタンス</td><td><strong>電圧降下</strong>（電圧変動率・%Z）</td></tr>
@@ -4927,7 +4989,7 @@ const TransformerPage = ({ onNav }) => (
       </Box>
       <Box kind="example" label="2つの試験の対比（取り違え防止）">
         <div className="table-wrap"><table className="data-table">
-          <thead><tr><th></th><th>無負荷試験</th><th>短絡試験</th></tr></thead>
+          <thead><tr><th scope="col"></th><th scope="col">無負荷試験</th><th scope="col">短絡試験</th></tr></thead>
           <tbody>
             <tr><td>二次側</td><td><strong>開放</strong></td><td><strong>短絡</strong></td></tr>
             <tr><td>加える電圧</td><td><strong>定格電圧</strong>（高い）</td><td><strong>低電圧</strong>（定格の数 %）</td></tr>
@@ -4987,7 +5049,7 @@ const TransformerPage = ({ onNav }) => (
       </p>
 
       <div className="table-wrap"><table className="data-table">
-        <thead><tr><th>項目</th><th>鉄損 <Eq tex="P_i" /></th><th>銅損 <Eq tex="P_c" /></th></tr></thead>
+        <thead><tr><th scope="col">項目</th><th scope="col">鉄損 <Eq tex="P_i" /></th><th scope="col">銅損 <Eq tex="P_c" /></th></tr></thead>
         <tbody>
           <tr><td>主な発生場所</td><td>鉄心</td><td>巻線</td></tr>
           <tr><td>主な内訳</td><td>ヒステリシス損・渦電流損</td><td>巻線抵抗による <Eq tex="I^2R" /> 損</td></tr>
@@ -5022,7 +5084,7 @@ const TransformerPage = ({ onNav }) => (
         note={<><Eq tex="P_{cN}" />: 全負荷銅損（定格電流時の銅損）、<Eq tex="S_N" />: 定格容量 [kV·A]。<strong>全負荷銅損と実際の銅損を混同しない</strong>。</>} />
 
       <div className="table-wrap"><table className="data-table">
-        <thead><tr><th>負荷率 <Eq tex="x" /></th><th>100%</th><th>80%</th><th>60%</th><th>50%</th><th>40%</th><th>20%</th></tr></thead>
+        <thead><tr><th scope="col">負荷率 <Eq tex="x" /></th><th scope="col">100%</th><th scope="col">80%</th><th scope="col">60%</th><th scope="col">50%</th><th scope="col">40%</th><th scope="col">20%</th></tr></thead>
         <tbody>
           <tr><td>銅損倍率 <Eq tex="x^2" /></td><td>1.00</td><td>0.64</td><td>0.36</td><td>0.25</td><td>0.16</td><td>0.04</td></tr>
         </tbody>
@@ -5059,7 +5121,7 @@ const TransformerPage = ({ onNav }) => (
         note="Wout: 1日の出力電力量、Wi: 1日の鉄損電力量、Wc: 1日の銅損電力量（いずれも kWh）。" />
 
       <div className="table-wrap"><table className="data-table">
-        <thead><tr><th>比較項目</th><th>通常効率</th><th>全日効率</th></tr></thead>
+        <thead><tr><th scope="col">比較項目</th><th scope="col">通常効率</th><th scope="col">全日効率</th></tr></thead>
         <tbody>
           <tr><td>評価対象</td><td>ある定常運転点</td><td>1日全体</td></tr>
           <tr><td>計算に用いる量</td><td>電力 <strong>[kW]</strong></td><td>電力量 <strong>[kWh]</strong></td></tr>
@@ -5201,7 +5263,7 @@ const TransformerPage = ({ onNav }) => (
 
       <h3 id="loss-mistakes">頻出ミス</h3>
       <div className="table-wrap"><table className="data-table">
-        <thead><tr><th>誤り</th><th>正しい考え方</th></tr></thead>
+        <thead><tr><th scope="col">誤り</th><th scope="col">正しい考え方</th></tr></thead>
         <tbody>
           <tr><td>kW と kWh を混ぜる</td><td>全日効率では<strong>すべて kWh にそろえる</strong></td></tr>
           <tr><td>kV·A × 時間 で出力を求める</td><td><strong>kV·A × 力率 × 時間</strong>（皮相電力のままでは有効電力量にならない）</td></tr>
@@ -5418,7 +5480,7 @@ const TransformerPage = ({ onNav }) => (
       <FormulaCard num="15 / 15" name="並行運転の負担配分（一般式）" eq="S_A : S_B = \dfrac{S_{NA}}{z_A} : \dfrac{S_{NB}}{z_B}"
         note={<><Eq tex="S_A,S_B" />: 各器の負担容量 [kV·A]、<Eq tex="S_{NA},S_{NB}" />: 各器の定格容量 [kV·A]、<Eq tex="z_A,z_B" />: 各器の %Z [%]（<strong>それぞれ自分の定格容量を基準にした値</strong>）。</>} />
       <div className="table-wrap"><table className="data-table">
-        <thead><tr><th>条件</th><th>一般式の帰結</th><th>覚え方</th></tr></thead>
+        <thead><tr><th scope="col">条件</th><th scope="col">一般式の帰結</th><th scope="col">覚え方</th></tr></thead>
         <tbody>
           <tr><td><strong>定格容量が同じ</strong>（<Eq tex="S_{NA}=S_{NB}" />）</td><td><Eq tex="S_A : S_B = 1/z_A : 1/z_B" /></td><td>負担は <strong>%Z に反比例</strong></td></tr>
           <tr><td><strong>%Z が同じ</strong>（<Eq tex="z_A=z_B" />）</td><td><Eq tex="S_A : S_B = S_{NA} : S_{NB}" /></td><td>負担は <strong>定格容量に比例</strong></td></tr>
@@ -5534,7 +5596,7 @@ const TransformerPage = ({ onNav }) => (
         </div>
       </div>
       <Box kind="mistake" label="なぜ 2 台なのに 100 % 取り出せないのか">
-        <p style={{ margin: 0 }}>2台の定格容量の合計は <Eq tex="2VI" /> なのに、三相として取り出せるのは <Eq tex="\sqrt3\,VI" /> しかない。理由は<strong>各変圧器の電流と線電流の位相</strong>にある。V結線では2台の巻線電流が <span className="marker">60° の位相差</span>を持つため、単純な代数和ではなく<strong>ベクトル和</strong>で効き、合計容量をそのまま三相出力に変換できない。<Eq tex="2VI \times \cos 30^\circ = \sqrt3\,VI" /> の <Eq tex="\cos 30^\circ = 0.866" /> がその目減り分であり、これが利用率 86.6 % の正体である。</p>
+        <p style={{ margin: 0 }}>2台の定格容量の合計は <Eq tex="2VI" /> なのに、三相として取り出せるのは <Eq tex="\sqrt3\,VI" /> しかない。理由は<strong>1台ずつの中で、巻線電圧と巻線電流の位相が 30° ずれる</strong>ことにある。V結線では各器の巻線電圧が線間電圧そのもの・巻線電流が線電流そのものになるが、この2つは同相にならず、<span className="marker">負荷力率が 1 でも 30° ずれる</span>。だから各器が送れる有効電力は <Eq tex="VI\cos(30^\circ \mp \theta)" /> にとどまり、力率1でも1台あたり <Eq tex="VI\cos 30^\circ = 0.866\,VI" />。2台合計で <Eq tex="2VI\cos 30^\circ = \sqrt3\,VI" />（一般には <Eq tex="\sqrt3\,VI\cos\theta" />）。この <Eq tex="\cos 30^\circ = 0.866" /> が目減り分であり、これが利用率 86.6 % の正体である（各器の分担は下の「2台の負担」で詳述）。</p>
       </Box>
 
       <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
@@ -5615,7 +5677,7 @@ const TransformerPage = ({ onNav }) => (
 
       <h3 id="v-fault-trap">正誤判定の急所（V結線）</h3>
       <div className="table-wrap"><table className="data-table">
-        <thead><tr><th>命題</th><th>判定</th><th>理由</th></tr></thead>
+        <thead><tr><th scope="col">命題</th><th scope="col">判定</th><th scope="col">理由</th></tr></thead>
         <tbody>
           <tr><td>1台故障後の出力は故障前の 2/3（66.7%）になる</td><td><strong>誤</strong></td><td>台数比ではなく <Eq tex="1/\sqrt{3}=57.7\%" />。巻線電流が √3 倍になるのが効く</td></tr>
           <tr><td>V結線の利用率は 57.7% である</td><td><strong>誤</strong></td><td>利用率（残り2台基準）は 86.6%。57.7% はΔ3台基準の出力比</td></tr>
@@ -5661,7 +5723,7 @@ const TransformerPage = ({ onNav }) => (
       <h3 id="traps-flow">どの式を使うか — 問題文のキーワードから引く</h3>
       <p>変圧器の問題は、<strong>問題文に出てくる語</strong>でほぼ解法が決まる。迷ったらこの表を上から見る。</p>
       <div className="table-wrap"><table className="data-table">
-        <thead><tr><th>問題文にこれがあれば</th><th>使う道具</th><th>求まるもの</th><th>節</th></tr></thead>
+        <thead><tr><th scope="col">問題文にこれがあれば</th><th scope="col">使う道具</th><th scope="col">求まるもの</th><th scope="col">節</th></tr></thead>
         <tbody>
           <tr><td><strong>無負荷電流・無負荷入力</strong>（二次開放・定格電圧）</td><td>無負荷試験</td><td>鉄損・励磁枝 <Eq tex="r_0,\ x_0" /></td><td>5</td></tr>
           <tr><td><strong>短絡電圧（インピーダンス電圧）・短絡入力</strong>（二次短絡・低電圧）</td><td>短絡試験</td><td>銅損・<Eq tex="Z_e,R_e,X_e" />・%Z</td><td>6</td></tr>
@@ -5679,7 +5741,7 @@ const TransformerPage = ({ onNav }) => (
 
       <h3 id="traps-table">ひっかけ一覧（本ページ全体の総まとめ）</h3>
       <div className="table-wrap"><table className="data-table">
-        <thead><tr><th>ひっかけ（誤り）</th><th>正しい考え方</th><th>節</th></tr></thead>
+        <thead><tr><th scope="col">ひっかけ（誤り）</th><th scope="col">正しい考え方</th><th scope="col">節</th></tr></thead>
         <tbody>
           <tr><td>無負荷試験で<strong>銅損</strong>を求める</td><td>無負荷試験は主に<strong>鉄損・励磁枝</strong>（二次開放・定格電圧）</td><td>5</td></tr>
           <tr><td>短絡試験で<strong>鉄損</strong>を求める</td><td>短絡試験は主に<strong>銅損・直列等価回路</strong>（二次短絡・低電圧）</td><td>6</td></tr>
@@ -5791,7 +5853,7 @@ const PowerElecLayers = () => (
 
     <div className="table-wrap"><table className="data-table">
       <thead>
-        <tr><th>視点</th><th>何を見るか</th><th>代表する式・量</th></tr>
+        <tr><th scope="col">視点</th><th scope="col">何を見るか</th><th scope="col">代表する式・量</th></tr>
       </thead>
       <tbody>
         <tr>
@@ -6029,7 +6091,7 @@ const PowerElecPage = ({ onNav }) => (
       <h2 id="devices"><span className="h-num">1.</span>主な半導体素子</h2>
       <div className="table-wrap">
         <table className="data">
-          <thead><tr><th>素子</th><th>制御性</th><th>用途</th></tr></thead>
+          <thead><tr><th scope="col">素子</th><th scope="col">制御性</th><th scope="col">用途</th></tr></thead>
           <tbody>
             <tr><td>ダイオード</td><td>制御不可</td><td>整流</td></tr>
             <tr><td>サイリスタ</td><td>ターンオンのみ可</td><td>位相制御整流</td></tr>
@@ -6039,6 +6101,8 @@ const PowerElecPage = ({ onNav }) => (
           </tbody>
         </table>
       </div>
+
+      <SectionCheck pageId="power-elec" sectionId="devices" />
 
       <h2 id="rectifier"><span className="h-num">2.</span>整流回路</h2>
 
@@ -6052,10 +6116,14 @@ const PowerElecPage = ({ onNav }) => (
       <FormulaCard num="02 / 04" name="三相全波整流（平均値）" eq="V_d = \dfrac{3\sqrt{2}}{\pi} V_L \approx 1.35 V_L"
         note="V_L は線間電圧の実効値。脈動率が小さく実用上の主役。" />
 
+      <SectionCheck pageId="power-elec" sectionId="rectifier" />
+
       <h2 id="chopper"><span className="h-num">3.</span>チョッパ（DC-DC変換）</h2>
       <PWMWaveform />
       <FormulaCard num="03 / 04" name="降圧チョッパ" eq="V_o = D \cdot V_i \quad,\quad D = t_{on}/T" />
       <FormulaCard num="04 / 04" name="昇圧チョッパ" eq="V_o = \dfrac{V_i}{1-D}" note="D を 1 に近づけるほど昇圧比が増大（理論上は無限大）。" />
+
+      <SectionCheck pageId="power-elec" sectionId="chopper" />
 
       <h2 id="inverter"><span className="h-num">4.</span>インバータと PWM</h2>
       <p>直流を交流に変換する装置。<span className="marker">PWM（パルス幅変調）</span> でスイッチング比を変えながら正弦波に近い出力を作る。三相インバータは IGBT を 6 個ブリッジ接続するのが基本構成。</p>
@@ -6070,6 +6138,8 @@ const PowerElecPage = ({ onNav }) => (
         </ul>
       </Box>
 
+      <SectionCheck pageId="power-elec" sectionId="inverter" />
+
       <h2 id="example"><span className="h-num">5.</span>例題</h2>
       <Box kind="example" label="例題 2.2.1（整流とチョッパ）">
         <p><strong>問1:</strong> 線間電圧 200 V の三相交流を三相全波（ブリッジ）整流したときの直流平均電圧 <Eq tex="V_d" /> を求めよ（理想素子・転流重なりは無視）。</p>
@@ -6079,6 +6149,8 @@ const PowerElecPage = ({ onNav }) => (
         <p style={{margin:"8px 0 0"}}>⚠️ 三相全波の 1.35 に掛けるのは<strong>線間電圧の実効値</strong>。相電圧と取り違えない。チョッパの D は<strong>オン時間の割合</strong>（0〜1）。</p>
       </Box>
 
+      <SectionCheck pageId="power-elec" sectionId="example" />
+
       <h2 id="quick-review"><span className="h-num">6.</span>1分復習（即答チェック）</h2>
       <div className="box">
         <details><summary>4変換（整流・チョッパ・インバータ・サイクロコンバータ）の入出力は？</summary>整流=AC→DC／チョッパ=DC→DC／インバータ=DC→AC／サイクロコンバータ=AC→AC</details>
@@ -6087,6 +6159,19 @@ const PowerElecPage = ({ onNav }) => (
         <details><summary>サイリスタ位相制御の出力電圧は制御角 α とどう関係？</summary>Vd = Vd0·cosα（誘導性負荷・電流連続のとき。α の余弦に比例）。抵抗負荷の単相全波では Vd0·(1+cosα)/2</details>
         <details><summary>三相インバータの基本構成は？</summary>IGBT を 6 個ブリッジ接続し PWM で正弦波に近い出力を作る</details>
       </div>
+      <SectionCheck pageId="power-elec" sectionId="quick-review" />
+
+      <SectionCheckSummary
+        pageId="power-elec"
+        sections={[
+          { id: "devices", label: "1. 主な半導体素子" },
+          { id: "rectifier", label: "2. 整流回路" },
+          { id: "chopper", label: "3. チョッパ（DC-DC変換）" },
+          { id: "inverter", label: "4. インバータと PWM" },
+          { id: "example", label: "5. 例題" },
+          { id: "quick-review", label: "6. 1分復習（即答チェック）" },
+        ]}
+      />
     </div>
     <PageNav prev={{ id: "transformer", title: "2.1 変圧器" }} next={{ id: "keiki-yo-henseiki", title: "2.3 計器用変成器（CT・VT）" }} onNav={onNav} />
   </>
@@ -6166,7 +6251,7 @@ const KeikiYoHenseikiLayers = () => (
 
     <div className="table-wrap"><table className="data-table">
       <thead>
-        <tr><th>視点</th><th>何を見るか</th><th>代表する式・量</th></tr>
+        <tr><th scope="col">視点</th><th scope="col">何を見るか</th><th scope="col">代表する式・量</th></tr>
       </thead>
       <tbody>
         <tr>
@@ -6350,7 +6435,7 @@ const KeikiYoHenseikiPage = ({ onNav }) => (
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "2. 静止器・電力変換" }, { label: "2.3 計器用変成器（CT・VT）" }]} onNav={onNav} />
     <PageHeader eyebrow="2.3  INSTRUMENT TRANSFORMERS (CT / VT)" title="計器用変成器（CT・VT）"
       deck="高圧の電流・電圧を低圧側で安全に測定するための変成器。CT＝電流用・VT＝電圧用。二次禁則が真逆になる理由を「一次側から何を強制するか」の物理から導く。丸暗記すると毎回逆になる典型論点。"
-      meta={[{ label: "出題頻度", value: "高（混同型は機械・法規どちらでも出る）" }, { label: "難易度", value: "★★★☆☆" }]} />
+      meta={[{ label: "出題頻度", value: "高（混同型は機械・法規どちらでも出る。付録 A の分野別集計には単独の枠がない）" }, { label: "難易度", value: "★★★☆☆" }]} />
     <div className="content">
       <KeikiYoHenseikiLayers />
 
@@ -6386,6 +6471,8 @@ const KeikiYoHenseikiPage = ({ onNav }) => (
 
       <CtVtWiringFig />
 
+      <SectionCheck pageId="keiki-yo-henseiki" sectionId="phys" />
+
       <h2 id="vt"><span className="h-num">2.</span>VT：一次側から「電圧」を強制する使い方</h2>
 
       <h3>2-1. 接続と動作</h3>
@@ -6409,6 +6496,8 @@ const KeikiYoHenseikiPage = ({ onNav }) => (
       <Box kind="formula" label="セクション2 まとめ（VT）">
         <p>一次に電圧を強制 → 磁束が決まる → 二次は <strong>開放OK・短絡NG</strong>（過電流で焼損）。二次1端子D種接地で感電防止。</p>
       </Box>
+
+      <SectionCheck pageId="keiki-yo-henseiki" sectionId="vt" />
 
       <h2 id="ct"><span className="h-num">3.</span>CT：一次側から「電流」を強制する使い方</h2>
 
@@ -6450,17 +6539,22 @@ const KeikiYoHenseikiPage = ({ onNav }) => (
       <p><strong>CT二次回路にはヒューズを入れない</strong>。VTは二次短絡が危険なので二次側をヒューズで保護する（セクション2-3）が、CTは逆に <strong>開放が危険</strong>。ヒューズが溶断すれば、その瞬間に二次開放＝セクション3-3・3-4の事故そのものになる。<span className="marker">「異常時は保護素子で切る」という常識が、CT二次回路にだけは通用しない</span>。禁則が逆だからで、これも物理から導ける。</p>
 
       <h3>3-6. 二次側1端子を D種接地する理由</h3>
-      <p>VTと同じく一次高圧と二次低圧の混触対策で二次側を接地する（<strong>高圧はD種・特別高圧はA種</strong>＝解釈第28条。セクション2-4参照）。CTは特に開放時に高電圧スパイクが出る危険があるため、接地は二重の意味で重要（混触対策＋万一のスパイク逃がし）。</p>
+      <p>VTと同じく一次高圧と二次低圧の混触対策で二次側を接地する（<strong>高圧はD種・特別高圧はA種</strong>＝解釈第28条。セクション2-4参照）。役割は<strong>混触時に二次回路の対地電位が高圧まで持ち上がるのを防ぐこと</strong>に尽きる。</p>
+      <Box kind="mistake" label="接地は開放スパイクの対策ではない">
+        <p>「接地しておけば開放スパイクも逃げる」は<strong>誤り</strong>。開放時の高電圧は二次端子 k–l の<span className="marker">間</span>に現れるので、片方の端子を接地しても電流の経路はできず、スパイクの大きさは変わらない。<strong>開放スパイクを防ぐのは短絡端子による常時閉路（セクション3-5）</strong>で、接地（感電・混触対策）とは目的が別。混同すると「接地してあるから開放してよい」という最も危険な結論に到達する。</p>
+      </Box>
 
       <Box kind="formula" label="セクション3 まとめ（CT）">
         <p>一次に電流を強制 → 二次は磁気平衡で <Eq tex="I_2 \approx (N_1/N_2) I_1" /> が <strong>流れる必要</strong> → 二次は <strong>短絡OK・開放NG</strong>（深飽和→スパイク→絶縁破壊）。現場では短絡端子で常時閉路を維持。二次1端子D種接地で感電防止。</p>
       </Box>
 
+      <SectionCheck pageId="keiki-yo-henseiki" sectionId="ct" />
+
       <h2 id="derived"><span className="h-num">4.</span>禁則は自動的に逆になる（セクション1〜3で導出済）</h2>
       <p>セクション2とセクション3を並べると、禁則は <strong>暗記するまでもなく</strong> 逆になることが分かる：</p>
       <div className="table-wrap">
         <table className="data">
-          <thead><tr><th></th><th>一次側に強制する量</th><th>二次OK</th><th>二次NG（と物理）</th></tr></thead>
+          <thead><tr><th scope="col"></th><th scope="col">一次側に強制する量</th><th scope="col">二次OK</th><th scope="col">二次NG（と物理）</th></tr></thead>
           <tbody>
             <tr><td>VT</td><td>電圧 V₁</td><td>開放（無負荷でΦ維持）</td><td>短絡 → 巻線焼損（I²R 銅損）</td></tr>
             <tr><td>CT</td><td>電流 I₁</td><td>短絡（磁気平衡成立）</td><td>開放 → 深飽和 → V₂スパイク → 絶縁破壊</td></tr>
@@ -6473,6 +6567,8 @@ const KeikiYoHenseikiPage = ({ onNav }) => (
         <p>電気回路理論には「<strong>電流源は開放してはならない／電圧源は短絡してはならない</strong>」という基本則がある。CTは一次側から見ると <Eq tex="I_1" /> を強制する <strong>電流源等価</strong>、VTは <Eq tex="V_1" /> を強制する <strong>電圧源等価</strong> と見なすと、上記の禁則はこの基本則の系として圧縮できる。</p>
         <p>ただし「等価電源」の概念は本来は回路理論の話で、電験3種範囲外。<strong>本筋はセクション1〜3の物理で導出済み</strong>であって、このメタファーは「思い出すための短縮形」に過ぎないことに注意。物理を理解せずメタファーだけ覚えると、また丸暗記に戻ってしまう。</p>
       </Box>
+
+      <SectionCheck pageId="keiki-yo-henseiki" sectionId="derived" />
 
       <h2 id="ratio"><span className="h-num">5.</span>巻数比の式は磁気平衡の系</h2>
       <p>巻数比の公式は独立に2本あるわけではなく、<strong>セクション1の磁気平衡と磁束変化率から派生</strong>する。</p>
@@ -6503,6 +6599,8 @@ const KeikiYoHenseikiPage = ({ onNav }) => (
         <p>変成比は「一次値÷二次読み値」の定格比をそのまま掛ければよい。</p>
       </Box>
 
+      <SectionCheck pageId="keiki-yo-henseiki" sectionId="ratio" />
+
       <h2 id="check"><span className="h-num">6.</span>セルフチェック（物理から再導出する練習）</h2>
       <p>穴埋めではなく <strong>「なぜそうなるか」をセクション1〜3から説明する</strong> 練習。文字数は1問あたり3〜4行を目安に。</p>
 
@@ -6531,6 +6629,8 @@ const KeikiYoHenseikiPage = ({ onNav }) => (
         <p style={{marginTop:'8px', fontSize:'12px', color:'var(--ink-3,#888)'}}>確認ポイント：1端子のみ＝二次回路に閉路を作らない（両端接地は地絡電流ループの危険）／種別＝高圧計器用変成器はD種（100Ω以下）・特別高圧計器用変成器はA種（10Ω以下）＝解釈第28条／目的＝混触時の二次高電圧を大地電位に逃がし感電防止。</p>
       </Box>
 
+      <SectionCheck pageId="keiki-yo-henseiki" sectionId="check" />
+
       <h2 id="links"><span className="h-num">7.</span>関連ページ</h2>
       <ul>
         <li><a href="#transformer" onClick={(e) => { e.preventDefault(); onNav('transformer'); }}><strong>2.1 変圧器</strong></a> — 電力用変圧器の基本式（巻数比・%Z・効率）。計器用との違いは「容量と目的」</li>
@@ -6539,6 +6639,20 @@ const KeikiYoHenseikiPage = ({ onNav }) => (
         <li><a href="https://kfurufuru.github.io/secretary-portal-public/denken-hoki-wiki.html#setsuchi-ichiran" target="_blank" rel="noopener"><strong>法規Wiki 2.1 接地工事一覧表</strong></a> — 計器用変成器二次側のD種接地条件</li>
       </ul>
 
+      <SectionCheck pageId="keiki-yo-henseiki" sectionId="links" />
+
+      <SectionCheckSummary
+        pageId="keiki-yo-henseiki"
+        sections={[
+          { id: "phys", label: "1. すべての変圧器に共通の物理（3点）" },
+          { id: "vt", label: "2. VT：一次側から「電圧」を強制する使い方" },
+          { id: "ct", label: "3. CT：一次側から「電流」を強制する使い方" },
+          { id: "derived", label: "4. 禁則は自動的に逆になる（セクション1〜3で導出済）" },
+          { id: "ratio", label: "5. 巻数比の式は磁気平衡の系" },
+          { id: "check", label: "6. セルフチェック（物理から再導出する練習）" },
+          { id: "links", label: "7. 関連ページ" },
+        ]}
+      />
     </div>
     <PageNav prev={{ id: "power-elec", title: "2.2 パワーエレクトロニクス" }} next={{ id: "auto-control", title: "3.1 自動制御" }} onNav={onNav} />
   </>
@@ -6629,7 +6743,7 @@ const YougoKonzaiPage = ({ onNav }) => (
         <p>混同ペアは<strong>「何が固定で・何が変わるか」</strong>を1つ決めると解ける。同期速度＝固定／回転子＝変わる、鉄損＝固定／銅損＝変わる、CT＝電流固定／VT＝電圧固定、P＝偏差が残る／I＝偏差を消す。固定側を起点に再構成すれば毎回逆にならない。</p>
       </Box>
 
-      <PageNav prev={{ id: "guide", title: "C 学習ガイド" }} next={{ id: "glossary", title: "B 用語集・索引" }} onNav={onNav} />
+      <PageNav prev={{ id: "guide", title: "C 学習ガイド" }} next={{ id: "home", title: "ホーム" }} onNav={onNav} />
     </div>
   </>
 );
@@ -6681,7 +6795,7 @@ const AutoControlLayers = () => (
 
     <div className="table-wrap"><table className="data-table">
       <thead>
-        <tr><th>視点</th><th>何を見るか</th><th>代表する式・量</th></tr>
+        <tr><th scope="col">視点</th><th scope="col">何を見るか</th><th scope="col">代表する式・量</th></tr>
       </thead>
       <tbody>
         <tr>
@@ -6828,7 +6942,7 @@ const BodeMarginFig = () => (
       <line x1="320" y1="80" x2="320" y2="113" stroke="var(--danger)" strokeWidth="2" markerEnd="url(#kac-bode-arr)" />
       <text x="330" y="100" fontSize="11" fontWeight="700" fill="var(--danger)">GM</text>
       <circle cx="230" cy="80" r="4" fill="var(--accent)" />
-      <text x="86" y="128" fontSize="10" fill="var(--accent-ink)">ωc：ゲインが 0 dB を横切る</text>
+      <text x="224" y="100" textAnchor="end" fontSize="10" fill="var(--accent-ink)">ωc：ゲインが 0 dB を横切る</text>
       {/* ===== 縦の対応線 ===== */}
       <line x1="230" y1="80" x2="230" y2="238" stroke="var(--rule)" strokeWidth="1" strokeDasharray="3 3" />
       <line x1="320" y1="113" x2="320" y2="250" stroke="var(--rule)" strokeWidth="1" strokeDasharray="3 3" />
@@ -6884,6 +6998,8 @@ const AutoControlPage = ({ onNav }) => (
 
       <StepResponseFig />
 
+      <SectionCheck pageId="auto-control" sectionId="tf" />
+
       <h2 id="block"><span className="h-num">2.</span>ブロック線図</h2>
       <BlockDiagram />
       <FormulaCard num="03 / 03" name="フィードバック結合" eq="\dfrac{Y}{R} = \dfrac{G}{1 + GH}" note="単位フィードバックでは H = 1。" />
@@ -6896,6 +7012,8 @@ const AutoControlPage = ({ onNav }) => (
         <p style={{margin:"8px 0 0"}}>💡 開ループ <Eq tex="G" /> の時定数 <Eq tex="2\;\mathrm{s}" /> が、フィードバックで <Eq tex="0.2\;\mathrm{s}" /> に<strong>短縮</strong>＝応答が速くなる（速応性向上）。上の「理解を深める」で見た<strong>時定数の小ささ＝速応性</strong>が、フィードバックの効果として現れる。⚠️ 分母は <Eq tex="1+GH" />。<Eq tex="H" /> が1でない時に <Eq tex="1+G" /> と混同しない。</p>
       </Box>
 
+      <SectionCheck pageId="auto-control" sectionId="block" />
+
       <h2 id="stability"><span className="h-num">3.</span>安定判別</h2>
       <ul>
         <li><strong>ラウス・フルビッツ法</strong> — 特性方程式の係数から代数的に判定</li>
@@ -6903,12 +7021,14 @@ const AutoControlPage = ({ onNav }) => (
         <li><strong>ボード線図</strong> — ゲイン余裕・位相余裕で安定度を可視化</li>
       </ul>
       <Box kind="formula" label="安定度の指標">
-        <p><strong>ゲイン余裕</strong>: 開ループ伝達関数 GH の位相が −180° となる周波数で、ゲインが 0 dB を<strong>どれだけ下回っているか</strong>（GM = −20log|GH(jω)| [dB]。通常の負帰還系では正の値が安定の目安）。</p>
+        <p><strong>ゲイン余裕</strong>: 開ループ伝達関数 GH の位相が −180° となる周波数で、ゲインが 0 dB を<strong>どれだけ下回っているか</strong>（位相交差周波数を ω<sub>p</sub> として GM = −20log|GH(jω<sub>p</sub>)| [dB]。通常の負帰還系では正の値が安定の目安）。</p>
         <p><strong>位相余裕</strong>: 開ループ GH のゲインが 0 dB となる周波数における位相 + 180°。</p>
         <p>実用上は <strong>位相余裕 30°〜60°</strong>、<strong>ゲイン余裕 6 dB 以上</strong> が目安。</p>
       </Box>
 
       <BodeMarginFig />
+
+      <SectionCheck pageId="auto-control" sectionId="stability" />
 
       <h2 id="pid"><span className="h-num">4.</span>PID制御・シーケンス制御（頻出）</h2>
       <ul>
@@ -6917,6 +7037,8 @@ const AutoControlPage = ({ onNav }) => (
         <li><strong>D（微分）動作</strong> — 偏差の変化率で先回りし、<strong>速応性・減衰性を改善</strong>（単独では使わず P や PI に付加する）</li>
         <li><strong>シーケンス制御</strong> — <span className="marker">あらかじめ定めた順序または条件に従って各段階を逐次進める制御</span>。時間で進むもののほか、センサ・接点の状態信号を条件に進むものも含む（「開ループ」と限定しない）。リレーの a接点（メーク）・b接点（ブレーク）・<strong>自己保持回路</strong>が頻出。フィードバック制御（目標値と比較して訂正し続ける制御）との対比で問われる</li>
       </ul>
+
+      <SectionCheck pageId="auto-control" sectionId="pid" />
 
       <h2 id="quick-review"><span className="h-num">5.</span>1分復習（即答チェック）</h2>
       <div className="box">
@@ -6928,6 +7050,18 @@ const AutoControlPage = ({ onNav }) => (
         <details><summary>P・I・D 各動作の特徴は？</summary>P=偏差に比例（一般に定常偏差が残る）／I=偏差を積分（定常偏差を除去）／D=変化率で先回り（速応性・減衰性を改善）</details>
         <details><summary>フィードバック制御とシーケンス制御の違いは？</summary>フィードバック=目標値と比較して訂正し続ける制御／シーケンス=あらかじめ定めた順序または条件に従い各段階を逐次進める制御（a接点・b接点・自己保持回路）</details>
       </div>
+      <SectionCheck pageId="auto-control" sectionId="quick-review" />
+
+      <SectionCheckSummary
+        pageId="auto-control"
+        sections={[
+          { id: "tf", label: "1. 伝達関数" },
+          { id: "block", label: "2. ブロック線図" },
+          { id: "stability", label: "3. 安定判別" },
+          { id: "pid", label: "4. PID制御・シーケンス制御（頻出）" },
+          { id: "quick-review", label: "5. 1分復習（即答チェック）" },
+        ]}
+      />
     </div>
     <PageNav prev={{ id: "keiki-yo-henseiki", title: "2.3 計器用変成器（CT・VT）" }} next={{ id: "info-elec", title: "3.2 情報・電子回路" }} onNav={onNav} />
   </>
@@ -7148,8 +7282,8 @@ const ElectrolysisFig = () => (
     </defs>
     {/* 直流電源 */}
     <text x="240" y="20" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--ink)">直流電源</text>
-    <line x1="232" y1="26" x2="232" y2="46" stroke="var(--ink)" strokeWidth="2.6" />
-    <line x1="242" y1="31" x2="242" y2="41" stroke="var(--ink)" strokeWidth="1.6" />
+    <line x1="232" y1="26" x2="232" y2="46" stroke="var(--ink)" strokeWidth="1.6" />
+    <line x1="242" y1="31" x2="242" y2="41" stroke="var(--ink)" strokeWidth="2.6" />
     <text x="222" y="40" textAnchor="end" fontSize="11" fontWeight="700" fill="var(--danger)">＋</text>
     <text x="252" y="40" fontSize="11" fontWeight="700" fill="var(--ink)">−</text>
     {/* 配線 */}
@@ -7264,7 +7398,7 @@ const InfoElecPage = ({ onNav }) => (
       { id: "quick-review", heading: "1分復習（即答チェック）", body: <>
         <div className="box">
           <details><summary>ド・モルガンの定理は？</summary>A+B 全体の否定 = Āと B̄ の積／A·B 全体の否定 = Ā と B̄ の和（バーを分配すると + と · が入れ替わる）</details>
-          <details><summary>RS-FF の禁止入力は？JK-FF の J=K=1 は？</summary>RS-FF は R=S=1 が禁止入力／JK-FF の J=K=1 は反転動作（禁止入力なし）</details>
+          <details><summary>RS-FF の禁止入力は？JK-FF の J=K=1 は？</summary>RS-FF は NOR 形（正論理入力）なら R=S=1 が禁止／NAND 形（負論理入力）なら両入力 0 が禁止。JK-FF の J=K=1 は反転動作（禁止入力なし）</details>
           <details><summary>n ビット A/D 変換の量子化段階数は？</summary>2ⁿ 段階（例: 8ビット = 256段階）</details>
           <details><summary>(1010)₂ は10進でいくつ？</summary>8 + 2 = 10（各桁の重み 8, 4, 2, 1 を足す）</details>
         </div>
@@ -7283,7 +7417,7 @@ const LightingPage = ({ onNav }) => (
       { id: "units", heading: "光の単位", body: <>
         <div className="table-wrap">
           <table className="data">
-            <thead><tr><th>量</th><th>記号</th><th>単位</th><th>意味</th></tr></thead>
+            <thead><tr><th scope="col">量</th><th scope="col">記号</th><th scope="col">単位</th><th scope="col">意味</th></tr></thead>
             <tbody>
               <tr><td>光束</td><td>F</td><td>lm（ルーメン）</td><td>光源の総光量</td></tr>
               <tr><td>光度</td><td>I</td><td>cd（カンデラ）</td><td>単位立体角あたりの光束</td></tr>
@@ -7363,7 +7497,7 @@ const HeatPage = ({ onNav }) => (
         <div className="box">
           <details><summary>ジュール熱の式は？</summary>Q = I²Rt = Pt [J]</details>
           <details><summary>温度上昇の式は？</summary>Q = c·m·ΔT（c:比熱, m:質量, ΔT:温度差）</details>
-          <details><summary>IH調理器・焼入れの加熱方式は？電子レンジは？</summary>IH・焼入れ=誘導加熱（渦電流）／電子レンジ=マイクロ波加熱（誘電加熱の一種・水分子励起）</details>
+          <details><summary>IH調理器・焼入れの加熱方式は？電子レンジは？</summary>IH・焼入れ=誘導加熱（渦電流）／電子レンジ=マイクロ波加熱（誘電加熱の一種・水分子（双極子）の向きが交番電界に追従しきれず誘電損失として発熱。共鳴ではない）</details>
           <details><summary>ヒートポンプの COP はなぜ 1 を超える？</summary>電力で熱を作るのではなく外気から汲み上げて運ぶため。COP = Q/W（実用機で3〜6）。加熱COP = 冷房COP + 1（同一運転状態での関係）</details>
         </div>
       </>},
@@ -7373,7 +7507,7 @@ const HeatPage = ({ onNav }) => (
 
 const ChemPage = ({ onNav }) => (
   <StubPage title="電気化学" eyebrow="4.3  ELECTROCHEMISTRY"
-    deck="ファラデーの法則・電池・電気分解。出題は少ないが基本式は確実に。" freq="低（APPENDIX A に対応する分野バケツなし）"
+    deck="ファラデーの法則・電池・電気分解。出題は少ないが基本式は確実に。" freq="低（付録 A の分野別集計では「その他」に含まれ、単独の内訳なし）"
     prev={{ id: "heat", title: "4.2 電熱" }} next={{ id: "drive-mech", title: "4.4 電動機応用" }}
     onNav={onNav}
     sections={[
@@ -7483,6 +7617,7 @@ const TrendsPage = ({ data, onNav }) => (
           <li>下の比率グラフの「○問」は<strong>百分率から換算した概算</strong>（総数200問×%）で、1問ずつ数えた実数ではない</li>
           <li><strong>令和4年度以降は上期・下期の年2回実施</strong>。年度別表は1行に2回分を合算しているため、年度行どうしを単純比較できない</li>
           <li>年度別表は<strong>主要6単元だけの内訳</strong>（照明・電熱・電気化学・情報などを含まない）。行の合計は1回分の解答問題数と一致しない</li>
+          <li>比率グラフ（換算値）と年度別表（1問ずつの割当）は<strong>別々に集計している</strong>ため、列を足すと差が出る。実際「制御」は換算値 18 問に対し表の列合計は <strong>17 問</strong>（単元の境界にある問題をどちらへ寄せるかで ±1 問ぶれる）。<span className="marker">どちらも一次照合済みの実数ではない</span></li>
         </ul>
         <p style={{margin:"8px 0 0"}}>優先順位の目安としては使えるが、<span className="marker">数値そのものを暗記したり答案に書いたりしない</span>こと。</p>
       </Box>
@@ -7501,7 +7636,7 @@ const TrendsPage = ({ data, onNav }) => (
       <h2><span className="h-num">2.</span>主要6単元の年度別出題数</h2>
       <div className="table-wrap">
         <table className="data">
-          <thead><tr><th>年度</th><th>誘導機</th><th>変圧器</th><th>直流機</th><th>同期機</th><th>パワエレ</th><th>制御</th></tr></thead>
+          <thead><tr><th scope="col">年度</th><th scope="col">誘導機</th><th scope="col">変圧器</th><th scope="col">直流機</th><th scope="col">同期機</th><th scope="col">パワエレ</th><th scope="col">制御</th></tr></thead>
           <tbody>
             <tr><td>R5</td><td className="num">4</td><td className="num">3</td><td className="num">2</td><td className="num">2</td><td className="num">2</td><td className="num">2</td></tr>
             <tr><td>R4</td><td className="num">4</td><td className="num">3</td><td className="num">3</td><td className="num">2</td><td className="num">2</td><td className="num">1</td></tr>
@@ -7605,28 +7740,33 @@ const GuidePage = ({ onNav }) => (
       <h2><span className="h-num">1.</span>3 ヶ月モデル（復習中心）</h2>
       <div className="table-wrap">
         <table className="data">
-          <thead><tr><th>週</th><th>単元</th><th>到達目標</th></tr></thead>
+          <thead><tr><th scope="col">週</th><th scope="col">単元</th><th scope="col">到達目標</th></tr></thead>
           <tbody>
             <tr><td>1〜2週</td><td>直流機</td><td>誘導起電力・トルク式の運用、励磁方式の暗記</td></tr>
             <tr><td>3〜5週</td><td>三相誘導電動機</td><td>1:s:(1-s) 比、等価回路、トルク特性、始動方式の完全理解</td></tr>
-            <tr><td>6〜7週</td><td>変圧器</td><td>%Z・電圧変動率・効率計算の反復</td></tr>
+            <tr><td>6〜7週</td><td>変圧器・計器用変成器（CT/VT）</td><td>%Z・電圧変動率・効率計算の反復。CT/VT は二次禁則が逆になる理由まで</td></tr>
             <tr><td>8週</td><td>同期機</td><td>V カーブ・短絡比・並列運転条件</td></tr>
             <tr><td>9週</td><td>パワエレ</td><td>整流・チョッパ・PWM の基本式</td></tr>
             <tr><td>10週</td><td>自動制御</td><td>伝達関数・フィードバック合成・安定判別</td></tr>
             <tr><td>11週</td><td>照明・電熱・応用</td><td>公式暗記中心の短期決戦</td></tr>
-            <tr><td>12週</td><td>過去問演習</td><td>本試験 2〜3 年分を時間計測で解く</td></tr>
+            <tr><td>12週</td><td>過去問演習</td><td>本試験 2〜3 年分を時間計測で解く。仕上げに「D 用語混同まとめ」で横断ひっかけを総ざらい</td></tr>
           </tbody>
         </table>
       </div>
 
       <h2><span className="h-num">2.</span>得点戦略</h2>
-      <Box kind="tip" label="60点合格ラインの内訳例">
+      <Box kind="formula" label="まず配点を押さえる">
+        <p><strong>A問題 14問 × 5点 ＝ 70点</strong>／<strong>B問題は解答 3問 × 10点（小問 (a)(b) が各5点）＝ 30点</strong>。解答するのは計 17 問・満点 100 点で、合格ラインは原則 60 点（難易度により調整される場合がある）。<span className="marker">B問題は1問完答で10点＝A問題2問ぶん</span>なので、「何問取るか」ではなく<strong>どの種類の問題を取るか</strong>で点が変わる。</p>
+        <p style={{margin:"8px 0 0", fontSize:"12.5px", color:"var(--ink-soft)"}}>⚠️ B問題の<strong>出題数と必須／選択の別は科目・年度で異なる</strong>（必須のみの科目と、一部を選択する科目がある）。上の配点は「解答するのは 17 問」という点では共通だが、<span className="marker">自分が受ける回の受験案内で必ず確認すること</span>。本Wikiでは一次資料の照合が済んでいないため、選択の有無は断定していない。</p>
+      </Box>
+      <Box kind="tip" label="60点合格ラインの内訳例（配点どおりに積む）">
         <ul>
-          <li>三大単元（誘導機・変圧器・直流機）で <strong>9〜10 問</strong> 確保 → 約 50点</li>
-          <li>同期機・パワエレ・制御で <strong>2〜3 問</strong> 上積み → 約 14点</li>
-          <li>照明・電熱・応用で <strong>1 問</strong> → 約 6点</li>
-          <li>合計目標 <strong>70点</strong> でマージン確保</li>
+          <li>三大単元（誘導機・変圧器・直流機）で <strong>A問題 8問（40点）＋ B問題 1問完答（10点）</strong> → <strong>50点</strong></li>
+          <li>同期機・パワエレ・制御で <strong>A問題 3問</strong> → <strong>15点</strong></li>
+          <li>照明・電熱・応用で <strong>A問題 1問</strong> → <strong>5点</strong></li>
+          <li>合計 <strong>70点</strong>（合格ライン +10点のマージン）</li>
         </ul>
+        <p style={{margin:"8px 0 0"}}>⚠️ 端数の出ない数字で組むこと。1問あたりを一律「約6点」などと按分すると、A問題（5点）と B問題（10点）の差が消えて計画が実際の答案と合わなくなる。</p>
       </Box>
 
       <h2><span className="h-num">3.</span>本Wikiの使い方</h2>
