@@ -17697,6 +17697,81 @@ function MachigaiNotePage({
     color: 'var(--accent-ink)',
     count: records.length
   }];
+  const TAKEOUT_MEMO_CAP = 300;
+  const [takeoutText, setTakeoutText] = React.useState('');
+  const [takeoutMsg, setTakeoutMsg] = React.useState('');
+  function takeoutHeading() {
+    const f = FILTERS.find(x => x.key === filter);
+    const d = new Date();
+    const ymd = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    return '電験3種 間違いノート（' + (f ? f.label : '') + '） ' + filtered.length + '件 / ' + ymd + ' 書き出し';
+  }
+  function takeoutItems() {
+    return filtered.map((r, i) => {
+      const memo = r.memo || '';
+      const cut = memo.length > TAKEOUT_MEMO_CAP;
+      return {
+        no: i + 1,
+        status: (STATUS_DEFS[r.status] || {}).label || r.status,
+        article: r.articleTitle || '',
+        item: r.itemTitle || '',
+        answer: cut ? memo.slice(0, TAKEOUT_MEMO_CAP) + '…（以下略・全文はWikiで）' : memo
+      };
+    });
+  }
+  function buildTakeoutText() {
+    const lines = [takeoutHeading(), '並びは緊急度順。当日はこの順に上から見る。', ''];
+    takeoutItems().forEach(it => {
+      lines.push(it.no + ') [' + it.status + '] ' + it.article);
+      lines.push('   Q. ' + it.item.replace(/\s*\n+\s*/g, ' ').trim());
+      if (it.answer) lines.push('   A. ' + it.answer.replace(/\s*\n+\s*/g, ' / ').trim());
+      lines.push('');
+    });
+    return lines.join('\n');
+  }
+  function handleTakeoutCopy() {
+    const text = buildTakeoutText();
+    setTakeoutText(text);
+    setTakeoutMsg('下のテキストを書き出しました。コピーしてスマホのメモ帳などに貼ってください。');
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => setTakeoutMsg('クリップボードにコピーしました（' + filtered.length + '件）。スマホのメモ帳などに貼り付けてください。')).catch(() => {});
+      }
+    } catch (e) {}
+  }
+  function handleTakeoutPrint() {
+    const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;'
+    })[c]);
+    const rows = takeoutItems().map(it => '<li><div class="h"><span class="st">' + esc(it.status) + '</span>' + esc(it.article) + '</div>' + '<div class="q">' + esc(it.item) + '</div>' + (it.answer ? '<div class="a">' + esc(it.answer) + '</div>' : '') + '</li>').join('');
+    const doc = '<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>' + esc(takeoutHeading()) + '</title>' + '<style>@page{margin:12mm}' + 'body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;background:#fff;font-size:10.5pt;line-height:1.55;margin:0}' + 'h1{font-size:13pt;margin:0 0 2mm}.sub{font-size:9pt;opacity:.72;margin:0 0 4mm}' + 'ol{margin:0;padding-left:7mm}li{margin:0 0 3.5mm;break-inside:avoid;page-break-inside:avoid}' + '.h{font-weight:700;font-size:10pt}' + '.st{border:1px solid #000;border-radius:3px;padding:0 4px;margin-right:5px;font-size:8.5pt;font-weight:400}' + '.q{margin-top:1mm}.a{margin-top:1mm;padding-left:3mm;border-left:2px solid #999}' + '</style></head><body><h1>' + esc(takeoutHeading()) + '</h1>' + '<p class="sub">並びは緊急度順。当日はこの順に上から見る。</p><ol>' + rows + '</ol></body></html>';
+    try {
+      const frame = document.createElement('iframe');
+      frame.setAttribute('aria-hidden', 'true');
+      frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+      frame.onload = () => {
+        try {
+          frame.contentWindow.focus();
+          frame.contentWindow.print();
+        } catch (e) {
+          setTakeoutMsg('印刷を開けませんでした。「テキストでコピー」を使ってください。');
+        }
+        setTimeout(() => {
+          try {
+            document.body.removeChild(frame);
+          } catch (e) {}
+        }, 1000);
+      };
+      document.body.appendChild(frame);
+      frame.srcdoc = doc;
+      setTakeoutMsg('印刷ダイアログを開きます（PDF で保存すればスマホにも持ち出せます）。');
+    } catch (e) {
+      setTakeoutMsg('印刷を開けませんでした。「テキストでコピー」を使ってください。');
+    }
+  }
   return React.createElement("div", null, React.createElement("div", {
     style: {
       marginBottom: 20
@@ -17744,7 +17819,13 @@ function MachigaiNotePage({
     style: {
       color: 'var(--dgm-teal)'
     }
-  }, "今日の一問(理論)"), "」由来の記録も横断表示（タイトルクリックで該当セクション・理論wikiへ遷移）。"), React.createElement("div", {
+  }, "今日の一問(理論)"), "」由来の記録も横断表示（タイトルクリックで該当セクション・理論wikiへ遷移）。", React.createElement("div", {
+    style: {
+      marginTop: 6,
+      paddingTop: 6,
+      borderTop: '1px dashed var(--line)'
+    }
+  }, "⚠ 過去問を繰り返すと", React.createElement("strong", null, "答えを覚えているだけで解けてしまう"), "問題が出てきます。正解しても", React.createElement("strong", null, "理由を1行で言えなければ「うる覚え」に落とす"), "こと。覚えた答えは本番の初見問題では再現しません。")), React.createElement("div", {
     style: {
       display: 'flex',
       flexWrap: 'wrap',
@@ -17841,7 +17922,102 @@ function MachigaiNotePage({
       color: 'var(--ink-3)',
       fontSize: 11
     }
-  }, "テスト＝思い出してからめくる（定着↑）")), filtered.length === 0 ? React.createElement("div", {
+  }, "テスト＝思い出してからめくる（定着↑）")), filtered.length > 0 && React.createElement("div", {
+    style: {
+      border: '1px solid var(--line)',
+      borderRadius: 'var(--radius)',
+      background: 'var(--bg-elev)',
+      padding: '10px 14px',
+      marginBottom: 16
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 13,
+      lineHeight: 1.7,
+      color: 'var(--ink-2)'
+    }
+  }, "🎒 ", React.createElement("strong", null, "当日持ち出し"), " — このノートは", React.createElement("strong", null, "この端末のこのブラウザにだけ"), "あります。試験当日に別の端末で見る／会場でページを開けない場合に備え、", React.createElement("strong", null, "前日までに"), "表示中の ", filtered.length, " 件を外に出しておきましょう。"), React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginTop: 10,
+      alignItems: 'center'
+    }
+  }, React.createElement("button", {
+    type: "button",
+    onClick: handleTakeoutCopy,
+    style: {
+      padding: '5px 14px',
+      borderRadius: 999,
+      border: '1.5px solid var(--accent)',
+      background: 'var(--accent)',
+      color: 'var(--bg)',
+      cursor: 'pointer',
+      fontSize: 12,
+      fontWeight: 700,
+      fontFamily: 'inherit'
+    }
+  }, "📋 テキストでコピー"), React.createElement("button", {
+    type: "button",
+    onClick: handleTakeoutPrint,
+    style: {
+      padding: '5px 14px',
+      borderRadius: 999,
+      border: '1.5px solid var(--accent)',
+      background: 'transparent',
+      color: 'var(--accent-ink)',
+      cursor: 'pointer',
+      fontSize: 12,
+      fontWeight: 700,
+      fontFamily: 'inherit'
+    }
+  }, "🖨 印刷 / PDFで保存"), takeoutText && React.createElement("button", {
+    type: "button",
+    onClick: () => {
+      setTakeoutText('');
+      setTakeoutMsg('');
+    },
+    style: {
+      padding: '5px 12px',
+      borderRadius: 999,
+      border: '1px solid var(--line-2)',
+      background: 'transparent',
+      color: 'var(--ink-3)',
+      cursor: 'pointer',
+      fontSize: 12,
+      fontFamily: 'inherit'
+    }
+  }, "閉じる"), React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: 'var(--ink-3)'
+    }
+  }, "いま表示中のフィルタ・並び順のまま出ます")), takeoutMsg && React.createElement("div", {
+    style: {
+      marginTop: 8,
+      fontSize: 12,
+      color: 'var(--ink-2)'
+    }
+  }, takeoutMsg), takeoutText && React.createElement("textarea", {
+    readOnly: true,
+    value: takeoutText,
+    onFocus: e => e.target.select(),
+    style: {
+      width: '100%',
+      boxSizing: 'border-box',
+      marginTop: 8,
+      minHeight: 180,
+      padding: 10,
+      borderRadius: 'var(--radius)',
+      border: '1px solid var(--line-2)',
+      background: 'var(--bg)',
+      color: 'var(--ink)',
+      fontSize: 12,
+      lineHeight: 1.6,
+      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace'
+    }
+  })), filtered.length === 0 ? React.createElement("div", {
     style: {
       padding: '32px 16px',
       textAlign: 'center',
@@ -32027,7 +32203,7 @@ function ChokuzenToujitsuPage({
   }, "1. 当日の順路"), React.createElement(MemTable, {
     headers: ["時点", "見るもの", "目安"],
     rows: [["移動中", "8.4 間違いノート — 自分が実際に落とした論点", "5分"], ["−60分", "セクション2 → 8.1 数値だけ確認 — 混同ペア", "15分"], ["−30分", "セクション3 → 8.3 ひっかけだけ確認 — 4テーマ", "10分"], ["−10分", "セクション4 → 8.2 公式だけ確認 — 立式の1行目", "5分"], ["試験中", "セクション5 — 65分の配分と提出前の4点", "—"]],
-    note: "上から順に、時間の続く分だけ。全部を回すことより混同ペアを1周することを優先する（当日に新規インプットをしても定着しない）。起点を自分の間違いノートに置くのは、他人の頻出より自分の失点の方が当日は効くため"
+    note: "上から順に、時間の続く分だけ。全部を回すことより混同ペアを1周することを優先する（当日に新規インプットをしても定着しない）。起点を自分の間違いノートに置くのは、他人の頻出より自分の失点の方が当日は効くため。8.4 の記録は開いた端末のブラウザにしか残らないので、前日までに 8.4 の「当日持ち出し」でテキスト（スマホのメモ帳へ貼る）か紙に出しておくと、会場の電波・端末に左右されずに移動中の5分が使える"
   }), React.createElement("h2", {
     id: "top6"
   }, "2. 当日これだけ 6組"), React.createElement("div", {
