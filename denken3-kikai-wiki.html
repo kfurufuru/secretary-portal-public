@@ -1146,6 +1146,9 @@ window.WIKI_DATA = {
     { page: "transformer", pageTitle: "2.1 変圧器", anchor: "pz-meaning",
       title: "%Zから何が分かるか", desc: "短絡電流・電圧変動率・並行運転の分担の3つに整理",
       keywords: "%Z パーセントインピーダンス 短絡電流 電圧変動率 負荷分担" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "kakomon-progress",
+      title: "過去問集の進捗（20年間）", desc: "年度回 x 問番号のグリッドに ◎○△× を残し、△× をチャットに渡す",
+      keywords: "過去問 進捗 記録 20年間 電気書院 問題集 チェック 復習" },
   ],
   glossary: [
     { term: "同期速度",        reading: "DOUKI SOKUDO",      letter: "た",
@@ -2565,7 +2568,7 @@ const SectionCheck = ({ pageId, sectionId, compact = false }) => {
             padding: '4px 10px',
             minWidth: 36,
             background: status === b.mark ? b.color : 'transparent',
-            color: status === b.mark ? '#fff' : 'var(--ink)',
+            color: status === b.mark ? 'var(--bg)' : 'var(--ink)',
             border: status === b.mark ? `1px solid ${b.color}` : '1px solid var(--rule)',
             borderRadius: 4,
             cursor: 'pointer',
@@ -2732,7 +2735,7 @@ const ConceptQuizItem = ({ q, pageId, pageTitle, required }) => {
   return (
     <div style={{ border: '1px solid var(--rule)', borderRadius: 8, padding: '14px 16px', margin: '10px 0', background: 'var(--bg-elev)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, color: '#fff', background: required ? '#dc2626' : '#3b82f6' }}>{required ? '必須' : '任意'}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, color: 'var(--bg)', background: required ? 'var(--danger)' : 'var(--info)' }}>{required ? '必須' : '任意'}</span>
         {(q.tags || []).map(t => (<span key={t} style={{ fontSize: 11, color: 'var(--ink-soft)' }}>{t}</span>))}
         {prev && prev.status && (<span style={{ fontSize: 11, color: 'var(--ink-mute)' }}>· 前回: {prev.status === 'understood' ? '◎正解' : prev.status === 'review' ? '△要復習' : '×不正解'}{prev.reviewCount > 1 ? `（${prev.reviewCount}回目）` : ''}</span>)}
       </div>
@@ -2891,7 +2894,194 @@ const ConceptQuiz = ({ pageId, pageTitle }) => {
   );
 };
 
-Object.assign(window, { KIKAI_DAILY_POOL, SectionCheck, SectionCheckSummary, ConceptQuizItem, ConceptQuiz });
+
+/* ---- KakomonProgress: 過去問題集（年度回 x 問番号）の進捗グリッド ----
+   電気書院「20年間の過去問」を解いた進捗を localStorage に残す。記録するのは
+   「年度回・問番号・自己評価」だけで、問題文は一切載せない（書籍は著作物のため）。
+   「なぜ間違えたか」という質の記録は repo 側 learning-log/kikai/<page>.md が SoT
+   （localStorage は端末に閉じるため、端末をまたぐ分析には使わない）。
+   収録年度は監修者さんの蔵書（H18〜R7）に合わせた。違う版を使うときはこの配列を増減する。 */
+const KAKOMON_SESSIONS = [
+  { id: 'H18', year: 2006 },
+  { id: 'H19', year: 2007 },
+  { id: 'H20', year: 2008 },
+  { id: 'H21', year: 2009 },
+  { id: 'H22', year: 2010 },
+  { id: 'H23', year: 2011 },
+  { id: 'H24', year: 2012 },
+  { id: 'H25', year: 2013 },
+  { id: 'H26', year: 2014 },
+  { id: 'H27', year: 2015 },
+  { id: 'H28', year: 2016 },
+  { id: 'H29', year: 2017 },
+  { id: 'H30', year: 2018 },
+  { id: 'R1', year: 2019 },
+  { id: 'R2', year: 2020 },
+  { id: 'R3', year: 2021 },
+  { id: 'R4上', year: 2022 },
+  { id: 'R4下', year: 2022 },
+  { id: 'R5上', year: 2023 },
+  { id: 'R5下', year: 2023 },
+  { id: 'R6上', year: 2024 },
+  { id: 'R6下', year: 2024 },
+  { id: 'R7上', year: 2025 },
+  { id: 'R7下', year: 2025 }
+];
+const KAKOMON_QMAX = 18;              // 問番号の上限（列）
+const KAKOMON_CYCLE = ['', '◎', '○', '△', '×'];
+const KAKOMON_COLOR = { '◎': 'var(--ok)', '○': 'var(--info)', '△': 'var(--warn)', '×': 'var(--danger)' };
+
+const KakomonProgress = ({ pageId, topicLabel }) => {
+  const key = `denken_check::kikai_${pageId}::kakomon::v1`;
+  const [grid, setGrid] = React.useState(() => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(key) || '{}');
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+      // 行の値も検証する。文字列が入っていると Object.assign({}, '×') が {'0':'×'} になり、
+      // 存在しない「問0」が復習待ちとコピー文面に出る（トップレベルの検証だけでは防げない）
+      const clean = {};
+      Object.keys(parsed).forEach(k => {
+        const row = parsed[k];
+        if (!row || typeof row !== 'object' || Array.isArray(row)) return;
+        // 行がオブジェクトでも中身までは保証されない。問番号でないキーや ◎○△× 以外の
+        // 判定を残すと「問0」「問NaN」が復習待ちとコピー文面に出る（前バージョンが
+        // 保存した {'0':'×'} は行としては正常なので、行の型検査だけでは通ってしまう）
+        const kept = {};
+        Object.keys(row).forEach(q => {
+          const n = Number(q);
+          const isQ = Number.isInteger(n) && n >= 1 && n <= KAKOMON_QMAX && String(n) === q;
+          if (isQ && KAKOMON_CYCLE.indexOf(row[q]) > 0) kept[q] = row[q];
+        });
+        if (Object.keys(kept).length) clean[k] = kept;
+      });
+      return clean;
+    } catch (e) { return {}; }
+  });
+  const [copied, setCopied] = React.useState('');
+
+  const cycle = (sid, q) => {
+    const cur = (grid[sid] || {})[q] || '';
+    const next = KAKOMON_CYCLE[(KAKOMON_CYCLE.indexOf(cur) + 1) % KAKOMON_CYCLE.length];
+    const row = Object.assign({}, grid[sid]);
+    if (next) row[q] = next; else delete row[q];
+    const updated = Object.assign({}, grid);
+    if (Object.keys(row).length) updated[sid] = row; else delete updated[sid];
+    setGrid(updated);
+    try { localStorage.setItem(key, JSON.stringify(updated)); } catch (e) { /* 容量超過等は記録だけ失う */ }
+  };
+
+  const order = {};
+  KAKOMON_SESSIONS.forEach((s, i) => { order[s.id] = i; });
+  const all = [];
+  KAKOMON_SESSIONS.forEach(s => {
+    const row = grid[s.id] || {};
+    Object.keys(row).forEach(q => all.push({ sid: s.id, q: Number(q), mark: row[q] }));
+  });
+  const weak = all.filter(r => r.mark === '△' || r.mark === '×')
+                  .sort((a, b) => (order[a.sid] - order[b.sid]) || (a.q - b.q));
+  const solid = all.filter(r => r.mark === '◎' || r.mark === '○').length;
+
+  const copyWeak = () => {
+    if (!weak.length) { setCopied('△× の記録がまだありません'); return; }
+    const text = [topicLabel + 'で落とした問題（学習ログに追記したい）']
+      .concat(weak.map(r => '- ' + r.sid + ' 問' + r.q + ' ' + r.mark))
+      .concat(['', '各問について「理解できなかったところ／公式／考え方・解き方／計算ミス／覚えたいこと」を書きます'])
+      .join('\n');
+    const done = () => setCopied(weak.length + '件をコピーしました。チャットに貼って中身を書いてください');
+    const fail = () => setCopied('コピーできませんでした（下の一覧を手で選択してください）');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fail);
+    } else {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta); done();
+      } catch (e) { fail(); }
+    }
+  };
+
+  const cellBase = {
+    width: 26, height: 26, padding: 0, lineHeight: '24px', textAlign: 'center',
+    border: '1px solid var(--rule)', borderRadius: 4, cursor: 'pointer',
+    fontSize: 13, fontWeight: 700, background: 'transparent', color: 'var(--ink-soft)',
+  };
+  const stickyHead = {
+    position: 'sticky', left: 0, background: 'var(--bg-elev)', textAlign: 'left',
+    whiteSpace: 'nowrap', padding: '0 8px 0 0', fontSize: 11,
+  };
+  const qNumbers = Array.from({ length: KAKOMON_QMAX }, (_, i) => i + 1);
+
+  return (
+    <div style={{ margin: '10px 0 18px', padding: '12px 14px', background: 'var(--bg-elev)', border: '1px solid var(--rule)', borderRadius: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
+        <strong style={{ fontSize: 14 }}>過去問集の進捗（{topicLabel}）</strong>
+        <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
+          記録 {all.length} 問（◎○ {solid} ／ △× {weak.length}）
+        </span>
+      </div>
+      <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: '0 0 8px' }}>
+        解いた問のマスをタップすると <strong>◎ → ○ → △ → × → 空</strong> と変わる。
+        <strong>正解しても「なぜその式か」を1行で言えなければ △</strong> に落とす（覚えていただけの正解を弾くため）。
+        解いていない問は空のままでよい。年度により B問題の構成が違うので、実際に解いた問だけ埋める。
+      </p>
+      <div style={{ overflowX: 'auto', paddingBottom: 4 }}>
+        <table style={{ borderCollapse: 'separate', borderSpacing: 2, fontSize: 12 }}>
+          <thead>
+            <tr>
+              <th scope="col" style={Object.assign({}, stickyHead, { color: 'var(--ink-soft)', fontWeight: 600 })}>年度回</th>
+              {qNumbers.map(q => (
+                <th key={q} scope="col" style={{ width: 26, fontSize: 10, fontWeight: 600, color: 'var(--ink-soft)' }}>{q}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {KAKOMON_SESSIONS.map(s => (
+              <tr key={s.id}>
+                <th scope="row" style={Object.assign({}, stickyHead, { fontWeight: 600 })}>
+                  {s.id}<span style={{ color: 'var(--ink-soft)', fontWeight: 400 }}> ({s.year})</span>
+                </th>
+                {qNumbers.map(q => {
+                  const mark = (grid[s.id] || {})[q] || '';
+                  return (
+                    <td key={q} style={{ padding: 0 }}>
+                      <button
+                        onClick={() => cycle(s.id, q)}
+                        aria-label={s.id + ' 問' + q + ' ' + (mark || '未記録')}
+                        style={Object.assign({}, cellBase, mark ? {
+                          // 文字色は白固定にしない: dark テーマの --ok/--warn/--danger は明色なので
+                          // 白だとコントラストが AA を割る（実測 1.9:1）。地の色なら両テーマで 6:1 以上。
+                          background: KAKOMON_COLOR[mark], color: 'var(--bg)', border: '1px solid ' + KAKOMON_COLOR[mark],
+                        } : {})}
+                      >{mark}</button>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <button onClick={copyWeak} style={{
+          padding: '6px 12px', background: 'var(--accent)', color: 'var(--bg)', border: 'none',
+          borderRadius: 5, cursor: 'pointer', fontSize: 12, fontWeight: 700,
+        }}>△× をコピーしてチャットに貼る</button>
+        {copied && <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{copied}</span>}
+      </div>
+      {weak.length > 0 && (
+        <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: '8px 0 0' }}>
+          復習待ち: {weak.map(r => r.sid + ' 問' + r.q + r.mark).join(' ／ ')}
+        </p>
+      )}
+      <p style={{ fontSize: 11, color: 'var(--ink-soft)', margin: '8px 0 0' }}>
+        この記録はこの端末のブラウザにだけ残る。<strong>ミスの中身（公式・考え方・計算ミス・覚えたいこと）は
+        チャットに書いて learning-log に残す</strong>と、端末をまたいで読めて傾向も集計できる。
+      </p>
+    </div>
+  );
+};
+
+Object.assign(window, { KIKAI_DAILY_POOL, SectionCheck, SectionCheckSummary, ConceptQuizItem, ConceptQuiz, KakomonProgress });
 
 </script>
 <script type="text/babel">
@@ -5986,6 +6176,11 @@ const TransformerPage = ({ onNav }) => (
         <details><summary>V結線の2台で「等しいもの」と「偏るもの」は？</summary>等しい＝皮相電力 V_L·I_L と巻線電流（同一仕様器なら損失・温度上昇もほぼ同等）／偏る＝個別力率と有効・無効電力の分担（有効電力係数は cos(30°−θ) と cos(30°+θ)）。有効分担が等しいのは力率1のときだけ</details>
       </div>
       <SectionCheck pageId="transformer" sectionId="quick-review" />
+
+      <h2 id="kakomon-progress"><span className="h-num">15.</span>過去問集の進捗（20年間）</h2>
+      <p>手持ちの過去問集（電気書院・H18〜R7 の20年間）で、変圧器の問題をどこまで解いたかを残す。
+        面（どこまで解いたか）はここで、質（なぜ間違えたか）は学習ログで管理する。</p>
+      <KakomonProgress pageId="transformer" topicLabel="変圧器" />
 
       <SectionCheckSummary
         pageId="transformer"
