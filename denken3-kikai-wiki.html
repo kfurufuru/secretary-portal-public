@@ -2470,7 +2470,7 @@ const KIKAI_DAILY_POOL = [
     evidence:['本ページ セクション3（誘導起電力と磁束）'], verified:'high',
     wikiPageId:'transformer' },
 
-  // ─── 同期機 synchronous (6) ───
+  // ─── 同期機 synchronous (7) ───
   { id:'k15', topic:'同期機', rank:'S',
     q:'同期電動機の定常運転時の滑りはいくらか。',
     choices:[{key:'A',label:'ゼロ（常に同期速度で回転）',correct:true},{key:'B',label:'0 < s < 1',correct:false},{key:'C',label:'s < 0',correct:false},{key:'D',label:'負荷により変化する',correct:false}],
@@ -2512,6 +2512,13 @@ const KIKAI_DAILY_POOL = [
     tags:['#考え方','#論説'],
     explanation:'同期電動機は始動トルクを持たない。制動巻線をかご形導体として使う自己始動法（始動中は界磁巻線を抵抗経由で短絡）、始動電動機法、低周波始動などを用いる。',
     evidence:['本ページ セクション5（始動法・乱調・自己励磁）'], verified:'high',
+    wikiPageId:'synchronous' },
+  { id:'k21', topic:'同期機', rank:'A',
+    q:'回転磁束の空間分布が正弦波で最大値が Bm のとき、1極の磁束 Φ を求めるのに使う磁束密度はどれか。',
+    choices:[{key:'A',label:'平均値 (2/π)Bm',correct:true},{key:'B',label:'実効値 Bm/√2',correct:false},{key:'C',label:'最大値 Bm そのもの',correct:false},{key:'D',label:'(1/2)Bm',correct:false}],
+    tags:['#考え方','#ひっかけ注意'],
+    explanation:'Φ は「磁束密度×面積」の総和なので、極面上で平均した値を使う。正弦波の半周期の平均は (2/π)Bm ≈ 0.637Bm。実効値 Bm/√2 ≈ 0.707Bm を当てるのが最頻の誤り。この 2/π の逆数 π が、E = 4.44fNΦ の 4.44 = √2π の π 側の正体。',
+    evidence:['本ページ セクション1 折りたたみ「4.44 はどこから来るか」段4'], verified:'high',
     wikiPageId:'synchronous' },
 ];
 
@@ -3964,6 +3971,73 @@ const SynchronousPage = ({ onNav }) => (
         <p style={{margin:"8px 0 0"}}><a href="https://kfurufuru.github.io/secretary-portal-public/denken3-riron-wiki.html#inductance" target="_blank" rel="noopener">→ 理論Wiki「3.1 インダクタンス・電磁誘導」でファラデー則・磁束鎖交を深掘り</a></p>
       </Box>
 
+      <Fold label="4.44 はどこから来るか — e = Blv から基本式を導く" sub="導出6段。数値を覚えるのではなく作れるようにする">
+        <p>公式 <Eq tex="E=4.44\,k_w fN\Phi_m" /> の <strong>4.44</strong> は天下りの定数ではなく、<span className="marker">導体1本の <Eq tex="e=Blv" /> から6段で作れる</span>。正体は <Eq tex="\sqrt{2}\,\pi" />（<Eq tex="\sqrt{2}" /> が実効値変換、<Eq tex="\pi" /> が正弦波の平均値 <Eq tex="2/\pi" /> の逆数）。</p>
+
+        <DiagramFrame caption="図1.3.1  極ピッチと磁束密度分布（円周方向に展開した図）" viewBox="0 0 480 262">
+          {/* N極側の面積 = 平均値×極ピッチ = 1極の磁束 Φ */}
+          <path d="M 60,140 C 123.3,66.7 186.7,66.7 250,140 Z" fill="var(--accent-soft)" stroke="none" />
+          {/* 基準線（円周方向の位置 x） */}
+          <line x1="40" y1="140" x2="455" y2="140" stroke="var(--ink-soft)" strokeWidth="1.5" />
+          <polygon points="455,140 447,136 447,144" fill="var(--ink-soft)" stroke="none" />
+          <text x="452" y="132" fontSize="11" fill="var(--ink-mute)" textAnchor="end">円周方向の位置</text>
+          {/* 磁束密度分布 B(x) = Bm sin(pi x / tau) */}
+          <path d="M 60,140 C 123.3,66.7 186.7,66.7 250,140 C 313.3,213.3 376.7,213.3 440,140" fill="none" stroke="var(--accent)" strokeWidth="2.4" />
+          {/* 最大値 Bm */}
+          <line x1="40" y1="85" x2="155" y2="85" stroke="var(--rule)" strokeWidth="1" strokeDasharray="4 3" />
+          <line x1="155" y1="85" x2="155" y2="140" stroke="var(--rule)" strokeWidth="1" strokeDasharray="4 3" />
+          <text x="36" y="89" fontSize="12" fill="var(--ink)" textAnchor="end">Bm</text>
+          {/* 平均値 (2/pi)Bm */}
+          <line x1="60" y1="105" x2="250" y2="105" stroke="var(--danger)" strokeWidth="1.6" strokeDasharray="6 3" />
+          <text x="255" y="102" fontSize="11.5" fill="var(--danger)" fontWeight="700">平均値 (2/π)Bm</text>
+          <text x="255" y="117" fontSize="10.5" fill="var(--ink-mute)">実効値 Bm/√2 ではない</text>
+          {/* 極の別 */}
+          <text x="155" y="132" fontSize="12" fill="var(--ink)" fontWeight="700" textAnchor="middle">N 極</text>
+          <text x="345" y="158" fontSize="12" fill="var(--ink)" fontWeight="700" textAnchor="middle">S 極</text>
+          <text x="155" y="120" fontSize="10.5" fill="var(--ink-mute)" textAnchor="middle">網掛け面積 = Φ</text>
+          {/* 極ピッチ tau */}
+          <line x1="60" y1="222" x2="250" y2="222" stroke="var(--ink-soft)" strokeWidth="1.2" />
+          <line x1="60" y1="216" x2="60" y2="228" stroke="var(--ink-soft)" strokeWidth="1.2" />
+          <line x1="250" y1="216" x2="250" y2="228" stroke="var(--ink-soft)" strokeWidth="1.2" />
+          <text x="155" y="215" fontSize="11.5" fill="var(--ink)" textAnchor="middle">極ピッチ τ = πD/p</text>
+          {/* 2 tau = 1周期 */}
+          <line x1="60" y1="246" x2="440" y2="246" stroke="var(--accent)" strokeWidth="1.4" />
+          <line x1="60" y1="240" x2="60" y2="252" stroke="var(--accent)" strokeWidth="1.4" />
+          <line x1="440" y1="240" x2="440" y2="252" stroke="var(--accent)" strokeWidth="1.4" />
+          <polygon points="440,246 430,241 430,251" fill="var(--accent)" stroke="none" />
+          <text x="250" y="240" fontSize="11.5" fill="var(--accent-ink)" fontWeight="700" textAnchor="middle">1周期(1/f 秒)で 2τ 進む → 周速 v = 2τf</text>
+          {/* 導体 */}
+          <circle cx="200" cy="140" r="5" fill="var(--ink)" stroke="none" />
+          <text x="200" y="180" fontSize="11" fill="var(--ink-soft)" textAnchor="middle">導体（長さ l）</text>
+          <line x1="200" y1="170" x2="200" y2="150" stroke="var(--ink-soft)" strokeWidth="1" />
+        </DiagramFrame>
+
+        <div className="table-wrap"><table className="data-table">
+          <thead><tr><th scope="col">段</th><th scope="col">式</th><th scope="col">意味</th></tr></thead>
+          <tbody>
+            <tr><td className="num">1</td><td><Eq tex="\tau=\dfrac{\pi D}{p}" /></td><td>極ピッチ。固定子内径 D の円周を極数 p で割る</td></tr>
+            <tr><td className="num">2</td><td><Eq tex="v=2\tau f" /></td><td>界磁の周速。<strong>1周期で 2 極ピッチ</strong>（N極＋S極）進む</td></tr>
+            <tr><td className="num">3</td><td><Eq tex="e=Blv" /></td><td>導体1本の瞬時起電力（<Eq tex="B=B_m\sin\omega t" />）</td></tr>
+            <tr><td className="num">—</td><td><Eq tex="\dfrac{\pi x}{\tau}=\dfrac{\pi vt}{\tau}=2\pi ft=\omega t" /></td><td><strong>図の空間の正弦と、段3の時間の正弦は同じもの</strong>。固定された導体の上を界磁が <Eq tex="x=vt" /> で通り過ぎるため</td></tr>
+            <tr><td className="num">4</td><td><Eq tex="\Phi=\dfrac{2}{\pi}B_m\,\tau\,l" /></td><td>1極の磁束。正弦波分布の<strong>平均値</strong>×極の面積</td></tr>
+            <tr><td className="num">5</td><td><Eq tex="e_{rms}=\dfrac{\pi}{\sqrt{2}}f\Phi=2.22f\Phi" /></td><td>導体1本の実効値</td></tr>
+            <tr><td className="num">6</td><td><Eq tex="E=4.44fN\Phi" /></td><td>1相の<strong>直列</strong>巻数 N ＝ 導体 <strong>2N 本</strong>（1巻きにつき2辺）</td></tr>
+          </tbody>
+        </table></div>
+
+        <p>段4を段3に代入すると <Eq tex="B_m=\dfrac{\pi\Phi}{2\tau l}" /> なので</p>
+        <Eq display tex="e_{rms}=\dfrac{B_m l v}{\sqrt{2}}=\dfrac{1}{\sqrt{2}}\cdot\dfrac{\pi\Phi}{2\tau l}\cdot l\cdot 2\tau f=\dfrac{\pi}{\sqrt{2}}f\Phi\;\;(=2.2214f\Phi)" />
+        <p>これを2倍して <Eq tex="\sqrt{2}\,\pi=4.4429\approx 4.44" />。<span className="marker">実機ではさらに巻線係数 <Eq tex="k_w" /> を掛けて <Eq tex="E=4.44k_w fN\Phi_m" /></span>（分布巻・短節巻で各コイルの起電力に位相差が出る分の目減り）。上の導出は <Eq tex="k_w=1" />（集中巻・全節巻）の理想形にあたり、<strong>変圧器の <Eq tex="E=4.44fN\Phi_m" /> と同じ形になる</strong>のはこのため。</p>
+
+        <Box kind="mistake" label="この導出で落とすところ（3点）">
+          <ul style={{margin:0}}>
+            <li><Eq tex="\dfrac{2}{\pi}B_m" /> は<strong>平均値</strong>。実効値 <Eq tex="B_m/\sqrt{2}" /> と取り違えると <Eq tex="\Phi" /> が狂う（理論から持ち越す定番の混同）</li>
+            <li><Eq tex="v=2\tau f" /> の <strong>2</strong> — 1周期で進むのは1極ピッチではなく<strong>2</strong>極ピッチ。極数によらず成立する（<Eq tex="v=\pi D n=\pi D\dfrac{N_s}{60}=\pi D\dfrac{2f}{p}=2\tau f" />）</li>
+            <li><strong>N 巻 ＝ 導体 2N 本</strong> — 1本と数えると答えが半分（2.22 と 4.44 を分ける段）</li>
+          </ul>
+        </Box>
+      </Fold>
+
       <SectionCheck pageId="synchronous" sectionId="structure" />
 
       <h2 id="reaction"><span className="h-num">2.</span>電機子反作用</h2>
@@ -4057,6 +4131,7 @@ const SynchronousPage = ({ onNav }) => (
         <details><summary>円筒形同期機が最大出力となる内部相差角 δ は？</summary>δ = π/2（P = (E·V / x_s)·sinδ）</details>
         <details><summary>同期電動機の始動法は？なぜ自力始動できない？</summary>始動トルクがないため、制動巻線による自己始動法／始動電動機法／低周波始動を使う。始動中は界磁巻線を抵抗経由で短絡</details>
         <details><summary>乱調とは？その対策は？</summary>負荷急変で内部相差角 δ が振動する現象。制動巻線の誘導トルクで減衰させる（はずみ車は慣性で急変を緩和する補助）</details>
+        <details><summary>E = 4.44fNΦ の 4.44 の出どころは？</summary>4.44 = √2·π。√2 は実効値変換、π は正弦波の平均値 (2/π) の逆数。導体1本が 2.22fΦ、1相 N 巻＝導体 2N 本なので 2 倍して 4.44fNΦ</details>
       </div>
       <SectionCheck pageId="synchronous" sectionId="quick-review" />
 
