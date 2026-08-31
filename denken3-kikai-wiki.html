@@ -4815,6 +4815,58 @@ const TransformerTestCircuit = ({ mode }) => {
   );
 };
 
+/* Impedance triangle — Re / Xe / Ze の直角合成を実寸比で見せる（1 Ω = 100 px） */
+const ImpedanceTriangle = () => (
+  <figure style={{ margin: "10px 0 14px", background: "var(--bg-elev)", borderRadius: "8px", padding: "12px 8px 8px" }}>
+    <svg viewBox="0 0 420 268" role="img"
+      aria-label="インピーダンス三角形。底辺が等価抵抗Re=0.75オーム、高さが等価リアクタンスXe=1.85オーム、斜辺が等価インピーダンスZe=2.00オーム。ReとXeは直角に交わるため、Xeは引き算ではなく二乗の差の平方根で求まる"
+      style={{ display: "block", width: "100%", height: "auto", maxWidth: "420px", margin: "0 auto" }}>
+      <text x="210" y="20" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="var(--ink)">
+        インピーダンス三角形（実寸比・1 Ω = 100 px）
+      </text>
+
+      {/* 三角形本体 */}
+      <path d="M 120 240 H 195 V 55 Z" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round" />
+
+      {/* 直角記号 */}
+      <path d="M 178 240 V 223 H 195" fill="none" stroke="var(--accent)" strokeWidth="1.6" />
+
+      {/* θ */}
+      <path d="M 120 240 a 32 32 0 0 0 21 -24" fill="none" stroke="var(--warn)" strokeWidth="1.6" />
+      <text x="158" y="233" fontSize="12" fill="var(--warn)">θ</text>
+
+      {/* 底辺 Re */}
+      <text x="157" y="260" textAnchor="middle" fontSize="12" fill="var(--ink)">
+        <tspan fontStyle="italic">R</tspan><tspan dy="3" fontSize="9">e</tspan><tspan dy="-3"> = </tspan>
+        <tspan fontWeight="700">0.75</tspan><tspan> Ω</tspan>
+      </text>
+
+      {/* 高さ Xe */}
+      <text x="205" y="152" fontSize="12" fill="var(--ink)">
+        <tspan fontStyle="italic">X</tspan><tspan dy="3" fontSize="9">e</tspan><tspan dy="-3"> = </tspan>
+        <tspan fontWeight="700">1.85</tspan><tspan> Ω</tspan>
+      </text>
+      <text x="205" y="169" fontSize="10.5" fill="var(--ink-mute)">← 求めるのはここ</text>
+
+      {/* 斜辺 Ze */}
+      <line x1="104" y1="146" x2="150" y2="139" stroke="var(--accent)" strokeWidth="1.2" />
+      <text x="98" y="143" textAnchor="end" fontSize="12" fill="var(--accent-ink)">
+        <tspan fontStyle="italic">Z</tspan><tspan dy="3" fontSize="9">e</tspan><tspan dy="-3"> = </tspan>
+        <tspan fontWeight="700">2.00</tspan><tspan> Ω</tspan>
+      </text>
+      <text x="98" y="160" textAnchor="end" fontSize="10.5" fill="var(--ink-mute)">= Vs / Is（斜辺）</text>
+
+      {/* 注記 */}
+      <text x="210" y="30" textAnchor="middle" fontSize="0" fill="none"></text>
+      <text x="300" y="228" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--danger)">Ze − Re = 1.25 は誤り</text>
+      <text x="300" y="245" textAnchor="middle" fontSize="10.5" fill="var(--ink-soft)">斜辺から底辺を引いても高さにならない</text>
+    </svg>
+    <figcaption style={{ fontSize: "12px", color: "var(--ink-mute)", textAlign: "center", marginTop: "6px", lineHeight: 1.6 }}>
+      <Eq tex="R_e" /> と <Eq tex="X_e" /> は <strong>90° ずれたベクトル</strong>。図は実寸比なので、<Eq tex="Z_e - R_e" /> が高さと一致しないことが目で見て分かる。
+    </figcaption>
+  </figure>
+);
+
 const TransformerPage = ({ onNav }) => (
   <>
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "2. 静止器" }, { label: "2.1 変圧器" }]} onNav={onNav} />
@@ -5122,6 +5174,51 @@ const TransformerPage = ({ onNav }) => (
         <p><strong>単位確認:</strong> V÷A＝Ω ✓／W÷A²＝Ω ✓／%Z は無次元 ✓　<strong>検算:</strong> 短絡電流は定格の <Eq tex="100/5 = 20" /> 倍。</p>
         <p style={{ margin: "8px 0 0" }}><strong>ここから電圧変動率へ直結する:</strong> 力率 0.8 の定格負荷なら、<Eq tex="\varepsilon \approx p\cos\theta + q\sin\theta = 2.0\times0.8 + 4.58\times0.6 \approx 4.35\;[\%]" />（遅れ）。進みなら <Eq tex="2.0\times0.8 - 4.58\times0.6 \approx -1.15\;[\%]" /> で<span className="marker">符号が反転する</span>。<strong>短絡試験1つから %Z・銅損・短絡電流・電圧変動率がすべて出る</strong>のがこの試験の価値。</p>
         <p style={{ margin: "8px 0 0" }}><strong>ひっかけ注意:</strong> <Eq tex="R_e" /> の分母は <Eq tex="I_s^{\,2}" /> であって <Eq tex="I_s" /> ではない（<Eq tex="P = I^2R" /> だから）。また <Eq tex="X_e = Z_e - R_e" /> は誤り（<span className="marker">直角合成なので二乗の差の平方根</span>）。<Eq tex="5-2=3" /> としないこと（正しくは 4.58）。</p>
+      </Box>
+
+      <ImpedanceTriangle />
+
+      <Box kind="tip" label="力率経由でもう一度出す（独立2経路で検算する）">
+        <p style={{ margin: 0 }}>短絡試験の測定値だけで<strong>力率</strong>が出せる。ここから <Eq tex="R_e" /> と <Eq tex="X_e" /> を三角関数で出すと、<span className="marker">三平方の経路とは独立した検算</span>になる。</p>
+        <Eq display tex="\cos\theta = \frac{P_s}{V_s I_s} \;\Longrightarrow\; R_e = Z_e\cos\theta,\qquad X_e = Z_e\sin\theta" />
+        <p style={{ margin: "4px 0 0" }}>2つの経路（<Eq tex="R_e = P_s/I_s^2" /> と <Eq tex="R_e = Z_e\cos\theta" />）が同じ値になれば計算ミスなし。<strong>試験本番で30秒で回せる検算</strong>なので、値を出したら必ず通す。</p>
+      </Box>
+
+      <Box kind="example" label="解法例 2.1.5（定格が与えられない最小形 — Vs・Is・Ps だけから Xe を出す）">
+        <p><strong>与えられた値:</strong> 単相変圧器の二次側を短絡し、一次側の電流計が <Eq tex="40\;\mathrm{A}" /> を示すよう電圧を調整したところ、電圧計 <Eq tex="80\;\mathrm{V}" />、電力計 <Eq tex="1200\;\mathrm{W}" />。計器はすべて理想的とする。</p>
+        <p><strong>何を求めるか:</strong> 一次側からみた<strong>漏れリアクタンス</strong> <Eq tex="X_e" />。</p>
+
+        <p style={{ marginBottom: 4 }}><strong>① 等価インピーダンス（斜辺）</strong></p>
+        <Eq display tex="Z_e = \frac{V_s}{I_s} = \frac{80}{40} = 2.00\;[\Omega]" />
+        <p style={{ margin: "4px 0 0" }}>ここで出るのは<span className="marker">斜辺であって求める高さではない</span>。この時点で答えると失点する。</p>
+
+        <p style={{ marginBottom: 4 }}><strong>② 等価抵抗（電力計＝銅損）</strong></p>
+        <Eq display tex="R_e = \frac{P_s}{I_s^{\,2}} = \frac{1200}{40^2} = \frac{1200}{1600} = 0.75\;[\Omega]" />
+        <p style={{ margin: "4px 0 0" }}>直列回路なので<strong>電流基準</strong>。<Eq tex="P_s/V_s^2" /> や <Eq tex="V_s^2/P_s" /> ではない。</p>
+
+        <p style={{ marginBottom: 4 }}><strong>③ 直角合成から高さを分離</strong></p>
+        <Eq display tex="X_e = \sqrt{Z_e^{\,2} - R_e^{\,2}} = \sqrt{2.00^2 - 0.75^2} = \sqrt{3.4375} \approx 1.85\;[\Omega]" />
+
+        <p style={{ marginBottom: 4 }}><strong>④ 力率経由で検算</strong></p>
+        <Eq display tex="\cos\theta = \frac{P_s}{V_s I_s} = \frac{1200}{80 \times 40} = 0.375,\qquad \sin\theta = \sqrt{1 - 0.375^2} \approx 0.9270" />
+        <Eq display tex="R_e = Z_e\cos\theta = 2.00 \times 0.375 = 0.75\;\checkmark \qquad X_e = Z_e\sin\theta = 2.00 \times 0.9270 \approx 1.85\;\checkmark" />
+
+        <p><strong>単位確認:</strong> V÷A＝Ω ✓／W÷A²＝Ω ✓　<strong>検算:</strong> <Eq tex="R_e &lt; X_e &lt; Z_e" /> の大小関係が成立 ✓</p>
+
+        <p style={{ margin: "8px 0 0" }}><strong>この問題では %Z は求められない:</strong> %Z を出すには<strong>定格電圧または定格容量</strong>が要る（<Eq tex="\%Z = V_s/V_n \times 100" />）。ここでは「40 A が定格電流」としか分からないので <Eq tex="V_n" /> が確定せず、<span className="marker">%Z・電圧変動率・短絡電流のどれも出せない</span>。解法例 2.1.4 との違いはこの1点で、<strong>与件に定格があるかどうか</strong>が分岐になる。</p>
+      </Box>
+
+      <Box kind="mistake" label="この最小形で分かれる誤答（選択肢はこの3つを狙って作られる）">
+        <div className="table-wrap"><table className="data-table">
+          <thead><tr><th scope="col">出る値</th><th scope="col">やってしまう操作</th><th scope="col">なぜ違うか</th></tr></thead>
+          <tbody>
+            <tr><td><strong>1.85</strong>（正）</td><td><Eq tex="X_e = \sqrt{Z_e^2 - R_e^2}" /></td><td>—</td></tr>
+            <tr><td>2.00</td><td><Eq tex="Z_e" /> を求めた時点で答える</td><td><Eq tex="Z_e" /> は<strong>斜辺</strong>。問われているのは高さ <Eq tex="X_e" /></td></tr>
+            <tr><td>1.25</td><td><Eq tex="Z_e - R_e = 2.00 - 0.75" /></td><td>直角に交わるベクトルなので<strong>スカラー引き算は不可</strong></td></tr>
+            <tr><td>0.75</td><td><Eq tex="R_e" /> を答える</td><td><Eq tex="R_e" /> は<strong>抵抗</strong>。リアクタンスではない</td></tr>
+          </tbody>
+        </table></div>
+        <p style={{ margin: "8px 0 0" }}>計算の最後に<strong>「自分が今どれを求めたか」</strong>を必ず1回確認する。<span className="marker">出した値が選択肢に無いときは立式そのものを疑う</span>（1.25 や 0.75 は選択肢に置かれないことが多い）。</p>
       </Box>
 
       <SectionCheck pageId="transformer" sectionId="sc-test" />
@@ -5847,6 +5944,8 @@ const TransformerPage = ({ onNav }) => (
           <tr><td>並行運転は <strong>%Z だけ</strong>を見る</td><td><strong>容量と %Z の両方</strong>（<Eq tex="S_N/z" /> の比）。容量が違うと %Z 逆比は誤り</td><td>10</td></tr>
           <tr><td>V結線の 57.7 % と 86.6 % を<strong>同じ分母</strong>で考える</td><td><strong>分母が違う</strong>（Δ3台の合計容量／使用中2台の定格合計）</td><td>12</td></tr>
           <tr><td><Eq tex="X_e = Z_e - R_e" /> とする</td><td>直角合成なので <Eq tex="X_e = \sqrt{Z_e^2 - R_e^2}" /></td><td>6</td></tr>
+          <tr><td>漏れリアクタンスを問われて <Eq tex="Z_e" /> を答える</td><td><Eq tex="Z_e" /> は<strong>斜辺</strong>。求めるのは高さ <Eq tex="X_e" />（選択肢に <Eq tex="Z_e" /> が置かれる）</td><td>6</td></tr>
+          <tr><td><Eq tex="R_e = P_s/V_s^{\,2}" /> とする</td><td>直列回路なので<strong>電流基準</strong>。<Eq tex="P_s = I_s^2 R_e" /> より <Eq tex="R_e = P_s/I_s^{\,2}" /></td><td>6</td></tr>
           <tr><td><Eq tex="r_0 = V_1/I_0" /> とする</td><td>分母は<strong>鉄損電流</strong> <Eq tex="I_w" />。<Eq tex="r_0 = V_1/I_w = V_1^2/P_0" /></td><td>5</td></tr>
           <tr><td>負荷率に<strong>力率を掛ける</strong></td><td>kV·A どうしの比。kW 与件なら <Eq tex="S = P/\cos\phi" /> で<strong>割って</strong>から</td><td>7</td></tr>
           <tr><td>巻数比の式を<strong>実機にそのまま</strong>使う</td><td><strong>理想変圧器</strong>の関係。実機は巻線抵抗・漏れリアクタンス・励磁電流でずれる</td><td>2</td></tr>
@@ -5859,6 +5958,9 @@ const TransformerPage = ({ onNav }) => (
       <div className="box">
         <details><summary>巻数比 a と電圧・電流の関係は？</summary>a = N₁/N₂ = V₁/V₂ = I₂/I₁（電流は巻数比の逆比）</details>
         <details><summary>%Z = 5% のとき短絡電流は定格の何倍？</summary>20倍（I_s = (100/%Z)·I_n）</details>
+        <details><summary>短絡試験で Ze・Re・Xe を出す順番と式は？</summary>①Ze = Vs/Is（<strong>斜辺</strong>）→ ②Re = Ps/Is²（電力計＝銅損・<strong>電流基準</strong>）→ ③Xe = √(Ze²−Re²)（<strong>直角合成</strong>）。②で Ps/Vs² としない、③で Ze−Re としないの2点が失点源</details>
+        <details><summary>短絡試験の測定値だけで検算するには？</summary>cosθ = Ps/(VsIs) を出し、Re = Ze·cosθ、Xe = Ze·sinθ で再計算する。三平方の経路と<strong>独立</strong>なので計算ミスを拾える</details>
+        <details><summary>短絡試験の与件に定格が無いとき、何が求められて何が求められない？</summary>求められる＝Ze・Re・Xe（測定値だけで出る）／<strong>求められない</strong>＝%Z・電圧変動率・短絡電流（定格電圧 Vn または定格容量 SN が要る）。「定格電流を流した」だけでは Vn は確定しない</details>
         <details><summary>変圧器の最高効率の条件は？</summary>鉄損 = 銅損（P_i = x²P_cN）。そのときの負荷率 x = √(P_i / P_cN)。分母は全負荷銅損であって、そのときの実銅損ではない</details>
         <details><summary>通常効率と全日効率は何が違う？</summary>通常効率＝ある運転点を <strong>kW の比</strong>で評価（η = Pout /(Pout+Pi+x²PcN)）／全日効率＝1日全体を <strong>kWh の比</strong>で評価（ηd = Wout /(Wout+Wi+Wc)）。効率自体はどちらも無次元で [%] 表示。<strong>主に重視される用途</strong>が通常効率＝電力用変圧器、全日効率＝負荷変動の大きい配電用変圧器（同じ1台について両方を評価でき、対象機器が排他的に分かれるわけではない）</details>
         <details><summary>全日効率は kW と kWh のどちらで計算する？</summary><strong>kWh（電力量）</strong>。出力・鉄損・銅損をそれぞれ電力量に直してから分母に入れる。通常効率を求めてから時間を掛けても全日効率にはならない（鉄損と銅損では掛ける時間が違うため）</details>
