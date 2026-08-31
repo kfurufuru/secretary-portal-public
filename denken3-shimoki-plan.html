@@ -196,13 +196,14 @@ footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--line);
   <button class="btn subj" data-subj="riron"    type="button" aria-pressed="true">理論</button>
   <button class="btn subj" data-subj="denryoku" type="button" aria-pressed="true">電力</button>
   <button class="btn subj" data-subj="kikai"    type="button" aria-pressed="true">機械</button>
-  <button class="btn subj" data-subj="hoki"     type="button" aria-pressed="true">法規</button>
+  <button class="btn subj" data-subj="hoki"     type="button" aria-pressed="false">法規</button>
 </div>
 <p class="cap">上期の結果が出たら、合格した科目を外してください。残り科目に時間が寄ります（科目合格は制度上、翌年度・翌々年度まで有効。年度をまたぐ扱いは公式の受験案内で確認のこと）。</p>
 
 <div id="phases"></div>
 
 <div class="note" id="weekPlan"></div>
+<div id="rotation"></div>
 
 <!-- ─────────── 3. 進捗 ─────────── -->
 <h2 id="progress">3. 進捗の可視化</h2>
@@ -273,8 +274,8 @@ footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--line);
 <h3>原則3: 不安な暗記はまとめて、空き時間に回す（③を伸ばす）</h3>
 <p>効いていた導線なので壊さず、入口だけ固定します。移動中・待ち時間はこの順で開く。</p>
 <ol style="font-size:13.5px;padding-left:22px">
-  <li>間違いノート（自分が落とした論点）</li>
-  <li>8.1 覚える数値 / 8.2 公式 / 8.3 ひっかけ / 8.5 用語</li>
+  <li><a href="denken-hoki-wiki.html#chokuzen-machigai">間違いノート</a>（自分が落とした論点・4科目横断で集約される）</li>
+  <li>その日の担当科目の直前チェック（セクション2の直前期に、受ける科目ぶんのリンクが出ます）</li>
   <li>今日の一問</li>
 </ol>
 
@@ -336,7 +337,7 @@ footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--line);
   var K = {
     theme: 'denken_plan::theme',
     mode:  'denken_plan::mode',      // 'cbt' | 'shiki'
-    subj:  'denken_plan::subjects',
+    subj:  'denken_plan::subjects::v2',  // v1(4科目既定)の保存値を引き継がないための版付け
     dates: 'denken_plan::dates',
     youi:  'denken_plan::youi',
   };
@@ -375,8 +376,23 @@ footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--line);
   }
 
   var mode = ls(K.mode, 'shiki') === 'cbt' ? 'cbt' : 'shiki';
-  var subjects = jget(K.subj, ['riron', 'denryoku', 'kikai', 'hoki']);
+  var subjects = jget(K.subj, ['riron', 'denryoku', 'kikai']);  // 既定は理論・電力・機械の3科目
   var SUBJ_LABEL = { riron: '理論', denryoku: '電力', kikai: '機械', hoki: '法規', other: 'その他' };
+  // 直前期の行き先。href は実際に開いて h1 が出ることを確認したものだけを載せる。
+  // 機械には専用の直前ページが無いので、無いと明記する（あるふりをしない）。
+  var DIRECT_CHECK = {
+    riron:    { href: 'denken3-riron-wiki.html#last-3days',            text: '7.2 直前3日戦略' },
+    denryoku: { href: 'denken3-denryoku-wiki.html#strategy-last3days', text: '試験直前3日チェックリスト' },
+    kikai:    { href: 'denken3-kikai-wiki.html',                       text: '専用の直前ページは無し。各章のマーカー箇所を総ざらい' },
+    hoki:     { href: 'denken-hoki-wiki.html#chokuzen-toujitsu',       text: '8.0 当日の見直し順路' },
+  };
+  // 各Wikiの章立て（Wiki本体の定義から抜き出した実データ）
+  var SUBJ_CHAPTERS = {
+    riron:    ['電磁気', '電気回路', '電磁誘導・過渡', '三相交流', '電子理論', '計測'],
+    denryoku: ['発電', '変電', '送電', '配電', 'その他'],
+    kikai:    ['回転機', '静止器・電力変換', '制御・応用', '電気応用'],
+    hoki:     ['電気事業法', '電気設備技術基準', '施設管理', '直前チェック'],
+  };
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -468,7 +484,7 @@ footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--line);
     { key: 'kiso',    r: 0.35, hd: '基礎の作り直し',        body: '公式と条文の「なぜそうなるか」を1行で言える状態にする。ここで理由を言語化しておかないと、後の過去問周回が丸暗記に化ける。' },
     { key: 'kako1',   r: 0.35, hd: '過去問 1周目',          body: '解けるかより「どの型か」を判別できるかを見る。解けなかった問題は全部その場で理解度ボタンを押して間違いノートに落とす。' },
     { key: 'kako2',   r: 0.30, hd: '過去問 2周目＋弱点集中', body: '2周目は速度を上げる。うる覚え（答えは合うが理由が言えない）を潰す時間をここに置く。新しい教材は増やさない。' },
-    { key: 'chokuzen', fixedDays: 14, hd: '直前期',          body: '自分の弱点だけを見る。8.1 数値 / 8.2 公式 / 8.3 ひっかけ と間違いノート。新規インプットはしない。' },
+    { key: 'chokuzen', fixedDays: 14, hd: '直前期',          body: '' },  // 本文は選択科目から組み立てる（下の chokuzenBody）
   ];
 
   function renderPhases() {
@@ -492,6 +508,7 @@ footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--line);
       lens = [0, 0, 0, chokuzen];
     }
 
+    PHASE_DEFS[3].body = chokuzenBody();   // out 構築より前に入れる（forEach が p.body をその場でコピーするため）
     var out = [], cur = new Date(t);
     PHASE_DEFS.forEach(function (p, i) {
       var len = lens[i];
@@ -502,6 +519,16 @@ footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--line);
     });
 
     function span(len) { return len >= 7 ? '約 ' + Math.round(len / 7) + ' 週間' : len + ' 日間'; }
+    // 直前期に開く先は受ける科目で変わる。法規を受けないのに 8.1〜8.3 へ誘導しないこと。
+    function chokuzenBody() {
+      var links = subjects.map(function (k) {
+        var d = DIRECT_CHECK[k];
+        return d ? '<li><a href="' + d.href + '">' + SUBJ_LABEL[k] + '</a> — ' + d.text + '</li>' : '';
+      }).join('');
+      return '自分の弱点だけを見る。新規インプットはしない。'
+        + (links ? '<ul style="margin:6px 0;padding-left:20px">' + links + '</ul>' : '')
+        + '<a href="denken-hoki-wiki.html#chokuzen-machigai">間違いノート</a> は4科目を横断して集約されるので、法規を受けない場合もここが起点。';
+    }
     host.innerHTML = out.map(function (p) {
       var now = t >= p.start && t <= p.end;
       return '<div class="phase' + (now ? ' now' : '') + '">'
@@ -513,13 +540,38 @@ footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--line);
       + '<div style="font-size:13.5px">セクション5の持ち物チェックリストと、前日に書き出した間違いノートを使う。</div></div>';
 
     var n = subjects.length;
-    if (!n) { $('weekPlan').innerHTML = '<strong>科目が1つも選ばれていません。</strong>上のボタンで下期に受ける科目を選んでください。'; return; }
+    if (!n) {
+      $('weekPlan').innerHTML = '<strong>科目が1つも選ばれていません。</strong>上のボタンで下期に受ける科目を選んでください。';
+      $('rotation').innerHTML = '';
+      return;
+    }
     var weeks = Math.max(1, Math.floor(total / 7));
     $('weekPlan').innerHTML = '<strong>週の割り振り</strong>：残り約 ' + weeks + ' 週を ' + n + ' 科目（'
       + subjects.map(function (s) { return SUBJ_LABEL[s]; }).join('・') + '）で回すと、1科目あたり約 '
       + (Math.round(weeks / n * 10) / 10) + ' 週分。'
       + '毎週まるごと1科目に充てるより、<strong>1日1科目で回して各科目に毎週触れる</strong>ほうが忘却の谷が浅くなります（間隔反復）。'
-      + '法規は直前でも伸びますが、理論は積み上がるまで時間がかかるので前半に厚く置いてください。';
+      + (subjects.indexOf('riron') >= 0
+          ? '<strong>理論は前半に厚く置いてください。</strong>オームの法則・交流回路・電磁気の式は、電力の送配電計算にも機械の等価回路にもそのまま出てくる土台で、ここが薄いと他2科目の計算が伸びません。'
+          : '');
+
+    // 曜日ローテーション: 6日を科目で順回し、7日目は全科目横断の棚卸しに固定する。
+    // 「毎週どの科目にも触れる」を曜日で固定してしまうほうが、その日の気分で選ぶより崩れにくい。
+    var DOW = ['月', '火', '水', '木', '金', '土', '日'];
+    var cells = [];
+    for (var i = 0; i < 6; i++) cells.push(subjects[i % n]);
+    var rows = DOW.map(function (d, i) {
+      if (i === 6) return '<tr><td><strong>' + d + '</strong></td><td>全科目</td><td>間違いノートの棚卸し。1週間で「うる覚え」に落ちた分を潰す</td></tr>';
+      var k = cells[i];
+      return '<tr><td><strong>' + d + '</strong></td><td>' + SUBJ_LABEL[k] + '</td><td class="cap">'
+        + (SUBJ_CHAPTERS[k] || []).join(' / ') + '</td></tr>';
+    }).join('');
+    var counts = {};
+    cells.forEach(function (k) { counts[k] = (counts[k] || 0) + 1; });
+    $('rotation').innerHTML = '<div class="card"><div style="font-weight:700;font-size:13.5px;margin-bottom:6px">週の曜日ローテーション（'
+      + n + '科目版）</div><div class="scroll-x"><table><thead><tr><th>曜日</th><th>科目</th><th>範囲</th></tr></thead><tbody>'
+      + rows + '</tbody></table></div><div class="cap" style="margin-top:6px">週あたりの日数: '
+      + subjects.map(function (k) { return SUBJ_LABEL[k] + ' ' + (counts[k] || 0) + '日'; }).join(' / ')
+      + ' ＋ 棚卸し1日。範囲は各Wikiの章立てそのまま。</div></div>';
   }
 
   document.querySelectorAll('.subj').forEach(function (b) {
