@@ -1060,6 +1060,7 @@ window.WIKI_DATA = {
         { id: "glossary", num: "B",  title: "用語集・索引",   freq: null },
         { id: "guide",    num: "C",  title: "学習ガイド",     freq: null },
         { id: "yougo-konzai", num: "D", title: "用語混同まとめ（横断ひっかけ）", freq: null },
+        { id: "study-log", num: "E", title: "学習記録（過去問トラッカー）", freq: null },
       ],
     },
   ],
@@ -1146,9 +1147,12 @@ window.WIKI_DATA = {
     { page: "transformer", pageTitle: "2.1 変圧器", anchor: "pz-meaning",
       title: "%Zから何が分かるか", desc: "短絡電流・電圧変動率・並行運転の分担の3つに整理",
       keywords: "%Z パーセントインピーダンス 短絡電流 電圧変動率 負荷分担" },
-    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "kakomon-progress",
-      title: "過去問集の進捗（20年間）", desc: "年度回 x 問番号のグリッドに ◎○△× を残し、△× をチャットに渡す",
-      keywords: "過去問 進捗 記録 20年間 電気書院 問題集 チェック 復習" },
+    { page: "study-log", pageTitle: "E 学習記録", anchor: "tracker",
+      title: "過去問の進捗（20年間）", desc: "年度回 x 問番号のグリッドに ◎○△× と日付を残し、忘却曲線で算出した日に再挑戦へ回す",
+      keywords: "過去問 進捗 記録 20年間 電気書院 問題集 チェック 復習 トラッカー 今日やる 学習記録" },
+    { page: "study-log", pageTitle: "E 学習記録", anchor: "retry",
+      title: "次に解き直す日はどう決まるか", desc: "FSRS（忘却曲線）で判定ごとに間隔を算出。◎○ も空きすぎれば出てくる",
+      keywords: "再挑戦 忘却曲線 FSRS 間隔 復習 タイミング 半年 鮮度" },
   ],
   glossary: [
     { term: "同期速度",        reading: "DOUKI SOKUDO",      letter: "た",
@@ -2927,30 +2931,179 @@ const KAKOMON_SESSIONS = [
   { id: 'R7上', year: 2025 },
   { id: 'R7下', year: 2025 }
 ];
-const KAKOMON_QMAX = 18;              // 問番号の上限（列）
+const KAKOMON_QMAX = 18;              // 問番号の上限
+// 機械は A問題 14問（各5点）＋ B問題 3問完答（各10点）。B問題は問15〜18 に置かれ、
+// 1問が (a)(b) の2小問に分かれる（問17・18 は選択）。(a) は解けたが (b) で落ちた、が
+// 典型なので、B問題は (a)(b) を別マスにしないと「どこで落ちたか」が残らない。
+const KAKOMON_B_FROM = 15;
+/* 再挑戦の間隔は忘却曲線から算出する（固定日数ではない）。
+   計算は scripts/fsrs_engine.py（py-fsrs から逐語移植した FSRS-6）の JS 移植で、
+   records.json 側のスケジューラと同じ式・同じ定数を使う。別式にすると
+   「同じ問題に2つの再挑戦日が出る」ため。数値一致は機械照合している。
+   判定 → FSRS rating: × = Again(1) / △ = Hard(2) / ○ = Good(3) / ◎ = Easy(4)
+   ◎○ も対象にする（「試験直前に、○ だが半年触っていない」を拾うため）。 */
+const FSRS_W = [
+  0.212, 1.2931, 2.3065, 8.2956, 6.4133, 0.8334, 3.0194, 0.001, 1.8722,
+  0.1666, 0.796, 1.4835, 0.0614, 0.2629, 1.6483, 0.6014, 1.8729, 0.5425,
+  0.0912, 0.0658, 0.1542,
+];
+const FSRS_DECAY = -FSRS_W[20];
+const FSRS_FACTOR = Math.pow(0.9, 1 / FSRS_DECAY) - 1;
+const FSRS_RETENTION = 0.9;
+const FSRS_MAX_INTERVAL = 365;
+const FSRS_RATING = { '×': 1, '△': 2, '○': 3, '◎': 4 };
+const fsrsClampD = (d) => Math.min(Math.max(d, 1.0), 10.0);
+const fsrsClampS = (s) => Math.max(s, 0.001);
+const fsrsInitS = (rating) => fsrsClampS(FSRS_W[rating - 1]);
+const fsrsInitD = (rating, clamp) => {
+  const d = FSRS_W[4] - Math.pow(Math.E, FSRS_W[5] * (rating - 1)) + 1;
+  return clamp === false ? d : fsrsClampD(d);
+};
+const fsrsRetrievability = (elapsed, s) =>
+  Math.pow(1 + FSRS_FACTOR * Math.max(0, elapsed) / s, FSRS_DECAY);
+const fsrsNextD = (difficulty, rating) => {
+  const arg1 = fsrsInitD(4, false);
+  const delta = -(FSRS_W[6] * (rating - 3));
+  const arg2 = difficulty + (10.0 - difficulty) * delta / 9.0;
+  return fsrsClampD(FSRS_W[7] * arg1 + (1 - FSRS_W[7]) * arg2);
+};
+const fsrsRecallS = (d, s, r, rating) => s * (
+  1 + Math.pow(Math.E, FSRS_W[8]) * (11 - d) * Math.pow(s, -FSRS_W[9])
+    * (Math.pow(Math.E, (1 - r) * FSRS_W[10]) - 1)
+    * (rating === 2 ? FSRS_W[15] : 1) * (rating === 4 ? FSRS_W[16] : 1));
+const fsrsForgetS = (d, s, r) => Math.min(
+  FSRS_W[11] * Math.pow(d, -FSRS_W[12]) * (Math.pow(s + 1, FSRS_W[13]) - 1)
+    * Math.pow(Math.E, (1 - r) * FSRS_W[14]),
+  s / Math.pow(Math.E, FSRS_W[17] * FSRS_W[18]));
+const fsrsShortS = (s, rating) => {
+  let inc = Math.pow(Math.E, FSRS_W[17] * (rating - 3 + FSRS_W[18])) * Math.pow(s, -FSRS_W[19]);
+  if (rating >= 2) inc = Math.max(inc, 1.0);
+  return fsrsClampS(s * inc);
+};
+// 1回の復習で (stability, difficulty) を更新する。s/d が null なら新規カード
+const fsrsReview = (s, d, rating, elapsed) => {
+  if (s === null || s === undefined || d === null || d === undefined) {
+    return { s: fsrsInitS(rating), d: fsrsInitD(rating) };
+  }
+  if (elapsed < 1) return { s: fsrsShortS(s, rating), d: fsrsNextD(d, rating) };
+  const r = fsrsRetrievability(elapsed, s);
+  const ns = rating === 1 ? fsrsForgetS(d, s, r) : fsrsRecallS(d, s, r, rating);
+  return { s: fsrsClampS(ns), d: fsrsNextD(d, rating) };
+};
+// Python の round() は偶数丸め。Math.round は 0.5 を切り上げるので、ちょうど x.5 の
+// stability で1日ずれる（実運用では超越関数の積なので到達しないが、式が同じと言う以上は揃える）
+const fsrsRoundHalfEven = (x) => {
+  const f = Math.floor(x);
+  // 許容誤差を入れてはいけない。Python の round() は実際の double をそのまま丸めるので、
+  // 1.4999999 を「ちょうど半分」とみなすと JS だけが 2 を返して食い違う（実測）
+  if (x - f !== 0.5) return Math.round(x);
+  return (f % 2 === 0) ? f : f + 1;
+};
+const fsrsInterval = (s) => Math.min(Math.max(
+  fsrsRoundHalfEven((s / FSRS_FACTOR) * (Math.pow(FSRS_RETENTION, 1 / FSRS_DECAY) - 1)), 1), FSRS_MAX_INTERVAL);
+
+/* 試験日で間隔を頭打ちにする。FSRS は「いつまでに」の制約が無い前提の設計なので、
+   ◎ を重ねると 365日後＝試験のはるか後ろへ寝かせてしまう。試験までに全マスを
+   最低1回は触れる状態にするため、残り日数を上限にする（残り日数が短いほど間隔も縮む）。
+   日付の出所: denken3-shimoki-plan.html の cbtStart（令和8年度下期 CBT 初日）。
+   二次情報では CBT 2/4〜2/28 と 2/5〜3/1 が混在するため保守側（早い方）を採る。
+   一次照合は未実施。試験が過ぎたら頭打ちをやめる（値を変えるのはこの1行）。 */
+const KAKOMON_EXAM_DATE = '2027-02-04';
+const kakomonDaysToExam = () => {
+  const d = -kakomonDaysSince(KAKOMON_EXAM_DATE);
+  return (d === null || !isFinite(d)) ? null : d;
+};
+const kakomonInterval = (s) => {
+  const base = fsrsInterval(s);
+  const left = kakomonDaysToExam();
+  return (left !== null && left > 0) ? Math.min(base, left) : base;
+};
 const KAKOMON_CYCLE = ['', '◎', '○', '△', '×'];
 const KAKOMON_COLOR = { '◎': 'var(--ok)', '○': 'var(--info)', '△': 'var(--warn)', '×': 'var(--danger)' };
 
-const KakomonProgress = ({ pageId, topicLabel }) => {
+// マスの識別子。A問題は "7"、B問題は "15a" / "15b"
+const kakomonCells = (q) => (q >= KAKOMON_B_FROM ? [q + 'a', q + 'b'] : [String(q)]);
+const KAKOMON_CELL_RE = /^([1-9]|1[0-4])$|^1[5-8][ab]$/;
+const kakomonSortKey = (cell) => {
+  const m = cell.match(/^(\d+)([ab]?)$/);
+  return m ? Number(m[1]) * 2 + (m[2] === 'b' ? 1 : 0) : 999;
+};
+const kakomonLabel = (cell) => {
+  const m = cell.match(/^(\d+)([ab]?)$/);
+  return m ? ('問' + m[1] + (m[2] ? '(' + m[2] + ')' : '')) : cell;
+};
+// ローカル日付。toISOString は UTC なので、日本の深夜に付けた記録が前日扱いになる
+const kakomonToday = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+const kakomonAddDays = (iso, n) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return '';
+  const [y, m, d] = iso.split('-').map(Number);
+  const x = new Date(y, m - 1, d + n);
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+};
+const kakomonDaysSince = (iso) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return null;
+  const [y, m, d] = iso.split('-').map(Number);
+  const then = new Date(y, m - 1, d);
+  const n = new Date();
+  return Math.round((new Date(n.getFullYear(), n.getMonth(), n.getDate()) - then) / 86400000);
+};
+/* 値は { m: 判定, d: 最後にタップした日, s: 安定度, f: 難度, i: 次回までの日数,
+          bs/bf/bd: その日の1回目のタップ直前の状態 }。
+   b* を持つのは、◎→○→△→× と回して判定を選び直す操作が「4回復習した」ことに
+   ならないようにするため（同じ基準から毎回引き直す）。
+   旧版は判定の文字列だけ／{m,d} だけを持つので、どちらも受けて種をまき直す。 */
+const kakomonVal = (v) => {
+  const seed = (m, d) => {
+    const init = fsrsReview(null, null, FSRS_RATING[m], 0);
+    return { m, d: d || '', s: init.s, f: init.d, i: kakomonInterval(init.s) };
+  };
+  if (typeof v === 'string') return KAKOMON_CYCLE.indexOf(v) > 0 ? seed(v, '') : null;
+  if (!v || typeof v !== 'object') return null;
+  const d = typeof v.d === 'string' ? v.d : '';
+  const okNum = (x) => typeof x === 'number' && isFinite(x) && x > 0;
+  const carry = (o) => {
+    if (okNum(v.bs) && okNum(v.bf)) { o.bs = v.bs; o.bf = v.bf; o.bd = typeof v.bd === 'string' ? v.bd : ''; }
+    return o;
+  };
+  // 墓標: 判定を空に戻した記録。履歴（bs/bf/bd）だけを当日ぶん持ち越す。
+  // 「△ を ○ に上げる」には ×→空→◎→○ と一巡するしかないので、空でレコードごと
+  // 消すと、その正当な操作のたびに数ヶ月ぶんのスケジュールが振り出しに戻る。
+  // 翌日以降は掃除する（本当に記録を消したかった場合を尊重する）。
+  if (v.m === '') return (d && d === kakomonToday() && okNum(v.bs)) ? carry({ m: '', d }) : null;
+  if (KAKOMON_CYCLE.indexOf(v.m) <= 0) return null;
+  if (!okNum(v.s) || !okNum(v.f) || !okNum(v.i)) return seed(v.m, d);
+  return carry({ m: v.m, d, s: v.s, f: v.f, i: v.i });
+};
+
+const KakomonProgress = ({ pageId, topicLabel, migrateFrom }) => {
   const key = `denken_check::kikai_${pageId}::kakomon::v1`;
+  // グリッドは科目まるごと1枚（R3 問15 は1つの問題で、単元ごとに同じマスを持つと二重管理になる）。
+  // 単元ページに置いていた頃の記録は捨てずに引き継ぐ。
+  const legacyKeys = (migrateFrom || []).map(x => `denken_check::kikai_${x}::kakomon::v1`);
   const [grid, setGrid] = React.useState(() => {
     try {
-      const parsed = JSON.parse(localStorage.getItem(key) || '{}');
+      let src = null;
+      for (const k of [key].concat(legacyKeys)) {
+        try { const s = localStorage.getItem(k); if (s && s !== '{}') { src = s; break; } } catch (e) { /* noop */ }
+      }
+      const parsed = JSON.parse(src || '{}');
       if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-      // 行の値も検証する。文字列が入っていると Object.assign({}, '×') が {'0':'×'} になり、
-      // 存在しない「問0」が復習待ちとコピー文面に出る（トップレベルの検証だけでは防げない）
       const clean = {};
       Object.keys(parsed).forEach(k => {
         const row = parsed[k];
         if (!row || typeof row !== 'object' || Array.isArray(row)) return;
-        // 行がオブジェクトでも中身までは保証されない。問番号でないキーや ◎○△× 以外の
-        // 判定を残すと「問0」「問NaN」が復習待ちとコピー文面に出る（前バージョンが
-        // 保存した {'0':'×'} は行としては正常なので、行の型検査だけでは通ってしまう）
+        // 行がオブジェクトでも中身までは保証されない。マス識別子でないキーや ◎○△× 以外の
+        // 判定を残すと「問0」「問NaN」が復習待ちとコピー文面に出る
         const kept = {};
         Object.keys(row).forEach(q => {
-          const n = Number(q);
-          const isQ = Number.isInteger(n) && n >= 1 && n <= KAKOMON_QMAX && String(n) === q;
-          if (isQ && KAKOMON_CYCLE.indexOf(row[q]) > 0) kept[q] = row[q];
+          const val = kakomonVal(row[q]);
+          if (!val) return;
+          // 旧版は B問題も1マス（"15"）だった。(a) に寄せて引き継ぐ（捨てない）
+          const cell = /^1[5-8]$/.test(q) ? q + 'a' : q;
+          if (KAKOMON_CELL_RE.test(cell)) kept[cell] = val;
         });
         if (Object.keys(kept).length) clean[k] = kept;
       });
@@ -2959,11 +3112,39 @@ const KakomonProgress = ({ pageId, topicLabel }) => {
   });
   const [copied, setCopied] = React.useState('');
 
-  const cycle = (sid, q) => {
-    const cur = (grid[sid] || {})[q] || '';
+  // 旧キーから引き継いだ場合は新キーへ書き戻す（元は消さない＝取り違えても失われない）
+  React.useEffect(() => {
+    try {
+      if (Object.keys(grid).length && !localStorage.getItem(key)) {
+        localStorage.setItem(key, JSON.stringify(grid));
+      }
+    } catch (e) { /* noop */ }
+  }, []);
+
+  const cycle = (sid, cell) => {
+    const prev = (grid[sid] || {})[cell] || null;
+    const cur = prev ? prev.m : '';
     const next = KAKOMON_CYCLE[(KAKOMON_CYCLE.indexOf(cur) + 1) % KAKOMON_CYCLE.length];
     const row = Object.assign({}, grid[sid]);
-    if (next) row[q] = next; else delete row[q];
+    if (next) {
+      const today = kakomonToday();
+      // 同じ日に判定を選び直しているなら、その日の1回目の直前の状態から引き直す
+      // （タップ回数ぶん復習したことにしない）
+      const sameDay = prev && prev.d === today;
+      const base = sameDay
+        ? { s: prev.bs, f: prev.bf, d: prev.bd }
+        : (prev ? { s: prev.s, f: prev.f, d: prev.d } : { s: null, f: null, d: '' });
+      const elapsed = base.d ? (kakomonDaysSince(base.d) || 0) : 0;
+      const r = fsrsReview(base.s === undefined ? null : base.s,
+                           base.f === undefined ? null : base.f,
+                           FSRS_RATING[next], elapsed);
+      const rec = { m: next, d: today, s: r.s, f: r.d, i: kakomonInterval(r.s) };
+      if (base.s !== null && base.s !== undefined) { rec.bs = base.s; rec.bf = base.f; rec.bd = base.d || ''; }
+      row[cell] = rec;
+    } else if (prev && prev.bs !== undefined) {
+      // 空へ回しても、その日のうちは履歴を捨てない（一巡して選び直す操作を壊さない）
+      row[cell] = { m: '', d: kakomonToday(), bs: prev.bs, bf: prev.bf, bd: prev.bd || '' };
+    } else delete row[cell];
     const updated = Object.assign({}, grid);
     if (Object.keys(row).length) updated[sid] = row; else delete updated[sid];
     setGrid(updated);
@@ -2975,19 +3156,41 @@ const KakomonProgress = ({ pageId, topicLabel }) => {
   const all = [];
   KAKOMON_SESSIONS.forEach(s => {
     const row = grid[s.id] || {};
-    Object.keys(row).forEach(q => all.push({ sid: s.id, q: Number(q), mark: row[q] }));
+    Object.keys(row).forEach(cell => {
+      const v = row[cell];
+      if (!v.m) return;   // 墓標（判定を空に戻したマス）は記録として数えない
+      all.push({ sid: s.id, cell, mark: v.m, date: v.d, days: kakomonDaysSince(v.d), interval: v.i,
+                 next: kakomonAddDays(v.d, v.i) });
+    });
   });
-  const weak = all.filter(r => r.mark === '△' || r.mark === '×')
-                  .sort((a, b) => (order[a.sid] - order[b.sid]) || (a.q - b.q));
+  const byPos = (a, b) => (order[a.sid] - order[b.sid]) || (kakomonSortKey(a.cell) - kakomonSortKey(b.cell));
+  const weak = all.filter(r => r.mark === '△' || r.mark === '×').sort(byPos);
   const solid = all.filter(r => r.mark === '◎' || r.mark === '○').length;
+  // 再挑戦の対象は判定を問わない。◎○ も間隔が長いだけで、空きすぎれば出てくる
+  // （「○ だが半年触っていない」を試験前に拾うため）。日付が無い旧記録は待たせない
+  const isDue = (r) => r.days === null || r.days >= (r.interval || 1);
+  // ◎○ も対象にした結果、年度順に並べると △× の緊急度が埋もれる。
+  // 落とした問題を先に、その中でも「予定日をどれだけ超えたか」の比が大きい順に出す。
+  const overdueRatio = (r) => (r.days === null) ? 99 : (r.days / Math.max(1, r.interval));
+  const weakFirst = (r) => (r.mark === '△' || r.mark === '×') ? 0 : 1;
+  const due = all.filter(isDue).sort((a, b) =>
+    (weakFirst(a) - weakFirst(b)) || (overdueRatio(b) - overdueRatio(a)) || byPos(a, b));
+  const waiting = all.filter(r => !isDue(r)).sort((a, b) => ((a.interval - a.days) - (b.interval - b.days)));
+  const DUE_SHOWN = 10;
+  const dueKeys = {};
+  due.forEach(r => { dueKeys[r.sid + '/' + r.cell] = true; });
 
   const copyWeak = () => {
-    if (!weak.length) { setCopied('△× の記録がまだありません'); return; }
-    const text = [topicLabel + 'で落とした問題（学習ログに追記したい）']
-      .concat(weak.map(r => '- ' + r.sid + ' 問' + r.q + ' ' + r.mark))
+    if (!due.length) { setCopied('今日やる分はありません（寝かせ中のみ）'); return; }
+    const line = (r) => '- ' + r.sid + ' ' + kakomonLabel(r.cell) + ' ' + r.mark
+      + (r.date ? `（${r.date} に記録・${r.days}日経過／予定日 ${r.next}）` : '（日付なし）');
+    // 貼る単位を「今日やる」だけに絞る。寝かせ中まで入れると数百行になり、
+    // 貼らなくなる（面→質の往復が止まるのがこの設計のいちばん現実的な壊れ方）
+    const text = [`${topicLabel}・今日やる ${due.length} 件（学習ログに追記したい）`]
+      .concat(due.map(line))
       .concat(['', '各問について「理解できなかったところ／公式／考え方・解き方／計算ミス／覚えたいこと」を書きます'])
       .join('\n');
-    const done = () => setCopied(weak.length + '件をコピーしました。チャットに貼って中身を書いてください');
+    const done = () => setCopied(due.length + '件をコピーしました。チャットに貼って中身を書いてください');
     const fail = () => setCopied('コピーできませんでした（下の一覧を手で選択してください）');
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(done, fail);
@@ -3016,22 +3219,44 @@ const KakomonProgress = ({ pageId, topicLabel }) => {
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
         <strong style={{ fontSize: 14 }}>過去問集の進捗（{topicLabel}）</strong>
         <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
-          記録 {all.length} 問（◎○ {solid} ／ △× {weak.length}）
+          記録 {all.length} マス（◎○ {solid} ／ △× {weak.length}）
         </span>
+        {due.length > 0 && (
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--danger)' }}>
+            今日やる {due.length} 件
+          </span>
+        )}
       </div>
       <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: '0 0 8px' }}>
-        解いた問のマスをタップすると <strong>◎ → ○ → △ → × → 空</strong> と変わる。
+        解いた問のマスをタップすると <strong>◎ → ○ → △ → × → 空</strong> と変わり、<strong>その日の日付も一緒に残る</strong>。
         <strong>正解しても「なぜその式か」を1行で言えなければ △</strong> に落とす（覚えていただけの正解を弾くため）。
-        解いていない問は空のままでよい。年度により B問題の構成が違うので、実際に解いた問だけ埋める。
+        <strong>問15〜18 は B問題</strong>なので (a)(b) を別マスにしてある。解いていない問は空のままでよい
+        （年度により B問題の構成が違う。問17・18 は選択）。
       </p>
-      <div style={{ overflowX: 'auto', paddingBottom: 4 }}>
+      <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: '0 0 8px' }}>
+        次に解き直す日は<strong>忘却曲線から算出</strong>する（判定が良いほど長く空く）。
+        期限が来たマスは<strong>枠が光って</strong>「今日やる」に出る。
+        <strong>◎○ も対象</strong>で、間隔が長いだけ——「○ だが半年触っていない」も期限が来れば出てくる。
+        間違えた直後に解き直しても、覚えているだけで解けてしまい定着しない。
+      </p>
+      <div style={{ overflowX: 'auto', maxHeight: '70vh', overflowY: 'auto', paddingBottom: 4 }}>
         <table style={{ borderCollapse: 'separate', borderSpacing: 2, fontSize: 12 }}>
           <thead>
             <tr>
-              <th scope="col" style={Object.assign({}, stickyHead, { color: 'var(--ink-soft)', fontWeight: 600 })}>年度回</th>
+              <th scope="col" rowSpan={2} style={Object.assign({}, stickyHead, { top: 0, zIndex: 2, color: 'var(--ink-soft)', fontWeight: 600 })}>年度回</th>
               {qNumbers.map(q => (
-                <th key={q} scope="col" style={{ width: 26, fontSize: 10, fontWeight: 600, color: 'var(--ink-soft)' }}>{q}</th>
+                <th key={q} scope="col" colSpan={q >= KAKOMON_B_FROM ? 2 : 1} rowSpan={q >= KAKOMON_B_FROM ? 1 : 2}
+                    style={{ fontSize: 10, fontWeight: 600, position: 'sticky', top: 0, background: 'var(--bg-elev)',
+                             color: q >= KAKOMON_B_FROM ? 'var(--accent-ink)' : 'var(--ink-soft)' }}>
+                  {q}
+                </th>
               ))}
+            </tr>
+            <tr>
+              {qNumbers.filter(q => q >= KAKOMON_B_FROM).map(q => ([
+                <th key={q + 'a'} scope="col" style={{ width: 26, fontSize: 9, fontWeight: 600, position: 'sticky', top: 16, background: 'var(--bg-elev)', color: 'var(--ink-soft)' }}>a</th>,
+                <th key={q + 'b'} scope="col" style={{ width: 26, fontSize: 9, fontWeight: 600, position: 'sticky', top: 16, background: 'var(--bg-elev)', color: 'var(--ink-soft)' }}>b</th>,
+              ]))}
             </tr>
           </thead>
           <tbody>
@@ -3040,22 +3265,27 @@ const KakomonProgress = ({ pageId, topicLabel }) => {
                 <th scope="row" style={Object.assign({}, stickyHead, { fontWeight: 600 })}>
                   {s.id}<span style={{ color: 'var(--ink-soft)', fontWeight: 400 }}> ({s.year})</span>
                 </th>
-                {qNumbers.map(q => {
-                  const mark = (grid[s.id] || {})[q] || '';
+                {qNumbers.map(q => kakomonCells(q).map(cell => {
+                  const v = (grid[s.id] || {})[cell];
+                  const mark = (v && v.m) ? v.m : '';
+                  const isDueCell = !!dueKeys[s.id + '/' + cell];
+                  const days = v ? kakomonDaysSince(v.d) : null;
                   return (
-                    <td key={q} style={{ padding: 0 }}>
+                    <td key={cell} style={{ padding: 0 }}>
                       <button
-                        onClick={() => cycle(s.id, q)}
-                        aria-label={s.id + ' 問' + q + ' ' + (mark || '未記録')}
+                        onClick={() => cycle(s.id, cell)}
+                        title={mark ? `${s.id} ${kakomonLabel(cell)} ${mark}${v.d ? ` / ${v.d}${days !== null ? `（${days}日前）` : ''} → 次回 ${kakomonAddDays(v.d, v.i)}` : ''}` : undefined}
+                        aria-label={s.id + ' ' + kakomonLabel(cell) + ' ' + (mark || '未記録')
+                          + (isDueCell ? ' 再挑戦の期限' : '')}
                         style={Object.assign({}, cellBase, mark ? {
                           // 文字色は白固定にしない: dark テーマの --ok/--warn/--danger は明色なので
                           // 白だとコントラストが AA を割る（実測 1.9:1）。地の色なら両テーマで 6:1 以上。
                           background: KAKOMON_COLOR[mark], color: 'var(--bg)', border: '1px solid ' + KAKOMON_COLOR[mark],
-                        } : {})}
+                        } : {}, isDueCell ? { boxShadow: '0 0 0 2px var(--warn)' } : {})}
                       >{mark}</button>
                     </td>
                   );
-                })}
+                }))}
               </tr>
             ))}
           </tbody>
@@ -3065,12 +3295,22 @@ const KakomonProgress = ({ pageId, topicLabel }) => {
         <button onClick={copyWeak} style={{
           padding: '6px 12px', background: 'var(--accent)', color: 'var(--bg)', border: 'none',
           borderRadius: 5, cursor: 'pointer', fontSize: 12, fontWeight: 700,
-        }}>△× をコピーしてチャットに貼る</button>
+        }}>今日やるをコピーしてチャットに貼る</button>
         {copied && <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{copied}</span>}
       </div>
-      {weak.length > 0 && (
-        <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: '8px 0 0' }}>
-          復習待ち: {weak.map(r => r.sid + ' 問' + r.q + r.mark).join(' ／ ')}
+      {due.length > 0 && (
+        <p style={{ fontSize: 12, margin: '8px 0 0' }}>
+          <strong style={{ color: 'var(--danger)' }}>今日やる:</strong>{' '}
+          <span style={{ color: 'var(--ink-soft)' }}>
+            {due.slice(0, DUE_SHOWN).map(r => `${r.sid} ${kakomonLabel(r.cell)}${r.mark}${r.days === null ? '（日付なし）' : `（${r.days}日前／間隔${r.interval}日）`}`).join(' ／ ')}
+            {due.length > DUE_SHOWN ? ` ／ 他 ${due.length - DUE_SHOWN} 件` : ''}
+          </span>
+        </p>
+      )}
+      {waiting.length > 0 && (
+        <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: '4px 0 0' }}>
+          寝かせ中: {waiting.slice(0, DUE_SHOWN).map(r => `${r.sid} ${kakomonLabel(r.cell)}${r.mark}（${r.next} / あと${r.interval - r.days}日）`).join(' ／ ')}
+          {waiting.length > DUE_SHOWN ? ` ／ 他 ${waiting.length - DUE_SHOWN} 件` : ''}
         </p>
       )}
       <p style={{ fontSize: 11, color: 'var(--ink-soft)', margin: '8px 0 0' }}>
@@ -3082,6 +3322,8 @@ const KakomonProgress = ({ pageId, topicLabel }) => {
 };
 
 Object.assign(window, { KIKAI_DAILY_POOL, SectionCheck, SectionCheckSummary, ConceptQuizItem, ConceptQuiz, KakomonProgress });
+// fsrs_engine.py との数値一致を機械照合するためのエクスポート（本体は上の実装をそのまま使う）
+Object.assign(window, { KAKOMON_FSRS: { review: fsrsReview, interval: fsrsInterval, RATING: FSRS_RATING } });
 
 </script>
 <script type="text/babel">
@@ -6177,10 +6419,11 @@ const TransformerPage = ({ onNav }) => (
       </div>
       <SectionCheck pageId="transformer" sectionId="quick-review" />
 
-      <h2 id="kakomon-progress"><span className="h-num">15.</span>過去問集の進捗（20年間）</h2>
-      <p>手持ちの過去問集（電気書院・H18〜R7 の20年間）で、変圧器の問題をどこまで解いたかを残す。
-        面（どこまで解いたか）はここで、質（なぜ間違えたか）は学習ログで管理する。</p>
-      <KakomonProgress pageId="transformer" topicLabel="変圧器" />
+      <h2 id="kakomon-progress"><span className="h-num">15.</span>過去問の進捗はどこに残すか</h2>
+      <p>解いた過去問の記録（◎○△×・解いた日・忘却曲線で決まる次回予定日）は
+        <a href="#" onClick={(e) => { e.preventDefault(); onNav('study-log'); }}> リファレンス E「学習記録」</a>
+        に集約してある。グリッドは<strong>機械まるごと1枚</strong>で、単元ごとには分けていない
+        （R3 問15 は1つの問題なので、単元ごとに同じマスを持つと二重管理になる）。</p>
 
       <SectionCheckSummary
         pageId="transformer"
@@ -8129,6 +8372,80 @@ const GlossaryPage = ({ data, onNav, focus }) => {
   );
 };
 
+const StudyLogPage = ({ onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "リファレンス" }, { label: "E 学習記録" }]} onNav={onNav} />
+    <PageHeader eyebrow="E  STUDY LOG" title="学習記録（過去問トラッカー）"
+      deck="解いた過去問と、間違えた日を残す。面（どこまで解いたか）はここ、質（なぜ間違えたか）はチャット経由の学習ログ。単元ごとではなく機械まるごと1枚で管理する。"
+      meta={[{ label: "対象", value: "電気書院 20年間の過去問（機械）" }, { label: "再挑戦", value: "忘却曲線から算出" }]} />
+    <div className="content">
+      <h2 id="tracker"><span className="h-num">1.</span>過去問の進捗</h2>
+      <p>解いた問のマスをタップして <strong>◎○△×</strong> を残す。マスは<strong>1問＝1マス</strong>で、
+        B問題（問15〜18）だけ (a)(b) に分かれている。単元は問わない（R3 問15 は1つの問題なので、
+        単元ごとに同じマスを持つと二重管理になる）。</p>
+      <KakomonProgress pageId="study-log" topicLabel="機械" migrateFrom={["transformer"]} />
+
+      <h2 id="how"><span className="h-num">2.</span>この記録の回し方</h2>
+      <p>面と質を分けているのは、片方だけでは学習が回らないから。<strong>どこまで解いたか</strong>は端末で軽く残し、
+        <strong>なぜ間違えたか</strong>は端末に閉じない場所に残す。</p>
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th scope="col">残すもの</th><th scope="col">どこに</th><th scope="col">なぜそこか</th></tr></thead>
+        <tbody>
+          <tr><td>解けた／解けない（◎○△×と日付）</td><td>このページのグリッド</td><td>大量・高頻度・タップ1回。消えても解き直せば復元できる</td></tr>
+          <tr><td>理解できなかったところ・公式・考え方・計算ミス・覚えたいこと</td><td>チャットに書く → 学習ログに追記</td><td>端末をまたいで読め、傾向も集計できる。<strong>消えたら再現できない資産</strong></td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 id="rules">判定の付け方</h3>
+      <ul>
+        <li><strong>◎</strong> 手が止まらず解けて、理由も言える</li>
+        <li><strong>○</strong> 解けた・理由も言える</li>
+        <li><strong>△</strong> 解けたが理由が曖昧、または時間超過</li>
+        <li><strong>×</strong> 解けなかった</li>
+      </ul>
+      <p><strong>正解しても「なぜその式か」を1行で言えなければ △ に落とす。</strong>
+        受験直後に「答えを覚えていて何とか解けた問題があった」という実感が残っており、
+        覚えているだけの正解を ○ にすると、この記録が使えなくなる。</p>
+
+      <h3 id="retry">次に解き直す日はどう決まるか</h3>
+      <p>間違えた直後に解き直すと、<strong>覚えているから解けてしまう</strong>。それは定着ではない。
+        少し忘れた頃に思い出して初めて記憶に残るので、<strong>次回の日付は忘却曲線から算出</strong>する。
+        固定日数ではなく、判定と過去の履歴で伸び縮みする。</p>
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th scope="col">判定を続けたとき</th><th scope="col">次回までの間隔（日）</th></tr></thead>
+        <tbody>
+          <tr><td>◎ を重ねる</td><td>8 → 66 → 365</td></tr>
+          <tr><td>○ を重ねる</td><td>2 → 11 → 46 → 163 → 365</td></tr>
+          <tr><td>△ → △ → ○ → ◎</td><td>1 → 3 → 9 → 36</td></tr>
+          <tr><td>× を付ける</td><td>1（振り出しに戻る）</td></tr>
+        </tbody>
+      </table></div>
+      <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+        表の数値は<strong>予定日ちょうどに解き直した場合</strong>。早く解けば短く、遅れれば長くなる。</p>
+      <p><strong>ただし試験日を越えては寝かせない。</strong>FSRS は「いつまでに」の制約が無い前提の設計なので、
+        ◎ を重ねると 365日後＝試験のはるか後ろへ送ってしまう。そこで
+        <strong>間隔は試験日までの残り日数で頭打ち</strong>にしてある。残りが減るほど間隔も縮み、
+        直前期には全マスが一巡する。</p>
+      <p><strong>◎○ も再挑戦の対象</strong>にしてある。間隔が長いだけで、期限が来れば「今日やる」に出る。
+        試験前に「○ にはなっているが半年触っていない」を拾うためで、
+        <strong>鮮度の落ちた ○ は ○ のままとは限らない</strong>。</p>
+      <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+        計算は <code>scripts/fsrs_engine.py</code>（py-fsrs から逐語移植した FSRS-6）の JS 移植で、
+        <code>records.json</code> 側のスケジューラと同じ式・同じ定数を使う。別式にすると同じ問題に
+        2つの再挑戦日が出るため。数値が一致することは機械照合している。</p>
+
+      <h3 id="log">学習ログへの渡し方</h3>
+      <p>グリッドのコピーボタンを押すと、<strong>今日やる</strong>と<strong>まだ寝かせる</strong>に分かれた一覧が
+        クリップボードに入る。それをチャットに貼って、各問について思い出せることを書けば、
+        こちらで学習ログに整形して追記する。体裁は整えなくてよい。</p>
+      <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+        書籍の問題文は転載しない。残すのは年度・問番号と、自分の理解だけ。</p>
+    </div>
+    <PageNav prev={{ id: "yougo-konzai", title: "D 用語混同まとめ（横断ひっかけ）" }}
+      next={{ id: "home", title: "ホーム" }} onNav={onNav} />
+  </>
+);
+
 const GuidePage = ({ onNav }) => (
   <>
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "リファレンス" }, { label: "学習ガイド" }]} onNav={onNav} />
@@ -8462,6 +8779,7 @@ const App = () => {
       case 'trends':            return <TrendsPage {...props} />;
       case 'glossary':          return <GlossaryPage {...props} focus={glossaryFocus} />;
       case 'guide':             return <GuidePage {...props} />;
+      case 'study-log':         return <StudyLogPage {...props} />;
       default:                  return <HomePage {...props} />;
     }
   };
