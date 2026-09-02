@@ -3177,20 +3177,33 @@ const KakomonProgress = ({ pageId, topicLabel, migrateFrom }) => {
     (weakFirst(a) - weakFirst(b)) || (overdueRatio(b) - overdueRatio(a)) || byPos(a, b));
   const waiting = all.filter(r => !isDue(r)).sort((a, b) => ((a.interval - a.days) - (b.interval - b.days)));
   const DUE_SHOWN = 10;
+  // 直近につけたマス（同じ日なら年度回の並び順で最後）。ヘッダに次回予定日を出すため
+  const lastTouched = all.filter(r => r.date)
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : byPos(a, b))).slice(-1)[0] || null;
   const dueKeys = {};
   due.forEach(r => { dueKeys[r.sid + '/' + r.cell] = true; });
 
   const copyWeak = () => {
-    if (!due.length) { setCopied('今日やる分はありません（寝かせ中のみ）'); return; }
+    if (!all.length) { setCopied('まだ記録がありません。解いた問のマスをタップしてください'); return; }
+    // 今日つけたマスを必ず入れる。ここが無いと「解いた当日にコピーが空」になり、
+    // いちばん書きたいその日の学びがログに残らない（面→質の往復が初日で止まる）。
+    // 寝かせ中は入れない（数百行になって貼らなくなる）。
+    const today = kakomonToday();
+    const todays = all.filter(r => r.date === today).sort(byPos);
+    const dueOnly = due.filter(r => r.date !== today);
+    if (!todays.length && !dueOnly.length) { setCopied('今日つけた分も、予定日が来た分もありません'); return; }
+    // meta 行にそのまま移せる形を添える（q は 15a 形式、date は解いた日）
     const line = (r) => '- ' + r.sid + ' ' + kakomonLabel(r.cell) + ' ' + r.mark
-      + (r.date ? `（${r.date} に記録・${r.days}日経過／予定日 ${r.next}）` : '（日付なし）');
-    // 貼る単位を「今日やる」だけに絞る。寝かせ中まで入れると数百行になり、
-    // 貼らなくなる（面→質の往復が止まるのがこの設計のいちばん現実的な壊れ方）
-    const text = [`${topicLabel}・今日やる ${due.length} 件（学習ログに追記したい）`]
-      .concat(due.map(line))
+      + `  → exam=${r.sid} | q=${r.cell} | result=${r.mark}`
+      + (r.date ? ` | date=${r.date}` : '')
+      + (r.date && r.date !== today ? `（${r.days}日経過・予定日 ${r.next}）` : '');
+    const text = [`${topicLabel}の記録（学習ログに追記したい）`]
+      .concat(todays.length ? ['', `■ 今日解いた（${todays.length} 件）`].concat(todays.map(line)) : [])
+      .concat(dueOnly.length ? ['', `■ 予定日が来た（${dueOnly.length} 件・まだ解いていない）`].concat(dueOnly.map(line)) : [])
       .concat(['', '各問について「理解できなかったところ／公式／考え方・解き方／計算ミス／覚えたいこと」を書きます'])
       .join('\n');
-    const done = () => setCopied(due.length + '件をコピーしました。チャットに貼って中身を書いてください');
+    const n = todays.length + dueOnly.length;
+    const done = () => setCopied(n + '件をコピーしました。チャットに貼って中身を書いてください');
     const fail = () => setCopied('コピーできませんでした（下の一覧を手で選択してください）');
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(done, fail);
@@ -3226,9 +3239,23 @@ const KakomonProgress = ({ pageId, topicLabel, migrateFrom }) => {
             今日やる {due.length} 件
           </span>
         )}
+        {/* スマホではタップしたマスが画面下に隠れ、次回予定日（title 属性）も出ない。
+            直近でつけたマスの次回だけを、常に見えるヘッダ側に1つ出す */}
+        {lastTouched && (
+          <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
+            直近: {lastTouched.sid} {kakomonLabel(lastTouched.cell)}{lastTouched.mark} → 次回 {lastTouched.next}
+          </span>
+        )}
+        {all.length === 0 && (
+          <span style={{ fontSize: 12, color: 'var(--accent-ink)', fontWeight: 700 }}>
+            まず1問。解いた年度回の行をタップ
+          </span>
+        )}
       </div>
       <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: '0 0 8px' }}>
         解いた問のマスをタップすると <strong>◎ → ○ → △ → × → 空</strong> と変わり、<strong>その日の日付も一緒に残る</strong>。
+        <strong>判定を上げたいとき</strong>（△ → ○ など）は空まで回して付け直す。途中で一度マスが消えるが、
+        <strong>その日のうちなら履歴は残る</strong>ので間隔は振り出しに戻らない。
         <strong>正解しても「なぜその式か」を1行で言えなければ △</strong> に落とす（覚えていただけの正解を弾くため）。
         <strong>問15〜18 は B問題</strong>なので (a)(b) を別マスにしてある。解いていない問は空のままでよい
         （年度により B問題の構成が違う。問17・18 は選択）。
@@ -3295,7 +3322,7 @@ const KakomonProgress = ({ pageId, topicLabel, migrateFrom }) => {
         <button onClick={copyWeak} style={{
           padding: '6px 12px', background: 'var(--accent)', color: 'var(--bg)', border: 'none',
           borderRadius: 5, cursor: 'pointer', fontSize: 12, fontWeight: 700,
-        }}>今日やるをコピーしてチャットに貼る</button>
+        }}>今日の分をコピーしてチャットに貼る</button>
         {copied && <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{copied}</span>}
       </div>
       {due.length > 0 && (
@@ -8421,8 +8448,10 @@ const StudyLogPage = ({ onNav }) => (
         </tbody>
       </table></div>
       <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
-        表の数値は<strong>予定日ちょうどに解き直した場合</strong>。早く解けば短く、遅れれば長くなる。</p>
-      <p><strong>ただし試験日を越えては寝かせない。</strong>FSRS は「いつまでに」の制約が無い前提の設計なので、
+        表の数値は<strong>予定日ちょうどに解き直した場合</strong>。早く解けば短く、遅れれば長くなる。
+        いずれも<strong>試験日で頭打ち</strong>になるので、上の 365 日などは実際には出ない。</p>
+      <p><strong>ただし試験日を越えては寝かせない（{KAKOMON_EXAM_DATE} を想定）。</strong>
+        FSRS は「いつまでに」の制約が無い前提の設計なので、
         ◎ を重ねると 365日後＝試験のはるか後ろへ送ってしまう。そこで
         <strong>間隔は試験日までの残り日数で頭打ち</strong>にしてある。残りが減るほど間隔も縮み、
         直前期には全マスが一巡する。</p>
@@ -8435,9 +8464,12 @@ const StudyLogPage = ({ onNav }) => (
         2つの再挑戦日が出るため。数値が一致することは機械照合している。</p>
 
       <h3 id="log">学習ログへの渡し方</h3>
-      <p>グリッドのコピーボタンを押すと、<strong>今日やる</strong>と<strong>まだ寝かせる</strong>に分かれた一覧が
-        クリップボードに入る。それをチャットに貼って、各問について思い出せることを書けば、
-        こちらで学習ログに整形して追記する。体裁は整えなくてよい。</p>
+      <p>グリッドのコピーボタンを押すと、<strong>今日解いた分</strong>と<strong>予定日が来た分</strong>の一覧が
+        クリップボードに入る（寝かせ中は入らない。数百行になって貼らなくなるため）。
+        各行には <code>exam= / q= / result= / date=</code> が付いているので、
+        <strong>あとは「なぜ間違えたか」を書き足すだけ</strong>でよい。体裁は整えなくてよい。</p>
+      <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+        コピーは<strong>解いて判定を付けたあと</strong>に押す（付ける前に押すと、その日の分が入らない）。</p>
       <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
         書籍の問題文は転載しない。残すのは年度・問番号と、自分の理解だけ。</p>
     </div>

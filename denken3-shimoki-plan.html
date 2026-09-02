@@ -233,12 +233,31 @@ footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--line);
   <div class="cap" id="spark30cap">–</div>
 </div>
 
+<!-- 過去問トラッカー（各Wikiの「学習記録」ページのグリッド）。理解度ボタンの記録とは
+     数え方が違う（1マス＝過去問1問）ので、上の集計には混ぜず別枠で出す。混ぜると
+     数百マスが論点の記録を飲み込み、既存の指標の意味が変わってしまう。 -->
+<div class="card" id="pvKakomonCard" hidden>
+  <div class="row"><strong style="font-size:14px">過去問トラッカー</strong>
+    <span class="spacer" style="margin-left:auto"></span>
+    <span class="cap" id="pvKkSubj">–</span></div>
+  <div class="row" style="gap:18px;margin-top:6px;flex-wrap:wrap">
+    <div><span class="big" id="pvKkTotal">–</span><span class="unit">マス</span>
+      <div class="cap">解いた記録</div></div>
+    <div><span class="big" id="pvKkDue">–</span><span class="unit">件</span>
+      <div class="cap">今日やる（予定日到来）</div></div>
+    <div><span class="big" id="pvKkDays7">–</span><span class="unit">日</span>
+      <div class="cap">直近7日で解いた日</div></div>
+  </div>
+  <div class="cap" id="pvKkSpan" style="margin-top:6px">–</div>
+</div>
+
 <div id="bySubject"></div>
 
 <div class="card" id="pvEmpty" hidden>
   <div style="font-weight:700">まだ記録がありません</div>
   <p class="cap" style="margin:6px 0 0">
     各Wikiの問題ブロックにある理解度ボタン（◎理解した／○うる覚え／△要確認／×間違えた・QuickReview の ✓理解／⚠要復習）を押すと、ここに集計されます。
+    過去問トラッカー（機械Wiki → リファレンス E 学習記録）の記録は数え方が違うので、上の別枠に出ます。
     記録はブラウザごとに別です。PCで押した記録はスマホには出てきません。
   </p>
 </div>
@@ -623,10 +642,79 @@ footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--line);
     return out;
   }
 
+  /* 過去問トラッカー（denken_check::<科目>_<page>::kakomon::v1）を数える。
+     値は 1マス = { m: 判定, d: 解いた日, i: 次回までの日数 }。理解度ボタンの記録とは
+     数え方が違うので collect() には混ぜない（混ぜると数百マスが論点の記録を飲み込む）。 */
+  function collectKakomon() {
+    var cells = [], subjs = {};
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (!key || key.indexOf('denken_check::') !== 0 || key.indexOf('::kakomon::') < 0) continue;
+        var g;
+        try { g = JSON.parse(localStorage.getItem(key)); } catch (e) { continue; }
+        if (!g || typeof g !== 'object') continue;
+        var subj = subjectOf(key);
+        Object.keys(g).forEach(function (sid) {
+          var row = g[sid];
+          if (!row || typeof row !== 'object') return;
+          Object.keys(row).forEach(function (c) {
+            var v = row[c];
+            // 旧形式（判定の文字列だけ）と墓標（m が空）も受ける
+            var mark = (typeof v === 'string') ? v : (v && v.m);
+            if (!mark) return;
+            var d = (v && typeof v.d === 'string') ? v.d : '';
+            var iv = (v && typeof v.i === 'number') ? v.i : null;
+            cells.push({ subj: subj, mark: mark, date: d, interval: iv });
+            subjs[subj] = true;
+          });
+        });
+      }
+    } catch (e) { /* localStorage 不可 → 0件として描く */ }
+    return { cells: cells, subjs: Object.keys(subjs) };
+  }
+
+  function renderKakomon() {
+    var k = collectKakomon();
+    var card = $('pvKakomonCard');
+    if (!card) return 0;
+    card.hidden = k.cells.length === 0;
+    if (!k.cells.length) return 0;
+    var t0 = today0().getTime();
+    var dayOf = function (iso) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return null;
+      var a = iso.split('-');
+      return new Date(+a[0], +a[1] - 1, +a[2]).getTime();
+    };
+    var due = k.cells.filter(function (c) {
+      var ms = dayOf(c.date);
+      if (ms === null) return true;                     // 日付なしは待たせない（Wiki 側と同じ扱い）
+      return Math.round((t0 - ms) / DAY) >= (c.interval || 1);
+    }).length;
+    var days = {};
+    k.cells.forEach(function (c) {
+      var ms = dayOf(c.date);
+      if (ms === null) return;
+      var back = Math.round((t0 - ms) / DAY);
+      if (back >= 0 && back < 7) days[c.date] = true;
+    });
+    var stamps = k.cells.map(function (c) { return dayOf(c.date); })
+                        .filter(function (x) { return x !== null; });
+    $('pvKkTotal').textContent = k.cells.length;
+    $('pvKkDue').textContent = due;
+    $('pvKkDays7').textContent = Object.keys(days).length;
+    $('pvKkSubj').textContent = k.subjs.map(function (s) { return SUBJ_LABEL[s] || s; }).join(' / ');
+    $('pvKkSpan').textContent = stamps.length
+      ? ('最初 ' + iso(new Date(Math.min.apply(null, stamps))) + ' 〜 最後 ' + iso(new Date(Math.max.apply(null, stamps))))
+      : '日付の記録なし（旧形式）';
+    return k.cells.length;
+  }
+
   function renderProgress() {
     var recs = collect();
+    var kakomonCount = renderKakomon();
     var t = today0().getTime();
-    $('pvEmpty').hidden = recs.length > 0;
+    $('pvEmpty').hidden = (recs.length + kakomonCount) > 0;
     $('pvTotal').textContent = recs.length;
 
     var todo = recs.filter(function (r) { return r.status !== 'understood'; });
