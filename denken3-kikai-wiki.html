@@ -3204,6 +3204,11 @@ const kakomonTopicOf = (session, cell) =>
 
 const KAKOMON_CYCLE = ['', '◎', '○', '△', '×'];
 const KAKOMON_COLOR = { '◎': 'var(--ok)', '○': 'var(--info)', '△': 'var(--warn)', '×': 'var(--danger)' };
+/* マスに添える1行メモ（n）。判定だけでは「なぜ落としたか」が残らず、予定日が来た頃には
+   理由を思い出せない＝学習ログが書かれない。コピー文面の meta 部は半角 `|` 区切りなので
+   `|` と改行は空白に潰す。長さも抑える（localStorage は科目まるごと1キー）。 */
+const KAKOMON_NOTE_MAX = 120;
+const kakomonNote = (s) => (typeof s === 'string' ? s : '').replace(/[|\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, KAKOMON_NOTE_MAX);
 
 // マスの識別子。A問題は "7"、B問題は "15a" / "15b"
 const kakomonCells = (q) => (q >= KAKOMON_B_FROM ? [q + 'a', q + 'b'] : [String(q)]);
@@ -3235,7 +3240,7 @@ const kakomonDaysSince = (iso) => {
   return Math.round((new Date(n.getFullYear(), n.getMonth(), n.getDate()) - then) / 86400000);
 };
 /* 値は { m: 判定, d: 最後にタップした日, s: 安定度, f: 難度, i: 次回までの日数,
-          bs/bf/bd: その日の1回目のタップ直前の状態 }。
+          bs/bf/bd: その日の1回目のタップ直前の状態, n: 1行メモ（任意・kakomonNote で正規化） }。
    b* を持つのは、◎→○→△→× と回して判定を選び直す操作が「4回復習した」ことに
    ならないようにするため（同じ基準から毎回引き直す）。
    旧版は判定の文字列だけ／{m,d} だけを持つので、どちらも受けて種をまき直す。 */
@@ -3250,13 +3255,15 @@ const kakomonVal = (v) => {
   const okNum = (x) => typeof x === 'number' && isFinite(x) && x > 0;
   const carry = (o) => {
     if (okNum(v.bs) && okNum(v.bf)) { o.bs = v.bs; o.bf = v.bf; o.bd = typeof v.bd === 'string' ? v.bd : ''; }
+    const n = kakomonNote(v.n);
+    if (n) o.n = n;
     return o;
   };
-  // 墓標: 判定を空に戻した記録。履歴（bs/bf/bd）だけを当日ぶん持ち越す。
+  // 墓標: 判定を空に戻した記録。履歴（bs/bf/bd）と1行メモ（n）だけを当日ぶん持ち越す。
   // 「△ を ○ に上げる」には ×→空→◎→○ と一巡するしかないので、空でレコードごと
   // 消すと、その正当な操作のたびに数ヶ月ぶんのスケジュールが振り出しに戻る。
   // 翌日以降は掃除する（本当に記録を消したかった場合を尊重する）。
-  if (v.m === '') return (d && d === kakomonToday() && okNum(v.bs)) ? carry({ m: '', d }) : null;
+  if (v.m === '') return (d && d === kakomonToday() && (okNum(v.bs) || kakomonNote(v.n))) ? carry({ m: '', d }) : null;
   if (KAKOMON_CYCLE.indexOf(v.m) <= 0) return null;
   if (!okNum(v.s) || !okNum(v.f) || !okNum(v.i)) return seed(v.m, d);
   return carry({ m: v.m, d, s: v.s, f: v.f, i: v.i });
@@ -3295,6 +3302,8 @@ const KakomonProgress = ({ pageId, topicLabel, migrateFrom }) => {
     } catch (e) { return {}; }
   });
   const [copied, setCopied] = React.useState('');
+  // 直近にタップしたマス。その下に「なぜ？」の1行入力を出す（読み込み直後は出さない）
+  const [focus, setFocus] = React.useState(null);
 
   // 旧キーから引き継いだ場合は新キーへ書き戻す（元は消さない＝取り違えても失われない）
   React.useEffect(() => {
@@ -3305,16 +3314,25 @@ const KakomonProgress = ({ pageId, topicLabel, migrateFrom }) => {
     } catch (e) { /* noop */ }
   }, []);
 
-  const cycle = (sid, cell) => {
+  const save = (updated) => {
+    setGrid(updated);
+    try { localStorage.setItem(key, JSON.stringify(updated)); } catch (e) { /* 容量超過等は記録だけ失う */ }
+  };
+  // to を渡すと巡回せずその判定にする（「言えない → △」ボタン用。日付・履歴の扱いはタップと同じ）
+  const cycle = (sid, cell, to) => {
     const prev = (grid[sid] || {})[cell] || null;
     const cur = prev ? prev.m : '';
-    const next = KAKOMON_CYCLE[(KAKOMON_CYCLE.indexOf(cur) + 1) % KAKOMON_CYCLE.length];
+    const next = to !== undefined ? to : KAKOMON_CYCLE[(KAKOMON_CYCLE.indexOf(cur) + 1) % KAKOMON_CYCLE.length];
     const row = Object.assign({}, grid[sid]);
+    const today = kakomonToday();
+    // 同じ日に判定を選び直しているなら、その日の1回目の直前の状態から引き直す
+    // （タップ回数ぶん復習したことにしない）
+    const sameDay = prev && prev.d === today;
+    // 1行メモは判定を変えても持ち越す（選び直すたびに書き直させない。空（墓標）を経由する
+    // 正規の付け直し操作でも消さない）。日を跨いでも消さない＝解いた日にコピーし忘れた理由が
+    // 再挑戦のタップで黙って失われる経路を塞ぐ。書き換えたければ欄で上書きする
+    const note = prev ? kakomonNote(prev.n) : '';
     if (next) {
-      const today = kakomonToday();
-      // 同じ日に判定を選び直しているなら、その日の1回目の直前の状態から引き直す
-      // （タップ回数ぶん復習したことにしない）
-      const sameDay = prev && prev.d === today;
       const base = sameDay
         ? { s: prev.bs, f: prev.bf, d: prev.bd }
         : (prev ? { s: prev.s, f: prev.f, d: prev.d } : { s: null, f: null, d: '' });
@@ -3324,15 +3342,29 @@ const KakomonProgress = ({ pageId, topicLabel, migrateFrom }) => {
                            FSRS_RATING[next], elapsed);
       const rec = { m: next, d: today, s: r.s, f: r.d, i: kakomonInterval(r.s) };
       if (base.s !== null && base.s !== undefined) { rec.bs = base.s; rec.bf = base.f; rec.bd = base.d || ''; }
+      if (note) rec.n = note;
       row[cell] = rec;
-    } else if (prev && prev.bs !== undefined) {
-      // 空へ回しても、その日のうちは履歴を捨てない（一巡して選び直す操作を壊さない）
-      row[cell] = { m: '', d: kakomonToday(), bs: prev.bs, bf: prev.bf, bd: prev.bd || '' };
+    } else if (prev && (prev.bs !== undefined || note)) {
+      // 空へ回しても、その日のうちは履歴とメモを捨てない（一巡して選び直す操作を壊さない。
+      // 初見カードは履歴が無いが、メモがあれば同じく当日限りの墓標で持ち越す）
+      row[cell] = { m: '', d: today };
+      if (prev.bs !== undefined) { row[cell].bs = prev.bs; row[cell].bf = prev.bf; row[cell].bd = prev.bd || ''; }
+      if (note) row[cell].n = note;
     } else delete row[cell];
     const updated = Object.assign({}, grid);
     if (Object.keys(row).length) updated[sid] = row; else delete updated[sid];
-    setGrid(updated);
-    try { localStorage.setItem(key, JSON.stringify(updated)); } catch (e) { /* 容量超過等は記録だけ失う */ }
+    save(updated);
+    setFocus({ sid, cell });
+  };
+  // 直近マスの1行メモ。判定が無いマスには付けない（メモだけの記録は集計の対象外になるため）
+  const setNote = (sid, cell, text) => {
+    const prev = (grid[sid] || {})[cell];
+    if (!prev || !prev.m) return;
+    const rec = Object.assign({}, prev);
+    // 入力中は trim しない（制御入力で末尾の空白が打てなくなる）。読む側の kakomonNote が整える
+    const n = (typeof text === 'string' ? text : '').replace(/[|\r\n]+/g, ' ').slice(0, KAKOMON_NOTE_MAX);
+    if (n.trim()) rec.n = n; else delete rec.n;
+    save(Object.assign({}, grid, { [sid]: Object.assign({}, grid[sid], { [cell]: rec }) }));
   };
 
   const order = {};
@@ -3344,7 +3376,7 @@ const KakomonProgress = ({ pageId, topicLabel, migrateFrom }) => {
       const v = row[cell];
       if (!v.m) return;   // 墓標（判定を空に戻したマス）は記録として数えない
       all.push({ sid: s.id, cell, mark: v.m, date: v.d, days: kakomonDaysSince(v.d), interval: v.i,
-                 next: kakomonAddDays(v.d, v.i) });
+                 next: kakomonAddDays(v.d, v.i), note: kakomonNote(v.n) });
     });
   });
   const byPos = (a, b) => (order[a.sid] - order[b.sid]) || (kakomonSortKey(a.cell) - kakomonSortKey(b.cell));
@@ -3366,6 +3398,9 @@ const KakomonProgress = ({ pageId, topicLabel, migrateFrom }) => {
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : byPos(a, b))).slice(-1)[0] || null;
   const dueKeys = {};
   due.forEach(r => { dueKeys[r.sid + '/' + r.cell] = true; });
+  // 1行メモを出すマス。タップ前でも、今日つけた直近のマスがあればそこに出す（再読込で欄が消えない）
+  const noteCell = focus || ((lastTouched && lastTouched.date === kakomonToday())
+    ? { sid: lastTouched.sid, cell: lastTouched.cell } : null);
 
   const copyWeak = () => {
     if (!all.length) { setCopied('まだ記録がありません。解いた問のマスをタップしてください'); return; }
@@ -3376,15 +3411,17 @@ const KakomonProgress = ({ pageId, topicLabel, migrateFrom }) => {
     const todays = all.filter(r => r.date === today).sort(byPos);
     const dueOnly = due.filter(r => r.date !== today);
     if (!todays.length && !dueOnly.length) { setCopied('今日つけた分も、予定日が来た分もありません'); return; }
-    // meta 行にそのまま移せる形を添える（q は 15a 形式、date は解いた日）
+    // meta 行にそのまま移せる形を添える（q は 15a 形式、date は解いた日）。
+    // タップ時に書いた1行メモは meta 部の外（次の行）に置く＝ `|` 区切りを壊さない
     const line = (r) => '- ' + r.sid + ' ' + kakomonLabel(r.cell) + ' ' + r.mark
       + `  → exam=${r.sid} | q=${r.cell} | result=${r.mark}`
       + (r.date ? ` | date=${r.date}` : '')
-      + (r.date && r.date !== today ? `（${r.days}日経過・予定日 ${r.next}）` : '');
+      + (r.date && r.date !== today ? `（${r.days}日経過・予定日 ${r.next}）` : '')
+      + (r.note ? `\n    メモ: ${r.note}` : '');
     const text = [`${topicLabel}の記録（学習ログに追記したい）`]
       .concat(todays.length ? ['', `■ 今日解いた（${todays.length} 件）`].concat(todays.map(line)) : [])
       .concat(dueOnly.length ? ['', `■ 予定日が来た（${dueOnly.length} 件・まだ解いていない）`].concat(dueOnly.map(line)) : [])
-      .concat(['', '各問について「理解できなかったところ／公式／考え方・解き方／計算ミス／覚えたいこと」を書きます'])
+      .concat(['', 'メモの無い問だけ「理解できなかったところ／公式／考え方・解き方／計算ミス／覚えたいこと」を補います'])
       .join('\n');
     const n = todays.length + dueOnly.length;
     const done = () => setCopied(n + '件をコピーしました。チャットに貼って中身を書いてください');
@@ -3443,7 +3480,8 @@ const KakomonProgress = ({ pageId, topicLabel, migrateFrom }) => {
         解いた問のマスをタップすると <strong>◎ → ○ → △ → × → 空</strong> と変わり、<strong>その日の日付も一緒に残る</strong>。
         <strong>判定を上げたいとき</strong>（△ → ○ など）は空まで回して付け直す。途中で一度マスが消えるが、
         <strong>その日のうちなら履歴は残る</strong>ので間隔は振り出しに戻らない。
-        <strong>正解しても「なぜその式か」を1行で言えなければ △</strong> に落とす（覚えていただけの正解を弾くため）。
+        タップするとマスの下に<strong>1行メモ</strong>が出る。△× なら「なぜ落としたか」を、◎○ なら「なぜその式か」を書く。
+        <strong>正解しても「なぜその式か」を1行で言えなければ「言えない → △」で △</strong> に落とす（覚えていただけの正解を弾くため）。
         <strong>問15〜18 は B問題</strong>なので (a)(b) を別マスにしてある。解いていない問は空のままでよい
         （年度により B問題の構成が違う。問17・18 は選択）。
       </p>
@@ -3505,6 +3543,32 @@ const KakomonProgress = ({ pageId, topicLabel, migrateFrom }) => {
           </tbody>
         </table>
       </div>
+      {/* 直近にタップしたマスの「なぜ？」1行入力。判定（面）だけ残して理由（質）を拾わないと、
+          予定日が来た頃には思い出せず学習ログが書かれない。◎○ には「1行で言えるか」を問い、
+          言えなければ △ に落とす（覚えていただけの正解を弾く。文で書いてあるだけでは実行されない）。
+          モーダルにしない（スマホで邪魔）。判定を変えても同じ日ならメモは残る */}
+      {noteCell && (() => {
+        const v = (grid[noteCell.sid] || {})[noteCell.cell];
+        if (!v || !v.m) return null;
+        const weakMark = v.m === '△' || v.m === '×';
+        return (
+          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 12 }}>
+            <span style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{noteCell.sid} {kakomonLabel(noteCell.cell)} {v.m}</span>
+            <input type="text" value={v.n || ''} maxLength={KAKOMON_NOTE_MAX}
+              onChange={(e) => setNote(noteCell.sid, noteCell.cell, e.target.value)}
+              placeholder={weakMark ? 'なぜ落とした？（1行）' : 'なぜその式か、1行で。言えなければ →△'}
+              aria-label={(noteCell.sid + ' ' + kakomonLabel(noteCell.cell) + ' の1行メモ')}
+              style={{ flex: '1 1 220px', minWidth: 0, padding: '5px 8px', fontSize: 12, border: '1px solid var(--rule)',
+                       borderRadius: 5, background: 'var(--bg)', color: 'var(--ink)' }} />
+            {!weakMark && (
+              <button onClick={() => cycle(noteCell.sid, noteCell.cell, '△')} style={{
+                padding: '5px 10px', background: 'transparent', color: 'var(--warn)', border: '1px solid var(--warn)',
+                borderRadius: 5, cursor: 'pointer', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
+              }}>言えない → △</button>
+            )}
+          </div>
+        );
+      })()}
       <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <button onClick={copyWeak} style={{
           padding: '6px 12px', background: 'var(--accent)', color: 'var(--bg)', border: 'none',
