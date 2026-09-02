@@ -391,6 +391,17 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .page-meta-item { display: flex; align-items: center; gap: 6px; }
 .page-meta-item strong { color: var(--ink-soft); font-weight: 600; }
 
+/* 各ページ冒頭の優先度。色は Box の役割配色（結論/罠/例題…）と衝突させないため
+   使わず、記号と文言だけで段を示す。値の出所は WIKI_DATA の prio 1か所。 */
+.page-prio {
+  display: inline-flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  margin-top: 14px; padding: 5px 12px; border-radius: 999px;
+  border: 1px solid var(--rule); background: var(--bg-elev);
+  font-size: 12px; color: var(--ink);
+}
+.page-prio b { font-weight: 700; letter-spacing: 0.02em; }
+.page-prio span { color: var(--ink-soft); }
+
 .content { max-width: var(--content-max); }
 
 .content h2 {
@@ -491,6 +502,22 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .box-mistake .box-label { color: var(--danger); }
 .box-example  { background: var(--bg-sunken); }
 .box-example .box-label { color: var(--ink-soft); }
+
+/* 色の凡例。box の 5 kind は「役割」を1対1で表す（色→役割が予測できないと、
+   同じページに並んだ公式・条件・罠・例題が全部同じ重みで読まれる）。
+   swatch の色だけを kind 色にし、文字は --ink のままにする
+   （--ok/--warn/--danger を --bg-elev の上に文字色として置くと AA を割るため）。 */
+.box-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 14px 0 20px; font-size: 12px; }
+.box-legend .lead { color: var(--ink-soft); font-weight: 700; }
+.box-legend span.lg { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+  border: 1px solid var(--rule); background: var(--bg-elev); color: var(--ink); }
+.box-legend span.lg::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--lg-color); flex: none; }
+.lg-tip     { --lg-color: var(--ok); }
+.lg-formula { --lg-color: var(--accent); }
+.lg-warn    { --lg-color: var(--warn); }
+.lg-mistake { --lg-color: var(--danger); }
+.lg-example { --lg-color: var(--ink-mute); }
+.lg-quiz    { --lg-color: var(--info); }
 
 .box .katex { font-size: 1.05em; }
 .box p:last-child { margin-bottom: 0; }
@@ -1015,10 +1042,10 @@ window.WIKI_DATA = {
       num: "01",
       title: "回転機",
       pages: [
-        { id: "dc-machine",        num: "1.1", title: "直流機",                    freq: "high" },
-        { id: "induction-machine", num: "1.2", title: "三相誘導電動機",          freq: "max", featured: true },
-        { id: "synchronous",       num: "1.3", title: "同期機",                    freq: "high" },
-        { id: "single-phase-im",   num: "1.4", title: "単相誘導電動機",          freq: "low" },
+        { id: "dc-machine",        num: "1.1", title: "直流機",                    prio: "S", freq: "high" },
+        { id: "induction-machine", num: "1.2", title: "三相誘導電動機",          prio: "S", freq: "max", featured: true },
+        { id: "synchronous",       num: "1.3", title: "同期機",                    prio: "A", freq: "high" },
+        { id: "single-phase-im",   num: "1.4", title: "単相誘導電動機",          prio: "C", freq: "low" },
       ],
     },
     {
@@ -1026,9 +1053,9 @@ window.WIKI_DATA = {
       num: "02",
       title: "静止器・電力変換",
       pages: [
-        { id: "transformer",   num: "2.1", title: "変圧器",        freq: "max" },
-        { id: "power-elec",    num: "2.2", title: "パワーエレクトロニクス", freq: "high" },
-        { id: "keiki-yo-henseiki", num: "2.3", title: "計器用変成器（CT・VT）", freq: "high" },
+        { id: "transformer",   num: "2.1", title: "変圧器",        prio: "S", freq: "max" },
+        { id: "power-elec",    num: "2.2", title: "パワーエレクトロニクス", prio: "A", freq: "high" },
+        { id: "keiki-yo-henseiki", num: "2.3", title: "計器用変成器（CT・VT）", prio: "A", freq: "high" },
       ],
     },
     {
@@ -1036,8 +1063,8 @@ window.WIKI_DATA = {
       num: "03",
       title: "制御・応用",
       pages: [
-        { id: "auto-control",  num: "3.1", title: "自動制御",   freq: "high" },
-        { id: "info-elec",     num: "3.2", title: "情報・電子回路", freq: "mid" },
+        { id: "auto-control",  num: "3.1", title: "自動制御",   prio: "A", freq: "high" },
+        { id: "info-elec",     num: "3.2", title: "情報・電子回路", prio: "B", freq: "mid" },
       ],
     },
     {
@@ -1045,10 +1072,12 @@ window.WIKI_DATA = {
       num: "04",
       title: "電気応用",
       pages: [
-        { id: "lighting",      num: "4.1", title: "照明",        freq: "mid" },
-        { id: "heat",          num: "4.2", title: "電熱",        freq: "mid" },
-        { id: "chemistry",     num: "4.3", title: "電気化学",   freq: "low" },
-        { id: "drive-mech",    num: "4.4", title: "電動機応用", freq: "mid" },
+        { id: "lighting",      num: "4.1", title: "照明",        prio: "B", freq: "mid" },
+        { id: "heat",          num: "4.2", title: "電熱",        prio: "B", freq: "mid" },
+        { id: "chemistry",     num: "4.3", title: "電気化学",   prio: "C", freq: "low" },
+        { id: "drive-mech",    num: "4.4", title: "電動機応用", prio: "B", freq: "mid" },
+      { id: "denki-kakou",   num: "4.5", title: "電気加工",   prio: "C", freq: "low" },
+      { id: "mechatronics",  num: "4.6", title: "メカトロニクス", prio: "C", freq: "low" },
       ],
     },
     {
@@ -2158,6 +2187,12 @@ const PageHeader = ({ eyebrow, title, deck, meta }) => (
     {eyebrow && <div className="page-eyebrow">{eyebrow}</div>}
     <h1 className="page-title">{title}</h1>
     {deck && <p className="page-deck">{deck}</p>}
+    {prioOfEyebrow(eyebrow) && (
+      <div><span className="page-prio">
+        <b>優先度 {prioOfEyebrow(eyebrow)}</b>
+        <span>{prioLabel(prioOfEyebrow(eyebrow))}</span>
+      </span></div>
+    )}
     {meta && <div className="page-meta">{meta.map((m, i) =>
       <div key={i} className="page-meta-item"><strong>{m.label}:</strong> {m.value}</div>
     )}</div>}
@@ -2180,6 +2215,20 @@ const Box = ({ kind, label, children }) => (
     {label && <div className="box-label">{label}</div>}
     {children}
   </aside>
+);
+
+/* Box の色が何を意味するかの凡例。長いページでは色が役割と結びついて初めて
+   「読み飛ばす／立ち止まる」の判断ができるので、最初の Box より前に一度だけ置く。 */
+const BoxLegend = () => (
+  <div className="box-legend">
+    <span className="lead">色の意味</span>
+    <span className="lg lg-tip">結論</span>
+    <span className="lg lg-formula">なぜその式か</span>
+    <span className="lg lg-warn">条件・前提</span>
+    <span className="lg lg-mistake">罠・誤答</span>
+    <span className="lg lg-example">例題</span>
+    <span className="lg lg-quiz">確認問題</span>
+  </div>
 );
 
 /* 折りたたみブロック（スマホでの縦長を抑える。結論・図・罠表は開いたまま、
@@ -2255,7 +2304,7 @@ const HomePage = ({ data, onNav }) => {
           <div className="stat">
             <div className="stat-label">頻出 TOP 3</div>
             <div className="stat-value">誘導機・変圧器・直流機</div>
-            <div className="stat-sub">合計で出題の 約 46%</div>
+            <div className="stat-sub">編集部集計での上位3単元（比率は付録A）</div>
           </div>
           <div className="stat">
             <div className="stat-label">推奨学習時間</div>
@@ -2278,7 +2327,9 @@ const HomePage = ({ data, onNav }) => {
         <p style={{marginTop: 14}}>本文中の <span className="marker">黄色マーカー</span> 部分は、論述・記述で問われやすい重要キーワード・原則を示す。試験直前期はマーカー箇所を中心に総ざらいするのが効率的である。</p>
 
         <h2><span className="h-num">2.</span>単元一覧</h2>
-        <p>章をクリックして該当ページへ移動する。★ が付いた単元は最頻出の重点単元。</p>
+        <p>章をクリックして該当ページへ移動する。★ が付いた単元は最頻出の重点単元。
+          カードの<strong>優先度</strong>は「60点に届くまでの近さ」で、S → C の順に着手する
+          （<strong>C は捨ててよいという意味ではない</strong>。公式試験範囲に入っている）。</p>
 
         {data.chapters.filter(c => c.id !== "ref").map(ch => (
           <div key={ch.id}>
@@ -2292,7 +2343,7 @@ const HomePage = ({ data, onNav }) => {
                     {pageDeckSummary(p.id)}
                   </div>
                   <div className="card-foot">
-                    <span>{freqLabel(p.freq)}</span>
+                    <span>{p.prio ? `優先度 ${p.prio}｜${prioLabel(p.prio)}` : freqLabel(p.freq)}</span>
                     {p.featured && <span className="card-freq">★ 重点</span>}
                   </div>
                 </div>
@@ -2301,7 +2352,26 @@ const HomePage = ({ data, onNav }) => {
           </div>
         ))}
 
-        <h2><span className="h-num">3.</span>出題傾向（直近10年）</h2>
+        <h2 id="route"><span className="h-num">3.</span>60点までの通り道</h2>
+        <p>合格ラインは 100点満点の 60点。<strong>全部を同じ深さでやると間に合わない</strong>ので、
+          落とすと 60点 に届きにくい順に STEP を切ってある。各単元カードの「優先度」はこの STEP に対応する。</p>
+        <div className="table-wrap"><table className="data-table">
+          <thead><tr><th scope="col">STEP</th><th scope="col">単元</th><th scope="col">ここで何をする</th></tr></thead>
+          <tbody>
+          <tr><td><strong>STEP 1</strong></td><td>1.2 三相誘導電動機 ／ 2.1 変圧器 ／ 1.1 直流機</td><td>優先度 S。計算の型を手が覚えるまで反復する。ここが崩れると他で取り返せない</td></tr>
+          <tr><td><strong>STEP 2</strong></td><td>1.3 同期機 ／ 2.2 パワエレ ／ 3.1 自動制御 ／ 2.3 計器用変成器</td><td>優先度 A。STEP 1 と合わせて計算問題の主戦場になる</td></tr>
+          <tr><td><strong>STEP 3</strong></td><td>4.1 照明 ／ 4.2 電熱 ／ 4.4 電動機応用 ／ 3.2 情報処理</td><td>優先度 B。公式数が少なく、短時間で得点に変わりやすい</td></tr>
+          <tr><td><strong>STEP 4</strong></td><td>4.3 電気化学 ／ 4.5 電気加工 ／ 4.6 メカトロニクス ／ 1.4 単相誘導電動機</td><td>優先度 C。深追いせず、選択肢を切れる状態まで</td></tr>
+          </tbody>
+        </table></div>
+        <Box kind="mistake" label="STEP 1 だけで合格できる、とは考えない">
+          <p style={{ margin: 0 }}>STEP 1 は<strong>取りこぼしが最も痛い範囲</strong>という意味であって、
+            そこだけで 60点 に届くという意味ではない。<span className="marker">STEP 4 の単元も公式試験範囲に入っている</span>ので、
+            出題されれば配点は同じ 5点である。STEP は<strong>着手の順番</strong>であって、やる／やらないの線引きではない。
+            範囲と本Wikiのページの対応は <a href="#" onClick={(e) => { e.preventDefault(); onNav("guide"); }}>C 学習ガイド</a> の1節にある。</p>
+        </Box>
+
+        <h2><span className="h-num">4.</span>出題傾向（直近10年）</h2>
         <p>過去10年間の機械科目における大きな単元別の出題比率。試験対策の優先順位の参考とする。</p>
         <div className="box">
           {data.freqData.map((f, i) => (
@@ -2313,14 +2383,21 @@ const HomePage = ({ data, onNav }) => {
           ))}
         </div>
 
-        <h2><span className="h-num">4.</span>学習戦略</h2>
+        <h2><span className="h-num">5.</span>学習戦略</h2>
         <Box kind="tip" label="推奨アプローチ">
           <ol>
-            <li><strong>誘導機 → 変圧器 → 直流機</strong> の順で骨格を固める。三大単元だけで出題の約 46% を占める。</li>
+            <li><strong>誘導機 → 変圧器 → 直流機</strong> の順で骨格を固める。この3単元は編集部集計で上位に来るが、<strong>「3つで何%取れる」という言い方はしない</strong>（下の注記）。</li>
             <li>同期機・パワエレを並列で進め、計算問題への対応力を上げる。</li>
             <li>自動制御は伝達関数とブロック線図を反復、頻出パターンに絞る。</li>
             <li>照明・電熱は公式数が少なく短期決戦が可能。直前期に取り組む。</li>
           </ol>
+        </Box>
+
+        <Box kind="warn" label="この優先順位が何に基づいているか">
+          <p style={{ margin: 0 }}>上の順番と付録Aの比率は<strong>過去問集計に基づく編集部の参考値</strong>であり、試験機関が公表した統計ではない。
+            <span className="marker">年度・試験回により出題構成は変動する</span>ので、「この割合で必ず出る」「上位3単元だけで◯%取れる」とは考えないこと。
+            比率の作り方と既知の限界は <a href="#" onClick={(e) => { e.preventDefault(); onNav("trends"); }}>付録A「出題傾向データ」</a> に全部書いてある。
+            <strong>試験回単位（R4上・R4下…R8上）で一次資料を確認した集計は未実施</strong>である。</p>
         </Box>
 
         <Box kind="warn" label="陥りやすい罠">
@@ -2352,15 +2429,40 @@ function pageDeckSummary(id) {
     "heat":              "発熱量計算・熱伝導・温度上昇・電気加熱方式。",
     "chemistry":         "電気分解・電池・ファラデー定数の応用。",
     "drive-mech":        "電動機の選定・所要動力・はずみ車・速度制御方式。",
+    "denki-kakou":       "放電加工・電解加工・ビーム加工・超音波加工・電気溶接。方式ごとのエネルギー源と適用材料の区別が要点。",
+    "mechatronics":      "センサ・アクチュエータ・サーボ・ステッピングモータ。機械系と電気制御系のつなぎ目。",
   };
   return m[id] || "";
+}
+
+/* 優先度は「60点に届くまでの近さ」で付ける。出題頻度そのものではなく、
+   落とすと 60点 に届きにくい順。根拠は編集部集計なので絶対視しない。
+   C は「捨ててよい」ではない — 公式試験範囲に含まれるので、選択肢を切れる程度までは触る。 */
+const PRIO_LABEL = {
+  S: "60点狙いでも必須",
+  A: "合格を安定させるために重要",
+  B: "余裕があれば得点源になる",
+  C: "出題は少ない。選択肢を切れる程度まで",
+};
+function prioLabel(prio) { return PRIO_LABEL[prio] || ""; }
+
+/* eyebrow 先頭の "2.1" から、その単元の優先度を WIKI_DATA 側で引く。
+   ページ側に prio を書き写さないのは、ホームのカードと二重管理になると
+   片方だけ直したときに食い違うため（SoT は WIKI_DATA の prio だけ）。 */
+function prioOfEyebrow(eyebrow) {
+  const m = /^(\d+\.\d+)/.exec(String(eyebrow || "").trim());
+  if (!m) return null;
+  const chs = (window.WIKI_DATA && window.WIKI_DATA.chapters) || [];
+  for (const c of chs) for (const pg of (c.pages || []))
+    if (pg.num === m[1] && pg.prio) return pg.prio;
+  return null;
 }
 
 function freqLabel(freq) {
   return { max: "出題頻度: 最頻出", high: "出題頻度: 高", mid: "出題頻度: 中", low: "出題頻度: 低" }[freq] || "—";
 }
 
-Object.assign(window, { Eq, PageHeader, Crumbs, Box, FormulaCard, PageNav, HomePage, pageDeckSummary, freqLabel });
+Object.assign(window, { Eq, PageHeader, Crumbs, Box, FormulaCard, PageNav, HomePage, pageDeckSummary, freqLabel, prioLabel, prioOfEyebrow, PRIO_LABEL });
 
 </script>
 <script type="text/babel">
@@ -2929,7 +3031,8 @@ const KAKOMON_SESSIONS = [
   { id: 'R6上', year: 2024 },
   { id: 'R6下', year: 2024 },
   { id: 'R7上', year: 2025 },
-  { id: 'R7下', year: 2025 }
+  { id: 'R7下', year: 2025 },
+  { id: 'R8上', year: 2026 }
 ];
 const KAKOMON_QMAX = 18;              // 問番号の上限
 // 機械は A問題 14問（各5点）＋ B問題 3問完答（各10点）。B問題は問15〜18 に置かれ、
@@ -3018,6 +3121,24 @@ const kakomonInterval = (s) => {
   const left = kakomonDaysToExam();
   return (left !== null && left > 0) ? Math.min(base, left) : base;
 };
+/* 過去問1問と Wiki の単元を紐付ける台帳。ここが埋まると
+   「%Z の過去問だけ」「変圧器で △× だけ」「R6〜R8 だけ」の抽出ができる。
+
+   形（1件 = 1マス。B問題は cell を "15a" / "15b" と分ける）:
+     { session:'R8上', cell:'3', topic:'transformer', subtopic:'pz',
+       difficulty:2, source:'令和8年度上期 第三種電気主任技術者試験 機械科目' }
+     topic    … ページ id（transformer / induction-machine …）
+     subtopic … そのページの節 id（pz / loss / sc-test …）。省略可
+     difficulty … 1〜3 の体感難易度。省略可
+
+   **登録は実物を確認した問だけ**。年度・問番号から単元を推測して埋めない
+   （分類を間違えると「この単元は解き終えた」という誤った達成感を作り、
+   本来やるべき復習が抜ける。空欄のほうが害が小さい）。
+   現在は 0 件。実物を確認しながら1件ずつ足していく。 */
+const KAKOMON_TOPICS = [];
+const kakomonTopicOf = (session, cell) =>
+  KAKOMON_TOPICS.find(t => t.session === session && t.cell === cell) || null;
+
 const KAKOMON_CYCLE = ['', '◎', '○', '△', '×'];
 const KAKOMON_COLOR = { '◎': 'var(--ok)', '○': 'var(--info)', '△': 'var(--warn)', '×': 'var(--danger)' };
 
@@ -3577,7 +3698,7 @@ const InductionMachinePage = ({ data, onNav }) => (
       title="三相誘導電動機"
       deck="機械科目で最頻出の単元。回転磁界・滑り・等価回路・トルク特性が四本柱。計算問題・理論問題ともに毎年必ず出題されるため、最優先で押さえる。"
       meta={[
-        { label: "出題頻度", value: "最頻出（10年で約36問）" },
+        { label: "出題頻度（編集部集計）", value: "最頻出（10年で約36問）" },
         { label: "難易度", value: "★★★★☆" },
         { label: "関連単元", value: "同期機 / パワエレ / 電動機応用" },
       ]}
@@ -4079,7 +4200,7 @@ const DCMachinePage = ({ onNav }) => (
       title="直流機"
       deck="界磁・電機子・整流子・ブラシで構成される回転機。誘導起電力と速度・トルクの関係、励磁方式の違いによる特性差が出題の中心。"
       meta={[
-        { label: "出題頻度", value: "高（10年で約24問）" },
+        { label: "出題頻度（編集部集計）", value: "高（10年で約24問）" },
         { label: "難易度", value: "★★★☆☆" },
       ]}
     />
@@ -4417,7 +4538,7 @@ const SynchronousPage = ({ onNav }) => (
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "1. 回転機" }, { label: "1.3 同期機" }]} onNav={onNav} />
     <PageHeader eyebrow="1.3  SYNCHRONOUS MACHINE" title="同期機"
       deck="同期速度で回転する交流機。発電所の主機として用いられる同期発電機と、力率改善に使われる同期調相機・同期電動機を扱う。"
-      meta={[{ label: "出題頻度", value: "高（10年で約22問・11%）" }, { label: "難易度", value: "★★★★☆" }]} />
+      meta={[{ label: "出題頻度（編集部集計）", value: "高（10年で約22問・11%）" }, { label: "難易度", value: "★★★★☆" }]} />
     <div className="content">
       <SynchronousLayers />
       <ConceptQuiz pageId="synchronous" pageTitle="同期機" />
@@ -4758,7 +4879,7 @@ const SinglePhaseIMPage = ({ onNav }) => (
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "1. 回転機" }, { label: "1.4 単相誘導電動機" }]} onNav={onNav} />
     <PageHeader eyebrow="1.4  SINGLE-PHASE INDUCTION MOTOR" title="単相誘導電動機"
       deck="単相電源では回転磁界が生じないため、始動時のみ補助巻線で擬似的に二相を作って起動する。家電・小型機器に多用。"
-      meta={[{ label: "出題頻度", value: "低" }]} />
+      meta={[{ label: "出題頻度（編集部集計）", value: "低" }]} />
     <div className="content">
       <SinglePhaseIMLayers />
       <h2 id="start"><span className="h-num">1.</span>始動方式</h2>
@@ -5328,15 +5449,154 @@ const ImpedanceTriangle = () => (
   </figure>
 );
 
+/* ---- 節末の即答チェック（解説 → その場で確認問題）----------------------------
+   もとはページ最下部のセクション14に22問まとめて置いてあった。解説を読んだ場所から
+   一番遠く、「読んだ直後に思い出せるか」を試せなかったので、データを1本にして
+   ①各節の末尾（その節のぶんだけ）②セクション14（通し）の2つの見え方を作る。
+   問（summary）は常に見え、答は畳んだまま＝先に答えが見えると学習効果が消えるため。
+   s = 節の id（SectionCheck の sectionId と同じ）。 */
+const TRANSFORMER_QUICK = [
+  { s:'basic', q:'巻数比 a と電圧・電流の関係は？',
+    a:<>a = N₁/N₂ = V₁/V₂ = I₂/I₁（電流は巻数比の逆比）</> },
+  { s:'emf', q:'E = 4.44 f N Φm の 4.44 はどこから来る？',
+    a:<>√2·π ≈ 4.44。Φ = Φm sinωt を微分すると起電力の<strong>最大値</strong>が 2πfNΦm になり、実効値にするため √2 で割る（2π/√2 = √2π）。<strong>Φm は磁束の最大値</strong>であって実効値ではない、が取り違えの元</> },
+  { s:'emf', q:'電圧を変えずに周波数だけ下げると何が起きる？',
+    a:<>Φm ∝ V/f なので<strong>磁束が増える</strong> → 鉄心が飽和に近づく → <strong>励磁電流が急増</strong> → 発熱・うなり・保護動作。だからインバータで可変速駆動するときは <span className="marker">V/f を一定に保つ</span></> },
+  { s:'equiv', q:'等価回路の「直列4素子」と「並列の励磁回路」は、それぞれ何を表し、どちらの試験で求まる？',
+    a:<>直列 r₁, x₁, r₂′, x₂′ ＝ <strong>銅損と電圧降下</strong> → <strong>短絡試験</strong>／並列 r₀, x₀ ＝ <strong>鉄損と磁化電流</strong> → <strong>無負荷試験</strong>。ただし短絡試験で出るのは<span className="marker">和 R_e = r₁+r₂′、X_e = x₁+x₂′ だけ</span>で、r₁ と r₂′ を分けるには直流抵抗測定が要る（三種は和のままで解ける）。電圧変動率・効率・短絡電流・並行運転は、すべてこの1枚から導かれる</> },
+  { s:'equiv', q:'二次側の量を一次側に換算するとき、何を何倍する？（巻数比 a = N₁/N₂）',
+    a:<>インピーダンスは <strong>a² 倍</strong>（r₂′ = a²r₂・x₂′ = a²x₂）、電圧は <strong>a 倍</strong>、電流は <strong>1/a 倍</strong>。抵抗まで a 倍にしてしまうのが失点源。換算しても<strong>損失は変わらない</strong>ことで検算できる（a²r₂ × (I₂/a)² = r₂I₂²）</> },
+  { s:'oc-test', q:'無負荷試験で Iw・Iμ・r₀・x₀ を出す順番と式は？',
+    a:<>①Iw = P₀/V₁（電力計 ≒ 鉄損・<strong>電圧と同相の成分</strong>）→ ②Iμ = √(I₀²−Iw²)（<strong>直角合成</strong>）→ ③r₀ = V₁/Iw（＝V₁²/P₀）→ ④x₀ = V₁/Iμ。短絡試験が<strong>インピーダンスを分解</strong>するのに対し、無負荷試験は<strong>電流を分解</strong>する。無負荷力率 cosθ₀ = Iw/I₀ は磁化分が主なので非常に低い（0.1〜0.3 程度）</> },
+  { s:'sc-test', q:'短絡試験で Ze・Re・Xe を出す順番と式は？',
+    a:<>①Ze = Vs/Is（<strong>斜辺</strong>）→ ②Re = Ps/Is²（電力計 ≒ 銅損・<strong>電流基準</strong>）→ ③Xe = √(Ze²−Re²)（<strong>直角合成</strong>）。②で Ps/Vs² としない、③で Ze−Re としないの2点が失点源</> },
+  { s:'sc-test', q:'短絡試験の測定値だけで検算するには？',
+    a:<>cosθ = Ps/(VsIs) を出し、Re = Ze·cosθ、Xe = Ze·sinθ で再計算する。三平方とは<strong>別の計算経路</strong>なので途中の算術ミスを拾える。ただし2経路は代数的には同じ式（Ze·cosθ ≡ Ps/Is²）なので、<strong>立式そのものの誤りは拾えない</strong></> },
+  { s:'sc-test', q:'短絡試験の与件に定格が無いとき、何が求められて何が求められない？',
+    a:<>求められる＝Ze・Re・Xe（測定値だけで出る）／<strong>求められない</strong>＝%Z・電圧変動率・短絡電流（定格電圧 Vn または定格容量 SN が要る）。「定格電流を流した」だけでは Vn は確定しない</> },
+  { s:'loss', q:'変圧器の最高効率の条件は？',
+    a:<>鉄損 = 銅損（P_i = x²P_cN）。そのときの負荷率 x = √(P_i / P_cN)。分母は全負荷銅損であって、そのときの実銅損ではない</> },
+  { s:'loss', q:'通常効率と全日効率は何が違う？',
+    a:<>通常効率＝ある運転点を <strong>kW の比</strong>で評価（η = Pout /(Pout+Pi+x²PcN)）／全日効率＝1日全体を <strong>kWh の比</strong>で評価（ηd = Wout /(Wout+Wi+Wc)）。効率自体はどちらも無次元で [%] 表示。<strong>主に重視される用途</strong>が通常効率＝電力用変圧器、全日効率＝負荷変動の大きい配電用変圧器（同じ1台について両方を評価でき、対象機器が排他的に分かれるわけではない）</> },
+  { s:'loss', q:'全日効率は kW と kWh のどちらで計算する？',
+    a:<><strong>kWh（電力量）</strong>。出力・鉄損・銅損をそれぞれ電力量に直してから分母に入れる。通常効率を求めてから時間を掛けても全日効率にはならない（鉄損と銅損では掛ける時間が違うため）</> },
+  { s:'loss', q:'出力電力量の式は？',
+    a:<>Wout = Σ Sk·cosφk·tk [kWh]。kV·A は皮相電力なので、有効電力量にするには<strong>力率を掛ける</strong>。無負荷の時間帯は出力ゼロなので足さない</> },
+  { s:'loss', q:'鉄損電力量の式は？',
+    a:<>Wi = Pi × Ton [kWh]。Ton は<strong>電圧が加わっている時間</strong>。24時間通電のときだけ Pi×24 で、「12時間だけ電源に接続」ならその通電時間を使う</> },
+  { s:'loss', q:'銅損電力量の式は？',
+    a:<>Wc = PcN × Σ xk²·tk [kWh]（xk = Sk/SN）。各時間帯ごとに<strong>2乗してから足す</strong>。全負荷銅損 PcN をそのまま使うのではない</> },
+  { s:'loss', q:'50% 負荷のとき銅損は全負荷銅損の何%？',
+    a:<><strong>25%</strong>（x² = 0.5² = 0.25）。半分ではない。銅損は I²R で、電圧一定なら I は kV·A に比例するので負荷率の2乗で効く</> },
+  { s:'loss', q:'出力の計算には力率を使うのに、負荷率には原則使わないのはなぜ？',
+    a:<>出力は<strong>有効電力</strong>なので kV·A に力率を掛ける。一方、銅損を決めるのは<strong>巻線電流</strong>で、負荷率の本質は x = I/IN。三相では I = S/(√3V) なので、電圧一定なら電流は kV·A に比例し x = S/SN（kV·A どうしの比）で取れる。力率を掛けると低力率の時間帯の銅損を過小評価する。合言葉は「力率は出力 kWh に、kV·A 負荷率は銅損に」</> },
+  { s:'loss', q:'負荷が「40 kW・力率0.8」と kW で与えられたら負荷率は？（定格 100 kV·A）',
+    a:<><strong>x = 0.5</strong>。負荷率は皮相電力の比なので、まず S = P/cosφ = 40/0.8 = <strong>50 kV·A</strong> に換算してから x = 50/100 = 0.5。<span className="marker">40/100 = 0.4 としない</span>。「力率を掛けない」のは負荷が kV·A で与えられたときの話で、kW 与件では力率で<strong>割って</strong> kV·A に直す</> },
+  { s:'loss', q:'無負荷通電中（電源は入・負荷ゼロ）に発生する損失は？',
+    a:<><strong>鉄損だけ</strong>。銅損は三種の計算ではほぼ 0 として扱う（励磁電流によるわずかな銅損は無視する前提）</> },
+  { s:'loss', q:'電源切離し中（開放）に発生する損失は？',
+    a:<><strong>鉄損も銅損も発生しない</strong>。「無負荷」と「電源切離し」を混同すると、鉄損電力量の通電時間を取り違える</> },
+  { s:'loss', q:'全日効率の計算順序（5ステップ）は？',
+    a:<>①各時間帯の出力電力量 Sk·cosφk·tk → ②合計して Wout → ③鉄損電力量 Wi = Pi·Ton → ④銅損電力量 Wc = PcN·Σxk²tk → ⑤ηd = Wout/(Wout+Wi+Wc)×100。最後に 0〜100% に収まるか検算する</> },
+  { s:'vreg', q:'電圧変動率の簡易式は？',
+    a:<>ε ≈ p·cosθ + q·sinθ（遅れ力率では sinθ が正）</> },
+  { s:'pz', q:'%Z = 5% のとき短絡電流は定格の何倍？',
+    a:<>20倍（I_s = (100/%Z)·I_n）</> },
+  { s:'parallel', q:'並行運転の必須条件は？（満たさないと運転そのものが成立しない側）',
+    a:<>①<strong>変圧比（巻数比）が等しい</strong>（違うと無負荷でも循環電流）②<strong>極性が等しい</strong>（違うと短絡と同じ状態・最も危険）③三相では<strong>相順と位相変位（角変位）が等しい</strong>（Y-Y と Y-Δ は 30° ずれるので組めない）。<span className="marker">条件を列挙させる設問では %Z 一致も数える</span>のが通例なので落とさない</> },
+  { s:'parallel', q:'負担配分の一般式は？',
+    a:<>S_A : S_B = <strong>S_NA/z_A : S_NB/z_B</strong>（S_N＝各器の定格容量、z＝<strong>自己容量基準</strong>の %Z）。並列なので<strong>電圧降下が共通</strong>→ 電流は実インピーダンスの逆比、を %Z で書き直した形。<strong>覚える式はこれ1つでよい</strong>（各器のインピーダンス角が等しい前提。角度がずれると単純な足し算では配れない）</> },
+  { s:'parallel', q:'「%Z の逆比」で解いてよいのはどんなとき？',
+    a:<><strong>自己容量基準の %Z をそのまま</strong>逆比にしてよいのは<strong>定格容量が等しいときだけ</strong>。<span className="marker">共通の基準容量に換算した %Z なら容量が違っても常に逆比</span>（一般式と同じことを言っている）。自己容量基準のまま逆比を使うと過負荷の答えが出る（A 100 kV·A・4 % ＋ B 300 kV·A・6 % で 300 kV·A を分担 → 正しくは 100 と 200 kV·A、%Z 逆比では <span className="marker">A が 180 kV·A ＝ 定格の 180 %</span>）。逆に %Z が等しいときは<strong>定格容量の比</strong>になる</> },
+  { s:'vconn', q:'単巻変圧器の自己容量（等価容量）は？',
+    a:<>自己容量 ＝ 負荷容量 × <strong>(V_h − V_l)/V_h</strong>（V_h: 高圧側電圧、V_l: 低圧側電圧。昇圧でも降圧でも同じ式）。<strong>変圧比が1に近いほど</strong>小さな自己容量で大きな負荷容量を扱える（小型・高効率）。欠点は<strong>一次と二次が絶縁されない</strong>こと</> },
+  { s:'vconn', q:'V結線の 86.6 % と 57.7 % は、それぞれ何に対する比？',
+    a:<>86.6 %（√3/2）＝<strong>使用中2台の定格合計 2S₁</strong> に対する利用率／57.7 %（1/√3）＝<strong>Δ結線3台の合計容量 3S₁</strong> に対する出力比。どちらも分子は同じ √3S₁ で、<span className="marker">違うのは分母</span></> },
+  { s:'v-fault', q:'V結線の出力と利用率は？',
+    a:<>出力 = √3 × 単器容量。利用率 √3/2 ≈ 86.6%（Δ結線3台比の出力は 57.7%）</> },
+  { s:'v-fault', q:'Δ-Δ の1台が故障したら出力は何%になる？',
+    a:<>1/√3 ≈ 57.7%（2/3 = 66.7% ではない）。巻線電流が線電流そのものになり √3 倍の負担になるため</> },
+  { s:'v-fault', q:'V結線で線間電圧が3つとも得られるのはなぜ？',
+    a:<>3つの線間電圧の和はゼロ（V̇ab+V̇bc+V̇ca=0）なので、2つを2台で作れば残り1つは V̇bc=−(V̇ab+V̇ca) として定まる（実負荷では電圧降下の分だけ不平衡が出る）</> },
+  { s:'v-fault', q:'V結線の2台で「等しいもの」と「偏るもの」は？',
+    a:<>等しい＝皮相電力 V_L·I_L と巻線電流（同一仕様器なら損失・温度上昇もほぼ同等）／偏る＝個別力率と有効・無効電力の分担（有効電力係数は cos(30°−θ) と cos(30°+θ)）。有効分担が等しいのは力率1のときだけ</> },
+  { s:'traps', q:'無負荷試験と短絡試験を取り違えないために、問題文の最初に確認する2点は？',
+    a:<>①<strong>二次側は開放か短絡か</strong> → ②<strong>電圧は定格か低電圧か</strong>。二次開放・定格電圧なら<strong>無負荷試験</strong>（鉄損・r₀・x₀）、二次短絡・低電圧なら<strong>短絡試験</strong>（銅損・Z_e・R_e・X_e・%Z）。<span className="marker">「求めるのは損失か・定数か・電流か」は判別材料にならない</span>——どちらの試験でも損失・定数・電流は出るので、これは求める量の確認であって試験の判別ではない</> },
+  { s:'traps', q:'%Z が小さい変圧器では、短絡電流と並行運転の分担はそれぞれどう動く？',
+    a:<>短絡電流は<strong>大きくなる</strong>（I_s =(100/%Z)I_n・反比例）。並行運転の分担も<strong>その器に寄る</strong>が、寄り方を決めるのは %Z 単独ではなく S_N/z の比。<span className="marker">「%Z が小さい＝短絡電流も小さい」は定番の誤り</span>で、%Z は「定格電流を流すのに必要な電圧の割合」＝小さいほど電流が流れやすい、と読む</> },
+];
+
+/* セクション14（通し）で使う節の並びと見出し。番号は h2 に合わせ、文言は
+   1行に収まるよう短縮している（理解度サマリの label とも同じ表記にそろえる）。 */
+const TRANSFORMER_QUICK_SECTIONS = [
+  ['basic',    '2. 理想変圧器と巻数比'],
+  ['emf',      '3. 誘導起電力と磁束'],
+  ['equiv',    '4. 実際の変圧器と等価回路'],
+  ['oc-test',  '5. 無負荷試験（開放試験）'],
+  ['sc-test',  '6. 短絡試験（インピーダンス試験）'],
+  ['loss',     '7. 損失・通常効率・全日効率'],
+  ['vreg',     '8. 電圧変動率'],
+  ['pz',       '9. 百分率インピーダンスと短絡電流'],
+  ['parallel', '10. 並行運転'],
+  ['vconn',    '11. V結線・単巻変圧器'],
+  ['v-fault',  '12. Δ-Δ 1台故障 → V結線運転'],
+  ['traps',    '13. 過去問での解き方とひっかけ注意'],
+];
+
+/* s を渡すとその節ぶんだけ（節末用）、省くと全問を節ごとに（セクション14用）。 */
+const TransformerQuick = ({ s }) => {
+  const groups = s
+    ? [[null, TRANSFORMER_QUICK.filter(x => x.s === s)]]
+    : TRANSFORMER_QUICK_SECTIONS
+        .map(([id, label]) => [label, TRANSFORMER_QUICK.filter(x => x.s === id)])
+        .filter(g => g[1].length);
+  if (!groups.length || !groups[0][1].length) return null;
+  const n = groups.reduce((t, g) => t + g[1].length, 0);
+  return (
+    <div className="box" style={s ? { background: "color-mix(in oklab, var(--info) 10%, var(--bg-elev))",
+                                      borderColor: "color-mix(in oklab, var(--info) 30%, transparent)" } : undefined}>
+      {s && (
+        <div className="box-label" style={{ color: "var(--info)" }}>
+          この節の確認問題（{n}問）
+        </div>
+      )}
+      {groups.map(([label, items]) => (
+        <React.Fragment key={label || "one"}>
+          {label && <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-soft)", margin: "12px 0 4px" }}>{label}</div>}
+          {items.map(it => (<details key={it.q}><summary>{it.q}</summary>{it.a}</details>))}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
 const TransformerPage = ({ onNav }) => (
   <>
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "2. 静止器" }, { label: "2.1 変圧器" }]} onNav={onNav} />
     <PageHeader eyebrow="2.1  TRANSFORMER" title="変圧器"
       deck="鉄心と二つの巻線で電圧を変成する静止器。誘導機に並ぶ最頻出単元。巻数比・%Z・電圧変動率・損失と効率・並列運転が出題の柱。"
-      meta={[{ label: "出題頻度", value: "最頻出（10年で約32問・16%）" }, { label: "難易度", value: "★★★★☆" }]} />
+      meta={[{ label: "出題頻度（編集部集計）", value: "最頻出（10年で約32問・16%）" }, { label: "難易度", value: "★★★★☆" }]} />
     <div className="content">
       <TransformerLayers />
       <ConceptQuiz pageId="transformer" pageTitle="変圧器" />
+
+      <BoxLegend />
+
+      <Box kind="tip" label="60点狙いで読む順（節の並びとは違う）">
+        <p>このページの節は<strong>知識のつながり順</strong>に並べてある。
+          一方、<strong>得点に近い順</strong>に読むなら下の順路がよい。%Z と電圧変動率は
+          単独で1問になりやすく、損失・全日効率より<span className="marker">先に固めた方が取りこぼしが減る</span>。</p>
+        <p style={{ margin: "8px 0 0", lineHeight: 2 }}>
+          <a href="#" onClick={(e) => { e.preventDefault(); onNav("transformer", "basic"); }}>巻数比・一次換算</a> → <a href="#" onClick={(e) => { e.preventDefault(); onNav("transformer", "emf"); }}>誘導起電力</a> → <a href="#" onClick={(e) => { e.preventDefault(); onNav("transformer", "equiv"); }}>等価回路</a> → <a href="#" onClick={(e) => { e.preventDefault(); onNav("transformer", "oc-test"); }}>無負荷試験</a> → <a href="#" onClick={(e) => { e.preventDefault(); onNav("transformer", "sc-test"); }}>短絡試験</a> → <a href="#" onClick={(e) => { e.preventDefault(); onNav("transformer", "pz"); }}>%Z・短絡電流</a> → <a href="#" onClick={(e) => { e.preventDefault(); onNav("transformer", "vreg"); }}>電圧変動率</a> → <a href="#" onClick={(e) => { e.preventDefault(); onNav("transformer", "loss"); }}>損失・効率・最高効率</a> → <a href="#" onClick={(e) => { e.preventDefault(); onNav("transformer", "parallel"); }}>並行運転</a> → <a href="#" onClick={(e) => { e.preventDefault(); onNav("transformer", "v-fault"); }}>V結線</a> → <a href="#" onClick={(e) => { e.preventDefault(); onNav("transformer", "loss-daily"); }}>全日効率</a>
+        </p>
+        <p style={{ margin: "10px 0 0", fontSize: 13, color: "var(--ink-soft)" }}>
+          <strong>節の順番そのものは変えていない。</strong>並べ替えると、これまでに貼ったリンク・
+          ブックマーク・検索結果の着地先が全部ずれるため。読む順だけをここで示す。</p>
+        <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--ink-soft)" }}>
+          <strong>「発展」と書かれた折りたたみは後回しでよい。</strong>畳んであるだけで消していないので、
+          理解を深めたくなったら開く（T形等価回路・実系統の短絡電流・V結線の電力分担・
+          全日効率シミュレータ・等価負荷率）。</p>
+      </Box>
 
       <h2 id="scope"><span className="h-num">1.</span>このページで得点できる問題</h2>
       <p>変圧器は「1つの等価回路」から枝分かれして出題される。どの問いも、下の6つのどれかに帰着する。</p>
@@ -5393,6 +5653,7 @@ const TransformerPage = ({ onNav }) => (
       <FormulaCard num="02 / 15" name="一次換算（二次側の量を一次側へ寄せる）" eq="r_2' = a^2 r_2,\quad x_2' = a^2 x_2,\quad I_2' = I_2 / a,\quad V_2' = a V_2"
         note={<>インピーダンスは <Eq tex="a^2" /> 倍、電流は <Eq tex="1/a" /> 倍、電圧は <Eq tex="a" /> 倍。<span className="marker">一次換算と二次換算を計算の途中で混ぜない</span>（どちら側に統一したかを必ず先に決める）。</>} />
 
+      <TransformerQuick s="basic" />
       <SectionCheck pageId="transformer" sectionId="basic" />
 
       <h2 id="emf"><span className="h-num">3.</span>誘導起電力と磁束</h2>
@@ -5402,7 +5663,7 @@ const TransformerPage = ({ onNav }) => (
       <p style={{margin:"6px 0 0", fontSize:"13px"}}>この 4.44 を <Eq tex="e=Blv" /> から6段で導く手順は <a href="#" onClick={(e) => { e.preventDefault(); onNav("synchronous"); }}>1.3 同期機</a> セクション1 の折りたたみ「4.44 はどこから来るか」にある（同じ係数が回転機と静止器で共通して出る理由もそこで説明）。</p>
       <p>この式を <Eq tex="\Phi_m" /> について解くと、印加電圧をほぼ一定とみなせる範囲で次が言える。</p>
       <Eq display tex="\Phi_m = \frac{E}{4.44 f N} \;\Longrightarrow\; \Phi_m \propto \frac{V}{f}" />
-      <Box kind="mistake" label="周波数が下がると何が起きるか（V/f 一定制御の根拠）">
+      <Box kind="warn" label="周波数が下がると何が起きるか（V/f 一定制御の根拠）">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, margin: "4px 0 8px" }}>
           {[
             ["周波数 f が低下", "1周期が長くなる"],
@@ -5421,6 +5682,7 @@ const TransformerPage = ({ onNav }) => (
         <p style={{ margin: 0 }}>だから<strong>電圧を下げずに周波数だけ下げてはいけない</strong>。インバータで電動機を可変速駆動するとき <span className="marker"><Eq tex="V/f" /> を一定に保つ</span>のは、磁束を一定にして飽和を避けるためである。<strong>逆に周波数が上がる</strong>と磁束は減り、鉄損は減るがトルクも落ちる。</p>
       </Box>
 
+      <TransformerQuick s="emf" />
       <SectionCheck pageId="transformer" sectionId="emf" />
 
       <h2 id="equiv"><span className="h-num">4.</span>実際の変圧器と等価回路</h2>
@@ -5500,6 +5762,7 @@ const TransformerPage = ({ onNav }) => (
         <p style={{margin:"8px 0 0"}}><a href="https://kfurufuru.github.io/secretary-portal-public/denken3-riron-wiki.html#inductance" target="_blank" rel="noopener">→ 理論Wiki「3.1 インダクタンス」で相互M・結合係数k・和動/差動を深掘り</a></p>
       </Fold>
 
+      <TransformerQuick s="equiv" />
       <SectionCheck pageId="transformer" sectionId="equiv" />
 
       <h2 id="oc-test"><span className="h-num">5.</span>無負荷試験（開放試験）</h2>
@@ -5579,6 +5842,7 @@ const TransformerPage = ({ onNav }) => (
         <p style={{ margin: "8px 0 0" }}><strong>ひっかけ注意:</strong> <span className="marker"><Eq tex="r_0" /> の分母は <Eq tex="I_0" /> ではなく <Eq tex="I_w" /></span>。<Eq tex="V_1/I_0 = 200/2.5 = 80\,\Omega" /> としてしまうのが典型的な誤り（それは励磁インピーダンスの大きさであって鉄損抵抗ではない）。また <Eq tex="P_0" /> は<strong>鉄損</strong>であって銅損ではない。</p>
       </Box>
 
+      <TransformerQuick s="oc-test" />
       <SectionCheck pageId="transformer" sectionId="oc-test" />
 
       <h2 id="sc-test"><span className="h-num">6.</span>短絡試験（インピーダンス試験）</h2>
@@ -5595,7 +5859,7 @@ const TransformerPage = ({ onNav }) => (
       <Box kind="warn" label="三相では線間・線電流・三相電力の関係を確認する">
         <p style={{ margin: 0 }}>上の式も<strong>単相、または三相の1相分</strong>。三相で三相電力 <Eq tex="P_{s,3\phi}" /> を測ったなら1相分は <Eq tex="P_{s,3\phi}/3" />、Y結線の相電圧は <Eq tex="V_{s,\ell}/\sqrt3" />。<span className="marker">単相の式に線間電圧と三相電力を混ぜて代入しない</span>。%Z を経由すれば結線に依らず扱えるので、三相はそちらが安全（セクション9）。</p>
       </Box>
-      <Box kind="example" label="2つの試験の対比（取り違え防止）">
+      <Box kind="mistake" label="2つの試験の対比（取り違え防止）">
         <div className="table-wrap"><table className="data-table">
           <thead><tr><th scope="col"></th><th scope="col">無負荷試験</th><th scope="col">短絡試験</th></tr></thead>
           <tbody>
@@ -5686,6 +5950,7 @@ const TransformerPage = ({ onNav }) => (
         <p style={{ margin: "8px 0 0" }}>計算の最後に<strong>「自分が今どれを求めたか」</strong>を必ず1回確認する。<span className="marker">出した値が選択肢に無いときは立式そのものを疑う</span>（1.25 や 0.75 は選択肢に置かれないことが多い）。</p>
       </Box>
 
+      <TransformerQuick s="sc-test" />
       <SectionCheck pageId="transformer" sectionId="sc-test" />
 
       <h2 id="loss"><span className="h-num">7.</span>損失・通常効率・全日効率</h2>
@@ -5763,7 +6028,7 @@ const TransformerPage = ({ onNav }) => (
         <p style={{ margin: "6px 0 0" }}>例: 定格 100 kV·A の変圧器に「40 kW・力率 0.8」の負荷 → <Eq tex="S = 40/0.8 = 50" /> kV·A、<Eq tex="x = 0.5" />（<span className="marker"><Eq tex="40/100 = 0.4" /> としない</span>）。<strong>掛けるのではなく割る</strong>のがポイント。</p>
       </Box>
 
-      <Box kind="formula" label="覚え方">
+      <Box kind="tip" label="覚え方">
         <p style={{ margin: 0, fontSize: 15 }}><strong>力率は出力 kWh に使う。kV·A 負荷率は銅損に使う。</strong>（kW 与件なら、まず力率で<strong>割って</strong> kV·A にする）</p>
       </Box>
 
@@ -5915,8 +6180,10 @@ const TransformerPage = ({ onNav }) => (
       </Box>
 
       <h3 id="loss-sim">全日効率シミュレータ（数字を動かして確かめる）</h3>
-      <p>上の例題の条件が初期値。<strong>負荷率を半分にしても銅損は 1/4 にしかならない</strong>こと、<strong>負荷時間帯はそのままで通電時間だけを減らす（無負荷通電の時間を電源切離しに変える）と鉄損電力量だけが減る</strong>ことを、数値で確かめてほしい。負荷のある時間まで削れば、当然そのぶん出力電力量と銅損電力量も減る。</p>
-      <TransformerDailyEfficiencySimulator />
+      <Fold label="シミュレータを開く" sub="60点狙いでは後回しでよい（理解の確認用）">
+        <p>上の例題の条件が初期値。<strong>負荷率を半分にしても銅損は 1/4 にしかならない</strong>こと、<strong>負荷時間帯はそのままで通電時間だけを減らす（無負荷通電の時間を電源切離しに変える）と鉄損電力量だけが減る</strong>ことを、数値で確かめてほしい。負荷のある時間まで削れば、当然そのぶん出力電力量と銅損電力量も減る。</p>
+        <TransformerDailyEfficiencySimulator />
+      </Fold>
 
       <h3 id="loss-mistakes">頻出ミス</h3>
       <div className="table-wrap"><table className="data-table">
@@ -5933,7 +6200,7 @@ const TransformerPage = ({ onNav }) => (
           <tr><td>通電時間を 24 時間と決めつける</td><td>問題文の<strong>実際の通電時間</strong>を確認する（「12時間だけ接続」なら 12）</td></tr>
         </tbody>
       </table></div>
-      <Box kind="formula" label="この一文だけ持ち帰る">
+      <Box kind="tip" label="この一文だけ持ち帰る">
         <p style={{ margin: 0, fontSize: 15 }}>出力は「<strong>kV·A × 力率 × 時間</strong>」、鉄損は「<strong>一定 × 通電時間</strong>」、銅損は「<strong>全負荷銅損 × 負荷率² × 時間</strong>」。</p>
       </Box>
 
@@ -6031,6 +6298,7 @@ const TransformerPage = ({ onNav }) => (
         <p style={{ margin: "8px 0 0" }}>通常効率の <Eq tex="P_i = P_c" /> と形は同じだが、<strong>比べているのは電力 [kW] ではなく電力量 [kWh]</strong>。主線では両者を混同しないこと。</p>
       </Fold>
 
+      <TransformerQuick s="loss" />
       <SectionCheck pageId="transformer" sectionId="loss" />
 
       <h2 id="vreg"><span className="h-num">8.</span>電圧変動率</h2>
@@ -6058,6 +6326,7 @@ const TransformerPage = ({ onNav }) => (
         <p style={{ margin: "8px 0 0" }}>(2) は負。<strong>進み力率では端子電圧が無負荷時より上がる</strong>。<span className="marker"><Eq tex="q" /> が <Eq tex="p" /> より大きい変圧器ほど、この符号反転は起こりやすい</span>（実機の変圧器は一般に <Eq tex="q > p" />）。</p>
       </Box>
 
+      <TransformerQuick s="vreg" />
       <SectionCheck pageId="transformer" sectionId="vreg" />
 
       <h2 id="pz"><span className="h-num">9.</span>百分率インピーダンスと短絡電流</h2>
@@ -6113,6 +6382,7 @@ const TransformerPage = ({ onNav }) => (
         <p style={{ margin: "8px 0 0" }}>合成インピーダンスは必ず変圧器単独より大きくなるので、<strong>実際の短絡電流は簡易式の値より小さくなる</strong>。遮断器の選定では簡易式で安全側に見積もったうえで、詳細計算で確認する。</p>
       </Fold>
 
+      <TransformerQuick s="pz" />
       <SectionCheck pageId="transformer" sectionId="pz" />
 
       <h2 id="parallel"><span className="h-num">10.</span>並行運転</h2>
@@ -6218,6 +6488,7 @@ const TransformerPage = ({ onNav }) => (
         <p style={{ margin: 0 }}>容量比 2:1 そのままで分担し、<strong>両器とも負荷率 50 %</strong> でそろう。これが「%Z をそろえる」ことの実利。</p>
       </Box>
 
+      <TransformerQuick s="parallel" />
       <SectionCheck pageId="transformer" sectionId="parallel" />
 
       <h2 id="vconn"><span className="h-num">11.</span>V結線・単巻変圧器（頻出小論点）</h2>
@@ -6225,6 +6496,9 @@ const TransformerPage = ({ onNav }) => (
         <li><strong>V結線</strong> — 単相変圧器2台で三相を供給。出力容量は <Eq tex="\sqrt{3}\,S_1" />（<Eq tex="S_1" />: 1台の定格容量 [V·A]）。2台合計 <Eq tex="2S_1" /> に対する<span className="marker">利用率は √3/2 ≈ 86.6%</span>、Δ結線（3台）に対する出力比は <Eq tex="1/\sqrt{3} \approx 57.7\%" />。<strong>単相3台のΔ-Δで1台が故障した場合の応急運転</strong>は次のセクション12で詳説。</li>
         <li><strong>単巻変圧器</strong> — 一次・二次が巻線を共用（分路巻線＋直列巻線）。<span className="marker">自己容量（等価容量）＝ 負荷容量 × (V_h − V_l)/V_h</span> で、変圧比が1に近いほど小さな自己容量で大きな負荷容量を扱える（小型・高効率。ただし一次二次が絶縁されない）。</li>
       </ul>
+
+      <TransformerQuick s="vconn" />
+      <SectionCheck pageId="transformer" sectionId="vconn" />
 
       <h2 id="v-fault"><span className="h-num">12.</span>単相3台のΔ-Δで1台故障 → V結線運転</h2>
       <Box kind="tip" label="まず覚える結論（3つ）">
@@ -6252,7 +6526,7 @@ const TransformerPage = ({ onNav }) => (
           <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>「残った設備をどれだけ使い切れているか」＝<strong>利用率</strong>。</div>
         </div>
       </div>
-      <Box kind="mistake" label="なぜ 2 台なのに 100 % 取り出せないのか">
+      <Box kind="formula" label="なぜ 2 台なのに 100 % 取り出せないのか">
         <p style={{ margin: 0 }}>2台の定格容量の合計は <Eq tex="2VI" /> なのに、三相として取り出せるのは <Eq tex="\sqrt3\,VI" /> しかない。理由は<strong>1台ずつの中で、巻線電圧と巻線電流の位相が 30° ずれる</strong>ことにある。V結線では各器の巻線電圧が線間電圧そのもの・巻線電流が線電流そのものになるが、この2つは同相にならず、<span className="marker">負荷力率が 1 でも 30° ずれる</span>。だから各器が送れる有効電力は <Eq tex="VI\cos(30^\circ \mp \theta)" /> にとどまり、力率1でも1台あたり <Eq tex="VI\cos 30^\circ = 0.866\,VI" />。2台合計で <Eq tex="2VI\cos 30^\circ = \sqrt3\,VI" />（一般には <Eq tex="\sqrt3\,VI\cos\theta" />）。この <Eq tex="\cos 30^\circ = 0.866" /> が目減り分であり、これが利用率 86.6 % の正体である（各器の分担は下の「2台の負担」で詳述）。</p>
       </Box>
 
@@ -6373,6 +6647,7 @@ const TransformerPage = ({ onNav }) => (
         ▶ 結線方式そのものの比較（Y-Y / Δ-Δ / Y-Δ / Δ-Y の位相変位・第3高調波・用途）は <a href="https://kfurufuru.github.io/secretary-portal-public/denken3-denryoku-wiki.html#henatsuki" target="_blank" rel="noopener">電力Wiki「2.1 変圧器（基礎ハブ）」の三相結線とV結線</a>へ。
       </p>
 
+      <TransformerQuick s="v-fault" />
       <SectionCheck pageId="transformer" sectionId="v-fault" />
 
       <h2 id="traps"><span className="h-num">13.</span>過去問での解き方とひっかけ注意</h2>
@@ -6417,33 +6692,14 @@ const TransformerPage = ({ onNav }) => (
         </tbody>
       </table></div>
 
+      <TransformerQuick s="traps" />
       <SectionCheck pageId="transformer" sectionId="traps" />
 
-      <h2 id="quick-review"><span className="h-num">14.</span>1分復習（即答チェック）</h2>
-      <div className="box">
-        <details><summary>巻数比 a と電圧・電流の関係は？</summary>a = N₁/N₂ = V₁/V₂ = I₂/I₁（電流は巻数比の逆比）</details>
-        <details><summary>%Z = 5% のとき短絡電流は定格の何倍？</summary>20倍（I_s = (100/%Z)·I_n）</details>
-        <details><summary>短絡試験で Ze・Re・Xe を出す順番と式は？</summary>①Ze = Vs/Is（<strong>斜辺</strong>）→ ②Re = Ps/Is²（電力計 ≒ 銅損・<strong>電流基準</strong>）→ ③Xe = √(Ze²−Re²)（<strong>直角合成</strong>）。②で Ps/Vs² としない、③で Ze−Re としないの2点が失点源</details>
-        <details><summary>短絡試験の測定値だけで検算するには？</summary>cosθ = Ps/(VsIs) を出し、Re = Ze·cosθ、Xe = Ze·sinθ で再計算する。三平方とは<strong>別の計算経路</strong>なので途中の算術ミスを拾える。ただし2経路は代数的には同じ式（Ze·cosθ ≡ Ps/Is²）なので、<strong>立式そのものの誤りは拾えない</strong></details>
-        <details><summary>短絡試験の与件に定格が無いとき、何が求められて何が求められない？</summary>求められる＝Ze・Re・Xe（測定値だけで出る）／<strong>求められない</strong>＝%Z・電圧変動率・短絡電流（定格電圧 Vn または定格容量 SN が要る）。「定格電流を流した」だけでは Vn は確定しない</details>
-        <details><summary>変圧器の最高効率の条件は？</summary>鉄損 = 銅損（P_i = x²P_cN）。そのときの負荷率 x = √(P_i / P_cN)。分母は全負荷銅損であって、そのときの実銅損ではない</details>
-        <details><summary>通常効率と全日効率は何が違う？</summary>通常効率＝ある運転点を <strong>kW の比</strong>で評価（η = Pout /(Pout+Pi+x²PcN)）／全日効率＝1日全体を <strong>kWh の比</strong>で評価（ηd = Wout /(Wout+Wi+Wc)）。効率自体はどちらも無次元で [%] 表示。<strong>主に重視される用途</strong>が通常効率＝電力用変圧器、全日効率＝負荷変動の大きい配電用変圧器（同じ1台について両方を評価でき、対象機器が排他的に分かれるわけではない）</details>
-        <details><summary>全日効率は kW と kWh のどちらで計算する？</summary><strong>kWh（電力量）</strong>。出力・鉄損・銅損をそれぞれ電力量に直してから分母に入れる。通常効率を求めてから時間を掛けても全日効率にはならない（鉄損と銅損では掛ける時間が違うため）</details>
-        <details><summary>出力電力量の式は？</summary>Wout = Σ Sk·cosφk·tk [kWh]。kV·A は皮相電力なので、有効電力量にするには<strong>力率を掛ける</strong>。無負荷の時間帯は出力ゼロなので足さない</details>
-        <details><summary>鉄損電力量の式は？</summary>Wi = Pi × Ton [kWh]。Ton は<strong>電圧が加わっている時間</strong>。24時間通電のときだけ Pi×24 で、「12時間だけ電源に接続」ならその通電時間を使う</details>
-        <details><summary>銅損電力量の式は？</summary>Wc = PcN × Σ xk²·tk [kWh]（xk = Sk/SN）。各時間帯ごとに<strong>2乗してから足す</strong>。全負荷銅損 PcN をそのまま使うのではない</details>
-        <details><summary>50% 負荷のとき銅損は全負荷銅損の何%？</summary><strong>25%</strong>（x² = 0.5² = 0.25）。半分ではない。銅損は I²R で、電圧一定なら I は kV·A に比例するので負荷率の2乗で効く</details>
-        <details><summary>出力の計算には力率を使うのに、負荷率には原則使わないのはなぜ？</summary>出力は<strong>有効電力</strong>なので kV·A に力率を掛ける。一方、銅損を決めるのは<strong>巻線電流</strong>で、負荷率の本質は x = I/IN。三相では I = S/(√3V) なので、電圧一定なら電流は kV·A に比例し x = S/SN（kV·A どうしの比）で取れる。力率を掛けると低力率の時間帯の銅損を過小評価する。合言葉は「力率は出力 kWh に、kV·A 負荷率は銅損に」</details>
-        <details><summary>負荷が「40 kW・力率0.8」と kW で与えられたら負荷率は？（定格 100 kV·A）</summary><strong>x = 0.5</strong>。負荷率は皮相電力の比なので、まず S = P/cosφ = 40/0.8 = <strong>50 kV·A</strong> に換算してから x = 50/100 = 0.5。<span className="marker">40/100 = 0.4 としない</span>。「力率を掛けない」のは負荷が kV·A で与えられたときの話で、kW 与件では力率で<strong>割って</strong> kV·A に直す</details>
-        <details><summary>無負荷通電中（電源は入・負荷ゼロ）に発生する損失は？</summary><strong>鉄損だけ</strong>。銅損は三種の計算ではほぼ 0 として扱う（励磁電流によるわずかな銅損は無視する前提）</details>
-        <details><summary>電源切離し中（開放）に発生する損失は？</summary><strong>鉄損も銅損も発生しない</strong>。「無負荷」と「電源切離し」を混同すると、鉄損電力量の通電時間を取り違える</details>
-        <details><summary>全日効率の計算順序（5ステップ）は？</summary>①各時間帯の出力電力量 Sk·cosφk·tk → ②合計して Wout → ③鉄損電力量 Wi = Pi·Ton → ④銅損電力量 Wc = PcN·Σxk²tk → ⑤ηd = Wout/(Wout+Wi+Wc)×100。最後に 0〜100% に収まるか検算する</details>
-        <details><summary>電圧変動率の簡易式は？</summary>ε ≈ p·cosθ + q·sinθ（遅れ力率では sinθ が正）</details>
-        <details><summary>V結線の出力と利用率は？</summary>出力 = √3 × 単器容量。利用率 √3/2 ≈ 86.6%（Δ結線3台比の出力は 57.7%）</details>
-        <details><summary>Δ-Δ の1台が故障したら出力は何%になる？</summary>1/√3 ≈ 57.7%（2/3 = 66.7% ではない）。巻線電流が線電流そのものになり √3 倍の負担になるため</details>
-        <details><summary>V結線で線間電圧が3つとも得られるのはなぜ？</summary>3つの線間電圧の和はゼロ（V̇ab+V̇bc+V̇ca=0）なので、2つを2台で作れば残り1つは V̇bc=−(V̇ab+V̇ca) として定まる（実負荷では電圧降下の分だけ不平衡が出る）</details>
-        <details><summary>V結線の2台で「等しいもの」と「偏るもの」は？</summary>等しい＝皮相電力 V_L·I_L と巻線電流（同一仕様器なら損失・温度上昇もほぼ同等）／偏る＝個別力率と有効・無効電力の分担（有効電力係数は cos(30°−θ) と cos(30°+θ)）。有効分担が等しいのは力率1のときだけ</details>
-      </div>
+      <h2 id="quick-review"><span className="h-num">14.</span>1分復習（通し）</h2>
+      <p>各節の末尾に置いてある確認問題を、ここに全部まとめてある（同じ問題・同じ答え）。
+        節ごとに解くのは<strong>解説を読んだ直後に思い出せるか</strong>を試すため、ここに通しがあるのは
+        <strong>試験直前に全体を1分で流す</strong>ため。答えは畳んであるので、開く前に必ず自分で言ってみる。</p>
+      <TransformerQuick />
       <SectionCheck pageId="transformer" sectionId="quick-review" />
 
       <h2 id="kakomon-progress"><span className="h-num">15.</span>過去問の進捗はどこに残すか</h2>
@@ -6464,9 +6720,10 @@ const TransformerPage = ({ onNav }) => (
           { id: "vreg", label: "8. 電圧変動率" },
           { id: "pz", label: "9. 百分率インピーダンスと短絡電流" },
           { id: "parallel", label: "10. 並行運転" },
-          { id: "v-fault", label: "11–12. V結線・単巻変圧器／Δ-Δ 1台故障" },
+          { id: "vconn", label: "11. V結線・単巻変圧器" },
+          { id: "v-fault", label: "12. Δ-Δ 1台故障 → V結線運転" },
           { id: "traps", label: "13. 過去問での解き方とひっかけ注意" },
-          { id: "quick-review", label: "14. 1分復習（即答チェック）" },
+          { id: "quick-review", label: "14. 1分復習（通し）" },
         ]}
       />
     </div>
@@ -6753,7 +7010,7 @@ const PowerElecPage = ({ onNav }) => (
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "2. 静止器・電力変換" }, { label: "2.2 パワーエレクトロニクス" }]} onNav={onNav} />
     <PageHeader eyebrow="2.2  POWER ELECTRONICS" title="パワーエレクトロニクス"
       deck="半導体スイッチで電力を制御する分野。整流回路（AC→DC）、チョッパ（DC→DC）、インバータ（DC→AC）、サイクロコンバータ（AC→AC）の四つに大別される。"
-      meta={[{ label: "出題頻度", value: "高（10年で約20問・10%）" }, { label: "難易度", value: "★★★★☆" }]} />
+      meta={[{ label: "出題頻度（編集部集計）", value: "高（10年で約20問・10%）" }, { label: "難易度", value: "★★★★☆" }]} />
     <div className="content">
       <PowerElecLayers />
       <h2 id="devices"><span className="h-num">1.</span>主な半導体素子</h2>
@@ -7103,7 +7360,7 @@ const KeikiYoHenseikiPage = ({ onNav }) => (
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "2. 静止器・電力変換" }, { label: "2.3 計器用変成器（CT・VT）" }]} onNav={onNav} />
     <PageHeader eyebrow="2.3  INSTRUMENT TRANSFORMERS (CT / VT)" title="計器用変成器（CT・VT）"
       deck="高圧の電流・電圧を低圧側で安全に測定するための変成器。CT＝電流用・VT＝電圧用。二次禁則が真逆になる理由を「一次側から何を強制するか」の物理から導く。丸暗記すると毎回逆になる典型論点。"
-      meta={[{ label: "出題頻度", value: "高（混同型は機械・法規どちらでも出る。付録 A の分野別集計には単独の枠がない）" }, { label: "難易度", value: "★★★☆☆" }]} />
+      meta={[{ label: "出題頻度（編集部集計）", value: "高（混同型は機械・法規どちらでも出る。付録 A の分野別集計には単独の枠がない）" }, { label: "難易度", value: "★★★☆☆" }]} />
     <div className="content">
       <KeikiYoHenseikiLayers />
 
@@ -7648,7 +7905,7 @@ const AutoControlPage = ({ onNav }) => (
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "3. 制御・応用" }, { label: "3.1 自動制御" }]} onNav={onNav} />
     <PageHeader eyebrow="3.1  AUTOMATIC CONTROL" title="自動制御"
       deck="伝達関数・ブロック線図・周波数応答・安定判別が四本柱。電気主任技術者の試験では古典制御の範疇に絞られる。"
-      meta={[{ label: "出題頻度", value: "高（10年で約18問・9%）" }, { label: "難易度", value: "★★★★☆" }]} />
+      meta={[{ label: "出題頻度（編集部集計）", value: "高（10年で約18問・9%）" }, { label: "難易度", value: "★★★★☆" }]} />
     <div className="content">
       <AutoControlLayers />
       <h2 id="tf"><span className="h-num">1.</span>伝達関数</h2>
@@ -8017,7 +8274,7 @@ const StubPage = ({ id, title, eyebrow, deck, freq, sections, onNav, prev, next 
   <>
     <Crumbs items={[{ id: "home", label: "ホーム" }, { label: title }]} onNav={onNav} />
     <PageHeader eyebrow={eyebrow} title={title} deck={deck}
-      meta={freq ? [{ label: "出題頻度", value: freq }] : null} />
+      meta={freq ? [{ label: "出題頻度（編集部集計）", value: freq }] : null} />
     <div className="content">
       {sections.map((s, i) => (
         <React.Fragment key={i}>
@@ -8030,10 +8287,32 @@ const StubPage = ({ id, title, eyebrow, deck, freq, sections, onNav, prev, next 
   </>
 );
 
+/* プログラム問題のコード表示。既存 CSS に pre 用クラスが無いためここで持つ。
+   長い行はブロック内で横スクロールさせる（本文を横に伸ばさない）。 */
+const progPre = {
+  fontFamily: "var(--font-mono)",
+  fontSize: "12.5px",
+  lineHeight: 1.7,
+  background: "var(--bg-sunken)",
+  border: "1px solid var(--rule-soft)",
+  borderRadius: "6px",
+  padding: "10px 14px",
+  overflowX: "auto",
+  margin: "4px 0 14px",
+};
+const codeLang = {
+  fontFamily: "var(--font-mono)",
+  fontSize: "10px",
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  color: "var(--ink-mute)",
+  margin: "10px 0 2px",
+};
+
 const InfoElecPage = ({ onNav }) => (
   <StubPage id="info-elec" title="情報・電子回路"
     eyebrow="3.2  INFORMATION & ELECTRONIC CIRCUITS"
-    deck="論理回路・組み合わせ回路・順序回路・基本演算・A/D 変換などを扱う。出題範囲は浅く広い。"
+    deck="論理回路・順序回路・A/D 変換・進数に加え、BASIC と C の2言語で併記されるプログラム問題の読み方までを扱う。出題範囲は浅く広い。"
     freq="中（10年で約10問・5%）"
     prev={{ id: "auto-control", title: "3.1 自動制御" }} next={{ id: "lighting", title: "4.1 照明" }}
     onNav={onNav}
@@ -8070,6 +8349,235 @@ const InfoElecPage = ({ onNav }) => (
           <details><summary>n ビット A/D 変換の量子化段階数は？</summary>2ⁿ 段階（例: 8ビット = 256段階）</details>
           <details><summary>(1010)₂ は10進でいくつ？</summary>8 + 2 = 10（各桁の重み 8, 4, 2, 1 を足す）</details>
         </div>
+      </>},
+      { id: "program-howto", heading: "プログラム問題の読み方（BASIC・C の2言語併記）", body: <>
+        <p>試験のプログラム問題は、同一の処理が <strong>BASIC（JIS X 3003）</strong>と <strong>C 言語（JIS X 3010）</strong>の2通りの表記で併記される（受験案内の記載として受け取ったもの。<span className="marker">自分が受ける回の受験案内で確認すること</span>）。2つの言語で<strong>別々の問題が出るのではない</strong>。同じ1つのプログラムが2つの書き方で並んでいるだけである。</p>
+        <Box kind="tip" label="結論 — 両方覚える必要はない">
+        <p><span className="marker">どちらか片方が読めれば解答できる</span>。自分の言語を1つ決めて固定し、もう片方の表記は読み飛ばしてよい。本ページの以降の節も「片方＋対照表」で完結するように書いてある。片方で答えを出したあと、もう片方を検算に使うのは自由だが、義務ではない。</p>
+        </Box>
+        <p>どちらを選ぶかの目安は次のとおり。</p>
+        <ul>
+        <li><strong>プログラミング経験がない</strong> — BASIC。英単語（IF・FOR・PRINT）をほぼそのまま読み下せて、記号が少ない</li>
+        <li><strong>C・Java・Python などの経験がある</strong> — C。見慣れた記法（<code>{`==`}</code>・<code>{`{ }`}</code>・<code>{`i++`}</code>）のままでよい</li>
+        <li>一度決めたら<strong>過去問演習も同じ側で通す</strong>。毎回切り替えると、次節の「記号の意味の違い」（<code>{`=`}</code> と <code>{`==`}</code> など）で混同が起きる</li>
+        </ul>
+        <Box kind="warn" label="前提 — 問題文の表記が正">
+        <p>BASIC には処理系による方言がある。本ページに載せる BASIC は <strong>JIS X 3003（Full BASIC）に近い基本形</strong>に寄せてあるが、<strong>細部は処理系で違う</strong>（<code>LET</code> の有無、<code>DO … LOOP</code> の綴り、剰余が関数形か演算子形か等）。実際の問題文に印刷されたコードが本ページと違ったら、<span className="marker">問題文の表記に従って読む</span>。</p>
+        </Box>
+      </>},
+      { id: "syntax-contrast", heading: "最小限の文法対照表（BASIC ↔ C）", body: <>
+        <p>試験のプログラム読解に必要な文法はこの表の範囲でほぼ足りる。自分の言語の列だけ覚え、もう片方の列は「同じ意味の別表記」と確認できれば十分である。</p>
+        <div className="table-wrap">
+        <table className="data-table">
+        <thead>
+        <tr><th scope="col">項目</th><th scope="col">BASIC</th><th scope="col">C</th><th scope="col">メモ</th></tr>
+        </thead>
+        <tbody>
+        <tr><td>変数の用意</td><td>宣言不要（使えばよい）</td><td><code>{`int i, s;`}</code>（型を先に宣言）</td><td>C は整数 <code>int</code>・実数 <code>double</code></td></tr>
+        <tr><td>代入</td><td><code>{`LET S = 0`}</code></td><td><code>{`s = 0;`}</code></td><td>C は文末の <code>{`;`}</code> が必須</td></tr>
+        <tr><td>等しい</td><td><code>{`=`}</code>（IF の中の <code>{`A = B`}</code>）</td><td><code>{`==`}</code></td><td>最重要の違い（下の罠）</td></tr>
+        <tr><td>等しくない</td><td><code>{`<>`}</code></td><td><code>{`!=`}</code></td><td>意味は同じ</td></tr>
+        <tr><td>大小比較</td><td><code>{`<   >   <=   >=`}</code></td><td><code>{`<   >   <=   >=`}</code></td><td>両言語共通</td></tr>
+        <tr><td>論理演算</td><td><code>{`AND   OR   NOT`}</code></td><td><code>{`&&   ||   !`}</code></td><td>「かつ・または・でない」</td></tr>
+        <tr><td>条件分岐</td><td><code>{`IF 条件 THEN … ELSE … END IF`}</code></td><td><code>{`if (条件) { … } else { … }`}</code></td><td>1行だけなら BASIC は <code>{`IF 条件 THEN 文`}</code> とも書く</td></tr>
+        <tr><td>回数の繰り返し</td><td><code>{`FOR I = 1 TO 5 … NEXT I`}</code></td><td><code>{`for (i = 1; i <= 5; i++) { … }`}</code></td><td><code>{`i++`}</code> は <code>{`i = i + 1`}</code> の略記。増分は <code>{`STEP 2`}</code> ↔ <code>{`i = i + 2`}</code></td></tr>
+        <tr><td>条件の繰り返し</td><td><code>{`DO WHILE 条件 … LOOP`}</code> など<br /><span style={{fontSize:12,color:"var(--ink-soft)"}}>綴りは処理系差あり</span></td><td><code>{`while (条件) { … }`}</code></td><td>条件が真の<strong>間だけ</strong>繰り返す。<strong>条件が先頭なら0回もありうる／末尾（<code>{`do { … } while (条件);`}</code> 型）なら最低1回は動く</strong>。綴りより「条件をどこで見るか」を読む</td></tr>
+        <tr><td>配列の宣言</td><td><code>{`DIM A(5)`}</code><br /><span style={{fontSize:12,color:"var(--ink-soft)"}}>開始番号は問題文のループで確認</span></td><td><code>{`int a[5];`}</code> → <code>{`a[0]`}</code>〜<code>{`a[4]`}</code><br /><span style={{fontSize:12,color:"var(--ink-soft)"}}>C は必ず 0 から</span></td><td><span className="marker">開始番号が違う</span>（下の罠2）</td></tr>
+        <tr><td>配列の参照</td><td><code>{`A(I)`}</code>（丸かっこ）</td><td><code>{`a[i]`}</code>（角かっこ）</td><td>かっこの形で言語を見分けられる</td></tr>
+        <tr><td>余り（剰余）</td><td><code>{`MOD(A, B)`}</code> など<br /><span style={{fontSize:12,color:"var(--ink-soft)"}}>関数形・演算子形の両方がある</span></td><td><code>{`a % b`}</code></td><td>A を B で割った余り</td></tr>
+        <tr><td>出力</td><td><code>{`PRINT S`}</code></td><td><code>{`printf("%d\\n", s);`}</code></td><td><code>{`%d`}</code> は整数の埋め込み位置</td></tr>
+        <tr><td>コメント（注釈）</td><td><code>{`REM 注釈`}</code></td><td><code>{`/* 注釈 */`}</code>（<code>{`// 注釈`}</code> も可）</td><td>実行されない。読み飛ばしてよい</td></tr>
+        </tbody>
+        </table>
+        </div>
+        <Box kind="mistake" label="罠1 — = と == の取り違え（最大の失点源）">
+        <p>BASIC の <code>{`=`}</code> は<strong>文脈で意味が変わる</strong>。<code>{`LET A = B`}</code> なら代入、<code>{`IF A = B THEN`}</code> の中なら「等しいか」の比較である。C はこれを記号で区別し、<code>{`=`}</code> は常に代入、<code>{`==`}</code> が比較。したがって <span className="marker">C の <code>{`if`}</code> の中に <code>{`==`}</code> があったら「等しいか」と読む</span>。「等しくない」も BASIC <code>{`<>`}</code> ↔ C <code>{`!=`}</code> で記号が違うだけで意味は同じ。</p>
+        </Box>
+        <Box kind="mistake" label="罠2 — 配列の添字が何番から始まるかを、覚えずに読み取る">
+        <p>C は <strong>必ず 0 から</strong>。<code>{`int a[5];`}</code> なら <code>{`a[0]`}</code>〜<code>{`a[4]`}</code> で、これは規格で決まっているので迷う余地がない。</p>
+        <p>BASIC 側は<strong>本ページでは既定値を断定しない</strong>。処理系や指定によって 0 開始にも 1 開始にもなり、
+        <span className="marker">その差は必ずコードのどこかに現れる</span>からである。
+        <code>{`FOR I = 1 TO 5`}</code> と書いてあれば添字は 1〜5、<code>{`FOR I = 0 TO 4`}</code> なら 0〜4。
+        既定値を暗記するより、<strong>コードが実際に触っている添字を拾う</strong>方が確実で速い。</p>
+        <p><strong>ただしループだけでは足りない。</strong>見るのは<strong>宣言・ループ範囲・添字式のすべて</strong>である。
+        下のトレース例題2がまさにその形で、ループは <code>{`FOR I = 2 TO 5`}</code> なのに、
+        添字が 1 から始まると分かるのは<strong>ループの前の <code>{`LET M = A(1)`}</code></strong> の方である。
+        <span className="marker"><code>{`A(I-1)`}</code> のような添字式やループ後の参照も同じように数える</span>。</p>
+        <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--ink-soft)" }}>
+        本Wikiは JIS X 3003 の規格原文を照合していないため、BASIC 側の既定の添字下限については断定を避けている。</p>
+        </Box>
+        <Box kind="mistake" label="罠3 — C の整数どうしの割り算は切り捨て">
+        <p>C で <code>{`int`}</code> どうしの <code>{`5 / 2`}</code> は <strong>2</strong>（小数点以下切り捨て）。これは C の規格で決まっている。割り算を含むトレースでは、<strong>C 側は「整数どうしなら切り捨て」を1行ごとに意識する</strong>。<br />BASIC 側が小数を保つかどうかは処理系差があるため本Wikiでは断定しない。<span className="marker">割り算が出たら、問題文が示す途中経過や選択肢の値で、切り捨てかどうかを確かめる</span>。</p>
+        </Box>
+      </>},
+      { id: "trace-method", heading: "トレースの手順（変数表で機械的に実行する）", body: <>
+        <p>プログラム問題の解法の中心は<strong>トレース（追跡）</strong>である。プログラムを「読んで意味を悟る」のではなく、<span className="marker">自分が計算機になったつもりで1行ずつ機械的に実行し、変数の値を表に記録する</span>。</p>
+        <Box kind="formula" label="なぜ表に書くのか">
+        <p>頭の中だけでトレースすると、ループが2周目に入ったあたりで「今の I はいくつだったか」を必ず見失う。変数の値は<strong>上書きされて消える</strong>ので、紙の表に履歴として残すのが唯一確実な方法である。表さえ正しく埋まれば、プログラムの「意図」が分からなくても答えは出る。</p>
+        </Box>
+        <p>手順は次の6ステップ。</p>
+        <ol>
+        <li>プログラムに登場する<strong>変数をすべて列挙</strong>し、表の列にする（配列は要素ごとに列を分けるか、値の並びを欄外に書いておく）</li>
+        <li>ループより前の代入を実行し、<strong>初期値の行</strong>を書く</li>
+        <li>ループは<strong>「周回」列</strong>を作り、1周ごとに1行使う</li>
+        <li>1文実行するたびに、<strong>値が変わった変数だけ</strong>新しい値を書く（変わらない変数は前の行の値のまま）</li>
+        <li>条件判定（IF・ループ継続）は<strong>真／偽を明記</strong>し、どちらへ進んだかを矢印で書く</li>
+        <li>出力文（PRINT／printf）に到達した<strong>時点の値</strong>が答え</li>
+        </ol>
+        <Box kind="warn" label="条件 — ループの境界（回数）は表で確認する">
+        <p>「何回まわるか」を暗算で決めない。C の <code>{`i < 5`}</code>（<code>{`i = 0`}</code> 開始）は i = 0, 1, 2, 3, 4 の<strong>5回</strong>、<code>{`i <= 5`}</code>（<code>{`i = 1`}</code> 開始）も<strong>5回</strong>だが最後の i の値が違う。BASIC の <code>{`FOR I = 1 TO 5`}</code> も I = 1〜5 の5回。境界（未満か以下か）を1回分読み違える「1回ずれ」が定番の誤答なので、<span className="marker">最初の1周と最後の1周は必ず表に書いて確かめる</span>。</p>
+        <Box kind="formula" label="C の for が回る順番（規格で決まっている）">
+          <p style={{ margin: 0 }}><code>{`for (A; B; C) { 本体 }`}</code> は
+            <strong>①A を1回だけ実行 → ②B を判定 → 真なら③本体 → ④C → ②へ戻る</strong>。
+            B が偽になった瞬間に抜ける。だから <code>{`for (i = 1; i <= 5; i++)`}</code> を抜けた直後の
+            <code>{`i`}</code> は <strong>6</strong>（最初に条件を満たさなかった値）で、これは C の規格で確定する。
+            <br />BASIC の <code>{`NEXT I`}</code> を抜けた後の <code>{`I`}</code> も標準では同じ考え方だが、
+            処理系差の可能性があるので本Wikiでは断定しない。<span className="marker">抜けた後の値が答えに絡む問題では、C 側で数える</span>。</p>
+        </Box>
+        </Box>
+      </>},
+      { id: "trace-example", heading: "トレース例題（ループと配列）", body: <>
+        <p>前節の手順をそのまま使う。BASIC・C を併記するが、<strong>自分の言語の側だけ読めばよい</strong>。</p>
+
+        <Box kind="example" label="例題1 — ループの和">
+        <p><strong>問:</strong> 次のプログラムを実行したとき、出力される値を求めよ。</p>
+        <div style={codeLang}>BASIC</div>
+        <pre style={progPre}>{`LET S = 0
+FOR I = 1 TO 5
+  LET S = S + I
+NEXT I
+PRINT S`}</pre>
+        <div style={codeLang}>C</div>
+        <pre style={progPre}>{`int i, s;
+s = 0;
+for (i = 1; i <= 5; i++) {
+  s = s + i;
+}
+printf("%d\\n", s);`}</pre>
+        <Fold label="解答とトレース" sub="開く前に、自分で変数表（I と S の2列）を埋めてみる">
+        <p>変数は I（ループカウンタ）と S（和）の2つ。初期値 S = 0 から、ループ本体 <code>{`S = S + I`}</code> を1周1行で記録する。</p>
+        <div className="table-wrap">
+        <table className="data-table">
+        <thead>
+        <tr><th scope="col">周回</th><th scope="col">I</th><th scope="col">S = S + I の計算</th><th scope="col">実行後の S</th></tr>
+        </thead>
+        <tbody>
+        <tr><td>開始前</td><td>—</td><td>（LET S = 0）</td><td className="num">0</td></tr>
+        <tr><td>1周目</td><td className="num">1</td><td>0 + 1</td><td className="num">1</td></tr>
+        <tr><td>2周目</td><td className="num">2</td><td>1 + 2</td><td className="num">3</td></tr>
+        <tr><td>3周目</td><td className="num">3</td><td>3 + 3</td><td className="num">6</td></tr>
+        <tr><td>4周目</td><td className="num">4</td><td>6 + 4</td><td className="num">10</td></tr>
+        <tr><td>5周目</td><td className="num">5</td><td>10 + 5</td><td className="num">15</td></tr>
+        </tbody>
+        </table>
+        </div>
+        <p>I = 5 の周回を終えるとループ継続条件（BASIC: I が 5 以下 ／ C: <code>{`i <= 5`}</code>）が偽になって抜け、出力文に到達する。<strong>答え: 15</strong>（1 から 5 までの和）。</p>
+        <p>検算: <Eq tex="1+2+3+4+5 = \dfrac{5 \times 6}{2} = 15" />。トレースの答えと一致する。</p>
+        </Fold>
+        </Box>
+
+        <Box kind="example" label="例題2 — 配列の最大値">
+        <p><strong>問:</strong> 5個の値 30, 80, 50, 90, 20 がこの順で配列に入っている（BASIC では A(1)〜A(5)、C では a[0]〜a[4]）。次のプログラムを実行したとき、出力される値を求めよ。</p>
+        <div style={codeLang}>BASIC</div>
+        <pre style={progPre}>{`DIM A(5)
+LET M = A(1)
+FOR I = 2 TO 5
+  IF A(I) > M THEN LET M = A(I)
+NEXT I
+PRINT M`}</pre>
+        <div style={codeLang}>C</div>
+        <pre style={progPre}>{`int a[5] = {30, 80, 50, 90, 20};
+int i, m;
+m = a[0];
+for (i = 1; i < 5; i++) {
+  if (a[i] > m) {
+    m = a[i];
+  }
+}
+printf("%d\\n", m);`}</pre>
+        <Fold label="解答とトレース" sub="開く前に、比較の真／偽を1周ずつ書いてみる">
+        <p>M（C では m）は「これまでに見た中の最大値」。先頭の要素を初期値にし、2番目以降と順に比較して、より大きければ入れ替える。<strong>BASIC は I = 2〜5、C は i = 1〜4 と番号は違うが、参照する要素は同じ</strong>（添字の開始が 1 と 0 で違うため。セクション7の罠2）。</p>
+        <div className="table-wrap">
+        <table className="data-table">
+        <thead>
+        <tr><th scope="col">周回</th><th scope="col">BASIC: I ／ C: i</th><th scope="col">見る要素と値</th><th scope="col">M より大きいか</th><th scope="col">実行後の M</th></tr>
+        </thead>
+        <tbody>
+        <tr><td>開始前</td><td>—</td><td>先頭 = 30</td><td>（M = 先頭で初期化）</td><td className="num">30</td></tr>
+        <tr><td>1周目</td><td>I=2 ／ i=1</td><td className="num">80</td><td>80 &gt; 30 → 真</td><td className="num">80</td></tr>
+        <tr><td>2周目</td><td>I=3 ／ i=2</td><td className="num">50</td><td>50 &gt; 80 → 偽</td><td className="num">80</td></tr>
+        <tr><td>3周目</td><td>I=4 ／ i=3</td><td className="num">90</td><td>90 &gt; 80 → 真</td><td className="num">90</td></tr>
+        <tr><td>4周目</td><td>I=5 ／ i=4</td><td className="num">20</td><td>20 &gt; 90 → 偽</td><td className="num">90</td></tr>
+        </tbody>
+        </table>
+        </div>
+        <p>ループを抜けて出力。<strong>答え: 90</strong>（5個の中の最大値）。</p>
+        <p>不等号を <code>{`<`}</code> に変えれば同じ形で<strong>最小値</strong>になる（答えは 20）。比較の向きを1か所変えるだけで問題の意味が反転するので、トレースでは<strong>不等号の向きを最初に確認</strong>する。</p>
+        </Fold>
+        </Box>
+      </>},
+      { id: "flowchart", heading: "フローチャートの記号", body: <>
+        <p>プログラムの代わりに<strong>フローチャート（流れ図）</strong>で処理が示されることもある。記号は次の対応で読む。読み方はプログラムと同じで、<strong>矢印に沿って1記号ずつトレース</strong>すればよい。</p>
+        <div className="table-wrap">
+        <table className="data-table">
+        <thead>
+        <tr><th scope="col">記号</th><th scope="col">名称</th><th scope="col">意味</th><th scope="col">コードとの対応</th></tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><svg width="72" height="36" viewBox="0 0 72 36" aria-hidden="true"><rect x="4" y="7" width="64" height="22" rx="11" fill="none" stroke="var(--ink-mute)" strokeWidth="1.5" /></svg></td>
+        <td>端子</td><td>開始・終了</td><td>プログラムの始めと終わり</td>
+        </tr>
+        <tr>
+        <td><svg width="72" height="36" viewBox="0 0 72 36" aria-hidden="true"><rect x="4" y="7" width="64" height="22" fill="none" stroke="var(--ink-mute)" strokeWidth="1.5" /></svg></td>
+        <td>処理</td><td>計算・代入</td><td><code>{`LET S = S + I`}</code> ／ <code>{`s = s + i;`}</code></td>
+        </tr>
+        <tr>
+        <td><svg width="72" height="36" viewBox="0 0 72 36" aria-hidden="true"><polygon points="36,3 69,18 36,33 3,18" fill="none" stroke="var(--ink-mute)" strokeWidth="1.5" /></svg></td>
+        <td>判断</td><td>条件で分岐（枝に Yes／No を書く）</td><td><code>{`IF`}</code> ／ <code>{`if`}</code>、ループの継続判定</td>
+        </tr>
+        <tr>
+        <td><svg width="72" height="36" viewBox="0 0 72 36" aria-hidden="true"><polygon points="16,7 70,7 56,29 2,29" fill="none" stroke="var(--ink-mute)" strokeWidth="1.5" /></svg></td>
+        <td>入出力（データ）</td><td>値の入力・出力</td><td><code>{`PRINT`}</code> ／ <code>{`printf`}</code></td>
+        </tr>
+        <tr>
+        <td><svg width="72" height="36" viewBox="0 0 72 36" aria-hidden="true"><polygon points="14,7 58,7 70,17 70,29 2,29 2,17" fill="none" stroke="var(--ink-mute)" strokeWidth="1.5" /></svg></td>
+        <td>ループ端</td><td>繰り返しの範囲（開始と終了で上下対）</td><td><code>{`FOR`}</code>〜<code>{`NEXT`}</code> ／ <code>{`for`}</code>。開始側に「I = 1, 5」のように範囲を書く</td>
+        </tr>
+        <tr>
+        <td><svg width="72" height="36" viewBox="0 0 72 36" aria-hidden="true"><line x1="8" y1="18" x2="58" y2="18" stroke="var(--ink-mute)" strokeWidth="1.5" /><polygon points="58,13 68,18 58,23" fill="var(--ink-mute)" /></svg></td>
+        <td>流れ線</td><td>処理の順序</td><td>原則として上から下・左から右へ読む</td>
+        </tr>
+        </tbody>
+        </table>
+        </div>
+        <Box kind="tip" label="結論 — ループの書き方は2流儀あるが同じもの">
+        <p>繰り返しは、①<strong>ループ端の対</strong>で挟む書き方と、②<strong>判断記号＋上へ戻る矢印</strong>で書く書き方（while をそのまま図にした形）の2通りがある。<span className="marker">どちらも意味は同じ</span>。②では「戻る矢印がどこへ戻るか」と「抜ける条件はどちらの枝か」を最初に確認してからトレースを始める。</p>
+        </Box>
+      </>},
+      { id: "bit-byte", heading: "ビットとバイトの基礎", body: <>
+        <p>ビットは 0 か 1 の2値をとる情報の最小単位で、<strong>1バイト = 8ビット</strong>。10進↔2進↔16進の変換手順は本ページのセクション4（基数変換）を参照。ここでは<strong>「n ビットで何通り表せるか」</strong>というビット幅の視点だけ押さえる。</p>
+        <FormulaCard num="01" name="n ビットで表せる状態の数" eq="2^n \;\text{通り}"
+        note={<>1ビット増えるごとに2倍。4ビット = 16通り = 16進1桁、8ビット（1バイト）= 256通り、16ビット = 65536通り。<Eq tex="2^{10} = 1024" /> が「キロ」の目安。</>} />
+        <div className="table-wrap">
+        <table className="data-table">
+        <thead>
+        <tr><th scope="col">ビット数</th><th scope="col">状態の数</th><th scope="col">0 起点の最大値</th><th scope="col">対応</th></tr>
+        </thead>
+        <tbody>
+        <tr><td className="num">4</td><td className="num">16</td><td className="num">15</td><td>16進1桁（0〜F）</td></tr>
+        <tr><td className="num">8</td><td className="num">256</td><td className="num">255</td><td>1バイト = 16進2桁（00〜FF）</td></tr>
+        <tr><td className="num">10</td><td className="num">1024</td><td className="num">1023</td><td>約10³（キロの目安）</td></tr>
+        <tr><td className="num">16</td><td className="num">65536</td><td className="num">65535</td><td>2バイト</td></tr>
+        </tbody>
+        </table>
+        </div>
+        <Box kind="mistake" label="罠 — 「状態の数」と「最大値」を混同しない">
+        <p>「8ビットの最大値は 256」は誤り。8ビットで表せるのは <Eq tex="2^8 = 256" /> <strong>通り</strong>だが、0 を含むので 0〜255、<span className="marker">最大値は <Eq tex="2^8 - 1 = 255" /></span>。「<Eq tex="2^n" /> は個数、最大値は <Eq tex="2^n - 1" />」とセットで覚える。A/D 変換の量子化段階数（セクション3）の <Eq tex="2^n" /> も同じ数え方である。</p>
+        </Box>
+        <Box kind="tip" label="結論 — 2進数の桁シフトは 2倍・1/2倍">
+        <p>2進数を左へ1桁ずらすと値は <strong>2倍</strong>、右へ1桁ずらすと <strong>1/2倍</strong>（整数では小数点以下切り捨て）になる。10進数で桁をずらすと10倍・1/10倍になるのと同じ理屈で、<strong>基数（その進数の底）倍</strong>されるだけである。</p>
+        </Box>
       </>},
     ]}
   />
@@ -8214,7 +8722,7 @@ const ChemPage = ({ onNav }) => (
 const DriveMechPage = ({ onNav }) => (
   <StubPage title="電動機応用" eyebrow="4.4  MOTOR APPLICATIONS"
     deck="電動機の選定・所要動力計算・はずみ車効果。実用に近い計算問題が出る。" freq="中（10年で約14問・7%）"
-    prev={{ id: "chemistry", title: "4.3 電気化学" }} next={{ id: "trends", title: "出題傾向データ" }}
+    prev={{ id: "chemistry", title: "4.3 電気化学" }} next={{ id: "denki-kakou", title: "4.5 電気加工" }}
     onNav={onNav}
     sections={[
       { id: "power", heading: "所要動力", body: <>
@@ -8328,7 +8836,475 @@ const TrendsPage = ({ data, onNav }) => (
         </ul>
       </Box>
     </div>
-    <PageNav prev={{ id: "drive-mech", title: "4.4 電動機応用" }} next={{ id: "glossary", title: "用語集・索引" }} onNav={onNav} />
+    <PageNav prev={{ id: "mechatronics", title: "4.6 メカトロニクス" }} next={{ id: "glossary", title: "用語集・索引" }} onNav={onNav} />
+  </>
+);
+
+/* ============================================================
+   4.5 電気加工 — DenkiKakouPage
+   denken3-kikai-wiki.html へ組み込む JSX フラグメント（draft）
+   ============================================================ */
+
+const DenkiKakouPage = ({ onNav }) => (
+  <>
+    <Crumbs items={[
+      { id: "home", label: "ホーム" },
+      { label: "4. 電気応用" },
+      { label: "4.5 電気加工" }
+    ]} onNav={onNav} />
+
+    <PageHeader
+      eyebrow="4.5  ELECTRICAL MACHINING"
+      title="電気加工"
+      deck="放電・電解・ビーム・超音波・溶接。各方式を「エネルギーの種類 × 媒体 × 導電性の要否 × 工具の消耗」の4軸で見比べれば、知識問題は1枚の表に還元できる。"
+      meta={[
+        { label: "位置づけ", value: "知識（文章）問題中心。方式の横断比較が得点の核" },
+        { label: "関連単元", value: "電熱 / 電気化学" },
+      ]}
+    />
+
+    <div className="content">
+
+      <h2 id="overview"><span className="h-num">1.</span>全体像 — 4軸で整理する</h2>
+      <p>電気加工は、電気エネルギーを熱・化学反応・機械振動などに変えて材料を<strong>除去</strong>（削る・穴をあける）または<strong>接合</strong>（溶接）する加工の総称。工具を押し付けて削る機械加工と違い、<span className="marker">材料の硬さに関係なく加工できる</span>方式が多いのが共通の強みである。</p>
+      <Box kind="tip" label="結論 — 選択肢問題はこの4軸で切る">
+        <ul>
+          <li><strong>エネルギーの種類</strong> — 熱（放電・ビーム・溶接）／化学（電解）／機械振動（超音波）</li>
+          <li><strong>媒体・環境</strong> — 絶縁性の加工液（放電）／導電性の電解液（電解）／真空（電子ビーム）／大気中可（レーザ）／砥粒スラリー（超音波）</li>
+          <li><strong>導電性の要否</strong> — <strong>必須</strong>：放電・電解（＋溶接2方式）。<strong>不問</strong>：レーザ・超音波・電子ビーム</li>
+          <li><strong>工具・電極の消耗</strong> — 消耗する：放電・超音波。ほぼ消耗しない：電解。<strong>工具電極を持たない</strong>：ビーム系（<span className="marker">「非接触」は放電・ビーム系に共通</span>で、工具の有無とは別の軸）</li>
+        </ul>
+      </Box>
+      <SectionCheck pageId="denki-kakou" sectionId="overview" />
+
+      <h2 id="edm"><span className="h-num">2.</span>放電加工（EDM）</h2>
+      <p>工具電極と工作物（いずれも導電性）を<strong>絶縁性の加工液</strong>（灯油系の油や脱イオン水）中でわずかなすき間を保って向かい合わせ、両者の間で<strong>繰り返し放電</strong>を発生させる。放電の熱で工作物表面を局所的に溶融・除去する加工法である。</p>
+      <ul>
+        <li><strong>エネルギー</strong> — 放電による<strong>熱</strong>（電気 → 熱）</li>
+        <li><strong>媒体</strong> — <span className="marker">絶縁性の加工液</span>（加工くずの排出・冷却・絶縁回復を担う）</li>
+        <li><strong>対象</strong> — <span className="marker">導電性材料に限る</span>。ただし熱で除去するため<strong>硬さは不問</strong>（焼入れ鋼・超硬合金も可）</li>
+        <li><strong>長所</strong> — 非接触で加工力がほとんど働かず、薄物・複雑形状も可。金型加工の定番</li>
+        <li><strong>短所</strong> — 加工速度が小さい。<span className="marker">工具電極も放電で消耗する</span></li>
+      </ul>
+      <Box kind="warn" label="条件 — 「絶縁性の液の中で放電させる」という一見矛盾した前提">
+        <p>加工液が絶縁性なのは、<strong>狙ったすき間（最接近点）だけで放電を起こし、それ以外では電流を流さない</strong>ため。液が導電性だと電流が液中に分散し、放電が集中しない。放電後に液が絶縁を回復することで、次の放電が別の場所で起こり、面全体が均されていく。</p>
+      </Box>
+      <Fold label="発展 — ワイヤ放電加工（ワイヤカット）" sub="細線を電極にして輪郭を切り抜く">
+        <p>細い金属ワイヤ（黄銅線など）を電極として連続的に送りながら放電させ、糸のこのように工作物の輪郭を切り抜く方式。ワイヤは常に新しい部分が供給されるため、<strong>電極消耗が加工精度に響きにくい</strong>。プレス金型の抜き型加工などに使われる。</p>
+      </Fold>
+      <SectionCheck pageId="denki-kakou" sectionId="edm" />
+
+      <h2 id="ecm"><span className="h-num">3.</span>電解加工（ECM）</h2>
+      <p>工作物を<strong>陽極（＋）</strong>、工具を<strong>陰極（−）</strong>として<strong>導電性の電解液</strong>（食塩水・硝酸ナトリウム水溶液など）中で大電流を流し、<strong>電気分解の陽極溶解（陽極溶出）</strong>によって工作物の金属をイオンとして溶かし出す加工法。熱ではなく<strong>化学反応（電気化学）</strong>で除去する点が放電加工との決定的な違いである。</p>
+      <ul>
+        <li><strong>エネルギー</strong> — 電気化学反応（電気分解）</li>
+        <li><strong>媒体</strong> — <span className="marker">導電性の電解液</span>（放電加工の絶縁性加工液と正反対）</li>
+        <li><strong>対象</strong> — <span className="marker">導電性材料に限る</span>。硬さは不問</li>
+        <li><strong>長所</strong> — 加工速度が大きい。溶かし出すだけなので<strong>加工変質層や残留応力が生じにくい</strong>。<span className="marker">工具（陰極）はほとんど消耗しない</span>（陰極側では金属が溶け出さないため）</li>
+        <li><strong>短所</strong> — 電解液の管理・廃液処理が必要。加工精度は放電加工に譲る場面がある</li>
+      </ul>
+      <FormulaCard
+        num="01 / 02"
+        name="電解加工の除去量（ファラデーの法則）"
+        eq="W = \dfrac{M \cdot I \cdot t}{n \cdot F}"
+        note={<>除去量は流れた電気量 <Eq tex="Q = It" /> に比例する。これは <a href="#" onClick={(e) => { e.preventDefault(); onNav("chemistry"); }}>4.3 電気化学</a> のファラデーの法則そのもの（M:原子量, n:価数, F:ファラデー定数 96500 C/mol）。電解加工は「電気分解を除去加工に転用したもの」と理解すればよい。</>}
+      />
+      <Box kind="mistake" label="罠 — 放電加工と電解加工の取り違え（最頻出の混同ペア）">
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead><tr><th scope="col">軸</th><th scope="col">放電加工</th><th scope="col">電解加工</th></tr></thead>
+            <tbody>
+              <tr><td>除去の原理</td><td><strong>熱</strong>で溶融・除去</td><td><strong>電気分解（陽極溶出）</strong>で溶かし出す</td></tr>
+              <tr><td>液の性質</td><td><span className="marker">絶縁性</span>の加工液</td><td><span className="marker">導電性</span>の電解液</td></tr>
+              <tr><td>工具の消耗</td><td><strong>消耗する</strong></td><td><strong>ほとんど消耗しない</strong></td></tr>
+              <tr><td>対象材料</td><td colSpan="2" style={{textAlign:"center"}}>どちらも<strong>導電性材料のみ</strong>（ここは共通＝ひっかけに注意）</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>選択肢では「放電加工の加工液は導電性」「電解加工では工具電極が消耗する」のように<strong>液の性質と消耗の有無を入れ替えて</strong>誤り選択肢が作られる。「絶縁の中で火花・導電の中で溶出」とセットで覚える。</p>
+      </Box>
+      <SectionCheck pageId="denki-kakou" sectionId="ecm" />
+
+      <h2 id="beam"><span className="h-num">4.</span>ビーム加工 — 電子ビームとレーザ</h2>
+      <p>高密度のエネルギービームを一点に集中させ、その熱で材料を溶融・蒸発させる加工。<strong>電子ビーム加工</strong>と<strong>レーザ加工</strong>は「集中させるものが電子か光か」で対になっており、<span className="marker">環境（真空か大気か）の違い</span>が試験の急所になる。</p>
+      <h3 id="beam-eb">電子ビーム加工</h3>
+      <ul>
+        <li><strong>原理</strong> — <span className="marker">真空中</span>で電子を高電圧で加速し、電磁レンズ（磁界）で細く集束して工作物に衝突させる。電子の運動エネルギーが衝突点で熱に変わり、溶融・蒸発で除去（または溶接）する</li>
+        <li><strong>長所</strong> — エネルギー密度がきわめて高く、微細な穴あけや深い溶込みの溶接ができる。高融点材料も加工可。真空中のため酸化や不純物の混入がない</li>
+        <li><strong>短所</strong> — <span className="marker">真空装置が必須</span>で、装置が大がかり・工作物の大きさが真空槽に制約される</li>
+      </ul>
+      <Box kind="warn" label="条件 — なぜ電子ビームだけ真空が要るのか">
+        <p>電子は空気分子に衝突すると散乱・減速してしまい、大気中ではビームとして工作物まで届かない。だから<strong>電子ビーム＝真空必須</strong>。一方レーザは光なので大気中を通り、<strong>真空不要</strong>。ここが両者を分ける最大の対比軸で、「レーザ加工は真空中で行う」型の誤り選択肢の源になる。</p>
+      </Box>
+      <h3 id="beam-laser">レーザ加工</h3>
+      <ul>
+        <li><strong>原理</strong> — 位相のそろったレーザ光をレンズで集束し、光エネルギーを熱に変えて溶融・蒸発させる。切断・穴あけ・溶接・マーキングに使う</li>
+        <li><strong>長所</strong> — <span className="marker">大気中で加工でき</span>、非接触で加工力ゼロ。<span className="marker">導電性を問わず</span>金属・非金属とも加工可。微細加工に適する</li>
+        <li><strong>短所</strong> — <strong>その波長の光を材料が吸収しないと加工できない</strong>。高反射材料や、使う波長に対して透明な材料は苦手（「透明なら常に不可」ではなく<span className="marker">波長との相性で決まる</span>）</li>
+      </ul>
+      <SectionCheck pageId="denki-kakou" sectionId="beam" />
+
+      <h2 id="ultrasonic"><span className="h-num">5.</span>超音波加工</h2>
+      <p>工具を超音波（目安として 20 kHz 程度以上）で振動させ、工具と工作物の間に<strong>砥粒を混ぜた加工液（スラリー）</strong>を介在させて、砥粒が工作物表面を微細に打撃・破砕することで除去する。電気エネルギーを振動子で<strong>機械的な振動エネルギー</strong>に変えて使う加工法である。</p>
+      <ul>
+        <li><strong>エネルギー</strong> — 機械振動（電気 → 振動子 → 超音波振動）。熱でも化学でもない</li>
+        <li><strong>媒体</strong> — 砥粒スラリー（実際に削るのは砥粒）</li>
+        <li><strong>対象</strong> — <span className="marker">導電性は不要</span>。<strong>ガラス・セラミックス・半導体などの硬くて脆い材料（硬脆材料）</strong>に適する</li>
+        <li><strong>短所</strong> — 加工速度は小さい。工具も砥粒との接触で摩耗する</li>
+      </ul>
+      <Box kind="tip" label="結論 — 「絶縁物・硬脆材料ならまず超音波」">
+        <p>放電・電解は導電性材料しか加工できない。<strong>ガラスやセラミックスが問題文に出たら、答えの候補は超音波加工（またはレーザ加工）</strong>。「導電性が要るか否か」で方式を二分する整理が、この単元の選択肢を最速で切る道具になる。</p>
+      </Box>
+      <SectionCheck pageId="denki-kakou" sectionId="ultrasonic" />
+
+      <h2 id="welding"><span className="h-num">6.</span>電気溶接</h2>
+      <p>電気エネルギーの熱で金属どうしを<strong>接合</strong>する加工。熱の作り方で<strong>抵抗溶接</strong>（ジュール熱）と<strong>アーク溶接</strong>（アーク放電の熱）に大別される。</p>
+      <h3 id="welding-resistance">抵抗溶接（スポット溶接・シーム溶接）</h3>
+      <ul>
+        <li><strong>原理</strong> — 重ね合わせた母材を電極で加圧しながら<strong>低電圧・大電流</strong>を流し、接触部の抵抗で生じる<strong>ジュール熱</strong> <Eq tex="Q = I^2 R t" /> で局部的に溶融・接合する</li>
+        <li>接触抵抗が大きい<strong>母材どうしの接触面で集中的に発熱</strong>するため、狙った点だけが溶ける。自動車車体のスポット溶接が代表例</li>
+        <li>発熱の物理は <a href="#" onClick={(e) => { e.preventDefault(); onNav("heat"); }}>4.2 電熱</a> のジュール熱そのもの</li>
+      </ul>
+      <h3 id="welding-arc">アーク溶接</h3>
+      <ul>
+        <li><strong>原理</strong> — 電極（溶接棒）と母材の間に<strong>アーク放電</strong>を発生させ、その高温で母材と溶加材を溶かして接合する</li>
+        <li>被覆アーク溶接では、溶接棒の被覆材が燃えて発生するガスやスラグが<strong>溶融金属を大気（酸素・窒素）から遮へい</strong>する</li>
+      </ul>
+      <FormulaCard
+        num="02 / 02"
+        name="抵抗溶接の発熱量（ジュールの法則）"
+        eq="Q = I^2 R t \;[\mathrm{J}]"
+        note={<>発熱は電流の2乗に比例するため、抵抗溶接は電流の管理が要。低電圧でも大電流を流せば接触部に十分な熱を集中できる。</>}
+      />
+      <Fold label="発展 — アーク溶接の電源はなぜ「垂下特性」か" sub="アーク長が揺れても電流を保つ">
+        <p>手溶接ではアーク長（電極と母材の距離）が手ぶれで絶えず変動する。電源の出力特性が<strong>垂下特性</strong>（電流が増えると端子電圧が大きく下がる特性）だと、アーク長が変わって電圧が揺れても<strong>電流はほぼ一定に保たれ</strong>、溶込みが安定しアークも切れにくい。<strong>手溶接では</strong>定電圧特性の電源だと、わずかな電圧変動が大きな電流変動になってしまう。</p>
+      </Fold>
+      <Box kind="mistake" label="罠 — 「何の熱で溶かすか」の入れ替え">
+        <p>「スポット溶接はアーク放電の熱を利用する」「アーク溶接は接触抵抗のジュール熱を利用する」のように、<strong>熱源を入れ替えた誤り選択肢</strong>が典型。抵抗溶接＝<strong>接触抵抗のジュール熱＋加圧</strong>、アーク溶接＝<strong>アーク放電の熱</strong>と1対1で固定する。さらに 4.2 電熱の誘導加熱（渦電流）を混ぜてくる場合もあるが、溶接の2方式に誘導加熱は含まれない。</p>
+      </Box>
+      <SectionCheck pageId="denki-kakou" sectionId="welding" />
+
+      <h2 id="compare"><span className="h-num">7.</span>方式比較表（この1枚が最重要）</h2>
+      <p>選択肢問題は、ほぼこの表のどこか1マスを書き換えて作られる。<strong>行（方式）ではなく列（軸）で縦に読む</strong>練習をすると、どのマスが入れ替えられても気づけるようになる。</p>
+      <div className="table-wrap">
+        <table className="data-table">
+          <caption>表4.5.1  電気加工の方式比較</caption>
+          <thead>
+            <tr>
+              <th scope="col">方式</th>
+              <th scope="col">主なエネルギー</th>
+              <th scope="col">媒体・環境</th>
+              <th scope="col">導電性の要否</th>
+              <th scope="col">工具・電極の消耗</th>
+              <th scope="col">特徴（要点）</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>放電加工</strong></td>
+              <td>熱（放電）</td>
+              <td><span className="marker">絶縁性</span>の加工液</td>
+              <td><span className="marker">必須</span></td>
+              <td><strong>消耗する</strong></td>
+              <td>硬さ不問・非接触・金型加工。加工速度は小</td>
+            </tr>
+            <tr>
+              <td><strong>電解加工</strong></td>
+              <td>電気化学（電気分解）</td>
+              <td><span className="marker">導電性</span>の電解液</td>
+              <td><span className="marker">必須</span></td>
+              <td><strong>ほぼ消耗しない</strong></td>
+              <td>工作物が陽極。加工速度大・変質層が出にくい</td>
+            </tr>
+            <tr>
+              <td><strong>電子ビーム加工</strong></td>
+              <td>熱（電子の運動エネルギー）</td>
+              <td><span className="marker">真空</span>が必須</td>
+              <td>不問（実務では絶縁物の帯電が課題）</td>
+              <td>工具なし（非接触）</td>
+              <td>エネルギー密度極大・微細加工・高融点材料可。装置大</td>
+            </tr>
+            <tr>
+              <td><strong>レーザ加工</strong></td>
+              <td>熱（光）</td>
+              <td><span className="marker">大気中で可</span></td>
+              <td><span className="marker">不問</span></td>
+              <td>工具なし（非接触）</td>
+              <td>微細加工・切断・溶接。高反射・透明材料は苦手</td>
+            </tr>
+            <tr>
+              <td><strong>超音波加工</strong></td>
+              <td>機械振動（＋砥粒）</td>
+              <td>砥粒スラリー</td>
+              <td><span className="marker">不問</span></td>
+              <td>消耗する（摩耗）</td>
+              <td><strong>ガラス・セラミックス等の硬脆材料</strong>に適する</td>
+            </tr>
+            <tr>
+              <td><strong>抵抗溶接</strong></td>
+              <td>熱（ジュール熱）</td>
+              <td>大気中（加圧して通電）</td>
+              <td>必須（通電するため）</td>
+              <td>電極は加圧・通電用</td>
+              <td>低電圧・大電流。接触部で集中発熱。スポット溶接</td>
+            </tr>
+            <tr>
+              <td><strong>アーク溶接</strong></td>
+              <td>熱（アーク放電）</td>
+              <td>大気中（ガス・スラグで遮へい）</td>
+              <td>必須（母材が電路になる）</td>
+              <td>被覆アーク溶接では溶接棒が溶融して溶着</td>
+              <td>電源は垂下特性。被覆材が溶融部を保護</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <Box kind="tip" label="結論 — 縦読み3本で覚える">
+        <ul>
+          <li><strong>導電性が必須</strong> なのは：放電・電解（＋溶接2方式）。<strong>不問</strong>はレーザ・超音波（電子ビームも導電性を前提としない）</li>
+          <li><strong>真空が要る</strong>のは：電子ビームだけ</li>
+          <li><strong>工具が消耗する／しない</strong>：放電＝する、電解＝ほぼしない、ビーム系＝そもそも工具が無い</li>
+        </ul>
+      </Box>
+      <SectionCheck pageId="denki-kakou" sectionId="compare" />
+
+      <h2 id="traps"><span className="h-num">8.</span>選択肢の作られ方 — 誤り文の型</h2>
+      <p>この単元の誤り選択肢は、比較表の1マスを隣の方式のマスと入れ替える「入替型」がほとんど。よく使われる型を挙げる（型の整理であり、特定年度の実問題の引用ではない）。</p>
+      <Box kind="mistake" label="型1 — 液の性質の入替（放電⇔電解）">
+        <p>「放電加工では<strong>導電性の</strong>加工液を用いる」→ 誤り。放電加工の加工液は<strong>絶縁性</strong>。導電性の液を使うのは電解加工。</p>
+      </Box>
+      <Box kind="mistake" label="型2 — 工具消耗の入替（放電⇔電解）">
+        <p>「電解加工では工具電極が<strong>消耗する</strong>」→ 誤り。電解加工の工具（陰極）は<strong>ほとんど消耗しない</strong>。消耗するのは放電加工の電極。</p>
+      </Box>
+      <Box kind="mistake" label="型3 — 環境の入替（電子ビーム⇔レーザ）">
+        <p>「レーザ加工は<strong>真空中で</strong>行う必要がある」→ 誤り。真空必須は<strong>電子ビーム加工</strong>。レーザは大気中で加工できる。</p>
+      </Box>
+      <Box kind="mistake" label="型4 — 導電性の要否の拡大（放電・電解 → 全方式）">
+        <p>「超音波加工は<strong>導電性材料に限られる</strong>」→ 誤り。超音波加工は機械振動＋砥粒で削るので導電性不要（ガラス・セラミックス可）。導電性が必須なのは放電・電解。</p>
+      </Box>
+      <Box kind="mistake" label="型5 — 硬さと導電性の混同（放電加工）">
+        <p>「放電加工は<strong>硬い材料は加工できない</strong>」→ 誤り。放電加工は熱で除去するため<strong>硬さは不問</strong>（超硬合金・焼入れ鋼こそ得意）。制約は硬さではなく<strong>導電性</strong>。「硬さの制約」と「導電性の制約」をすり替えるのがこの型。</p>
+      </Box>
+      <Box kind="mistake" label="型6 — 除去原理のすり替え（電解加工）">
+        <p>「電解加工は放電の<strong>熱</strong>で工作物を溶融して除去する」→ 誤り。電解加工は<strong>電気分解（陽極溶出）</strong>による化学的な除去で、熱加工ではない。だから加工変質層が出にくい、という長所と因果でつながる。</p>
+      </Box>
+      <SectionCheck pageId="denki-kakou" sectionId="traps" />
+
+      <h2 id="quick-review"><span className="h-num">9.</span>1分復習（即答チェック）</h2>
+      <div className="box">
+        <details><summary>放電加工の加工液は導電性？絶縁性？</summary><strong>絶縁性</strong>（灯油系の油・脱イオン水）。狙ったすき間だけで放電を起こすため。導電性の液を使うのは電解加工</details>
+        <details><summary>電解加工で工作物は陽極・陰極のどちらにする？</summary><strong>陽極（＋）</strong>。電気分解の<strong>陽極溶出</strong>で金属を溶かし出す。工具が陰極（−）</details>
+        <details><summary>工具電極がほとんど消耗しないのは放電加工と電解加工のどちら？</summary><strong>電解加工</strong>。陰極側では金属が溶け出さないため。放電加工の電極は放電で消耗する</details>
+        <details><summary>真空を必要とする加工方式は？</summary><strong>電子ビーム加工</strong>のみ。電子は空気分子に散乱されるため。レーザ加工は大気中で可</details>
+        <details><summary>ガラス・セラミックスなど絶縁性の硬脆材料に適する加工方式は？</summary><strong>超音波加工</strong>（レーザ加工も導電性不問）。砥粒スラリーを介した微細破砕で削るため導電性が不要</details>
+        <details><summary>導電性材料に限られる除去加工は？</summary><strong>放電加工と電解加工</strong>。放電は電極間で放電させるため、電解は工作物を電気分解の陽極にするため</details>
+        <details><summary>抵抗溶接とアーク溶接の熱源はそれぞれ何？</summary>抵抗溶接＝接触部の<strong>ジュール熱</strong>（Q = I²Rt・低電圧大電流＋加圧）／アーク溶接＝<strong>アーク放電の熱</strong></details>
+        <details><summary>アーク溶接の電源に垂下特性が求められる理由は？</summary>手ぶれでアーク長（＝アーク電圧）が変動しても<strong>電流をほぼ一定に保ち</strong>、アークと溶込みを安定させるため</details>
+      </div>
+      <SectionCheck pageId="denki-kakou" sectionId="quick-review" />
+
+      <SectionCheckSummary
+        pageId="denki-kakou"
+        sections={[
+          { id: "overview", label: "1. 全体像 — 4軸で整理する" },
+          { id: "edm", label: "2. 放電加工（EDM）" },
+          { id: "ecm", label: "3. 電解加工（ECM）" },
+          { id: "beam", label: "4. ビーム加工（電子ビーム・レーザ）" },
+          { id: "ultrasonic", label: "5. 超音波加工" },
+          { id: "welding", label: "6. 電気溶接" },
+          { id: "compare", label: "7. 方式比較表" },
+          { id: "traps", label: "8. 選択肢の作られ方" },
+          { id: "quick-review", label: "9. 1分復習（即答チェック）" },
+        ]}
+      />
+    </div>
+
+    <PageNav
+      prev={{ id: "drive-mech", title: "4.4 電動機応用" }}
+      next={{ id: "mechatronics", title: "4.6 メカトロニクス" }}
+      onNav={onNav}
+    />
+  </>
+);
+
+const MechatronicsPage = ({ onNav }) => (
+  <>
+    <Crumbs items={[{ id: "home", label: "ホーム" }, { label: "4. 電気応用" }, { label: "4.6 メカトロニクス" }]} onNav={onNav} />
+    <PageHeader eyebrow="4.6  MECHATRONICS" title="メカトロニクス"
+      deck="センサで測り、制御装置で判断し、アクチュエータで動かす——機械と電気・制御を一体で扱う技術。サーボ機構とステッピングモータが学習の中心で、計算はステップ角まわりに集中する。"
+      meta={[{ label: "出題形式", value: "語句選択・正誤判定が中心（計算はステップ角）" }, { label: "難易度", value: "★★★☆☆（目安）" }]} />
+    <div className="content">
+
+      <h2 id="overview"><span className="h-num">1.</span>メカトロニクスの基本構成</h2>
+      <p>メカトロニクスシステムは、対象の状態を<strong>センサ</strong>で検出し、<strong>制御装置</strong>（コントローラ）が目標値と比較して操作量を決め、<strong>アクチュエータ</strong>が機械を駆動する、という信号の流れで構成される。</p>
+      <Box kind="tip" label="まず覚える構成（信号の流れ）">
+        <p><span className="marker">目標値 → 制御装置 → アクチュエータ → 機械（制御対象） → センサ → 制御装置へ戻る</span>。この「センサで測って戻す」経路が<strong>フィードバック</strong>であり、これを持つ制御が<strong>閉ループ制御</strong>、持たない制御が<strong>開ループ制御</strong>である。</p>
+      </Box>
+      <p>フィードバック制御の一般論（伝達関数・安定判別・PID）は<a href="#" onClick={(e) => { e.preventDefault(); onNav("auto-control"); }}>3.1 自動制御</a>で扱う。本ページでは、そのループを構成する<strong>部品（センサ・アクチュエータ）</strong>と、機械に固有の話題（サーボ機構・ステッピングモータ・慣性と減速比）に絞る。</p>
+      <SectionCheck pageId="mechatronics" sectionId="overview" />
+
+      <h2 id="sensors"><span className="h-num">2.</span>センサ — 何を検出し、出力は何になるか</h2>
+      <p>試験では「<span className="marker">何を検出するセンサか</span>」「<span className="marker">出力がパルス（デジタル）か電圧（アナログ）か</span>」の対応を問われる。この2軸で整理する。</p>
+      <div className="table-wrap">
+        <table className="data-table">
+          <thead><tr><th scope="col">センサ</th><th scope="col">検出量</th><th scope="col">出力・原理</th><th scope="col">特徴</th></tr></thead>
+          <tbody>
+            <tr><td>エンコーダ</td><td>回転角・位置</td><td><strong>パルス（デジタル）</strong>。光学式が代表（スリット円板＋発光・受光素子）</td><td>増分形はパルス数で相対角、絶対形はコードで絶対角を出す</td></tr>
+            <tr><td>レゾルバ</td><td>回転角</td><td><strong>アナログ交流電圧</strong>。巻線の電磁誘導で、回転角に応じた振幅の信号を出す（変圧器と同じ原理）</td><td>検出部に光学素子や半導体を持たないため、振動・高温・粉塵に強い（信号を角度に直す回路は別に要る）</td></tr>
+            <tr><td>タコジェネレータ</td><td>回転速度</td><td><strong>回転速度に比例した電圧</strong>（直流形と交流形がある。直流形は直流発電機と同じ原理）</td><td>アナログの速度信号がそのまま得られる</td></tr>
+            <tr><td>熱電対</td><td>温度</td><td>2種の金属の接合点間の温度差による<strong>熱起電力</strong>（ゼーベック効果）</td><td>高温域まで測れる。起電力は小さい</td></tr>
+            <tr><td>測温抵抗体</td><td>温度</td><td>金属（白金など）の<strong>電気抵抗が温度で変化</strong>することを利用</td><td>中低温域で高精度。起電力を発生するのではなく抵抗変化を測る</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <Box kind="mistake" label="罠 — エンコーダとレゾルバ、熱電対と測温抵抗体">
+        <ul>
+          <li><strong>エンコーダ＝デジタル（増分形はパルス、絶対形はコード）／レゾルバ＝交流電圧（アナログ）</strong>。どちらも回転角を検出するが、出力の形式が逆に入れ替えられて出題されやすい。<span className="marker">「エンコーダ＝常にパルス」も不正確</span>（絶対形は並列コードを出す）。</li>
+          <li><strong>熱電対＝起電力を「発生する」／測温抵抗体＝抵抗変化を「測る」</strong>。測温抵抗体は自分では起電力を出さない（外部から電流を流して抵抗を測る）。</li>
+          <li>タコジェネレータは<strong>速度</strong>のセンサ。「回転角を検出する」とされたら誤り。</li>
+        </ul>
+      </Box>
+      <Fold label="発展 — 増分形（インクリメンタル）と絶対形（アブソリュート）" sub="エンコーダの2方式の違いを開く">
+        <ul>
+          <li><strong>増分形</strong> — 回転に伴いパルスを出し、<strong>パルスを数えて</strong>基準位置からの角度を知る。電源を切るとカウント値（現在位置）を失うので、起動時に原点復帰が要る。構造が簡単。</li>
+          <li><strong>絶対形</strong> — 円板に角度ごとの<strong>符号（コード）</strong>が刻まれ、読み出した瞬間に絶対角が分かる。電源を切っても位置を失わないが、構造は複雑になる。</li>
+        </ul>
+      </Fold>
+      <SectionCheck pageId="mechatronics" sectionId="sensors" />
+
+      <h2 id="actuators"><span className="h-num">3.</span>アクチュエータ — 電気式・油圧式・空気圧式の使い分け</h2>
+      <p>アクチュエータは制御信号を機械的な動き（力・トルク・変位）に変換する要素。エネルギー源で3方式に大別される。</p>
+      <div className="table-wrap">
+        <table className="data-table">
+          <thead><tr><th scope="col">方式</th><th scope="col">代表例</th><th scope="col">長所</th><th scope="col">短所</th></tr></thead>
+          <tbody>
+            <tr><td>電気式</td><td>サーボモータ・ステッピングモータ・ソレノイド</td><td>制御性・応答性がよく、配線だけで済み保守が容易。最も広く使われる</td><td>同じ大きさでは油圧ほど大きな力は出しにくい</td></tr>
+            <tr><td>油圧式</td><td>油圧シリンダ・油圧モータ</td><td><strong>小形で大きな力</strong>が出せる（建設機械・プレスなど）</td><td>ポンプ・配管・タンクが必要で装置が大掛かり。油漏れの管理が要る</td></tr>
+            <tr><td>空気圧式</td><td>エアシリンダ</td><td>構造が簡単・軽量・クリーンで、高速動作に向く</td><td>空気の<strong>圧縮性</strong>のため剛性が低く、中間位置での精密な位置決めは苦手</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <Box kind="warn" label="使い分けの判断軸">
+        <p>「大きな力 → 油圧」「速い・簡単・クリーン → 空気圧」「精密な制御 → 電気」が基本の対応（目安）。空気圧の弱点が<span className="marker">圧縮性による位置決め精度の低さ</span>にある点は、理由ごと覚える（空気はばねのように縮むので、負荷が変わると位置がずれる）。</p>
+      </Box>
+      <SectionCheck pageId="mechatronics" sectionId="actuators" />
+
+      <h2 id="servo"><span className="h-num">4.</span>サーボ機構 — 位置・速度・力を目標値に追従させる</h2>
+      <p><strong>サーボ機構</strong>は、物体の<strong>位置・方位・姿勢など</strong>（機械では主に位置・速度・トルク）を制御量とし、<span className="marker">任意に変化する目標値に追従させる</span>フィードバック制御系である。定義の核心は<strong>制御量が位置・方位・姿勢である</strong>ことと、<strong>目標値の任意の変化に追従できる</strong>こと（分類上は追値制御に属する）。位置を一定に保つ運転もサーボなので、「定値運転はサーボでない」ではない。</p>
+      <Box kind="formula" label="なぜフィードバックが要るか">
+        <p>負荷トルクの変動・摩擦・部品のばらつきがあっても、<strong>実際の位置や速度をセンサで測って目標値との偏差を打ち消し続ける</strong>から、外乱があっても目標値に到達できる。逆に開ループ制御は外乱・誤差を検出できないので、条件が変わると結果がずれたままになる。</p>
+      </Box>
+      <p>典型的なサーボ系は、<strong>位置ループの内側に速度ループ、さらに内側に電流（トルク）ループ</strong>を持つ多重ループ構成をとる。サーボモータには位置・速度検出用のエンコーダ（またはレゾルバ）が組み込まれており、セクション2のセンサがまさにこのループの「測る」役を担う。偏差の演算・安定性・PID動作の中身は<a href="#" onClick={(e) => { e.preventDefault(); onNav("auto-control"); }}>3.1 自動制御</a>を参照。</p>
+      <SectionCheck pageId="mechatronics" sectionId="servo" />
+
+      <h2 id="stepping"><span className="h-num">5.</span>ステッピングモータ — パルスで回る・開ループで位置決め</h2>
+      <p><strong>ステッピングモータ</strong>（パルスモータ）は、入力パルス<strong>1個につき一定角度（ステップ角）だけ回転</strong>するモータ。回転角はパルスの<strong>数</strong>で、回転速度はパルスの<strong>周波数</strong>で決まる。</p>
+      <FormulaCard num="01 / 03" name="回転角（ステップ角 × パルス数）" eq="\theta = \theta_s \times N"
+        note={<>θ<sub>s</sub>: ステップ角 [°]、N: パルス数。1回転（360°）に必要なパルス数は 360/θ<sub>s</sub>。<strong>ステップ角はモータの構造（相数・ロータの歯数）と励磁方式で決まる値で、パルス側では変えられない</strong>——変えられるのは「何パルス送るか（角度）」と「どれだけ速く送るか（速度）」だけである。</>} />
+      <FormulaCard num="02 / 03" name="回転速度とパルス周波数" eq="n = \dfrac{\theta_s \, f}{360} \times 60 = \dfrac{\theta_s \, f}{6} \;[\mathrm{min^{-1}}]"
+        note={<>f: パルス周波数 [Hz]（パルス/秒）。毎秒 θ<sub>s</sub>·f [°] 回るので、360 で割れば毎秒の回転数 [s⁻¹]、60 倍で [min⁻¹]。</>} />
+      <Box kind="formula" label="なぜ開ループで位置決めできるか">
+        <p>固定子の巻線を順に励磁すると、回転子は磁気的に安定な位置へ<strong>1ステップずつ吸い寄せられて止まる</strong>。パルス数と回転角が<span className="marker">1対1に対応する</span>ので、センサで位置を測り返さなくても「何パルス送ったか」だけで位置が決まる——これが開ループ位置決めの根拠である。</p>
+      </Box>
+      <Box kind="mistake" label="罠 — 脱調（だっちょう）">
+        <p>負荷トルクが過大なとき、または急な加減速や過大なパルス周波数で回転子が追従できないとき、回転がパルスと同期を失う。これが<strong>脱調</strong>で、<span className="marker">以後はパルス数と回転角の対応が崩れる</span>。開ループ制御では脱調を<strong>検出できない</strong>（測って戻す経路がない）ため、位置ずれに気づけない——「開ループで位置決めできる」の裏側にある弱点として、セットで問われる。</p>
+      </Box>
+      <Box kind="example" label="例題 — ステップ角の計算">
+        <p>ステップ角 1.8° のステッピングモータに 500 個のパルスを与えたときの回転角と、パルス周波数 2000 Hz で駆動したときの回転速度を求めよ。</p>
+        <details><summary>解答・解説を開く</summary>
+          <p>回転角: <Eq tex="\theta = 1.8 \times 500 = 900^\circ" />（＝2.5 回転）。1回転に必要なパルス数は <Eq tex="360/1.8 = 200" /> パルス。</p>
+          <p>回転速度: 毎秒 <Eq tex="1.8 \times 2000 = 3600^\circ" /> 回る。</p>
+          <Eq display tex="n = \dfrac{3600}{360} \times 60 = 600\;\mathrm{min^{-1}}" />
+          <p style={{margin:"8px 0 0"}}>⚠️ 「°のまま」か「回転数に直したか」を最後に必ず確認する。360 で割り忘れる・60 を掛け忘れるのが定番のミス。</p>
+        </details>
+      </Box>
+      <Box kind="mistake" label="罠 — サーボモータとステッピングモータ">
+        <ul>
+          <li><strong>ステッピングモータ</strong> — <span className="marker">開ループ</span>で位置決め（センサ不要）。安価・簡単だが、脱調のおそれがあり大トルク・高速域は苦手。</li>
+          <li><strong>サーボモータ</strong> — エンコーダ等を組み込み<span className="marker">閉ループ</span>で制御。脱調に相当する「位置を見失う」ことがなく、高速・高トルクまで追従するが、検出器と制御装置のぶん高価。</li>
+          <li>「ステッピングモータはフィードバック制御で位置決めする」→ 誤り（原則は開ループ）。逆に「サーボモータは検出器を持たない」も誤り。</li>
+        </ul>
+      </Box>
+      <SectionCheck pageId="mechatronics" sectionId="stepping" />
+
+      <h2 id="mech-elec"><span className="h-num">6.</span>機械系と電気制御系の基本関係 — トルク・慣性・減速比</h2>
+      <p>モータで機械を加減速するとき、電気側（トルク）と機械側（慣性）を結ぶのが回転の運動方程式である。</p>
+      <FormulaCard num="03 / 03" name="回転体の運動方程式" eq="T = J \dfrac{d\omega}{dt}"
+        note={<>T: 加速に使えるトルク [N·m]、J: 慣性モーメント [kg·m²]、ω: 角速度 [rad/s]。慣性が大きいほど・速く加速したいほど、大きなトルクが要る。<br /><strong>この J に何を入れるかが計算の分岐点。</strong>減速機を介すなら <Eq tex="J = J_M + J_L/i^2" />（モータ自身の慣性 ＋ モータ軸に換算した負荷慣性）で、<span className="marker">負荷側の J<sub>L</sub> をそのまま入れない</span>。</>} />
+      <ul>
+        <li><strong>加速時</strong>はモータトルクのうち負荷トルクを差し引いた残り（加速トルク）が J·dω/dt をまかなう。<strong>減速時</strong>は逆にエネルギーを吸収する必要がある（制動）。</li>
+        <li><strong>減速比 i の減速機</strong>を介すと（損失を無視すれば）、負荷側の回転速度は <Eq tex="1/i" /> 倍、トルクは <Eq tex="i" /> 倍になる。低速・大トルクの負荷を小形モータで駆動できる。</li>
+      </ul>
+      <Fold label="発展 — 負荷慣性のモータ軸換算はなぜ 1/i² か" sub="減速比の2乗で効く理由を開く">
+        <p>減速比 i でモータが負荷の i 倍の速度で回るとき、負荷（慣性モーメント J<sub>L</sub>）の運動エネルギーを、モータ軸の角速度 ω<sub>M</sub> で表すと <Eq tex="\dfrac{1}{2}J_L\omega_L^2 = \dfrac{1}{2}\left(\dfrac{J_L}{i^2}\right)\omega_M^2" />（ω<sub>L</sub> = ω<sub>M</sub>/i）。つまりモータ軸から見た負荷慣性は <Eq tex="J_L/i^2" /> に見える。速度が 1/i になるぶん、エネルギーの式で<strong>2乗で</strong>効くのがポイント（損失を無視した理想の関係）。減速機は「トルクを増やす」だけでなく「負荷慣性を小さく見せる」働きもする。</p>
+      </Fold>
+      <SectionCheck pageId="mechatronics" sectionId="mech-elec" />
+
+      <h2 id="glossary"><span className="h-num">7.</span>頻出語句の定義集</h2>
+      <div className="table-wrap">
+        <table className="data-table">
+          <thead><tr><th scope="col">用語</th><th scope="col">定義</th></tr></thead>
+          <tbody>
+            <tr><td>サーボ機構</td><td>位置・方位・姿勢などを制御量とし、任意に変化する目標値に追従させるフィードバック制御系</td></tr>
+            <tr><td>開ループ制御</td><td>出力（結果）を検出せず、入力信号だけで制御する方式。外乱・誤差を修正できない</td></tr>
+            <tr><td>閉ループ制御</td><td>出力をセンサで検出して目標値と比較し、偏差を打ち消すように操作し続ける方式（フィードバック制御）</td></tr>
+            <tr><td>ステップ角</td><td>ステッピングモータが入力パルス1個で回転する角度</td></tr>
+            <tr><td>脱調</td><td>ステッピングモータの回転が入力パルスとの同期を失い、パルス数と回転角の対応が崩れる現象</td></tr>
+            <tr><td>増分形エンコーダ</td><td>回転に伴うパルスを数えて基準位置からの角度を知る方式。電源断で現在位置を失う</td></tr>
+            <tr><td>絶対形エンコーダ</td><td>角度ごとの符号を読み出して絶対角を直接知る方式。電源断でも位置を失わない</td></tr>
+            <tr><td>慣性モーメント J</td><td>回転の変化のしにくさを表す量 [kg·m²]。T = J·dω/dt で加速トルクと結びつく</td></tr>
+            <tr><td>減速比</td><td>モータ軸と負荷軸の速度の比。損失を無視すれば速度 1/i 倍・トルク i 倍、負荷慣性は 1/i² に換算される</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <SectionCheck pageId="mechatronics" sectionId="glossary" />
+
+      <h2 id="traps"><span className="h-num">8.</span>ひっかけ・混同ペア</h2>
+      <div className="table-wrap">
+        <table className="data-table">
+          <thead><tr><th scope="col">混同ペア</th><th scope="col">区別の核心</th><th scope="col">ひっかけ方の型</th></tr></thead>
+          <tbody>
+            <tr><td>エンコーダ ⇔ レゾルバ</td><td>エンコーダ＝デジタル（増分形＝パルス／絶対形＝コード）／レゾルバ＝交流電圧（アナログ・電磁誘導）</td><td>出力形式を入れ替える。「レゾルバはパルスを出力」は誤り</td></tr>
+            <tr><td>サーボモータ ⇔ ステッピングモータ</td><td>サーボ＝検出器つき閉ループ／ステッピング＝原則開ループ・脱調のおそれ</td><td>制御方式を入れ替える。「ステッピングは検出器で位置を修正」は誤り</td></tr>
+            <tr><td>開ループ ⇔ 閉ループ</td><td>出力を測って戻すか否か。戻さなければ外乱・誤差を修正できない</td><td>「開ループは外乱があっても正確」のような長所のすり替え</td></tr>
+            <tr><td>タコジェネレータ ⇔ エンコーダ</td><td>タコジェネ＝速度に比例した電圧／エンコーダ＝角度（パルス）。エンコーダでもパルスの頻度から速度は計算できる</td><td>検出量（速度か位置か）を入れ替える</td></tr>
+            <tr><td>熱電対 ⇔ 測温抵抗体</td><td>熱電対＝熱起電力を発生（ゼーベック効果）／測温抵抗体＝抵抗変化を測る</td><td>「測温抵抗体は起電力を発生する」は誤り</td></tr>
+            <tr><td>油圧式 ⇔ 空気圧式</td><td>油圧＝小形で大きな力／空気圧＝軽快・クリーンだが圧縮性で位置決めが苦手</td><td>長所と短所を交差させて入れ替える</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <SectionCheck pageId="mechatronics" sectionId="traps" />
+
+      <h2 id="quick-review"><span className="h-num">9.</span>1分復習（即答チェック）</h2>
+      <div className="box">
+        <details><summary>メカトロニクスシステムの信号の流れは？</summary>目標値 → 制御装置 → アクチュエータ → 機械 → センサ →（フィードバック）→ 制御装置。センサで測って戻す経路があれば閉ループ</details>
+        <details><summary>エンコーダとレゾルバの出力の違いは？</summary>エンコーダ＝<strong>デジタル</strong>（増分形はパルス、絶対形はコード）／レゾルバ＝回転角に応じた<strong>交流電圧</strong>（アナログ・電磁誘導）。レゾルバは検出部に光学素子・半導体を持たないぶん悪環境に強い</details>
+        <details><summary>タコジェネレータは何を検出する？</summary>回転速度（速度に比例した電圧を出力）。回転角ではない</details>
+        <details><summary>熱電対と測温抵抗体の原理の違いは？</summary>熱電対＝2種の金属の熱起電力（ゼーベック効果）／測温抵抗体＝白金などの抵抗が温度で変化するのを測る</details>
+        <details><summary>アクチュエータ3方式の使い分けは？</summary>大きな力→油圧／高速・簡単・クリーン→空気圧（ただし圧縮性で位置決めは苦手）／精密な制御→電気</details>
+        <details><summary>サーボ機構の定義は？</summary>位置・方位・姿勢など（主に位置・速度・トルク）を制御量とし、任意に変化する目標値に追従させるフィードバック制御系</details>
+        <details><summary>ステッピングモータの回転角と回転速度は何で決まる？</summary>回転角＝ステップ角×パルス数（θ = θs·N）／回転速度＝パルス周波数に比例（n = θs·f/6 [min⁻¹]）</details>
+        <details><summary>ステッピングモータが開ループで位置決めできる理由と、その弱点は？</summary>パルス数と回転角が1対1に対応するから。弱点は脱調（過大負荷・急加減速で同期を失う）で、開ループでは検出できない</details>
+        <details><summary>減速比 i の減速機を介すと速度・トルク・負荷慣性はどうなる？（損失無視）</summary>負荷側の速度 1/i 倍・トルク i 倍。モータ軸から見た負荷慣性は 1/i²（エネルギーの式で速度が2乗で効くため）</details>
+      </div>
+      <SectionCheck pageId="mechatronics" sectionId="quick-review" />
+
+      <SectionCheckSummary
+        pageId="mechatronics"
+        sections={[
+          { id: "overview", label: "1. メカトロニクスの基本構成" },
+          { id: "sensors", label: "2. センサ" },
+          { id: "actuators", label: "3. アクチュエータ" },
+          { id: "servo", label: "4. サーボ機構" },
+          { id: "stepping", label: "5. ステッピングモータ" },
+          { id: "mech-elec", label: "6. トルク・慣性・減速比" },
+          { id: "glossary", label: "7. 頻出語句の定義集" },
+          { id: "traps", label: "8. ひっかけ・混同ペア" },
+          { id: "quick-review", label: "9. 1分復習（即答チェック）" },
+        ]}
+      />
+    </div>
+    <PageNav prev={{ id: "denki-kakou", title: "4.5 電気加工" }} next={{ id: "trends", title: "A 出題傾向データ" }} onNav={onNav} />
   </>
 );
 
@@ -8424,12 +9400,18 @@ const StudyLogPage = ({ onNav }) => (
       </table></div>
 
       <h3 id="rules">判定の付け方</h3>
-      <ul>
-        <li><strong>◎</strong> 手が止まらず解けて、理由も言える</li>
-        <li><strong>○</strong> 解けた・理由も言える</li>
-        <li><strong>△</strong> 解けたが理由が曖昧、または時間超過</li>
-        <li><strong>×</strong> 解けなかった</li>
-      </ul>
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th scope="col">判定</th><th scope="col">意味</th><th scope="col">見分け方</th></tr></thead>
+        <tbody>
+          <tr><td><strong>◎</strong></td><td>解説を見ずに正解し、<strong>解法と理由を説明できる</strong></td><td>人に教えられる</td></tr>
+          <tr><td><strong>○</strong></td><td>正解した。ただし<strong>少し迷った</strong></td><td>選択肢を絞る場面で手が止まった</td></tr>
+          <tr><td><strong>△</strong></td><td>正解したが<strong>勘・公式の選び方・理解に不安がある</strong></td><td>「なぜその式か」を1行で言えない／時間超過</td></tr>
+          <tr><td><strong>×</strong></td><td><strong>不正解</strong>、または正解でも<strong>解法が分からない</strong></td><td>解説を読んで初めて筋道が分かった</td></tr>
+        </tbody>
+      </table></div>
+      <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "8px 0 0" }}>
+        4段が重ならないよう「<strong>正解したか</strong>」と「<strong>理由を言えるか</strong>」の2軸で切ってある。
+        正解したかだけで付けると ◎ と ○ の区別が消え、記録が「解いた／解いていない」の2値に退化する。</p>
       <p><strong>正解しても「なぜその式か」を1行で言えなければ △ に落とす。</strong>
         受験直後に「答えを覚えていて何とか解けた問題があった」という実感が残っており、
         覚えているだけの正解を ○ にすると、この記録が使えなくなる。</p>
@@ -8472,6 +9454,47 @@ const StudyLogPage = ({ onNav }) => (
         コピーは<strong>解いて判定を付けたあと</strong>に押す（付ける前に押すと、その日の分が入らない）。</p>
       <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
         書籍の問題文は転載しない。残すのは年度・問番号と、自分の理解だけ。</p>
+
+      <h3 id="source">出典</h3>
+      <p>このグリッドが指す問題の出どころは次の2つ。<strong>問題文・図・選択肢は本Wikiに転載していない</strong>ので、
+        解くときは手元の問題集か試験機関の公開問題を開くこと。</p>
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th scope="col">年度回</th><th scope="col">出典</th></tr></thead>
+        <tbody>
+          <tr><td>H18〜R7下</td><td>電気書院『電験3種 過去問題集』（20年間・機械科目）</td></tr>
+          <tr><td>R8上</td><td>一般財団法人 電気技術者試験センター 公開の試験問題・解答<br />（令和8年度上期 第三種電気主任技術者試験 機械科目・2026年8月30日実施）</td></tr>
+        </tbody>
+      </table></div>
+      <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+        本Wikiの解説中で過去問に言及する場合は「令和8年度上期 機械」のように<strong>年度・期・科目まで書く</strong>。
+        数値や条件を変えて引用したときは、<strong>その旨を併記する</strong>。
+        <span className="marker">R8上の各問がどの単元かは未登録</span>（実物を確認していないため。下の「単元との紐付け」を参照）。</p>
+
+      <h3 id="topics">単元との紐付け（構造のみ・現在は未登録）</h3>
+      <p>年度 × 問番号の表だけだと「<strong>%Z の過去問だけ</strong>」「<strong>変圧器で △× だけ</strong>」を取り出せない。
+        1問ごとに単元を持たせる台帳（<code>KAKOMON_TOPICS</code>）を用意してあるが、
+        <strong>中身は空のまま出している</strong>。</p>
+      <Box kind="warn" label="なぜ空で出すのか">
+        <p style={{ margin: 0 }}>年度と問番号から単元を推測して埋めることはできる。だがそれをやると、
+          分類を間違えたときに<strong>「この単元は解き終えた」という誤った達成感</strong>が生まれ、
+          本来やるべき復習が抜ける。<span className="marker">空欄のほうが害が小さい</span>ので、
+          <strong>実物を確認した問だけを1件ずつ登録する</strong>方針にした。</p>
+      </Box>
+      <p>1件はこの形で持つ。B問題は <code>cell</code> を <code>"15a"</code> / <code>"15b"</code> に分ける。</p>
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th scope="col">項目</th><th scope="col">意味</th><th scope="col">例</th></tr></thead>
+        <tbody>
+          <tr><td><code>session</code></td><td>年度回（グリッドの行と同じ）</td><td><code>"R8上"</code></td></tr>
+          <tr><td><code>cell</code></td><td>問番号。B問題は小問まで</td><td><code>"3"</code> / <code>"15a"</code></td></tr>
+          <tr><td><code>topic</code></td><td>Wikiのページ id</td><td><code>"transformer"</code></td></tr>
+          <tr><td><code>subtopic</code></td><td>そのページの節 id（省略可）</td><td><code>"pz"</code></td></tr>
+          <tr><td><code>difficulty</code></td><td>体感難易度 1〜3（省略可）</td><td><code>2</code></td></tr>
+          <tr><td><code>source</code></td><td>出典（年度・期・科目まで）</td><td><code>"令和8年度上期 第三種電気主任技術者試験 機械科目"</code></td></tr>
+        </tbody>
+      </table></div>
+      <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+        登録済み <strong>0 件</strong>。解いた問について「この問題は変圧器の %Z だった」とチャットで伝えてもらえれば、
+        こちらで1件ずつ追記する。埋まった時点で単元別・節別の抽出を出す。</p>
     </div>
     <PageNav prev={{ id: "yougo-konzai", title: "D 用語混同まとめ（横断ひっかけ）" }}
       next={{ id: "home", title: "ホーム" }} onNav={onNav} />
@@ -8484,24 +9507,73 @@ const GuidePage = ({ onNav }) => (
     <PageHeader eyebrow="APPENDIX C  STUDY GUIDE" title="学習ガイド"
       deck="電気系出身者を想定した、最短経路の学習プラン例。" />
     <div className="content">
-      <h2><span className="h-num">1.</span>3 ヶ月モデル（復習中心）</h2>
+      <h2 id="scope-map"><span className="h-num">1.</span>公式試験範囲との対応</h2>
+      <p>受験案内に挙げられている「機械」の出題範囲と、本Wikiのページの対応。
+        <strong>範囲に穴が無いこと</strong>をここで確認する。</p>
+      <div className="table-wrap"><table className="data-table">
+        <thead><tr><th scope="col">公式試験範囲</th><th scope="col">本Wikiの対応ページ</th><th scope="col">内容</th></tr></thead>
+        <tbody>
+          <tr><td><strong>電気機器</strong></td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav("dc-machine"); }}>1.1 直流機</a> ／ <a href="#" onClick={(e) => { e.preventDefault(); onNav("induction-machine"); }}>1.2 三相誘導電動機</a> ／ <a href="#" onClick={(e) => { e.preventDefault(); onNav("synchronous"); }}>1.3 同期機</a> ／ <a href="#" onClick={(e) => { e.preventDefault(); onNav("single-phase-im"); }}>1.4 単相誘導電動機</a> ／ <a href="#" onClick={(e) => { e.preventDefault(); onNav("transformer"); }}>2.1 変圧器</a> ／ <a href="#" onClick={(e) => { e.preventDefault(); onNav("keiki-yo-henseiki"); }}>2.3 計器用変成器</a></td><td>最大の範囲。回転機と静止器に分けて6ページ</td></tr>
+          <tr><td><strong>パワーエレクトロニクス</strong></td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav("power-elec"); }}>2.2 パワーエレクトロニクス</a></td><td>整流・チョッパ・インバータ</td></tr>
+          <tr><td><strong>電動機応用</strong></td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav("drive-mech"); }}>4.4 電動機応用</a></td><td>所要動力・はずみ車・速度制御</td></tr>
+          <tr><td><strong>照明</strong></td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav("lighting"); }}>4.1 照明</a></td><td>光束・光度・照度・輝度</td></tr>
+          <tr><td><strong>電熱</strong></td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav("heat"); }}>4.2 電熱</a></td><td>ジュール熱・熱伝導・加熱方式</td></tr>
+          <tr><td><strong>電気化学</strong></td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav("chemistry"); }}>4.3 電気化学</a></td><td>電気分解・電池</td></tr>
+          <tr><td><strong>電気加工</strong></td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav("denki-kakou"); }}>4.5 電気加工</a></td><td><strong>今回新設</strong>。放電・電解・ビーム・超音波・溶接</td></tr>
+          <tr><td><strong>自動制御</strong></td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav("auto-control"); }}>3.1 自動制御</a></td><td>伝達関数・安定判別</td></tr>
+          <tr><td><strong>メカトロニクス</strong></td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav("mechatronics"); }}>4.6 メカトロニクス</a></td><td><strong>今回新設</strong>。センサ・アクチュエータ・サーボ</td></tr>
+          <tr><td><strong>電力システムに関する情報伝送及び処理</strong></td><td><a href="#" onClick={(e) => { e.preventDefault(); onNav("info-elec"); }}>3.2 情報・電子回路</a></td><td>論理回路・A/D・進数・プログラム</td></tr>
+        </tbody>
+      </table></div>
+      <Box kind="warn" label="この対応表の出どころ">
+        <p style={{ margin: 0 }}>左列は<strong>受験案内に記載された出題範囲</strong>として受け取ったものを並べている。
+          <span className="marker">試験機関の公表資料との逐語照合は未実施</span>なので、
+          自分が受ける回の受験案内で必ず確認すること。範囲の呼び方や区分が変わることがある。
+          右列のページが存在することは機械的に確認している（リンク切れがあれば不整合）。</p>
+      </Box>
+
+      <h2 id="cycle"><span className="h-num">2.</span>学習の回し方（1単元 = 1サイクル）</h2>
+      <p>単元を全部読んでから最後に過去問をまとめて解く、という進め方はしない。
+        <strong>1単元ごとに「学習 → その単元の過去問 → △× の復習 → 次の単元」を1サイクル</strong>として回す。
+        読んだ直後に解かないと、どこが分かっていないかが分からないまま次へ進むことになる。</p>
+      <Box kind="tip" label="1サイクルの中身">
+        <ol style={{ margin: 0 }}>
+          <li><strong>学習</strong> — 単元ページを読む。各節の末尾にある確認問題をその場で解く</li>
+          <li><strong>過去問</strong> — その単元の過去問を 5〜10 問。<a href="#" onClick={(e) => { e.preventDefault(); onNav("transformer", "kakomon-progress"); }}>過去問の進捗</a> に ◎○△× を残す</li>
+          <li><strong>復習</strong> — △× だけをチャットに貼って学習ログに残す。<strong>間違えた直後に解き直さない</strong>（覚えているから解けてしまい定着しない）</li>
+          <li><strong>次の単元へ</strong> — 前の単元の △× は、日を空けてから戻る</li>
+        </ol>
+      </Box>
+
+      <h2 id="plan"><span className="h-num">3.</span>3 ヶ月モデル（13週・復習中心）</h2>
+      <p>順番は<strong>ホームの「学習戦略」と同じ</strong>にそろえてある（以前はこの表とホームで先頭の単元が食い違っていた）。
+        並び順の根拠は編集部集計の出題比率で、<span className="marker">一次資料で検証した統計ではない</span>。
+        得意・不得意に応じて入れ替えてよい。</p>
       <div className="table-wrap">
         <table className="data">
-          <thead><tr><th scope="col">週</th><th scope="col">単元</th><th scope="col">到達目標</th></tr></thead>
+          <thead><tr><th scope="col">週</th><th scope="col">単元</th><th scope="col">サイクルで解く過去問</th><th scope="col">到達目標</th></tr></thead>
           <tbody>
-            <tr><td>1〜2週</td><td>直流機</td><td>誘導起電力・トルク式の運用、励磁方式の暗記</td></tr>
-            <tr><td>3〜5週</td><td>三相誘導電動機</td><td>1:s:(1-s) 比、等価回路、トルク特性、始動方式の完全理解</td></tr>
-            <tr><td>6〜7週</td><td>変圧器・計器用変成器（CT/VT）</td><td>%Z・電圧変動率・効率計算の反復。CT/VT は二次禁則が逆になる理由まで</td></tr>
-            <tr><td>8週</td><td>同期機</td><td>V カーブ・短絡比・並列運転条件</td></tr>
-            <tr><td>9週</td><td>パワエレ</td><td>整流・チョッパ・PWM の基本式</td></tr>
-            <tr><td>10週</td><td>自動制御</td><td>伝達関数・フィードバック合成・安定判別</td></tr>
-            <tr><td>11週</td><td>照明・電熱・応用</td><td>公式暗記中心の短期決戦</td></tr>
-            <tr><td>12週</td><td>過去問演習</td><td>本試験 2〜3 年分を時間計測で解く。仕上げに「D 用語混同まとめ」で横断ひっかけを総ざらい</td></tr>
+            <tr><td>1〜2週</td><td>1.2 三相誘導電動機</td><td>誘導機 5〜10問</td><td>1:s:(1-s) 比、等価回路、トルク特性、始動方式の完全理解</td></tr>
+            <tr><td>3〜4週</td><td>2.1 変圧器</td><td>変圧器 5〜10問</td><td>巻数比・%Z・電圧変動率・効率計算の反復</td></tr>
+            <tr><td>5週</td><td>1.1 直流機</td><td>直流機 5〜10問</td><td>誘導起電力・トルク式の運用、励磁方式の暗記</td></tr>
+            <tr><td>6週</td><td>1.3 同期機／1.4 単相誘導電動機</td><td>同期機 5問</td><td>V カーブ・短絡比・並列運転条件</td></tr>
+            <tr><td>7週</td><td>2.2 パワエレ／2.3 計器用変成器</td><td>パワエレ 5問</td><td>整流・チョッパ・PWM の基本式。CT/VT は二次禁則が逆になる理由まで</td></tr>
+            <tr><td>8週</td><td>3.1 自動制御</td><td>制御 5問</td><td>伝達関数・フィードバック合成・安定判別</td></tr>
+            <tr><td>9週</td><td>4.4 電動機応用</td><td>応用 5問</td><td>所要動力・はずみ車・速度制御方式</td></tr>
+            <tr><td>10週</td><td>4.1 照明／4.2 電熱</td><td>照明・電熱 5問</td><td>公式数が少ない。短期決戦で取り切る</td></tr>
+            <tr><td>11週</td><td>3.2 情報処理</td><td>情報 5問</td><td>論理回路・A/D・進数と、プログラムのトレース手順</td></tr>
+            <tr><td>12週</td><td>4.3 電気化学／4.5 電気加工／4.6 メカトロニクス</td><td>各 3〜5問</td><td>方式・用語の区別。深追いせず選択肢を切れる状態まで</td></tr>
+            <tr><td>13週</td><td>総仕上げ</td><td>直近の複数回分を通しで</td><td><strong>90分の本番形式</strong>で時間配分を確かめる。仕上げに「D 用語混同まとめ」で横断ひっかけを総ざらい</td></tr>
           </tbody>
         </table>
       </div>
+      <Box kind="warn" label="最終週にまとめて過去問、にしない">
+        <p style={{ margin: 0 }}>13週目の本番形式演習は<strong>時間配分の確認</strong>が目的であって、ここが過去問の初回ではない。
+          各単元の過去問は1〜12週で<strong>単元ごとに解き終えている</strong>前提で組んである。
+          最終週に初めて過去問へ触ると、どの単元が弱いかが分かった時点で対策の時間が残らない。</p>
+      </Box>
 
-      <h2><span className="h-num">2.</span>得点戦略</h2>
+      <h2 id="score"><span className="h-num">4.</span>得点戦略</h2>
       <Box kind="formula" label="まず配点を押さえる">
         <p><strong>A問題 14問 × 5点 ＝ 70点</strong>／<strong>B問題は解答 3問 × 10点（小問 (a)(b) が各5点）＝ 30点</strong>。解答するのは計 17 問・満点 100 点で、合格ラインは原則 60 点（難易度により調整される場合がある）。<span className="marker">B問題は1問完答で10点＝A問題2問ぶん</span>なので、「何問取るか」ではなく<strong>どの種類の問題を取るか</strong>で点が変わる。</p>
         <p style={{margin:"8px 0 0", fontSize:"12.5px", color:"var(--ink-soft)"}}>⚠️ B問題の<strong>出題数と必須／選択の別は科目・年度で異なる</strong>（必須のみの科目と、一部を選択する科目がある）。上の配点は「解答するのは 17 問」という点では共通だが、<span className="marker">自分が受ける回の受験案内で必ず確認すること</span>。本Wikiでは一次資料の照合が済んでいないため、選択の有無は断定していない。</p>
@@ -8516,7 +9588,7 @@ const GuidePage = ({ onNav }) => (
         <p style={{margin:"8px 0 0"}}>⚠️ 端数の出ない数字で組むこと。1問あたりを一律「約6点」などと按分すると、A問題（5点）と B問題（10点）の差が消えて計画が実際の答案と合わなくなる。</p>
       </Box>
 
-      <h2><span className="h-num">3.</span>本Wikiの使い方</h2>
+      <h2 id="howto"><span className="h-num">5.</span>本Wikiの使い方</h2>
       <ul>
         <li><strong>左サイドバー</strong>から章・節を選択。検索バーで用語ジャンプも可能。</li>
         <li><strong>Tweaks パネル</strong>でテーマ（ライト/ダーク）・アクセント色・フォントサイズ・行間を切替できる。</li>
@@ -8808,6 +9880,8 @@ const App = () => {
       case 'heat':              return <HeatPage {...props} />;
       case 'chemistry':         return <ChemPage {...props} />;
       case 'drive-mech':        return <DriveMechPage {...props} />;
+      case 'denki-kakou':       return <DenkiKakouPage {...props} />;
+      case 'mechatronics':      return <MechatronicsPage {...props} />;
       case 'trends':            return <TrendsPage {...props} />;
       case 'glossary':          return <GlossaryPage {...props} focus={glossaryFocus} />;
       case 'guide':             return <GuidePage {...props} />;
