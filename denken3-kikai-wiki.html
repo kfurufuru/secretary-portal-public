@@ -509,9 +509,32 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
    （--ok/--warn/--danger を --bg-elev の上に文字色として置くと AA を割るため）。 */
 .box-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 14px 0 20px; font-size: 12px; }
 .box-legend .lead { color: var(--ink-soft); font-weight: 700; }
-.box-legend span.lg { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
-  border: 1px solid var(--rule); background: var(--bg-elev); color: var(--ink); }
-.box-legend span.lg::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--lg-color); flex: none; }
+.box-legend .lg { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+  border: 1px solid var(--rule); background: var(--bg-elev); color: var(--ink);
+  font: inherit; line-height: inherit; cursor: pointer; }
+.box-legend .lg::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--lg-color); flex: none; }
+.box-legend .lg[aria-pressed="true"] { background: var(--ink); color: var(--bg-elev); border-color: var(--ink); }
+.box-legend .lg-reset { border-style: dashed; }
+.box-legend .lg-reset::before { display: none; }
+.box-legend .hint { flex-basis: 100%; color: var(--ink-soft); font-size: 11.5px; margin-top: 2px; }
+
+/* 役割フィルタ。凡例チップを押すと .content に data-box-filter="tip mistake" のように
+   役割名が入り、その役割の枠と見出しだけを残して本文を畳む。試験直前に
+   「結論と罠だけ」「公式だけ」を通しで流すための表示で、DOM は消していない
+   （解除で元に戻る）。枠を持たない節の見出しは JS 側で data-empty を付けて隠す。 */
+/* !important は意図的。直下の div にはインライン style の display:flex/grid が
+   あり（節1のジャンプボタン等）、普通のセレクタでは畳めない（実測で17件漏れた）。 */
+.content[data-box-filter] > * { display: none !important; }
+.content[data-box-filter] > h2 { display: block !important; }
+.content[data-box-filter] > h2[data-empty="1"] { display: none !important; }
+.content[data-box-filter] > .box-legend { display: flex !important; }
+.content[data-box-filter~="tip"]     > aside.box-tip,
+.content[data-box-filter~="warn"]    > aside.box-warn,
+.content[data-box-filter~="mistake"] > aside.box-mistake,
+.content[data-box-filter~="example"] > aside.box-example,
+.content[data-box-filter~="formula"] > aside.box-formula,
+.content[data-box-filter~="quiz"]    > .box.box-quiz { display: block !important; }
+.content[data-box-filter~="formula"] > .formula-card { display: grid !important; }
 .lg-tip     { --lg-color: var(--ok); }
 .lg-formula { --lg-color: var(--accent); }
 .lg-warn    { --lg-color: var(--warn); }
@@ -1171,7 +1194,7 @@ window.WIKI_DATA = {
       title: "どの式を使うか（判断フロー）", desc: "問題文のキーワードから解法を引く対応表",
       keywords: "解き方 判断 フロー 過去問 キーワード どの式" },
     { page: "transformer", pageTitle: "2.1 変圧器", anchor: "traps-table",
-      title: "ひっかけ一覧", desc: "無負荷/短絡の取り違え・kWとkWh・%Zと短絡電流など12件",
+      title: "ひっかけ一覧", desc: "無負荷/短絡の取り違え・kWとkWh・%Zと短絡電流・並行運転の%Z逆比・V結線の分母など",
       keywords: "ひっかけ 誤り 注意 罠 まとめ" },
     { page: "transformer", pageTitle: "2.1 変圧器", anchor: "pz-meaning",
       title: "%Zから何が分かるか", desc: "短絡電流・電圧変動率・並行運転の分担の3つに整理",
@@ -2219,17 +2242,57 @@ const Box = ({ kind, label, children }) => (
 
 /* Box の色が何を意味するかの凡例。長いページでは色が役割と結びついて初めて
    「読み飛ばす／立ち止まる」の判断ができるので、最初の Box より前に一度だけ置く。 */
-const BoxLegend = () => (
-  <div className="box-legend">
-    <span className="lead">色の意味</span>
-    <span className="lg lg-tip">結論</span>
-    <span className="lg lg-formula">なぜその式か</span>
-    <span className="lg lg-warn">条件・前提</span>
-    <span className="lg lg-mistake">罠・誤答</span>
-    <span className="lg lg-example">例題</span>
-    <span className="lg lg-quiz">確認問題</span>
-  </div>
-);
+const BOX_LEGEND_ITEMS = [
+  ['tip', '結論'], ['formula', 'なぜその式か'], ['warn', '条件・前提'],
+  ['mistake', '罠・誤答'], ['example', '例題'], ['quiz', '確認問題'],
+];
+/* チップは押すとその役割の枠だけに絞る（複数可）。絞り込み中は .content に
+   data-box-filter を立て、CSS 側で本文を畳む。枠が1つも残らない節の h2 は
+   data-empty を付けて隠す（見出しだけが並ぶと壊れて見えるため）。
+   状態は保存しない。ページを移ると全部表示に戻る（「本文が消えた」と
+   思わせないため）。 */
+const BoxLegend = () => {
+  const [on, setOn] = React.useState([]);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    const el = ref.current && ref.current.closest('.content');
+    if (!el) return;
+    const h2s = Array.from(el.children).filter(c => c.tagName === 'H2');
+    if (!on.length) {
+      el.removeAttribute('data-box-filter');
+      h2s.forEach(h => h.removeAttribute('data-empty'));
+      return;
+    }
+    el.setAttribute('data-box-filter', on.join(' '));
+    // 各 h2 について、次の h2 までに表示されている子が1つも無ければ隠す
+    const kids = Array.from(el.children);
+    h2s.forEach(h => {
+      let i = kids.indexOf(h) + 1, shown = false;
+      for (; i < kids.length && kids[i].tagName !== 'H2'; i++) {
+        if (getComputedStyle(kids[i]).display !== 'none') { shown = true; break; }
+      }
+      if (shown) h.removeAttribute('data-empty'); else h.setAttribute('data-empty', '1');
+    });
+    return () => { el.removeAttribute('data-box-filter'); h2s.forEach(h => h.removeAttribute('data-empty')); };
+  }, [on]);
+  const toggle = (k) => setOn(v => v.includes(k) ? v.filter(x => x !== k) : v.concat(k));
+  const labelOf = (k) => (BOX_LEGEND_ITEMS.find(x => x[0] === k) || [])[1];
+  return (
+    <div className="box-legend" ref={ref}>
+      <span className="lead">{on.length ? '表示中' : '色の意味'}</span>
+      {BOX_LEGEND_ITEMS.map(([k, label]) => (
+        <button key={k} type="button" className={`lg lg-${k}`} aria-pressed={on.includes(k)}
+          onClick={() => toggle(k)}>{label}</button>
+      ))}
+      {on.length > 0 && (
+        <button type="button" className="lg lg-reset" onClick={() => setOn([])}>すべて表示に戻す</button>
+      )}
+      <span className="hint">{on.length
+        ? `「${on.map(labelOf).join('・')}」の枠だけを見出しつきで残している。本文は隠れているだけで消えていない`
+        : 'チップを押すと、その役割の枠だけに絞って読める（複数可・直前確認向け）'}</span>
+    </div>
+  );
+};
 
 /* 折りたたみブロック（スマホでの縦長を抑える。結論・図・罠表は開いたまま、
    導出・例題・論説は畳んで「必要になったら開く」導線にする） */
@@ -5556,7 +5619,7 @@ const TransformerQuick = ({ s }) => {
   if (!groups.length || !groups[0][1].length) return null;
   const n = groups.reduce((t, g) => t + g[1].length, 0);
   return (
-    <div className="box" style={s ? { background: "color-mix(in oklab, var(--info) 10%, var(--bg-elev))",
+    <div className="box box-quiz" style={s ? { background: "color-mix(in oklab, var(--info) 10%, var(--bg-elev))",
                                       borderColor: "color-mix(in oklab, var(--info) 30%, transparent)" } : undefined}>
       {s && (
         <div className="box-label" style={{ color: "var(--info)" }}>
@@ -5602,7 +5665,7 @@ const TransformerPage = ({ onNav }) => (
       </Box>
 
       <h2 id="scope"><span className="h-num">1.</span>このページで得点できる問題</h2>
-      <p>変圧器は「1つの等価回路」から枝分かれして出題される。どの問いも、下の6つのどれかに帰着する。</p>
+      <p>変圧器は「1つの等価回路」から枝分かれして出題される。どの問いも、下の7つのどれかに帰着する。</p>
       <div className="table-wrap"><table className="data-table">
         <thead><tr><th scope="col">問われ方</th><th scope="col">使う道具</th><th scope="col">本ページの節</th></tr></thead>
         <tbody>
@@ -5612,6 +5675,7 @@ const TransformerPage = ({ onNav }) => (
           <tr><td>効率を求める／最大になる負荷率を求める</td><td>鉄損・銅損・全日効率</td><td>7</td></tr>
           <tr><td>負荷をかけたとき端子電圧がどれだけ下がるか</td><td>電圧変動率 <Eq tex="\varepsilon" /></td><td>8</td></tr>
           <tr><td>短絡電流の大きさ／2台の負荷分担</td><td>%Z・並行運転</td><td>9・10</td></tr>
+          <tr><td>単相2台で三相を供給する／1台故障後の出力・利用率／単巻の自己容量</td><td>V結線容量（分母の区別）・単巻変圧器</td><td>11・12</td></tr>
         </tbody>
       </table></div>
       <p style={{ fontSize: 12.5, color: "var(--ink-mute)" }}>出題頻度の表記は<strong>編集者による過去問の概算集計</strong>であり、実施機関の公式集計ではない。年度・区分の内訳は非公開のため、学習の優先度の目安としてのみ使うこと。</p>
