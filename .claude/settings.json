@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "p=$(cat); case \"$p\" in *.html*|*-mirror/*|*business-skills*) ;; *) exit 0 ;; esac; for d in \"$CLAUDE_PROJECT_DIR\" \"$PWD\" \"$(git rev-parse --show-toplevel 2>/dev/null)\"; do if [ -n \"$d\" ] && [ -f \"$d/.claude/hooks/mirror_guard.py\" ]; then printf '%s' \"$p\" | python \"$d/.claude/hooks/mirror_guard.py\"; exit $?; fi; done; exit 0",
+            "timeout": 20,
+            "statusMessage": "生成物の保護チェック"
+          }
+        ]
+      }
+    ]
+  }
+}
