@@ -421,7 +421,8 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   border-bottom: 1px solid var(--rule);
   scroll-margin-top: 24px;
 }
-.content h2 .h-num {
+.content h2 .h-num,
+.main h2 .h-num {
   font-family: var(--font-mono);
   font-size: 13px;
   color: var(--accent);
@@ -9894,7 +9895,11 @@ const TOC = ({ page }) => {
     let cancelled = false;
     const update = () => {
       if (cancelled) return;
-      const heads = document.querySelectorAll('.content h2[id], .content h3[id]');
+      // タブ型ページは本文が .content の外（.page-tabs-container の下）に出るため
+      // .main まで広げる（.main にサイドバーと右レールは含まれない）。
+      // 非表示タブの見出しを拾わないよう、可視のものだけに絞る。
+      const heads = [...document.querySelectorAll('.main h2[id], .main h3[id]')]
+        .filter(h => h.offsetParent !== null);
       const next = [...heads].map(h => {
         /* 見出し先頭の節番号は <span class="h-num"> で本文と分かれている。textContent を
            正規表現で切ると「1時間配分」のように番号と本文が融合したとき「1」+「時間配分」と
@@ -9920,7 +9925,8 @@ const TOC = ({ page }) => {
   }, [page]);
   useEffect(() => {
     const onScroll = () => {
-      const heads = [...document.querySelectorAll('.content h2[id], .content h3[id]')];
+      const heads = [...document.querySelectorAll('.main h2[id], .main h3[id]')]
+        .filter(h => h.offsetParent !== null);
       let cur = null;
       for (const h of heads) {
         if (h.getBoundingClientRect().top < 80) cur = h.id;
