@@ -1268,6 +1268,12 @@ window.WIKI_DATA = {
     { page: "power-elec", pageTitle: "2.2 パワーエレクトロニクス", anchor: "rect-3ph",
       title: "三相ダイオード全波整流（導通順序・脈動率）", desc: "上側は最高相・下側は最低相、線間電圧の絶対値の包絡線。脈動率 π(2−√3)/6 ≈ 0.140",
       keywords: "三相ダイオード全波整流 三相全波 ブリッジ 導通順序 導通角 120度 60度 6パルス 線間電圧 相電圧 平均値 1.35 脈動率 リプル率 最大値 最小値" },
+    { page: "auto-control", pageTitle: "3.1 自動制御", anchor: "multi-loop",
+      title: "ブロック線図の合成 — 内側のループから閉じる", desc: "直列は掛ける・並列は足す・帰還は G/(1∓GH)。入れ子は内側から1ブロックに潰す",
+      keywords: "ブロック線図 合成 直列 縦続 並列 フィードバック結合 多重ループ 二重ループ 内側 入れ子 一巡伝達関数 分母 1+GH 正帰還 負帰還 符号" },
+    { page: "auto-control", pageTitle: "3.1 自動制御", anchor: "move-points",
+      title: "引出点・加え合わせ点の移動", desc: "後ろへ移すとき引出点は 1/G・加え合わせ点は G。2つで補正が逆",
+      keywords: "引出点 取り出し点 加え合わせ点 加算点 移動 等価変換 1/G G 交差 ループ 補正 混同 逆" },
     { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "sop-pos",
       title: "真理値表から論理式を作る — 積和形式と和積形式", desc: "積和は出力1の行・和積は出力0の行。否定を付ける向きが逆。多数決回路で AB+BC+CA ⇄ (A+B)(B+C)(C+A)",
       keywords: "真理値表 論理式 積和形式 和積形式 SOP POS 加法標準形 乗法標準形 簡単化 簡略化 ドモルガン 恒等式 多数決回路 最小項 最大項 論理圧縮" },
@@ -1854,10 +1860,10 @@ const KIKAI_DAILY_POOL = [
 
   // ─── 自動制御 auto-control (5) ───
   { id:'k39', topic:'自動制御', rank:'S',
-    q:'一巡伝達関数が G のとき、フィードバック（負帰還）結合した閉ループ伝達関数はどれか。',
+    q:'前向き伝達関数が G、帰還要素が H = 1（直結帰還）のとき、負帰還結合した閉ループ伝達関数はどれか。',
     choices:[{key:'A',label:'G/(1+G)',correct:true},{key:'B',label:'G/(1−G)',correct:false},{key:'C',label:'(1+G)/G',correct:false},{key:'D',label:'1/(1+G)',correct:false}],
     tags:['#公式','#頻出S'],
-    explanation:'前向き要素 G、帰還要素 H の一般形は G/(1+GH)。H = 1（直結帰還）なら G/(1+G)。分母の符号は負帰還が +、正帰還が −。1/(1+G) は「入力から偏差まで」の伝達関数で、出力までのものとは別物。',
+    explanation:'前向き要素 G、帰還要素 H の一般形は G/(1+GH)。H = 1（直結帰還）なら G/(1+G)。分母の符号は負帰還が +、正帰還が −。1/(1+G) は「入力から偏差まで」の伝達関数で、出力までのものとは別物。なお H = 1 でないときの一巡伝達関数は GH で、前向き G と一致しない（「一巡が G」と「前向きが G」は別条件）。',
     evidence:['本ページ セクション2 ブロック線図の合成則'], verified:'high',
     wikiPageId:'auto-control' },
   { id:'k40', topic:'自動制御', rank:'S',
@@ -26049,7 +26055,254 @@ const AutoControlPage = ({
   tex: "H"
 }), " が1でない時に ", /*#__PURE__*/React.createElement(Eq, {
   tex: "1+G"
-}), " と混同しない。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}), " と混同しない。")), /*#__PURE__*/React.createElement(Box, {
+  kind: "formula",
+  label: "用語 — 一巡伝達関数（開ループ伝達関数）"
+}, /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: 0
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, /*#__PURE__*/React.createElement("strong", null, "ループを1か所で切って、そこから一周したときの積")), "が", /*#__PURE__*/React.createElement("strong", null, "一巡伝達関数"), "。 単純なフィードバック系なら ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "GH"
+}), " がそれで、閉ループ伝達関数 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G/(1+GH)"
+}), " の", /*#__PURE__*/React.createElement("strong", null, "分母に現れているもの"), "である。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, "⚠️ ", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "閉ループ伝達関数 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G/(1+GH)"
+}), " と一巡伝達関数 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "GH"
+}), " の取り違えが定番の引っかけ"), "。 設問が「一巡伝達関数を求めよ」なら、", /*#__PURE__*/React.createElement("strong", null, "割り算をせずに一周の積を書くだけ"), "で終わる。")), /*#__PURE__*/React.createElement("h3", {
+  id: "combine"
+}, "3つの結合則 — これだけで大半は解ける"), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data-table"
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "結合"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "合成伝達関数"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "読み方"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "直列"), "（縦続）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_1 G_2"
+})), /*#__PURE__*/React.createElement("td", null, "掛ける")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "並列")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_1 \\pm G_2"
+})), /*#__PURE__*/React.createElement("td", null, "足す（加え合わせ点の符号どおり）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "フィードバック")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dfrac{G}{1 \\mp GH}"
+})), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "負帰還なら ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "1+GH"
+}), "・正帰還なら ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "1-GH"
+}))))))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, "符号は", /*#__PURE__*/React.createElement("strong", null, "加え合わせ点の記号"), "で決まる。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "-"
+}), " なら分母は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "+"
+}), "、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "+"
+}), " なら分母は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "-"
+}), " と", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "逆になる"), "のが引っかけどころ。"), /*#__PURE__*/React.createElement("h3", {
+  id: "multi-loop"
+}, "ループが複数あるとき — 内側から順に閉じる"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "結論から"), "：", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "入れ子になったループは", /*#__PURE__*/React.createElement("strong", null, "内側から1つずつ潰して1つのブロックに置き換える")), "。 外側から手を付けようとすると式が絡まる。"), /*#__PURE__*/React.createElement(Box, {
+  kind: "example",
+  label: "例題 — 二重ループの合成"
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 前向きに ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_1"
+}), "、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_2"
+}), " が直列に並び、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_2"
+}), " だけに ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "H_2"
+}), " の負帰還（内側ループ）、 全体に ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "H_1"
+}), " の負帰還（外側ループ）がかかっている。閉ループ伝達関数を求め、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_1=2,\\;G_2=5,\\;H_2=0.4,\\;H_1=0.1"
+}), " のときの値を出せ。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 2px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "① 内側を閉じる"), " —— ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_2"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "H_2"
+}), " だけを見て公式03 を当てる。"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "G_2' = \\dfrac{G_2}{1 + G_2 H_2} = \\dfrac{5}{1 + 5\\times0.4} = \\dfrac{5}{3} \\approx 1.667"
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 2px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "② 直列にまとめる"), " —— 内側を1つのブロックとみなして ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_1"
+}), " と掛ける。"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "G_{\\text{fwd}} = G_1 G_2' = 2 \\times \\dfrac{5}{3} = \\dfrac{10}{3} \\approx 3.333"
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 2px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "③ 外側を閉じる"), " —— もう一度 公式03。"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "W = \\dfrac{G_{\\text{fwd}}}{1 + G_{\\text{fwd}} H_1} = \\dfrac{10/3}{1 + (10/3)\\times0.1} = \\dfrac{10/3}{4/3} = 2.5"
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "検算"), "：記号のまま最後まで整理すると"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "W = \\dfrac{G_1 G_2}{1 + G_2 H_2 + G_1 G_2 H_1} = \\dfrac{2\\times5}{1 + 2 + 1} = \\dfrac{10}{4} = 2.5"
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "6px 0 0"
+  }
+}, "で一致する。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "分母に ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_2 H_2"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_1 G_2 H_1"
+}), " の", /*#__PURE__*/React.createElement("strong", null, "両方"), "が出ているかを見れば、内側を閉じ忘れていないか分かる"), "。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, "この例のように", /*#__PURE__*/React.createElement("strong", null, "分母が「1 ＋ 各ループの一巡伝達関数の和」"), "で止まるのは、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "どのループも互いに", /*#__PURE__*/React.createElement("strong", null, "接触している"), "とき"), "（ブロックか信号線を共有している。", /*#__PURE__*/React.createElement("strong", null, "入れ子でも交差でも接触していれば成り立つ"), "）。 この例では内側 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_2H_2"
+}), " と外側 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_1G_2H_1"
+}), " が ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_2"
+}), " を共有しているので当てはまる。"), /*#__PURE__*/React.createElement(Box, {
+  kind: "mistake",
+  label: "離れた（接触しない）ループが2つあると、和だけでは足りない"
+}, /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: 0
+  }
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_1"
+}), " に ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "H_1"
+}), " の帰還をかけた閉ループと、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_2"
+}), " に ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "H_2"
+}), " の帰還をかけた閉ループを", /*#__PURE__*/React.createElement("strong", null, "縦続に並べた"), "（2つのループがブロックを共有していない）場合、正しい答えは"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "W = \\dfrac{G_1 G_2}{(1+G_1H_1)(1+G_2H_2)} = \\dfrac{G_1 G_2}{1 + G_1H_1 + G_2H_2 + \\underbrace{G_1H_1 \\cdot G_2H_2}_{\\text{積の項}}}"
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "6px 0 0"
+  }
+}, "で、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "分母に", /*#__PURE__*/React.createElement("strong", null, "積の項"), "が加わる"), "。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_1=2,\\;G_2=5,\\;H_1=0.1,\\;H_2=0.4"
+}), " なら正しい値は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "25/9 \\approx 2.78"
+}), " だが、 「1 ＋ 和」で済ませると ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "25/8 = 3.125"
+}), " になって", /*#__PURE__*/React.createElement("strong", null, "合わない"), "。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, "迷ったら", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "「和で済むか」を考えずに、", /*#__PURE__*/React.createElement("strong", null, "内側から順に閉じて掛ける")), "ほうが安全である （この例は", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_1/(1+G_1H_1)"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G_2/(1+G_2H_2)"
+}), " を掛けるだけ）。 「1 ＋ 和」は", /*#__PURE__*/React.createElement("strong", null, "検算"), "に使う道具であって、解法の近道ではない。"))), /*#__PURE__*/React.createElement("h3", {
+  id: "move-points"
+}, "引出点と加え合わせ点の移動 — 向きで 1/G か G かが変わる"), /*#__PURE__*/React.createElement("p", null, "ループが絡み合っていて内側から閉じられないときは、", /*#__PURE__*/React.createElement("strong", null, "点を移動して形を整える"), "。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "移動して信号の値が変わらないように補正を入れる"), "のが原則で、", /*#__PURE__*/React.createElement("strong", null, "引出点と加え合わせ点で補正が逆になる"), "のが最大の混同源である。"), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data-table"
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "動かすもの"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "ブロック ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G"
+}), " の", /*#__PURE__*/React.createElement("strong", null, "前 → 後")), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "ブロック ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G"
+}), " の", /*#__PURE__*/React.createElement("strong", null, "後 → 前")))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "引出点"), "（信号を取り出す点）"), /*#__PURE__*/React.createElement("td", null, "枝に ", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "1/G"
+})), " を入れる"), /*#__PURE__*/React.createElement("td", null, "枝に ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G"
+}), " を入れる")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "加え合わせ点"), "（信号を足す点）"), /*#__PURE__*/React.createElement("td", null, "足す枝に ", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "G"
+})), " を入れる"), /*#__PURE__*/React.createElement("td", null, "足す枝に ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "1/G"
+}), " を入れる"))))), /*#__PURE__*/React.createElement(Box, {
+  kind: "tip",
+  label: "覚えずに導く — 移動前後で値が同じになるように置くだけ"
+}, /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: 0
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "引出点"), ": ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "X \\to [G] \\to Y=GX"
+}), " で ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "X"
+}), " を取り出していた枝を ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G"
+}), " の後ろへ移すと、 取れるのは ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "Y=GX"
+}), "。欲しいのは ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "X"
+}), " なので ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "1/G"
+}), " を掛けて戻す。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "加え合わせ点"), ": ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "(X+Z) \\to [G] \\to G(X+Z) = GX + GZ"
+}), "。 加え合わせ点を ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G"
+}), " の後ろへ移すと本線は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "GX"
+}), " なので、足す側には ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "GZ"
+}), " が要る＝枝に ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "G"
+}), "。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "「", /*#__PURE__*/React.createElement("strong", null, "後ろへ移すとき"), "は、取り出す側は割る・足す側は掛ける」"), "と1行で覚えてもよいが （", /*#__PURE__*/React.createElement("strong", null, "前へ移すときは4通りとも逆になる"), "）、 迷ったら上のように", /*#__PURE__*/React.createElement("strong", null, "移動後の式を書いて元と一致させる"), "ほうが確実である（数値を1組入れて確かめれば 10 秒で済む）。")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "auto-control",
   sectionId: "block"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -26516,7 +26769,11 @@ const AutoControlPage = ({
   className: "h-num"
 }, "6."), "1分復習（即答チェック）"), /*#__PURE__*/React.createElement("div", {
   className: "box"
-}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れ系の伝達関数は？"), "G(s) = K / (1 + Ts)（T:時定数, K:ゲイン。ステップ応答は指数的に立ち上がる）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "二次系の減衰係数 ζ による応答の違いは？"), "ζ<1 振動的／ζ=1 臨界制動／ζ>1 過制動"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "フィードバック結合の閉ループ伝達関数は？"), "Y/R = G / (1 + GH)（単位フィードバックは H=1）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "周波数伝達関数はどう作る？ゲインの dB は？"), "伝達関数の ", /*#__PURE__*/React.createElement("strong", null, "s を jω に置き換える"), "だけ。見るのは大きさ |G| と偏角 ∠G。dB は振幅比なので ", /*#__PURE__*/React.createElement("strong", null, "20log₁₀|G|"), "（電力比の 10log と混同しない）。|G|=1→0 dB、1/√2→−3 dB、1/10→−20 dB"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れの折れ点角周波数・そこでのゲインと位相は？"), "G=K/(1+jωT) の折れ点は ", /*#__PURE__*/React.createElement("strong", null, "ω=1/T"), "（時定数の逆数）。折れ点で ", /*#__PURE__*/React.createElement("strong", null, "−3 dB・−45°"), "。以降は ", /*#__PURE__*/React.createElement("strong", null, "−20 dB/dec"), " で下がり、位相は −90° へ漸近。周波数 [Hz] を聞かれたら f=ω/(2π)"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "RC・RL 回路の時定数は？"), "RC は ", /*#__PURE__*/React.createElement("strong", null, "掛ける"), "（T=CR）、RL は ", /*#__PURE__*/React.createElement("strong", null, "割る"), "（T=L/R）。次元で確かめられる（Ω×F=s、H/Ω=s）。伝達関数は「出力素子のインピーダンス ÷ 直列合計」の分圧で作る"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "負帰還をかけると直流ゲインと折れ点はどうなる？"), /*#__PURE__*/React.createElement("strong", null, "前向きが一次遅れ1段・フィードバックが定数 H のとき"), "、直流ゲインは ", /*#__PURE__*/React.createElement("strong", null, "1/(1+KH) 倍に下がり"), "、折れ点角周波数は ", /*#__PURE__*/React.createElement("strong", null, "(1+KH) 倍に上がる"), "（単位フィードバックなら H=1 で 1/(1+K)・(1+K) 倍）。帯域が広がる＝速応性が上がる。ゲインを捨てて帯域を買っており、", /*#__PURE__*/React.createElement("strong", null, "直流ゲイン×折れ点＝K/T は不変"), "（検算に使える）。前向きが二次以上ならこの形では言えない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "RLC 直列（出力＝C）の共振角周波数と共振時のゲインは？"), "分母 1−ω²LC+jωCR の", /*#__PURE__*/React.createElement("strong", null, "実部が 0"), " になる点で、", /*#__PURE__*/React.createElement("strong", null, "ω₀ = 1/√(LC)"), "（R は入らない）。そのとき |G| = 1/(ω₀CR) = ", /*#__PURE__*/React.createElement("strong", null, "√(L/C)/R"), " で ", /*#__PURE__*/React.createElement("strong", null, "1 を超えうる"), "、位相はちょうど −90°。共振", /*#__PURE__*/React.createElement("strong", null, "周波数"), " f₀ = ω₀/(2π) との取り違えに注意"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れ・積分要素のベクトル軌跡は？"), "一次遅れ K/(1+jωT)＝中心 (K/2, 0)・半径 K/2 の", /*#__PURE__*/React.createElement("strong", null, "下半円"), "（ω=0 で実軸の K、ω→∞ で原点）／積分 1/(jωT)＝", /*#__PURE__*/React.createElement("strong", null, "負の虚軸"), "（位相 −90° 一定）。選択肢は ω=0 の点と ω→∞ の向きの2点で絞れる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "3つの安定判別法は？"), "ラウス・フルビッツ（係数から代数判定）／ナイキスト（−1+j0 を囲むか）／ボード線図（ゲイン余裕・位相余裕）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "安定度の実用的な目安は？"), "位相余裕 30〜60°・ゲイン余裕 6 dB 以上"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "P・I・D 各動作の特徴は？"), "P=偏差に比例（一般に定常偏差が残る）／I=偏差を積分（定常偏差を除去）／D=変化率で先回り（速応性・減衰性を改善）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "フィードバック制御とシーケンス制御の違いは？"), "フィードバック=目標値と比較して訂正し続ける制御／シーケンス=あらかじめ定めた順序または条件に従い各段階を逐次進める制御（a接点・b接点・自己保持回路）")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れ系の伝達関数は？"), "G(s) = K / (1 + Ts)（T:時定数, K:ゲイン。ステップ応答は指数的に立ち上がる）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "二次系の減衰係数 ζ による応答の違いは？"), "ζ<1 振動的／ζ=1 臨界制動／ζ>1 過制動"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "フィードバック結合の閉ループ伝達関数は？一巡伝達関数との違いは？"), "閉ループは Y/R = G / (1 + GH)（単位フィードバックは H=1）。", /*#__PURE__*/React.createElement("strong", null, "負帰還なら分母は 1+GH・正帰還なら 1−GH"), " と加え合わせ点の符号と逆になる。", /*#__PURE__*/React.createElement("strong", null, "一巡伝達関数はループを1か所で切って一周した積 GH"), " で、閉ループの", /*#__PURE__*/React.createElement("strong", null, "分母に出てくるほう"), "。「一巡を求めよ」なら割り算はしない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直列・並列の合成は？ループが複数あるときの手順は？"), "直列＝", /*#__PURE__*/React.createElement("strong", null, "掛ける"), " G₁G₂／並列＝", /*#__PURE__*/React.createElement("strong", null, "足す"), " G₁±G₂。ループは", /*#__PURE__*/React.createElement("strong", null, "内側から1つずつ閉じて1ブロックに置き換える"), "。分母が「1 ＋ 各ループの一巡伝達関数の和」で止まるのは", /*#__PURE__*/React.createElement("strong", null, "どのループも互いに接触している"), "とき（入れ子・交差とも可）で、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "離れたループが2つあると積の項が加わる"), "（G₁H₁·G₂H₂）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "引出点・加え合わせ点をブロック G の後ろへ移すと？"), /*#__PURE__*/React.createElement("strong", null, "引出点は枝に 1/G"), "（取り出す側は割る）／", /*#__PURE__*/React.createElement("strong", null, "加え合わせ点は枝に G"), "（足す側は掛ける）。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "2つで補正が逆"), "。", /*#__PURE__*/React.createElement("strong", null, "前へ移すときは4通りとも逆"), "になる。迷ったら移動後の式を書いて元と一致させる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "周波数伝達関数はどう作る？ゲインの dB は？"), "伝達関数の ", /*#__PURE__*/React.createElement("strong", null, "s を jω に置き換える"), "だけ。見るのは大きさ |G| と偏角 ∠G。dB は振幅比なので ", /*#__PURE__*/React.createElement("strong", null, "20log₁₀|G|"), "（電力比の 10log と混同しない）。|G|=1→0 dB、1/√2→−3 dB、1/10→−20 dB"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れの折れ点角周波数・そこでのゲインと位相は？"), "G=K/(1+jωT) の折れ点は ", /*#__PURE__*/React.createElement("strong", null, "ω=1/T"), "（時定数の逆数）。折れ点で ", /*#__PURE__*/React.createElement("strong", null, "−3 dB・−45°"), "。以降は ", /*#__PURE__*/React.createElement("strong", null, "−20 dB/dec"), " で下がり、位相は −90° へ漸近。周波数 [Hz] を聞かれたら f=ω/(2π)"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "RC・RL 回路の時定数は？"), "RC は ", /*#__PURE__*/React.createElement("strong", null, "掛ける"), "（T=CR）、RL は ", /*#__PURE__*/React.createElement("strong", null, "割る"), "（T=L/R）。次元で確かめられる（Ω×F=s、H/Ω=s）。伝達関数は「出力素子のインピーダンス ÷ 直列合計」の分圧で作る"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "負帰還をかけると直流ゲインと折れ点はどうなる？"), /*#__PURE__*/React.createElement("strong", null, "前向きが一次遅れ1段・フィードバックが定数 H のとき"), "、直流ゲインは ", /*#__PURE__*/React.createElement("strong", null, "1/(1+KH) 倍に下がり"), "、折れ点角周波数は ", /*#__PURE__*/React.createElement("strong", null, "(1+KH) 倍に上がる"), "（単位フィードバックなら H=1 で 1/(1+K)・(1+K) 倍）。帯域が広がる＝速応性が上がる。ゲインを捨てて帯域を買っており、", /*#__PURE__*/React.createElement("strong", null, "直流ゲイン×折れ点＝K/T は不変"), "（検算に使える）。前向きが二次以上ならこの形では言えない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "RLC 直列（出力＝C）の共振角周波数と共振時のゲインは？"), "分母 1−ω²LC+jωCR の", /*#__PURE__*/React.createElement("strong", null, "実部が 0"), " になる点で、", /*#__PURE__*/React.createElement("strong", null, "ω₀ = 1/√(LC)"), "（R は入らない）。そのとき |G| = 1/(ω₀CR) = ", /*#__PURE__*/React.createElement("strong", null, "√(L/C)/R"), " で ", /*#__PURE__*/React.createElement("strong", null, "1 を超えうる"), "、位相はちょうど −90°。共振", /*#__PURE__*/React.createElement("strong", null, "周波数"), " f₀ = ω₀/(2π) との取り違えに注意"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れ・積分要素のベクトル軌跡は？"), "一次遅れ K/(1+jωT)＝中心 (K/2, 0)・半径 K/2 の", /*#__PURE__*/React.createElement("strong", null, "下半円"), "（ω=0 で実軸の K、ω→∞ で原点）／積分 1/(jωT)＝", /*#__PURE__*/React.createElement("strong", null, "負の虚軸"), "（位相 −90° 一定）。選択肢は ω=0 の点と ω→∞ の向きの2点で絞れる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "3つの安定判別法は？"), "ラウス・フルビッツ（係数から代数判定）／ナイキスト（−1+j0 を囲むか）／ボード線図（ゲイン余裕・位相余裕）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "安定度の実用的な目安は？"), "位相余裕 30〜60°・ゲイン余裕 6 dB 以上"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "P・I・D 各動作の特徴は？"), "P=偏差に比例（一般に定常偏差が残る）／I=偏差を積分（定常偏差を除去）／D=変化率で先回り（速応性・減衰性を改善）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "フィードバック制御とシーケンス制御の違いは？"), "フィードバック=目標値と比較して訂正し続ける制御／シーケンス=あらかじめ定めた順序または条件に従い各段階を逐次進める制御（a接点・b接点・自己保持回路）")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "auto-control",
   sectionId: "quick-review"
 }), /*#__PURE__*/React.createElement(SectionCheckSummary, {
