@@ -1253,6 +1253,15 @@ window.WIKI_DATA = {
     { page: "synchronous", pageTitle: "1.3 同期機", anchor: "parallel-cross",
       title: "横流（循環電流）と短絡比からの計算", desc: "Ic=|E1−E2|/(2xs)、xs[p.u.]≈1/Ks、Zbase=Vn²/Sn",
       keywords: "横流 循環電流 並行運転 並列運転 起電力の差 同期リアクタンス 短絡比 基準インピーダンス p.u. 単位法 同期化電流 無効分 有効分" },
+    { page: "drive-mech", pageTitle: "4.4 電動機応用", anchor: "elevator",
+      title: "釣合いおもり付きエレベータの所要出力", desc: "P=(m−m_c)gv/η。受け持つのはかご＋荷とおもりの差だけ",
+      keywords: "エレベータ 釣合いおもり つりあいおもり 昇降 かご 巻上 所要出力 回生 下降 差" },
+    { page: "drive-mech", pageTitle: "4.4 電動機応用", anchor: "gear",
+      title: "減速機を介した速度・トルク・軸動力", desc: "速度 1/i・トルク i 倍・動力は不変。両側の P=Tω 一致が検算",
+      keywords: "減速機 減速比 歯車 軸トルク 軸動力 回転速度 慣性 換算 1/i2 ギヤ 検算" },
+    { page: "drive-mech", pageTitle: "4.4 電動機応用", anchor: "flywheel",
+      title: "はずみ車効果 GD² と出し入れするエネルギー", desc: "J=GD²/4（4で割る）、W=½J(ω₁²−ω₂²) は2乗の差",
+      keywords: "はずみ車 フライホイール GD2 GD² 慣性モーメント 蓄積 放出 運動エネルギー 730 速度変動 平滑" },
     { page: "transformer", pageTitle: "2.1 変圧器", anchor: "loss-btb",
       title: "返還負荷法（バック・ツー・バック試験）", desc: "同一仕様2台で電力を循環させ、外部電源は損失ぶんだけ。鉄損は主電源・銅損は補助変圧器",
       keywords: "返還負荷法 バックツーバック back-to-back 温度上昇試験 補助変圧器 鉄損供給 銅損供給 循環 同一仕様 2台 試験電源 小規模" },
@@ -1262,6 +1271,9 @@ window.WIKI_DATA = {
     { page: "chemistry", pageTitle: "4.3 電気化学", anchor: "edlc",
       title: "電気二重層キャパシタ（EDLC）", desc: "界面への物理吸着と化学反応の違いから、エネルギー密度・出力密度・寿命・自己放電が導ける",
       keywords: "電気二重層キャパシタ EDLC スーパーキャパシタ リチウムイオン電池 エネルギー密度 出力密度 寿命 サイクル 自己放電 急速充電 貯蔵原理 物理吸着" },
+    { page: "drive-mech", pageTitle: "4.4 電動機応用", anchor: "flywheel-accel",
+      title: "はずみ車の加速に要するトルクと時間", desc: "T=J·dω/dt から t=J(ω₂−ω₁)/T。T は電動機トルク−負荷トルクの余り",
+      keywords: "はずみ車 フライホイール 加速 加速トルク 所要時間 運動方程式 角加速度 慣性モーメント GD2 F=ma 起動 立ち上げ" },
     { page: "heat", pageTitle: "4.2 電熱", anchor: "thermal-circuit",
       title: "熱回路 — 熱の伝わり方と熱抵抗", desc: "温度差↔電圧・熱流↔電流・熱抵抗↔抵抗のアナロジー。R_th=l/(λA)、多層壁は直列",
       keywords: "熱回路 熱抵抗 熱伝導率 熱伝導 対流 熱伝達率 熱流密度 温度こう配 単位面積 放射 ステファンボルツマン 4乗 熱容量 アナロジー 電気回路 多層壁 直列 断熱材 定常 炉壁" },
@@ -28551,7 +28563,7 @@ const DriveMechPage = ({
   id: "drive-mech",
   title: "電動機応用",
   eyebrow: "4.4  MOTOR APPLICATIONS",
-  deck: "所要動力計算・負荷の特性分類・はずみ車効果。実用に近い計算問題が出る。",
+  deck: "所要動力（ポンプ・送風機・巻上機・エレベータ）・減速機・負荷の特性分類・はずみ車効果。実用に近い計算問題が出る。",
   freq: "中（10年で約14問・7%）",
   prev: {
     id: "chemistry",
@@ -28614,11 +28626,201 @@ const DriveMechPage = ({
       tex: "P=\\dfrac{Q\\,\\Delta p}{\\eta}"
     }), " も同じく ", /*#__PURE__*/React.createElement(Eq, {
       tex: "\\eta"
-    }), " は分母。")))
+    }), " は分母。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "warn",
+      label: "ポンプの H は「全揚程」— 実揚程だけではない"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, "公式の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "H"
+    }), " は", /*#__PURE__*/React.createElement("strong", null, "全揚程"), "で、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "実揚程（持ち上げる高さ）＋ 損失水頭"), "である。問題文が「実揚程 20 m、損失水頭 3 m」と分けて与えたら、 足した 23 m を式に入れる。もう一つの定番が単位で、", /*#__PURE__*/React.createElement("strong", null, "流量が [m³/min] で与えられたら 60 で割って [m³/s] にする"), "。 この2つはポンプの計算で定番の失点である。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "もう一つ、", /*#__PURE__*/React.createElement("strong", null, "「電動機入力」を問われたら効率が2段になることがある"), "。 ポンプ効率 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\eta_p"
+    }), " と電動機効率 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\eta_m"
+    }), " が別々に与えられたら、両方で割る。"), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "P_{\\text{in}} = \\dfrac{\\rho g Q H}{\\eta_p\\,\\eta_m}\\;[\\mathrm{W}]"
+    }), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "「ポンプ軸動力」なら ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\eta_p"
+    }), " だけ、「電動機入力」なら ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\eta_m"
+    }), " まで"), "。 設問がどこまでを聞いているかで割る回数が変わる（効率が1つしか与えられていなければ総合効率とみなして1回でよい）。")), /*#__PURE__*/React.createElement("h3", {
+      id: "elevator"
+    }, "釣合いおもり付きエレベータ"), /*#__PURE__*/React.createElement("p", null, "エレベータは、かごの反対側に", /*#__PURE__*/React.createElement("strong", null, "釣合いおもり"), "を吊るしてある。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "電動機が受け持つのは「かご＋荷」と「おもり」の差だけ"), "で、全体の重さではない。"), /*#__PURE__*/React.createElement(FormulaCard, {
+      num: "04",
+      name: "釣合いおもり付きエレベータの所要出力",
+      eq: "P = \\dfrac{(m - m_c)\\,g\\,v}{\\eta}\\;[\\mathrm{W}]",
+      note: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+        tex: "m"
+      }), ": かご＋荷の質量、", /*#__PURE__*/React.createElement(Eq, {
+        tex: "m_c"
+      }), ": 釣合いおもりの質量、", /*#__PURE__*/React.createElement(Eq, {
+        tex: "v"
+      }), ": 昇降速度 [m/s]。", /*#__PURE__*/React.createElement("span", {
+        className: "marker"
+      }, "力行か回生かは ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "m"
+      }), " と ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "m_c"
+      }), " の大小で決まる"), "：", /*#__PURE__*/React.createElement(Eq, {
+        tex: "m > m_c"
+      }), "（かご側が重い）なら", /*#__PURE__*/React.createElement("strong", null, "上昇＝力行・下降＝回生"), "、", /*#__PURE__*/React.createElement(Eq, {
+        tex: "m \\lt m_c"
+      }), "（空かごなど軽負荷）なら", /*#__PURE__*/React.createElement("strong", null, "逆転して上昇＝回生・下降＝力行"), "になる。 釣合いおもりは「かご＋定格積載の 4〜5 割」に設定されるので、", /*#__PURE__*/React.createElement("strong", null, "軽負荷では実際に逆転する"), "。 式が負値になったら、力の向きが逆＝回生側と読む。")
+    }), /*#__PURE__*/React.createElement(Box, {
+      kind: "example",
+      label: "例題 — 釣合いおもり付きエレベータ"
+    }, /*#__PURE__*/React.createElement("p", null, "かごと荷の合計 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "m = 1200\\;\\mathrm{kg}"
+    }), "、釣合いおもり ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "m_c = 900\\;\\mathrm{kg}"
+    }), "、 上昇速度 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "v = 1.0\\;\\mathrm{m/s}"
+    }), "、効率 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\eta = 0.75"
+    }), "、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "g = 9.8\\;\\mathrm{m/s^2}"
+    }), " のときの電動機出力は？"), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "P = \\dfrac{(1200-900)\\times 9.8 \\times 1.0}{0.75} = \\dfrac{2940}{0.75} = 3920\\;[\\mathrm{W}] = 3.92\\;[\\mathrm{kW}]"
+    }), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "⚠️ ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "m"
+    }), " をそのまま入れると 15.7 kW になり、", /*#__PURE__*/React.createElement("strong", null, "4倍"), "外す。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "おもりを引く"), "のがこの問題の全てで、そこさえ間違えなければ残りは巻上機と同じ式である。")), /*#__PURE__*/React.createElement("h3", {
+      id: "gear"
+    }, "減速機を介したとき — 速度・トルク・動力"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "結論から"), "：減速比 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "i"
+    }), " の減速機を通すと、損失を無視すれば", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "速度は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "1/i"
+    }), " 倍、トルクは ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "i"
+    }), " 倍、動力は不変"), "。 動力が変わらないことが検算になる（両側で ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "P = T\\omega"
+    }), " を出して一致するか見る）。"), /*#__PURE__*/React.createElement(FormulaCard, {
+      num: "05",
+      name: "減速機の関係（損失を無視）",
+      eq: "N_L = \\dfrac{N_M}{i}\\;,\\quad T_L = i\\,T_M\\;,\\quad P = T\\omega = \\dfrac{2\\pi N T}{60}",
+      note: /*#__PURE__*/React.createElement(React.Fragment, null, "添字 M はモータ側、L は負荷側。", /*#__PURE__*/React.createElement(Eq, {
+        tex: "N"
+      }), " は [min⁻¹] なので ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "\\omega = 2\\pi N/60"
+      }), " [rad/s] に直してから掛ける。 負荷の慣性をモータ軸へ換算すると ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "1/i^2"
+      }), " になる理由は", /*#__PURE__*/React.createElement("a", {
+        href: "#",
+        onClick: e => {
+          e.preventDefault();
+          onNav("mechatronics", "mech-elec");
+        }
+      }, "4.6 メカトロニクス セクション6"), " に導出がある。")
+    }), /*#__PURE__*/React.createElement(Box, {
+      kind: "warn",
+      label: "「軸入力」を問われたら減速機効率が入る"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, "上の関係は", /*#__PURE__*/React.createElement("strong", null, "損失を無視した理想"), "。減速機効率 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\eta_g"
+    }), " が与えられたら、 負荷側の動力を出すのに電動機はそのぶん余計に要る。"), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "P_M = \\dfrac{P_L}{\\eta_g}\\;,\\qquad T_M = \\dfrac{T_L}{i\\,\\eta_g}"
+    }), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "このとき「動力は不変」も「両側で ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "T\\omega"
+    }), " が一致する」も成り立たない"), "（成り立つのは ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\eta_g = 1"
+    }), " のときだけ）。検算に使う前に、問題文が ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\eta_g"
+    }), " を与えているかを必ず見る。 速度の関係 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "N_L = N_M/i"
+    }), " だけは効率に関係なく成り立つ。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "example",
+      label: "例題 — 減速機を介した軸動力"
+    }, /*#__PURE__*/React.createElement("p", null, "電動機 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "N_M = 1500\\;\\mathrm{min^{-1}}"
+    }), "、減速比 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "i = 5"
+    }), "、負荷トルク ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "T_L = 200\\;\\mathrm{N\\cdot m}"
+    }), "。 負荷の回転速度と軸動力を求めよ。"), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "N_L = \\dfrac{1500}{5} = 300\\;[\\mathrm{min^{-1}}] \\quad,\\quad \\omega_L = \\dfrac{2\\pi \\times 300}{60} = 31.4\\;[\\mathrm{rad/s}]"
+    }), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "P = T_L\\,\\omega_L = 200 \\times 31.4 = 6.28\\times 10^{3}\\;[\\mathrm{W}] = 6.28\\;[\\mathrm{kW}]"
+    }), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "検算"), "：モータ側トルクは ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "T_M = T_L/i = 40"
+    }), " N·m、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\omega_M = 2\\pi\\times 1500/60 = 157"
+    }), " rad/s だから ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "P = 40 \\times 157 = 6.28"
+    }), " kW。", /*#__PURE__*/React.createElement("strong", null, "両側で一致する"), "ので計算は正しい。ずれたら ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "i"
+    }), " を掛ける向きを間違えている。")))
   }, {
     id: "load-types",
     heading: "負荷の特性分類",
     body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "定トルク負荷"), " — クレーン・エレベータ（回転速度によらずトルクが一定）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二乗低減トルク負荷"), " — ポンプ・送風機（T ∝ N²・軸動力は N³ で効く）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "定出力負荷"), " — 巻取機（張力一定・T ∝ 1/N）")), /*#__PURE__*/React.createElement(LoadTypeFig, null), /*#__PURE__*/React.createElement(Box, {
+      kind: "tip",
+      label: "トルク対速度曲線の交点 — 安定に運転できる点とできない点"
+    }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "結論から"), "：電動機と負荷のトルク曲線が交わる点が運転点。 そこで", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "速度がわずかに上がったときに「電動機トルク − 負荷トルク」が負になる"), "なら、 減速して元へ戻るので", /*#__PURE__*/React.createElement("strong", null, "安定"), "。正になるならさらに加速して離れていくので", /*#__PURE__*/React.createElement("strong", null, "不安定"), "。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "式で書くと、交点で ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\dfrac{dT_L}{dN} > \\dfrac{dT_M}{dN}"
+    }), "（速度に対する傾きが", /*#__PURE__*/React.createElement("strong", null, "負荷側のほうが大きい"), "）なら安定である。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "「立ち上がっている」ではなく", /*#__PURE__*/React.createElement("strong", null, "符号込みの傾きの大小")), "で判定するのが要点で、 定トルク負荷（傾き 0）でも、誘導電動機の低すべり側は傾きが", /*#__PURE__*/React.createElement("strong", null, "負"), "なので ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "0 > dT_M/dN"
+    }), " となり安定になる。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "定トルク負荷"), "の場合、停動トルクより左側（高すべり側）は電動機トルク曲線の傾きが正なので", /*#__PURE__*/React.createElement(Eq, {
+      tex: "0 \\lt dT_M/dN"
+    }), " となり", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "不安定"), "——誘導電動機の運転点が停動トルクより右側に落ち着くのはこのためである。 ただし", /*#__PURE__*/React.createElement("strong", null, "これは定トルク負荷での話"), "で、二乗低減トルク負荷（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "T_L \\propto N^2"
+    }), "）のように負荷側の傾きが十分大きければ、 高すべり側の交点でも上の不等式を満たして安定になりうる。「左側は必ず不安定」と覚えない。 そして「交点だから運転できる」と読むのも誤る——", /*#__PURE__*/React.createElement("strong", null, "交点は必要条件であって十分条件ではない"), "。")), /*#__PURE__*/React.createElement(Box, {
       kind: "warn",
       label: "T ∝ N² が成り立つ条件"
     }, /*#__PURE__*/React.createElement("p", null, "ポンプ・送風機の ", /*#__PURE__*/React.createElement(Eq, {
@@ -28631,7 +28833,122 @@ const DriveMechPage = ({
   }, {
     id: "flywheel",
     heading: "はずみ車効果（理論のエネルギー貯蔵とのつながり）",
-    body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Box, {
+    body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "結論から"), "：はずみ車の性能は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "GD^2"
+    }), "（はずみ車効果）で与えられることが多い。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "慣性モーメントに直すには 4 で割る"), "——ここを飛ばすのが定番の失点である。"), /*#__PURE__*/React.createElement(FormulaCard, {
+      num: "06",
+      name: "はずみ車効果と慣性モーメント",
+      eq: "J = \\dfrac{GD^2}{4}\\;[\\mathrm{kg\\cdot m^2}]",
+      note: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+        tex: "G"
+      }), ": 質量 [kg]、", /*#__PURE__*/React.createElement(Eq, {
+        tex: "D"
+      }), ": 回転直径 [m]（＝", /*#__PURE__*/React.createElement("strong", null, "回転半径（慣性半径）の2倍"), "で、はずみ車の外径そのものではない）。半径 ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "D/2"
+      }), " の2乗が効くので 4 で割る。", /*#__PURE__*/React.createElement("span", {
+        className: "marker"
+      }, "問題文が ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "GD^2"
+      }), " で与えたら、まず 4 で割って ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "J"
+      }), " にする"), "。")
+    }), /*#__PURE__*/React.createElement(FormulaCard, {
+      num: "07",
+      name: "速度変化で出し入れするエネルギー",
+      eq: "W = \\dfrac{1}{2}J\\left(\\omega_1^{2} - \\omega_2^{2}\\right)\\;[\\mathrm{J}]",
+      note: /*#__PURE__*/React.createElement(React.Fragment, null, "速度が ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "\\omega_1 \\to \\omega_2"
+      }), " に落ちる間に", /*#__PURE__*/React.createElement("strong", null, "放出"), "する（上げる間は同じ式で", /*#__PURE__*/React.createElement("strong", null, "吸収"), "する）。", /*#__PURE__*/React.createElement(Eq, {
+        tex: "\\omega = 2\\pi N/60"
+      }), "。", /*#__PURE__*/React.createElement("span", {
+        className: "marker"
+      }, "2乗の差"), "であって差の2乗ではない。")
+    }), /*#__PURE__*/React.createElement(Box, {
+      kind: "example",
+      label: "例題 — はずみ車が放出するエネルギー"
+    }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "GD^2 = 100\\;\\mathrm{kg\\cdot m^2}"
+    }), " のはずみ車が、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "1200\\;\\mathrm{min^{-1}}"
+    }), " から ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "1000\\;\\mathrm{min^{-1}}"
+    }), " まで落ちる間に放出するエネルギーは？"), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "J = \\dfrac{100}{4} = 25\\;[\\mathrm{kg\\cdot m^2}]"
+    }), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "\\omega_1 = \\dfrac{2\\pi\\times 1200}{60} = 125.7\\;,\\quad \\omega_2 = \\dfrac{2\\pi\\times 1000}{60} = 104.7\\;[\\mathrm{rad/s}]"
+    }), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "W = \\dfrac{1}{2}\\times 25 \\times \\left(125.7^{2} - 104.7^{2}\\right) \\approx 6.0\\times10^{4}\\;[\\mathrm{J}] = 60\\;[\\mathrm{kJ}]"
+    }), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "⚠️ ", /*#__PURE__*/React.createElement("strong", null, "4 で割り忘れる"), "と 4 倍（240 kJ）に、", /*#__PURE__*/React.createElement("strong", null, "(ω₁−ω₂)² と取り違える"), "と桁がまるごと外れる。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "検算"), "：", /*#__PURE__*/React.createElement(Eq, {
+      tex: "N"
+    }), " のままなら ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "W \\approx GD^2(N_1^2-N_2^2)/730"
+    }), " でも出る （730 は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "7200/\\pi^2"
+    }), " の丸め）。ここでは ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "100\\times(1200^2-1000^2)/730 \\approx 6.0\\times10^4"
+    }), " J で一致する。")), /*#__PURE__*/React.createElement("h3", {
+      id: "flywheel-accel"
+    }, "加速に要するトルクと時間"), /*#__PURE__*/React.createElement("p", null, "はずみ車は「放出するエネルギー」だけでなく、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "静止から所定の速度まで", /*#__PURE__*/React.createElement("strong", null, "回し上げる"), "のに要るトルクと時間"), "も問われる。 使うのは回転体の運動方程式で、直線運動の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "F = ma"
+    }), " と同じ形である。"), /*#__PURE__*/React.createElement(FormulaCard, {
+      num: "08",
+      name: "回転の運動方程式（加速トルクと時間）",
+      eq: "T = J\\dfrac{d\\omega}{dt} \\;\\Longrightarrow\\; t = \\dfrac{J\\,(\\omega_2 - \\omega_1)}{T}",
+      note: /*#__PURE__*/React.createElement(React.Fragment, null, "加速トルク ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "T"
+      }), " が一定のときの所要時間。", /*#__PURE__*/React.createElement(Eq, {
+        tex: "T"
+      }), " は", /*#__PURE__*/React.createElement("strong", null, "負荷トルクを差し引いた余り"), "（＝電動機トルク − 負荷トルク）である点に注意。 質量↔慣性モーメント、力↔トルク、加速度↔角加速度と読み替えれば ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "F=ma"
+      }), " そのもの。")
+    }), /*#__PURE__*/React.createElement(Box, {
+      kind: "example",
+      label: "例題 — 静止から回し上げる時間"
+    }, /*#__PURE__*/React.createElement("p", null, "同じはずみ車（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "GD^2 = 100\\;\\mathrm{kg\\cdot m^2}"
+    }), "）を、一定の加速トルク ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "T = 100\\;\\mathrm{N\\cdot m}"
+    }), " で 静止から ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "1200\\;\\mathrm{min^{-1}}"
+    }), " まで回し上げるのに要する時間と、そのとき蓄えられるエネルギーは？"), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "J = \\dfrac{100}{4} = 25\\;[\\mathrm{kg\\cdot m^2}]\\;,\\quad \\omega = \\dfrac{2\\pi\\times1200}{60} \\approx 125.7\\;[\\mathrm{rad/s}]"
+    }), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "t = \\dfrac{J\\,\\omega}{T} = \\dfrac{25 \\times 125.7}{100} \\approx 31.4\\;[\\mathrm{s}]"
+    }), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "W = \\dfrac{1}{2}J\\omega^2 = \\dfrac{1}{2}\\times 25 \\times 125.7^2 \\approx 1.97\\times10^{5}\\;[\\mathrm{J}] \\approx 197\\;[\\mathrm{kJ}]"
+    }), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "検算"), "：平均の角速度は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\omega/2"
+    }), " なので平均動力は", /*#__PURE__*/React.createElement(Eq, {
+      tex: "T\\,\\omega/2 = 100 \\times 62.8 = 6.28"
+    }), " kW。これに ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "t = 31.4"
+    }), " s を掛けると", /*#__PURE__*/React.createElement(Eq, {
+      tex: "6.28\\times10^{3} \\times 31.4 \\approx 1.97\\times10^{5}"
+    }), " J で ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "W"
+    }), " と一致する。", /*#__PURE__*/React.createElement("strong", null, "エネルギー側と時間側が独立に合う"), "ので計算は正しい。")), /*#__PURE__*/React.createElement(Box, {
       kind: "example",
       label: "理解を深める — はずみ車のエネルギー ½Jω² はコイル ½LI²・コンデンサ ½CV² と同型"
     }, /*#__PURE__*/React.createElement("p", null, "はずみ車（フライホイール）は回転体の", /*#__PURE__*/React.createElement("strong", null, "慣性"), "で運動エネルギー ", /*#__PURE__*/React.createElement(Eq, {
@@ -28666,7 +28983,7 @@ const DriveMechPage = ({
     heading: "1分復習（即答チェック）",
     body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       className: "box"
-    }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプの所要動力の式は？"), "P = ρgQH/η（Q:流量[m³/s], H:全揚程[m]）。効率 η は分母＝入力は出力より大きい"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプ・送風機の負荷特性は？"), "二乗低減トルク負荷（T ∝ N²）。回転速度を下げると軸動力は N³ で減る＝インバータ省エネの根拠"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車が貯えるエネルギーは？"), "W = ½Jω²（J:慣性モーメント, ω:角速度）。負荷急変時に出し入れして速度変動を平滑化")))
+    }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプの所要動力の式は？"), "P = ρgQH/η（Q:流量[m³/s], H:全揚程[m]）。効率 η は分母＝入力は出力より大きい"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプ・送風機の負荷特性は？"), "二乗低減トルク負荷（T ∝ N²）。回転速度を下げると軸動力は N³ で減る＝インバータ省エネの根拠"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車が貯えるエネルギーは？"), "W = ½Jω²（J:慣性モーメント, ω:角速度）。負荷急変時に出し入れして速度変動を平滑化"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車を静止から回し上げる時間は？"), "回転の運動方程式 T = J·dω/dt から、加速トルク T が一定なら ", /*#__PURE__*/React.createElement("strong", null, "t = J(ω₂−ω₁)/T"), "。ここでの T は", /*#__PURE__*/React.createElement("strong", null, "電動機トルク − 負荷トルク"), "の余り。直線運動の F = ma と同じ形"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車効果 GD² から慣性モーメント J を出すには？"), /*#__PURE__*/React.createElement("strong", null, "4 で割る"), "（J = GD²/4）。半径 D/2 の2乗が効くため。速度変化で出し入れするエネルギーは W = ½J(ω₁²−ω₂²)＝", /*#__PURE__*/React.createElement("strong", null, "2乗の差"), "で、差の2乗ではない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "釣合いおもり付きエレベータの所要出力は？"), "P = (m−m_c)gv/η。電動機が受け持つのは", /*#__PURE__*/React.createElement("strong", null, "かご＋荷とおもりの差"), "だけ。m をそのまま入れると大きく外す。力行／回生は ", /*#__PURE__*/React.createElement("strong", null, "m と m_c の大小"), "で決まり、m > m_c なら上昇＝力行・下降＝回生、空かごなど m < m_c では逆転する"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "減速比 i の減速機を通すと速度・トルク・動力は？"), "速度 1/i 倍・トルク i 倍・", /*#__PURE__*/React.createElement("strong", null, "動力は不変"), "（損失無視）。両側で P = Tω を出して一致するかが検算。負荷慣性のモータ軸換算は 1/i²"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプの H は何を指す？流量の単位は？"), "H は", /*#__PURE__*/React.createElement("strong", null, "全揚程 ＝ 実揚程 ＋ 損失水頭"), "。流量が [m³/min] なら 60 で割って [m³/s] にしてから式に入れる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "トルク曲線の交点はいつ安定運転できる？"), "速度が微増したとき「電動機トルク − 負荷トルク」が", /*#__PURE__*/React.createElement("strong", null, "負"), "になれば安定（減速して戻る）。式では ", /*#__PURE__*/React.createElement("strong", null, "dT_L/dN > dT_M/dN"), "（符号込みの傾きの大小）。定トルク負荷なら停動トルクより左側は不安定だが、二乗低減トルク負荷では左側でも安定になりうるので「左側は必ず不安定」と覚えない。", /*#__PURE__*/React.createElement("strong", null, "交点であることは必要条件で、十分条件ではない"))))
   }]
 });
 Object.assign(window, {
