@@ -1274,6 +1274,12 @@ window.WIKI_DATA = {
     { page: "auto-control", pageTitle: "3.1 自動制御", anchor: "move-points",
       title: "引出点・加え合わせ点の移動", desc: "後ろへ移すとき引出点は 1/G・加え合わせ点は G。2つで補正が逆",
       keywords: "引出点 取り出し点 加え合わせ点 加算点 移動 等価変換 1/G G 交差 ループ 補正 混同 逆" },
+    { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "ff-table",
+      title: "RS・D・T・JK フリップフロップの動作", desc: "覚えるのは保持・セット・リセット・反転の割り当てだけ。JK が全部入りで、J と K を結べば T-FF",
+      keywords: "フリップフロップ FF 順序回路 RS-FF D-FF T-FF JK-FF 保持 セット リセット 反転 トグル 特性式 禁止入力 NOR形 NAND形 状態 Q エッジ 立上り 立下り" },
+    { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "ff-trace",
+      title: "FF を含む回路の出力と分周", desc: "動作の行を先に埋め、左隣の Q に当てて1列ずつ進む。J=K=1 は 1/2 分周。初期状態はセット・リセットが来た時点で消える",
+      keywords: "フリップフロップ 回路 出力 タイムチャート 状態遷移 初期状態 Q0 分周 1/2分周 2進カウンタ 縦続 2のn乗 JK 反転 トグル 履歴 消える 引き継ぐ" },
     { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "timing-chart",
       title: "タイムチャートと多段接続 — 表に落とす", desc: "波形問題も2組接続も時刻ごとの表に落とす。中間信号に行を与える。多段は式を先に畳む",
       keywords: "タイムチャート 波形 出力波形 時刻 多段 2組接続 縦続 中間信号 表 トレース 1コマずれ ExOR AND 畳む A・Bバー 検算" },
@@ -28689,14 +28695,692 @@ const InfoElecPage = ({
   }, {
     id: "flipflop",
     heading: "順序回路（フリップフロップ）",
-    body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "RS-FF"), " — 基本形（NOR 形・正論理入力）では ", /*#__PURE__*/React.createElement("span", {
+    body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "結論から"), "：", /*#__PURE__*/React.createElement("span", {
       className: "marker"
-    }, "R=1, S=1 が禁止入力"), "（両出力が同じ値になり、次の状態が決まらない）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "D-FF"), " — クロックのエッジで D 入力を取り込んで保持する。", /*#__PURE__*/React.createElement("strong", null, "立上りか立下りかは素子で決まる"), "（記号のクロック端子に丸が付いていれば立下り）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "JK-FF"), " — J=K=1 で反転動作。", /*#__PURE__*/React.createElement("strong", null, "禁止入力がない"), "のが RS-FF との違い")), /*#__PURE__*/React.createElement(Box, {
+    }, "FF の出力は「いまの入力」だけでは決まらない。", /*#__PURE__*/React.createElement("strong", null, "前の状態"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " を持ち込んで初めて決まる"), "。 だから組合せ回路の解き方（セクション1（論理回路の基本）の「時刻ごとに列を独立に埋める」）はそのままでは使えず、", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " の行を1本足して前の列から引き継ぐ"), "のが唯一の型になる。"), /*#__PURE__*/React.createElement("h3", {
+      id: "ff-table"
+    }, "4種類の動作は1枚の表にまとまる"), /*#__PURE__*/React.createElement("p", null, "覚えるのは", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "「入力の組で", /*#__PURE__*/React.createElement("strong", null, "保持・セット・リセット・反転"), "のどれをするか」"), "だけで、4種はその割り当てが違うだけである。"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "やりたい動作"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "RS ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "(S,R)"
+    })), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "D"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "T"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "JK ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "(J,K)"
+    })))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "保持"), "（そのまま）"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0, 0"), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0, 0")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "セット"), "（1 にする）"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1, 0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1, 0")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "リセット"), "（0 にする）"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0, 1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0, 1")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "反転"), "（ひっくり返す）"), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1, 1"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "禁止入力"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "1, 1")), /*#__PURE__*/React.createElement("td", null, "無し"), /*#__PURE__*/React.createElement("td", null, "無し"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "無し")))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0",
+        fontSize: "12.5px",
+        color: "var(--ink-soft)"
+      }
+    }, "「—」はその FF 単体ではその動作を作れないという意味。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "4種のうち", /*#__PURE__*/React.createElement("strong", null, "4動作すべてを持つのは JK だけ")), "で、しかも禁止入力が無い。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "4px 0 0",
+        fontSize: "12.5px",
+        color: "var(--ink-soft)"
+      }
+    }, "この表は", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement("strong", null, "クロックを1回入れたときに、入力だけで何ができるか")), "を並べたもの。", /*#__PURE__*/React.createElement("strong", null, "クロックを入れない間はどの FF も現状を保つ"), "ので、「D-FF は保持できない素子」という意味ではない（レジスタは D-FF で作る）。 また", /*#__PURE__*/React.createElement("strong", null, "エッジ動作（またはマスタ・スレーブ）を前提"), "にしている —— レベル動作の JK に J=K=1 を入れると、クロックが H の間に何度も反転してしまう。"), /*#__PURE__*/React.createElement(Box, {
+      kind: "formula",
+      label: "特性式（クロック直後の状態）"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\text{RS}:\\; Q^{+} = S + \\bar{R}Q \\quad (SR = 0)"
+    })), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "4px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\text{D}:\\; Q^{+} = D"
+    })), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "4px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\text{T}:\\; Q^{+} = T \\oplus Q"
+    })), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "4px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\text{JK}:\\; Q^{+} = J\\bar{Q} + \\bar{K}Q"
+    })), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0",
+        fontSize: "12.5px"
+      }
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q^{+}"
+    }), " はクロックが入った", /*#__PURE__*/React.createElement("strong", null, "直後"), "の状態、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " は", /*#__PURE__*/React.createElement("strong", null, "直前"), "の状態。 RS の式に ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "(SR = 0)"
+    }), " と付いているのは、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "S=R=1"
+    }), " を除いた範囲でしか成り立たないから（そこが禁止入力）。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "tip",
+      label: "4種はバラバラの暗記ではない"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement("strong", null, "JK が全部入り")), "で、そこから機能を削ると他の3つになる。", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "J"
+    }), " と ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "K"
+    }), " を1本に結べば T-FF"), "（結んだ線が ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "T"
+    }), "。0,0＝保持／1,1＝反転しか作れない）、", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "K"
+    }), " に ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\bar{J}"
+    }), " を入れれば D-FF"), "（1,0＝セット／0,1＝リセットしか作れない）、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "T-FF は JK-FF の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "J,K"
+    }), " を結んだもの"), "と覚えれば、特性式 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q^{+} = T \\oplus Q"
+    }), " も", /*#__PURE__*/React.createElement(Eq, {
+      tex: "J\\bar{Q} + \\bar{K}Q"
+    }), " に ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "J=K=T"
+    }), " を代入して ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "T\\bar{Q} + \\bar{T}Q"
+    }), " ＝ XOR と自分で出せる。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "RS だけは向きが逆で、", /*#__PURE__*/React.createElement("strong", null, "RS に ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "S = J\\bar{Q},\\; R = KQ"
+    }), " のフィードバックを足したものが JK"), " である。 これを ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q^{+} = S + \\bar{R}Q"
+    }), " に入れると"), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "Q^{+} = J\\bar{Q} + \\overline{KQ}\\,Q = J\\bar{Q} + (\\bar{K}+\\bar{Q})Q = J\\bar{Q} + \\bar{K}Q"
+    }), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, "で JK の特性式に戻る。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "さらに ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "SR = J\\bar{Q}\\cdot KQ = JK(\\bar{Q}Q) = 0"
+    }), " なので、", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "S"
+    }), " と ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "R"
+    }), " が同時に 1 になることが原理的に起こらない")), " —— これが", /*#__PURE__*/React.createElement("strong", null, "JK に禁止入力が無い理由"), "で、「禁止だから使うな」という約束ではなく回路構造から出ている。")), /*#__PURE__*/React.createElement("h3", {
+      id: "ff-trace"
+    }, "例題 — FF を含む回路の出力を表で追う"), /*#__PURE__*/React.createElement(Box, {
+      kind: "example",
+      label: "例題 — JK-FF の出力（初期状態を変えて2通り）"
+    }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " JK-FF に下の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "J,K"
+    }), " を与える。各クロック直後の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " を、 初期状態 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_0 = 0"
+    }), " と ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_0 = 1"
+    }), " の2通りについて求めよ。"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "時刻"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t1"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t2"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t3"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t4"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t5"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t6"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t7"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t8"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "J"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "K"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "動作")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "保"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "S"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "R"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "反"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "反"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "保"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "R"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "S")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_0=0"
+    }), "）"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_0=1"
+    }), "）"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1")))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "4px 0 0",
+        fontSize: "12.5px",
+        color: "var(--ink-soft)"
+      }
+    }, "動作の行：", /*#__PURE__*/React.createElement("strong", null, "保"), "＝保持／", /*#__PURE__*/React.createElement("strong", null, "S"), "＝セット（1 にする）／", /*#__PURE__*/React.createElement("strong", null, "R"), "＝リセット（0 にする）／", /*#__PURE__*/React.createElement("strong", null, "反"), "＝反転"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "手順は4行"), " —— ⓪", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "有効エッジの時刻で列に切り、", /*#__PURE__*/React.createElement("strong", null, "その瞬間の"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "J,K"
+    }), " を読む"), "①", /*#__PURE__*/React.createElement(Eq, {
+      tex: "J,K"
+    }), " の組から", /*#__PURE__*/React.createElement("strong", null, "動作の行"), "を先に埋める（表を見るだけ） ②左端に初期状態を置く ③1列ずつ、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "左隣の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " にその列の動作を当てて"), "右へ進む。", /*#__PURE__*/React.createElement("strong", null, "動作の行を先に作るのが要点"), "で、これを飛ばして特性式に数値を入れると桁数が増えて間違える。"), /*#__PURE__*/React.createElement(Box, {
+      kind: "warn",
+      label: "①が先に埋められるのは、入力が外から来るときだけ"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "J,K"
+    }), " が", /*#__PURE__*/React.createElement("strong", null, "波形として外から与えられる"), "問題では、動作の行は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " と無関係に決まるので先に全部埋まる。 しかし", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "J,K"
+    }), " を", /*#__PURE__*/React.createElement("strong", null, "自分や他段の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " から作っている回路"), "（カウンタなど）では、動作は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " を1列進めて初めて決まる"), "ので先に埋められない。 その場合は", /*#__PURE__*/React.createElement("strong", null, "1列ごとに「動作を決める → ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " を更新する」を交互に"), "回す（次の例題がその形）。")), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "2つの初期状態で違うのは t1 だけ"), "で、t2 以降は完全に一致している。 理由は ", /*#__PURE__*/React.createElement("strong", null, "t2 がセットだから"), " —— ", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "セットかリセットが来た瞬間に、それ以前の履歴は消える"), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "J,K"
+    }), " が外から与えられる場合。", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " から作っていると「セットが来るかどうか」自体が履歴に依存する）。 逆に", /*#__PURE__*/React.createElement("strong", null, "保持と反転しか来ない列では、初期状態の違いは最後まで消えない"), "（次の分周がその例）。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "example",
+      label: "例題 — 分周（1/2 になる理由と、初期状態が残る例）"
+    }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " JK-FF の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "J=K=1"
+    }), " に固定（＝T-FF の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "T=1"
+    }), "）したとき、出力はどうなるか。"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "時刻"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t1"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t2"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t3"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t4"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t5"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t6"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t7"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t8"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_0=0"
+    }), "）"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_0=1"
+    }), "）"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "毎クロック反転するので、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " は", /*#__PURE__*/React.createElement("strong", null, "2クロックで1周期"), "＝周波数が ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "1/2"
+    })), "になる。 これを ", /*#__PURE__*/React.createElement("strong", null, "1/2 分周"), "という。"), /*#__PURE__*/React.createElement(Box, {
+      kind: "warn",
+      label: "「n 段つなげば 1/2ⁿ」はつなぎ方まで指定して初めて正しい"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "1/2^n"
+    }), " になるのは", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement("strong", null, "前段の出力を次段の", /*#__PURE__*/React.createElement("em", null, "クロック"), "に入れる")), "つなぎ方（非同期・リプル接続）のときである。", /*#__PURE__*/React.createElement("strong", null, "共通クロックのまま前段の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " を次段の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "J,K"
+    }), " に入れても ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "1/2^n"
+    }), " にはならない"), " —— 3段でそうすると状態は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "000 \\to 001 \\to 010 \\to 111 \\to 000"
+    }), " と", /*#__PURE__*/React.createElement("strong", null, "4クロックで一巡"), "し、最上位は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "1/8"
+    }), " ではなく ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "1/4"
+    }), "、計数も 0,1,2,7 で2進カウンタにならない。")), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "2行は全時刻で逆"), "になっている —— 保持もセットもリセットも来ないので、", /*#__PURE__*/React.createElement("strong", null, "初期状態の違いが最後まで消えない"), "。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "「初期状態が書かれていない分周の問題は答えが1つに決まらない」"), "ので、 設問に ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_0"
+    }), " かリセット動作の指定があるはずである。探して読む。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "example",
+      label: "例題 — FF を2段つないだ回路（段間接続で答えが変わる）"
+    }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " ", /*#__PURE__*/React.createElement("strong", null, "立下りエッジ"), "で動く JK-FF を2個用意し、どちらも ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "J=K=1"
+    }), " に固定する。 1段目のクロックに ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\mathrm{CK}"
+    }), " を与え、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "1段目の出力 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_0"
+    }), " を2段目の", /*#__PURE__*/React.createElement("strong", null, "クロック"), "に入れる"), "。 初期状態は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_1 = Q_0 = 0"
+    }), "。各パルス後の状態を求めよ。"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\mathrm{CK}"
+    })), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "1"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "2"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "3"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "4"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "5"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "6"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "7"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "8"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "1段目"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_0"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "2段目の CK（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_0"
+    }), " の 1→0）"), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "↓"), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "↓"), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "↓"), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "↓")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "2段目"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_1"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "(Q_1Q_0)_2"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "2")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "3")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "2")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "3")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "2段目は ", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_0"
+    }), " が ", /*#__PURE__*/React.createElement("strong", null, "1→0"), " に落ちた瞬間だけ反転"), "する（自分のクロックが立下ったということだから）。 結果は ", /*#__PURE__*/React.createElement("strong", null, "0→1→2→3→0 を繰り返す2進アップカウンタ"), "で、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_1"
+    }), " は ", /*#__PURE__*/React.createElement("strong", null, "4パルスで1周期＝", /*#__PURE__*/React.createElement(Eq, {
+      tex: "1/4"
+    })), "。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "2段で ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "1/2^2"
+    })), " になっているので、確かに ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "n"
+    }), " 段で ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "1/2^n"
+    }), " である。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "ここで ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\bar{Q}_0"
+    }), " を2段目のクロックに入れると"), "、反転する瞬間が ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_0"
+    }), " の ", /*#__PURE__*/React.createElement("strong", null, "0→1"), " 側に移り、 計数は ", /*#__PURE__*/React.createElement("strong", null, "3→2→1→0"), " の", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "ダウンカウンタ"), "になる（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_1"
+    }), " の周波数は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "1/4"
+    }), " のまま）。", /*#__PURE__*/React.createElement("strong", null, "回路図で「次段のクロックが ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " か ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\bar{Q}"
+    }), " か」を必ず見る"), " —— 周波数は同じでも数える向きが逆になる。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "⚠️ この表は", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "前の例題と手順が違う"), "。2段目の動作が1段目の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q_0"
+    }), " で決まるので、", /*#__PURE__*/React.createElement("strong", null, "動作の行を先に全部埋めることができず"), "、1列ずつ「1段目を更新 → その変化を見て2段目を更新」と進めるしかない。", /*#__PURE__*/React.createElement("strong", null, "複数の FF が出てきたら、この交互の進め方に切り替える。"))), /*#__PURE__*/React.createElement(Box, {
       kind: "mistake",
       label: "禁止入力は「形」で変わる"
     }, /*#__PURE__*/React.createElement("p", null, "「RS-FF の禁止入力は R=S=1」は ", /*#__PURE__*/React.createElement("strong", null, "NOR 形（正論理入力）の場合"), "。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
-    }, "NAND 形（負論理入力）では両入力を 0 にしたときが禁止"), "になる。問題文の回路がどちらの形かを見てから答える。")))
+    }, "NAND 形（負論理入力）では両入力を 0 にしたときが禁止"), "になる。問題文の回路がどちらの形かを見てから答える。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "mistake",
+      label: "D-FF の「1コマ遅れ」は、列の切り方を決めてから言う"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, "「D-FF は1コマ遅れる」は", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement("strong", null, "何を1コマと呼ぶかで真偽が変わる")), "ので、表を作る前に決める。"), /*#__PURE__*/React.createElement("ul", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "本ページの表（1列＝1エッジ）"), "では ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q^{+} = D"
+    }), "、つまり", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement("strong", null, "同じ列"), "の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "D"
+    }), " と ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " が一致する"), "。上の JK 例題と同じ規約である"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "波形図（1コマ＝エッジとエッジの間）"), "で見ると、あるコマの ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "D"
+    }), " は", /*#__PURE__*/React.createElement("strong", null, "次のコマ"), "の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " に現れる。これが「1コマ遅れ」に見える正体")), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "2つを混ぜると、ちょうど1列ずれる"), " —— セクション1（論理回路の基本）で最も警戒している事故がここでも起きる。 なお ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " がなぞるのは", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "エッジの瞬間に標本化した ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "D"
+    }), " だけ"), "で、エッジとエッジの間で ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "D"
+    }), " が動いてもその変化は出力に出ない。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "mistake",
+      label: "クロック端子の記号 — 三角がエッジ、丸が反転"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, "「丸が付いていれば立下り」は", /*#__PURE__*/React.createElement("strong", null, "三角があるときだけ"), "言える。2つの記号は役割が別で、組み合わせで読む。"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "クロック端子"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "動作"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "三角あり"), "・丸なし"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "立上りエッジ"), "で動く")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "三角あり"), "・", /*#__PURE__*/React.createElement("strong", null, "丸あり")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "立下りエッジ"), "で動く")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "三角なし・丸なし"), /*#__PURE__*/React.createElement("td", null, "レベル動作（クロックが ", /*#__PURE__*/React.createElement("strong", null, "H の間ずっと"), "入力が通る）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "三角なし・丸あり"), /*#__PURE__*/React.createElement("td", null, "レベル動作（", /*#__PURE__*/React.createElement("strong", null, "L の間"), "通る）"))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "三角＝エッジで一瞬だけ、丸＝その極性を反転"), "と覚える。 レベル動作のものはエッジ用の表がそのままでは使えない（クロックが開いている間じゅう入力が素通りする）。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "tip",
+      label: "クリア・プリセット端子はクロックを待たない"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, "回路図に ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\mathrm{CLR}"
+    }), "（クリア）や ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\mathrm{PR}"
+    }), "（プリセット）が描かれていたら、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "これらは", /*#__PURE__*/React.createElement("strong", null, "クロックと無関係に、その瞬間に"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " を 0 / 1 へ叩き込む"), "（非同期入力）。 初期状態が「リセットしてから開始」と書かれている問題は、たいていこの端子のことを指している。", /*#__PURE__*/React.createElement("strong", null, "表を作るとき、非同期入力が効いている列では動作の行を無視して値を上書きする。"))))
   }, {
     id: "adda",
     heading: "A/D・D/A 変換",
@@ -28849,13 +29533,27 @@ const InfoElecPage = ({
     heading: "1分復習（即答チェック）",
     body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       className: "box"
-    }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ド・モルガンの定理は？"), "A+B 全体の否定 = Āと B̄ の積／A·B 全体の否定 = Ā と B̄ の和（バーを分配すると + と · が入れ替わる）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "RS-FF の禁止入力は？JK-FF の J=K=1 は？"), "RS-FF は NOR 形（正論理入力）なら R=S=1 が禁止／NAND 形（負論理入力）なら両入力 0 が禁止。JK-FF の J=K=1 は反転動作（禁止入力なし）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "n ビット A/D 変換の量子化段階数は？"), "2ⁿ 段階（例: 8ビット = 256段階）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "(1010)₂ は10進でいくつ？"), "8 + 2 = 10（各桁の重み 8, 4, 2, 1 を足す）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "真理値表から積和形式・和積形式を作る手順は？"), /*#__PURE__*/React.createElement("strong", null, "積和は出力 1 の行"), "を拾い、その行で ", /*#__PURE__*/React.createElement("strong", null, "0"), " の変数に否定を付けて AND、項どうしは OR。", /*#__PURE__*/React.createElement("strong", null, "和積は出力 0 の行"), "を拾い、その行で ", /*#__PURE__*/React.createElement("strong", null, "1"), " の変数に否定を付けて OR、項どうしは AND。", /*#__PURE__*/React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ド・モルガンの定理は？"), "A+B 全体の否定 = Āと B̄ の積／A·B 全体の否定 = Ā と B̄ の和（バーを分配すると + と · が入れ替わる）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "RS-FF の禁止入力は？JK-FF の J=K=1 は？"), "RS-FF は NOR 形（正論理入力）なら R=S=1 が禁止／NAND 形（負論理入力）なら両入力 0 が禁止。JK-FF の J=K=1 は反転動作で", /*#__PURE__*/React.createElement("strong", null, "禁止入力なし"), "——JK は RS に S=JQ̄・R=KQ を足したもので、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "SR=JK(Q̄Q)=0 だから S と R が同時に 1 にならない")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "4種の FF は何が違う？T-FF は？"), "できる動作の違いだけ。", /*#__PURE__*/React.createElement("strong", null, "保持／セット／リセット／反転の4つ全部を持つのは JK だけ"), "（RS は反転できない・D は保持と反転ができない・T は保持と反転だけ）。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "T-FF は JK の J と K を1本に結んだもの"), "で、Q⁺ = T⊕Q（T=0 保持・T=1 反転）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "FF を含む回路の出力はどう追う？"), /*#__PURE__*/React.createElement("strong", null, "Q の行を1本足して前の列から引き継ぐ"), "。①有効エッジで列に切る ②J,K から動作の行を埋める ③初期状態を左端に置き1列ずつ進む。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "初期状態が要る"), "——セット／リセットが来れば履歴は消えるが、保持と反転しか来ない列（分周）では最後まで消えない。", /*#__PURE__*/React.createElement("strong", null, "J,K を Q から作っている回路では②が先に埋まらない"), "ので、1列ずつ交互に更新する"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "n 段つなぐと 1/2ⁿ 分周になる条件は？"), /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "前段の出力を次段の", /*#__PURE__*/React.createElement("strong", null, "クロック"), "に入れる"), "（非同期・リプル）つなぎ方のとき。共通クロックのまま前段 Q を次段の J,K へ入れても 1/2ⁿ にならない。", /*#__PURE__*/React.createElement("strong", null, "Q を渡せばアップ・Q̄ ならダウン"), "（周波数はどちらも同じ）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "クロック端子の三角と丸は？"), /*#__PURE__*/React.createElement("strong", null, "三角＝エッジ動作"), "・", /*#__PURE__*/React.createElement("strong", null, "丸＝極性の反転"), "。三角あり丸なし＝立上り、三角あり丸あり＝立下り、三角なし＝レベル動作。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "「丸＝立下り」は三角があるときだけ"), "。CLR／PR はクロックを待たず即時に効く"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "n ビット A/D 変換の量子化段階数は？"), "2ⁿ 段階（例: 8ビット = 256段階）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "(1010)₂ は10進でいくつ？"), "8 + 2 = 10（各桁の重み 8, 4, 2, 1 を足す）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "真理値表から積和形式・和積形式を作る手順は？"), /*#__PURE__*/React.createElement("strong", null, "積和は出力 1 の行"), "を拾い、その行で ", /*#__PURE__*/React.createElement("strong", null, "0"), " の変数に否定を付けて AND、項どうしは OR。", /*#__PURE__*/React.createElement("strong", null, "和積は出力 0 の行"), "を拾い、その行で ", /*#__PURE__*/React.createElement("strong", null, "1"), " の変数に否定を付けて OR、項どうしは AND。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
     }, "否定を付ける向きが逆"), "なのが最大の落とし穴"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "簡単化でよく使う恒等式は？"), "A + AB = A ／ A + ĀB = A + B ／ AB + AB̄ = A ／ (X+Y)(X+Ȳ) = X。", /*#__PURE__*/React.createElement("strong", null, "同じ項は何度でも使い回せる"), "ので、組にできる相手が複数あれば全部と組む —— 根拠は", /*#__PURE__*/React.createElement("strong", null, "積和なら X + X = X、和積ならその双対 X · X = X")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "半加算器と全加算器の式は？"), "HA: S = A⊕B、C = A·B ／ FA: S = A⊕B⊕C_in、C_out = AB + BC_in + C_in·A（＝AB + C_in(A⊕B) と同じ）。", /*#__PURE__*/React.createElement("strong", null, "入力の 1 の個数を2進数で書く"), "と表を覚えずに済む（上の桁が C_out、下が S）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "r 進法の値はどう出す？10進から r 進へ戻すには？"), "各桁の数字 × 重み rⁱ を足す（(2301)₄ なら 2·64+3·16+0·4+1 を合計して 177）。逆は ", /*#__PURE__*/React.createElement("strong", null, "r で割った余りを下から並べる"), "。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
     }, "最後に出た余りが最上位"), "で、上から読むと別の数になる。各桁に入るのは 0〜r−1"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "タイムチャート・多段接続の解き方は？"), "どちらも", /*#__PURE__*/React.createElement("strong", null, "時刻ごとに1行ずつ埋める表"), "に落とす。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
-    }, "中間信号（Ā や1段目の出力）にも必ず行を与える"), "——頭で追うと1コマずれる。多段は", /*#__PURE__*/React.createElement("strong", null, "式を先に畳む"), "と行が減り検算にもなる（例: (A⊕B)·A = A·B̄）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ビットパターンの論理演算のコツは？"), /*#__PURE__*/React.createElement("strong", null, "桁ごとに独立"), "（繰り上がりは無い）。必ず2進に開いてから演算し、", /*#__PURE__*/React.createElement("strong", null, "4桁ずつ区切って16進"), "に戻す。ExOR は「違う桁だけ1」なので縦に並べて見比べる。", /*#__PURE__*/React.createElement("strong", null, "OR と NOR は全桁が反転"), "している＝検算に使える"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "サイクルタイムと1命令の平均実行時間は？"), "T = 1/f（", /*#__PURE__*/React.createElement("strong", null, "逆数"), "。fT = 1）／1命令 = ", /*#__PURE__*/React.createElement("strong", null, "CPI × T = CPI/f"), "（クロックを多く使うほど時間は", /*#__PURE__*/React.createElement("strong", null, "増える"), "ので掛ける）。1秒あたりの命令数は f/CPI で、10⁶ で割れば MIPS。", /*#__PURE__*/React.createElement("span", {
+    }, "中間信号（Ā や1段目の出力）にも必ず行を与える"), "——頭で追うと1コマずれる。多段は", /*#__PURE__*/React.createElement("strong", null, "式を先に畳める"), "（例: (A⊕B)·A = A·B̄）が、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "畳んだ式", /*#__PURE__*/React.createElement("strong", null, "だけ"), "で埋めると行は減っても検算にはならない"), "——畳み方を誤れば表もそのまま誤る。", /*#__PURE__*/React.createElement("strong", null, "検算したいなら両方やって突き合わせる")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ビットパターンの論理演算のコツは？"), /*#__PURE__*/React.createElement("strong", null, "桁ごとに独立"), "（繰り上がりは無い）。必ず2進に開いてから演算し、", /*#__PURE__*/React.createElement("strong", null, "4桁ずつ区切って16進"), "に戻す。ExOR は「違う桁だけ1」なので縦に並べて見比べる。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement("strong", null, "「OR と NOR が全桁反転」は検算にならない")), "——NOR は OR の否定なので、", /*#__PURE__*/React.createElement("strong", null, "OR を間違えたままでも必ず反転する"), "。使えるのは ", /*#__PURE__*/React.createElement("strong", null, "AND と ExOR の立つ桁が重ならない"), "ことのほう"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "サイクルタイムと1命令の平均実行時間は？"), "T = 1/f（", /*#__PURE__*/React.createElement("strong", null, "逆数"), "。fT = 1）／1命令 = ", /*#__PURE__*/React.createElement("strong", null, "CPI × T = CPI/f"), "（クロックを多く使うほど時間は", /*#__PURE__*/React.createElement("strong", null, "増える"), "ので掛ける）。1秒あたりの命令数は f/CPI で、10⁶ で割れば MIPS。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
     }, "逆数なのは「1秒あたりの命令数」と t"), "（積がちょうど 1）で、", /*#__PURE__*/React.createElement("strong", null, "MIPS はそのまま逆数ではない"), "（MIPS × t = 10⁻⁶）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "r 進 n 桁で表せる範囲は？必要な桁数は？"), "0 〜 ", /*#__PURE__*/React.createElement("strong", null, "rⁿ − 1"), " の rⁿ 通り。", /*#__PURE__*/React.createElement("strong", null, "1 以上の整数"), " N を表すのに要る桁数は ", /*#__PURE__*/React.createElement("strong", null, "⌊log_r N⌋ + 1"), "。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
