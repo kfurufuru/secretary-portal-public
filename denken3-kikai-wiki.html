@@ -1274,6 +1274,18 @@ window.WIKI_DATA = {
     { page: "auto-control", pageTitle: "3.1 自動制御", anchor: "move-points",
       title: "引出点・加え合わせ点の移動", desc: "後ろへ移すとき引出点は 1/G・加え合わせ点は G。2つで補正が逆",
       keywords: "引出点 取り出し点 加え合わせ点 加算点 移動 等価変換 1/G G 交差 ループ 補正 混同 逆" },
+    { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "modulation",
+      title: "変調 — 搬送波の振幅・周波数・位相", desc: "搬送波が正弦波なら A・ω・θ の3つ。AM/FM/PM と ASK/FSK/PSK は同じ3分類。パルス列が搬送波なら PAM/PWM/PPM で別枠",
+      keywords: "変調 搬送波 AM FM PM ASK FSK PSK QAM 振幅 周波数 位相 直交振幅変調 FMは雑音に強い 振幅制限 占有帯域 周波数偏移 帯域とS/Nの交換 パルス変調 PAM PWM PPM アナログ変調 ディジタル変調" },
+    { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "pcm",
+      title: "PCM と標本化定理", desc: "標本化→量子化→符号化。fs ≥ 2fmax。電話 8kHz×8bit = 64kbps",
+      keywords: "PCM 標本化 サンプリング 量子化 符号化 標本化定理 ナイキスト エイリアシング 折返し 64kbps 8kHz 8ビット CD 44.1kHz 量子化雑音 6dB" },
+    { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "multiplex",
+      title: "多重化 — FDM・TDM・CDM・WDM", desc: "F は周波数で分け T は時間で分ける。WDM は光での FDM。変調（載せ方）と多重化（分け方）は階層が違う",
+      keywords: "多重化 FDM TDM CDM WDM 周波数分割 時分割 符号分割 波長分割 混同 変調との違い 図3.2.4 チャネル 分け合う" },
+    { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "telecom",
+      title: "電気通信 — 有線無線・アナログとディジタル・雑音", desc: "光ファイバが電磁誘導に強いのは導体でないから（低損失・広帯域は理由が別）。ディジタルが強いのは再生中継ができるから",
+      keywords: "電気通信 有線 無線 メタル 同軸 光ファイバ 電波 アナログ伝送 ディジタル伝送 中継 増幅 再生中継 雑音累積 熱雑音 誘導雑音 漏話 S/N比 誤り訂正" },
     { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "flow-blank",
       title: "流れ図の穴埋め形式と平均値", desc: "空欄はループの前・中・後のどこにあるかで役割が決まる（初期化・累算・最後に1回）。平均は要素数で割る",
       keywords: "流れ図 フローチャート 穴埋め 空欄 ア イ ウ 初期化 累算 平均 最大値 要素数 周回数 割る数 ループの外 M←A(1) S←S+A(I) 270 54 90 図3.2.3" },
@@ -27393,6 +27405,132 @@ const FlowBlankFig = () => {
   }, "終了"));
 };
 
+/* 図3.2.4 多重化 — FDM は周波数で分け、TDM は時間で分ける */
+const MultiplexFig = () => {
+  const CH = ["var(--accent)", "var(--ok)", "var(--warn)"];
+  return /*#__PURE__*/React.createElement(FigBox, {
+    viewBox: "0 0 480 250",
+    label: "多重化の2方式を並べた図。左は周波数分割多重で、縦軸が周波数、横軸が時間。3つのチャネルが別々の周波数帯を占め、どれも時間軸では途切れず全区間に伸びている。右は時分割多重で、同じ軸に対し3つのチャネルが同じ周波数帯を共有し、時間を区切って順番に入れ替わりながら並んでいる",
+    caption: "図3.2.4\u3000同じ2軸で見比べる。FDM は周波数で場所を分け、各チャネルは時間的に途切れない。TDM は周波数を共有し、時間を区切って順番に使う。「どちらの軸で切っているか」が唯一の違い。"
+  }, /*#__PURE__*/React.createElement("text", {
+    x: "118",
+    y: "20",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--ink)"
+  }, "FDM（周波数分割）"), /*#__PURE__*/React.createElement("line", {
+    x1: "46",
+    y1: "40",
+    x2: "46",
+    y2: "196",
+    stroke: "var(--ink)",
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "46",
+    y1: "196",
+    x2: "206",
+    y2: "196",
+    stroke: "var(--ink)",
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "30",
+    y: "120",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--ink-soft)",
+    transform: "rotate(-90 30 120)"
+  }, "周波数"), /*#__PURE__*/React.createElement("text", {
+    x: "126",
+    y: "214",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--ink-soft)"
+  }, "時間"), [0, 1, 2].map(k => /*#__PURE__*/React.createElement("g", {
+    key: "f" + k
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: "48",
+    y: 54 + k * 46,
+    width: "156",
+    height: "36",
+    fill: CH[2 - k],
+    opacity: "0.55",
+    stroke: CH[2 - k],
+    strokeWidth: "1.2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "126",
+    y: 76 + k * 46,
+    textAnchor: "middle",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--ink)"
+  }, "ch" + (3 - k)))), /*#__PURE__*/React.createElement("text", {
+    x: "126",
+    y: "236",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--ink-mute)"
+  }, "各chは全区間ずっと出ている"), /*#__PURE__*/React.createElement("text", {
+    x: "362",
+    y: "20",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--ink)"
+  }, "TDM（時分割）"), /*#__PURE__*/React.createElement("line", {
+    x1: "274",
+    y1: "40",
+    x2: "274",
+    y2: "196",
+    stroke: "var(--ink)",
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "274",
+    y1: "196",
+    x2: "452",
+    y2: "196",
+    stroke: "var(--ink)",
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "258",
+    y: "120",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--ink-soft)",
+    transform: "rotate(-90 258 120)"
+  }, "周波数"), /*#__PURE__*/React.createElement("text", {
+    x: "362",
+    y: "214",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--ink-soft)"
+  }, "時間"), [0, 1, 2, 3, 4, 5].map(k => /*#__PURE__*/React.createElement("g", {
+    key: "t" + k
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: 276 + k * 29,
+    y: "54",
+    width: "27",
+    height: "128",
+    fill: CH[k % 3],
+    opacity: "0.55",
+    stroke: CH[k % 3],
+    strokeWidth: "1.2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: 289 + k * 29,
+    y: "122",
+    textAnchor: "middle",
+    fontSize: "10",
+    fontWeight: "700",
+    fill: "var(--ink)"
+  }, "ch" + (k % 3 + 1)))), /*#__PURE__*/React.createElement("text", {
+    x: "362",
+    y: "236",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--ink-mute)"
+  }, "同じ帯域を順番に使い回す"));
+};
+
 /* 図4.1.1 光の4量（光束・光度・照度・輝度）が測る場所 */
 const LightQuantityFig = () => /*#__PURE__*/React.createElement(FigBox, {
   viewBox: "0 0 480 258",
@@ -30188,7 +30326,21 @@ const InfoElecPage = ({
       className: "marker"
     }, "否定を付ける向きが逆"), "なのが最大の落とし穴"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "簡単化でよく使う恒等式は？"), "A + AB = A ／ A + ĀB = A + B ／ AB + AB̄ = A ／ (X+Y)(X+Ȳ) = X。", /*#__PURE__*/React.createElement("strong", null, "同じ項は何度でも使い回せる"), "ので、組にできる相手が複数あれば全部と組む —— 根拠は", /*#__PURE__*/React.createElement("strong", null, "積和なら X + X = X、和積ならその双対 X · X = X")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "半加算器と全加算器の式は？"), "HA: S = A⊕B、C = A·B ／ FA: S = A⊕B⊕C_in、C_out = AB + BC_in + C_in·A（＝AB + C_in(A⊕B) と同じ）。", /*#__PURE__*/React.createElement("strong", null, "入力の 1 の個数を2進数で書く"), "と表を覚えずに済む（上の桁が C_out、下が S）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "r 進法の値はどう出す？10進から r 進へ戻すには？"), "各桁の数字 × 重み rⁱ を足す（(2301)₄ なら 2·64+3·16+0·4+1 を合計して 177）。逆は ", /*#__PURE__*/React.createElement("strong", null, "r で割った余りを下から並べる"), "。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
-    }, "最後に出た余りが最上位"), "で、上から読むと別の数になる。各桁に入るのは 0〜r−1"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "流れ図の穴埋めはどう解く？"), /*#__PURE__*/React.createElement("strong", null, "空欄の位置で役割を絞る"), "（ループの前＝初期化／中＝毎回の更新／後＝最後に1回）→ ", /*#__PURE__*/React.createElement("span", {
+    }, "最後に出た余りが最上位"), "で、上から読むと別の数になる。各桁に入るのは 0〜r−1"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "FDM と TDM は何で分ける？"), /*#__PURE__*/React.createElement("strong", null, "F は周波数"), "（Frequency）・", /*#__PURE__*/React.createElement("strong", null, "T は時間"), "（Time）。図では ", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "FDM が横縞・TDM が縦縞"), "。", /*#__PURE__*/React.createElement("strong", null, "WDM は光の波長で分ける FDM"), "（波長と周波数は c=fλ で同じ量）。CDM は同じ時間・同じ周波数を符号で分ける。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "変調（載せ方）と多重化（分け方）は階層が違う"), "ので排他ではない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "PCM の3段の順番と標本化定理は？"), /*#__PURE__*/React.createElement("strong", null, "標本化"), "（時間を刻む）→ ", /*#__PURE__*/React.createElement("strong", null, "量子化"), "（値を刻む）→ ", /*#__PURE__*/React.createElement("strong", null, "符号化"), "。", /*#__PURE__*/React.createElement(Eq, {
+      tex: "f_s \\geq 2 f_{max}"
+    }), "、足りないとエイリアシング。電話は 8 kHz × 8 bit = ", /*#__PURE__*/React.createElement("strong", null, "64 kbps"), "（1秒に何回読むか × 1回で何ビット書くか）。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "エイリアシングは標本化の失敗・量子化雑音は量子化の代償で原因が別")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "アナログ中継とディジタル中継の違いは？"), "アナログは", /*#__PURE__*/React.createElement("strong", null, "増幅"), "（信号も雑音も一緒に大きくなり", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "中継のたびに累積"), "）、ディジタルは", /*#__PURE__*/React.createElement("strong", null, "再生"), "（0か1かを判定して作り直すので持ち越さない）。ただし", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "判定を誤るほど雑音が大きいとそこで誤りが確定"), "し、アナログのような緩やかな劣化ではなく急に壊れる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "FM が AM より雑音に強い理由は？"), "2つある。①情報が", /*#__PURE__*/React.createElement("strong", null, "周波数"), "にあるので", /*#__PURE__*/React.createElement("strong", null, "振幅制限"), "で振幅の雑音を落とせる ②", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "周波数偏移を大きく取る（＝広帯域）ほど雑音による周波数の揺らぎが相対的に小さくなる"), "。", /*#__PURE__*/React.createElement("strong", null, "広帯域は代償であると同時に改善の源"), "で、①だけでは帯域を食う理由が説明できない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "流れ図の穴埋めはどう解く？"), /*#__PURE__*/React.createElement("strong", null, "空欄の位置で役割を絞る"), "（ループの前＝初期化／中＝毎回の更新／後＝最後に1回）→ ", /*#__PURE__*/React.createElement("span", {
       className: "marker"
     }, "残った候補だけ1周トレースして確定"), "。全候補を最初から当てはめない。", /*#__PURE__*/React.createElement("strong", null, "条件式・ループ範囲・添字・二重ループ"), "が空欄の型は位置では絞れないのでトレースが本体"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "合計から平均を出すとき、何で割る？"), /*#__PURE__*/React.createElement("span", {
       className: "marker"
@@ -30998,6 +31150,300 @@ printf("%d\\n", m);`), /*#__PURE__*/React.createElement(Fold, {
       kind: "tip",
       label: "結論 — 2進数の桁シフトは 2倍・1/2倍"
     }, /*#__PURE__*/React.createElement("p", null, "符号なしの2進数を左へ1桁ずらすと値は ", /*#__PURE__*/React.createElement("strong", null, "2倍"), "、右へ1桁ずらすと ", /*#__PURE__*/React.createElement("strong", null, "1/2倍"), "（整数では小数点以下切り捨て）になる。10進数で桁をずらすと10倍・1/10倍になるのと同じ理屈で、", /*#__PURE__*/React.createElement("strong", null, "基数（その進数の底）倍"), "されるだけである。")))
+  }, {
+    id: "telecom",
+    heading: "電気通信 — 何に載せ、どう分け、何に邪魔されるか",
+    body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "結論から"), "：", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "この分野は", /*#__PURE__*/React.createElement("strong", null, "4つの問い"), "に整理できる"), " ——", /*#__PURE__*/React.createElement("strong", null, "①どの道を通すか（有線・無線）"), "・", /*#__PURE__*/React.createElement("strong", null, "②信号をどんな形にするか（アナログ・ディジタル）"), "・", /*#__PURE__*/React.createElement("strong", null, "③何に載せて運ぶか（変調）"), "・", /*#__PURE__*/React.createElement("strong", null, "④1本の道をどう分け合うか（多重化）"), "。 そのうえで", /*#__PURE__*/React.createElement("strong", null, "何が信号を汚すか（雑音）"), "を見る。 用語は多いが、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "どの問いに答える言葉かで仕分ければ混ざらない"), "。"), /*#__PURE__*/React.createElement("h3", {
+      id: "wired-wireless"
+    }, "有線と無線 — 通す道の違い"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "伝送媒体"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "運ぶもの"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "強み"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "弱み"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "メタル線"), "（より対・同軸）"), /*#__PURE__*/React.createElement("td", null, "電気信号"), /*#__PURE__*/React.createElement("td", null, "給電と併用しやすい・安価"), /*#__PURE__*/React.createElement("td", null, "減衰が大きい・", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "電磁誘導を受ける"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "光ファイバ")), /*#__PURE__*/React.createElement("td", null, "光"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "低損失・広帯域・電磁誘導を受けない")), /*#__PURE__*/React.createElement("td", null, "接続（融着）に手間・曲げに弱い")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "電波"), "（無線）"), /*#__PURE__*/React.createElement("td", null, "電磁波"), /*#__PURE__*/React.createElement("td", null, "配線が要らない・移動体に使える"), /*#__PURE__*/React.createElement("td", null, "他局と干渉・遮蔽物に弱い・", /*#__PURE__*/React.createElement("strong", null, "周波数の割当が要る")))))), /*#__PURE__*/React.createElement(Box, {
+      kind: "tip",
+      label: "電磁誘導・サージに強いのは「金属でないこと」から"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, "電磁誘導を受けないのも、地絡・雷サージが乗らないのも、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "導体でないから"), "という1点から出ている。 高圧設備の近くを通す通信線に光が選ばれる理由もこれで、", /*#__PURE__*/React.createElement("strong", null, "覚える項目ではなく1つの理由の言い換え"), "である。 ただし", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "利点が全部そこから出るわけではない"), " —— ", /*#__PURE__*/React.createElement("strong", null, "広帯域"), "なのは搬送波（光）の周波数が桁違いに高いためで （載せられる情報量は搬送波の周波数が高いほど大きい。次の変調につながる）、", /*#__PURE__*/React.createElement("strong", null, "低損失"), "なのは石英ガラスの吸収・散乱が小さい波長帯を選んで使っているためである。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "この3つは理由が別"), "なので、まとめて「導体でないから」と説明しない。")), /*#__PURE__*/React.createElement("h3", {
+      id: "analog-digital"
+    }, "アナログとディジタル — 中継で差が出る"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "結論"), "：", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "1回の伝送では大差ないが、", /*#__PURE__*/React.createElement("strong", null, "中継を重ねると決定的に差がつく")), "。"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "アナログ伝送"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "ディジタル伝送"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "代表的な中継器"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "増幅"), "（そのまま大きくする）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement("strong", null, "再生"), "（0か1かを判定して作り直す）"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "雑音は"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "中継のたびに", /*#__PURE__*/React.createElement("strong", null, "累積する"))), /*#__PURE__*/React.createElement("td", null, "判定を誤らない限り", /*#__PURE__*/React.createElement("strong", null, "そこで消える"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "誤り訂正"), /*#__PURE__*/React.createElement("td", null, "できない"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "できる"), "（符号を付ける）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "代償"), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "量子化雑音"), "が原理的に乗る・帯域を多く使う"))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "アナログの中継は", /*#__PURE__*/React.createElement("strong", null, "信号も雑音も一緒に増幅する"), "ので、区間ごとの雑音が足し算で溜まる。 ディジタルは各中継点で", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "「0 に近いか 1 に近いか」を判定して波形を作り直す"), "ため、", /*#__PURE__*/React.createElement("strong", null, "判定を誤らない範囲の雑音は次の区間へ持ち越されない"), "。これが長距離でディジタルが選ばれる理由である。"), /*#__PURE__*/React.createElement("h3", {
+      id: "modulation"
+    }, "変調 — 搬送波の何を変えるか"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "変調とは「そのままでは飛ばない信号を、飛ぶ波（搬送波）の", /*#__PURE__*/React.createElement("strong", null, "どこか"), "に写しとること」"), "。 搬送波が", /*#__PURE__*/React.createElement("strong", null, "正弦波"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A\\sin(\\omega t + \\theta)"
+    }), " のとき、変えられる場所は", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A"
+    }), "（振幅）・", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\omega"
+    }), "（周波数）・", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\theta"
+    }), "（位相）の", /*#__PURE__*/React.createElement("strong", null, "3つ"), "である。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "下の方式名はこの3つの組合せにすぎない"), "。"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "変える場所"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "アナログ変調"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "ディジタル変調"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "振幅"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A"
+    })), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "AM"), "（振幅変調）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "ASK"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "周波数"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\omega"
+    })), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "FM"), "（周波数変調）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "FSK"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "位相"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\theta"
+    })), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "PM"), "（位相変調）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "PSK"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "振幅と位相を", /*#__PURE__*/React.createElement("strong", null, "同時に")), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement("strong", null, "QAM")), "（直交振幅変調。1回で複数ビット運べる）"))))), /*#__PURE__*/React.createElement(Box, {
+      kind: "warn",
+      label: "搬送波がパルス列なら、この3分類の外にある"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, "上の表は", /*#__PURE__*/React.createElement("strong", null, "搬送波が正弦波の場合"), "である。搬送波を", /*#__PURE__*/React.createElement("strong", null, "パルス列"), "にすると変えられる場所が変わり、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "パルスの", /*#__PURE__*/React.createElement("strong", null, "高さ"), "（PAM）・", /*#__PURE__*/React.createElement("strong", null, "幅"), "（PWM）・", /*#__PURE__*/React.createElement("strong", null, "位置"), "（PPM）"), "という別の3分類になる。", /*#__PURE__*/React.createElement("strong", null, "次の h3 で扱う PCM も名前のとおり「パルス符号変調」で、この系統"), "である。", /*#__PURE__*/React.createElement("strong", null, "「2.2 パワーエレクトロニクス」で出てくるインバータの PWM は、この仲間"), "である （そちらは情報を送るためではなく、平均電圧を作るために幅を変えている）。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "「変調＝AM・FM・PM の3つだけ」と覚えると、PWM が説明できなくなる"), "ので、", /*#__PURE__*/React.createElement("strong", null, "まず搬送波が正弦波かパルス列かを見る"), "。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "mistake",
+      label: "FM が雑音に強い理由は「振幅を見ていない」から"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, "理由は", /*#__PURE__*/React.createElement("strong", null, "2つあり、片方だけでは説明にならない"), "。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "①振幅に乗る雑音を捨てられる"), " —— AM は振幅に情報を入れているので", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "雑音と情報が同じ場所に乗り、区別できない"), "。FM は情報が", /*#__PURE__*/React.createElement("strong", null, "周波数"), "にあるので、 受信側で振幅をわざと一定に潰して（", /*#__PURE__*/React.createElement("strong", null, "振幅制限"), "）から復調すれば、振幅の揺らぎ（雷などのインパルス性雑音・フェージング）を落とせる。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "②帯域と S/N を交換している"), " —— ", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "雑音は搬送波に加わるので、 振幅だけでなく", /*#__PURE__*/React.createElement("strong", null, "位相（＝瞬時周波数）も揺らす")), "。この分は振幅制限では落ちない。 そこで", /*#__PURE__*/React.createElement("strong", null, "周波数偏移を大きく取る"), "（＝占有帯域を広げる）と、雑音による周波数の揺らぎが", /*#__PURE__*/React.createElement("strong", null, "相対的に小さくなる"), "。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "広帯域は「代償」であると同時に", /*#__PURE__*/React.createElement("strong", null, "改善の源そのもの")), "である —— ①だけで覚えると、 なぜ FM が帯域を食うのかが説明できなくなる。")), /*#__PURE__*/React.createElement("h3", {
+      id: "pcm"
+    }, "PCM — アナログをディジタルにする3段"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement("strong", null, "標本化 → 量子化 → 符号化")), "の順に進む。 このうち", /*#__PURE__*/React.createElement("strong", null, "量子化"), "が、セクション4（A/D・D/A 変換）にある「分解能 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "n"
+    }), " ビットで ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "2^n"
+    }), " 段階」の話である （", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "向こうは量子化だけ、ここはその前後まで含めた3段"), "）。"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "段"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "何をするか"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "失われるもの"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "標本化")), /*#__PURE__*/React.createElement("td", null, "一定間隔で値を読む"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "間隔が粗すぎると元に戻らない（下記の定理）"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "量子化")), /*#__PURE__*/React.createElement("td", null, "読んだ値を", /*#__PURE__*/React.createElement(Eq, {
+      tex: "2^n"
+    }), " 段階のどれかに丸める"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "量子化雑音"), "（原理的に避けられない）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "符号化")), /*#__PURE__*/React.createElement("td", null, "段階の番号を2進数で書く"), /*#__PURE__*/React.createElement("td", null, "—（ここでは失われない）"))))), /*#__PURE__*/React.createElement(Box, {
+      kind: "formula",
+      label: "標本化定理（サンプリング定理）"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "f_s \\geq 2 f_{max}"
+    })), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "4px 0 0",
+        fontSize: "12.5px"
+      }
+    }, "信号に含まれる", /*#__PURE__*/React.createElement("strong", null, "最高周波数の2倍以上"), "の頻度で標本化すれば、元の波形を復元できる。 足りないと", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "実際には無い低い周波数が現れる（エイリアシング）"), "。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "example",
+      label: "例題 — 電話の PCM が 64 kbps になる理由"
+    }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 音声帯域の上限を 3.4 kHz とし、標本化周波数 8 kHz・量子化 8 ビットで PCM 符号化する。1チャネルの伝送速度を求めよ。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, "標本化定理の下限は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "2 \\times 3.4 = 6.8\\;\\mathrm{kHz}"
+    }), " で、規格の 8 kHz はこれを満たしている（余裕は折返し防止のフィルタ用）。"), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "8\\,000\\;[\\text{回/s}] \\times 8\\;[\\text{bit/回}] = 64\\,000\\;\\mathrm{bit/s} = 64\\;\\mathrm{kbps}"
+    }), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "式は「1秒あたり何回読むか × 1回で何ビット書くか」だけ"), "で、覚える公式ではない。 ステレオなら ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\times 2"
+    }), "（2チャネル分）を掛けるだけである。")), /*#__PURE__*/React.createElement("h3", {
+      id: "multiplex"
+    }, "多重化 — 1本の道を分け合う"), /*#__PURE__*/React.createElement(MultiplexFig, null), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "方式"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "何で分けるか"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "典型例"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "FDM"), "（周波数分割）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "周波数")), /*#__PURE__*/React.createElement("td", null, "ラジオ・テレビの放送チャネル")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "TDM"), "（時分割）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "時間")), /*#__PURE__*/React.createElement("td", null, "ディジタル電話の多重化")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "CDM"), "（符号分割）"), /*#__PURE__*/React.createElement("td", null, "拡散符号（同じ時間・同じ周波数を共有）"), /*#__PURE__*/React.createElement("td", null, "移動体通信")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "WDM"), "（波長分割）"), /*#__PURE__*/React.createElement("td", null, "光の波長（＝光での FDM）"), /*#__PURE__*/React.createElement("td", null, "光ファイバの大容量化"))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "WDM は FDM の光版"), "である（波長と周波数は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "c = f\\lambda"
+    }), " で結ばれた同じ量の別表現）。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "別方式として覚えるのではなく「光でやる FDM」と読む"), "と、4つが2軸＋1つに減る。"), /*#__PURE__*/React.createElement("h3", {
+      id: "noise"
+    }, "雑音 — どこから来るか"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "雑音"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "出どころ"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "減らせるか"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "熱雑音")), /*#__PURE__*/React.createElement("td", null, "導体中の電子の熱運動"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "温度と帯域幅で決まる。ゼロにはできない"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "量子化雑音")), /*#__PURE__*/React.createElement("td", null, "丸めの誤差（ディジタル固有）"), /*#__PURE__*/React.createElement("td", null, "ビット数 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "n"
+    }), " を増やせば減る")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誘導雑音")), /*#__PURE__*/React.createElement("td", null, "外部の電磁誘導・静電結合"), /*#__PURE__*/React.createElement("td", null, "より対・シールド・", /*#__PURE__*/React.createElement("strong", null, "光ファイバ"), "で回避")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "混信・漏話")), /*#__PURE__*/React.createElement("td", null, "他チャネルの回り込み"), /*#__PURE__*/React.createElement("td", null, "チャネル間の間隔をあける"))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "通信品質は", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "S/N"
+    }), " 比"), "（信号電力と雑音電力の比、dB 表記）で測る。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "S/N"
+    }), " が大きいほど良い"), "。量子化雑音については、", /*#__PURE__*/React.createElement("strong", null, "ビットを1つ増やすと段階が2倍細かくなる"), "ぶん ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "S/N"
+    }), " がおよそ ", /*#__PURE__*/React.createElement("strong", null, "6 dB"), " 改善する。"), /*#__PURE__*/React.createElement(Box, {
+      kind: "warn",
+      label: "「1ビットで約 6 dB」は暗記補助であって公式ではない"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, "試験で問われるのは", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement("strong", null, "「ビットを増やすと量子化雑音は減る」という向き")), "だけで、 定数まで答案に書く必要はない。"), /*#__PURE__*/React.createElement("details", {
+      style: {
+        marginTop: "6px"
+      }
+    }, /*#__PURE__*/React.createElement("summary", null, "正確な式（余力があるときだけ）"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, "全振幅の正弦波に対して ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "S/N \\approx 6.02n + 1.76\\;[\\mathrm{dB}]"
+    }), " で、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "n=8"
+    }), " なら約 ", /*#__PURE__*/React.createElement("strong", null, "49.9 dB"), "（概算 6n では 48 dB）、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "n=16"
+    }), " なら約 ", /*#__PURE__*/React.createElement("strong", null, "98.1 dB"), "（同 96 dB）。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "入力波形や振幅の取り方で定数項は変わる"), "ので、", /*#__PURE__*/React.createElement("strong", null, "「1ビットあたり約 6 dB」は傾きの目安"), "として使う。"))), /*#__PURE__*/React.createElement(Box, {
+      kind: "mistake",
+      label: "この分野の混同ペア"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "①変調と多重化を混ぜる"), " —— 変調は", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "「載せ方」"), "、多重化は", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "「分け方」"), "。 FDM の各チャネルの中身はそれぞれ変調されている（両者は", /*#__PURE__*/React.createElement("strong", null, "階層が違う"), "ので排他ではない）。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "②FDM と TDM を取り違える"), " —— ", /*#__PURE__*/React.createElement("strong", null, "F は周波数（Frequency）で分ける・T は時間（Time）で分ける"), "。 図3.2.4 では ", /*#__PURE__*/React.createElement("strong", null, "FDM が横縞"), "（周波数軸を分ける）・", /*#__PURE__*/React.createElement("strong", null, "TDM が縦縞"), "（時間軸を分ける）。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "同じ ch は左右で同じ色"), "にしてある。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "③標本化と量子化を入れ替える"), " —— ", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "先に", /*#__PURE__*/React.createElement("strong", null, "時間"), "を刻む（標本化）、次に", /*#__PURE__*/React.createElement("strong", null, "値"), "を刻む（量子化）"), "。 エイリアシングは標本化の失敗、量子化雑音は量子化の代償で、", /*#__PURE__*/React.createElement("strong", null, "原因が別"), "である。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "④「ディジタルは雑音に強い」を無条件だと思う"), " —— 強いのは", /*#__PURE__*/React.createElement("strong", null, "再生中継ができるから"), "で、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "判定を誤るほど雑音が大きければ、そこで誤りが確定して以降ずっと残る"), "。アナログのように「少しずつ劣化」ではなく", /*#__PURE__*/React.createElement("strong", null, "急に壊れる"), "。")))
   }]
 });
 const LightingPage = ({
