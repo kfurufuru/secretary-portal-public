@@ -1274,6 +1274,9 @@ window.WIKI_DATA = {
     { page: "auto-control", pageTitle: "3.1 自動制御", anchor: "move-points",
       title: "引出点・加え合わせ点の移動", desc: "後ろへ移すとき引出点は 1/G・加え合わせ点は G。2つで補正が逆",
       keywords: "引出点 取り出し点 加え合わせ点 加算点 移動 等価変換 1/G G 交差 ループ 補正 混同 逆" },
+    { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "flow-blank",
+      title: "流れ図の穴埋め形式と平均値", desc: "空欄はループの前・中・後のどこにあるかで役割が決まる（初期化・累算・最後に1回）。平均は要素数で割る",
+      keywords: "流れ図 フローチャート 穴埋め 空欄 ア イ ウ 初期化 累算 平均 最大値 要素数 周回数 割る数 ループの外 M←A(1) S←S+A(I) 270 54 90 図3.2.3" },
     { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "circuit-to-table",
       title: "回路図から真理値表を起こす", desc: "中間信号に名前を付けて段に分け、左の段から列を埋める。式を一気に書き下さない",
       keywords: "回路図 真理値表 ゲート 段 中間信号 名前を付ける 2のn乗行 NAND OR AND 冗長項 合意項 簡単化 式が違って見える 突き合わせ 図3.2.2" },
@@ -27198,6 +27201,198 @@ const LogicCircuitFig = () => /*#__PURE__*/React.createElement(FigBox, {
   fill: "var(--ink)"
 }, "Y"));
 
+/* 図3.2.3 最大値と平均値を求める流れ図（穴埋め形式） */
+const FlowBlankFig = () => {
+  const CX = 190,
+    W = 210; /* 本流の中心と箱幅 */
+  const box = (cy, text, mark) => /*#__PURE__*/React.createElement("g", {
+    key: "b" + cy
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: CX - W / 2,
+    y: cy - 16,
+    width: W,
+    height: "32",
+    fill: "var(--bg)",
+    stroke: "var(--ink)",
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: CX,
+    y: cy + 4,
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink)"
+  }, text), mark && /*#__PURE__*/React.createElement("text", {
+    x: CX - W / 2 - 14,
+    y: cy + 4,
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--warn)"
+  }, mark));
+  const arrow = (y1, y2) => /*#__PURE__*/React.createElement("line", {
+    key: "a" + y1,
+    x1: CX,
+    y1: y1,
+    x2: CX,
+    y2: y2,
+    stroke: "var(--ink)",
+    strokeWidth: "1.4",
+    markerEnd: "url(#kfb-ar)"
+  });
+  return /*#__PURE__*/React.createElement(FigBox, {
+    viewBox: "0 0 480 476",
+    label: "最大値と平均値を求める流れ図。中身が空欄になっている処理が3つある。開始のあと空欄アの処理、ループ端で I を 2 から 5 まで繰り返し、その中で A(I) が M より大きいかを判断し、大きければ M に A(I) を代入する。大きいか否かにかかわらず同じ場所へ合流し、続いて空欄イの処理。ループを抜けたあと空欄ウの処理、M と H を出力して終了する。空欄アはループの前、イはループの中、ウはループの後にある",
+    caption: "図3.2.3\u3000最大値と平均値を同時に求める流れ図。ア・イ・ウが空欄で、答えは下の例題にある（先に見ないこと）。ウだけがループ端の外にあり、ア はループの前、イ と右へ張り出した M ← A(I) はどちらもループの中である（横に出ていてもループ端の上下に挟まれていれば「中」）。"
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "kfb-ar",
+    markerWidth: "6",
+    markerHeight: "5",
+    refX: "5.2",
+    refY: "2.5",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L6,2.5 L0,5 z",
+    fill: "var(--ink)"
+  }))), /*#__PURE__*/React.createElement("rect", {
+    x: CX - 55,
+    y: "8",
+    width: "110",
+    height: "28",
+    rx: "14",
+    fill: "var(--bg)",
+    stroke: "var(--ink)",
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: CX,
+    y: "27",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink)"
+  }, "開始"), arrow(36, 50), box(68, "（ ア ）", "ア"), arrow(84, 98), /*#__PURE__*/React.createElement("path", {
+    d: "M " + (CX - W / 2) + " 132 L " + (CX - W / 2) + " 108 L " + (CX - W / 2 + 12) + " 100 L " + (CX + W / 2 - 12) + " 100 L " + (CX + W / 2) + " 108 L " + (CX + W / 2) + " 132 Z",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)",
+    strokeWidth: "1.5"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: CX,
+    y: "121",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--accent-ink)"
+  }, "繰り返し\u3000I = 2, 5"), arrow(132, 148), /*#__PURE__*/React.createElement("path", {
+    d: "M " + CX + " 150 L " + (CX + 78) + " 176 L " + CX + " 202 L " + (CX - 78) + " 176 Z",
+    fill: "var(--bg)",
+    stroke: "var(--ink)",
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: CX,
+    y: "180",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink)"
+  }, "A(I) > M ?"), /*#__PURE__*/React.createElement("line", {
+    x1: CX + 78,
+    y1: "176",
+    x2: "307",
+    y2: "176",
+    stroke: "var(--ink)",
+    strokeWidth: "1.4",
+    markerEnd: "url(#kfb-ar)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "292",
+    y: "168",
+    textAnchor: "middle",
+    fontSize: "10",
+    fontWeight: "700",
+    fill: "var(--ok)"
+  }, "Yes"), /*#__PURE__*/React.createElement("rect", {
+    x: "307",
+    y: "160",
+    width: "130",
+    height: "32",
+    fill: "var(--bg)",
+    stroke: "var(--ink)",
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "372",
+    y: "180",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink)"
+  }, "M ← A(I)"), /*#__PURE__*/React.createElement("line", {
+    x1: "372",
+    y1: "192",
+    x2: "372",
+    y2: "222",
+    stroke: "var(--ink)",
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "372",
+    y1: "222",
+    x2: CX,
+    y2: "222",
+    stroke: "var(--ink)",
+    strokeWidth: "1.4",
+    markerEnd: "url(#kfb-ar)"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: CX,
+    y1: "202",
+    x2: CX,
+    y2: "222",
+    stroke: "var(--ink)",
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: CX + 18,
+    y: "216",
+    textAnchor: "middle",
+    fontSize: "10",
+    fontWeight: "700",
+    fill: "var(--ink-soft)"
+  }, "No"), /*#__PURE__*/React.createElement("circle", {
+    cx: CX,
+    cy: "222",
+    r: "3",
+    fill: "var(--ink)"
+  }), arrow(222, 236), box(254, "（ イ ）", "イ"), arrow(270, 284), /*#__PURE__*/React.createElement("path", {
+    d: "M " + (CX - W / 2) + " 286 L " + (CX - W / 2) + " 310 L " + (CX - W / 2 + 12) + " 318 L " + (CX + W / 2 - 12) + " 318 L " + (CX + W / 2) + " 310 L " + (CX + W / 2) + " 286 Z",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)",
+    strokeWidth: "1.5"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: CX,
+    y: "306",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--accent-ink)"
+  }, "繰り返し\u3000I"), arrow(318, 332), box(350, "（ ウ ）", "ウ"), arrow(366, 380), /*#__PURE__*/React.createElement("path", {
+    d: "M " + (CX - W / 2 + 14) + " 382 L " + (CX + W / 2) + " 382 L " + (CX + W / 2 - 14) + " 414 L " + (CX - W / 2) + " 414 Z",
+    fill: "var(--bg)",
+    stroke: "var(--ink)",
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: CX,
+    y: "402",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink)"
+  }, "M 、 H を出力"), arrow(414, 428), /*#__PURE__*/React.createElement("rect", {
+    x: CX - 55,
+    y: "430",
+    width: "110",
+    height: "28",
+    rx: "14",
+    fill: "var(--bg)",
+    stroke: "var(--ink)",
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: CX,
+    y: "449",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink)"
+  }, "終了"));
+};
+
 /* 図4.1.1 光の4量（光束・光度・照度・輝度）が測る場所 */
 const LightQuantityFig = () => /*#__PURE__*/React.createElement(FigBox, {
   viewBox: "0 0 480 258",
@@ -29993,7 +30188,33 @@ const InfoElecPage = ({
       className: "marker"
     }, "否定を付ける向きが逆"), "なのが最大の落とし穴"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "簡単化でよく使う恒等式は？"), "A + AB = A ／ A + ĀB = A + B ／ AB + AB̄ = A ／ (X+Y)(X+Ȳ) = X。", /*#__PURE__*/React.createElement("strong", null, "同じ項は何度でも使い回せる"), "ので、組にできる相手が複数あれば全部と組む —— 根拠は", /*#__PURE__*/React.createElement("strong", null, "積和なら X + X = X、和積ならその双対 X · X = X")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "半加算器と全加算器の式は？"), "HA: S = A⊕B、C = A·B ／ FA: S = A⊕B⊕C_in、C_out = AB + BC_in + C_in·A（＝AB + C_in(A⊕B) と同じ）。", /*#__PURE__*/React.createElement("strong", null, "入力の 1 の個数を2進数で書く"), "と表を覚えずに済む（上の桁が C_out、下が S）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "r 進法の値はどう出す？10進から r 進へ戻すには？"), "各桁の数字 × 重み rⁱ を足す（(2301)₄ なら 2·64+3·16+0·4+1 を合計して 177）。逆は ", /*#__PURE__*/React.createElement("strong", null, "r で割った余りを下から並べる"), "。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
-    }, "最後に出た余りが最上位"), "で、上から読むと別の数になる。各桁に入るのは 0〜r−1"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "回路図から真理値表を起こす手順は？"), /*#__PURE__*/React.createElement("strong", null, "中間信号に名前を付けて段に分ける"), "（各ゲートの入力が外部入力か、より入力側の段の出力だけになるように）→ 入力の全組合せ 2ⁿ 行を2進数の順に並べる → ", /*#__PURE__*/React.createElement("span", {
+    }, "最後に出た余りが最上位"), "で、上から読むと別の数になる。各桁に入るのは 0〜r−1"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "流れ図の穴埋めはどう解く？"), /*#__PURE__*/React.createElement("strong", null, "空欄の位置で役割を絞る"), "（ループの前＝初期化／中＝毎回の更新／後＝最後に1回）→ ", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "残った候補だけ1周トレースして確定"), "。全候補を最初から当てはめない。", /*#__PURE__*/React.createElement("strong", null, "条件式・ループ範囲・添字・二重ループ"), "が空欄の型は位置では絞れないのでトレースが本体"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "合計から平均を出すとき、何で割る？"), /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "周回数ではなく", /*#__PURE__*/React.createElement("strong", null, "要素数")), "。", /*#__PURE__*/React.createElement(Eq, {
+      tex: "I=2"
+    }), " から回す形は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(1)"
+    }), " を初期化で使い切っているだけで、その1個も合計に入っている（5個なら5で割る）。", /*#__PURE__*/React.createElement("strong", null, "初期値はループの開始値と対"), "で、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "I=2,5"
+    }), " なら ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "S \\leftarrow A(1)"
+    }), "・", /*#__PURE__*/React.createElement(Eq, {
+      tex: "I=1,5"
+    }), " なら ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "S \\leftarrow 0"
+    }), "。取り違えると 240÷5=48 や二重計上になる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "最大値の初期化を M←0 にすると？"), /*#__PURE__*/React.createElement(Eq, {
+      tex: "I=2"
+    }), " 始まりの図では ", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(1)"
+    }), " が比較されない"), "ので、全部正でも ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(1)"
+    }), " が最大なら誤る。", /*#__PURE__*/React.createElement(Eq, {
+      tex: "I=1"
+    }), " 始まりでも", /*#__PURE__*/React.createElement("strong", null, "全要素が負"), "なら 0 が出る。", /*#__PURE__*/React.createElement("strong", null, "先頭要素で初期化"), "すれば両方塞げる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "回路図から真理値表を起こす手順は？"), /*#__PURE__*/React.createElement("strong", null, "中間信号に名前を付けて段に分ける"), "（各ゲートの入力が外部入力か、より入力側の段の出力だけになるように）→ 入力の全組合せ 2ⁿ 行を2進数の順に並べる → ", /*#__PURE__*/React.createElement("span", {
       className: "marker"
     }, "左の段から順に、1段を全行埋めてから次の段へ"), "。読むときは", /*#__PURE__*/React.createElement("strong", null, "「0 になる行だけ探す」"), "と速い（OR は入力が全部 0 の行、NAND は入力が全部 1 の行）。使えるのは", /*#__PURE__*/React.createElement("strong", null, "組合せ回路だけ")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "表から作った式と、回路から畳んだ式の形が違ったら？"), /*#__PURE__*/React.createElement("span", {
       className: "marker"
@@ -30327,7 +30548,316 @@ printf("%d\\n", m);`), /*#__PURE__*/React.createElement(Fold, {
       label: "結論 — ループの書き方は2流儀あるが同じもの"
     }, /*#__PURE__*/React.createElement("p", null, "繰り返しは、①", /*#__PURE__*/React.createElement("strong", null, "ループ端の対"), "で挟む書き方と、②", /*#__PURE__*/React.createElement("strong", null, "判断記号＋上へ戻る矢印"), "で書く書き方（while をそのまま図にした形）の2通りがある。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
-    }, "どちらも繰り返しを表すが、条件を判定する位置と抜ける枝は書き方で変わる"), "。②では「戻る矢印がどこへ戻るか」と「抜ける条件はどちらの枝か」を最初に確認してからトレースを始める。")))
+    }, "どちらも繰り返しを表すが、条件を判定する位置と抜ける枝は書き方で変わる"), "。②では「戻る矢印がどこへ戻るか」と「抜ける条件はどちらの枝か」を最初に確認してからトレースを始める。")), /*#__PURE__*/React.createElement("h3", {
+      id: "flow-blank"
+    }, "穴埋め形式 — 空欄は「置かれている場所」で役割が決まる"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "結論から"), "：", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "全部の選択肢を最初から当てはめて試さない"), "。 空欄が", /*#__PURE__*/React.createElement("strong", null, "ループの前か・中か・後か"), "を見れば、そこが担う役割は", /*#__PURE__*/React.createElement("strong", null, "初期化・累算（毎回やること）・仕上げ（1回だけやること）"), "のどれかに", /*#__PURE__*/React.createElement("strong", null, "絞れる"), "。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "絞ってから残った候補だけを1周トレースして確定させる"), "のが最短で、 セクション9（トレースの手順）を捨てるという意味ではない —— ", /*#__PURE__*/React.createElement("strong", null, "絞る段と確定させる段の2段に分ける"), "ということである。"), /*#__PURE__*/React.createElement(FlowBlankFig, null), /*#__PURE__*/React.createElement(Box, {
+      kind: "tip",
+      label: "空欄を見たら3つを順に確認する"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, "①", /*#__PURE__*/React.createElement("strong", null, "出力文が何を出すか"), "を先に見る（ゴールから逆算する。この図なら ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "M"
+    }), " と ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "H"
+    }), "） ②その値を作るのに", /*#__PURE__*/React.createElement("strong", null, "変数がいくつ要るか"), "を数える（最大値用と合計用で2本） ③空欄の", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "位置で役割を絞る"), " —— ", /*#__PURE__*/React.createElement("strong", null, "ループの前＝初期化／ループの中＝毎回の更新／ループの後＝最後に1回"), "④", /*#__PURE__*/React.createElement("strong", null, "残った候補を1周だけトレースして確定"), "する。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "warn",
+      label: "位置だけでは決まらない空欄もある"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, "次の型は「前・中・後」の枠に収まらないので、③で絞れず", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "④のトレースが本体"), "になる。"), /*#__PURE__*/React.createElement("ul", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "判断の条件式が空欄"), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(I) > M"
+    }), " か ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(I) \\geq M"
+    }), " か、不等号の向き）—— 最大値か最小値かは", /*#__PURE__*/React.createElement("strong", null, "出力の意味"), "から決める"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "ループ端の範囲が空欄"), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "I = 2, 5"
+    }), " の 2 や 5）—— 位置は「ループそのもの」なので前後の分類が効かない"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "添字が空欄"), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(I)"
+    }), " か ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(I+1)"
+    }), " か）—— 役割は同じ「更新」でも値が変わる"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二重ループ"), " —— 内側の「前」は外側の「中」。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "どのループ端に対しての前・中・後かを先に決める"))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0",
+        fontSize: "12.5px",
+        color: "var(--ink-soft)"
+      }
+    }, "また「ループの前」に来るのが初期化とは限らない（値の", /*#__PURE__*/React.createElement("strong", null, "入力"), "のこともある）。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "example",
+      label: "例題 — 図3.2.3 のア・イ・ウを埋める"
+    }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 配列に ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "30,\\;80,\\;50,\\;90,\\;20"
+    }), " がこの順で入っている （", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(1)"
+    }), " 〜 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(5)"
+    }), "）。図3.2.3 の空欄ア・イ・ウを埋め、出力される ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "M"
+    }), " と ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "H"
+    }), " を求めよ。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "配列はセクション10（トレース例題）と同じ"), "で、違いは", /*#__PURE__*/React.createElement("strong", null, "合計用の変数が1本増えた"), "ことだけである。"), /*#__PURE__*/React.createElement(Fold, {
+      label: "解答と、1周1行のトレース",
+      sub: "先に自分でア・イ・ウを埋めてから開く"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "空欄"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "位置"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "役割"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "入るもの"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "ア")), /*#__PURE__*/React.createElement("td", null, "ループの", /*#__PURE__*/React.createElement("strong", null, "前")), /*#__PURE__*/React.createElement("td", null, "初期化"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "M \\leftarrow A(1)"
+    }), "、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "S \\leftarrow A(1)"
+    }))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "イ")), /*#__PURE__*/React.createElement("td", null, "ループの", /*#__PURE__*/React.createElement("strong", null, "中")), /*#__PURE__*/React.createElement("td", null, "毎回の累算"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "S \\leftarrow S + A(I)"
+    }))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "ウ")), /*#__PURE__*/React.createElement("td", null, "ループの", /*#__PURE__*/React.createElement("strong", null, "後")), /*#__PURE__*/React.createElement("td", null, "最後に1回"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "H \\leftarrow S \\div 5"
+    })))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "あとは", /*#__PURE__*/React.createElement("strong", null, "1周1行"), "で追う。", /*#__PURE__*/React.createElement(Eq, {
+      tex: "I"
+    }), " は 2 から始まるので、開始前の行に ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(1)"
+    }), " の分を書いておく。"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "周回"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "I"
+    })), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(I)"
+    })), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(I) > M"
+    })), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "実行後の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "M"
+    })), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "実行後の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "S"
+    })))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "開始前"), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "30"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "30")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "1周目"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "2"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "80"), /*#__PURE__*/React.createElement("td", null, "Yes"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "80"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "110")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "2周目"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "3"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "50"), /*#__PURE__*/React.createElement("td", null, "No"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "80"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "160")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "3周目"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "4"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "90"), /*#__PURE__*/React.createElement("td", null, "Yes"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "90")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "250")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "4周目"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "5"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "20"), /*#__PURE__*/React.createElement("td", null, "No"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "90")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "270")))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "答え:"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "M = 90"
+    }), "、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "H = 270 \\div 5 = 54"
+    }), "。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "本番の選択肢は", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "ア・イ・ウの", /*#__PURE__*/React.createElement("strong", null, "組合せ"), "が1行ずつ並ぶ"), "形で出る。", /*#__PURE__*/React.createElement("strong", null, "一番自信のある空欄1つで行を絞り"), "（この問題ならイの累算が最も確実）、", /*#__PURE__*/React.createElement("strong", null, "残った行だけ他の空欄を確認する"), "。5行を全部トレースする必要はない。")), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "検算"), "：合計は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "30+80+50+90+20 = 270"
+    }), " で表の最終行と一致。 平均 54 は", /*#__PURE__*/React.createElement("strong", null, "最小 20 と最大 90 の間"), "にあり、値の散らばりから見ても妥当。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "平均が範囲外に出たら、その時点で計算違いが確定する"), "ので、この一目確認は必ず入れる。 ただし", /*#__PURE__*/React.createElement("strong", null, "捕まえられるのは「範囲外に飛ぶ」誤りだけ"), "で、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "割る数を1つ間違えた程度では範囲内に収まってしまう"), "（下の落とし穴①）。足し算を1か所間違えた場合も同様で、たとえば ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "30+80"
+    }), " を 100 と誤ると ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "260 \\div 5 = 52"
+    }), " でやはり範囲内に入る。", /*#__PURE__*/React.createElement("strong", null, "範囲チェックは桁違いの検出用"), "と割り切り、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "本命は合計を別に手で足して ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "S"
+    }), " の最終行と突き合わせること"), "である。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "mistake",
+      label: "この型の失点はここに集中する"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "①割る数を「周回数」にしてしまう"), " —— ループは ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "I=2"
+    }), " から 4 回しか回らないが、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "S"
+    }), " には ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(1)"
+    }), " の分が最初から入っているので、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "要素は 5 個"), "である。 4 で割ると ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "270 \\div 4 = 67.5"
+    }), "。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "この値は最小 20 と最大 90 の", /*#__PURE__*/React.createElement("strong", null, "間に収まってしまう"), "ので、 下の範囲チェックでは", /*#__PURE__*/React.createElement("strong", null, "捕まらない")), " —— ", /*#__PURE__*/React.createElement("strong", null, "割る数は「ループが何周したか」ではなく「要素が何個あるか」で決める"), "と、 数える前に決着させるしかない。", /*#__PURE__*/React.createElement(Eq, {
+      tex: "I"
+    }), " が 2 から始まるのは ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(1)"
+    }), " を初期化で使い切ったからで、", /*#__PURE__*/React.createElement("strong", null, "その1個も合計に入っている"), "。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "②ウを置く位置を間違える"), " —— ここは", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "正確に覚える価値がある"), "。 ウをループの", /*#__PURE__*/React.createElement("strong", null, "中でもイの後ろ"), "に置いた場合、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "H"
+    }), " は毎周上書きされるだけで最終周の値は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "270 \\div 5 = 54"
+    }), "、", /*#__PURE__*/React.createElement("strong", null, "出力は変わらない"), "（無駄な計算になるだけ）。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "壊れるのは", /*#__PURE__*/React.createElement("strong", null, "イより前"), "に置いたとき"), "で、 最終周は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "S"
+    }), " がまだ 250 なので ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "250 \\div 5 = 50"
+    }), " と誤る。 「ループの中だから誤り」ではなく、", /*#__PURE__*/React.createElement("strong", null, "その式が読む変数が更新済みかどうか"), "で決まる。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "③初期値をループの開始値と切り離して考える"), " —— これがこの型の本丸である。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "S \\leftarrow A(1)"
+    }), " と ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "S \\leftarrow 0"
+    }), " は", /*#__PURE__*/React.createElement("strong", null, "同じ位置・同じ役割（初期化）"), "なので、位置だけでは選べない"), "。 決めているのは", /*#__PURE__*/React.createElement("strong", null, "ループ端の開始値"), "である。"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "ループ端"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "ア に入るもの"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "図3.2.3 のまま間違えると"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "I = 2,\\;5"
+    }), "（この図）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "M \\leftarrow A(1)"
+    }), "、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "S \\leftarrow A(1)"
+    })), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "S \\leftarrow 0"
+    }), " にすると ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(1)"
+    }), " が合計から漏れ、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "240 \\div 5 = 48"
+    }))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "I = 1,\\;5"
+    })), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "M \\leftarrow A(1)"
+    }), "、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "S \\leftarrow 0"
+    })), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "S \\leftarrow A(1)"
+    }), " にすると ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(1)"
+    }), " を二重に数える"))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "ループ端は空欄ではない"), "ことが多いので、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "まずループ端を読んでから ア を選ぶ"), "。 穴埋めではループ端を書き換えて辻褄を合わせることはできない。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "④最大値の初期化を ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "M \\leftarrow 0"
+    }), " にする"), " —— この図では", /*#__PURE__*/React.createElement("strong", null, "2つの理由で危ない"), "。 (a) ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "I"
+    }), " が 2 から始まるので ", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(1)"
+    }), " が一度も比較されない"), "。 配列が ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "90,30,50,80,20"
+    }), " なら（全部正でも）", /*#__PURE__*/React.createElement(Eq, {
+      tex: "M = 80"
+    }), " と誤る。 この問題で答えが一致するのは「全部正」だからではなく、", /*#__PURE__*/React.createElement("strong", null, "全部正かつ ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A(1)"
+    }), " が最大でない"), "からである。 (b) ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "I=1"
+    }), " から回したとしても、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, /*#__PURE__*/React.createElement("strong", null, "全要素が負"), "なら ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "M=0"
+    }), " と誤る"), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "-5,\\,3"
+    }), " のように正の値が1つでもあれば結果は合う。「負の値を含むと誤る」ではない）。", /*#__PURE__*/React.createElement("strong", null, "先頭要素で初期化する"), "のが、どちらの穴も同時に塞ぐ書き方である。")))
   }, {
     id: "bit-byte",
     heading: "ビットとバイトの基礎",
