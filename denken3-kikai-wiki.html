@@ -1274,6 +1274,9 @@ window.WIKI_DATA = {
     { page: "auto-control", pageTitle: "3.1 自動制御", anchor: "move-points",
       title: "引出点・加え合わせ点の移動", desc: "後ろへ移すとき引出点は 1/G・加え合わせ点は G。2つで補正が逆",
       keywords: "引出点 取り出し点 加え合わせ点 加算点 移動 等価変換 1/G G 交差 ループ 補正 混同 逆" },
+    { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "timing-chart",
+      title: "タイムチャートと多段接続 — 表に落とす", desc: "波形問題も2組接続も時刻ごとの表に落とす。中間信号に行を与える。多段は式を先に畳む",
+      keywords: "タイムチャート 波形 出力波形 時刻 多段 2組接続 縦続 中間信号 表 トレース 1コマずれ ExOR AND 畳む A・Bバー 検算" },
     { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "bitwise",
       title: "ビットパターンの論理演算と16進表現", desc: "桁ごとに独立（繰り上がり無し）。2進に開いて演算し4桁ずつ16進へ。OR と NOR は全桁反転",
       keywords: "ビットパターン 論理演算 ExOR XOR 排他的論理和 OR NOR AND 16進 2進 桁ごと 繰り上がり B5 6C D9 FD 検算" },
@@ -28197,7 +28200,392 @@ const InfoElecPage = ({
       tex: "C_{out}"
     }), " が「2 個以上で 1」＝", /*#__PURE__*/React.createElement("strong", null, "上の多数決回路そのもの"), "（", /*#__PURE__*/React.createElement(Eq, {
       tex: "AB+BC+CA"
-    }), "）になっているのが分かる。")))
+    }), "）になっているのが分かる。")), /*#__PURE__*/React.createElement("h3", {
+      id: "timing-chart"
+    }, "タイムチャートと多段接続 — どちらも「表に落とす」"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "結論から"), "：", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "波形から出力を選ぶ問題も、組合せ回路を2組つないだ問題も、 やることは同じ「", /*#__PURE__*/React.createElement("strong", null, "時刻ごとに1行ずつ埋める表"), "」"), "である。 頭の中で波形を追うと途中で1コマずれやすいので、", /*#__PURE__*/React.createElement("strong", null, "中間信号にも行を与えて書き下す"), "。"), /*#__PURE__*/React.createElement(Box, {
+      kind: "warn",
+      label: "この手法が使えるのは組合せ回路だけ"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, "各列を独立に埋められるのは、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "出力が", /*#__PURE__*/React.createElement("strong", null, "その時刻の入力だけ"), "で決まる回路"), "（AND・OR・NOT・XOR などの組合せ回路）に限る。", /*#__PURE__*/React.createElement("strong", null, "フリップフロップを含む順序回路では使えない"), " —— 出力が前の状態に依存するので、", /*#__PURE__*/React.createElement("strong", null, "同じ入力の列でも初期状態が違えば答えが変わる"), "。 順序回路を表にするには「状態 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " の行」と「クロックのどのエッジで動くか」を別に用意し、", /*#__PURE__*/React.createElement("strong", null, "前の列の ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " を引き継ぐ"), "必要がある（セクション3（順序回路）を参照）。")), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "出題は「連続した波形の図」で与えられることが多い。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "最初にやるのは", /*#__PURE__*/React.createElement("strong", null, "波形を時刻の列に切る"), "こと"), "で、 1コマずれが実際に起きるのはこの", /*#__PURE__*/React.createElement("strong", null, "切り分けの段"), "である。 列に切ってしまえば以降はずれない。最後は求めた出力行を波形に戻して選択肢と照合する。"), /*#__PURE__*/React.createElement(Box, {
+      kind: "example",
+      label: "例題 — タイムチャートから出力波形を求める"
+    }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 下の入力 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A,\\;B"
+    }), " に対する ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Y = \\bar{A} \\cdot B"
+    }), " の波形を求めよ。"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "時刻"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t1"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t2"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t3"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t4"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t5"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t6"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t7"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t8"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "A"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "B"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "中間"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\bar{A}"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "出力"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Y = \\bar{A}\\cdot B"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "検算は別経路で"), "：ド・モルガンで", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\bar{A}\\cdot B = \\overline{A + \\bar{B}}"
+    }), " に直し、", /*#__PURE__*/React.createElement("strong", null, "違う中間行を作って"), "突き合わせる。"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "時刻"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t1"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t2"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t3"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t4"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t5"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t6"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t7"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t8"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\bar{B}"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "A + \\bar{B}"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\overline{A + \\bar{B}}"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, "最終行が ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Y"
+    }), " と全時刻で一致した。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "通った中間行が違う（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\bar{A}"
+    }), " ではなく ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\bar{B}"
+    }), "）ので、式の読み違いも捕まえられる"), "。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0",
+        fontSize: "12.5px",
+        color: "var(--ink-soft)"
+      }
+    }, "⚠️ 「", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Y"
+    }), " が 1 なのは ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A=0"
+    }), " かつ ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "B=1"
+    }), " の列だけ」と数え直すのは、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\bar{A}\\cdot B"
+    }), " の", /*#__PURE__*/React.createElement("strong", null, "定義の言い換え"), "なので検算にならない（捕まえられるのは行の転記ミスだけ）。 この節の後半「ビットパターンの論理演算」で「OR と NOR は全桁反転」を検算に使わない理由と同じである。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "example",
+      label: "例題 — 回路を2組つないだときの出力"
+    }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 1段目で ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "P = A \\oplus B"
+    }), "（ExOR）を作り、2段目で ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q = P \\cdot A"
+    }), "（AND）とする。 同じ入力に対する ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q"
+    }), " を求めよ。"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "時刻"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t1"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t2"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t3"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t4"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t5"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t6"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t7"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "t8"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "A"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "B"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "1段目"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "P = A \\oplus B"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "2段目"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "Q = P \\cdot A"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "1")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "0")))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "検算（式で先に畳む）"), "：2段まとめると"), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "Q = (A \\oplus B)\\cdot A = (A\\bar{B} + \\bar{A}B)\\cdot A = A\\bar{B}"
+    }), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, "途中を省かずに書くと ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A\\bar{B}\\cdot A + \\bar{A}B\\cdot A = (A\\cdot A)\\bar{B} + (A\\cdot\\bar{A})B = A\\bar{B} + 0"
+    }), " で、 使うのは ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A \\oplus B = A\\bar{B} + \\bar{A}B"
+    }), "（XOR の展開）・分配則・", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A\\cdot A = A"
+    }), "・", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A\\cdot\\bar{A} = 0"
+    }), " の4つ。 結果は ", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "A=1"
+    }), " かつ ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "B=0"
+    }), " の列だけ 1"), "（t3 と t7）で、表の最終行と一致する。"), /*#__PURE__*/React.createElement(Box, {
+      kind: "tip",
+      label: "「行を減らす」と「検算する」は選ぶ"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "畳んだ式だけで埋めれば行は1本減る"), "が、突き合わせる相手が無くなるので", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "検算にはならない"), "（畳み方を ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "(A\\oplus B)\\cdot A = A"
+    }), " と誤れば、表もそのまま誤る）。", /*#__PURE__*/React.createElement("strong", null, "検算したいなら両方やる"), " —— ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "P"
+    }), " 行を追った結果と、畳んだ式で数え直した結果を突き合わせる。 この2経路は独立なので、畳み方の誤りも表の転記ミスも捕まる。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "本例は8列が ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "(A,B)"
+    }), " の4通りを全部含む"), "ので、一致すれば真理値表の全行が合ったことになる。")), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "⚠️ 落とし穴 —— ", /*#__PURE__*/React.createElement("strong", null, "①中間信号の行を省いて暗算する"), "（多段では必ず書く）。", /*#__PURE__*/React.createElement("strong", null, "②否定を取り忘れる"), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\bar{A}"
+    }), " の行を作れば防げる）。", /*#__PURE__*/React.createElement("strong", null, "③立ち上がりの位置を1コマずらす"), "（波形を列に切る段で起きる。切り終えたら列がそろうので以降は起きない）。")))
   }, {
     id: "bitwise",
     heading: "ビットパターンの論理演算と16進表現",
@@ -28465,7 +28853,9 @@ const InfoElecPage = ({
       className: "marker"
     }, "否定を付ける向きが逆"), "なのが最大の落とし穴"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "簡単化でよく使う恒等式は？"), "A + AB = A ／ A + ĀB = A + B ／ AB + AB̄ = A ／ (X+Y)(X+Ȳ) = X。", /*#__PURE__*/React.createElement("strong", null, "同じ項は何度でも使い回せる"), "ので、組にできる相手が複数あれば全部と組む —— 根拠は", /*#__PURE__*/React.createElement("strong", null, "積和なら X + X = X、和積ならその双対 X · X = X")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "半加算器と全加算器の式は？"), "HA: S = A⊕B、C = A·B ／ FA: S = A⊕B⊕C_in、C_out = AB + BC_in + C_in·A（＝AB + C_in(A⊕B) と同じ）。", /*#__PURE__*/React.createElement("strong", null, "入力の 1 の個数を2進数で書く"), "と表を覚えずに済む（上の桁が C_out、下が S）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "r 進法の値はどう出す？10進から r 進へ戻すには？"), "各桁の数字 × 重み rⁱ を足す（(2301)₄ なら 2·64+3·16+0·4+1 を合計して 177）。逆は ", /*#__PURE__*/React.createElement("strong", null, "r で割った余りを下から並べる"), "。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
-    }, "最後に出た余りが最上位"), "で、上から読むと別の数になる。各桁に入るのは 0〜r−1"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ビットパターンの論理演算のコツは？"), /*#__PURE__*/React.createElement("strong", null, "桁ごとに独立"), "（繰り上がりは無い）。必ず2進に開いてから演算し、", /*#__PURE__*/React.createElement("strong", null, "4桁ずつ区切って16進"), "に戻す。ExOR は「違う桁だけ1」なので縦に並べて見比べる。", /*#__PURE__*/React.createElement("strong", null, "OR と NOR は全桁が反転"), "している＝検算に使える"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "サイクルタイムと1命令の平均実行時間は？"), "T = 1/f（", /*#__PURE__*/React.createElement("strong", null, "逆数"), "。fT = 1）／1命令 = ", /*#__PURE__*/React.createElement("strong", null, "CPI × T = CPI/f"), "（クロックを多く使うほど時間は", /*#__PURE__*/React.createElement("strong", null, "増える"), "ので掛ける）。1秒あたりの命令数は f/CPI で、10⁶ で割れば MIPS。", /*#__PURE__*/React.createElement("span", {
+    }, "最後に出た余りが最上位"), "で、上から読むと別の数になる。各桁に入るのは 0〜r−1"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "タイムチャート・多段接続の解き方は？"), "どちらも", /*#__PURE__*/React.createElement("strong", null, "時刻ごとに1行ずつ埋める表"), "に落とす。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "中間信号（Ā や1段目の出力）にも必ず行を与える"), "——頭で追うと1コマずれる。多段は", /*#__PURE__*/React.createElement("strong", null, "式を先に畳む"), "と行が減り検算にもなる（例: (A⊕B)·A = A·B̄）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ビットパターンの論理演算のコツは？"), /*#__PURE__*/React.createElement("strong", null, "桁ごとに独立"), "（繰り上がりは無い）。必ず2進に開いてから演算し、", /*#__PURE__*/React.createElement("strong", null, "4桁ずつ区切って16進"), "に戻す。ExOR は「違う桁だけ1」なので縦に並べて見比べる。", /*#__PURE__*/React.createElement("strong", null, "OR と NOR は全桁が反転"), "している＝検算に使える"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "サイクルタイムと1命令の平均実行時間は？"), "T = 1/f（", /*#__PURE__*/React.createElement("strong", null, "逆数"), "。fT = 1）／1命令 = ", /*#__PURE__*/React.createElement("strong", null, "CPI × T = CPI/f"), "（クロックを多く使うほど時間は", /*#__PURE__*/React.createElement("strong", null, "増える"), "ので掛ける）。1秒あたりの命令数は f/CPI で、10⁶ で割れば MIPS。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
     }, "逆数なのは「1秒あたりの命令数」と t"), "（積がちょうど 1）で、", /*#__PURE__*/React.createElement("strong", null, "MIPS はそのまま逆数ではない"), "（MIPS × t = 10⁻⁶）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "r 進 n 桁で表せる範囲は？必要な桁数は？"), "0 〜 ", /*#__PURE__*/React.createElement("strong", null, "rⁿ − 1"), " の rⁿ 通り。", /*#__PURE__*/React.createElement("strong", null, "1 以上の整数"), " N を表すのに要る桁数は ", /*#__PURE__*/React.createElement("strong", null, "⌊log_r N⌋ + 1"), "。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
