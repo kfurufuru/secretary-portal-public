@@ -1274,6 +1274,15 @@ window.WIKI_DATA = {
     { page: "auto-control", pageTitle: "3.1 自動制御", anchor: "move-points",
       title: "引出点・加え合わせ点の移動", desc: "後ろへ移すとき引出点は 1/G・加え合わせ点は G。2つで補正が逆",
       keywords: "引出点 取り出し点 加え合わせ点 加算点 移動 等価変換 1/G G 交差 ループ 補正 混同 逆" },
+    { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "bitwise",
+      title: "ビットパターンの論理演算と16進表現", desc: "桁ごとに独立（繰り上がり無し）。2進に開いて演算し4桁ずつ16進へ。OR と NOR は全桁反転",
+      keywords: "ビットパターン 論理演算 ExOR XOR 排他的論理和 OR NOR AND 16進 2進 桁ごと 繰り上がり B5 6C D9 FD 検算" },
+    { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "r-adic",
+      title: "r 進法 — 重みを並べて足す", desc: "各桁 × rⁱ の和。10進→r進は r で割った余りを下から並べる（最後の余りが最上位）",
+      keywords: "r進法 基数 重み 展開 4進 8進 相互変換 余り 下から 最上位 0からr-1 2301 177" },
+    { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "cpi",
+      title: "動作周波数・サイクルタイム・CPI", desc: "T=1/f（逆数）、1命令=CPI×T=CPI/f、MIPS=f/(CPI·10⁶)",
+      keywords: "動作周波数 クロック サイクルタイム CPI 命令 平均実行時間 MIPS GHz ナノ秒 fT=1 命令毎秒と平均実行時間が逆数 MIPSは10^6で割る 2GHz 500MIPS" },
     { page: "info-elec", pageTitle: "3.2 情報・電子回路", anchor: "sop-pos",
       title: "真理値表から論理式を作る — 積和形式と和積形式", desc: "積和は出力1の行・和積は出力0の行。否定を付ける向きが逆。多数決回路で AB+BC+CA ⇄ (A+B)(B+C)(C+A)",
       keywords: "真理値表 論理式 積和形式 和積形式 SOP POS 加法標準形 乗法標準形 簡単化 簡略化 ドモルガン 恒等式 多数決回路 最小項 最大項 論理圧縮" },
@@ -28190,6 +28199,106 @@ const InfoElecPage = ({
       tex: "AB+BC+CA"
     }), "）になっているのが分かる。")))
   }, {
+    id: "bitwise",
+    heading: "ビットパターンの論理演算と16進表現",
+    body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "結論から"), "：", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "論理演算は", /*#__PURE__*/React.createElement("strong", null, "桁ごとに独立"), "に行う"), "。 繰り上がりが無いので、算術の足し算とはまったく別物である。 8ビットのまま計算してから", /*#__PURE__*/React.createElement("strong", null, "4桁ずつ区切って16進に読み替える"), "のが定石。"), /*#__PURE__*/React.createElement(Box, {
+      kind: "warn",
+      label: "NOT を含む演算（NOR・NAND）は語長で答えが変わる"
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: 0
+      }
+    }, "ExOR・OR・AND は上位を 0 で埋めても答えが変わらないが、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "否定が入ると上位の 0 が 1 に反転する"), "ので", /*#__PURE__*/React.createElement("strong", null, "何ビットで考えるかを先に決める"), "。 下の例は ", /*#__PURE__*/React.createElement("strong", null, "8ビット"), "なので NOR は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "02"
+    }), " だが、16ビットで同じ計算をすると", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\mathrm{FF}02"
+    }), " になる。問題文の語長（8ビット・1バイト・16ビット等）を読み落とさない。")), /*#__PURE__*/React.createElement(Box, {
+      kind: "example",
+      label: "例題 — 8ビットのビットパターンに ExOR・OR・NOR を施す"
+    }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A = (\\mathrm{B5})_{16}"
+    }), "、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "B = (6\\mathrm{C})_{16}"
+    }), " について、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A \\oplus B"
+    }), "（ExOR）・", /*#__PURE__*/React.createElement(Eq, {
+      tex: "A + B"
+    }), "（OR。", /*#__PURE__*/React.createElement("strong", null, "この ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "+"
+    }), " は論理和の記号"), "で算術の加算ではない）・", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\overline{A + B}"
+    }), "（NOR）を16進で求めよ。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 2px"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "① まず2進に開く"), "（16進1桁 ＝ 2進4桁）。"), /*#__PURE__*/React.createElement("div", {
+      className: "table-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "data-table"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "2進（8ビット）"), /*#__PURE__*/React.createElement("th", {
+      scope: "col"
+    }, "16進"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "A"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1011 0101"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "B5")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "B"
+    })), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0110 1100"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "6C")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "ExOR"), "（違えば1）"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1101 1001"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "D9"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "OR"), "（どちらか1なら1）"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "1111 1101"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "FD"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "NOR"), "（OR の反転）"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0000 0010"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("strong", null, "02"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "（参考）", /*#__PURE__*/React.createElement("strong", null, "AND")), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "0010 0100"), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "24"))))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "検算"), "：", /*#__PURE__*/React.createElement("strong", null, "AND と ExOR を足すと OR になる"), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "24_{16} + \\mathrm{D9}_{16} = \\mathrm{FD}_{16}"
+    }), "）。 AND が立つ桁と ExOR が立つ桁は", /*#__PURE__*/React.createElement("strong", null, "重ならない"), "ので繰り上がりが起きず、", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "AND・ExOR・OR の3行を独立に突き合わせられる"), "。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0",
+        fontSize: "12.5px",
+        color: "var(--ink-soft)"
+      }
+    }, "⚠️ 一方「OR と NOR は全桁が反転している」は", /*#__PURE__*/React.createElement("strong", null, "検算にならない"), "。 NOR は定義が「OR の否定」なので、", /*#__PURE__*/React.createElement("strong", null, "OR 行を間違えたまま NOR を書いても必ず反転する"), "（OR を FF と誤れば NOR は 00 で辻褄が合う）。 捕まえられるのは転記ミスだけである。", /*#__PURE__*/React.createElement("strong", null, "ExOR は「違う桁だけ1」"), "なので、A と B を縦に並べて目で見比べれば書ける。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "⚠️ 落とし穴 —— ", /*#__PURE__*/React.createElement("strong", null, "①繰り上がりを入れてしまう"), "（論理演算に繰り上がりは無い）。", /*#__PURE__*/React.createElement("strong", null, "②16進のまま演算しようとする"), "（必ず2進に開く）。", /*#__PURE__*/React.createElement("strong", null, "③NOR を「NOT してから OR」と読む"), "（正しくは", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "OR してから NOT"), "。", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\overline{A}+\\overline{B}"
+    }), " は NAND と等しく、別物）。")))
+  }, {
     id: "flipflop",
     heading: "順序回路（フリップフロップ）",
     body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "RS-FF"), " — 基本形（NOR 形・正論理入力）では ", /*#__PURE__*/React.createElement("span", {
@@ -28207,7 +28316,7 @@ const InfoElecPage = ({
       tex: "2^n"
     }), " 段階で量子化する（符号なし2進コードとして扱う典型例では出力コードは 0〜", /*#__PURE__*/React.createElement(Eq, {
       tex: "2^n-1"
-    }), "。段階数と最大値の数え分けはセクション11）。逐次比較形・並列比較形・積分形が主要方式。")
+    }), "。段階数と最大値の数え分けはセクション12）。逐次比較形・並列比較形・積分形が主要方式。")
   }, {
     id: "radix",
     heading: "基数変換（2進・10進・16進）",
@@ -28215,6 +28324,68 @@ const InfoElecPage = ({
       kind: "example",
       label: "例題 — 基数変換"
     }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " (45)₁₀ を2進数と16進数で表せ。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "解:"), " 45 = 32 + 8 + 4 + 1 = ", /*#__PURE__*/React.createElement("strong", null, "(101101)₂"), "。4桁ずつ区切って 0010 1101 → ", /*#__PURE__*/React.createElement("strong", null, "(2D)₁₆"), "。検算: 2×16 + 13 = 45 ✓")), /*#__PURE__*/React.createElement("h3", {
+      id: "r-adic"
+    }, "r 進法 — 重みを並べて足すだけ"), /*#__PURE__*/React.createElement("p", null, "2進・10進・16進は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "r = 2,\\,10,\\,16"
+    }), " の特別な場合にすぎない。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "どの基数でも「各桁の数字 × その桁の重み ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "r^{\\,i}"
+    }), "」を足す"), "だけである。"), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "(a_{n-1}\\,a_{n-2}\\cdots a_1 a_0)_r = a_{n-1}r^{\\,n-1} + a_{n-2}r^{\\,n-2} + \\cdots + a_1 r + a_0"
+    }), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, "各桁に入れる数字は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "0"
+    }), " から ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "r-1"
+    }), " まで（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "r"
+    }), " は入らない）。", /*#__PURE__*/React.createElement(Eq, {
+      tex: "r > 10"
+    }), " のときは 10 以上を ", /*#__PURE__*/React.createElement("strong", null, "A・B・C…"), " の文字で書く（16進の A〜F がこれ）。 逆向き（10進 → ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "r"
+    }), " 進）は", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "r"
+    }), " で割った余りを下から並べる"), "。"), /*#__PURE__*/React.createElement(Box, {
+      kind: "example",
+      label: "例題 — 4進数と10進数の相互変換"
+    }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "(2301)_4"
+    }), " を10進で表し、その値を4進に戻して確かめよ。"), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "(2301)_4 = 2\\times4^3 + 3\\times4^2 + 0\\times4^1 + 1\\times4^0 = 128 + 48 + 0 + 1"
+    }), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, "足して ", /*#__PURE__*/React.createElement("strong", null, "177"), "（10進）。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 2px"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "逆変換"), "（4で割った余りを下から並べる）:"), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "177 \\div 4 = 44\\;\\text{余}\\,1 \\;,\\; 44 \\div 4 = 11\\;\\text{余}\\,0 \\;,\\; 11 \\div 4 = 2\\;\\text{余}\\,3 \\;,\\; 2 \\div 4 = 0\\;\\text{余}\\,2"
+    }), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "6px 0 0"
+      }
+    }, "余りを", /*#__PURE__*/React.createElement("strong", null, "下から"), "読んで ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "(2301)_4"
+    }), "。元に戻ったので正しい。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "⚠️ ", /*#__PURE__*/React.createElement("strong", null, "余りを上から読む"), "と ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "(1032)_4"
+    }), " になり、これは ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "1\\times64 + 0\\times16 + 3\\times4 + 2\\times1"
+    }), " で ", /*#__PURE__*/React.createElement("strong", null, "78"), " という別の数。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "最後に出た余りが最上位"), "である。")), /*#__PURE__*/React.createElement("h3", {
       id: "digit-count"
     }, "必要な桁数を数える"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "結論から"), "：", /*#__PURE__*/React.createElement("span", {
       className: "marker"
@@ -28292,7 +28463,11 @@ const InfoElecPage = ({
       className: "box"
     }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ド・モルガンの定理は？"), "A+B 全体の否定 = Āと B̄ の積／A·B 全体の否定 = Ā と B̄ の和（バーを分配すると + と · が入れ替わる）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "RS-FF の禁止入力は？JK-FF の J=K=1 は？"), "RS-FF は NOR 形（正論理入力）なら R=S=1 が禁止／NAND 形（負論理入力）なら両入力 0 が禁止。JK-FF の J=K=1 は反転動作（禁止入力なし）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "n ビット A/D 変換の量子化段階数は？"), "2ⁿ 段階（例: 8ビット = 256段階）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "(1010)₂ は10進でいくつ？"), "8 + 2 = 10（各桁の重み 8, 4, 2, 1 を足す）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "真理値表から積和形式・和積形式を作る手順は？"), /*#__PURE__*/React.createElement("strong", null, "積和は出力 1 の行"), "を拾い、その行で ", /*#__PURE__*/React.createElement("strong", null, "0"), " の変数に否定を付けて AND、項どうしは OR。", /*#__PURE__*/React.createElement("strong", null, "和積は出力 0 の行"), "を拾い、その行で ", /*#__PURE__*/React.createElement("strong", null, "1"), " の変数に否定を付けて OR、項どうしは AND。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
-    }, "否定を付ける向きが逆"), "なのが最大の落とし穴"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "簡単化でよく使う恒等式は？"), "A + AB = A ／ A + ĀB = A + B ／ AB + AB̄ = A ／ (X+Y)(X+Ȳ) = X。", /*#__PURE__*/React.createElement("strong", null, "同じ項は何度でも使い回せる"), "ので、組にできる相手が複数あれば全部と組む —— 根拠は", /*#__PURE__*/React.createElement("strong", null, "積和なら X + X = X、和積ならその双対 X · X = X")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "半加算器と全加算器の式は？"), "HA: S = A⊕B、C = A·B ／ FA: S = A⊕B⊕C_in、C_out = AB + BC_in + C_in·A（＝AB + C_in(A⊕B) と同じ）。", /*#__PURE__*/React.createElement("strong", null, "入力の 1 の個数を2進数で書く"), "と表を覚えずに済む（上の桁が C_out、下が S）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "r 進 n 桁で表せる範囲は？必要な桁数は？"), "0 〜 ", /*#__PURE__*/React.createElement("strong", null, "rⁿ − 1"), " の rⁿ 通り。", /*#__PURE__*/React.createElement("strong", null, "1 以上の整数"), " N を表すのに要る桁数は ", /*#__PURE__*/React.createElement("strong", null, "⌊log_r N⌋ + 1"), "。", /*#__PURE__*/React.createElement("span", {
+    }, "否定を付ける向きが逆"), "なのが最大の落とし穴"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "簡単化でよく使う恒等式は？"), "A + AB = A ／ A + ĀB = A + B ／ AB + AB̄ = A ／ (X+Y)(X+Ȳ) = X。", /*#__PURE__*/React.createElement("strong", null, "同じ項は何度でも使い回せる"), "ので、組にできる相手が複数あれば全部と組む —— 根拠は", /*#__PURE__*/React.createElement("strong", null, "積和なら X + X = X、和積ならその双対 X · X = X")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "半加算器と全加算器の式は？"), "HA: S = A⊕B、C = A·B ／ FA: S = A⊕B⊕C_in、C_out = AB + BC_in + C_in·A（＝AB + C_in(A⊕B) と同じ）。", /*#__PURE__*/React.createElement("strong", null, "入力の 1 の個数を2進数で書く"), "と表を覚えずに済む（上の桁が C_out、下が S）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "r 進法の値はどう出す？10進から r 進へ戻すには？"), "各桁の数字 × 重み rⁱ を足す（(2301)₄ なら 2·64+3·16+0·4+1 を合計して 177）。逆は ", /*#__PURE__*/React.createElement("strong", null, "r で割った余りを下から並べる"), "。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "最後に出た余りが最上位"), "で、上から読むと別の数になる。各桁に入るのは 0〜r−1"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ビットパターンの論理演算のコツは？"), /*#__PURE__*/React.createElement("strong", null, "桁ごとに独立"), "（繰り上がりは無い）。必ず2進に開いてから演算し、", /*#__PURE__*/React.createElement("strong", null, "4桁ずつ区切って16進"), "に戻す。ExOR は「違う桁だけ1」なので縦に並べて見比べる。", /*#__PURE__*/React.createElement("strong", null, "OR と NOR は全桁が反転"), "している＝検算に使える"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "サイクルタイムと1命令の平均実行時間は？"), "T = 1/f（", /*#__PURE__*/React.createElement("strong", null, "逆数"), "。fT = 1）／1命令 = ", /*#__PURE__*/React.createElement("strong", null, "CPI × T = CPI/f"), "（クロックを多く使うほど時間は", /*#__PURE__*/React.createElement("strong", null, "増える"), "ので掛ける）。1秒あたりの命令数は f/CPI で、10⁶ で割れば MIPS。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "逆数なのは「1秒あたりの命令数」と t"), "（積がちょうど 1）で、", /*#__PURE__*/React.createElement("strong", null, "MIPS はそのまま逆数ではない"), "（MIPS × t = 10⁻⁶）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "r 進 n 桁で表せる範囲は？必要な桁数は？"), "0 〜 ", /*#__PURE__*/React.createElement("strong", null, "rⁿ − 1"), " の rⁿ 通り。", /*#__PURE__*/React.createElement("strong", null, "1 以上の整数"), " N を表すのに要る桁数は ", /*#__PURE__*/React.createElement("strong", null, "⌊log_r N⌋ + 1"), "。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
     }, "255 は2進8桁だが 256 は9桁"), "——「−1」を落とすと境界で1桁ずれる")))
   }, {
@@ -28489,7 +28664,7 @@ for (i = 1; i < 5; i++) {
 printf("%d\\n", m);`), /*#__PURE__*/React.createElement(Fold, {
       label: "解答とトレース",
       sub: "開く前に、比較の真／偽を1周ずつ書いてみる"
-    }, /*#__PURE__*/React.createElement("p", null, "M（C では m）は「これまでに見た中の最大値」。先頭の要素を初期値にし、2番目以降と順に比較して、より大きければ入れ替える。", /*#__PURE__*/React.createElement("strong", null, "BASIC は I = 2〜5、C は i = 1〜4 と番号は違うが、参照する要素は同じ"), "（添字の開始が 1 と 0 で違うため。セクション7の罠2）。"), /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("p", null, "M（C では m）は「これまでに見た中の最大値」。先頭の要素を初期値にし、2番目以降と順に比較して、より大きければ入れ替える。", /*#__PURE__*/React.createElement("strong", null, "BASIC は I = 2〜5、C は i = 1〜4 と番号は違うが、参照する要素は同じ"), "（添字の開始が 1 と 0 で違うため。セクション8の罠2）。"), /*#__PURE__*/React.createElement("div", {
       className: "table-wrap"
     }, /*#__PURE__*/React.createElement("table", {
       className: "data-table"
@@ -28618,7 +28793,7 @@ printf("%d\\n", m);`), /*#__PURE__*/React.createElement(Fold, {
   }, {
     id: "bit-byte",
     heading: "ビットとバイトの基礎",
-    body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, "ビットは 0 か 1 の2値をとる情報の最小単位で、", /*#__PURE__*/React.createElement("strong", null, "1バイト = 8ビット"), "。10進↔2進↔16進の変換手順は本ページのセクション4（基数変換）を参照。ここでは", /*#__PURE__*/React.createElement("strong", null, "「n ビットで何通り表せるか」"), "というビット幅の視点だけ押さえる。"), /*#__PURE__*/React.createElement(FormulaCard, {
+    body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, "ビットは 0 か 1 の2値をとる情報の最小単位で、", /*#__PURE__*/React.createElement("strong", null, "1バイト = 8ビット"), "。10進↔2進↔16進の変換手順は本ページのセクション5（基数変換）を参照。ここでは", /*#__PURE__*/React.createElement("strong", null, "「n ビットで何通り表せるか」"), "というビット幅の視点だけ押さえる。"), /*#__PURE__*/React.createElement(FormulaCard, {
       num: "03",
       name: "n ビットで表せる状態の数",
       eq: "2^n \\;\\text{通り}",
@@ -28661,7 +28836,82 @@ printf("%d\\n", m);`), /*#__PURE__*/React.createElement(Fold, {
       className: "num"
     }, "65536"), /*#__PURE__*/React.createElement("td", {
       className: "num"
-    }, "65535"), /*#__PURE__*/React.createElement("td", null, "2バイト"))))), /*#__PURE__*/React.createElement(Box, {
+    }, "65535"), /*#__PURE__*/React.createElement("td", null, "2バイト"))))), /*#__PURE__*/React.createElement("h3", {
+      id: "cpi"
+    }, "動作周波数・サイクルタイム・CPI"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "結論から"), "：", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "サイクルタイムは動作周波数の", /*#__PURE__*/React.createElement("strong", null, "逆数")), "。 そこに ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\mathrm{CPI}"
+    }), "（1命令あたりの平均クロック数）を掛ければ1命令の平均実行時間になる。", /*#__PURE__*/React.createElement("strong", null, "掛けるか割るかを迷ったら単位で決まる"), "。"), /*#__PURE__*/React.createElement(FormulaCard, {
+      num: "04",
+      name: "サイクルタイムと1命令の平均実行時間",
+      eq: "T = \\dfrac{1}{f} \\;,\\qquad t_{\\text{命令}} = \\mathrm{CPI} \\times T = \\dfrac{\\mathrm{CPI}}{f}",
+      note: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+        tex: "f"
+      }), ": 動作周波数 [Hz]、", /*#__PURE__*/React.createElement(Eq, {
+        tex: "T"
+      }), ": サイクルタイム（1クロックの時間）[s]、", /*#__PURE__*/React.createElement(Eq, {
+        tex: "\\mathrm{CPI}"
+      }), ": Cycles Per Instruction（無次元）。 1秒あたりの命令数は ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "f/\\mathrm{CPI}"
+      }), "、", /*#__PURE__*/React.createElement(Eq, {
+        tex: "10^6"
+      }), " で割れば ", /*#__PURE__*/React.createElement("strong", null, "MIPS"), "。")
+    }), /*#__PURE__*/React.createElement(Box, {
+      kind: "example",
+      label: "例題 — 2 GHz・CPI 4 のプロセッサ"
+    }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 動作周波数 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "2\\;\\mathrm{GHz}"
+    }), "、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\mathrm{CPI} = 4"
+    }), " のとき、 サイクルタイム・1命令の平均実行時間・MIPS を求めよ。"), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "T = \\dfrac{1}{2\\times10^{9}} = 5\\times10^{-10}\\;[\\mathrm{s}] = 0.5\\;[\\mathrm{ns}]"
+    }), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "t_{\\text{命令}} = 4 \\times 0.5 = 2.0\\;[\\mathrm{ns}] = 2\\times10^{-9}\\;[\\mathrm{s}]"
+    }), /*#__PURE__*/React.createElement(Eq, {
+      display: true,
+      tex: "\\dfrac{f}{\\mathrm{CPI}} = \\dfrac{2\\times10^{9}}{4} = 5\\times10^{8}\\;\\text{命令/秒} = 500\\;[\\mathrm{MIPS}]"
+    }), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "検算"), "：1命令 2 ns なら 1秒で ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "1/(2\\times10^{-9}) = 5\\times10^{8}"
+    }), " 命令。", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "逆数の関係にあるのは ", /*#__PURE__*/React.createElement("strong", null, "1秒あたりの命令数"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "f/\\mathrm{CPI}"
+    }), " と ", /*#__PURE__*/React.createElement("strong", null, "平均実行時間"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "t"
+    })), "で、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "(5\\times10^{8}) \\times (2\\times10^{-9}) = 1"
+    }), " とちょうど 1 になる。", /*#__PURE__*/React.createElement("strong", null, "MIPS は「そのまま逆数」ではない"), " —— ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\mathrm{MIPS} = (f/\\mathrm{CPI}) \\div 10^{6}"
+    }), " なので", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\mathrm{MIPS} \\times t = 10^{-6}"
+    }), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "500 \\times 2\\times10^{-9} = 10^{-6}"
+    }), "）。", /*#__PURE__*/React.createElement("strong", null, "検算に使うのは命令数のほう"), "で、MIPS に直すのは最後の1回にする。"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: "8px 0 0"
+      }
+    }, "⚠️ 落とし穴 —— ", /*#__PURE__*/React.createElement("strong", null, "①", /*#__PURE__*/React.createElement(Eq, {
+      tex: "f"
+    }), " と ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "T"
+    }), " を掛ける"), "（逆数なので必ず ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "fT = 1"
+    }), "）。", /*#__PURE__*/React.createElement("strong", null, "②CPI で割る"), "（1命令に4クロック要るなら時間は", /*#__PURE__*/React.createElement("span", {
+      className: "marker"
+    }, "4倍に増える"), "ので掛ける）。", /*#__PURE__*/React.createElement("strong", null, "③G と M の取り違え"), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\mathrm{GHz}=10^9"
+    }), "・", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\mathrm{MIPS}=10^6"
+    }), " 命令/秒で、3桁ずれる）。")), /*#__PURE__*/React.createElement(Box, {
       kind: "mistake",
       label: "罠 — 「状態の数」と「最大値」を混同しない"
     }, /*#__PURE__*/React.createElement("p", null, "「8ビットの最大値は 256」は誤り。8ビットで表せるのは ", /*#__PURE__*/React.createElement(Eq, {
@@ -28674,7 +28924,7 @@ printf("%d\\n", m);`), /*#__PURE__*/React.createElement(Fold, {
       tex: "2^n"
     }), " は個数、最大値は ", /*#__PURE__*/React.createElement(Eq, {
       tex: "2^n - 1"
-    }), "」とセットで覚える。A/D 変換の量子化段階数（セクション3）の ", /*#__PURE__*/React.createElement(Eq, {
+    }), "」とセットで覚える。A/D 変換の量子化段階数（セクション4）の ", /*#__PURE__*/React.createElement(Eq, {
       tex: "2^n"
     }), " も同じ数え方である。")), /*#__PURE__*/React.createElement(Box, {
       kind: "tip",
