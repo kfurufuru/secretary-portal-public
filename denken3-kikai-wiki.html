@@ -1253,6 +1253,9 @@ window.WIKI_DATA = {
     { page: "synchronous", pageTitle: "1.3 同期機", anchor: "rotor-types",
       title: "水車発電機とタービン発電機", desc: "回転速度→極数→回転子の形。突極形と円筒形、大径短軸と小径長軸",
       keywords: "水車発電機 タービン発電機 突極形 円筒形 非突極 極数 回転速度 直径 軸方向 大径短軸 小径長軸 遠心力 立軸 横軸" },
+    { page: "synchronous", pageTitle: "1.3 同期機", anchor: "vcurve-scr",
+      title: "短絡比の4つの顔（If比・電流比・1/xs・100/%Zs）と無負荷飽和曲線・三相短絡曲線", desc: "短絡曲線が直線なのは短絡時の電機子反作用が強い減磁で飽和しないから。Zs=En/Is の分子は相電圧",
+      keywords: "短絡比 Ks 無負荷飽和曲線 三相短絡曲線 持続短絡電流 定格電流 界磁電流 同期インピーダンス 百分率同期インピーダンス %Zs 単位法 p.u. 電圧変動率 安定度 鉄機械 銅機械 水車発電機 タービン発電機 減磁作用 飽和" },
     { page: "synchronous", pageTitle: "1.3 同期機", anchor: "parallel-cross",
       title: "横流（循環電流）と短絡比からの計算", desc: "Ic=|E1−E2|/(2xs)、xs[p.u.]≈1/Ks、Zbase=Vn²/Sn",
       keywords: "横流 循環電流 並行運転 並列運転 起電力の差 同期リアクタンス 短絡比 基準インピーダンス p.u. 単位法 同期化電流 無効分 有効分" },
@@ -11989,6 +11992,218 @@ const SyncReactionFig = () => /*#__PURE__*/React.createElement("figure", {
     lineHeight: 1.6
   }
 }, "図1.3.1\u3000同期発電機の電機子反作用。電機子起磁力が界磁起磁力に対してどの向きに立つかで作用が決まる。直交なら交差磁化、逆向きなら減磁（遅れ力率）、同じ向きなら増磁（進み力率）。同期電動機では遅れと進みの対応が入れ替わる。"));
+
+/* 図1.3.5 無負荷飽和曲線と三相短絡曲線。
+   短絡比の「界磁電流の比」と「電流の比」が同じ値になることを図の上で読ませるのが目的なので、
+   短絡曲線は原点を通る直線として描き、If1:If2 と Is:In が同じ比（1.25）になる座標を計算して置く。
+   直線 (70,235)-(460,140) 傾き 0.24359 に対し If1=380 → Is_y=159.5、In_y=174.6 → If2=318。
+   丸めた座標での比は 縦横とも 1.2500。比は例題1.3.1・例題1.3.3 と同じ機（Ks=1.25）にそろえてある。
+   目分量で置くと節の主張が図で崩れる。
+
+   飽和曲線の制約2つ（どちらも意味に効く。形を触るときは再確認すること）:
+     ① 右端で明確に寝る。「飽和して寝る」と書きながら上昇し続けると
+        「短絡曲線だけが直線」という対比が図の上で成立しない。
+     ② 傾きが原点で最大で、そこから単調に減る（S字にしない）。実機の無負荷飽和曲線は
+        原点から空隙線（＝最大傾き）で立ち上がり単調に寝る。原点付近で傾きが小さいと
+        「低界磁でも非線形」という誤った意味を与える。
+        現 path の実測傾き: x=75 で 0.898 → 160 で 0.726 → 300 で 0.327 → 460 で 0.101（単調減少）。 */
+const SyncSCRFig = () => /*#__PURE__*/React.createElement(DiagramFrame, {
+  caption: "図1.3.5  無負荷飽和曲線と三相短絡曲線。短絡曲線が原点を通る直線なので、界磁電流の比 If1/If2 と電流の比 Is/In は必ず同じ値になる（作図も例題と同じ比 1.25 で描いている）",
+  viewBox: "0 0 500 300"
+}, /*#__PURE__*/React.createElement("line", {
+  x1: "70",
+  y1: "235",
+  x2: "470",
+  y2: "235",
+  stroke: "var(--ink-soft)",
+  strokeWidth: "1.5"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "70",
+  y1: "235",
+  x2: "70",
+  y2: "40",
+  stroke: "var(--ink-soft)",
+  strokeWidth: "1.5"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "470",
+  y1: "235",
+  x2: "470",
+  y2: "40",
+  stroke: "var(--ink-soft)",
+  strokeWidth: "1.5"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "74",
+  y: "34",
+  fontSize: "11.5",
+  style: {
+    fill: 'var(--ink)'
+  }
+}, "端子電圧（無負荷）"), /*#__PURE__*/React.createElement("text", {
+  x: "466",
+  y: "34",
+  fontSize: "11.5",
+  textAnchor: "end",
+  style: {
+    fill: 'var(--ink)'
+  }
+}, "電機子電流"), /*#__PURE__*/React.createElement("text", {
+  x: "466",
+  y: "268",
+  fontSize: "12",
+  textAnchor: "end",
+  style: {
+    fill: 'var(--ink)'
+  }
+}, "界磁電流 If"), /*#__PURE__*/React.createElement("line", {
+  x1: "70",
+  y1: "235",
+  x2: "460",
+  y2: "140",
+  stroke: "var(--ok)",
+  strokeWidth: "2.4"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "372",
+  y: "132",
+  fontSize: "11.5",
+  fontWeight: "700",
+  textAnchor: "end",
+  style: {
+    fill: 'var(--ok)'
+  }
+}, "三相短絡曲線（直線）"), /*#__PURE__*/React.createElement("path", {
+  d: "M 70 235 C 130 181, 200 120, 300 88 C 340 76, 362 72, 380 70 C 398 68, 432 64, 462 61",
+  fill: "none",
+  stroke: "var(--accent)",
+  strokeWidth: "2.4"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "106",
+  y: "108",
+  fontSize: "11.5",
+  fontWeight: "700",
+  style: {
+    fill: 'var(--accent)'
+  }
+}, "無負荷飽和曲線"), /*#__PURE__*/React.createElement("text", {
+  x: "106",
+  y: "122",
+  fontSize: "10.5",
+  style: {
+    fill: 'var(--ink-mute)'
+  }
+}, "（飽和して寝る）"), /*#__PURE__*/React.createElement("line", {
+  x1: "70",
+  y1: "70",
+  x2: "380",
+  y2: "70",
+  stroke: "var(--rule)",
+  strokeWidth: "1",
+  strokeDasharray: "4 3"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "66",
+  y: "74",
+  fontSize: "11.5",
+  textAnchor: "end",
+  fontWeight: "700",
+  style: {
+    fill: 'var(--accent)'
+  }
+}, "Vn"), /*#__PURE__*/React.createElement("line", {
+  x1: "380",
+  y1: "235",
+  x2: "380",
+  y2: "70",
+  stroke: "var(--rule)",
+  strokeWidth: "1",
+  strokeDasharray: "4 3"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "380",
+  y: "252",
+  fontSize: "11.5",
+  textAnchor: "middle",
+  fontWeight: "700",
+  style: {
+    fill: 'var(--accent)'
+  }
+}, "If1"), /*#__PURE__*/React.createElement("circle", {
+  cx: "380",
+  cy: "70",
+  r: "4.5",
+  fill: "var(--accent)"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "380",
+  y1: "159.5",
+  x2: "470",
+  y2: "159.5",
+  stroke: "var(--rule)",
+  strokeWidth: "1",
+  strokeDasharray: "4 3"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "476",
+  y: "163",
+  fontSize: "11.5",
+  fontWeight: "700",
+  style: {
+    fill: 'var(--danger)'
+  }
+}, "Is"), /*#__PURE__*/React.createElement("circle", {
+  cx: "380",
+  cy: "159.5",
+  r: "4.5",
+  fill: "var(--danger)"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "318",
+  y1: "174.6",
+  x2: "470",
+  y2: "174.6",
+  stroke: "var(--rule)",
+  strokeWidth: "1",
+  strokeDasharray: "4 3"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "476",
+  y: "178",
+  fontSize: "11.5",
+  fontWeight: "700",
+  style: {
+    fill: 'var(--warn)'
+  }
+}, "In"), /*#__PURE__*/React.createElement("line", {
+  x1: "318",
+  y1: "235",
+  x2: "318",
+  y2: "174.6",
+  stroke: "var(--rule)",
+  strokeWidth: "1",
+  strokeDasharray: "4 3"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "318",
+  y: "252",
+  fontSize: "11.5",
+  textAnchor: "middle",
+  fontWeight: "700",
+  style: {
+    fill: 'var(--warn)'
+  }
+}, "If2"), /*#__PURE__*/React.createElement("circle", {
+  cx: "318",
+  cy: "174.6",
+  r: "4.5",
+  fill: "var(--warn)"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "76",
+  y: "284",
+  fontSize: "12.5",
+  fontWeight: "700",
+  style: {
+    fill: 'var(--ink)'
+  }
+}, "Ks = If1 / If2 = Is / In"), /*#__PURE__*/React.createElement("text", {
+  x: "232",
+  y: "284",
+  fontSize: "10.5",
+  style: {
+    fill: 'var(--ink-mute)'
+  }
+}, "直線なので、横で測っても縦で測っても同じ比"));
 const SynchronousPage = ({
   onNav
 }) => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Crumbs, {
@@ -12487,7 +12702,347 @@ const SynchronousPage = ({
   tex: "N_s = 120f/p"
 }), "。しかし ", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "定常運転では滑りは存在しない"), "。誘導機の滑りの式を流用してはならない。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, "定常運転では滑りは存在しない"), "。誘導機の滑りの式を流用してはならない。")), /*#__PURE__*/React.createElement("h3", {
+  id: "vcurve-scr"
+}, "短絡比の4つの顔 — この節の 14 小問のうち 9 問がここに集まる"), /*#__PURE__*/React.createElement("p", null, "台帳（", /*#__PURE__*/React.createElement("a", {
+  href: "#",
+  onClick: e => {
+    e.preventDefault();
+    onNav("trends");
+  }
+}, "付録A 出題傾向データ"), "）で同期機は 27 小問、そのうち", /*#__PURE__*/React.createElement("strong", null, "この節の領域が 14 小問"), "で単元最大。 さらにその 14 問を分けると、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "短絡比・同期インピーダンス関連が 9 問"), "（R3問6・R4上問5・R4下問5・R5上問5・R6下問6・", /*#__PURE__*/React.createElement("strong", null, "R6下問15(a)(b) の2小問"), "・R7上問6・R7下問6。", /*#__PURE__*/React.createElement("span", {
+  style: {
+    fontSize: "12.5px",
+    color: "var(--ink-soft)"
+  }
+}, "うち R5上問5 は計算ではなく「短絡比の大小と外形寸法・安定度・電圧変動率」の論説"), "）、 ベクトル図と V カーブの読みが 5 問である。ここでは前者を扱う。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "9 問が難しいのではなく、短絡比が 4 通りの顔で出てくるのが難しい。"), "問題文が「界磁電流」で来るか「短絡電流」で来るか「%インピーダンス」で来るかで見た目が変わるだけで、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "中身は 1 つ"), "である。まず絵で押さえる。"), /*#__PURE__*/React.createElement(SyncSCRFig, null), /*#__PURE__*/React.createElement(Box, {
+  kind: "tip",
+  label: "なぜ短絡曲線だけ直線なのか（ここが4つの顔をつなぐ根拠）"
+}, /*#__PURE__*/React.createElement("p", null, "無負荷飽和曲線が寝るのは", /*#__PURE__*/React.createElement("strong", null, "鉄心が磁気飽和する"), "から。ところが三相短絡状態では端子電圧がゼロなので、電機子電流は", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "誘導起電力 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "E"
+}), " に対しておよそ 90° 遅れる"), "（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I = E/(r_a + \\mathrm{j}x_s)"
+}), " で ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_a \\ll x_s"
+}), " のため）。", /*#__PURE__*/React.createElement("strong", null, "「遅れ力率」と言えないことに注意"), " — 力率角は端子電圧を基準に測る量で、端子電圧が 0 のここでは定義できない。基準は端子電圧ではなく起電力である。 この 90° 遅れ電流は電機子反作用として", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "強い減磁作用"), "を生み（セクション2）、界磁がつくった起磁力の大半を打ち消す。 残る空隙磁束が小さいままなので", /*#__PURE__*/React.createElement("strong", null, "鉄心が飽和領域に入らず"), "、磁束は界磁電流に比例し、起電力も短絡電流も比例する — だから短絡曲線は原点を通る直線になる。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "この直線性が「界磁電流の比＝電流の比」を保証している。"), "直線でなければ図の横で測った比と縦で測った比は一致せず、下の表の顔①と顔②は別物になってしまう。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "ただし「短絡比は飽和と無関係」ではない。"), "顔①の ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_{f1}"
+}), " は", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "飽和したあとの無負荷飽和曲線から読む値"), "なので、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s"
+}), " は飽和を", /*#__PURE__*/React.createElement("strong", null, "すでに織り込んでいる"), "。だから ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "1/K_s"
+}), " が対応するのは", /*#__PURE__*/React.createElement("strong", null, "飽和"), "同期インピーダンス [p.u.] で、 原点の接線（空隙線）から求める不飽和値より小さい。直線性が要るのは", /*#__PURE__*/React.createElement("strong", null, "短絡側だけ"), "である。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0",
+    fontSize: "12.5px",
+    color: "var(--ink-soft)"
+  }
+}, "ここで無視しているもの: 電機子抵抗（これがあるので厳密には 90° にならない）、 漏れリアクタンス（空隙磁束が完全に 0 にはならない理由）、残留磁気（短絡曲線が厳密には原点を通らない理由）。 また突極機で界磁電流を大きくすると磁極本体が飽和して短絡曲線もわずかに寝るので、", /*#__PURE__*/React.createElement("strong", null, "「いつまでも直線」ではない"), "（試験範囲では直線扱いでよい）。")), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data-table"
+}, /*#__PURE__*/React.createElement("caption", null, "表1.3.1  短絡比の4つの顔（すべて同じ量。問題文がどれで来るかだけが違う）"), /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "顔"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "式"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "問題文の合図"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "他の顔とどうつながるか"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "① 界磁電流の比", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+  style: {
+    fontSize: "12px",
+    color: "var(--ink-soft)"
+  }
+}, "（定義）")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s = \\dfrac{I_{f1}}{I_{f2}}"
+})), /*#__PURE__*/React.createElement("td", null, "「無負荷で定格電圧を発生する界磁電流」「短絡電流が定格電流に等しくなる界磁電流」"), /*#__PURE__*/React.createElement("td", null, "これが定義。図の", /*#__PURE__*/React.createElement("strong", null, "横方向"), "で測る。", /*#__PURE__*/React.createElement("span", {
+  style: {
+    fontSize: "12px",
+    color: "var(--ink-soft)"
+  }
+}, "公式02 と セクション8 は同じものを ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_{f0}/I_{fs}"
+}), " と書いている（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_{f0}=I_{f1}"
+}), "・", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_{fs}=I_{f2}"
+}), "）"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "② 電流の比"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s = \\dfrac{I_s}{I_n}"
+})), /*#__PURE__*/React.createElement("td", null, "「持続短絡電流」「定格電流」"), /*#__PURE__*/React.createElement("td", null, "短絡曲線が", /*#__PURE__*/React.createElement("strong", null, "原点を通る直線"), "だから①と一致する。図の", /*#__PURE__*/React.createElement("strong", null, "縦方向"), "で測る")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "③ インピーダンスの逆数"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s = \\dfrac{1}{Z_s\\,[\\mathrm{p.u.}]}"
+}), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s \\approx \\dfrac{1}{x_s\\,[\\mathrm{p.u.}]}"
+})), /*#__PURE__*/React.createElement("td", null, "「同期インピーダンス [p.u.]」「同期リアクタンス [p.u.]」「単位法」"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_s = E_n/I_s"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_{\\rm base}=E_n/I_n"
+}), " の比を取ると ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "E_n"
+}), " が約分で消えて ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_n/I_s = 1/K_s"
+}), "。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_s"
+}), " で書けば厳密"), "で、", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_s"
+}), " に置き換えるところで初めて ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_a"
+}), " を無視した近似になる"), "（公式02 の注）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "④ %インピーダンスの逆数"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s = \\dfrac{100}{\\%Z_s}"
+})), /*#__PURE__*/React.createElement("td", null, "「百分率同期インピーダンス [%]」"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\%Z_s = 100\\,Z_s[\\mathrm{p.u.}]"
+}), " なので", /*#__PURE__*/React.createElement("strong", null, "③の単位違い"), "（こちらも厳密）。100 倍を忘れる／余計に掛けるのが定番"))))), /*#__PURE__*/React.createElement(Box, {
+  kind: "mistake",
+  label: "別経路の照合が何を捕まえて、何を見逃すか（ここを混ぜると「確かめた」つもりで通す）"
+}, /*#__PURE__*/React.createElement("p", null, "②と③（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_s"
+}), " で書いた形）と④はどれも", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "同じ定義から代数的に導いた同値な形"), "である。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_s/Z_{\\rm base} = (E_n/I_s)/(E_n/I_n) = I_n/I_s = 1/K_s"
+}), " のように、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "E_n"
+}), " が約分で消えるだけの変形にすぎない。ここから 2 つのことが出る。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "捕まえるもの: 電卓の打ち間違い。"), "同値でも", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "通る数字が違えば別経路"), "なので、押し間違いは露見する。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_s = E_n/I_s = 3810/547 \\fallingdotseq 6.97"
+}), " と、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_s = Z_{\\rm base}/K_s = 8.71/1.25 \\fallingdotseq 6.97"
+}), " は", /*#__PURE__*/React.createElement("strong", null, "違う数を叩いて同じ答えに着く"), "。 試験で実際に起きる誤りの多くはこれなので、", /*#__PURE__*/React.createElement("strong", null, "この照合は捨てるべきではない"), "。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "見逃すもの: 上流の概念の取り違え。"), /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_n"
+}), " に ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\sqrt3"
+}), " を掛けてしまったなど、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "両方の経路が共通して踏む段"), "での誤りは、どちらも同じように狂うので必ず一致してしまう。", /*#__PURE__*/React.createElement("strong", null, "「一致した」は概念が正しいことの証拠にならない"), "。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "概念の取り違えを当てる方法（式の外から）。"), "次の 2 つが実際に効く。"), /*#__PURE__*/React.createElement("ul", {
+  style: {
+    margin: "4px 0 0",
+    paddingLeft: 22
+  }
+}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_s"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_{\\rm base}"
+}), " の大小"), " — ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s > 1"
+}), " の機なら必ず ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_s < Z_{\\rm base}"
+}), "。逆になっていれば逆数を取り違えている"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "問題文が名指す機種"), " — 「水車発電機」と書いてあるのに 0.6 が出たら、あるいは「タービン発電機」で 1.2 が出たら疑う")), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "値の範囲だけで当てようとしてはいけない。"), "実用範囲は", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "タービン発電機で 0.5〜0.7、水車発電機で 0.9〜1.2 程度"), "とされるが、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s = 1.25"
+}), " を逆数にした ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "1/1.25 = 0.80"
+}), " は", /*#__PURE__*/React.createElement("strong", null, "この範囲の中に入ってしまう"), "。 範囲チェックが効くのは 0.2 や 5 のような", /*#__PURE__*/React.createElement("strong", null, "桁違い"), "のときだけで、実際の出題が集まる ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s \\approx 1"
+}), " の帯では逆数ミスに無力である。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0",
+    fontSize: "12.5px",
+    color: "var(--ink-soft)"
+  }
+}, "上の実用範囲は教材で広く使われている値だが、本 Wiki では一次資料での確認をしていない（文献により 0.5〜0.8 / 0.8〜1.2 と幅の書き方が異なる）。", /*#__PURE__*/React.createElement("strong", null, "大小関係（タービン < 水車）だけを使い、境界の数字を暗記の対象にしないこと。"))), /*#__PURE__*/React.createElement(Box, {
+  kind: "example",
+  label: "例題 1.3.3（2曲線の読み取り → 短絡比 → 同期インピーダンス → %Zs）"
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 定格出力 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "5000\\;\\mathrm{kV\\cdot A}"
+}), "、定格電圧 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "6600\\;\\mathrm{V}"
+}), "、Y 結線の三相同期発電機がある。 無負荷飽和曲線から、定格電圧を発生する界磁電流は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_{f1} = 50\\;\\mathrm{A}"
+}), "。この界磁電流のままで三相短絡したときの持続短絡電流は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_s = 547\\;\\mathrm{A}"
+}), " であった。 短絡比 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s"
+}), "、同期インピーダンス ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_s\\,[\\Omega]"
+}), "、百分率同期インピーダンス ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\%Z_s"
+}), " を求めよ。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "6px 0 0",
+    fontSize: "12.5px",
+    color: "var(--ink-soft)"
+  }
+}, "セクション7の", /*#__PURE__*/React.createElement("strong", null, "例題1.3.1 と同じ機"), "である。あちらは「", /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s"
+}), " を与えて ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_s"
+}), " を出す」向き、こちらは", /*#__PURE__*/React.createElement("strong", null, "2曲線の読み取りから出発して ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s"
+}), " を作る"), "向き。 数値は本 Wiki で作った類題で、特定年度の本試験問題ではない。この骨格は R6下問15・R7下問6 と同型である。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "10px 0 2px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "① 定格電流"), "（三相容量から。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\sqrt3"
+}), " は", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "分母"), "）"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "I_n = \\frac{S_n}{\\sqrt3\\,V_n} = \\frac{5000\\times10^{3}}{\\sqrt3 \\times 6600} \\fallingdotseq 437\\;[\\mathrm{A}]"
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "10px 0 2px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "② 短絡比"), "（顔②。持続短絡電流 ÷ 定格電流）"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "K_s = \\frac{I_s}{I_n} = \\frac{547}{437} \\fallingdotseq 1.25"
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "10px 0 2px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "③ 同期インピーダンス"), "（", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "分子は相電圧"), "。Y 結線なので ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_n/\\sqrt3"
+}), "）"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "E_n = \\frac{6600}{\\sqrt3} \\fallingdotseq 3810\\;[\\mathrm{V}], \\qquad Z_s = \\frac{E_n}{I_s} = \\frac{3810}{547} \\fallingdotseq 6.97\\;[\\Omega]"
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "10px 0 2px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "④ 百分率同期インピーダンス"), "（顔④）"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "\\%Z_s = \\frac{100}{K_s} = \\frac{100}{1.25} = 80.0\\;[\\%]"
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "答: ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s \\fallingdotseq 1.25"
+}), "、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_s \\fallingdotseq 6.97\\;\\Omega"
+}), "、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\%Z_s = 80.0\\;\\%"
+}))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "別経路で③を叩き直す（打鍵ミスの照合）:"), /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_{\\rm base} = V_n^2/S_n = 6600^2/(5000\\times10^3) \\fallingdotseq 8.71\\;\\Omega"
+}), " として", /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_s = Z_{\\rm base}/K_s = 8.71/1.25 \\fallingdotseq 6.97\\;\\Omega"
+}), "。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "3810/547 と 8.71/1.25 は違う数を叩いて同じ答えに着く"), "ので、押し間違いはここで露見する。 ただし①で ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\sqrt3"
+}), " を掛けてしまったような", /*#__PURE__*/React.createElement("strong", null, "両経路が共通して踏む段の誤りは、両方とも同じように狂うので一致してしまう"), "（上の Box）。 概念のほうは ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s > 1"
+}), " に対して ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_s = 6.97 < Z_{\\rm base} = 8.71"
+}), " になっているかで当てる。")), /*#__PURE__*/React.createElement(Box, {
+  kind: "mistake",
+  label: "例題1.3.3 の失点源4件"
+}, /*#__PURE__*/React.createElement("ul", {
+  style: {
+    margin: 0,
+    paddingLeft: 22
+  }
+}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z_s"
+}), " の分子に線間電圧 6600 を入れる"), " — ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "6600/547 \\fallingdotseq 12.1\\;\\Omega"
+}), " となり ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\sqrt3"
+}), " 倍ずれる。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "1 相分のインピーダンスなので分子は相電圧")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\%Z_s = 100 K_s"
+}), " としてしまう"), " — ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "100 \\times 1.25 = 125\\;\\%"
+}), " が出る。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s"
+}), " が大きい機ほど ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\%Z_s"
+}), " は", /*#__PURE__*/React.createElement("strong", null, "小さい"), "（電圧変動が小さい機ということ）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_n"
+}), " に ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\sqrt3"
+}), " を掛けてしまう"), " — ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\sqrt3"
+}), " は", /*#__PURE__*/React.createElement("strong", null, "分母"), "。三相容量 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "S_n=\\sqrt3 V_n I_n"
+}), " を ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_n"
+}), " について解いた形"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_s"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_{f1}"
+}), " を取り違える"), " — 短絡比は", /*#__PURE__*/React.createElement("strong", null, "電機子側の電流の比"), "か", /*#__PURE__*/React.createElement("strong", null, "界磁側の電流の比"), "のどちらかで、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "電機子側と界磁側を混ぜた比は意味を持たない"))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0",
+    fontSize: "12.5px",
+    color: "var(--ink-soft)"
+  }
+}, "この Box を例題の枠の", /*#__PURE__*/React.createElement("strong", null, "中"), "ではなく", /*#__PURE__*/React.createElement("strong", null, "外"), "に置いているのは、 直前確認モード（役割フィルタ）のセレクタが ", /*#__PURE__*/React.createElement("code", null, ".content > aside.box-mistake"), " という直下指定で、 入れ子にすると", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "「罠だけ」表示のときに丸ごと消える"), "ため（実測で確認）。")), /*#__PURE__*/React.createElement(Box, {
+  kind: "tip",
+  label: "Ks の大小が何を意味するか（論説問題はここだけ問う）"
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s"
+}), " が大きい ＝ ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_s"
+}), " が小さい。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_s"
+}), " は負荷電流による電圧降下の源なので、そこから性質がすべて出る。"), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data-table"
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s"
+}), " が大きい機"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "理由"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "電圧変動率が", /*#__PURE__*/React.createElement("strong", null, "小さい")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_s"
+}), " が小さいので負荷をかけても端子電圧が落ちにくい")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "安定度が", /*#__PURE__*/React.createElement("strong", null, "高い")), /*#__PURE__*/React.createElement("td", null, "出力 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P = (EV/x_s)\\sin\\delta"
+}), "（公式03）の係数が大きく、同じ出力を", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "小さい内部相差角 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\delta"
+})), " で出せる＝脱調まで余裕がある")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "持続短絡電流が", /*#__PURE__*/React.createElement("strong", null, "大きい")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_s = K_s I_n"
+}), " そのもの。", /*#__PURE__*/React.createElement("span", {
+  style: {
+    fontSize: "12px",
+    color: "var(--ink-soft)"
+  }
+}, "なお遮断器の遮断容量を決めるのは突発短絡直後の電流（過渡・次過渡リアクタンスで決まる）で、持続短絡電流ではない。ここで言えるのは傾向まで"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "鉄機械（", /*#__PURE__*/React.createElement("strong", null, "大形・高価"), "）になる"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_s"
+}), " を小さくする直接の手は", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "空隙を大きくする"), "こと。空隙が大きいと同じ磁束に必要な界磁起磁力が増えるので、界磁巻線と磁極が大きくなり鉄が増える。", /*#__PURE__*/React.createElement("strong", null, "水車発電機のほうがタービン発電機より短絡比が大きい"), "のはこの差"))))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "「短絡比が大きいほど良い」ではない。"), "特性は良くなるが機械が大きく高くなるうえ短絡電流も増える。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "誤りを選ぶ問題では「小形・安価になる」「短絡電流が小さくなる」が誤答肢として置かれる"), "。")), /*#__PURE__*/React.createElement(Box, {
+  kind: "tip",
+  label: "この節の1分復習"
+}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "短絡比の定義（界磁電流で）は？"), /*#__PURE__*/React.createElement("strong", null, "無負荷で定格電圧を出す界磁電流 If1 ÷ 短絡電流が定格電流になる界磁電流 If2")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "なぜ Ks = Is/In とも書けるのか？"), /*#__PURE__*/React.createElement("strong", null, "三相短絡曲線が原点を通る直線"), "だから。横で測った比と縦で測った比が一致する"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "なぜ短絡曲線は直線になるのか？"), "短絡時は電機子反作用が", /*#__PURE__*/React.createElement("strong", null, "強い減磁作用"), "として働き、", /*#__PURE__*/React.createElement("strong", null, "鉄心が飽和しない"), "から"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Zs [Ω] を持続短絡電流から出す式は？"), "Zs = En / Is。", /*#__PURE__*/React.createElement("strong", null, "En は相電圧"), "（Y 結線なら Vn/√3）。線間電圧を入れると √3 倍ずれる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "%Zs と Ks の関係は？"), "%Zs = ", /*#__PURE__*/React.createElement("strong", null, "100 / Ks"), "。逆数（これは厳密）。Ks が大きい機ほど %Zs は小さい"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Ks = 1/xs[p.u.] が「≈」なのはなぜ？"), "厳密に成り立つのは ", /*#__PURE__*/React.createElement("strong", null, "Zs"), "（同期インピーダンス）で書いた Ks = 1/Zs[p.u.]。", /*#__PURE__*/React.createElement("strong", null, "xs に置き換える段で ra を無視している"), "。実機は xs ≫ ra なので実害はほぼ無い"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Ks が大きい機の特徴を4つ"), "電圧変動率", /*#__PURE__*/React.createElement("strong", null, "小"), "・安定度", /*#__PURE__*/React.createElement("strong", null, "高"), "・持続短絡電流", /*#__PURE__*/React.createElement("strong", null, "大"), "・機械は", /*#__PURE__*/React.createElement("strong", null, "大形高価"), "（鉄機械）")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "synchronous",
   sectionId: "vcurve"
 }), /*#__PURE__*/React.createElement("h2", {
