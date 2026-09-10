@@ -1247,6 +1247,9 @@ window.WIKI_DATA = {
     { page: "induction-machine", pageTitle: "1.2 三相誘導電動機", anchor: "speed-vector",
       title: "V/f 一定制御とベクトル制御の違い", desc: "V/f は磁束の大きさだけ、ベクトルは励磁成分とトルク成分に分解。VVVF と CVCF",
       keywords: "V/f一定制御 Vf一定 スカラー制御 ベクトル制御 VVVF CVCF 可変電圧可変周波数 定電圧定周波数 励磁電流成分 トルク電流成分 始動トルク 速応性 回転磁界" },
+    { page: "induction-machine", pageTitle: "1.2 三相誘導電動機", anchor: "torque-lowslip",
+      title: "低滑り域の線形近似（T ∝ V²s/r₂'）と、厳密／近似の仕分け", desc: "T∝V² と比例推移は厳密、T∝s は低滑り域だけの近似。速度の誤差は s/(1−s) 倍に薄まる",
+      keywords: "低滑り 線形近似 トルク近似 r2/s 十分大きい 比例推移 厳密 近似 停動滑り sm 電圧低下 回転速度 二次抵抗 外部抵抗 滑り周波数 V/f 一定 トルクブースト 一次抵抗 問15 B問題" },
     { page: "synchronous", pageTitle: "1.3 同期機", anchor: "rotor-types",
       title: "水車発電機とタービン発電機", desc: "回転速度→極数→回転子の形。突極形と円筒形、大径短軸と小径長軸",
       keywords: "水車発電機 タービン発電機 突極形 円筒形 非突極 極数 回転速度 直径 軸方向 大径短軸 小径長軸 遠心力 立軸 横軸" },
@@ -8474,12 +8477,12 @@ const InductionMachinePage = ({
   target: "_blank",
   rel: "noopener"
 }, "→ 理論Wiki「電磁誘導（ファラデー・レンツの法則）」で e=-dΦ/dt の原理と、フレミング左手の電磁力 F=BIL を深掘り"))), /*#__PURE__*/React.createElement(RotatingFieldDiagram, null), /*#__PURE__*/React.createElement(FormulaCard, {
-  num: "01 / 07",
+  num: "01 / 09",
   name: "同期速度",
   eq: "N_s = \\dfrac{120 f}{p} \\;[\\mathrm{min^{-1}}]",
   note: /*#__PURE__*/React.createElement(React.Fragment, null, "f は電源周波数 [Hz]、p は極数。50Hz・4極なら Ns = 1500 min⁻¹。")
 }), /*#__PURE__*/React.createElement(FormulaCard, {
-  num: "02 / 07",
+  num: "02 / 09",
   name: "滑り（slip）",
   eq: "s = \\dfrac{N_s - N}{N_s}",
   note: /*#__PURE__*/React.createElement(React.Fragment, null, "N は回転子の実回転速度。0<s<1 が電動機域、s<0 が発電機域、s>1 が制動域。")
@@ -8513,12 +8516,12 @@ const InductionMachinePage = ({
   display: true,
   tex: "P_2 : P_{c2} : P_m \\;=\\; 1 : s : (1-s)"
 }), /*#__PURE__*/React.createElement("p", null, "この関係は B 問題で頻出。1 つでも与えられれば残り 2 つが即座に求まる。")), /*#__PURE__*/React.createElement(FormulaCard, {
-  num: "03 / 07",
+  num: "03 / 09",
   name: "二次銅損 / 二次入力",
   eq: "\\dfrac{P_{c2}}{P_2} = s \\quad,\\quad \\dfrac{P_m}{P_2} = 1-s",
   note: "効率や出力計算で軸となる関係。"
 }), /*#__PURE__*/React.createElement(FormulaCard, {
-  num: "04 / 07",
+  num: "04 / 09",
   name: "トルクへの換算（同期ワット）",
   eq: "T = \\dfrac{P_2}{\\omega_s} = \\dfrac{P_m}{\\omega}",
   note: /*#__PURE__*/React.createElement(React.Fragment, null, "二次入力 ", /*#__PURE__*/React.createElement(Eq, {
@@ -8614,7 +8617,7 @@ const InductionMachinePage = ({
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
 }, "3."), "トルク特性"), /*#__PURE__*/React.createElement("p", null, "滑り s に対するトルク T の関係は、典型的な「山形」の曲線となる。停動トルク Tmax を境に、左側（高滑り域）が始動領域、右側（低滑り域）が安定運転領域である。"), /*#__PURE__*/React.createElement(TorqueSlipCurve, null), /*#__PURE__*/React.createElement(FormulaCard, {
-  num: "05 / 07",
+  num: "05 / 09",
   name: "トルク式（簡易形）",
   eq: "T \\;\\propto\\; \\dfrac{V_1^{2} \\cdot (r_2'/s)}{(r_1 + r_2'/s)^2 + (x_1 + x_2')^2}",
   note: /*#__PURE__*/React.createElement(React.Fragment, null, "電圧の二乗に比例することに注意。電源電圧が 0.9 倍に低下すると、トルクは 0.81 倍となる。")
@@ -8656,7 +8659,213 @@ const InductionMachinePage = ({
 }), " が増え、効率は下がる（だから運転中は抵抗を短絡する）。")), /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
   label: "比例推移の使い道"
-}, /*#__PURE__*/React.createElement("p", null, "「始動時のみ二次抵抗を挿入し、加速後に短絡」という二次抵抗始動法はこの性質を利用したもの。かご形では原理的に二次抵抗を変化できないため、二重かご形・深溝形が用いられる。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, /*#__PURE__*/React.createElement("p", null, "「始動時のみ二次抵抗を挿入し、加速後に短絡」という二次抵抗始動法はこの性質を利用したもの。かご形では原理的に二次抵抗を変化できないため、二重かご形・深溝形が用いられる。")), /*#__PURE__*/React.createElement("h3", {
+  id: "torque-lowslip"
+}, "低滑り域の線形近似 — B問題（問15）の計算はここから出る"), /*#__PURE__*/React.createElement("p", null, "台帳（セクション7）でこの単元のトルク特性は 9 小問あり、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "うち 6 問が B問題（問15）"), "である（R5下・R6上・R7上 の各 (a)(b)）。 その 6 問の内訳は", /*#__PURE__*/React.createElement("strong", null, "この節の線形近似で解くもの 4 問"), "（R5下(b)・R6上(a)・R7上(a)(b)）、", /*#__PURE__*/React.createElement("strong", null, "比例推移だけで解けて近似が要らないもの 1 問"), "（R6上(b)）、", /*#__PURE__*/React.createElement("strong", null, "滑り周波数 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "f_2 = s f_1"
+}), " だけで済むもの 1 問"), "（R5下(a)）である。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "「どれが近似で、どれが近似なしに解けるか」を分けられることが得点条件"), "で、この節はその仕分けを扱う。"), /*#__PURE__*/React.createElement("p", null, "まず近似そのものを作る。", /*#__PURE__*/React.createElement("strong", null, "定格付近では滑り s が小さく ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'/s"
+}), " が ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_1"
+}), "・", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_1+x_2'"
+}), " に比べて十分大きい"), "ので、 公式05 の分母を ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "(r_2'/s)^2"
+}), " だけと見なして次の形に潰せる。", /*#__PURE__*/React.createElement("span", {
+  style: {
+    fontSize: "12.5px",
+    color: "var(--ink-soft)"
+  }
+}, "以下、公式05（簡易等価回路のまま、近似を入れていない式）を", /*#__PURE__*/React.createElement("strong", null, "「厳密式」"), "と呼ぶ。 「簡易形」という名前は", /*#__PURE__*/React.createElement("strong", null, "簡易等価回路"), "を使うという意味で、近似式という意味ではない。")), /*#__PURE__*/React.createElement(FormulaCard, {
+  num: "08 / 09",
+  name: "低滑り域のトルク（線形近似）",
+  eq: "T \\;\\approx\\; \\dfrac{3 V_1^{2}\\, s}{\\omega_s\\, r_2'} \\qquad (s \\ll s_m)",
+  note: /*#__PURE__*/React.createElement(React.Fragment, null, "厳密式（公式05）の分母 ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "(r_1 + r_2'/s)^2 + (x_1+x_2')^2"
+  }), " を ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "(r_2'/s)^2"
+  }), " で置き換えたもの。", /*#__PURE__*/React.createElement(Eq, {
+    tex: "V_1"
+  }), " は", /*#__PURE__*/React.createElement("strong", null, "相電圧"), "、頭の 3 は", /*#__PURE__*/React.createElement("strong", null, "三相ぶん"), "（", /*#__PURE__*/React.createElement(Eq, {
+    tex: "T = 3I_2'^2 (r_2'/s)/\\omega_s"
+  }), " で ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "I_2' \\approx V_1 s/r_2'"
+  }), " と置いた形）。", /*#__PURE__*/React.createElement("strong", null, "近似が成り立つのは低滑り域だけ"), "で、停動滑り ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "s_m"
+  }), " に近づくと破綻する（下の実測を参照）。")
+}), /*#__PURE__*/React.createElement(Box, {
+  kind: "mistake",
+  label: "3つの比例則のうち、厳密は2つ・近似は1つだけ（ここを一緒くたにすると射程を誤る）"
+}, /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data-table"
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "読み替え"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "何を固定するか"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "厳密／近似"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "根拠"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "T \\propto V_1^{2}"
+})), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "s"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'"
+})), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "厳密")), /*#__PURE__*/React.createElement("td", null, "上の厳密式が ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_1^{2}"
+}), " を", /*#__PURE__*/React.createElement("strong", null, "丸ごと因数に持つ"), "。近似を経由しない")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'/s"
+}), " が同じならトルクも同じ（比例推移）"), /*#__PURE__*/React.createElement("td", null, "トルク"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "厳密")), /*#__PURE__*/React.createElement("td", null, "厳密式は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s"
+}), " を ", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'/s"
+}), " という束でしか含まない"), "。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_1^{2}"
+}), " を除いた残りは ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'/s"
+}), " だけの関数")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "T \\propto s"
+})), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_1"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'"
+})), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "近似"), "（低滑り域のみ）"), /*#__PURE__*/React.createElement("td", null, "分母の ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_1"
+}), "・", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_1+x_2'"
+}), " を捨てて初めて成り立つ。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s"
+}), " が ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s_m"
+}), " に近づくと崩れ、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s_m"
+}), " を超えると", /*#__PURE__*/React.createElement("strong", null, "増やすほど減る"), "ので比例どころか向きが逆になる"))))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, "混同しやすいのは 2 行目と 3 行目。どちらも「滑りが k 倍」という形で現れるが、", /*#__PURE__*/React.createElement("strong", null, "二次抵抗も一緒に k 倍にするなら厳密"), "、", /*#__PURE__*/React.createElement("strong", null, "二次抵抗を据え置いて滑りだけ動かすなら近似"), "である。")), /*#__PURE__*/React.createElement(Box, {
+  kind: "tip",
+  label: "近似の誤差は「トルクの絶対値」には出るが「回転速度」にはほとんど出ない（実測）"
+}, /*#__PURE__*/React.createElement("p", null, "1相あたり ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_1 = 0.30"
+}), "、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_1+x_2' = 1.20"
+}), "、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2' = 0.24\\;\\Omega"
+}), "、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_1 = 200\\;\\mathrm{V}"
+}), "、4極・50 Hz（このとき ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s_m = 0.194"
+}), "）で厳密式と近似式を突き合わせた。"), /*#__PURE__*/React.createElement("ul", {
+  style: {
+    margin: "6px 0 0",
+    paddingLeft: 22
+  }
+}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "トルクの絶対値"), ": ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s = 0.03"
+}), " で厳密 86.9 N·m に対し近似 95.5 N·m（", /*#__PURE__*/React.createElement("strong", null, "+9.9 %"), "）。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "近似式で絶対値を出してはいけない")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "滑りの比"), ": 「トルク一定のまま ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_1"
+}), " を 0.9 倍」で厳密 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s' = 0.0382"
+}), " に対し近似 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s' = 0.0370"
+}), "（3.1 % のずれ）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "回転速度"), ": 同じ条件で厳密 1442.6、近似 1444.4 min⁻¹ — 差は ", /*#__PURE__*/React.createElement("strong", null, "1.8 min⁻¹（0.12 %）"))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "なぜ速度だけ誤差が薄まるのか。"), /*#__PURE__*/React.createElement(Eq, {
+  tex: "N = N_s(1-s)"
+}), " なので、滑りの相対誤差が速度の相対誤差に移るときに ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s/(1-s)"
+}), " 倍に縮む。 上の数値では ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "0.124\\,\\% / 3.13\\,\\% \\fallingdotseq 0.0396"
+}), " で、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s/(1-s) = 0.0382/0.9618 \\fallingdotseq 0.0397"
+}), " と一致する（差は表示を 3 桁に丸めたことによる）。", /*#__PURE__*/React.createElement("strong", null, "滑りが小さいことが、そのまま近似の免罪符になっている"), "。 裏を返すと、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "滑りそのものや二次銅損 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_{c2}=sP_2"
+}), " を近似式から出すと、この免罪符は効かない"), "（数 % のずれがそのまま残る）。"), /*#__PURE__*/React.createElement(Box, {
+  kind: "mistake",
+  label: "何が検算になり、何がならないか（ここを取り違えると「確かめた」つもりで通してしまう）"
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "検算になる: 近似解を厳密式（公式05）に戻す。"), "近似式と厳密式は", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "別の方程式"), "なので、戻して値が動けば近似誤差の大きさがそのまま見える。 上の例で近似解 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s' = 0.0370"
+}), " を厳密式に入れるとトルクは 84.6 N·m で、元の 86.9 N·m と 2.7 % ずれる — ", /*#__PURE__*/React.createElement("strong", null, "この 2.7 % が近似の代償の実体"), "である。 この問題の誤り源は近似だけなので、これが唯一の検出手段になる。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "検算にならない: 電力配分 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_2 : P_{c2} : P_m = 1 : s : (1-s)"
+}), " を当てること。"), "この比は", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "s"
+}), " を入力として受け取る恒等式"), "で、間違った ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s"
+}), " を入れれば間違った配分をそのまま返す。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s"
+}), " が正しいかは何も言っていない。", /*#__PURE__*/React.createElement("strong", null, "「別の関係だから検算になる」は成り立たない"), " — 別の関係であることと、検証したい量を独立に決めることは別である。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "どちらでも検出できないもの: 等価回路の選び方そのもの。"), "両方とも同じ簡易等価回路の上に立っているので、励磁電流や機械損を無視したことによるずれは、どちらの手続きでも出てこない。"))), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "V/f 一定制御がトルクを保てる理由も、この近似式から 1 行で出る。"), "滑り周波数 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "f_2 = s f_1"
+}), "（セクション6の例題 1.2.1）と同期角速度 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\omega_s = 4\\pi f_1 / p"
+}), " を近似式に入れ、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s = f_2/f_1"
+}), " と置くと、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_1"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "f_1"
+}), " は次の 1 つの束にまとまる。"), /*#__PURE__*/React.createElement(FormulaCard, {
+  num: "09 / 09",
+  name: "トルクを決める2つの量（V/f と滑り周波数）",
+  eq: "T \\;\\approx\\; \\dfrac{3p}{4\\pi r_2'}\\left(\\dfrac{V_1}{f_1}\\right)^{2} f_2 \\qquad (f_2 = s f_1)",
+  note: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+    tex: "V/f"
+  }), " を一定に保ったまま滑り周波数 ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "f_2"
+  }), " が同じなら、", /*#__PURE__*/React.createElement("strong", null, "周波数によらずトルクが同じ"), "になる。これがセクション5の ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "V/f"
+  }), " 一定制御が可変速でトルクを保てる理由。公式08 と同じ近似の上に立っているので、低滑り域でだけ成り立つ。")
+}), /*#__PURE__*/React.createElement(Box, {
+  kind: "tip",
+  label: "ただし低周波では崩れる — トルクブーストが要る理由（実測）"
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "公式09 には ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_1"
+}), " が入っていない。"), "厳密式で同じ計算をすると、上と同じ定数で滑り周波数 1.5 Hz を保ったまま周波数を下げたときのトルクは 50 Hz を 1.00 として 30 Hz で 0.95、10 Hz で ", /*#__PURE__*/React.createElement("strong", null, "0.77"), "、5 Hz で ", /*#__PURE__*/React.createElement("strong", null, "0.57"), " まで落ちる。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x = 2\\pi f L"
+}), " は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "f"
+}), " と一緒に縮むのに ", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_1"
+}), " は縮まない"), "ので、 低周波ほど端子電圧に占める一次抵抗の電圧降下の割合が増え、二次側に届く分が減るためである。", /*#__PURE__*/React.createElement("span", {
+  style: {
+    fontSize: "12.5px",
+    color: "var(--ink-soft)"
+  }
+}, "この実測は励磁枝を省いた簡易等価回路によるもので、そこで落ちるのは", /*#__PURE__*/React.createElement("strong", null, "二次電流"), "である。 励磁枝が ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_1 + \\mathrm{j}x_1"
+}), " の内側にある実機の等価回路では、同じ理由で", /*#__PURE__*/React.createElement("strong", null, "空隙磁束そのもの"), "も定格に届かなくなる。どちらも起点は同じ ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_1"
+}), "。"), "セクション5でいう", /*#__PURE__*/React.createElement("strong", null, "トルクブースト"), "（低速で電圧を上乗せする）は、この落ち込みを埋めるためのもので、装置の親切ではなく ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_1"
+}), " が ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "f"
+}), " と一緒に縮まないことの帰結である。")), /*#__PURE__*/React.createElement(Box, {
+  kind: "tip",
+  label: "この近似を実際に使う計算"
+}, /*#__PURE__*/React.createElement("p", null, "セクション6の ", /*#__PURE__*/React.createElement("strong", null, "例題 1.2.3"), "（トルク一定で電圧が下がったときの回転速度）と ", /*#__PURE__*/React.createElement("strong", null, "例題 1.2.4"), "（同一トルクのまま外部抵抗で減速）で、上の 3 行の使い分けを 1 問ずつ確認する。")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "induction-machine",
   sectionId: "torque"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -8723,8 +8932,17 @@ const InductionMachinePage = ({
   className: "h-num"
 }, "5."), "速度制御"), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "周波数制御（VVVF）"), " — 最も広く使われる方式。", /*#__PURE__*/React.createElement(Eq, {
   tex: "V/f = \\mathrm{const}"
-}), " で磁束を一定に保つ。低速で電圧降下を補正する ", /*#__PURE__*/React.createElement("strong", null, "トルクブースト"), " も併用。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "極数切替"), " — 巻線結線を切り替えて極数を変え、段階的に速度を変える。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二次抵抗制御"), " — 巻線形で外部抵抗を調整。効率は悪いが大容量機で実績あり。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二次励磁制御（クレーマ・セルビウス）"), " — 二次に電力を入出力。エネルギー回生が可能。")), /*#__PURE__*/React.createElement(FormulaCard, {
-  num: "06 / 07",
+}), " で磁束を一定に保つ。低速で電圧降下を補正する ", /*#__PURE__*/React.createElement("strong", null, "トルクブースト"), " も併用。", /*#__PURE__*/React.createElement("span", {
+  style: {
+    fontSize: "12.5px",
+    color: "var(--ink-soft)"
+  }
+}, "なぜ ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V/f"
+}), " でトルクが保て、なぜ低速で保てなくなるのかは", /*#__PURE__*/React.createElement("strong", null, "セクション3の公式09"), "（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "T \\propto (V_1/f_1)^2 f_2"
+}), "）で数式から出る。")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "極数切替"), " — 巻線結線を切り替えて極数を変え、段階的に速度を変える。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二次抵抗制御"), " — 巻線形で外部抵抗を調整。効率は悪いが大容量機で実績あり。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二次励磁制御（クレーマ・セルビウス）"), " — 二次に電力を入出力。エネルギー回生が可能。")), /*#__PURE__*/React.createElement(FormulaCard, {
+  num: "06 / 09",
   name: "V/f 一定制御",
   eq: "\\dfrac{V}{f} = \\mathrm{const} \\;\\Rightarrow\\; \\phi \\;\\approx\\; \\mathrm{const}",
   note: /*#__PURE__*/React.createElement(React.Fragment, null, "磁束を定格値に保ち、最大トルクを維持しながら可変速運転を行う。基底周波数以上では弱め界磁制御に移行。")
@@ -8827,8 +9045,132 @@ const InductionMachinePage = ({
 }), /*#__PURE__*/React.createElement(Eq, {
   display: true,
   tex: "P_m = (1-s) \\cdot P_2 = 0.96 \\times 22.0 = 21.12 \\;[\\mathrm{kW}]"
-})), /*#__PURE__*/React.createElement(FormulaCard, {
-  num: "07 / 07",
+})), /*#__PURE__*/React.createElement(Box, {
+  kind: "example",
+  label: "例題 1.2.3（トルク一定の負荷で電源電圧が下がったときの回転速度）"
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 4 極・50 Hz の三相誘導電動機が、定格電圧で 1455 min⁻¹ で運転している。負荷トルクが回転速度によらず一定のまま、端子電圧が定格の 90 % に低下した。回転速度はいくらになるか。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "解:"), " 使うのはセクション3の 3 行のうち 2 行。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "T \\propto V_1^{2}"
+}), "（厳密）と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "T \\propto s"
+}), "（低滑り近似）である。 トルクが変わらないのだから、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_1^{2} s"
+}), " が変わらない。"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "s_1 = \\dfrac{1500-1455}{1500} = 0.030"
+}), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "V_1^{2}\\,s_1 = (0.9V_1)^{2}\\,s_2 \\;\\Rightarrow\\; s_2 = \\dfrac{s_1}{0.9^{2}} = \\dfrac{0.030}{0.81} = 0.0370"
+}), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "N_2 = 1500\\,(1-0.0370) = 1444 \\;[\\mathrm{min^{-1}}]"
+}), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "近似の適用条件を数字で確かめる（これは検算ではない）:"), " 答えの動作点 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s_2 = 0.0370"
+}), " で ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'/s = 0.24/0.0370 = 6.49\\;\\Omega"
+}), "、捨てた側は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "|r_1 + \\mathrm{j}x| = |0.30 + \\mathrm{j}1.20| = 1.24\\;\\Omega"
+}), " で、比は 5.2 倍。「十分大きい」は成り立っている。 ただし分母は 2 乗で効くので ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "(r_1+r_2'/s)^2 + x^2 = 47.5"
+}), " に対し ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "(r_2'/s)^2 = 42.1"
+}), " と 13 % の差が残り、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "これがトルクの絶対値が 1 割ずれる正体"), "である。", /*#__PURE__*/React.createElement("strong", null, "近似解を厳密式に戻して一致を見るのは独立な検算にならない"), "（同じ等価回路を 2 回使っているだけ）。ここでやれるのは、捨てた項が実際に小さいことを確かめる", /*#__PURE__*/React.createElement("strong", null, "適用条件の点検"), "までである。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "電力収支の側から見た意味:"), " トルクが同じなら二次入力（同期ワット）", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_2 = T\\omega_s"
+}), " も同じ。増えた滑りの分がそのまま二次銅損 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_{c2}=sP_2"
+}), " に化け、機械出力の割合 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "(1-s)"
+}), " は 97.0 % から 96.3 % へ下がる。 二次電流は ", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "同じトルクでも増える"), "（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "T \\propto I_2'^2 r_2'/s"
+}), " で ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "T"
+}), "・", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'"
+}), " が一定なら ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2'^2 \\propto s"
+}), " なので約 11 % 増）。", /*#__PURE__*/React.createElement("strong", null, "電圧が下がった分を電流で埋めている"), "ので、長時間続けば二次側の温度上昇が問題になる。"), /*#__PURE__*/React.createElement(Box, {
+  kind: "mistake",
+  label: "ここが失点源"
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "「電圧が 0.9 倍だから速度も 0.9 倍」は誤り。"), "同期速度 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "N_s = 120f/p"
+}), " は", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "電圧に依存しない"), "（周波数と極数だけで決まる）。動くのは滑りだけで、しかも 3.0 % → 3.7 % と 0.7 ポイントしか動かない。速度の変化はわずか 11 min⁻¹（厳密式で解いても 12 min⁻¹）である。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "近似の代償を数字で持っておく（ただし本番で疑うためではない）。"), "この問題を厳密式で解くと ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s_2 = 0.0382"
+}), "・1443 min⁻¹ で、近似解と 1.8 min⁻¹ しか違わない（セクション3の実測）。 滑りそのものを答えさせる問題では 3 % のずれが残るが、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "試験問題はそもそも ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_1"
+}), "・", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_1+x_2'"
+}), " を与えず、近似で解くことを前提に作られており、公表解答も近似値である"), "。", /*#__PURE__*/React.createElement("strong", null, "本番で「近似を疑って厳密に解き直す」ことはできないし、その必要もない"), "。ここで誤差を知っておく意味は、 「近似で出した滑りは 3 % 程度の幅を持つ数字だ」と理解した上で選択肢を選ぶこと、そして ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s"
+}), " が定格の数倍まで大きくなる問題（始動時・停動付近）では", /*#__PURE__*/React.createElement("strong", null, "近似そのものを使ってはいけない"), "と判断できることにある。"))), /*#__PURE__*/React.createElement(Box, {
+  kind: "example",
+  label: "例題 1.2.4（巻線形で外部抵抗を入れて減速する — こちらは近似が要らない）"
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 上と同じ 4 極・50 Hz の三相巻線形誘導電動機（定格 1455 min⁻¹、二次抵抗は一次換算で 1 相あたり ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2' = 0.24\\;\\Omega"
+}), "）を、定格と同じトルクのまま 1350 min⁻¹ で運転したい。二次回路に一次換算で 1 相あたり何 Ω の外部抵抗を入れればよいか。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "解:"), " トルクが同じなら ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'/s"
+}), " が同じ（比例推移・", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "厳密"), "）。近似は使わない。"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "s_1 = 0.030, \\qquad s_2 = \\dfrac{1500-1350}{1500} = 0.100"
+}), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "\\dfrac{r_2' + R'}{s_2} = \\dfrac{r_2'}{s_1} \\;\\Rightarrow\\; r_2' + R' = r_2' \\dfrac{s_2}{s_1} = 0.24 \\times \\dfrac{0.100}{0.030} = 0.80\\;\\Omega"
+}), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "R' = 0.80 - 0.24 = 0.56 \\;[\\Omega]"
+}), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "ここから直接出る頻出論点（検算ではなく帰結）:"), " 動作点の ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'/s"
+}), " は前後とも ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "0.24/0.030 = 0.80/0.100 = 8.0\\;\\Omega"
+}), " で、等価回路から見える一次側インピーダンスが完全に同じになる。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "電動機は電源側から見て前後で区別がつかない"), "ので、一次電流も力率も同じ。これが「トルクだけでなく", /*#__PURE__*/React.createElement("strong", null, "電流も力率も比例推移する"), "」の中身である。 なお ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'/s"
+}), " の不変性は比例推移そのものなので、これは独立な検算ではない。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "算術として閉じるかを見る（こちらは検算になる）:"), " 一次側から見たインピーダンスが同じなので二次電流 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2'"
+}), " も同じ。 すると二次銅損は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "3I_2'^2 (r_2'+R')"
+}), " なので前後の比は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "0.80/0.24 = 3.33"
+}), "。 いっぽう ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_{c2} = sP_2"
+}), " で ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_2 = T\\omega_s"
+}), " はトルクが同じだから不変なので、比は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "0.100/0.030 = 3.33"
+}), "。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "抵抗の側から数えた値と滑りの側から数えた値が一致する"), "。 もし ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "R'"
+}), " を取り違えて 0.80 Ω と答えていれば、抵抗側の比が ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "1.04/0.24 = 4.33"
+}), " になって滑り側の 3.33 と合わず、ここで誤りが出る。"), /*#__PURE__*/React.createElement(Box, {
+  kind: "mistake",
+  label: "ここが失点源"
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "答えは ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "0.80\\;\\Omega"
+}), " ではなく ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "0.56\\;\\Omega"
+}), "。"), /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2' s_2/s_1"
+}), " が出すのは", /*#__PURE__*/React.createElement("strong", null, "二次回路の合計抵抗"), "で、問われているのは", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "追加する外部抵抗"), "。元の ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'"
+}), " を引き忘れる形が定番。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "効率は比例推移しない。"), "同じトルクを 3.3 倍の滑りで出しているので、二次銅損 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_{c2}=sP_2"
+}), " も 3.3 倍になり、機械出力の割合は 97.0 % から 90.0 % へ落ちる。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "速度を下げた分がそのまま抵抗の熱になる"), "方式であり、これが二次抵抗制御が効率で V/f 制御に劣る理由である（セクション5）。"))), /*#__PURE__*/React.createElement(FormulaCard, {
+  num: "07 / 09",
   name: "効率（簡易）",
   eq: "\\eta \\;\\approx\\; (1-s) \\times \\dfrac{P_2}{P_1} \\;\\le\\; (1-s)",
   note: "鉄損・一次銅損・機械損を無視した上限値。実機では (1-s) からさらに数%低下する。"
@@ -8877,7 +9219,23 @@ const InductionMachinePage = ({
   className: "h-num"
 }, "9."), "1分復習（即答チェック）"), /*#__PURE__*/React.createElement("div", {
   className: "box"
-}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期速度 N_s の式は？（4極・50Hz では？）"), "N_s = 120f/p（120×50/4 = ", /*#__PURE__*/React.createElement("strong", null, "1500 min⁻¹"), "）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "滑り s の定義は？"), "s = (N_s − N) / N_s（電動機域は 0 < s < 1）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "回転子（二次）周波数 f₂ は？"), "f₂ = s · f₁（滑り×一次周波数）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "二次入力 P₂ の電力配分比は？"), "P₂ : P_c2 : P_m = ", /*#__PURE__*/React.createElement("strong", null, "1 : s : (1−s)"), "（二次銅損は s 倍、機械出力は (1−s) 倍）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Y-Δ 始動で始動電流・トルクは全電圧始動の何倍？"), /*#__PURE__*/React.createElement("strong", null, "1/3"), "（始動電流・始動トルクともに 1/3）")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期速度 N_s の式は？（4極・50Hz では？）"), "N_s = 120f/p（120×50/4 = ", /*#__PURE__*/React.createElement("strong", null, "1500 min⁻¹"), "）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "滑り s の定義は？"), "s = (N_s − N) / N_s（電動機域は 0 < s < 1）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "回転子（二次）周波数 f₂ は？"), "f₂ = s · f₁（滑り×一次周波数）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "二次入力 P₂ の電力配分比は？"), "P₂ : P_c2 : P_m = ", /*#__PURE__*/React.createElement("strong", null, "1 : s : (1−s)"), "（二次銅損は s 倍、機械出力は (1−s) 倍）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Y-Δ 始動で始動電流・トルクは全電圧始動の何倍？"), /*#__PURE__*/React.createElement("strong", null, "1/3"), "（始動電流・始動トルクともに 1/3）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "「二次抵抗を k 倍にすると同一トルクの滑りも k 倍」と「トルクは滑りに比例」— 厳密なのはどちら？"), /*#__PURE__*/React.createElement("strong", null, "前者（比例推移）だけが厳密"), "。厳密式は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s"
+}), " を ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_2'/s"
+}), " の束でしか含まない。後者は分母の ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "r_1"
+}), "・", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x"
+}), " を捨てた低滑り近似で、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s_m"
+}), " を超えると向きすら逆になる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "トルク一定の負荷で電源電圧が 0.9 倍になると、滑りは何倍になるか？"), /*#__PURE__*/React.createElement(Eq, {
+  tex: "T \\propto V_1^2 s"
+}), " より ", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "1/0.81 = 1.23"
+}), " 倍"), "。同期速度は電圧で変わらないので、動くのは滑りだけ（3.0 % → 3.7 %）")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "induction-machine",
   sectionId: "quick-review"
 }), /*#__PURE__*/React.createElement(SectionCheckSummary, {
