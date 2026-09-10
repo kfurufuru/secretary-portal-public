@@ -488,7 +488,6 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
   font-weight: 700;
   margin-bottom: 8px;
   display: flex;
@@ -1256,6 +1255,9 @@ window.WIKI_DATA = {
     { page: "synchronous", pageTitle: "1.3 同期機", anchor: "vcurve-scr",
       title: "短絡比の4つの顔（If比・電流比・1/xs・100/%Zs）と無負荷飽和曲線・三相短絡曲線", desc: "短絡曲線が直線なのは短絡時の電機子反作用が強い減磁で飽和しないから。Zs=En/Is の分子は相電圧",
       keywords: "短絡比 Ks 無負荷飽和曲線 三相短絡曲線 持続短絡電流 定格電流 界磁電流 同期インピーダンス 百分率同期インピーダンス %Zs 単位法 p.u. 電圧変動率 安定度 鉄機械 銅機械 水車発電機 タービン発電機 減磁作用 飽和" },
+    { page: "synchronous", pageTitle: "1.3 同期機", anchor: "vcurve-phasor",
+      title: "同期電動機のベクトル図と V カーブの正体（E = V − jxs·I）", desc: "負荷一定なら I cosφ が動かせない。だから I は力率1で最短（V カーブの底）、E の先端は水平線上を動く",
+      keywords: "同期電動機 ベクトル図 フェーザ図 誘導起電力 E=V-jxsI 電動機規約 発電機規約 符号 力率1 進み力率 遅れ力率 過励磁 不足励磁 位相特性曲線 Vカーブ V曲線 界磁電流 トルク 同期角速度 相電圧 円筒形" },
     { page: "synchronous", pageTitle: "1.3 同期機", anchor: "parallel-cross",
       title: "横流（循環電流）と短絡比からの計算", desc: "Ic=|E1−E2|/(2xs)、xs[p.u.]≈1/Ks、Zbase=Vn²/Sn",
       keywords: "横流 循環電流 並行運転 並列運転 起電力の差 同期リアクタンス 短絡比 基準インピーダンス p.u. 単位法 同期化電流 無効分 有効分" },
@@ -12210,6 +12212,332 @@ const SyncSCRFig = () => /*#__PURE__*/React.createElement(DiagramFrame, {
     fill: 'var(--ink-mute)'
   }
 }, "直線なので、横で測っても縦で測っても同じ比"));
+
+/* 図1.3.6 同期電動機のベクトル図（V 基準・電動機規約 E = V - jXs*I）。
+   この図の主張は「負荷が一定なら Icosφ が一定」の1点で、そこから
+     ・I の先端が垂直線上を動く → |I| が最小になるのは力率1 ＝ V カーブの底
+     ・E の虚部 -Xs*Icosφ も一定 → E の先端は水平線上を動く
+   の2つが同時に出る。座標は実数値から計算して置いてある（目分量にしない）:
+     V=115.47 V(相), xs=3Ω, 負荷 P=6928 W 一定 → Icosφ=20.0 A で固定。
+     遅れ0.8: I=25 A, E=70.47-j60 (|E|=92.6)
+     力率1  : I=20 A, E=115.47-j60 (|E|=130.1)
+     進み0.8: I=25 A, E=160.47-j60 (|E|=171.3)
+   スケール 電圧 1.6px/V・電流 2.4px/A、原点 (60,150)、虚軸は上向き（画面 y は下向きなので
+   虚部が負の E は軸の下に出る）。3本の E の先端はいずれも y=150+60*1.6=246 に載る。
+   ※ 符号を1つでも触るなら、E の先端が同一水平線・I の先端が同一垂直線に載ることを
+     計算し直して確認すること。載らなくなった時点でこの図は主張を失う。 */
+const SyncPhasorFig = () => /*#__PURE__*/React.createElement(DiagramFrame, {
+  caption: "図1.3.6  同期電動機のベクトル図（V 基準）。負荷を一定に保ったまま界磁電流だけを変えると、I の先端は垂直線上を、E の先端は水平線上を動く。I が最短になるのが力率1 ＝ V カーブの底",
+  viewBox: "0 0 500 330"
+}, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+  id: "ksp-v",
+  markerWidth: "6",
+  markerHeight: "5",
+  refX: "5",
+  refY: "2.5",
+  orient: "auto"
+}, /*#__PURE__*/React.createElement("path", {
+  d: "M0,0 L6,2.5 L0,5 z",
+  fill: "var(--ink)"
+})), /*#__PURE__*/React.createElement("marker", {
+  id: "ksp-i",
+  markerWidth: "6",
+  markerHeight: "5",
+  refX: "5",
+  refY: "2.5",
+  orient: "auto"
+}, /*#__PURE__*/React.createElement("path", {
+  d: "M0,0 L6,2.5 L0,5 z",
+  fill: "var(--accent)"
+})), /*#__PURE__*/React.createElement("marker", {
+  id: "ksp-e",
+  markerWidth: "6",
+  markerHeight: "5",
+  refX: "5",
+  refY: "2.5",
+  orient: "auto"
+}, /*#__PURE__*/React.createElement("path", {
+  d: "M0,0 L6,2.5 L0,5 z",
+  fill: "var(--danger)"
+}))), /*#__PURE__*/React.createElement("line", {
+  x1: "108",
+  y1: "96",
+  x2: "108",
+  y2: "262",
+  stroke: "var(--rule)",
+  strokeWidth: "1",
+  strokeDasharray: "5 4"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "114",
+  y: "92",
+  fontSize: "10.5",
+  style: {
+    fill: 'var(--ink-mute)'
+  }
+}, "I cosφ = 一定（負荷一定）"), /*#__PURE__*/React.createElement("line", {
+  x1: "60",
+  y1: "246",
+  x2: "410",
+  y2: "246",
+  stroke: "var(--rule)",
+  strokeWidth: "1",
+  strokeDasharray: "5 4"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "406",
+  y: "234",
+  fontSize: "10.5",
+  textAnchor: "end",
+  style: {
+    fill: 'var(--ink-mute)'
+  }
+}, "E の先端はこの線上"), /*#__PURE__*/React.createElement("line", {
+  x1: "60",
+  y1: "150",
+  x2: "440",
+  y2: "150",
+  stroke: "var(--ink-soft)",
+  strokeWidth: "1.2"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "446",
+  y: "154",
+  fontSize: "11",
+  style: {
+    fill: 'var(--ink-soft)'
+  }
+}, "実軸"), /*#__PURE__*/React.createElement("line", {
+  x1: "245",
+  y1: "150",
+  x2: "173",
+  y2: "246",
+  stroke: "var(--ok)",
+  strokeWidth: "1.4",
+  opacity: "0.55"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "245",
+  y1: "150",
+  x2: "317",
+  y2: "246",
+  stroke: "var(--ok)",
+  strokeWidth: "1.4",
+  opacity: "0.55"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "245",
+  y1: "150",
+  x2: "245",
+  y2: "246",
+  stroke: "var(--ok)",
+  strokeWidth: "2.4"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "336",
+  y: "200",
+  fontSize: "11",
+  style: {
+    fill: 'var(--ok)'
+  }
+}, "−j xs I"), /*#__PURE__*/React.createElement("text", {
+  x: "336",
+  y: "213",
+  fontSize: "10",
+  style: {
+    fill: 'var(--ink-mute)'
+  }
+}, "3本とも縦の落差は同じ"), /*#__PURE__*/React.createElement("line", {
+  x1: "60",
+  y1: "150",
+  x2: "245",
+  y2: "150",
+  stroke: "var(--ink)",
+  strokeWidth: "3",
+  markerEnd: "url(#ksp-v)"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "196",
+  y: "142",
+  fontSize: "12",
+  fontWeight: "700",
+  style: {
+    fill: 'var(--ink)'
+  }
+}, "V（相電圧）"), /*#__PURE__*/React.createElement("line", {
+  x1: "60",
+  y1: "150",
+  x2: "108",
+  y2: "114",
+  stroke: "var(--accent)",
+  strokeWidth: "2",
+  markerEnd: "url(#ksp-i)"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "113",
+  y: "112",
+  fontSize: "11",
+  fontWeight: "700",
+  style: {
+    fill: 'var(--accent)'
+  }
+}, "進"), /*#__PURE__*/React.createElement("line", {
+  x1: "60",
+  y1: "150",
+  x2: "108",
+  y2: "150",
+  stroke: "var(--accent)",
+  strokeWidth: "2.8",
+  markerEnd: "url(#ksp-i)"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "113",
+  y: "146",
+  fontSize: "11",
+  fontWeight: "700",
+  style: {
+    fill: 'var(--accent)'
+  }
+}, "1"), /*#__PURE__*/React.createElement("line", {
+  x1: "60",
+  y1: "150",
+  x2: "108",
+  y2: "186",
+  stroke: "var(--accent)",
+  strokeWidth: "2",
+  markerEnd: "url(#ksp-i)"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "113",
+  y: "190",
+  fontSize: "11",
+  fontWeight: "700",
+  style: {
+    fill: 'var(--accent)'
+  }
+}, "遅"), /*#__PURE__*/React.createElement("line", {
+  x1: "60",
+  y1: "150",
+  x2: "173",
+  y2: "246",
+  stroke: "var(--danger)",
+  strokeWidth: "2",
+  strokeDasharray: "6 3",
+  markerEnd: "url(#ksp-e)"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "60",
+  y1: "150",
+  x2: "245",
+  y2: "246",
+  stroke: "var(--danger)",
+  strokeWidth: "2.8",
+  markerEnd: "url(#ksp-e)"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "60",
+  y1: "150",
+  x2: "317",
+  y2: "246",
+  stroke: "var(--danger)",
+  strokeWidth: "2",
+  strokeDasharray: "2 3",
+  markerEnd: "url(#ksp-e)"
+}), /*#__PURE__*/React.createElement("circle", {
+  cx: "173",
+  cy: "246",
+  r: "3.5",
+  fill: "var(--danger)"
+}), /*#__PURE__*/React.createElement("circle", {
+  cx: "245",
+  cy: "246",
+  r: "3.5",
+  fill: "var(--danger)"
+}), /*#__PURE__*/React.createElement("circle", {
+  cx: "317",
+  cy: "246",
+  r: "3.5",
+  fill: "var(--danger)"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "160",
+  y: "264",
+  fontSize: "11",
+  textAnchor: "middle",
+  style: {
+    fill: 'var(--danger)'
+  }
+}, "E 92.6"), /*#__PURE__*/React.createElement("text", {
+  x: "245",
+  y: "264",
+  fontSize: "11",
+  textAnchor: "middle",
+  fontWeight: "700",
+  style: {
+    fill: 'var(--danger)'
+  }
+}, "E 130.1"), /*#__PURE__*/React.createElement("text", {
+  x: "330",
+  y: "264",
+  fontSize: "11",
+  textAnchor: "middle",
+  style: {
+    fill: 'var(--danger)'
+  }
+}, "E 171.3"), /*#__PURE__*/React.createElement("text", {
+  x: "245",
+  y: "280",
+  fontSize: "10.5",
+  textAnchor: "middle",
+  style: {
+    fill: 'var(--ink-mute)'
+  }
+}, "［V］\u3000左ほど不足励磁・右ほど過励磁"), /*#__PURE__*/React.createElement("line", {
+  x1: "256",
+  y1: "42",
+  x2: "274",
+  y2: "42",
+  stroke: "var(--accent)",
+  strokeWidth: "2"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "280",
+  y: "46",
+  fontSize: "10.5",
+  style: {
+    fill: 'var(--ink)'
+  }
+}, "進 = 進み0.8（25 A）過励磁"), /*#__PURE__*/React.createElement("line", {
+  x1: "256",
+  y1: "60",
+  x2: "274",
+  y2: "60",
+  stroke: "var(--accent)",
+  strokeWidth: "2.8"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "280",
+  y: "64",
+  fontSize: "10.5",
+  fontWeight: "700",
+  style: {
+    fill: 'var(--ink)'
+  }
+}, "1 = 力率1（20 A）最短"), /*#__PURE__*/React.createElement("line", {
+  x1: "256",
+  y1: "78",
+  x2: "274",
+  y2: "78",
+  stroke: "var(--accent)",
+  strokeWidth: "2"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "280",
+  y: "82",
+  fontSize: "10.5",
+  style: {
+    fill: 'var(--ink)'
+  }
+}, "遅 = 遅れ0.8（25 A）不足励磁"), /*#__PURE__*/React.createElement("text", {
+  x: "60",
+  y: "306",
+  fontSize: "11.5",
+  fontWeight: "700",
+  style: {
+    fill: 'var(--ink)'
+  }
+}, "E = V − j xs I（電動機）"), /*#__PURE__*/React.createElement("text", {
+  x: "266",
+  y: "306",
+  fontSize: "10",
+  style: {
+    fill: 'var(--ink-mute)'
+  }
+}, "発電機は符号が逆（E = V + j xs I）"));
 const SynchronousPage = ({
   onNav
 }) => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Crumbs, {
@@ -13048,7 +13376,344 @@ const SynchronousPage = ({
 }, "誤りを選ぶ問題では「小形・安価になる」「短絡電流が小さくなる」が誤答肢として置かれる"), "。")), /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
   label: "この節の1分復習"
-}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "短絡比の定義（界磁電流で）は？"), /*#__PURE__*/React.createElement("strong", null, "無負荷で定格電圧を出す界磁電流 If1 ÷ 短絡電流が定格電流になる界磁電流 If2")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "なぜ Ks = Is/In とも書けるのか？"), /*#__PURE__*/React.createElement("strong", null, "三相短絡曲線が原点を通る直線"), "だから。横で測った比と縦で測った比が一致する"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "なぜ短絡曲線は直線になるのか？"), "短絡時は電機子反作用が", /*#__PURE__*/React.createElement("strong", null, "強い減磁作用"), "として働き、", /*#__PURE__*/React.createElement("strong", null, "鉄心が飽和しない"), "から"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Zs [Ω] を持続短絡電流から出す式は？"), "Zs = En / Is。", /*#__PURE__*/React.createElement("strong", null, "En は相電圧"), "（Y 結線なら Vn/√3）。線間電圧を入れると √3 倍ずれる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "%Zs と Ks の関係は？"), "%Zs = ", /*#__PURE__*/React.createElement("strong", null, "100 / Ks"), "。逆数（これは厳密）。Ks が大きい機ほど %Zs は小さい"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Ks = 1/xs[p.u.] が「≈」なのはなぜ？"), "厳密に成り立つのは ", /*#__PURE__*/React.createElement("strong", null, "Zs"), "（同期インピーダンス）で書いた Ks = 1/Zs[p.u.]。", /*#__PURE__*/React.createElement("strong", null, "xs に置き換える段で ra を無視している"), "。実機は xs ≫ ra なので実害はほぼ無い"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Ks が大きい機の特徴を4つ"), "電圧変動率", /*#__PURE__*/React.createElement("strong", null, "小"), "・安定度", /*#__PURE__*/React.createElement("strong", null, "高"), "・持続短絡電流", /*#__PURE__*/React.createElement("strong", null, "大"), "・機械は", /*#__PURE__*/React.createElement("strong", null, "大形高価"), "（鉄機械）")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "短絡比の定義（界磁電流で）は？"), /*#__PURE__*/React.createElement("strong", null, "無負荷で定格電圧を出す界磁電流 If1 ÷ 短絡電流が定格電流になる界磁電流 If2")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "なぜ Ks = Is/In とも書けるのか？"), /*#__PURE__*/React.createElement("strong", null, "三相短絡曲線が原点を通る直線"), "だから。横で測った比と縦で測った比が一致する"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "なぜ短絡曲線は直線になるのか？"), "短絡時は電機子反作用が", /*#__PURE__*/React.createElement("strong", null, "強い減磁作用"), "として働き、", /*#__PURE__*/React.createElement("strong", null, "鉄心が飽和しない"), "から"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Zs [Ω] を持続短絡電流から出す式は？"), "Zs = En / Is。", /*#__PURE__*/React.createElement("strong", null, "En は相電圧"), "（Y 結線なら Vn/√3）。線間電圧を入れると √3 倍ずれる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "%Zs と Ks の関係は？"), "%Zs = ", /*#__PURE__*/React.createElement("strong", null, "100 / Ks"), "。逆数（これは厳密）。Ks が大きい機ほど %Zs は小さい"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Ks = 1/xs[p.u.] が「≈」なのはなぜ？"), "厳密に成り立つのは ", /*#__PURE__*/React.createElement("strong", null, "Zs"), "（同期インピーダンス）で書いた Ks = 1/Zs[p.u.]。", /*#__PURE__*/React.createElement("strong", null, "xs に置き換える段で ra を無視している"), "。実機は xs ≫ ra なので実害はほぼ無い"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Ks が大きい機の特徴を4つ"), "電圧変動率", /*#__PURE__*/React.createElement("strong", null, "小"), "・安定度", /*#__PURE__*/React.createElement("strong", null, "高"), "・持続短絡電流", /*#__PURE__*/React.createElement("strong", null, "大"), "・機械は", /*#__PURE__*/React.createElement("strong", null, "大形高価"), "（鉄機械）")), /*#__PURE__*/React.createElement("h3", {
+  id: "vcurve-phasor"
+}, "同期電動機のベクトル図 — V カーブの左右が何を意味するか"), /*#__PURE__*/React.createElement("p", null, "この節の残り 5 問（R4下問4・R5下問5・R6上問6・R8上問15(a)(b)）は、上の短絡比とは別系統である。", /*#__PURE__*/React.createElement("strong", null, "4 問は同期電動機の 1 相ベクトル図"), "から出て、残る R4下問4 は V カーブの読図（難易度1）でベクトル図が無くても解けるが、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "なぜ V 字になるのかはベクトル図でしか出てこない"), "。V カーブの図（図1.3.2）は「底で力率1」という", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "結果"), "を描いたもので、", /*#__PURE__*/React.createElement("strong", null, "なぜそうなるかはベクトル図を見ないと出てこない"), "。"), /*#__PURE__*/React.createElement(FormulaCard, {
+  num: "05",
+  name: "同期電動機の誘導起電力（1相）",
+  eq: "\\dot E = \\dot V - \\mathrm{j}x_s \\dot I \\qquad |E| = \\sqrt{(V - x_s I\\sin\\varphi)^2 + (x_s I\\cos\\varphi)^2}",
+  note: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, "円筒形"), "・", /*#__PURE__*/React.createElement(Eq, {
+    tex: "r_a"
+  }), " 無視。", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\varphi"
+  }), " は遅れを正に取る（", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\dot I = I\\angle-\\varphi"
+  }), "）。", /*#__PURE__*/React.createElement("span", {
+    className: "marker"
+  }, "符号は「電流の正方向をどちらに取るか」で決まる規約"), "で、物理が違うわけではない。 電動機では ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\dot I"
+  }), " を", /*#__PURE__*/React.createElement("strong", null, "電源から電動機へ流れ込む向き"), "に正と取るので、1相の閉路方程式は ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\dot V = \\dot E + \\mathrm{j}x_s\\dot I"
+  }), "、 移項して ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\dot E = \\dot V - \\mathrm{j}x_s\\dot I"
+  }), " になる。発電機の公式01 ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\dot E = \\dot V + \\dot I(r_a + \\mathrm{j}x_s)"
+  }), " と符号が逆に見えるのは、 あちらが ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\dot I"
+  }), " を", /*#__PURE__*/React.createElement("strong", null, "機械から外へ出る向き"), "に取っているためである。")
+}), /*#__PURE__*/React.createElement(SyncPhasorFig, null), /*#__PURE__*/React.createElement(Box, {
+  kind: "tip",
+  label: "V カーブが V 字になる理由は「Icosφ が動かせない」の一点"
+}, /*#__PURE__*/React.createElement("p", null, "負荷（軸出力）が一定なら、入力 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P = 3VI\\cos\\varphi"
+}), " も一定（損失を無視）。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V"
+}), " は電源で決まっているので、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "I\\cos\\varphi"
+}), " は界磁電流をどう動かしても変えられない"), "。図でいえば ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot I"
+}), " の先端が", /*#__PURE__*/React.createElement("strong", null, "垂直線上"), "に拘束される。"), /*#__PURE__*/React.createElement("p", null, "すると電流の大きさは ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I = \\dfrac{I\\cos\\varphi}{\\cos\\varphi}"
+}), " なので、", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\cos\\varphi = 1"
+}), " のときに最小"), "になる。 これが V カーブの", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "底が力率1である理由"), "で、そこから左右どちらへずれても ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I"
+}), " は増える（＝ V 字）。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "同じことが ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "E"
+}), " の側にも起きる。"), /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot E"
+}), " の虚部は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "-x_s I\\cos\\varphi"
+}), " なので、これも一定。 つまり ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot E"
+}), " の先端は", /*#__PURE__*/React.createElement("strong", null, "水平線上"), "を動く。界磁電流を増やすと ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "|E|"
+}), " が伸び、先端は右へ進んで", /*#__PURE__*/React.createElement("strong", null, "進み力率（過励磁）"), "へ移る。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "「励磁を強める＝進み」「弱める＝遅れ」は、この水平線の上を右へ／左へ動くこと"), "である。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "ただし水平線になるには条件が3つ要る。"), /*#__PURE__*/React.createElement(Eq, {
+  tex: "I\\cos\\varphi"
+}), " が一定（負荷一定）だけでは足りない。"), /*#__PURE__*/React.createElement("ul", {
+  style: {
+    margin: "4px 0 0",
+    paddingLeft: 22
+  }
+}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "V"
+}), " が一定 — 電源につながっているので動かない"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "I\\cos\\varphi"
+}), " が一定 — 負荷が一定だから"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_s"
+}), " が一定"), " — ", /*#__PURE__*/React.createElement("strong", null, "磁気飽和を無視して線形に扱っている"), "ことによる")), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "6px 0 0",
+    fontSize: "12.5px",
+    color: "var(--ink-soft)"
+  }
+}, "3 つめは見落としやすい。すぐ上の短絡比の節で 「", /*#__PURE__*/React.createElement(Eq, {
+  tex: "K_s"
+}), " は飽和を織り込んでいて ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "1/K_s"
+}), " は", /*#__PURE__*/React.createElement("strong", null, "飽和"), "同期インピーダンスに対応する」と書いたとおり、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_s"
+}), " は本来", /*#__PURE__*/React.createElement("strong", null, "界磁の強さで変わる"), "。ここで界磁電流を大きく振っても ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_s"
+}), " を固定していられるのは、 試験問題が飽和を無視した線形モデルを前提にしているからで、実機では水平線は厳密には少し曲がる。"), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data-table"
+}, /*#__PURE__*/React.createElement("caption", null, "表1.3.2  負荷一定（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P = 6928\\;\\mathrm{W}"
+}), "・", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V=115.5\\;\\mathrm{V}"
+}), "・", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_s = 3\\;\\Omega"
+}), "）のまま界磁だけ変えたとき"), /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "力率"), /*#__PURE__*/React.createElement("th", {
+  scope: "col",
+  className: "num"
+}, "I [A]"), /*#__PURE__*/React.createElement("th", {
+  scope: "col",
+  className: "num"
+}, "I cosφ [A]"), /*#__PURE__*/React.createElement("th", {
+  scope: "col",
+  className: "num"
+}, "|E| [V]"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "励磁"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "0.6 遅れ"), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, "33.3"), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, "20.0"), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, "69.7"), /*#__PURE__*/React.createElement("td", null, "不足励磁")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "0.8 遅れ"), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, "25.0"), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, "20.0"), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, "92.6"), /*#__PURE__*/React.createElement("td", null, "不足励磁")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "1.0")), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, /*#__PURE__*/React.createElement("strong", null, "20.0")), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, "20.0"), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, "130.1"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "V カーブの底"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "0.8 進み"), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, "25.0"), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, "20.0"), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, "171.3"), /*#__PURE__*/React.createElement("td", null, "過励磁")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "0.6 進み"), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, "33.3"), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, "20.0"), /*#__PURE__*/React.createElement("td", {
+  className: "num"
+}, "204.5"), /*#__PURE__*/React.createElement("td", null, "過励磁"))))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "I\\cos\\varphi"
+}), " の列が", /*#__PURE__*/React.createElement("strong", null, "一定"), "で、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I"
+}), " の列だけが V 字に凹み、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "|E|"
+}), " は単調に増える。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "3 列を横に見比べれば V カーブの正体が分かる"), "。")), /*#__PURE__*/React.createElement(Box, {
+  kind: "mistake",
+  label: "「遅れ＝増磁」（セクション2）と「遅れ＝不足励磁」（ここ）は矛盾しない"
+}, /*#__PURE__*/React.createElement("p", null, "セクション2（電機子反作用）は", /*#__PURE__*/React.createElement("strong", null, "同期電動機では遅れ力率＝増磁作用"), "と書き、この節は", /*#__PURE__*/React.createElement("strong", null, "遅れ力率＝不足励磁"), "と書く。 並べて読むと「遅れ＝増磁＝界磁が強い＝過励磁」とつなぎたくなるが、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "これは逆"), "である。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "2つは同じ現象を別の側から見ている。"), "界磁が足りない（不足励磁）と、その不足を", /*#__PURE__*/React.createElement("strong", null, "電機子反作用の増磁作用が補う"), "形で釣り合う。 そのとき電機子に流れるのが遅れ電流である。逆に界磁が過剰（過励磁）なら、余分を", /*#__PURE__*/React.createElement("strong", null, "減磁作用が打ち消す"), "ために進み電流が流れる。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "「増磁・減磁」は電機子側の作用、「過励磁・不足励磁」は界磁側の状態"), "で、主語が違う。", /*#__PURE__*/React.createElement("strong", null, "電機子反作用は界磁の過不足を埋める向きに働く"), "——この1行でつながる。")), /*#__PURE__*/React.createElement(Box, {
+  kind: "example",
+  label: "例題 1.3.4（力率1のトルク → 過励磁にしたときの誘導起電力）"
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 4 極・50 Hz、定格線間電圧 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "200\\;\\mathrm{V}"
+}), "、Y 結線の三相円筒形同期電動機がある。1 相の同期リアクタンスは ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_s = 3\\;\\Omega"
+}), "、電機子抵抗は無視する。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "(a)"), " 力率 1 で線電流 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "20\\;\\mathrm{A}"
+}), " のとき、1 相の誘導起電力 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "|E|"
+}), " と発生トルク ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "T"
+}), " を求めよ。", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "(b)"), " 負荷トルクを変えずに界磁電流を増やし、力率 0.8（進み）にした。このときの線電流と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "|E|"
+}), " を求めよ。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "10px 0 2px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "(a) ① 相電圧"), "（Y 結線なので ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\sqrt3"
+}), " で割る）"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "V = \\frac{200}{\\sqrt3} \\fallingdotseq 115.5\\;[\\mathrm{V}]"
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "10px 0 2px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "② 誘導起電力"), " — 力率1 なら ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot I"
+}), " は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot V"
+}), " と同相なので、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\mathrm{j}x_s\\dot I"
+}), " は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot V"
+}), " と", /*#__PURE__*/React.createElement("strong", null, "直角"), "。三平方でよい。"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "x_s I = 3 \\times 20 = 60\\;[\\mathrm{V}], \\qquad |E| = \\sqrt{115.5^2 + 60^2} \\fallingdotseq 130.1\\;[\\mathrm{V}]"
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "10px 0 2px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "③ トルク"), " — 損失を無視すれば軸出力＝入力。同期速度で回るので同期角速度で割る。"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "P = \\sqrt3\\,V_\\ell I\\cos\\varphi = \\sqrt3 \\times 200 \\times 20 \\times 1 \\fallingdotseq 6928\\;[\\mathrm{W}]"
+}), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "N_s = \\frac{120 \\times 50}{4} = 1500\\;[\\mathrm{min^{-1}}], \\qquad \\omega_s = \\frac{2\\pi \\times 1500}{60} \\fallingdotseq 157.1\\;[\\mathrm{rad/s}]"
+}), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "T = \\frac{P}{\\omega_s} = \\frac{6928}{157.1} \\fallingdotseq 44.1\\;[\\mathrm{N \\cdot m}]"
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "10px 0 2px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "(b) ① 電流"), " — トルクが同じ＝出力が同じ（同期速度は変わらない）。したがって ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I\\cos\\varphi"
+}), " は (a) の値 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "20 \\times 1 = 20\\;\\mathrm{A}"
+}), " のまま動かない。"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "I = \\frac{I\\cos\\varphi}{\\cos\\varphi} = \\frac{20}{0.8} = 25.0\\;[\\mathrm{A}]"
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "2px 0 0",
+    fontSize: "12.5px",
+    color: "var(--ink-soft)"
+  }
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "I = P/(\\sqrt3 V_\\ell \\cos\\varphi)"
+}), " から出しても同じだが、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "丸めた ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P = 6928"
+}), " を経由すると 24.999 になる"), "。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I\\cos\\varphi"
+}), " を直接使うほうが速く、本節の主張とも一致する。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "10px 0 2px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "② 誘導起電力"), " — 進み力率なので ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\sin\\varphi < 0"
+}), "、実部は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V"
+}), " より", /*#__PURE__*/React.createElement("strong", null, "大きくなる"), "。"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "x_s I = 3 \\times 25 = 75\\;[\\mathrm{V}] \\;\\Rightarrow\\; \\text{実部} = 115.5 + 75 \\times 0.6 = 160.5, \\quad \\text{虚部} = -75 \\times 0.8 = -60"
+}), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "|E| = \\sqrt{160.5^2 + 60^2} \\fallingdotseq 171\\;[\\mathrm{V}]"
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "答: (a) ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "|E| \\fallingdotseq 130.1\\;\\mathrm{V}"
+}), "・", /*#__PURE__*/React.createElement(Eq, {
+  tex: "T \\fallingdotseq 44.1\\;\\mathrm{N \\cdot m}"
+}), "\u3000(b) ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I = 25.0\\;\\mathrm{A}"
+}), "・", /*#__PURE__*/React.createElement(Eq, {
+  tex: "|E| \\fallingdotseq 171\\;\\mathrm{V}"
+}))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "虚部が (a) と同じ 60 V になっている"), "のが効いている確認になる。 虚部は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_s I\\cos\\varphi = 3 \\times 25 \\times 0.8 = 60"
+}), " で、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I\\cos\\varphi = 20"
+}), " が負荷一定から動かないためである。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "ここが 60 にならなかったら、トルク一定の条件を使い損ねている"), "。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "この一致はきちんと検算として働く。"), "(a) の 60 は", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "与件の ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I = 20\\;\\mathrm{A}"
+}), " から ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_s I"
+}), " で出た値"), "で、 トルク一定の条件を一切使っていない。(b) の 60 だけがその条件の帰結である。だから条件の当てはめを誤ると実際に食い違う—— 「電流が一定」と誤れば ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "3 \\times 20 \\times 0.8 = 48"
+}), "、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\cos\\varphi"
+}), " を掛け忘れれば ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "3 \\times 25 = 75"
+}), " で、どちらも 60 にならない。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0",
+    fontSize: "12.5px",
+    color: "var(--ink-soft)"
+  }
+}, "見逃すのは、", /*#__PURE__*/React.createElement("strong", null, "「トルク一定 ⇒ ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I\\cos\\varphi"
+}), " 一定」という前提そのものを誤っている場合"), "と、計算違いが偶然打ち消し合う場合だけである。 「同じ条件を 2 回使っているだけだから無意味」ではない——", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "2 つの値が別々の出どころを持つなら、一致は情報を持つ"), "。")), /*#__PURE__*/React.createElement(Box, {
+  kind: "mistake",
+  label: "ここで落とす4点"
+}, /*#__PURE__*/React.createElement("ul", {
+  style: {
+    margin: 0,
+    paddingLeft: 22
+  }
+}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "発電機の式で解く"), " — 電動機は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot E = \\dot V - \\mathrm{j}x_s\\dot I"
+}), "。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "符号を逆にすると遅れと進みで ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "|E|"
+}), " の大小が入れ替わる"), "。「過励磁で進み・", /*#__PURE__*/React.createElement(Eq, {
+  tex: "|E| > V"
+}), "」が出てこなければ符号を疑う"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "線間電圧のまま ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_s I"
+}), " と三平方する"), " — ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_s"
+}), " は 1 相分なので、電圧も相電圧にそろえる。Y 結線なら ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\sqrt3"
+}), " で割る"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "トルクを ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P/\\omega"
+}), " の ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\omega"
+}), " に回転速度 [min⁻¹] をそのまま入れる"), " — ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\omega_s = 2\\pi N_s/60"
+}), " [rad/s] に直す。同期機は", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "滑りが無いので回転速度＝同期速度"), "（誘導機と違って ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "(1-s)"
+}), " は掛からない）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "「界磁を強めると電流が増える」と思い込む"), " — 力率1 より手前（不足励磁）では、界磁を強めると", /*#__PURE__*/React.createElement("strong", null, "電流は減る"), "。増え始めるのは底を過ぎてから。V カーブが V 字なのはこのため"))), /*#__PURE__*/React.createElement(Box, {
+  kind: "tip",
+  label: "この節の1分復習"
+}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期電動機の 1 相のベクトル式は？発電機とどう違う？"), /*#__PURE__*/React.createElement("strong", null, "E = V − jxs·I"), "（電動機）。発電機は E = V + I(ra+jxs) で", /*#__PURE__*/React.createElement("strong", null, "符号が逆")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "力率1 のときの |E| は？"), "jxs·I が V と直角なので三平方。", /*#__PURE__*/React.createElement("strong", null, "|E| = √(V² + (xs·I)²)"), " で、", /*#__PURE__*/React.createElement("strong", null, "ra を無視すれば必ず |E| > V"), "（ra を入れると、ごく小さい電流のときだけ |E| < V になりうる）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "V カーブの底が力率1 なのはなぜ？"), "負荷一定なら ", /*#__PURE__*/React.createElement("strong", null, "I cosφ が一定"), "。I = (I cosφ)/cosφ なので ", /*#__PURE__*/React.createElement("strong", null, "cosφ = 1 で最小"), "。だから底で最短になり左右で増える"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "界磁電流を増やすと力率はどちらへ動く？"), /*#__PURE__*/React.createElement("strong", null, "進み側（過励磁）"), "。E の先端は水平線上を右へ動き |E| が伸びる。減らせば遅れ側（不足励磁）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期電動機のトルクの出し方は？"), "T = P/ωs。ωs = ", /*#__PURE__*/React.createElement("strong", null, "2πNs/60"), " [rad/s]（Ns = 120f/p）。", /*#__PURE__*/React.createElement("strong", null, "滑りが無いので (1−s) は掛けない")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "負荷一定で界磁だけ変えたとき、E のどの成分が動かない？"), /*#__PURE__*/React.createElement("strong", null, "虚部 −xs·I cosφ"), "。I cosφ が負荷で固定されるため。だから E の先端は水平線上を動く")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "synchronous",
   sectionId: "vcurve"
 }), /*#__PURE__*/React.createElement("h2", {
