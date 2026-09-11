@@ -485,7 +485,6 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
   font-weight: 700;
   margin-bottom: 8px;
   display: flex;
@@ -4366,28 +4365,48 @@ const HenatsukiPage = ({ data, onNav }) => (
       <FormulaCard num="06" name="容量は寸法の4乗に比例する" eq="S = E I \propto A_c \times A_w \propto L^4"
         note="E=4.44 f N Bm Ac より電圧は鉄心断面積 Ac∝L² に比例し、電流は導体断面積（＝窓面積 Aw∝L²）に比例する。最大磁束密度 Bm・電流密度・周波数を一定とみなしたときの比例関係。" />
 
-      <Box kind="example" label="4乗則から出る2つの帰結">
+      <Box kind="example" label="まず持ち帰る目安 — 容量10倍で、背丈1.7倍・重さ4.6倍">
+        <p>単相柱上変圧器の実機系列（6.6 kV / 210-105 V）で、10 kVA と 100 kVA を比べるとこうなる。</p>
+        <div className="table-wrap"><table className="data">
+          <thead><tr><th>容量</th><th>幅×奥行×高さ</th><th>質量</th><th>10 kVA 比</th></tr></thead>
+          <tbody>
+            <tr><td>10 kVA</td><td>300 × 430 × 570 mm</td><td>80 kg</td><td>—</td></tr>
+            <tr><td><strong>50 kVA</strong></td><td><strong>420 × 520 × 680 mm</strong></td><td><strong>215 kg</strong></td><td>高さ 1.19 倍 / 重さ 2.7 倍</td></tr>
+            <tr><td>100 kVA</td><td>565 × 490 × 952 mm</td><td>370 kg</td><td>高さ 1.67 倍 / 重さ 4.6 倍</td></tr>
+          </tbody>
+        </table></div>
+        <p><strong>容量が 10 倍になっても、背丈は 2 倍にすら届かない。</strong>これがこの節で一番持ち帰る価値のある感覚で、変圧器に限らず電動機・ケーブル・盤にも効く。</p>
+      </Box>
+
+      <Box kind="warn" label="4乗則は「向き」は正しいが、数値の一致を期待してはいけない">
+        <p>理論どおり <Eq tex="W \propto S^{3/4}" inline /> なら容量10倍で重さ 5.6 倍のはずだが、上の実機は <strong>4.6 倍</strong>。系列から指数を求めると <Eq tex="W \propto S^{0.67}" inline /> で、理論の 0.75 より小さい。10 kVA・80 kg から 4乗則で 100 kVA を推すと 450 kg となり、実機 370 kg を <strong>2 割ほど過大に見積もる</strong>。</p>
+        <p>理由は<strong>実機が幾何学的相似ではない</strong>こと。容量帯ごとに鉄心材料・巻線配置・冷却方式が変わり、トップランナー規制で鉄損を下げる設計にもなっている。4乗則は<strong>「容量を増やしても寸法はゆるやかにしか増えない」という向きを掴む道具</strong>であって、重量の推定式ではない。</p>
+      </Box>
+
+      <Box kind="tip" label="技術者として持っておく感覚 — 発熱は体積、冷却は表面積">
+        <p>4乗則の本当の値打ちはここにある。<strong>損失は中身（体積 <Eq tex="L^3" inline />）で発生し、熱は外側（表面積 <Eq tex="L^2" inline />）からしか逃げない。</strong>大きくすると発熱が先に増えるので、単位容量あたりの放熱面はどんどん不足していく。</p>
         <ul>
-          <li><strong>容量 10 倍でも寸法は 1.8 倍、重量は 5.6 倍</strong>（<Eq tex="L \propto S^{1/4},\ W \propto S^{3/4}" inline />）。10 kVA・約 70 kg から 100 kVA を推すと 70×5.6 ≒ 390 kg で、実機のカタログ値（約 380 kg）とよく合う。同じ式で 50 kVA を推すと <Eq tex="70\times 5^{3/4} = 234" inline /> kg。<strong>写真7の銘板の実測 215 kg に対して誤差 9 %</strong>で、概算則として十分使える。</li>
-          <li><strong>大容量ほど効率が高い</strong>。放熱に使える表面積は <Eq tex="L^2" inline /> でしか増えないのに容量は <Eq tex="L^4" inline /> で増えるため、損失の割合が相対的に下がる。50 kVA 柱上変圧器の効率が 98 % 台、大型電力用変圧器が 99.5 % を超えるのはこのため。3節の最大効率条件（鉄損＝銅損）とセットで押さえる。</li>
+          <li><strong>効率は上がる</strong> — 損失の割合自体は下がるので、50 kVA 柱上変圧器の 98 % 台に対し大型電力用変圧器は 99.5 % を超える。3節の最大効率条件（鉄損＝銅損）とセットで押さえる。</li>
+          <li><strong>だが冷却が効かなくなる</strong> — だから小型機は油入自冷（写真7の銘板の「油入自冷式」）で足りるのに、大型機は送油風冷・送油水冷といった強制冷却が要る。</li>
+          <li><strong>この感覚は変圧器だけの話ではない</strong> — 電動機・ケーブル・キュービクル内の盤も同じ理屈で、大きく・詰め込むほど冷却が設計の律速になる。現場で「容量を上げたい」と言われたときに最初に疑うのはここ。</li>
         </ul>
       </Box>
 
       <div className="table-wrap"><table className="data">
         <thead><tr><th>容量</th><th>実物</th><th>大きさ・重さ</th><th>どこにあるか</th></tr></thead>
         <tbody>
-          <tr><td>5〜10 kVA</td><td>小型柱上変圧器</td><td>φ30 × 高50 cm / 50〜80 kg</td><td>需要の少ない郊外</td></tr>
-          <tr><td><strong>50 kVA</strong></td><td><strong>柱上変圧器（標準）</strong></td><td><strong>φ45 × 高70 cm / 215 kg（銘板値）</strong></td><td>住宅街の電柱</td></tr>
-          <tr><td>100 kVA</td><td>大型柱上変圧器</td><td>φ55 × 高80 cm / 約 380 kg</td><td>商店街・集合住宅</td></tr>
-          <tr><td>300〜500 kVA</td><td>モールド変圧器</td><td>幅1.3 × 高1.5 m / 約 1.5 t</td><td>キュービクル（自家用受電）</td></tr>
+          <tr><td>10 kVA</td><td>小型柱上変圧器</td><td>300 × 430 × 570 mm / 80 kg</td><td>需要の少ない郊外</td></tr>
+          <tr><td><strong>50 kVA</strong></td><td><strong>柱上変圧器（標準）</strong></td><td><strong>420 × 520 × 680 mm / 215 kg</strong></td><td>住宅街の電柱</td></tr>
+          <tr><td>100 kVA</td><td>大型柱上変圧器</td><td>565 × 490 × 952 mm / 370 kg</td><td>商店街・集合住宅</td></tr>
+          <tr><td>500 kVA</td><td>三相・油入</td><td>1180 × 670 × 1241 mm / 1495 kg</td><td>キュービクル（自家用受電）</td></tr>
           <tr><td>1〜2 MVA</td><td>油入変圧器</td><td>幅2 × 高2.5 m / 4〜6 t</td><td>中規模工場の受電</td></tr>
           <tr><td>20 MVA</td><td>配電用変電所バンク</td><td>幅4 × 高4 m / 40〜60 t</td><td>66 kV → 6.6 kV 変電所</td></tr>
           <tr><td>300 MVA〜</td><td>発電所主変圧器</td><td>家一軒ぶん / 300 t 超</td><td>火力・原子力の出口</td></tr>
         </tbody>
       </table></div>
 
-      <Box kind="warn" label="この表の寸法・重量は教育的近似であり、公式根拠ではない">
-        <p>寸法・重量はサイズ感をつかむための概算で、メーカー・年式・冷却方式で幅がある。<strong>試験の答案に書く数値ではない</strong>。一次照合できているのは、写真7の銘板（50 kVA・総質量 215 kg・一次 6600 V・二次 210 V/238 A・%Z 2.86 %）と写真10のモールド変圧器（10 kV・630 kVA）の2点。一方、上の電流計算と4乗則の比例関係は厳密で、試験でそのまま使える。</p>
+      <Box kind="warn" label="表の出典 — 上4行はメーカー寸法表、下3行は概算">
+        <p>10・50・100・500 kVA の行は<a href="https://www.hokurikudenki.co.jp/product/detail_toprunner_transformer/size.html" target="_blank" rel="noopener">北陸電機製造のトップランナー油入変圧器 寸法表</a>（50 Hz・6.6 kV）の値。<strong>50 kVA の 215 kg は写真7の銘板（別メーカー・60 Hz）とも一致</strong>しており、2社の資料で裏が取れている。残りの行（1〜2 MVA・20 MVA・300 MVA〜）はサイズ感をつかむための概算で、メーカー・年式・冷却方式で幅がある。<strong>いずれも試験の答案に書く数値ではない</strong>。一方、上の電流計算は厳密で、試験でそのまま使える。</p>
       </Box>
 
       <h3 id="size-photos">現物写真（11枚）</h3>
