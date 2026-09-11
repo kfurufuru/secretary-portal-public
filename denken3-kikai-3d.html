@@ -1,4 +1,5 @@
 <title>機械科目 3D工場</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="電験三種 機械科目の主要4機器を3D工場に配置し、機械Wikiと過去問台帳に結びつけて眺めるビューア">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
@@ -101,7 +102,9 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 aside h2{font-family:var(--font-serif);font-size:22px;margin:0 0 4px;line-height:1.35;text-wrap:balance}
 aside h2 .num{font-family:var(--font-mono);font-size:13px;color:var(--ink-3);font-weight:400;margin-right:8px}
 .kicker{font-size:11.5px;letter-spacing:.1em;color:var(--accent-ink);font-weight:500;margin-bottom:6px}
-.lead{color:var(--ink-2);margin:0 0 14px}
+.lead{color:var(--ink-2);margin:0 0 8px}
+.viewnote{font-size:12.5px;color:var(--ink-2);border-left:2px solid var(--steel);padding:2px 0 2px 10px;margin:0 0 14px}
+.viewnote:empty{display:none}
 aside h3{font-size:12.5px;letter-spacing:.08em;color:var(--ink-3);font-weight:500;margin:22px 0 8px;display:flex;align-items:center;gap:8px}
 aside h3::after{content:"";flex:1;height:1px;background:var(--line-2)}
 .parts{list-style:none;padding:0;margin:0;display:grid;gap:6px}
@@ -142,12 +145,96 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
 .overview-grid .s{grid-column:2/-1;font-size:12px;color:var(--ink-2)}
 @media (max-width:900px){
   .app{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
-  .view{height:46vh;min-height:240px}
+  .view{flex:none;height:46vh;min-height:260px}
+  /* チップが縦に折り返すとヘッダだけで画面を食う。横1列の横スクロールにする。
+     flex だと flex-basis:100% が本質サイズ計算で中身の幅に落ちてページごと横に伸びるため、
+     minmax(0,1fr) で潰せるグリッドにする。 */
+  header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 10px;padding:7px 10px;align-items:center}
+  header h1{grid-column:1;grid-row:1;font-size:15px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wikilink{grid-column:2;grid-row:1;margin-left:0}
+  .chips{grid-column:1/-1;grid-row:2;min-width:0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;white-space:nowrap;min-height:34px;display:flex;align-items:center}
   .legend{max-width:calc(100% - 20px)}
   .ctrlbar{gap:8px 16px}
   aside{border-left:0;border-top:1px solid var(--line)}
   .hint{display:none}
   header h1 small{display:none}
+}
+
+/* ---- 30秒理解 ---- */
+.oneliner{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 5px 5px 0;font-size:14.5px;font-weight:600;line-height:1.6;color:var(--ink);margin:0 0 12px}
+.oneliner small{display:block;font-size:11px;font-weight:400;letter-spacing:.08em;color:var(--accent-ink);margin-bottom:3px}
+/* ---- 狙われるポイント ---- */
+.exam{list-style:none;padding:0;margin:0;display:grid;gap:7px}
+.exam li{border:1px solid var(--line-2);border-radius:5px;padding:8px 11px;display:grid;gap:3px}
+.exam .en{font-size:11.5px;letter-spacing:.04em;color:var(--ink-3)}
+.exam .ef{font-family:var(--font-mono);font-size:13.5px;font-weight:600;color:var(--accent-ink);word-break:break-word}
+.exam .ew{font-size:12px;color:var(--ink-2);line-height:1.55}
+/* ---- 予想クイズ ---- */
+.quiz{list-style:none;padding:0;margin:0;display:grid;gap:10px;counter-reset:q}
+.quiz>li{border:1px solid var(--line);border-radius:6px;padding:11px 13px;background:var(--panel);counter-increment:q}
+.quiz>li.done{border-color:var(--line-2)}
+.qq{font-size:13.5px;font-weight:500;line-height:1.6;margin-bottom:9px;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start}
+.qn{font-family:var(--font-mono);font-size:11px;background:var(--steel);color:var(--panel);border-radius:3px;padding:1px 6px;margin-top:3px}
+.qopts{display:grid;gap:5px}
+.qopts button{text-align:left;border:1px solid var(--line);background:transparent;border-radius:5px;padding:8px 12px;font-size:13px;min-height:38px;line-height:1.4;display:flex;align-items:center;gap:8px}
+.qopts button:hover:not(:disabled){border-color:var(--accent);background:var(--accent-soft)}
+.qopts button:disabled{cursor:default}
+.qopts button .mk{font-family:var(--font-mono);font-size:11px;color:var(--ink-3);flex:none}
+.qopts button.ok{border-color:var(--ok);background:var(--ok-soft);font-weight:600}
+.qopts button.ng{border-color:var(--danger);background:var(--danger-soft)}
+.qopts button.dim{opacity:.45}
+.qfb{margin-top:9px;font-size:12.5px;line-height:1.65;color:var(--ink-2);border-top:1px dashed var(--line);padding-top:8px}
+.qfb b{color:var(--ink)}
+.qfb .verdict{display:block;font-weight:700;margin-bottom:3px}
+.qfb .verdict.ok{color:var(--ok)}
+.qfb .verdict.ng{color:var(--danger)}
+.qfb .again{background:none;border:0;color:var(--accent-ink);font-size:12px;text-decoration:underline;padding:4px 0 0;min-height:32px}
+/* ---- もう一歩カード ---- */
+.cards{display:grid;gap:8px}
+.cards details{border:1px solid var(--line-2);border-radius:5px;overflow:hidden}
+.cards summary{cursor:pointer;font-size:13px;font-weight:500;padding:9px 12px;min-height:38px;display:flex;align-items:center}
+.cards summary::marker{color:var(--accent)}
+.cards .cbody{padding:2px 12px 12px;font-size:12.5px;line-height:1.7;color:var(--ink-2)}
+.cards .cbody b{color:var(--ink)}
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0}
+.tbl table{border-collapse:collapse;width:100%;min-width:min(100%,340px);font-size:12px}
+.tbl th,.tbl td{border:1px solid var(--line-2);padding:5px 8px;text-align:left;vertical-align:top}
+.tbl th{background:var(--bg-sunken,var(--accent-soft));font-weight:600;color:var(--ink);white-space:nowrap}
+.tbl td{color:var(--ink-2)}
+.chain{list-style:none;padding:0;margin:8px 0;display:grid;gap:0}
+.chain li{position:relative;padding:5px 0 5px 20px;font-size:12.5px;color:var(--ink-2)}
+.chain li::before{content:"↓";position:absolute;left:4px;top:4px;color:var(--accent);font-size:11px}
+.chain li:first-child::before{content:"●";font-size:8px;top:9px}
+.chain li b{color:var(--ink)}
+.meter{height:6px;border-radius:3px;background:var(--line-2);overflow:hidden;margin:6px 0 2px}
+.meter i{display:block;height:100%;background:var(--accent);transition:width .2s}
+.segsm{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 8px}
+.segsm button{border:1px solid var(--line);background:transparent;border-radius:4px;padding:5px 11px;font-size:12px;min-height:34px;color:var(--ink-2)}
+.segsm button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.convwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:6px 0;border:1px solid var(--line-2);border-radius:4px;background:var(--panel)}
+.convfig{display:block;width:100%;min-width:430px;height:auto}
+/* ---- 次にやること ---- */
+.steps{display:grid;gap:6px;margin:0}
+.steps a,.steps div{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;border:1px solid var(--line-2);border-radius:5px;padding:9px 12px;text-decoration:none;color:var(--ink);font-size:13px;min-height:40px}
+.steps a:hover{border-color:var(--accent);background:var(--accent-soft)}
+.steps .sn{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-mono);font-size:11px;font-weight:600;background:var(--line-2);color:var(--ink-3)}
+.steps .here{background:var(--accent-soft);border-color:var(--accent)}
+.steps .here .sn{background:var(--accent);color:#fff}
+.steps small{display:block;font-size:11.5px;color:var(--ink-3);grid-column:2}
+/* ---- 操作帯の読み値ハイライト ---- */
+.readout dt.lit,.readout dd.lit{background:var(--accent);color:#1A2028;border-radius:3px;padding:0 4px}
+.rnote{grid-column:1/-1;font-size:11px;color:#8E98A2;margin-top:2px;text-align:right}
+/* ---- 全景に戻る ---- */
+.backbtn{position:absolute;right:12px;bottom:10px;background:rgba(18,23,29,.86);border:1px solid rgba(255,255,255,.16);color:#E6E9E4;border-radius:5px;padding:7px 14px;font-size:12.5px;min-height:36px}
+.backbtn:hover{border-color:#D9853F;color:#F0B57E}
+.backbtn.hidden{display:none}
+@media (max-width:900px){
+  .qopts button{min-height:44px;font-size:13.5px}
+  .segsm button,.cards summary,.steps a,.steps div{min-height:44px}
+  .seg button{padding:6px 12px;min-height:36px}
+  .oneliner{font-size:14px}
 }
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
@@ -163,6 +250,7 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
       <div class="labels" id="labels"><svg id="leaders"></svg></div>
       <div class="legend" id="legend"></div>
       <button class="lgshow hidden" id="lgshow">凡例を出す</button>
+      <button class="backbtn hidden" id="backbtn">← 工場全景へ</button>
       <div class="hint">ドラッグで回転 <kbd>ホイール</kbd>で拡縮<br>凡例の行に触れると、その部品を指す</div>
     </div>
     <div class="ctrlbar" id="ctrlbar"></div>
@@ -188,20 +276,31 @@ const MACHINES = {
     kicker:'静止器。動かないが磁束は回っている',
     lead:'鉄心の脚に低圧巻線（内側）と高圧巻線（外側）を同心に巻いた三相内鉄形。タンクと油を外して鉄心を見せている。上のブッシングが外部との出入口。',
     parts:[
-      ['#6B7580','鉄心（積層けい素鋼板）','磁束の通り道。鉄損（ヒステリシス損＋渦電流損）はここで発生し、負荷に関係なく一定'],
-      ['#C07A3A','低圧巻線（内側・太い）','電流が大きいので導体が太い。銅損は電流の2乗、つまり負荷率の2乗で増える'],
+      ['#6B7580','鉄心（積層けい素鋼板）','磁束の通り道。鉄損（ヒステリシス損＋渦電流損）はここで出る。**電源電圧と周波数が一定なら**負荷によらずほぼ一定'],
+      ['#C07A3A','低圧巻線（内側・太い）','電流が大きいので導体が太い。銅損は電流の2乗、つまり負荷率の2乗で増える（巻線抵抗一定とみなした場合）'],
       ['#A05A25','高圧巻線（外側・細い）','巻数が多く電流が小さい。絶縁距離をとるため外側に置く'],
       ['#E6D3A3','ブッシング','高圧側3本が長い。長さは絶縁距離そのもの'],
       ['#F0B57E','磁束（動く点）','脚→ヨーク→隣の脚と閉じて回る。E = 4.44 f N Φm の Φm がこの流れの最大値'],
+      ['#4A5B68','単相変圧器のタンク（三相結線）','**見る対象を切り替えると出る**。3台並べてΔ-Δ、1台外すとV-V。三相は「3台の単相の組み合わせ」でも作れる'],
+      ['#C07A3A','分路巻線（単巻変圧器）','一次と二次の**共通部分**。ここには両方の電流の差が流れる'],
+      ['#7FB069','直列巻線（単巻変圧器）','足りない電圧を足す部分。**自己容量を決めるのはここ**。電圧比が1に近いほど小さくて済む'],
     ],
     sections:[
       ['basic','2. 理想変圧器と巻数比・一次側換算','内側と外側の巻線の「巻数の差」が変圧比。図の太さの差は電流の差'],
       ['emf','3. 誘導起電力と磁束','脚を回る磁束Φmが1巻きごとに起電力を作る。周波数と巻数で決まる'],
-      ['equiv','4. 実際の変圧器と等価回路','鉄心を通らず巻線間で漏れる磁束が漏れリアクタンス'],
+      ['equiv','4. 実際の変圧器と等価回路','鉄心を通らず巻線間で漏れる磁束が漏れリアクタンス。励磁電流は鉄損電流と磁化電流の和で、磁化電流は飽和のため第3調波を含む'],
       ['oc-test','5. 無負荷試験（開放試験）','二次を開放して測るのは鉄心だけの損失＝鉄損'],
       ['sc-test','6. 短絡試験（インピーダンス試験）','二次を短絡して定格電流を流すと巻線だけの損失＝銅損'],
-      ['loss','7. 損失・通常効率・全日効率','左下のスライダーで負荷率を動かすと鉄損は動かず銅損だけ動く'],
-      ['vconn','11. V結線・単巻変圧器','3脚のうち1台分を外したのがV結線。容量が√3/2倍になる理由は結線図で'],
+      ['loss','7. 損失・通常効率・全日効率','下のスライダーで負荷率を動かすと、鉄損は動かず銅損だけ2乗で動く'],
+      ['pz','8. 百分率インピーダンス降下と短絡電流','%Z は定格電流を流すのに要る電圧の割合。短絡電流はその逆数倍で Is = In×100/%Z'],
+      ['vreg','9. 電圧変動率','ε ≒ p·cosθ + q·sinθ。短絡試験で求めた %抵抗降下 p と %リアクタンス降下 q を使う'],
+      ['parallel','10. 並行運転','極性・変圧比・%インピーダンス・（三相では）角変位をそろえる。負荷の分担は**%Zの逆比**'],
+      ['vconn','11. V結線・単巻変圧器','**利用率**は2台の定格容量の合計に対して√3/2（約86.6%）。**出力比**はΔ結線3台に対して1/√3（約57.7%）。分母が違うので取り違えに注意'],
+      ['v-fault','12. Δ-Δ 1台故障 → V結線運転','3Dの「三相結線」でΔ-ΔからV-Vへ切り替えると、この移行そのものが見える'],
+      ['three-winding','13. 三巻線変圧器','一次・二次に加えて三次巻線を持つ。三次をΔにすると第3調波の逃げ道になる'],
+      ['power-capacitor','14. 電力用コンデンサ','**進相**＝負荷と並列で力率改善、**調相**＝系統電圧の調整、**直列**＝線路に直列でリアクタンスを打ち消す'],
+      ['traps','15. 過去問での解き方とひっかけ注意','解く順序と取り違えの一覧。3Dで形をつかんだあとに通すと効く'],
+      ['quick-review','16. 1分復習（通し）','Wiki側の通し復習。3Dの即答チェックのあとに回すと抜けが出る'],
     ],
   },
   'dc-machine': {
@@ -223,6 +322,8 @@ const MACHINES = {
       ['generator','5. 直流発電機の外部特性','同じ機械を外から回すと発電機。残留磁気から自己励磁が育つ'],
       ['speed-control','6. 速度制御','n ∝ (V − Ia·Ra)/Φ。電圧制御・界磁制御・抵抗制御の3つ'],
       ['reaction','7. 電機子反作用と対策','切替で中性軸のずれを表示。ブラシ位置・補極・補償巻線'],
+      ['ac-commutator-motor','8. 交流整流子電動機','交直両用のユニバーサルモータ。磁束が交番するので固定子も積層鉄心にする'],
+      ['brushless-dc','9. ブラシレス DC モータ','ブラシと整流子を持たない。ユニバーサルモータとは別物'],
     ],
   },
   'induction-machine': {
@@ -233,15 +334,17 @@ const MACHINES = {
       ['#D24A43','固定子巻線 U相','三相を120°ずらして配置。矢印は合成磁界。同期速度 Ns = 120f/p で回る'],
       ['#C9A227','固定子巻線 V相',''],
       ['#3572D6','固定子巻線 W相',''],
-      ['#C07A3A','かご形回転子（導体棒＋端絡環）','棒が磁界を切って誘導電流が流れ、トルクが出る。滑りが0だと電流が流れずトルクも0'],
+      ['#C07A3A','かご形回転子（導体棒＋端絡環）','棒が磁界を切って誘導電流が流れ、トルクが出る。滑りが0だと磁束を切らず、電流もトルクも0'],
       ['#7E8C99','巻線形回転子＋スリップリング＋外部抵抗','二次抵抗を外から足せる。比例推移で始動トルクを大きくできる'],
+      ['#F0B57E','磁界の目印（橙の玉）','**実在する部品ではなく、見るための目印**。回転磁界と一緒に同期速度で回る'],
+      ['#E9EDF0','回転子の目印（白い帯）','同じく目印。橙が白を追い越していく割合が滑り s。s=0 では重なったまま動かない'],
     ],
     sections:[
       ['overview','1. 動作原理','矢印（回転磁界）と回転子の速度差＝滑り。回転子の周波数は s·f'],
-      ['circuit','2. 等価回路と電力の流れ','二次入力 P2 : 二次銅損 : 機械出力 = 1 : s : (1−s)'],
+      ['circuit','2. 等価回路と電力の流れ','二次入力 P₂ : 二次銅損 : 機械出力 = 1 : s : (1−s)（機械損を無視した場合）'],
       ['torque','3. トルク特性','右のトルク-滑り曲線。滑りスライダーで動作点が動く'],
-      ['start','4. 始動方式','Y-Δ始動は電圧1/√3・電流1/3・トルク1/3。巻線形は二次抵抗始動'],
-      ['speed','5. 速度制御','Ns = 120f/p なので f か p を変える。V/f一定制御は磁束を保つため'],
+      ['start','4. 始動方式','Y-Δ始動は巻線1相の電圧が1/√3、線電流1/3、トルク1/3。巻線形は二次抵抗始動'],
+      ['speed','5. 速度制御','同期速度を動かす（f・極数）か、滑りを動かす（二次抵抗・一次電圧）。V/f一定制御は磁束を保つため'],
     ],
   },
   synchronous: {
@@ -249,15 +352,15 @@ const MACHINES = {
     kicker:'回転機。回転磁界と同じ速さで回る',
     lead:'固定子は誘導機と同じ三相巻線。回転子は直流で励磁した磁極で、回転磁界に「かみ合って」同期速度で回る。負荷がかかると磁極が磁界からδだけ遅れる（負荷角）。',
     parts:[
-      ['#D24A43','固定子巻線（三相）','回転磁界を作る。発電機なら逆にここに起電力 E = 4.44 k f N Φ が出る'],
+      ['#D24A43','固定子巻線（三相）','回転磁界を作る。発電機なら逆にここに起電力が出る。1相あたり E = 4.44 k f N Φm で、線間値はその√3倍'],
       ['#3B5A73','突極形回転子（水車発電機）','極数が多く低速。横に太い。切替で見比べる'],
       ['#5C6B78','円筒形回転子（タービン発電機）','2極か4極で高速。細長い。遠心力に耐える形'],
-      ['#F0B57E','負荷角δ（矢印と磁極のずれ）','これが大きいほど出力が大きい。90°を超えると脱調'],
+      ['#F0B57E','負荷角δ（矢印と磁極のずれ）','円筒形・抵抗を無視した基本モデルでは P ∝ sinδ。δ=90°で最大、それを超えると同期を保てない'],
       ['#7E8C99','制動巻線（突極の表面の棒）','始動時はかご形として働き、乱調を抑える'],
     ],
     sections:[
       ['structure','1. 構造と動作','回転子が磁界に「引かれて同じ速さで回る」感覚をここで作る'],
-      ['reaction','2. 電機子反作用','電機子電流の磁界が界磁を強めたり弱めたり（進み・遅れで逆）'],
+      ['reaction','2. 電機子反作用','**発電機**では遅れ電流が減磁・進み電流が増磁。**電動機**は電流の向きが逆なので対応も反転する'],
       ['vcurve','3. V カーブと位相特性','右のVカーブ。界磁電流スライダーで電機子電流と力率が変わる'],
       ['rotor-types','4. 水車発電機とタービン発電機','切替で形の違いを見る。速度と極数の関係がそのまま形になる'],
       ['parallel','5. 並列運転の条件と横流','電圧・周波数・位相・波形を揃えないと横流が流れる'],
@@ -266,36 +369,100 @@ const MACHINES = {
   },
 };
 const ORDER = ['transformer','dc-machine','induction-machine','synchronous'];
-/* 学習の順路。要点3つ → ツアー（状態を切り替えながら見る） → 即答チェック。
-   ここも数値は書かない。式と因果だけ。 */
+/* 学習の順路。
+     30秒理解 → 狙われる論点 → 予想クイズ（予想→操作→確認）→ ツアー → もう一歩 → 即答チェック
+   予想クイズの set は3Dと操作帯を実際に動かす。答えを先に見せず、選んでから確かめさせる。
+   ここに書く数値は**自作の練習用の算数だけ**。過去問の解答・法令値は持ち込まない
+   （それらは機械Wikiが正本）。式の値もWiki側で確かめる前提。 */
 const STUDY = {
   transformer: {
+    oneLiner: '電圧は巻数比、電流はその逆比。損失は鉄損＋銅損の2本立て。',
+    exam: [
+      ['巻数比と一次側換算', 'a = N₁/N₂ = V₁/V₂ = I₂/I₁　r₂′ = a²·r₂', '電圧は巻数に比例、電流は反比例。二次側を a² 倍して一次側にそろえると1本の回路になる'],
+      ['誘導起電力', 'E = 4.44 f N Φm', '鉄心を回る磁束Φmと周波数と巻数で決まる'],
+      ['損失と効率', 'η = 出力/(出力＋Pi＋α²·Pc)　最大効率は Pi = α²·Pc', '鉄損 Pi は**電源電圧と周波数が一定なら**ほぼ一定、銅損は負荷率αの2乗。出力は α·S·cosθ'],
+      ['2つの試験と %Z', '無負荷→鉄損／短絡→銅損・%Z　Is = In × 100/%Z', '定格**電圧**をかける＝鉄、定格**電流**を流す＝銅。短絡試験から %Z が出て、その逆数倍が短絡電流'],
+      ['V結線と単巻変圧器', '利用率 √3/2　自己容量/線路容量 =(Vh−Vl)/Vh', '操作帯の「見る対象」を三相結線・単巻変圧器に切り替えると、実物の姿で確かめられる'],
+    ],
+    predict: [
+      { q:'全負荷銅損が 400 W の変圧器を、負荷率 50% で運転した。このときの銅損は？',
+        opts:['100 W','200 W','283 W','400 W'], ans:0, set:{tfView:'core', tfLoad:.5}, hi:'cu',
+        why:'銅損は負荷率の2乗に比例する。0.5² = 0.25 なので 400 × 0.25 = 100 W。半分の負荷なら銅損は4分の1。' },
+      { q:'鉄損 100 W、全負荷銅損 400 W の変圧器。効率が最大になる負荷率 α は？',
+        opts:['0.25','0.50','0.71','1.00'], ans:1, set:{tfView:'core', tfLoad:.5}, hi:'eff',
+        why:'最大効率の条件は Pi = α²·Pc。α = √(Pi/Pc) = √(100/400) = 0.5。下のグラフで破線（鉄損）と実線（銅損）が交わる点。' },
+      { q:'二次側を開放したまま定格電圧をかける無負荷試験。主に測れる損失は？',
+        opts:['銅損','鉄損','機械損','漂遊負荷損'], ans:1, set:{tfView:'core', tfLoad:0}, hi:'fe',
+        why:'二次を開放しているので負荷電流が流れず銅損はほぼ出ない。磁束は回っているので鉄損が出る。逆に短絡試験は定格電流を流して銅損を取り出す。' },
+      { q:'%インピーダンスが 4 % の変圧器。二次側を短絡したときに流れる短絡電流は、定格電流の何倍か。',
+        opts:['4倍','25倍','40倍','400倍'], ans:1, set:{tfView:'core'}, hi:'eff',
+        why:'Is = In × 100/%Z = In × 100/4 = 25 倍。%Z は「定格電流を流したとき内部インピーダンスで生じる電圧降下が定格電圧の何%か」なので、定格電圧をかけたままなら**その逆数倍**まで電流が伸びる。%Z が小さい変圧器ほど電圧変動率は小さいが短絡電流は大きくなる、という表裏の関係も一緒に覚える。' },
+      { q:'同じ変圧器3台のΔ-Δ結線から1台を外してV結線にした。三相出力は元の何倍になるか。',
+        opts:['約0.58倍（1/√3）','約0.67倍（2/3）','約0.87倍（√3/2）','変わらない'], ans:0,
+        set:{tfView:'bank', bankV:true}, hi:'vsd',
+        why:'Δ-Δ3台の出力は 3P、V-V2台は √3P なので √3P/3P = 1/√3 ≒ 0.577 倍。よく混同される √3/2 ≒ 0.866 は「残った2台の定格容量の合計 2P に対する比」＝利用率で、分母が違う。3Dで3台目が実際に消えるところを見ておくと取り違えにくい。' },
+      { q:'6000 V を 6600 V に昇圧する単巻変圧器。線路容量が 100 kVA のとき、自己容量はいくらか。',
+        opts:['約9.1 kVA','約10 kVA','約91 kVA','100 kVA'], ans:0,
+        set:{tfView:'auto', autoA:1.1}, hi:'self',
+        why:'自己容量 = 線路容量 ×(V₂−V₁)/V₂ = 100 ×(6600−6000)/6600 ≒ 9.1 kVA。分母は**高い方の電圧**。低い方（6000）で割ると 10 kVA になり、これが典型的な誤り。電圧比が1に近いほど小さい容量の変圧器で足りるのが単巻変圧器の利点。' },
+    ],
     points: [
       ['磁束は鉄心を閉じて回る', '脚→ヨーク→隣の脚。動く点がその道。E = 4.44 f N Φm のΦmはこの磁束の最大値'],
-      ['鉄損は負荷に無関係、銅損は負荷率の2乗', '磁束は無負荷でも回っている（鉄損）。電流が流れて初めて巻線が発熱する（銅損）'],
-      ['鉄損＝銅損 で効率最大', '負荷率スライダーを動かして、右下の曲線の交点を見つける'],
+      ['鉄損はほぼ一定、銅損は負荷率の2乗', '電源電圧と周波数が一定なら、磁束は無負荷でも回っている（鉄損）。電流が流れて初めて巻線が発熱する（銅損）'],
+      ['鉄損＝銅損 で効率最大', '負荷率スライダーを動かして、下の曲線の交点を見つける'],
     ],
     tour: [
-      {t:'磁束の道を追う', d:'光る点が磁束。脚を上がり、ヨークを通り、隣の脚を下って閉じる。閉じた鉄の道なので外に漏れにくい。この磁束が一次・二次の両方の巻線を貫くから電圧が「移る」。', set:{tfLoad:.7}, focus:'鉄心'},
-      {t:'巻線の太さの違い', d:'内側の低圧巻線は電流が大きいので太い。外側の高圧巻線は巻数が多く電流が小さいので細い。巻数比がそのまま電圧比、電流はその逆比。', set:{}, focus:'低圧巻線'},
-      {t:'負荷率0でも損失がある', d:'負荷率を0にしても磁束は回り続けている。だから鉄損は負荷に関係なく出る。二次を開放して測る無負荷試験は、この鉄損だけを取り出す試験。', set:{tfLoad:0}, focus:'鉄心'},
-      {t:'負荷をかけると銅損が増える', d:'負荷率を上げると巻線に電流が流れ、抵抗で発熱する。電流の2乗、つまり負荷率の2乗で増える。二次を短絡して定格電流を流す短絡試験は、この銅損だけを取り出す。', set:{tfLoad:1}, focus:'低圧巻線'},
-      {t:'効率が最大になる点', d:'鉄損（一定）と銅損（2乗で増える）が等しくなる負荷率で効率が最大。右下の曲線で、破線と実線が交わる負荷率がそれ。', set:{tfLoad:.5}, focus:null},
+      {t:'磁束の道を追う', d:'光る点が磁束。脚を上がり、ヨークを通り、隣の脚を下って閉じる。閉じた鉄の道なので外に漏れにくい。この磁束が一次・二次の両方の巻線を貫くから電圧が「移る」。', set:{tfView:'core', tfLoad:.7}, focus:'鉄心'},
+      {t:'巻線の太さの違い', d:'内側の低圧巻線は電流が大きいので太い。外側の高圧巻線は巻数が多く電流が小さいので細い。巻数比がそのまま電圧比、電流はその逆比。右脚は高圧巻線を切り欠いて内側を見せている。', set:{tfView:'core'}, focus:'低圧巻線'},
+      {t:'負荷率0でも損失がある', d:'負荷率を0にしても磁束は回り続けている。だから鉄損は負荷によらず出る（電源電圧と周波数が一定なら）。二次を開放して測る無負荷試験は、この鉄損だけを取り出す試験。', set:{tfView:'core', tfLoad:0}, focus:'鉄心'},
+      {t:'負荷をかけると銅損が増える', d:'負荷率を上げると巻線に電流が流れ、抵抗で発熱する。電流の2乗、つまり負荷率の2乗で増える。二次を短絡して定格電流を流す短絡試験は、この銅損だけを取り出す。', set:{tfView:'core', tfLoad:1}, focus:'低圧巻線'},
+      {t:'効率が最大になる点', d:'鉄損（ほぼ一定）と銅損（2乗で増える）が等しくなる負荷率で効率が最大。下の曲線で、破線と実線が交わる負荷率がそれ。', set:{tfView:'core', tfLoad:.5}, focus:null},
+      {t:'V結線は「3台のうち1台を外した姿」', d:'見る対象を三相結線に切り替えると、単相変圧器3台のバンクになる。Δ-Δでは3台が三角に閉じている。V-Vに切り替えると3台目が実際に消え、残り2台の渡り線だけで三相のまま送れることが見える。出力は 3P → √3P に落ちる。', set:{tfView:'bank', bankV:true}, focus:'3台目'},
+      {t:'単巻変圧器は「1つの巻線」', d:'一次と二次で巻線を分けず、1つの巻線の途中から取り出す。下の橙が一次と二次の共通部分（分路巻線）、上の緑がその分だけ電圧を足す直列巻線。電圧比を1に近づけると、緑の受け持つ容量＝自己容量がどんどん小さくなる。', set:{tfView:'auto', autoA:1.2}, focus:'直列巻線'},
     ],
     check: [
-      ['無負荷試験で測れるのは鉄損と銅損のどちらか', '鉄損。二次を開放しているので負荷電流が流れず、銅損はほぼ出ない。磁束は回っているので鉄損は出る。'],
       ['負荷率が半分になると銅損は何分の1か', '4分の1。銅損は電流の2乗、つまり負荷率の2乗に比例する。'],
-      ['効率が最大になる条件を式で', '鉄損 Pi = α²·Pc（負荷率αのときの銅損）。'],
+      ['効率が最大になる条件を式で', '鉄損 Pi = α²·Pc（負荷率αのときの銅損）。効率そのものは η = 出力/(出力+Pi+α²·Pc)。'],
+      ['全日効率は通常効率と何が違うか', '分母・分子が「電力」ではなく「1日の電力量」。鉄損は24時間ぶん（24·Pi）効き、銅損は負荷のあった時間ぶんだけ効く。配電用変圧器のように軽負荷の時間が長いと、鉄損の小さい機種が有利になる。'],
+      ['鉄損が「一定」と言えるのはどういう条件か', '電源電圧と周波数が一定のとき。磁束密度と周波数で決まる損失なので、電圧が変われば鉄損も変わる。'],
+      ['電圧変動率の近似式は', 'ε ≒ p·cosθ + q·sinθ。p は %抵抗降下、q は %リアクタンス降下で、どちらも短絡試験から求まる。'],
+      ['進相コンデンサ・調相設備・直列コンデンサはそれぞれ何をするか', '進相コンデンサは負荷と並列に入れて遅れ無効電力を打ち消し、力率を改善する。調相設備は系統の無効電力を加減して電圧を保つ。直列コンデンサは線路に直列に入れて線路リアクタンスを打ち消し、電圧降下と変動を抑える。つなぎ方（並列か直列か）で役割が変わる。'],
+      ['Y結線とΔ結線で、線間電圧と相電圧の関係はそれぞれどうなるか', 'Yは線間 = √3 × 相電圧で線電流 = 相電流。Δは線間 = 相電圧で線電流 = √3 × 相電流。Yは電圧が√3倍、Δは電流が√3倍と覚える。'],
+      ['Y-Y結線が単独では使いにくいのはなぜか', '第3調波の励磁電流が流れる道が無く、電圧波形がひずむため。三次巻線をΔ（安定巻線）にして逃げ道を作る。'],
+      ['並行運転する2台の負荷分担はどう決まるか', '%インピーダンスの逆比。定格容量 P と %z から (P₁/%z₁):(P₂/%z₂)。%Z が小さい方が多く負担するので、差が大きいと合計の定格を使い切れない。'],
+      ['V結線の「利用率」と「出力比」の分母はそれぞれ何か', '利用率は残った2台の定格容量の合計（2P）で割って √3/2 ≒ 86.6%。出力比はΔ結線3台の出力（3P）で割って 1/√3 ≒ 57.7%。同じ V結線の話でも分母が違う。'],
+      ['単巻変圧器の自己容量を出すとき、分母はどちらの電圧か', '高い方の電圧 Vh。自己容量/線路容量 = (Vh−Vl)/Vh。低い方で割るのが典型的な誤り。'],
     ],
+    cards: ['conv','test','pz','eff','vconn','conn3','exc'],
   },
+
   'dc-machine': {
+    oneLiner: '整流子が、回転する電機子の交流的な起電力を、外から見て直流に変える。',
+    exam: [
+      ['誘導起電力', 'E = pZΦn/(60a)', '磁束Φと回転数nに比例。導体1本では e = Blv'],
+      ['電動機の電圧式', 'E = V − Ia·Ra', '発電機なら V = E − Ia·Ra。向きが逆になる'],
+      ['トルク', 'T ∝ Φ·Ia', '磁束と電機子電流の積。**Ia が同じなら**Φを弱めるとトルクは減るが、定トルク負荷では Ia が増えて釣り合う'],
+      ['速度制御', 'n ∝ (V − Ia·Ra)/Φ', '電圧制御・界磁制御・抵抗制御の3方式はこの式のどこを動かすか'],
+      ['電機子反作用', '中性軸がずれる → 補極・補償巻線', '電機子起磁力が電機子電流に比例するので、補極を電機子と直列に入れれば負荷に応じて自動で釣り合う'],
+    ],
+    predict: [
+      { q:'直流分巻電動機で界磁磁束Φを弱めた。回転数 n はどうなるか（電源電圧一定）。',
+        opts:['上がる','下がる','変わらない','停止する'], ans:0, set:{react:false, load:.5},
+        why:'n ∝ (V − Ia·Ra)/Φ なので、Φを小さくすると n は上がる（Ia·Ra は V に比べて小さいという前提）。なお定トルク負荷では T = KΦIa が一定に保たれるので、Φ が減った分だけ Ia は増える。直巻電動機を無負荷で回すと危険なほど回転が上がるのも、負荷が減って界磁磁束が弱まるため。' },
+      { q:'電機子反作用による中性軸のずれが大きくなるのは、どんなときか。',
+        opts:['界磁電流が大きいとき','電機子電流が大きいとき','回転数が低いとき','電源電圧が低いとき'], ans:1, set:{react:true, load:.95},
+        why:'反作用は電機子電流が作る磁界によるもの。だから負荷（電機子電流）が大きいほどずれが大きい。補極を電機子巻線と直列に入れれば、負荷に応じて自動で打ち消せる。' },
+      { q:'整流子の役割として正しいのはどれか。',
+        opts:['交流を昇圧する','電機子導体の電流の向きを切り替える','界磁磁束を作る','回転速度を検出する'], ans:1, set:{react:false, load:.5},
+        why:'電機子導体の起電力は、N極の下とS極の下で向きが逆になる。整流子が回りながら接続を切り替えるので、ブラシの外側では一方向の電圧・電流になる。「整流子＝機械式の整流器」。' },
+    ],
     points: [
       ['整流子が「交流を直流に見せる」', '導体の起電力はN極の下とS極の下で逆向き。整流子が回るたびに接続を切り替え、ブラシから見ると同じ向きになる'],
       ['E ∝ Φ·n、T ∝ Φ·Ia', '起電力は磁束×回転数。トルクは磁束×電機子電流。速度制御は n ∝ (V − Ia·Ra)/Φ'],
       ['電機子反作用は電機子電流に比例', '負荷が増えるほど中性軸がずれる。だから補極は電機子電流で励磁して自動で打ち消す'],
     ],
     tour: [
-      {t:'整流子とブラシ', d:'軸端の環が整流子。回転しながら導体とブラシの接続を切り替える。導体の中は交流、ブラシの外は直流。「整流子＝機械式の整流器」と覚える。', set:{react:false}, focus:'整流子'},
+      {t:'整流子とブラシ', d:'軸端の環が整流子。回転しながら導体とブラシの接続を切り替える。導体の中は交流的、ブラシの外は直流。下の波形図が「切り替えで向きがそろう」ところを表している。', set:{react:false}, focus:'整流子'},
       {t:'導体1本の起電力', d:'磁極の下を通る導体1本に e = Blv が出る。全導体を直列に足すと E = pZΦn/(60a)。磁束Φと回転数nに比例する。', set:{react:false}, focus:'電機子巻線'},
       {t:'負荷をかけると中性軸がずれる', d:'負荷電流が流れると電機子自身が横向きの磁界（赤）を作る。主磁束（橙）と合成されて磁束が傾き、電気的中性軸（赤い面）が幾何学的中性軸（灰の面）からずれる。', set:{react:true, load:.9}, focus:'電気的中性軸'},
       {t:'電流が小さければ反作用も小さい', d:'負荷を0に近づけると赤い矢印が縮み、ずれが消える。反作用の大きさは電機子電流に比例する。だから補極を電機子巻線と直列にすれば、負荷に応じて自動で打ち消せる。', set:{react:true, load:.05}, focus:'電気的中性軸'},
@@ -305,49 +472,116 @@ const STUDY = {
       ['電機子反作用で中性軸はどちらへずれるか（電動機）', '回転方向と逆向き。発電機は回転方向と同じ向き。合成磁束の向きに直角な面が電気的中性軸。'],
       ['界磁を弱めると回転数はどうなるか', '上がる。n ∝ (V − Ia·Ra)/Φ なので、Φが小さいほど速い。直巻電動機を無負荷で回すと暴走するのも同じ理由。'],
       ['補極は何で励磁するか', '電機子電流。反作用は電機子電流に比例するので、直列にすれば負荷に応じて自動で打ち消せる。'],
+      ['整流子が無いと何が起きるか', 'ブラシから見た起電力が交流のままになる。整流子は回転する導体の接続を切り替えて、外部では一方向にそろえている。'],
     ],
+    cards: ['comm','react'],
   },
+
   'induction-machine': {
+    oneLiner: '回転磁界より少し遅れて回るから、磁束を切り続けてトルクが出る。',
+    exam: [
+      ['同期速度', 'Ns = 120f/p', '回転磁界の速さ。電源の周波数と極数だけで決まる'],
+      ['回転速度と滑り', 'N = (1−s)Ns、s = (Ns−N)/Ns', '実速度は必ず Ns より少し遅い'],
+      ['二次周波数', 'f₂ = s·f', '回転子から見た磁界の速さ。始動時 s=1 なら f₂ = f'],
+      ['電力の分配とトルク', 'P₂:Pc₂:Po = 1:s:(1−s)　T = P₂/ωs', '二次入力を同期角速度で割るとトルク（同期ワット）。Po は**内部**機械出力で、軸出力はここから機械損を引く'],
+      ['始動と比例推移', 'Y-Δ始動：巻線1相の電圧1/√3・線電流1/3・トルク1/3', '電源の線間電圧は変わらない。巻線にかかる電圧が1/√3になる。巻線形は二次抵抗を足して始動トルクを稼ぐ（比例推移）'],
+    ],
+    predict: [
+      { q:'電源 60 Hz、極数 4 の三相誘導電動機。回転磁界の同期速度 Ns は？',
+        opts:['900 min⁻¹','1200 min⁻¹','1800 min⁻¹','3600 min⁻¹'], ans:2,
+        set:{im_f:60, im_p:4, slip:.04, wound:false}, hi:'Ns',
+        why:'Ns = 120f/p = 120×60/4 = 1800 min⁻¹。極数が増えるほど遅くなる（2極なら3600、6極なら1200）。操作帯の「極数」を切り替えると数値が動く。' },
+      { q:'続けて。その電動機が滑り s = 0.04 で運転している。実際の回転速度 N は？',
+        opts:['1728 min⁻¹','1752 min⁻¹','1800 min⁻¹','1872 min⁻¹'], ans:0,
+        set:{im_f:60, im_p:4, slip:.04}, hi:'N',
+        why:'N = (1−s)Ns = 0.96 × 1800 = 1728 min⁻¹。滑りは「磁界にどれだけ置いていかれているか」の割合。3D では磁界の光点が回転子の目印を追い越していく。' },
+      { q:'さらに続けて。このときの二次周波数 f₂ は？',
+        opts:['0 Hz','2.4 Hz','24 Hz','60 Hz'], ans:1,
+        set:{im_f:60, im_p:4, slip:.04}, hi:'f2',
+        why:'f₂ = s·f = 0.04 × 60 = 2.4 Hz。回転子から見ると磁界はゆっくり回っている。始動時（s=1）は f₂ = f = 60 Hz まで上がる。始動電流が大きいのは、等価回路の二次抵抗が r₂/s と表され、s=1 で最小になってインピーダンスが最も小さくなるため。' },
+      { q:'滑りスライダーを 0 にすると、トルクはどうなるか。',
+        opts:['最大になる','0 になる','変わらない','負になる'], ans:1,
+        set:{slip:0}, hi:'f2',
+        why:'s=0 では回転子が磁界と同じ速さで回るので、導体は磁束を切らない。f₂ = 0、誘導起電力 0、二次電流 0、したがってトルクも 0。だから誘導機は同期速度には到達できない（「非同期機」と呼ばれる理由）。' },
+    ],
     points: [
       ['回転磁界の速さが同期速度 Ns = 120f/p', '固定子の三相巻線が作る。矢印がそれ。極数を変えるか周波数を変えないと速度は変わらない'],
       ['遅れがトルクを生む。遅れの割合が滑り s', '回転子が磁界より遅いから導体が磁束を切り、電流が流れ、トルクが出る。s=0 ならトルク0'],
-      ['P₂ : Pc₂ : Po = 1 : s : (1−s)', '二次入力のうち滑りの分が二次銅損、残りが機械出力。始動時 s=1 は全部が銅損'],
+      ['P₂ : Pc₂ : Po = 1 : s : (1−s)', '二次入力のうち滑りの分が二次銅損、残りが内部機械出力。軸出力はここから機械損を引く'],
     ],
     tour: [
-      {t:'回転磁界を見る', d:'U・V・Wの3つの巻線に120°ずれた電流が流れると、合成した磁界の向きが回る。矢印がその向き。速さは同期速度 Ns = 120f/p で、電源で決まる。', set:{slip:.05, wound:false, paused:false}, focus:'回転磁界'},
-      {t:'回転子は少し遅れて回る', d:'回転子は矢印より少し遅い。この遅れの割合が滑り s。遅れがあるから回転子の導体が磁束を切り、誘導電流が流れ、トルクが出る。', set:{slip:.05}, focus:'回転子'},
-      {t:'同期速度では回れない', d:'滑りを0にしてみる。回転子と磁界が同じ速さで、導体は磁束を切らない。電流ゼロ、トルクゼロ。だから誘導機は必ず同期速度より少し遅く回る。', set:{slip:0}, focus:'回転子'},
-      {t:'始動時は s=1', d:'滑り1は停止状態。二次周波数 f₂ = s·f が電源周波数と同じで、二次電流が最大。始動電流が大きい理由。だから Y-Δ始動や二次抵抗始動で抑える。', set:{slip:1}, focus:'回転子'},
-      {t:'巻線形なら二次抵抗を外から足せる', d:'スリップリングとブラシで回転子巻線を外に引き出し、抵抗を足す。右の曲線を見ると、最大トルクの高さは変わらず、それが出る滑りが大きい側へ動く（比例推移）。始動トルクを稼げる。', set:{wound:true, slip:.4}, focus:'外部抵抗'},
-      {t:'速度を変えるには f か p', d:'極数を2極にすると同期速度が倍になる。60 Hzでも上がる。滑りをいじっても数%しか変わらない。だから速度制御は「周波数を変える（インバータ）」か「極数を変える」。', set:{im_p:2, wound:false, slip:.05}, focus:'回転磁界'},
+      {t:'回転磁界を見る', d:'U・V・Wの3つの巻線に120°ずれた電流が流れると、合成した磁界の向きが回る。矢印がその向き。橙の光点が磁界の目印で、速さは同期速度 Ns = 120f/p。電源で決まる。', set:{slip:.05, wound:false, paused:false}, focus:'回転磁界'},
+      {t:'回転子は少し遅れて回る', d:'白い目印が回転子の位置。橙の光点（磁界）が少しずつ追い越していくのが見える。この追い越しの割合が滑り s。遅れがあるから回転子の導体が磁束を切り、誘導電流が流れ、トルクが出る。', set:{slip:.08}, focus:'回転子'},
+      {t:'同期速度では回れない', d:'滑りを0にすると、橙の光点と白い目印がぴたりと重なったまま動かなくなる。導体は磁束を切らない。f₂=0、誘導起電力0、電流0、トルク0。だから誘導機は、電動機として運転している限り必ず同期速度より遅く回る。', set:{slip:0}, focus:'回転子'},
+      {t:'始動時は s=1', d:'滑り1は停止状態。回転子は止まり、磁界だけが回る。二次周波数 f₂ = s·f が電源周波数と同じになる。等価回路の二次抵抗 r₂/s が s=1 で最小になるためインピーダンスが最も小さく、二次電流が最大。だから Y-Δ始動や二次抵抗始動で抑える。', set:{slip:1}, focus:'回転子'},
+      {t:'巻線形なら二次抵抗を外から足せる', d:'スリップリングとブラシで回転子巻線を外に引き出し、抵抗を足す。下の曲線を見ると、最大トルクの高さは変わらず、それが出る滑りが大きい側へ動く（比例推移）。始動トルクを稼げる。', set:{wound:true, slip:.4}, focus:'外部抵抗'},
+      {t:'速度制御は2通りある', d:'ひとつは同期速度そのものを動かす方法。極数を2極にすると同期速度が倍になり、インバータで周波数を変えても動く（V/f一定制御は磁束を保つため）。もうひとつは滑りを動かす方法で、巻線形の二次抵抗制御と一次電圧制御がこれにあたる。滑り側は損失が増えるが、比例推移を使って始動トルクも同時に稼げる。', set:{im_p:2, wound:false, slip:.05}, focus:'回転磁界'},
     ],
     check: [
-      ['滑り s=0 のときのトルクは', '0。回転子が磁束を切らず誘導電流が流れない。'],
-      ['二次入力 P₂ に対する機械出力 Po の比は', '(1−s)。二次銅損は s·P₂。3つの比は 1 : s : (1−s)。'],
-      ['二次抵抗を足すと最大トルクの大きさはどうなるか', '変わらない。最大トルクが出る滑りだけが大きくなる（比例推移）。'],
+      ['滑り s=0 のときのトルクは', '0。回転子が磁束を切らず誘導起電力も二次電流も生じない。'],
+      ['二次入力 P₂ に対する内部機械出力 Po の比は', '(1−s)。二次銅損は s·P₂。3つの比は 1 : s : (1−s)。この Po は内部機械出力なので、軸出力を問われたら機械損を引く。'],
+      ['巻線形で二次抵抗を足すと最大トルクの大きさはどうなるか', '変わらない。最大トルクが出る滑りだけが大きくなる（比例推移）。外部抵抗を足せるのは二次回路を引き出せる巻線形だけで、かご形ではできない。また比例推移が使えるのはトルク・一次電流・力率であって、出力・効率・二次銅損には使えない。'],
+      ['始動時（s=1）に二次電流が大きいのはなぜか', '等価回路の二次抵抗が r₂/s と表され、s=1 で最小になるからインピーダンスが最も小さくなる。二次起電力が最大になるのと同時に、二次周波数が上がって漏れリアクタンスも増えるので、周波数だけでは説明がつかない。'],
     ],
+    cards: ['slip'],
   },
+
   synchronous: {
+    oneLiner: '回転磁界と同じ速さで回り、界磁電流で力率（無効電力）を調整できる。',
+    exam: [
+      ['同期速度', 'Ns = 120f/p（滑り 0）', '誘導機と違い、負荷が変わっても回転速度は変わらない'],
+      ['誘導起電力（1相）', 'E = 4.44 k f N Φm', '**1相**の実効値。線間値を問われたら√3倍。k は巻線係数で、分布巻・短節巻では k < 1'],
+      ['出力と負荷角（1相）', 'P = (E·V/Xs)·sinδ', 'E・V は**相電圧**で1相分。三相合計は3倍。円筒形・抵抗を無視した基本モデルで、δ=90°で最大'],
+      ['V曲線', '不足励磁→遅れ／過励磁→進み', '谷が力率1。同期調相機はこれで無効電力を調整する'],
+      ['短絡比', 'Ks = 1/Zs[pu] = 100/%Zs', '百分率同期インピーダンスの逆数。大きいほど電圧変動率が小さく安定度が高い（鉄機械）'],
+    ],
+    predict: [
+      { q:'円筒形同期電動機の負荷角δを 30° から 60° にした。出力はどうなるか（E・V・Xs 一定）。',
+        opts:['約0.6倍','変わらない','約1.7倍','約2.0倍'], ans:2, set:{delta:60, rotor:'cyl'}, hi:'P',
+        why:'P = (E·V/Xs)·sinδ なので、出力は sinδ に比例する。sin60°/sin30° = 0.866/0.5 ≈ 1.73 倍。δ=90° で最大になり、それを超えると同期を保てない。※円筒形・抵抗無視の基本モデル。' },
+      { q:'同期電動機の界磁電流 If を、力率1になる値より大きくした（過励磁）。力率は？',
+        opts:['遅れになる','進みになる','1のまま','0になる'], ans:1, set:{If:1.5, delta:20, syncP:.5}, hi:'pf',
+        why:'過励磁では電機子電流が進み位相になる。V曲線の谷（力率1）より右側。この性質を使って無効電力を供給するのが同期調相機。不足励磁なら逆に遅れ。' },
+      { q:'三相同期電動機の滑りはいくらか。',
+        opts:['0','0.03 前後','1','負荷で変わる'], ans:0, set:{delta:20, If:1}, hi:'slip0',
+        why:'同期機は回転磁界と同じ速さで回るので滑りは常に0。負荷が増えると速度ではなく負荷角δが大きくなる。ここが誘導機との決定的な違い。' },
+    ],
     points: [
-      ['回転磁界と同じ速さで回る。滑りは常に0', '回転子は直流で励磁した磁石。回転磁界にかみ合って同期速度で回る'],
-      ['負荷角 δ が出力を決める', '負荷がかかると磁極が磁界から遅れる。δが大きいほど出力大。90°を超えると脱調'],
+      ['回転磁界と同じ速さで回る。滑りは常に0', '回転子は直流で励磁した磁石。負荷が増えても速度は落ちず、負荷角δが大きくなる'],
+      ['負荷角 δ が出力を決める', 'P = (E·V/Xs)·sinδ（円筒形・抵抗無視）。δ=90°で最大、超えると同期を保てない'],
       ['界磁電流で力率が変わる（Vカーブ）', '過励磁で進み、不足励磁で遅れ。谷が力率1。同期調相機はこれを使う'],
     ],
     tour: [
-      {t:'磁界にかみ合って回る', d:'回転子は直流で励磁された電磁石。回転磁界（矢印）に引かれて、まったく同じ速さで回る。誘導機と違って遅れは要らない。', set:{delta:15, If:1, rotor:'salient'}, focus:'回転子'},
-      {t:'負荷をかけると角度がつく', d:'負荷角を大きくすると、磁極の向きが矢印から遅れる。ばねを引いたように、この角度δが大きいほど引き戻す力（＝出力）が大きい。', set:{delta:60}, focus:'回転磁界'},
-      {t:'90°を超えると脱調', d:'δが90°で引き戻す力が最大。それを超えると力が減り、同期が外れる（脱調）。δが揺れるのが乱調で、制動巻線が抑える。', set:{delta:90}, focus:'回転磁界'},
-      {t:'界磁電流を増やすと進み力率', d:'負荷角を戻し、界磁電流を増やす。右のVカーブで谷の右側に移り、電機子電流が増えて進み力率になる。減らすと遅れ。同期調相機はこれで力率を調整する。', set:{delta:20, If:1.5, syncP:.5}, focus:'スリップリング'},
+      {t:'磁界にかみ合って回る', d:'回転子は直流で励磁された電磁石。回転磁界（矢印）に引かれて、まったく同じ速さで回る。誘導機と違って遅れは要らない。だから滑りは0。', set:{delta:15, If:1, rotor:'salient'}, focus:'回転子'},
+      {t:'負荷をかけると角度がつく', d:'負荷角を大きくすると、磁極の向きが矢印から遅れる。ばねを引いたように、この角度δが大きいほど引き戻す力（＝出力）が大きい。速度は変わらず、角度だけが変わる。', set:{delta:60, rotor:'cyl'}, focus:'回転磁界'},
+      {t:'90°を超えると同期を保てない', d:'P ∝ sinδ なので δ=90° で出力が最大。それを超えると引き戻す力が減り、同期が外れる（脱調）。δが揺れるのが乱調で、制動巻線が抑える。※円筒形・抵抗無視の基本モデル。', set:{delta:90, rotor:'cyl'}, focus:'回転磁界'},
+      {t:'界磁電流を増やすと進み力率', d:'負荷角を戻し、界磁電流を増やす。下のVカーブで谷の右側に移り、電機子電流が増えて進み力率になる。減らすと遅れ。同期調相機はこれで力率を調整する。', set:{delta:20, If:1.5, syncP:.5, rotor:'salient'}, focus:'スリップリング'},
       {t:'回転子の形は速度で決まる', d:'タービン発電機は高速なので2極か4極、遠心力に耐える円筒形。水車発電機は低速なので極数が多く、横に太い突極形。Ns = 120f/p がそのまま形になっている。', set:{rotor:'cyl', If:1, delta:20}, focus:'回転子'},
     ],
     check: [
-      ['同期電動機の滑りは', '0。回転磁界と同じ速さで回る。'],
-      ['過励磁にすると力率は進みか遅れか', '進み。Vカーブの谷（力率1）より界磁電流が大きい側。'],
+      ['同期電動機の滑りは', '0。回転磁界と同じ速さで回る。負荷が増えると速度ではなく負荷角δが増える。'],
+      ['同期電動機を過励磁にすると力率は進みか遅れか', '進み。Vカーブの谷（力率1）より界磁電流が大きい側。同期発電機は逆に、過励磁では遅れ力率で運転して遅れ無効電力を送り出す。「進み／遅れ」のラベルは電動機視点と発電機視点で反転するので、必ず機種を確かめる。'],
       ['タービン発電機の回転子が円筒形なのはなぜ', '高速で遠心力が大きいから。極数が少なく（2極・4極）細長い形になる。'],
+      ['P ∝ sinδ が使えるのはどんな条件か', '円筒形（非突極）で、電機子抵抗を無視した基本モデルのとき。突極機はリラクタンストルクの項が加わるので同じ式にはならない。'],
     ],
+    cards: ['cmp'],
   },
 };
 
+/* もう一歩カード。3Dだけでは見えない「計算上の話」をここで受ける。 */
+const CARDS = {
+  conv: { t:'なぜ一次側換算をするのか', body:'conv' },
+  test: { t:'無負荷試験と短絡試験', body:'test' },
+  comm: { t:'整流子が向きをそろえる', body:'comm' },
+  react:{ t:'電機子反作用の因果', body:'react' },
+  slip: { t:'滑りが 0 と 1 のとき', body:'slip' },
+  cmp:  { t:'誘導機と同期機の違い', body:'cmp' },
+  vconn:{ t:'V結線と単巻変圧器（分母を間違えない）', body:'vconn' },
+  exc:  { t:'励磁電流の中身と、並行運転の負荷分担', body:'exc' },
+  pz:   { t:'短絡試験から %Z へ、%Z から短絡電流へ', body:'pz' },
+  eff:  { t:'効率の出し方（通常・全日・規約）と損失の分類', body:'eff' },
+  conn3:{ t:'三相結線の組み合わせとスコット結線', body:'conn3' },
+};
 
 /* ============================================================ 3D */
 const stage = document.getElementById('view');
@@ -395,7 +629,21 @@ const M = {
   frame: std({color:0x3b5a73, metalness:.35, roughness:.6, side:THREE.DoubleSide}),
   coreRing: std({color:0x7c8790, metalness:.5, roughness:.5, side:THREE.DoubleSide}),
   window: std({color:0x7fa0bd, emissive:0x3c5a78, emissiveIntensity:.5}),
+  markField: std({color:0xffc47a, emissive:0xff9a2e, emissiveIntensity:1.1}),
+  markRotor: std({color:0xf2f5f7, emissive:0xbcc6cf, emissiveIntensity:.55}),
+  tank: std({color:0x4a5b68, metalness:.4, roughness:.6}),
+  shunt: std({color:0xc07a3a, metalness:.7, roughness:.35}),
+  series: std({color:0x7fb069, metalness:.6, roughness:.4}),
 };
+/* 2点を結ぶ電線。結線図を3D上でそのまま描くために使う */
+const _wa = new THREE.Vector3(), _wb = new THREE.Vector3();
+function wire3(a, b, mat, parent, r){
+  const dir = _wb.copy(b).sub(a), len = dir.length();
+  const o = new THREE.Mesh(new THREE.CylinderGeometry(r || .045, r || .045, len, 8), mat);
+  o.position.copy(_wa.copy(a).add(b).multiplyScalar(.5));
+  o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.normalize());
+  o.castShadow = false; parent.add(o); return o;
+}
 const mesh = (g, m, parent, x=0, y=0, z=0) => { const o = new THREE.Mesh(g, m); o.position.set(x,y,z); o.castShadow = o.receiveShadow = true; (parent||scene).add(o); return o; };
 
 /* --- 工場フロア --- */
@@ -408,33 +656,117 @@ const mesh = (g, m, parent, x=0, y=0, z=0) => { const o = new THREE.Mesh(g, m); 
   for (const m of ORDER) mesh(new THREE.BoxGeometry(7, .3, 5.5), M.steelDark, scene, MACHINES[m].x, .15, 0);
 }
 
-/* ---------- 変圧器 ---------- */
+/* ---------- 変圧器 ----------
+   3つの見る対象を持つ。
+     core … 三相内鉄形1台。鉄心・巻線・磁束・損失
+     bank … 単相変圧器3台のバンク。Δ-Δ と V-V を切り替えると1台が消える
+     auto … 単巻変圧器。1つの巻線の途中から取り出していることを見せる
+   ---------- */
 function buildTransformer(g){
+  /* === core: 三相内鉄形 === */
+  const core = new THREE.Group(); g.add(core);
   const legX = [-1.5, 0, 1.5];
-  mesh(new THREE.BoxGeometry(4.2, .6, .8), M.steel, g, 0, .45, 0);
-  const yokeTop = mesh(new THREE.BoxGeometry(4.2, .6, .8), M.steel, g, 0, 3.75, 0);
+  mesh(new THREE.BoxGeometry(4.2, .6, .8), M.steel, core, 0, .45, 0);
+  const yokeTop = mesh(new THREE.BoxGeometry(4.2, .6, .8), M.steel, core, 0, 3.75, 0);
   let hvL, lvR, bushHV;
   for (const x of legX){
-    mesh(new THREE.BoxGeometry(.6, 2.7, .8), M.steel, g, x, 2.1, 0);
-    const lv = mesh(new THREE.CylinderGeometry(.62,.62,2.1,32), M.copper, g, x, 2.1, 0);
+    mesh(new THREE.BoxGeometry(.6, 2.7, .8), M.steel, core, x, 2.1, 0);
+    const lv = mesh(new THREE.CylinderGeometry(.62,.62,2.1,32), M.copper, core, x, 2.1, 0);
     let hv;
     if (x === 1.5){ // 右脚は高圧巻線を手前側で切り欠き、内側の低圧巻線を見せる
-      hv = mesh(new THREE.CylinderGeometry(.85,.85,2.3,32,1,false, Math.PI*.35, Math.PI*1.3), M.copperCut, g, x, 2.1, 0);
+      hv = mesh(new THREE.CylinderGeometry(.85,.85,2.3,32,1,false, Math.PI*.35, Math.PI*1.3), M.copperCut, core, x, 2.1, 0);
       lvR = lv;
     } else {
-      hv = mesh(new THREE.CylinderGeometry(.85,.85,2.3,32), M.copperDark, g, x, 2.1, 0);
-      for (let i=0;i<7;i++) mesh(new THREE.TorusGeometry(.87,.03,6,40), M.copper, g, x, 1.1+i*.33, 0).rotation.x=Math.PI/2;
+      hv = mesh(new THREE.CylinderGeometry(.85,.85,2.3,32), M.copperDark, core, x, 2.1, 0);
+      for (let i=0;i<7;i++) mesh(new THREE.TorusGeometry(.87,.03,6,40), M.copper, core, x, 1.1+i*.33, 0).rotation.x=Math.PI/2;
     }
     if (x === -1.5) hvL = hv;
-    const b = mesh(new THREE.CylinderGeometry(.13,.16,1.6,16), M.ceramic, g, x, 4.85, -.25);
+    const b = mesh(new THREE.CylinderGeometry(.13,.16,1.6,16), M.ceramic, core, x, 4.85, -.25);
     if (x === 0) bushHV = b;
-    for (let i=0;i<5;i++) mesh(new THREE.TorusGeometry(.2,.04,6,24), M.ceramic, g, x, 4.3+i*.28, -.25).rotation.x=Math.PI/2;
-    mesh(new THREE.CylinderGeometry(.1,.12,.7,16), M.ceramic, g, x, 4.4, .3);
+    for (let i=0;i<5;i++) mesh(new THREE.TorusGeometry(.2,.04,6,24), M.ceramic, core, x, 4.3+i*.28, -.25).rotation.x=Math.PI/2;
+    mesh(new THREE.CylinderGeometry(.1,.12,.7,16), M.ceramic, core, x, 4.4, .3);
   }
   const fluxDots = [];
-  for (let w=0; w<2; w++) for (let i=0;i<10;i++){ const d = mesh(new THREE.SphereGeometry(.07, 10, 10), M.flux, g); d.castShadow=false; d.userData = {w, t:i/10}; fluxDots.push(d); }
-  g.userData.fluxDots = fluxDots;
-  g.userData.labels = [
+  for (let w=0; w<2; w++) for (let i=0;i<10;i++){ const d = mesh(new THREE.SphereGeometry(.07, 10, 10), M.flux, core); d.castShadow=false; d.userData = {w, t:i/10}; fluxDots.push(d); }
+
+  /* === bank: 単相変圧器3台 === */
+  const bank = new THREE.Group(); g.add(bank); bank.visible = false;
+  const tanks = [], term = [];
+  for (let i=0;i<3;i++){
+    const t = new THREE.Group(); bank.add(t); t.position.x = (i-1)*2.2;
+    mesh(new THREE.BoxGeometry(1.7, 2.2, 1.5), M.tank, t, 0, 1.35, 0);
+    mesh(new THREE.BoxGeometry(1.86, .16, 1.66), M.steel, t, 0, 2.5, 0);
+    for (const sgn of [-1,1]) for (let k=0;k<3;k++)
+      mesh(new THREE.BoxGeometry(.07,1.5,.42), M.steel, t, sgn*.93, 1.35, (k-1)*.46);
+    const pair = [];
+    for (const sgn of [-1,1]){
+      mesh(new THREE.CylinderGeometry(.1,.13,.95,14), M.ceramic, t, sgn*.5, 3.0, 0);
+      for (let k=0;k<3;k++) mesh(new THREE.TorusGeometry(.155,.033,6,18), M.ceramic, t, sgn*.5, 2.72+k*.26, 0).rotation.x=Math.PI/2;
+      pair.push(new THREE.Vector3(sgn*.5 + (i-1)*2.2, 3.5, 0));
+    }
+    tanks.push(t); term.push(pair);   // [左端子, 右端子]
+  }
+  /* 結線の電線。Δ-Δ（3台で三角を閉じる）と V-V（2台で開いたまま）を差し替える */
+  const wiresD = new THREE.Group(); bank.add(wiresD);
+  const wiresV = new THREE.Group(); bank.add(wiresV); wiresV.visible = false;
+  const ph = [M.u, M.v, M.w];
+  const up = (v, h) => new THREE.Vector3(v.x, v.y + h, v.z);
+  /* Δ-Δ: 0右-1左、1右-2左、2右-0左（奥を回して閉じる） */
+  {
+    const j01 = [term[0][1], term[1][0]], j12 = [term[1][1], term[2][0]];
+    wire3(j01[0], j01[1], M.brass, wiresD); wire3(j12[0], j12[1], M.brass, wiresD);
+    const back = -1.6;
+    const a = term[2][1], b = term[0][0];
+    const a2 = new THREE.Vector3(a.x, a.y+.5, back), b2 = new THREE.Vector3(b.x, b.y+.5, back);
+    wire3(a, a2, M.brass, wiresD); wire3(a2, b2, M.brass, wiresD); wire3(b2, b, M.brass, wiresD);
+    /* 各頂点から線路へ引き出す3本（U・V・W） */
+    const corner = [
+      new THREE.Vector3((term[0][1].x+term[1][0].x)/2, 3.5, 0),
+      new THREE.Vector3((term[1][1].x+term[2][0].x)/2, 3.5, 0),
+      new THREE.Vector3(term[0][0].x, 3.5, 0),
+    ];
+    corner.forEach((c,k)=>wire3(c, up(c, 1.5), ph[k], wiresD, .06));
+  }
+  /* V-V: 3台目を外す。0右-1左だけ結び、両端と中点の3本が線路へ出る */
+  {
+    const j01 = [term[0][1], term[1][0]];
+    wire3(j01[0], j01[1], M.brass, wiresV);
+    const mid = new THREE.Vector3((j01[0].x+j01[1].x)/2, 3.5, 0);
+    [term[0][0], mid, term[1][1]].forEach((c,k)=>wire3(c, up(c, 1.5), ph[k], wiresV, .06));
+  }
+
+  /* === auto: 単巻変圧器 === */
+  const auto = new THREE.Group(); g.add(auto); auto.visible = false;
+  mesh(new THREE.BoxGeometry(.7, 4.0, .8), M.steel, auto, -1.5, 2.2, 0);
+  mesh(new THREE.BoxGeometry(.7, 4.0, .8), M.steel, auto,  1.2, 2.2, 0);
+  mesh(new THREE.BoxGeometry(3.4, .7, .8), M.steel, auto, -.15, 4.55, 0);
+  mesh(new THREE.BoxGeometry(3.4, .7, .8), M.steel, auto, -.15, -.15, 0);
+  const shunt  = mesh(new THREE.CylinderGeometry(.82,.82,2.0,32), M.shunt,  auto, 1.2, 1.25, 0);
+  const series = mesh(new THREE.CylinderGeometry(.82,.82,1.2,32), M.series, auto, 1.2, 2.85, 0);
+  for (let i=0;i<6;i++) mesh(new THREE.TorusGeometry(.84,.028,6,36), M.copperDark, auto, 1.2, .4+i*.33, 0).rotation.x=Math.PI/2;
+  for (let i=0;i<4;i++) mesh(new THREE.TorusGeometry(.84,.028,6,36), M.copper,     auto, 1.2, 2.4+i*.3, 0).rotation.x=Math.PI/2;
+  /* 端子3つ。下端＝共通、境目＝一次の高い側、上端＝二次の高い側 */
+  const tap = [];
+  [[.25,'a'],[2.25,'b'],[3.45,'c']].forEach(([y])=>{
+    const t = mesh(new THREE.CylinderGeometry(.09,.11,.5,12), M.ceramic, auto, 2.35, y, 0);
+    wire3(new THREE.Vector3(1.2, y, .9), new THREE.Vector3(2.35, y, 0), M.brass, auto, .04);
+    tap.push(t);
+  });
+
+  Object.assign(g.userData, {core, bank, auto, fluxDots, tanks, wiresD, wiresV, shunt, series, tap});
+  /* 見る対象ごとにラベルを差し替える */
+  g.userData.labels = (st) => st.tfView === 'bank' ? [
+    {obj:tanks[0], t:'単相変圧器 1台目', c:'#4A5B68'},
+    {obj:tanks[2], t:'3台目（V結線では外す）', c:'#7E8C99'},
+    {obj:(st.bankV?wiresV:wiresD).children[0], t:'渡り線（変圧器どうしを結ぶ）', c:'#D9C7A0'},
+    {obj:(st.bankV?wiresV:wiresD).children[st.bankV?1:5], t:'線路への引き出し（U相）', c:'#D24A43'},
+  ] : st.tfView === 'auto' ? [
+    {obj:shunt,  t:'分路巻線（一次と二次の共通部分）', c:'#C07A3A'},
+    {obj:series, t:'直列巻線（この分だけ電圧を足す）', c:'#7FB069'},
+    {obj:tap[0], t:'端子a（共通の端）', c:'#E6D3A3'},
+    {obj:tap[1], t:'端子b（一次の高い側＝タップ）', c:'#E6D3A3'},
+    {obj:tap[2], t:'端子c（二次の高い側）', c:'#E6D3A3'},
+  ] : [
     {obj:yokeTop, t:'鉄心（ヨーク）', c:'#6B7580'},
     {obj:hvL, t:'高圧巻線（外側）', c:'#A05A25'},
     {obj:lvR, t:'低圧巻線（内側・切り欠き部）', c:'#C07A3A'},
@@ -442,6 +774,15 @@ function buildTransformer(g){
   ];
 }
 function animTransformer(g, t, st){
+  const u = g.userData;
+  u.core.visible = st.tfView === 'core';
+  u.bank.visible = st.tfView === 'bank';
+  u.auto.visible = st.tfView === 'auto';
+  if (st.tfView === 'bank'){
+    u.tanks[2].visible = !st.bankV;        // V結線は3台目を外した姿
+    u.wiresD.visible = !st.bankV; u.wiresV.visible = st.bankV;
+  }
+  if (st.tfView !== 'core') return;        // 見えていないものは動かさない
   const speed = st.paused ? 0 : .35;
   for (const d of g.userData.fluxDots){
     const dir = d.userData.w ? -1 : 1;
@@ -493,9 +834,17 @@ function buildIM(g){
   const resBox = mesh(new THREE.BoxGeometry(1.0,.9,.7), M.steelDark, ext, 2.9, -1.2, 1.2);
   for (let i=0;i<3;i++) mesh(new THREE.CylinderGeometry(.06,.06,.6,8), M.brass, ext, 2.7+i*.2, -.45, 1.2);
   const arrow = makeFieldArrow(1.25); g.add(arrow);
+  /* 滑りを目で見るための一対の目印。橙＝回転磁界、白＝回転子。
+     橙が白を追い越していく割合がそのまま滑り。s=0 では重なったまま動かない。 */
+  const fieldDot = mesh(new THREE.SphereGeometry(.14, 12, 12), M.markField, arrow, 0, 1.33, 0);
+  fieldDot.castShadow = false;
+  const rotorMark = mesh(new THREE.BoxGeometry(2.15, .07, .18), M.markRotor, rotor, 0, 1.09, 0);
+  rotorMark.castShadow = false;
   Object.assign(g.userData, {rotor, cage, wound, ext, arrow});
   g.userData.labels = [
     {obj:g.userData.frame, t:'固定子（三相巻線）', c:'#D24A43'},
+    {obj:fieldDot, t:'磁界の目印（橙）', c:'#F0B57E'},
+    {obj:rotorMark, t:'回転子の目印（白）', c:'#E9EDF0'},
     {obj:cage, t:'回転子（かご形）', c:'#C07A3A', key:'cage'},
     {obj:wound, t:'回転子（巻線形）', c:'#C07A3A', key:'wound'},
     {obj:arrow.userData.tip, t:'回転磁界（同期速度で回る）', c:'#F0B57E'},
@@ -609,7 +958,7 @@ const state = {
   slip:.05, wound:false, im_p:4, im_f:50,
   react:false, load:.5,
   rotor:'salient', delta:20, If:1.0, syncP:.5,
-  tfLoad:.7,
+  tfLoad:.7, tfView:'core', bankV:false, autoA:1.2,
 };
 
 /* ---------- カメラ ---------- */
@@ -621,10 +970,13 @@ function applyCam(){
 const VIEWS = {
   overview:{target:[0,2,0], dist:34, theta:.35, phi:1.15},
   transformer:{target:[-13,2.8,0], dist:9.5, theta:.55, phi:1.25},
+  'transformer:bank':{target:[-13,2.6,0], dist:12, theta:.35, phi:1.2},
+  'transformer:auto':{target:[-13,2.4,0], dist:11, theta:.7, phi:1.2},
   'dc-machine':{target:[-4.5,2.4,0], dist:8.5, theta:.8, phi:1.2},
   'induction-machine':{target:[4.5,2.4,0], dist:9, theta:.8, phi:1.2},
   synchronous:{target:[13,2.4,0], dist:9, theta:.8, phi:1.2},
 };
+const tfViewKey = () => state.tfView==='core' ? 'transformer' : 'transformer:'+state.tfView;
 function flyTo(v){ cam.want = {target:new THREE.Vector3(...v.target), dist:v.dist, theta:v.theta, phi:v.phi}; }
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -677,7 +1029,8 @@ function rebuildLabels(){
   /* 同じ名前のアンカー（直流機の界磁磁極Nなど）は1行にまとめ、線を複数本出す */
   const g = groups[state.current];
   const byName = new Map();
-  for (const l of g.userData.labels){
+  const labs = (typeof g.userData.labels === 'function') ? g.userData.labels(state) : g.userData.labels;
+  for (const l of labs){
     if (!l.obj) continue;
     if (!byName.has(l.t)) byName.set(l.t, {name:l.t, color:l.c, nodes:[]});
     byName.get(l.t).nodes.push({obj:l.obj});
@@ -781,7 +1134,7 @@ function buildCtrl(){
   const id = state.current;
   const title=document.createElement('div'); title.className='title'; ctrlbar.appendChild(title);
   if (!id){ title.textContent='工場全景'; const d=document.createElement('div'); d.style.cssText='font-size:12.5px;color:#C5CCD3;align-self:center'; d.textContent='左から 変圧器 → 直流機 → 三相誘導電動機 → 同期機。ラベルか機器をクリックすると寄る。'; ctrlbar.appendChild(d); return; }
-  title.textContent = MACHINES[id].title;
+  title.textContent = MACHINES[id].title + (id==='transformer' ? ' / ' + ({core:'鉄心と巻線', bank:'三相結線', auto:'単巻変圧器'})[state.tfView] : '');
   ctrlbar.appendChild(group('回転', seg([[false,'▶ 回す'],[true,'❚❚ 止める']], 'paused')));
   if (id==='induction-machine'){
     ctrlbar.appendChild(range('滑り s', 0, 1, .01, 'slip', v=>v.toFixed(2)));
@@ -797,7 +1150,10 @@ function buildCtrl(){
     ctrlbar.appendChild(range('負荷（電機子電流）', 0, 1, .01, 'load', v=>v.toFixed(2)+' pu'));
     ctrlbar.appendChild(group('電機子反作用', seg([[false,'隠す'],[true,'表示']], 'react')));
   } else if (id==='transformer'){
-    ctrlbar.appendChild(range('負荷率 α', 0, 1.2, .01, 'tfLoad', v=>v.toFixed(2)));
+    ctrlbar.appendChild(group('見る対象', seg([['core','鉄心と巻線'],['bank','三相結線'],['auto','単巻変圧器']], 'tfView')));
+    if (state.tfView==='core') ctrlbar.appendChild(range('負荷率 α', 0, 1.2, .01, 'tfLoad', v=>v.toFixed(2)));
+    if (state.tfView==='bank') ctrlbar.appendChild(group('結線', seg([[false,'Δ-Δ（3台）'],[true,'V-V（2台）']], 'bankV')));
+    if (state.tfView==='auto') ctrlbar.appendChild(range('電圧比 V₂/V₁', 1.05, 2, .01, 'autoA', v=>v.toFixed(2)));
   }
   readoutEl=document.createElement('dl'); readoutEl.className='readout'; ctrlbar.appendChild(readoutEl);
   refreshCtrl();
@@ -807,15 +1163,81 @@ function syncCtrl(){
   ctrlbar.querySelectorAll('.cg[data-key]').forEach(g=>{ if(g._input){ g._input.value = state[g.dataset.key]; g.querySelector('.val').textContent = g._fmt(state[g.dataset.key]); } });
   ctrlbar.querySelectorAll('.seg[data-key]').forEach(d=>{ [...d.children].forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===String(state[d.dataset.key])))); });
 }
+let _lastTfSig = null;
+const tfSig = () => state.tfView + '/' + state.bankV;
 function refreshCtrl(){
   syncCtrl();
-  if (!readoutEl) return; const id=state.current; let rows=[];
-  if (id==='induction-machine'){ const Ns=120*state.im_f/state.im_p; const N=Ns*(1-state.slip); rows=[['Ns = 120f/p', Ns.toFixed(0)+' min⁻¹'],['N = (1−s)Ns', N.toFixed(0)+' min⁻¹'],['f₂ = s·f', (state.slip*state.im_f).toFixed(1)+' Hz'],['P₂ : Pc₂ : Po', '1 : '+state.slip.toFixed(2)+' : '+(1-state.slip).toFixed(2)]]; }
-  if (id==='synchronous'){ rows=[['滑り','0（磁界と同じ速さ）'],['負荷角 δ', state.delta+'°'+(state.delta>=90?' 脱調域':'')],['力率', state.If<.98?'遅れ（不足励磁）':state.If>1.02?'進み（過励磁）':'1 付近']]; }
-  if (id==='dc-machine'){ rows=[['電機子電流', state.load.toFixed(2)+' pu'],['中性軸のずれ', state.react? '表示中。電流に比例':'非表示']]; }
-  if (id==='transformer'){ const a=state.tfLoad; rows=[['鉄損 Pi','一定'],['銅損', (a*a).toFixed(2)+' × Pc'],['最大効率','Pi = α²·Pc']]; }
-  readoutEl.innerHTML = rows.map(([k,v])=>'<dt>'+k+'</dt><dd>'+v+'</dd>').join('');
-  drawMini();
+  if (state.current === 'transformer' && tfSig() !== _lastTfSig){
+    const viewChanged = !_lastTfSig || _lastTfSig.split('/')[0] !== state.tfView;
+    _lastTfSig = tfSig();
+    if (!viewChanged){ rebuildLabels(); }      // 結線だけ変わったら凡例を張り直す
+    else {
+      buildCtrl();               // 見る対象でスライダーの中身が変わる
+      rebuildLabels(); flyTo(VIEWS[tfViewKey()]);
+      return;                    // buildCtrl から refreshCtrl が呼び直される
+    }
+  }
+  if (!readoutEl) return; const id=state.current; let rows=[], note='';
+  if (id==='induction-machine'){
+    const Ns=120*state.im_f/state.im_p, N=Ns*(1-state.slip);
+    rows=[['Ns','Ns = 120f/p', Ns.toFixed(0)+' min⁻¹'],
+          ['N','N = (1−s)Ns', N.toFixed(0)+' min⁻¹'],
+          ['f2','f₂ = s·f', (state.slip*state.im_f).toFixed(2)+' Hz'],
+          ['ratio','P₂ : Pc₂ : Po', '1 : '+state.slip.toFixed(2)+' : '+(1-state.slip).toFixed(2)]];
+    note='※ Po は内部機械出力。軸出力はここから機械損を引く';
+  }
+  if (id==='synchronous'){
+    const sd = Math.sin(state.delta*Math.PI/180);
+    /* 力率は「Vカーブの谷より右か左か」で決まる。谷は負荷で右へ動くので、
+       固定しきい値で判定するとグラフと読み値が逆転する（全負荷で実際に逆転していた）。
+       谷の位置 IF0 は drawMini のVカーブと同じ式を使う。 */
+    const d = state.If - IF0();
+    rows=[['slip0','滑り','0（磁界と同じ速さ）'],
+          ['delta','負荷角 δ', state.delta+'°'],
+          ['P','出力 ∝ sinδ', sd.toFixed(2)+(state.delta>=90?'（限界）':'')],
+          ['pf','力率', d<-.05?'遅れ（不足励磁）':d>.05?'進み（過励磁）':'1 付近']];
+    note='※ P は1相あたり。円筒形・抵抗無視の基本モデル';
+  }
+  if (id==='dc-machine'){
+    rows=[['ia','電機子電流', state.load.toFixed(2)+' pu'],
+          ['shift','中性軸のずれ', state.react? '表示中（電流に比例）':'非表示']];
+    note='※ 3D のずれ角は模式表示。実機の値ではない';
+  }
+  if (id==='transformer' && state.tfView==='core'){
+    const a=state.tfLoad;
+    rows=[['fe','鉄損 Pi','ほぼ一定'],
+          ['cu','銅損 α²·Pc', (a*a).toFixed(3).replace(/0+$/,'').replace(/\.$/,'')+' × Pc'],
+          ['eta','効率 η', a<=0 ? '—（無負荷は出力0）' : (eta(a)*100).toFixed(1)+' %'],
+          ['eff','最大効率','Pi = α²·Pc']];
+    note='※ 効率は「全負荷出力＝全負荷銅損の10倍・力率1」とした例。鉄損一定は電源電圧と周波数が一定のとき';
+  }
+  if (id==='transformer' && state.tfView==='bank'){
+    const V = state.bankV;
+    rows=[['conn','結線', V?'V-V（2台）':'Δ-Δ（3台）'],
+          ['out','三相出力', V?'√3·P ≒ 1.73 P':'3 P'],
+          ['use','利用率（台数の定格に対して）', V?'√3/2 ≒ 86.6 %':'100 %'],
+          ['vsd','Δ結線3台に対して', V?'1/√3 ≒ 57.7 %':'100 %']];
+    note='※ P は変圧器1台の定格容量。分母が「2台の合計」か「Δ3台」かで数字が変わる';
+  }
+  if (id==='transformer' && state.tfView==='auto'){
+    const a = state.autoA;
+    rows=[['a','電圧比 V₂/V₁', a.toFixed(2)],
+          ['self','自己容量 ÷ 線路容量', ((a-1)/a*100).toFixed(1)+' %'],
+          ['formula','式', '(V₂−V₁)/V₂']];
+    note='※ 昇圧の場合。電圧比が1に近いほど小さい容量の変圧器で足りる';
+  }
+  readoutEl.innerHTML = rows.map(([k,l,v])=>'<dt data-k="'+k+'">'+l+'</dt><dd data-k="'+k+'">'+v+'</dd>').join('')
+    + (note? '<div class="rnote">'+note+'</div>' : '');
+  drawMini(); drawMini2(); drawComm(); syncCards();
+}
+/* 予想クイズが当てた読み値を数秒だけ光らせる。どの数字の話かを取り違えないため。 */
+let litTimer = null;
+function litReadout(key){
+  if (!key || !readoutEl) return;
+  readoutEl.querySelectorAll('.lit').forEach(e=>e.classList.remove('lit'));
+  readoutEl.querySelectorAll('[data-k="'+key+'"]').forEach(e=>e.classList.add('lit'));
+  clearTimeout(litTimer);
+  litTimer = setTimeout(()=>readoutEl && readoutEl.querySelectorAll('.lit').forEach(e=>e.classList.remove('lit')), 4000);
 }
 
 /* ---------- 右パネル ---------- */
@@ -839,43 +1261,349 @@ function renderPanel(){
       <ol class="flow">
         <li><b>過去問を解く</b><span>間違えた問題の単元（例: 1.2 三相誘導電動機 ▸ トルク特性）を控える</span></li>
         <li><b>Wikiで詳細を確認</b><span><a href="${WIKI}" target="_blank" rel="noopener">機械Wiki ↗</a> の該当節を読む。数値・式・過去問解説はWikiだけが持つ</span></li>
-        <li class="here"><b>ここでイメージを固める</b><span>機器を選ぶと、Wikiの節と過去問がその機器に紐づいて出る。スライダーで滑りや負荷角を動かして、式の変数が「どこの動き」かを見る</span></li>
+        <li class="here"><b>ここでイメージを固める</b><span>機器を選ぶと <b>予想クイズ</b> が出る。答えを選ぶと3Dと数値が実際にその状態へ動くので、式の変数が「どこの動き」なのかを目で確かめられる</span></li>
       </ol>
       <h3>機器を選ぶ</h3>
       <div class="overview-grid">${ORDER.map(k=>`<button data-id="${k}"><span class="num">${MACHINES[k].num}</span><span class="t">${MACHINES[k].title}</span><span class="c">過去問 ${cnt[k]}問</span><span class="s">${esc(MACHINES[k].kicker)}</span></button>`).join('')}</div>
-      <div class="note"><b>数値はここに書かない。</b>この3Dは形と動きだけを担当し、式の値・過去問の解答は機械Wiki側だけが正本として持つ。過去問台帳（${KAKOMON.length}問）はWikiの kikai-kakomon-topics.js から抜粋したもの。</div>`;
+      <div class="note"><b>使い方は3つだけ。</b>ドラッグで回す、ホイールで寄る、凡例の行に触れると部品を指す。<br>
+      <b>数値はここに書かない。</b>この3Dは形と動きだけを担当し、式の値・過去問の解答は機械Wiki側だけが正本として持つ。予想クイズの数値は自作の練習用の算数で、過去問の解答ではない。過去問台帳（${KAKOMON.length}問）はWikiの kikai-kakomon-topics.js から抜粋したもの。</div>`;
     panel.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>select(b.dataset.id));
     return;
   }
-  const m = MACHINES[id]; const st = STUDY[id];
+  const m = MACHINES[id], st = STUDY[id];
   const qs = KAKOMON.filter(q=>q.p===id);
   const bySec = {}; for (const q of qs) (bySec[q.sec] ||= []).push(q);
-  const secOrder = m.sections.map(s=>s[0]);
-  const extraSecs = Object.keys(bySec).filter(s=>!secOrder.includes(s));
-  const secLabel = s => (m.sections.find(x=>x[0]===s)||[])[1] || s;
-  const hasMini = id!=='dc-machine';
+  const secOrder = m.sections.map(x=>x[0]);
+  const extraSecs = Object.keys(bySec).filter(x=>!secOrder.includes(x));
+  const secLabel = x => (m.sections.find(y=>y[0]===x)||[])[1] || x;
+  const charts = (id==='dc-machine') ? '' :
+    `<canvas class="mini" id="mini" width="700" height="300"></canvas><p class="mini-cap" id="miniCap"></p>`
+    + (id==='synchronous' ? `<canvas class="mini" id="mini2" width="700" height="300" style="margin-top:10px"></canvas><p class="mini-cap" id="mini2Cap"></p>` : '');
   panel.innerHTML = `
     <div class="kicker">${esc(m.kicker)}</div>
     <h2><span class="num">${m.num}</span>${m.title}</h2>
+    <div class="oneliner"><small>30秒理解</small>${esc(st.oneLiner)}</div>
     <p class="lead">${esc(m.lead)}</p>
-    <h3>まず3つ</h3>
-    <ol class="points">${st.points.map(([k,d],i)=>`<li><span class="k">${i+1}</span><div><b>${esc(k)}</b><br><span>${esc(d)}</span></div></li>`).join('')}</ol>
+    <p class="viewnote" id="viewnote"></p>
+
+    <h3>電験で狙われるポイント</h3>
+    <ul class="exam">${st.exam.map(([n,f,w])=>`<li><span class="en">${esc(n)}</span><span class="ef">${esc(f)}</span><span class="ew">${mark(w)}</span></li>`).join('')}</ul>
+
+    <h3>予想してから動かす</h3>
+    <ol class="quiz" id="quiz">${st.predict.map((p,i)=>`
+      <li data-q="${i}">
+        <div class="qq"><span class="qn">Q${i+1}</span><span>${esc(p.q)}</span></div>
+        <div class="qopts">${p.opts.map((o,k)=>`<button data-o="${k}"><span class="mk">${'アイウエ'[k]}</span><span>${esc(o)}</span></button>`).join('')}</div>
+        <div class="qfb" hidden></div>
+      </li>`).join('')}</ol>
+
+    ${charts}
+
     <h3>見どころツアー <span style="font-family:var(--font-mono);font-weight:400">${st.tour.length}歩</span></h3>
     <div class="tour" id="tour"></div>
-    ${hasMini? `<canvas class="mini" id="mini" width="700" height="300"></canvas><p class="mini-cap" id="miniCap"></p>`:''}
+
     <h3>見えているもの</h3>
-    <ul class="parts">${m.parts.map(([c,n,d])=>`<li><span class="sw" style="background:${c}"></span><div><b>${esc(n)}</b>${d?`<br><span>${esc(d)}</span>`:''}</div></li>`).join('')}</ul>
-    <h3>Wikiの節へ</h3>
-    <ul class="secs">${m.sections.map(([s,l,why])=>`<li><a href="${wikiUrl(id,s)}" target="_blank" rel="noopener"><span>${esc(l)}</span><span class="cnt">${bySec[s]? '過去問 '+bySec[s].length : ''}</span><span class="why">${esc(why)}</span></a></li>`).join('')}</ul>
-    <h3>この機器の過去問 <span style="font-family:var(--font-mono);font-weight:400">${qs.length}問</span></h3>
-    ${[...secOrder.filter(s=>bySec[s]), ...extraSecs].map(s=>`
-      <div class="secgroup">${esc(secLabel(s))}</div>
-      <ul class="kak">${bySec[s].map(q=>`<li><span class="id">${q.s} 問${q.c}</span><span><a href="${wikiUrl(id,s)}" target="_blank" rel="noopener">${esc(q.t)}</a><span class="d" title="難易度 ${q.d}">${'●'.repeat(q.d)}</span></span></li>`).join('')}</ul>`).join('')}
+    <ul class="parts">${m.parts.map(([c,n,d])=>`<li><span class="sw" style="background:${c}"></span><div><b>${esc(n)}</b>${d?`<br><span>${mark(d)}</span>`:''}</div></li>`).join('')}</ul>
+
+    <h3>もう一歩</h3>
+    <div class="cards" id="cards">${(st.cards||[]).map(k=>`<details data-card="${k}"><summary>${esc(CARDS[k].t)}</summary><div class="cbody">${cardBody(k)}</div></details>`).join('')}</div>
+
     <h3>即答チェック</h3>
     <ul class="check">${st.check.map(([q,a])=>`<li><details><summary>${esc(q)}</summary><p>${esc(a)}</p></details></li>`).join('')}</ul>
+
+    <h3>次にやること</h3>
+    <div class="steps">
+      <div class="here"><span class="sn">1</span><span>3Dで構造と動きを確かめる<small>いま見ているところ</small></span></div>
+      <a href="${wikiUrl(id)}" target="_blank" rel="noopener"><span class="sn">2</span><span>機械Wikiで式と例題を確認 ↗<small>数値・導出・解説はWikiが正本</small></span></a>
+      <a href="${wikiUrl('study-log')}" target="_blank" rel="noopener"><span class="sn">3</span><span>過去問トラッカーで解く ↗<small>解けたら1へ戻る</small></span></a>
+    </div>
+
+    <h3>Wikiの節へ</h3>
+    <ul class="secs">${m.sections.map(([x,l,why])=>`<li><a href="${wikiUrl(id,x)}" target="_blank" rel="noopener"><span>${esc(l)}</span><span class="cnt">${bySec[x]? '過去問 '+bySec[x].length : ''}</span><span class="why">${mark(why)}</span></a></li>`).join('')}</ul>
+
+    <h3>この理解を使う過去問 <span style="font-family:var(--font-mono);font-weight:400">${qs.length}問</span></h3>
+    ${[...secOrder.filter(x=>bySec[x]), ...extraSecs].map(x=>`
+      <div class="secgroup">${esc(secLabel(x))}</div>
+      <ul class="kak">${bySec[x].map(q=>`<li><span class="id">${q.s} 問${q.c}</span><span><a href="${wikiUrl(id,x)}" target="_blank" rel="noopener">${esc(q.t)}</a><span class="d" title="難易度 ${q.d}">${'●'.repeat(q.d)}</span></span></li>`).join('')}</ul>`).join('')}
     <div class="note">過去問の行をクリックすると、その論点のWikiの節が開く。解説・答え・数値はWiki側。ここは形と動きを見る場所。</div>`;
+  bindQuiz(st);
+  bindCards();
   tourStep = 0; renderTour(false);
-  drawMini();
+  drawMini(); drawMini2(); drawComm();
+}
+
+/* 見えているものの説明だけ **強調** を許す（本文の意味は変えず、条件語を目立たせるため） */
+function mark(t){ return esc(t).replace(/\*\*(.+?)\*\*/g, '<b style="color:var(--ink)">$1</b>'); }
+
+/* ---------- 予想 → 操作 → 確認 ----------
+   選ぶ前に答えを見せない。選んだ瞬間に 3D と操作帯を実際にその状態へ動かし、
+   どの読み値の話かを光らせる。式の暗記を「見た動き」に結び直すのが狙い。 */
+function bindQuiz(st){
+  const box = document.getElementById('quiz'); if (!box) return;
+  box.querySelectorAll('li[data-q]').forEach(li=>{
+    const qi = +li.dataset.q, item = st.predict[qi];
+    const fb = li.querySelector('.qfb');
+    const btns = [...li.querySelectorAll('.qopts button')];
+    const answer = (k)=>{
+      const ok = k === item.ans;
+      btns.forEach((b,bi)=>{ b.disabled = true;
+        if (bi === item.ans) b.classList.add('ok');
+        else if (bi === k) b.classList.add('ng');
+        else b.classList.add('dim'); });
+      li.classList.add('done');
+      fb.hidden = false;
+      fb.innerHTML = '<span class="verdict '+(ok?'ok':'ng')+'">'+(ok?'正解':'惜しい')+'</span>'+esc(item.why)
+        + '<br><button class="again">もう一度やる</button>';
+      fb.querySelector('.again').onclick = ()=>{
+        btns.forEach(b=>{ b.disabled=false; b.classList.remove('ok','ng','dim'); });
+        li.classList.remove('done'); fb.hidden = true; fb.innerHTML='';
+      };
+      if (item.set) Object.assign(state, item.set);
+      refreshCtrl();
+      litReadout(item.hi);
+    };
+    btns.forEach((b,k)=>b.onclick = ()=>answer(k));
+  });
+}
+
+/* ---------- もう一歩カード ---------- */
+function cardBody(k){
+  if (k==='conv') return `
+    <p><b>そのままでは1つの回路として足せない。</b>一次と二次は巻数が違うので、電圧も電流も桁が違う。
+    そこで二次側の抵抗・リアクタンスを <b>a² 倍</b>して「一次側から見た値」にそろえる。これが一次側換算。
+    <b>部品が物理的に移動するわけではない</b>。計算の目線を一次側に統一しているだけ。</p>
+    <div class="segsm" id="convseg">
+      <button data-c="0" aria-pressed="true">① 実物</button>
+      <button data-c="1">② 一次側へ換算</button>
+      <button data-c="2">③ 1つの等価回路</button>
+    </div>
+    <div class="convwrap" id="convfig"></div>
+    <p id="convcap" style="font-size:12px;color:var(--ink-3);margin:2px 0 0"></p>
+    <div class="tbl"><table><tr><th>量</th><th>換算のしかた</th></tr>
+      <tr><td>二次抵抗 r₂</td><td>r₂′ = a²·r₂</td></tr>
+      <tr><td>二次漏れリアクタンス x₂</td><td>x₂′ = a²·x₂</td></tr>
+      <tr><td>二次電圧 V₂</td><td>V₂′ = a·V₂</td></tr>
+      <tr><td>二次電流 I₂</td><td>I₂′ = I₂ / a</td></tr></table></div>
+    <p>逆に<b>一次量を二次側へ換算</b>するときは向きが反転する。インピーダンスは ÷a²、電圧は ÷a、電流は ×a。
+    どちらへ換算しているのかを取り違えると係数が逆になるので、問題文の「○○側に換算した」を必ず読む。</p>
+    <p style="font-size:12px">電圧が a 倍・電流が 1/a 倍なので、インピーダンスは a² 倍。<b>電力は換算しても変わらない</b>のが確かめどころ。</p>`;
+  if (k==='test') return `
+    <div class="tbl"><table>
+      <tr><th></th><th>無負荷試験（開放試験）</th><th>短絡試験（インピーダンス試験）</th></tr>
+      <tr><td>二次側</td><td>開放</td><td>短絡</td></tr>
+      <tr><td>加える電圧</td><td>定格電圧</td><td>定格電流が流れる低い電圧</td></tr>
+      <tr><td>流れる電流</td><td>励磁電流だけ（小さい）</td><td>定格電流</td></tr>
+      <tr><td>電力計が読むもの</td><td>ほぼ<b>鉄損</b></td><td>ほぼ<b>銅損</b></td></tr>
+      <tr><td>求まるもの</td><td>励磁アドミタンス</td><td>%インピーダンス・巻線抵抗</td></tr>
+    </table></div>
+    <p><b>覚え方。</b>「定格<b>電圧</b>をかける＝<b>鉄</b>心の磁束が定格＝鉄損」「定格<b>電流</b>を流す＝<b>銅</b>線の発熱＝銅損」。
+    無負荷試験で銅損がほぼ出ないのは電流が小さいから、短絡試験で鉄損がほぼ出ないのは電圧が低く磁束が小さいから。</p>`;
+  if (k==='comm') return `
+    <p>電機子導体はN極の下とS極の下を交互に通るので、導体に出る起電力は<b>向きが反転しつづける</b>（上の波形）。
+    整流子は回転しながら導体とブラシの接続を切り替えるので、<b>ブラシの外側では向きがそろう</b>（下の波形）。</p>
+    <canvas class="convfig" id="commfig" width="700" height="300"></canvas>
+    <p style="font-size:12px;color:var(--ink-3)">3Dの電機子と同期して赤点が動く。整流子＝機械式の整流器と考えると分かりやすい。
+    導体数が多いほど下の波形の谷が浅くなり、直流に近づく（脈動が減る）。※波形は原理を示す模式図。</p>`;
+  if (k==='react') return `
+    <ul class="chain">
+      <li><b>負荷が増える</b>（電機子電流 Ia が大きくなる）</li>
+      <li><b>電機子起磁力が大きくなる</b>（3Dの赤い矢印が伸びる）</li>
+      <li><b>主磁束と合成されて磁束が傾く</b>（白い矢印）</li>
+      <li><b>電気的中性軸がずれる</b>（赤い面が灰の面から回る）</li>
+      <li><b>整流が悪化する</b>（ブラシで火花・整流子が傷む）</li>
+      <li><b>補極（電機子と直列）・補償巻線で打ち消す</b></li>
+    </ul>
+    <div class="meter"><i id="reactbar" style="width:0%"></i></div>
+    <p style="font-size:12px;color:var(--ink-3);margin:0" id="reactcap">操作帯の負荷スライダーを動かすと、この帯とずれの大きさが変わる。</p>
+    <p>補極を<b>電機子巻線と直列</b>に入れるのは、反作用が電機子電流に比例するから。
+    直列なら負荷が変わっても自動で釣り合う。補償巻線は磁極面の溝に入れて、より広く打ち消す。
+    <b>3Dの傾きは模式表示で、実機の角度ではない。</b></p>`;
+  if (k==='slip') return `
+    <div class="tbl"><table>
+      <tr><th></th><th>s = 0（同期速度）</th><th>s = 1（停止・始動時）</th></tr>
+      <tr><td>回転子</td><td>磁界と同じ速さ</td><td>止まっている</td></tr>
+      <tr><td>磁束を切るか</td><td>切らない</td><td>最も速く切る</td></tr>
+      <tr><td>二次周波数 f₂</td><td>0 Hz</td><td>f（電源と同じ）</td></tr>
+      <tr><td>二次誘導起電力</td><td>0</td><td>最大</td></tr>
+      <tr><td>二次電流</td><td>0</td><td>最大（始動電流）</td></tr>
+      <tr><td>トルク</td><td>0</td><td>始動トルク</td></tr>
+    </table></div>
+    <p><b>だから誘導機は、電動機として運転している限り同期速度に到達できない。</b>到達した瞬間にトルクが0になり、負荷や摩擦で必ず引き戻される。
+    「非同期機」と呼ばれるのはこのため。逆に s=1 の始動時は二次電流が最大になるので、
+    Y-Δ始動（巻線1相の電圧が1/√3・線電流1/3・トルクは電圧の2乗に比例して1/3）や、巻線形なら二次抵抗を足して抑える。</p>`;
+  if (k==='pz') return `
+    <p><b>短絡試験でやっていることは、内部インピーダンスを測ること。</b>二次を短絡して、
+    一次側の電圧を0から上げていき、<b>定格電流が流れたところで止める</b>。そのときの
+    電圧 Vs・電流 In・電力 Ps から、一次側に換算した値が全部出る。</p>
+    <div class="tbl"><table>
+      <tr><th>求めるもの</th><th>式</th><th>意味</th></tr>
+      <tr><td>インピーダンス Z</td><td>Z = Vs / In</td><td>巻線の抵抗と漏れリアクタンスの合成</td></tr>
+      <tr><td>抵抗 R</td><td>R = Ps / In²</td><td>電力計が読んだ値＝銅損から出る</td></tr>
+      <tr><td>漏れリアクタンス X</td><td>X = √(Z² − R²)</td><td>直角に足されているので三平方</td></tr>
+      <tr><td>百分率インピーダンス %Z</td><td>%Z = Vs / Vn × 100</td><td>定格電圧の何%で定格電流が流れたか</td></tr>
+    </table></div>
+    <p><b>%Z は「定格電流を流すのに必要な電圧の割合」。</b>だから定格電圧をかけたまま短絡すると、
+    電流はその<b>逆数倍</b>まで伸びる。</p>
+    <p style="font-size:14px;text-align:center;font-family:var(--font-mono);color:var(--accent-ink);
+       border:1px solid var(--line-2);border-radius:4px;padding:8px;margin:8px 0">
+       Is = In × 100 / %Z</p>
+    <p>%Z が 4% なら短絡電流は定格の25倍、5% なら20倍。<b>%Z が小さい変圧器は電圧変動率が小さくて
+    使いやすいが、短絡電流は大きくなる</b>ので遮断器の選定がきびしくなる。この表裏の関係が
+    そのまま問われる。電圧変動率の近似式 ε ≒ p·cosθ + q·sinθ の p・q も、
+    この試験で出した R・X を定格に対する%にしたもの。とくに <b>p ＝ 全負荷銅損 ÷ 定格容量 × 100</b> と書けるので、銅損が分かっていれば短絡試験を経由せずに p が出る。</p>`;
+  if (k==='eff') return `
+    <p><b>効率は「出力 ÷ 入力」。</b>入力は出力に損失を足したものなので、こう書ける。</p>
+    <p style="font-size:14px;text-align:center;font-family:var(--font-mono);color:var(--accent-ink);
+       border:1px solid var(--line-2);border-radius:4px;padding:8px;margin:8px 0">
+       η = α·S·cosθ / (α·S·cosθ ＋ Pi ＋ α²·Pc) × 100 [%]</p>
+    <p>α は負荷率、S は定格容量、cosθ は負荷の力率、Pi は鉄損、Pc は全負荷銅損。
+    <b>力率が下がると分子だけが小さくなるので効率は下がる</b>（損失は変わらない）。
+    ここがよく問われる。</p>
+    <div class="tbl"><table>
+      <tr><th>種類</th><th>分母・分子</th><th>使いどころ</th></tr>
+      <tr><td><b>通常効率</b></td><td>出力[W] ÷ 入力[W]</td><td>ある瞬間の負荷での効率</td></tr>
+      <tr><td><b>全日効率</b></td><td>1日の出力<b>電力量</b> ÷ 1日の入力<b>電力量</b></td><td>鉄損は24時間ぶん（24·Pi）、銅損は負荷があった時間ぶんだけ。軽負荷の時間が長い配電用では鉄損の小さい機種が有利</td></tr>
+      <tr><td><b>規約効率</b></td><td>損失を実測ではなく<b>決められた方法で計算</b>して出す</td><td>巻線抵抗は<b>75 ℃</b>に換算する決まり。実測が難しい大型機で使う</td></tr>
+    </table></div>
+    <p><b>損失の分類。</b>どれが負荷で変わり、どれが変わらないかで覚える。</p>
+    <div class="tbl"><table>
+      <tr><th>区分</th><th>中身</th><th>負荷との関係</th></tr>
+      <tr><td><b>無負荷損</b>（鉄損）</td><td>ヒステリシス損 ＋ 渦電流損</td><td>電圧と周波数が一定ならほぼ一定</td></tr>
+      <tr><td rowspan="2"><b>負荷損</b></td><td>銅損（巻線抵抗による）</td><td>電流の2乗＝負荷率の2乗</td></tr>
+      <tr><td><b>漂遊負荷損</b>（漏れ磁束がタンクや金具に作る渦電流）</td><td>同じく負荷電流の2乗におよそ比例</td></tr>
+    </table></div>
+    <p><b>電圧を一定にしたまま周波数を変えると鉄損はどうなるか。</b>
+    磁束密度は Bm ∝ V/f なので、周波数を上げると磁束密度は下がる。
+    ヒステリシス損は Ph ∝ f·Bm^1.6 なので <b>f が上がると減り</b>、
+    渦電流損は Pe ∝ f²·Bm² なので f が打ち消し合って <b>電圧だけで決まり周波数によらない</b>。
+    合計の鉄損は周波数を上げるとやや減る。「鉄損は一定」と言えるのは
+    <b>電圧と周波数の両方が一定のとき</b>だけ、というのはこの意味。</p>
+    <p><b>返還負荷法。</b>大型変圧器の温度上昇試験で、同じものを2台向かい合わせに接続し、
+    <b>電源からは損失分だけ</b>を供給する方法。一方の巻線に定格電圧をかけて鉄損を、
+    もう一方に電圧を加えて定格電流を循環させて銅損を供給する。
+    定格容量ぶんの電源を用意しなくて済むのが利点。</p>`;
+  if (k==='conn3') return `
+    <p><b>まず相と線の関係。</b>ここを取り違えると結線の話が全部ずれる。</p>
+    <div class="tbl"><table>
+      <tr><th></th><th>線間電圧と相電圧</th><th>線電流と相電流</th></tr>
+      <tr><td><b>Y（星形）</b></td><td>線間 = <b>√3 ×</b> 相電圧</td><td>線電流 = 相電流</td></tr>
+      <tr><td><b>Δ（三角）</b></td><td>線間 = 相電圧</td><td>線電流 = <b>√3 ×</b> 相電流</td></tr>
+    </table></div>
+    <p><b>Y は中性点が出せる。Δ は第3調波を環流させられる。</b>この2つの長所を組み合わせるので、
+    実用では片側をY、片側をΔにすることが多い。</p>
+    <div class="tbl"><table>
+      <tr><th>結線</th><th>中性点</th><th>第3調波</th><th>角変位</th><th>特徴</th></tr>
+      <tr><td><b>Δ-Δ</b></td><td>出せない</td><td>Δ内を環流して逃げる</td><td>0°</td><td>1台故障してもV結線で運転を続けられる</td></tr>
+      <tr><td><b>Y-Y</b></td><td>両側で出せる</td><td><b>逃げ道が無く波形がひずむ</b></td><td>0°</td><td>単独では使いにくい。三次にΔ（安定巻線）を足す</td></tr>
+      <tr><td><b>Δ-Y / Y-Δ</b></td><td>Y側で出せる</td><td>Δ側で環流して逃げる</td><td><b>30°</b></td><td>両方の長所が取れる。昇圧・降圧でよく使う</td></tr>
+    </table></div>
+    <p><b>角変位が違う結線どうしは並行運転できない。</b>Δ-Δ（0°）と Δ-Y（30°）をつなぐと
+    30°の位相差で循環電流が流れる。並行運転の条件に「角変位が同じ」が入るのはこのため。</p>
+    <hr style="border:0;border-top:1px solid var(--line-2);margin:12px 0">
+    <p><b>スコット結線は三相を二相に変える。</b>変圧器2台で組み、
+    <b>主座（M座）</b>と<b>T座</b>と呼ぶ。</p>
+    <ul style="margin:6px 0 8px;padding-left:20px">
+      <li>主座変圧器の一次巻線を三相の2線間につなぎ、その<b>中点</b>にT座変圧器の一次巻線をつなぐ</li>
+      <li>T座変圧器の一次巻数は主座の <b>√3/2</b>（≒0.866）</li>
+      <li>二次側に、位相が<b>90°ずれた二相</b>が得られる</li>
+    </ul>
+    <p>交流電気鉄道のき電や、大容量の単相負荷（電気炉など）を三相系統につなぐときに使う。
+    単相負荷をそのまま三相につなぐと不平衡になるが、スコット結線なら
+    二相に分けて偏りを抑えられる。<b>数字は「T座は √3/2」と「二相の位相差は90°」の2つ</b>を押さえる。</p>`;
+  if (k==='exc') return `
+    <p><b>無負荷でも流れている電流（励磁電流 I₀）は、性質の違う2つの和。</b></p>
+    <div class="tbl"><table>
+      <tr><th>成分</th><th>位相</th><th>役割</th></tr>
+      <tr><td><b>鉄損電流</b> Iw</td><td>電圧と同相</td><td>鉄損として消費される。Pi = V·Iw</td></tr>
+      <tr><td><b>磁化電流</b> Iμ</td><td>電圧より90°遅れ</td><td>鉄心の磁束を作る。電力は消費しない</td></tr>
+    </table></div>
+    <p>2つは直角なので I₀ = √(Iw² + Iμ²)。実機では Iμ のほうがずっと大きく、励磁電流は<b>ほぼ遅れ</b>になる。</p>
+    <p><b>磁化電流は正弦波にならない。</b>鉄心が飽和するため波形がひずみ、<b>第3調波</b>を多く含む。
+    Δ結線があると第3調波が三角の中を環流して外に出ないので電圧波形が整う。
+    Y-Y結線が単独では嫌われ、Δ巻線（安定巻線）を足すのはこのため。</p>
+    <hr style="border:0;border-top:1px solid var(--line-2);margin:12px 0">
+    <p><b>並行運転の条件</b>（1つでも外れると循環電流が流れる）。</p>
+    <div class="tbl"><table>
+      <tr><th>条件</th><th>外れると</th></tr>
+      <tr><td>極性が同じ</td><td>大きな短絡電流が流れる</td></tr>
+      <tr><td>変圧比（巻数比）が等しい</td><td>電圧差で循環電流が流れる</td></tr>
+      <tr><td>%インピーダンスが等しい</td><td>負荷の分担が偏る</td></tr>
+      <tr><td>三相では角変位・相回転が同じ</td><td>位相差で循環電流が流れる</td></tr>
+    </table></div>
+    <p><b>負荷の分担は %Z の逆比。</b>定格容量 P₁・P₂、百分率インピーダンス %z₁・%z₂ なら
+    分担比は <b>(P₁/%z₁) : (P₂/%z₂)</b>。%Z が小さい変圧器ほど多く負担するので、
+    %Z の差が大きいと片方が先に定格に達し、合計では定格容量を使い切れない。</p>` ;
+  if (k==='vconn') return `
+    <p><b>V結線でいちばん間違えるのは「何に対する比か」。</b>同じ数字を2通りの分母で聞かれる。</p>
+    <div class="tbl"><table>
+      <tr><th>問われ方</th><th>分母</th><th>値</th><th>意味</th></tr>
+      <tr><td><b>利用率</b></td><td>残った2台の定格容量の合計 2P</td><td>√3/2 ≒ <b>86.6%</b></td><td>2台の設備をどれだけ使い切れるか</td></tr>
+      <tr><td><b>出力比</b>（Δ→V）</td><td>Δ結線3台の出力 3P</td><td>1/√3 ≒ <b>57.7%</b></td><td>1台外したら出力がどれだけ落ちるか</td></tr>
+    </table></div>
+    <p>V結線の三相出力は <b>√3·P</b>（P は1台の定格容量）。ここから 2P で割れば利用率、3P で割れば出力比。
+    3Dで「見る対象 → 三相結線」に切り替え、Δ-Δ と V-V を行き来すると、3台目が実際に消えても
+    三相のまま送れていることが確かめられる。Δ-Δ運転中に1台が故障したらV結線に切り替えて運転を続けられる、
+    というのがこの結線の値打ち。</p>
+    <p><b>V結線では、各変圧器の巻線に線電流がそのまま流れる。</b>Δ結線なら巻線には線電流の 1/√3 しか流れないので、
+    同じ線電流で比べると V結線の1台あたりの銅損は Δ結線の3倍（電流が√3倍→2乗で3倍）になる。
+    2台ぶんの負荷損を聞かれたら、線電流をそのまま使って 2·I²·r と計算する。</p>
+    <p><b>単巻変圧器は「1つの巻線の途中から取り出す」。</b>一次と二次が巻線を共有するので、
+    変圧器が自分で受け持つ容量（自己容量）は、電圧を足す直列巻線の分だけで済む。</p>
+    <div class="tbl"><table>
+      <tr><th>量</th><th>式</th></tr>
+      <tr><td>線路容量（負荷に送る容量）</td><td>Vh · I</td></tr>
+      <tr><td>自己容量（変圧器の大きさ）</td><td>(Vh − Vl) · I</td></tr>
+      <tr><td>比</td><td>(Vh − Vl) / Vh</td></tr>
+      <tr><td><b>直列巻線を流れる電流</b></td><td>二次電流 I₂ がそのまま</td></tr>
+      <tr><td><b>分路巻線を流れる電流</b></td><td>I₁ − I₂（一次と二次の差）</td></tr>
+    </table></div>
+    <p>分母は<b>高い方の電圧 Vh</b>。低い方で割る誤りが多い。電圧比が1に近いほど比は小さくなり、
+    小さな変圧器で大きな容量を送れる。逆に電圧比が大きいと利点が薄れ、
+    一次と二次が電気的につながっているので<b>低圧側にも高圧が現れる危険</b>がある点も出題される。</p>`;
+  if (k==='cmp') return `
+    <div class="tbl"><table>
+      <tr><th>項目</th><th>誘導機</th><th>同期機</th></tr>
+      <tr><td>回転速度</td><td>Ns より少し遅い（電動機運転のとき。s&lt;0 の発電運転では Ns より速い）</td><td>Ns と同じ</td></tr>
+      <tr><td>滑り</td><td>s &gt; 0</td><td>s = 0</td></tr>
+      <tr><td>回転子の励磁</td><td>電磁誘導（自分で誘導される）</td><td>直流励磁・永久磁石</td></tr>
+      <tr><td>負荷が増えると</td><td>速度が落ちる（s が増える）</td><td>負荷角 δ が増える</td></tr>
+      <tr><td>力率の調整</td><td>原則できない（遅れ）</td><td>界磁電流でできる</td></tr>
+      <tr><td>始動</td><td>自力で始動できる</td><td>そのままでは始動しない（制動巻線などが要る）</td></tr>
+    </table></div>
+    <p>試験では<b>「速度が変わるか、角度が変わるか」</b>で切り分けると迷わない。
+    誘導機は負荷が増えると遅くなり、同期機は遅くならずに角度がつく。
+    力率を調整できるのは同期機だけで、これが同期調相機の役割。</p>`;
+  return '';
+}
+function bindCards(){
+  const cs = document.getElementById('cards'); if (!cs) return;
+  const seg = document.getElementById('convseg');
+  if (seg){
+    seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      seg.querySelectorAll('button').forEach(c=>c.setAttribute('aria-pressed', String(c===b)));
+      drawConv(+b.dataset.c);
+    });
+    drawConv(0);
+  }
+  syncCards();
+}
+/* 状態が変わったらカード内の連動表示だけ更新する（作り直さない＝開閉状態を保つ） */
+const VIEWNOTE = {
+  core:'',
+  bank:'いま見ているのは<b>単相変圧器3台のバンク</b>。三相は1台の三相変圧器でも、単相3台の組み合わせでも作れる。操作帯の「結線」でΔ-ΔとV-Vを行き来すると、3台目が実際に消える。',
+  auto:'いま見ているのは<b>単巻変圧器</b>。一次と二次で巻線を分けず、1つの巻線の途中から取り出している。下の橙が共通部分（分路巻線）、上の緑が電圧を足す直列巻線。',
+};
+function syncCards(){
+  const vn = document.getElementById('viewnote');
+  if (vn) vn.innerHTML = (state.current==='transformer') ? (VIEWNOTE[state.tfView]||'') : '';
+  const bar = document.getElementById('reactbar');
+  if (bar){
+    bar.style.width = Math.round(state.load*100)+'%';
+    const cap = document.getElementById('reactcap');
+    if (cap) cap.textContent = state.react
+      ? '負荷 '+state.load.toFixed(2)+' pu。3Dの赤い矢印と中性軸のずれがこの帯に対応する。'
+      : '操作帯で「電機子反作用：表示」に切り替えると、3D側にもずれが出る。';
+  }
 }
 
 /* ---------- ツアー ---------- */
@@ -919,7 +1647,7 @@ function drawMini(){
   } else if (state.current==='synchronous'){
     axes(); ctx.fillStyle=ink3; ctx.fillText('If →', R-60, B+30); ctx.fillText('Ia', L-40, T+10); ctx.fillText('遅れ', L+20, B+30); ctx.fillText('進み', R-140, B+30);
     const xOf = If => L + (If-.3)/1.4*(R-L);
-    const Ia = (If,P) => { const If0 = .85 + P*.3; return Math.hypot(P*.7, 1.6*(If-If0)); };
+    const Ia = (If,P) => Math.hypot(P*.7, 1.6*(If - IF0(P)));
     for (const P of [0,.5,1]){ const sel = P===state.syncP; ctx.strokeStyle = sel? acc : ink3; ctx.setLineDash(sel?[]:[4,6]); ctx.beginPath(); for (let i=0;i<=140;i++){ const If=.3+i/100; const y=B - Ia(If,P)/1.6*(B-T); i? ctx.lineTo(xOf(If),y): ctx.moveTo(xOf(If),y);} ctx.stroke(); }
     ctx.setLineDash([2,4]); ctx.strokeStyle=steel; ctx.beginPath(); ctx.moveTo(xOf(.85), B); ctx.lineTo(xOf(1.15), B-0.7/1.6*(B-T)); ctx.stroke(); ctx.setLineDash([]);
     const y = B - Ia(state.If, state.syncP)/1.6*(B-T); ctx.fillStyle=acc; ctx.beginPath(); ctx.arc(xOf(state.If), y, 8, 0, Math.PI*2); ctx.fill();
@@ -933,33 +1661,184 @@ function drawMini(){
     ctx.strokeStyle=acc; ctx.beginPath(); for (let i=0;i<=120;i++){ const a=i/100; const y=yOf(Pc*a*a); i? ctx.lineTo(xOf(a),y): ctx.moveTo(xOf(a),y);} ctx.stroke();
     const am = Math.sqrt(Pi/Pc); ctx.strokeStyle=steel; ctx.setLineDash([2,4]); ctx.beginPath(); ctx.moveTo(xOf(am), B); ctx.lineTo(xOf(am), yOf(Pi)); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle=acc; ctx.beginPath(); ctx.arc(xOf(a0), yOf(Pc*a0*a0), 8, 0, Math.PI*2); ctx.fill();
+    /* 効率曲線（右目盛 80〜95%）。損失の交点と効率の山が同じ負荷率に来ることを重ねて見せる */
+    const eOf = v => B - (v-.80)/.15*(B-T);
+    ctx.strokeStyle=steel; ctx.lineWidth=2; ctx.beginPath();
+    for (let i=1;i<=120;i++){ const a=i/100; const y=eOf(Math.min(.95, Math.max(.80, eta(a)))); i===1? ctx.moveTo(xOf(a),y): ctx.lineTo(xOf(a),y); }
+    ctx.stroke(); ctx.lineWidth=2.5;
+    if (a0>0){ ctx.fillStyle=steel; ctx.beginPath(); ctx.arc(xOf(a0), eOf(Math.min(.95,Math.max(.80,eta(a0)))), 7, 0, Math.PI*2); ctx.fill(); }
     ctx.fillStyle=ink; ctx.fillText('鉄損 Pi（一定）', xOf(.02), yOf(Pi)-8); ctx.fillText('銅損 α²Pc', xOf(.8), yOf(Pc*.8*.8)-16);
-    ctx.fillStyle=steel; ctx.fillText('Pi=α²Pc', xOf(am)-40, B-6);
-    cap.textContent = '鉄損は負荷率に無関係、銅損は負荷率の2乗。両者が等しくなる負荷率で効率が最大。比率は例示で、実値はWikiの例題を見る。';
+    ctx.fillStyle=steel; ctx.fillText('Pi=α²Pc', xOf(am)-40, B-6); ctx.fillText('効率 η', xOf(.06), eOf(.93));
+    ctx.fillStyle=ink3; ctx.fillText('95%', R-58, T+22); ctx.fillText('80%', R-58, B-6);
+    cap.textContent = '橙が損失（鉄損は一定・銅損は負荷率の2乗）、青が効率（右目盛 80〜95%）。'
+      + '損失の2本が交わる負荷率で効率が山になる。比率は例示で、実値はWikiの例題を見る。';
   }
 }
 
+/* Vカーブの谷（力率1になる界磁電流）。負荷が増えると右上へ動く。
+   グラフと読み値の両方がこの1か所を見る。 */
+function IF0(P){ return .85 + (P===undefined? state.syncP : P)*.3; }
+
+/* 変圧器の効率。図と読み値が同じ式を見るように1か所に置く。
+   Pi・Pc は図の比率（0.25 / 1）に合わせ、全負荷出力は全負荷銅損の10倍・力率1とした例。
+   絶対値ではなく「負荷率で効率がどう動くか」を見るための模式。 */
+const TF_PI = .25, TF_PC = 1, TF_S = 10;
+function eta(a){ const out = a*TF_S; return out <= 0 ? 0 : out/(out + TF_PI + a*a*TF_PC); }
+
+/* ---------- 同期機の P-δ 曲線 ---------- */
+function drawMini2(){
+  const c = document.getElementById('mini2'); if (!c || state.current!=='synchronous') return;
+  const ctx = c.getContext('2d'), W=c.width, H=c.height; ctx.clearRect(0,0,W,H);
+  const css = getComputedStyle(document.documentElement);
+  const ink=css.getPropertyValue('--ink').trim(), ink3=css.getPropertyValue('--ink-3').trim(),
+        acc=css.getPropertyValue('--accent').trim(), line=css.getPropertyValue('--line').trim(),
+        steel=css.getPropertyValue('--steel').trim();
+  ctx.font='22px "JetBrains Mono", monospace'; ctx.lineWidth=2.5;
+  const L=64,R=W-20,T=26,B=H-44;
+  const xOf = d => L + d/180*(R-L), yOf = v => B - v*(B-T);
+  /* δ>90° は運転を保てない領域。薄く塗って境界を示す */
+  ctx.fillStyle=line; ctx.globalAlpha=.35; ctx.fillRect(xOf(90),T,xOf(180)-xOf(90),B-T); ctx.globalAlpha=1;
+  ctx.strokeStyle=line; ctx.beginPath(); ctx.moveTo(L,B); ctx.lineTo(R,B); ctx.moveTo(L,T); ctx.lineTo(L,B); ctx.stroke();
+  ctx.strokeStyle=acc; ctx.beginPath();
+  for (let i=0;i<=180;i++){ const y=yOf(Math.sin(i*Math.PI/180)); i? ctx.lineTo(xOf(i),y): ctx.moveTo(xOf(i),y); }
+  ctx.stroke();
+  ctx.setLineDash([3,5]); ctx.strokeStyle=steel;
+  ctx.beginPath(); ctx.moveTo(xOf(90),B); ctx.lineTo(xOf(90),yOf(1)); ctx.stroke(); ctx.setLineDash([]);
+  const d=state.delta, sd=Math.sin(d*Math.PI/180);
+  ctx.fillStyle=acc; ctx.beginPath(); ctx.arc(xOf(d), yOf(sd), 8, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle=ink3;
+  ctx.fillText('0°', L-10, B+30); ctx.fillText('90°', xOf(90)-24, B+30); ctx.fillText('180°', R-46, B+30);
+  ctx.fillText('P', L-42, T+10); ctx.fillText('δ', R-16, B+30);
+  ctx.fillText('保てない', xOf(96), T+22);
+  ctx.fillStyle=ink; ctx.fillText('δ='+d+'°  sinδ='+sd.toFixed(2), L+14, T+12);
+  const cap=document.getElementById('mini2Cap');
+  if (cap) cap.textContent='出力と負荷角：P =(E·V/Xs)·sinδ。δ=90°で最大で、そこを超えると引き戻す力が減り同期を保てない（網掛けの領域。スライダーは90°までで、ここへは入れない）。'
+    + '※円筒形（非突極）で電機子抵抗を無視した基本モデル。突極機はリラクタンストルクの項が加わるので同じ式にはならない。';
+}
+
+/* ---------- 変圧器：一次側換算の3段階（SVG） ---------- */
+const CONV_CAP = [
+  '実物。一次と二次は巻数が違うので、電圧も電流も桁が違う。このままでは1本の回路として足せない。',
+  '二次側の r₂・x₂ を a² 倍して一次側の目盛りにそろえる。部品が動くのではなく、見る目線を一次側に統一している。',
+  '換算後は変圧器を理想変圧器とみなせるので、1本の直列回路として一度に計算できる。これが一次側換算の目的。',
+];
+function drawConv(stage){
+  const host = document.getElementById('convfig'); if (!host) return;
+  const cap = document.getElementById('convcap'); if (cap) cap.textContent = CONV_CAP[stage];
+  const A='var(--accent)', I='var(--ink)', M2='var(--ink-3)', L='var(--line)';
+  const box=(x,y,w,h,t,fill)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${fill||'none'}" stroke="${I}" stroke-width="1.5"/>`
+    + `<text x="${x+w/2}" y="${y+h/2+5}" text-anchor="middle" font-size="14" fill="${I}">${t}</text>`;
+  const wire=(x1,y1,x2,y2,col)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col||I}" stroke-width="1.4"/>`;
+  const lab=(x,y,t,col,anchor)=>`<text x="${x}" y="${y}" text-anchor="${anchor||'middle'}" font-size="13" fill="${col||M2}">${t}</text>`;
+  const coil=(x,y,t)=>`<rect x="${x}" y="${y}" width="10" height="46" rx="5" fill="none" stroke="${I}" stroke-width="1.6"/>`
+    + `<text x="${x+5}" y="${y-7}" text-anchor="middle" font-size="13" fill="${M2}">${t}</text>`;
+  let g='';
+  if (stage===0){
+    g = wire(20,40,60,40)+box(60,28,44,24,'r₁')+wire(104,40,120,40)+box(120,28,44,24,'x₁')+wire(164,40,196,40)
+      + coil(196,17,'N₁') + `<line x1="214" y1="12" x2="214" y2="68" stroke="${M2}" stroke-width="3"/><line x1="220" y1="12" x2="220" y2="68" stroke="${M2}" stroke-width="3"/>`
+      + coil(228,17,'N₂')
+      + wire(238,40,268,40)+box(268,28,44,24,'x₂')+wire(312,40,328,40)+box(328,28,44,24,'r₂')+wire(372,40,404,40)
+      + box(404,22,52,36,'負荷')
+      + wire(20,40,20,96)+wire(20,96,196,96)+wire(238,96,404,96)+wire(404,96,404,58)+wire(196,96,196,52)+wire(238,96,238,52)
+      + lab(217,86,'巻数比 a = N₁/N₂',A) + lab(20,26,'V₁',M2) + lab(456,44,'V₂',M2,'start');
+  } else if (stage===1){
+    g = wire(20,40,60,40)+box(60,28,44,24,'r₁')+wire(104,40,120,40)+box(120,28,44,24,'x₁')+wire(164,40,192,40)
+      + box(192,28,50,24,'x₂′',"var(--accent-soft)")+wire(242,40,248,40)+box(248,28,50,24,'r₂′',"var(--accent-soft)")
+      + wire(298,40,330,40)
+      + coil(330,17,'N₁') + `<line x1="348" y1="12" x2="348" y2="68" stroke="${M2}" stroke-width="3"/><line x1="354" y1="12" x2="354" y2="68" stroke="${M2}" stroke-width="3"/>`
+      + coil(362,17,'N₂')
+      + wire(372,40,408,40)+box(408,22,52,36,'負荷′',"var(--accent-soft)")
+      + wire(20,40,20,96)+wire(20,96,330,96)+wire(372,96,408,96)+wire(408,96,408,58)+wire(330,96,330,52)+wire(372,96,372,52)
+      + `<path d="M300 74 C280 92 250 92 230 74" stroke="${A}" stroke-width="1.6" fill="none" marker-end="url(#ar)"/>`
+      + lab(265,104,'二次側の r₂・x₂ を a² 倍して一次側へ',A)
+      + lab(351,86,'理想変圧器（a:1）',M2);
+  } else {
+    g = wire(20,40,56,40)+box(56,28,40,24,'r₁')+wire(96,40,110,40)+box(110,28,40,24,'x₁')+wire(150,40,196,40)
+      + wire(196,40,196,70)+box(172,70,48,26,'励磁')+wire(196,96,196,110)
+      + wire(196,40,248,40)+box(248,28,46,24,'x₂′',"var(--accent-soft)")+wire(294,40,300,40)+box(300,28,46,24,'r₂′',"var(--accent-soft)")
+      + wire(346,40,392,40)+box(392,22,56,36,'負荷′',"var(--accent-soft)")
+      + wire(20,40,20,110)+wire(20,110,448,110)+wire(448,110,448,58)
+      + lab(234,16,'一次側から見た1本の回路',A)
+      + lab(20,26,'V₁',M2);
+  }
+  host.innerHTML = `<svg class="convfig" viewBox="0 0 480 124" role="img" aria-label="一次側換算の段階図">`
+    + `<defs><marker id="ar" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">`
+    + `<path d="M0 0 L7 3.5 L0 7 z" fill="${A}"/></marker></defs>${g}</svg>`;
+}
+
+/* ---------- 直流機：整流子の波形（3Dの回転と同期） ---------- */
+let commPhase = 0;
+function drawComm(){
+  const c = document.getElementById('commfig'); if (!c || state.current!=='dc-machine') return;
+  const ctx=c.getContext('2d'), W=c.width, H=c.height; ctx.clearRect(0,0,W,H);
+  const css=getComputedStyle(document.documentElement);
+  const ink=css.getPropertyValue('--ink').trim(), ink3=css.getPropertyValue('--ink-3').trim(),
+        acc=css.getPropertyValue('--accent').trim(), line=css.getPropertyValue('--line').trim(),
+        steel=css.getPropertyValue('--steel').trim();
+  ctx.font='20px "JetBrains Mono", monospace'; ctx.lineWidth=2.4;
+  const L=70,R=W-16, A1=78, A2=214, amp=46;
+  const xOf = u => L + u*(R-L);
+  const trace=(yc, f, col)=>{ ctx.strokeStyle=col; ctx.beginPath();
+    for (let i=0;i<=240;i++){ const u=i/240, y=yc - f(u)*amp; i? ctx.lineTo(xOf(u),y): ctx.moveTo(xOf(u),y); } ctx.stroke(); };
+  for (const [yc,t] of [[A1,'導体の起電力'],[A2,'ブラシ間の電圧']]){
+    ctx.strokeStyle=line; ctx.beginPath(); ctx.moveTo(L,yc); ctx.lineTo(R,yc); ctx.stroke();
+    ctx.fillStyle=ink3; ctx.fillText(t, L, yc-amp-14);
+  }
+  trace(A1, u=>Math.sin(u*4*Math.PI), steel);
+  trace(A2, u=>Math.abs(Math.sin(u*4*Math.PI)), acc);
+  const u = ((commPhase/(2*Math.PI))*2) % 1;
+  for (const [yc,f,col] of [[A1,x=>Math.sin(x*4*Math.PI),steel],[A2,x=>Math.abs(Math.sin(x*4*Math.PI)),acc]]){
+    ctx.fillStyle='#D24A43'; ctx.beginPath(); ctx.arc(xOf(u), yc - f(u)*amp, 7, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.fillStyle=ink3; ctx.fillText('0', L-24, A1+7); ctx.fillText('0', L-24, A2+7);
+  ctx.fillStyle=ink; ctx.fillText('整流子が向きを反転', xOf(.52), A2+amp+28);
+}
+
 /* ---------- 選択 ---------- */
+const backBtn = document.getElementById('backbtn');
+backBtn.onclick = ()=>select(null);
 function select(id){
   state.current = id;
+  backBtn.classList.toggle('hidden', !id);
   if (reduced){ const v = VIEWS[id||'overview']; cam.target.set(...v.target); cam.dist=v.dist; cam.theta=v.theta; cam.phi=v.phi; cam.want=null; }
-  else flyTo(VIEWS[id||'overview']);
+  else flyTo(VIEWS[(id==='transformer') ? tfViewKey() : (id||'overview')]);
+  _lastTfSig = (id==='transformer') ? tfSig() : null;
   renderChips(); buildCtrl(); renderPanel(); rebuildLabels();
   panel.scrollTop = 0;
   try { history.replaceState(null, '', id ? '#'+id : location.pathname); } catch (e) {}
 }
 
 /* ---------- ループ ---------- */
-function resize(){ const w=stage.clientWidth, h=stage.clientHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
-addEventListener('resize', resize); resize();
-let last = performance.now();
+/* 描画する画素数に上限を置く。高DPIの大画面では w*h*dpr² が1千万画素を超え、
+   操作に対する反応が目に見えて鈍る（実測: 2560x1300 で 2fps、負荷を落とすと 21fps）。
+   スマホのように面積が小さいときは上限に当たらないので画質はそのまま。 */
+const PIXEL_CAP = 2.6e6;
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
+  const pr = Math.max(0.75, Math.min(devicePixelRatio || 1, 2, Math.sqrt(PIXEL_CAP / (w * h))));
+  renderer.setPixelRatio(pr);
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+/* resize は連続で飛んでくるので1フレームにまとめる */
+let rzPending=false;
+addEventListener('resize', ()=>{ if(rzPending) return; rzPending=true; requestAnimationFrame(()=>{ rzPending=false; resize(); }); });
+resize();
+let last = performance.now(), lastComm = 0;
 function loop(now){
   const dt = Math.min(.05, (now-last)/1000); last = now; const t = now/1000;
   if (cam.want){ const k = 1 - Math.pow(.001, dt); cam.target.lerp(cam.want.target, k); cam.dist += (cam.want.dist-cam.dist)*k; cam.theta += (cam.want.theta-cam.theta)*k; cam.phi += (cam.want.phi-cam.phi)*k; if (cam.target.distanceTo(cam.want.target)<.01 && Math.abs(cam.dist-cam.want.dist)<.01) cam.want=null; }
   applyCam();
-  for (const id of ORDER) animators[id](groups[id], t, state, dt);
+  /* 1機に寄っているあいだ、画面外の3機は動かさない（見えないものを毎フレーム計算しない）。
+     カメラが移動中は全景が見えうるので全機動かす。 */
+  const only = (!cam.want && state.current) ? state.current : null;
+  for (const id of ORDER) if (!only || id === only) animators[id](groups[id], t, state, dt);
   if (hl.visible) hl.update();
   renderer.render(scene, camera); updateLabels();
+  /* 整流子の波形は3Dの電機子と位相をそろえる。毎フレームは要らないので約20fpsに間引く */
+  if (state.current === 'dc-machine'){
+    commPhase = -groups['dc-machine'].userData.arm.rotation.x;
+    if (now - lastComm > 50){ lastComm = now; drawComm(); }
+  }
   requestAnimationFrame(loop);
 }
 const initial = location.hash.replace('#','');
