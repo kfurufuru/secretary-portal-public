@@ -1426,6 +1426,9 @@ window.WIKI_DATA = {
     { page: "transformer", pageTitle: "2.1 変圧器", anchor: "vreg",
       title: "電圧変動率", desc: "定義ε=(V20-V2)/V2、ε≈p cosθ±q sinθ、遅れ・進みの符号、ベクトル図",
       keywords: "電圧変動率 遅れ力率 進み力率 ベクトル図 百分率抵抗降下 百分率リアクタンス降下 pcosθ qsinθ 符号" },
+    { page: "transformer", pageTitle: "2.1 変圧器", anchor: "vreg-projection",
+      title: "なぜ cos と sin なのか（V₂ 方向への投影）", desc: "I₂r はなす角θでI₂r cosθ、jI₂x はなす角90°−θで I₂x cos(90°−θ)=I₂x sinθ。R だから cos・X だから sin ではない",
+      keywords: "なぜ cos sin 投影 射影 水平成分 なす角 90度 90°−θ 直交 I2r I2x IRcosθ IXsinθ ベクトル図 丸暗記 導出 再現 力率角 遅れ 進み" },
     { page: "transformer", pageTitle: "2.1 変圧器", anchor: "vreg-example",
       title: "総合例題（%Zと電圧変動率を通しで解く）", desc: "2000V/100V・1000A・r1=0.2 x1=0.6 r2=0.0005 x2=0.0015 → p=1% q=3% %Z=3.16% ε=2.60%",
       keywords: "総合例題 一次換算 二次換算 変圧比 a² p q %Z 3.16 電圧変動率 2.60 最短解法 よくあるミス 確認問題" },
@@ -16692,6 +16695,292 @@ const PercentZTriangle = () => /*#__PURE__*/React.createElement("figure", {
   tex: "\\theta"
 }), " とは別物。"));
 
+/* セクション9「なぜ cos と sin なのか」の図。図番号は付けない
+   （このファイルの raw-SVG 図 VoltageDropChain / PercentZTriangle と同じ流儀）。
+   役割分担: 図2.1.1 は降下を合成した E₂ と |V₂| 円弧で ε の符号を見せる（合成の図）。
+   こちらは逆に **分解** 専用で、2本の降下ベクトルを別々に V₂ 軸へ落として、
+   cos と sin の出どころが「R か X か」ではなく **なす角** であることだけを見せる。
+
+   幾何の約束（図2.1.1 と同じ座標系。SVG は y 軸が下向き）:
+     V₂ は右向き。遅れ電流 I₂ は画面で V₂ の下側、jI₂x は I₂ を反時計 90° 回して上側。
+     θ = 36.87°（cosθ = 0.8・sinθ = 0.6）。
+     ① I₂r: 長さ 100、方向 (0.8, 0.6) → Δ(80, 60)。V₂ 方向成分 80 = 100 cos θ
+     ② jI₂x: 長さ 150、方向 (0.6, −0.8) → Δ(90, −120)。V₂ 方向成分 90 = 150 cos(90°−θ) = 150 sin θ
+   x > r に描いてあるのは図2.1.1（I₂r=30・I₂x=80）と大小関係をそろえるため。
+   長さを変えるときは上の 3 数（長さ・Δ・投影）を必ず同時に引き直すこと。
+   降下は視認のため誇張してある（実機の p, q は数 %）。 */
+const VregProjection = () => /*#__PURE__*/React.createElement("figure", {
+  style: {
+    margin: "10px 0 14px",
+    background: "var(--bg-elev)",
+    borderRadius: "8px",
+    padding: "12px 8px 8px"
+  }
+}, /*#__PURE__*/React.createElement("svg", {
+  viewBox: "0 0 380 444",
+  role: "img",
+  "aria-label": "電圧変動率の式が投影であることを示す図。上段は抵抗による電圧降下I2rで、負荷電流I2と同じ向きなので端子電圧V2とのなす角は力率角シータとなり、V2方向の成分はI2r掛けるコサインシータになる。下段は漏れリアクタンスによる電圧降下jI2xで、電流I2より90度進むためV2とのなす角は90度引くシータとなり、V2方向の成分はI2x掛けるコサイン90度引くシータ、すなわちI2x掛けるサインシータになる。RだからコサインXだからサインなのではなく、どちらもV2の向きへ投影した結果である",
+  style: {
+    display: "block",
+    width: "100%",
+    height: "auto",
+    maxWidth: "380px",
+    margin: "0 auto"
+  }
+}, /*#__PURE__*/React.createElement("text", {
+  x: "190",
+  y: "18",
+  textAnchor: "middle",
+  fontSize: "12.5",
+  fontWeight: "700",
+  fill: "var(--ink)"
+}, "どちらも同じ操作 — V₂ の向きへ投影する"), /*#__PURE__*/React.createElement("text", {
+  x: "190",
+  y: "40",
+  textAnchor: "middle",
+  fontSize: "11",
+  fontWeight: "700",
+  fill: "var(--ink-soft)"
+}, "① I₂r は I₂ と同方向 → なす角は θ"), /*#__PURE__*/React.createElement("text", {
+  x: "110",
+  y: "53",
+  textAnchor: "middle",
+  fontSize: "10.5",
+  fontWeight: "700",
+  fill: "var(--accent-ink)"
+}, "I₂r cos θ"), /*#__PURE__*/React.createElement("line", {
+  x1: "70",
+  y1: "62",
+  x2: "150",
+  y2: "62",
+  stroke: "var(--accent)",
+  strokeWidth: "2.2"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "70",
+  y1: "57",
+  x2: "70",
+  y2: "67",
+  stroke: "var(--accent)",
+  strokeWidth: "1.6"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "150",
+  y1: "57",
+  x2: "150",
+  y2: "67",
+  stroke: "var(--accent)",
+  strokeWidth: "1.6"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "70",
+  y1: "67",
+  x2: "70",
+  y2: "105",
+  stroke: "var(--ink-mute)",
+  strokeWidth: "1",
+  strokeDasharray: "3 3"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "150",
+  y1: "67",
+  x2: "150",
+  y2: "165",
+  stroke: "var(--ink-mute)",
+  strokeWidth: "1",
+  strokeDasharray: "3 3"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "35",
+  y1: "105",
+  x2: "350",
+  y2: "105",
+  stroke: "var(--ink-mute)",
+  strokeWidth: "1.4",
+  strokeDasharray: "4 3"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "348",
+  y: "99",
+  textAnchor: "end",
+  fontSize: "10.5",
+  fill: "var(--ink-mute)"
+}, "V₂ の向き（基準）"), /*#__PURE__*/React.createElement("line", {
+  x1: "70",
+  y1: "105",
+  x2: "150",
+  y2: "165",
+  stroke: "var(--warn)",
+  strokeWidth: "2.2"
+}), /*#__PURE__*/React.createElement("polygon", {
+  points: "150,165 139.6,162.2 144.4,155.8",
+  fill: "var(--warn)"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "160",
+  y: "140",
+  fontSize: "11",
+  fontWeight: "700",
+  fill: "var(--warn)"
+}, "I₂r"), /*#__PURE__*/React.createElement("text", {
+  x: "160",
+  y: "155",
+  fontSize: "10",
+  fill: "var(--ink-soft)"
+}, "（I₂ と同方向）"), /*#__PURE__*/React.createElement("path", {
+  d: "M 104 105 A 34 34 0 0 1 97.2 125.4",
+  fill: "none",
+  stroke: "var(--ink-mute)",
+  strokeWidth: "1.2"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "111",
+  y: "123",
+  fontSize: "11",
+  fill: "var(--ink)"
+}, "θ"), /*#__PURE__*/React.createElement("line", {
+  x1: "150",
+  y1: "165",
+  x2: "183.6",
+  y2: "190.2",
+  stroke: "var(--ink-mute)",
+  strokeWidth: "1",
+  strokeDasharray: "3 3"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "188",
+  y: "195",
+  fontSize: "10",
+  fill: "var(--ink-mute)"
+}, "I₂ の向き"), /*#__PURE__*/React.createElement("line", {
+  x1: "35",
+  y1: "215",
+  x2: "345",
+  y2: "215",
+  stroke: "var(--rule)",
+  strokeWidth: "1",
+  strokeDasharray: "2 4"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "190",
+  y: "238",
+  textAnchor: "middle",
+  fontSize: "11",
+  fontWeight: "700",
+  fill: "var(--ink-soft)"
+}, "② jI₂x は I₂ より 90° 進み → なす角は 90° − θ"), /*#__PURE__*/React.createElement("line", {
+  x1: "70",
+  y1: "375",
+  x2: "160",
+  y2: "255",
+  stroke: "var(--warn)",
+  strokeWidth: "2.2"
+}), /*#__PURE__*/React.createElement("polygon", {
+  points: "160,255 157.2,265.4 150.8,260.6",
+  fill: "var(--warn)"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "170",
+  y: "300",
+  fontSize: "11",
+  fontWeight: "700",
+  fill: "var(--warn)"
+}, "jI₂x"), /*#__PURE__*/React.createElement("text", {
+  x: "170",
+  y: "315",
+  fontSize: "10",
+  fill: "var(--ink-soft)"
+}, "（I₂ より 90° 進み）"), /*#__PURE__*/React.createElement("path", {
+  d: "M 110 375 A 40 40 0 0 0 94 343",
+  fill: "none",
+  stroke: "var(--ink-mute)",
+  strokeWidth: "1.2"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "98",
+  y: "366",
+  fontSize: "10.5",
+  fill: "var(--ink)"
+}, "90°−θ"), /*#__PURE__*/React.createElement("line", {
+  x1: "35",
+  y1: "375",
+  x2: "350",
+  y2: "375",
+  stroke: "var(--ink-mute)",
+  strokeWidth: "1.4",
+  strokeDasharray: "4 3"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "348",
+  y: "369",
+  textAnchor: "end",
+  fontSize: "10.5",
+  fill: "var(--ink-mute)"
+}, "V₂ の向き（基準）"), /*#__PURE__*/React.createElement("line", {
+  x1: "70",
+  y1: "375",
+  x2: "70",
+  y2: "393",
+  stroke: "var(--ink-mute)",
+  strokeWidth: "1",
+  strokeDasharray: "3 3"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "160",
+  y1: "255",
+  x2: "160",
+  y2: "393",
+  stroke: "var(--ink-mute)",
+  strokeWidth: "1",
+  strokeDasharray: "3 3"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "70",
+  y1: "398",
+  x2: "160",
+  y2: "398",
+  stroke: "var(--accent)",
+  strokeWidth: "2.2"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "70",
+  y1: "393",
+  x2: "70",
+  y2: "403",
+  stroke: "var(--accent)",
+  strokeWidth: "1.6"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "160",
+  y1: "393",
+  x2: "160",
+  y2: "403",
+  stroke: "var(--accent)",
+  strokeWidth: "1.6"
+}), /*#__PURE__*/React.createElement("text", {
+  x: "115",
+  y: "414",
+  textAnchor: "middle",
+  fontSize: "10.5",
+  fill: "var(--ink-soft)"
+}, "I₂x cos(90° − θ)"), /*#__PURE__*/React.createElement("text", {
+  x: "115",
+  y: "429",
+  textAnchor: "middle",
+  fontSize: "11",
+  fontWeight: "700",
+  fill: "var(--accent-ink)"
+}, "＝ I₂x sin θ")), /*#__PURE__*/React.createElement("figcaption", {
+  style: {
+    fontSize: "12px",
+    color: "var(--ink-mute)",
+    textAlign: "center",
+    marginTop: "6px",
+    lineHeight: 1.6
+  }
+}, "2本とも", /*#__PURE__*/React.createElement("strong", null, "やっていることは同じ"), "——", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_2"
+}), " の向きへ落とすだけ。違うのは", /*#__PURE__*/React.createElement("strong", null, "なす角"), "で、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2r"
+}), " は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\theta"
+}), "、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "jI_2x"
+}), " は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "90^\\circ - \\theta"
+}), "。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "R だから cos・X だから sin なのではない"), "。 足すと ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\Delta V = I_2r\\cos\\theta + I_2x\\sin\\theta"
+}), "（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_2"
+}), " 方向の成分としては近似ではなく厳密。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\varepsilon"
+}), " に移る段で初めて近似が入る）。 長さは視認のため誇張した概形で、実寸ではない。"));
+
 /* ---- 節末の即答チェック（解説 → その場で確認問題）----------------------------
    もとはページ最下部のセクション14に22問まとめて置いてあった。解説を読んだ場所から
    一番遠く、「読んだ直後に思い出せるか」を試せなかったので、データを1本にして
@@ -16838,6 +17127,12 @@ const TRANSFORMER_QUICK = [{
   a: /*#__PURE__*/React.createElement(React.Fragment, null, "%Z = I_n Z_e / V_n の分子・分母が同じ倍率で変わるから。二次換算では I_n が a 倍・Z_e が 1/a² 倍・V_n が 1/a 倍で", /*#__PURE__*/React.createElement("strong", null, "相殺する"), "。だから ", /*#__PURE__*/React.createElement("span", {
     className: "marker"
   }, "%Z・p・q・ε は基準側によらない"), "（三相で結線が絡むとき %Z 経由が安全なのもこの性質）")
+}, {
+  s: 'vreg',
+  q: '遅れ力率負荷で、リアクタンスによる電圧降下が I₂x sin θ になるのはなぜか。',
+  a: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, "jI₂x は電流 I₂ より 90° 進む"), "ので、端子電圧 V₂ とのなす角が ", /*#__PURE__*/React.createElement("strong", null, "90° − θ"), " になるため。V₂ 方向の成分は ", /*#__PURE__*/React.createElement("strong", null, "I₂x cos(90° − θ) = I₂x sin θ"), "。", /*#__PURE__*/React.createElement("span", {
+    className: "marker"
+  }, "X だから sin なのではなく、なす角を cos で投影した結果"), "にすぎない（同じ操作を I₂r にすると、なす角が θ なので I₂r cos θ）")
 }, {
   s: 'vreg',
   q: '電圧変動率の簡易式は？',
@@ -22453,7 +22748,49 @@ const TransformerPage = ({
   className: "h-num"
 }, "9."), "電圧変動率"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "何を求めるか"), "：負荷をかけたときに二次端子電圧がどれだけ変わるか。", /*#__PURE__*/React.createElement(Eq, {
   tex: "p,\\ q"
-}), " はセクション8で求めた量をそのまま使う。まず定義から押さえる。"), /*#__PURE__*/React.createElement(FormulaCard, {
+}), " はセクション8で求めた量をそのまま使う。まず定義から押さえる。"), /*#__PURE__*/React.createElement(Box, {
+  kind: "tip",
+  label: "結論 — 覚えるのは公式ではなく「投影」"
+}, /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "0 0 8px"
+  }
+}, "電圧変動率とは、", /*#__PURE__*/React.createElement("strong", null, "変圧器内部のインピーダンスによる電圧降下が、定格電圧に対して何 % か"), "を表した量。だから覚えるべきは ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "p\\cos\\theta + q\\sin\\theta"
+}), " という文字列ではなく、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, /*#__PURE__*/React.createElement("strong", null, "R による電圧降下"), "と", /*#__PURE__*/React.createElement("strong", null, "X による電圧降下"), "を、端子電圧の向きへ倒して足す"), "という操作のほうである。式はそこから毎回作り直せる（", /*#__PURE__*/React.createElement("a", {
+  href: "#",
+  onClick: e => {
+    e.preventDefault();
+    onNav("transformer", "vreg-projection");
+  }
+}, "下の「なぜ cos と sin なのか」"), "）。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: 0,
+    fontSize: 13
+  }
+}, "近くの節との役割分担：", /*#__PURE__*/React.createElement("strong", null, "なぜ内部に ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "R,\\ X"
+}), " があるのか"), "は ", /*#__PURE__*/React.createElement("a", {
+  href: "#",
+  onClick: e => {
+    e.preventDefault();
+    onNav("transformer", "equiv");
+  }
+}, "セクション4"), "、", /*#__PURE__*/React.createElement("strong", null, "どう測るのか"), "は ", /*#__PURE__*/React.createElement("a", {
+  href: "#",
+  onClick: e => {
+    e.preventDefault();
+    onNav("transformer", "sc-test");
+  }
+}, "セクション6"), "、", /*#__PURE__*/React.createElement("strong", null, "降下の総量（%Z）"), "と送電線との対応は ", /*#__PURE__*/React.createElement("a", {
+  href: "#",
+  onClick: e => {
+    e.preventDefault();
+    onNav("transformer", "pz-why");
+  }
+}, "セクション8"), "。この節が受け持つのは", /*#__PURE__*/React.createElement("strong", null, "その降下がなぜ電圧変動率の式になるのか"), "だけ。")), /*#__PURE__*/React.createElement(FormulaCard, {
   num: "13 / 18",
   name: "電圧変動率の定義",
   eq: "\\varepsilon = \\dfrac{V_{20} - V_2}{V_2}\\times 100\\;[\\%]",
@@ -22533,7 +22870,151 @@ const TransformerPage = ({
   tex: "p\\cos\\theta + q\\sin\\theta"
 }), " がそのまま出てくる。", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "近似式は「降下ベクトルの水平成分」を読んでいるだけ"), "である。"), /*#__PURE__*/React.createElement(TransformerPhasorLeading, null), /*#__PURE__*/React.createElement(Box, {
+}, "近似式は「降下ベクトルの水平成分」を読んでいるだけ"), "である。"), /*#__PURE__*/React.createElement("h3", {
+  id: "vreg-projection"
+}, "なぜ cos と sin なのか — 「R だから cos」ではない"), /*#__PURE__*/React.createElement("p", null, "いま「水平成分を足すと ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2r\\cos\\theta + I_2x\\sin\\theta"
+}), " になる」と書いたが、", /*#__PURE__*/React.createElement("strong", null, "なぜ片方が cos で片方が sin なのか"), "。ここを飛ばすと式が丸暗記になり、符号や「力率1なら ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "q"
+}), " は効かない」がその場で思い出せなくなる。答えは単純で、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "2本とも同じ操作（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_2"
+}), " の向きへ投影する）をしていて、違うのは V₂ とのなす角だけ"), "である。"), /*#__PURE__*/React.createElement(VregProjection, null), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data-table"
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "内部の降下"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "向き"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_2"
+}), " とのなす角"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_2"
+}), " 方向の成分"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2 r"
+}), "（抵抗分）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2"
+}), " と", /*#__PURE__*/React.createElement("strong", null, "同相")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\theta"
+}), "（力率角そのもの）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2r\\cos\\theta"
+}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "jI_2 x"
+}), "（リアクタンス分）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2"
+}), " より ", /*#__PURE__*/React.createElement("strong", null, "90° 進み")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "90^\\circ - \\theta"
+})), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2x\\cos(90^\\circ-\\theta) = I_2x\\sin\\theta"
+})))))), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\sin"
+}), " が出てくるのは ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "X"
+}), " の性質ではなく、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\cos(90^\\circ-\\theta) = \\sin\\theta"
+}), " という", /*#__PURE__*/React.createElement("strong", null, "角度の書き換え"), "の結果にすぎない。2本を足したものが端子電圧方向の降下で、それを定格電圧で割って百分率にすれば近似式になる。"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "\\Delta V = I_2r\\cos\\theta + I_2x\\sin\\theta \\qquad (\\Delta V:\\ V_2\\ \\text{方向の降下})"
+}), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "\\varepsilon \\approx \\frac{\\Delta V}{V_n}\\times 100 = \\underbrace{\\frac{I_2r}{V_n}\\times100}_{p}\\cos\\theta + \\underbrace{\\frac{I_2x}{V_n}\\times100}_{q}\\sin\\theta = p\\cos\\theta + q\\sin\\theta"
+}), /*#__PURE__*/React.createElement("p", null, "ここで ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\varepsilon"
+}), " は", /*#__PURE__*/React.createElement("strong", null, "定格負荷時"), "の値なので、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2"
+}), " は定格電流 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_n"
+}), "、割っている ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_n"
+}), " は定義式の分母 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_2"
+}), "（定格負荷時の端子電圧）と同じものを指している。だから ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "p,\\ q"
+}), " は", /*#__PURE__*/React.createElement("strong", null, "新しい量ではなく"), "、", /*#__PURE__*/React.createElement("a", {
+  href: "#",
+  onClick: e => {
+    e.preventDefault();
+    onNav("transformer", "pz");
+  }
+}, "セクション8"), "で ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "p = I_n R_e / V_n \\times 100"
+}), " として求めたものがそのまま入る。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "定格電流が基準なので、負荷が定格でなければこの値をそのまま使えない"), "（降下は負荷電流に比例するので、負荷率 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x"
+}), " なら ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\varepsilon"
+}), " もおよそ ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x"
+}), " 倍になる）。"), /*#__PURE__*/React.createElement(Box, {
+  kind: "warn",
+  label: "記号の対応 — 図の E₂ と定義式の V₂₀ はどうつながるか"
+}, /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: 0
+  }
+}, "ベクトル図は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "E_2 = V_2 + I_2r + jI_2x"
+}), " を描いている。一方いちばん上の定義式は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_{20}"
+}), "（無負荷時の二次電圧）で書かれている。この2つが結びつくのは、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "負荷を外すと ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2 = 0"
+}), " になって ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2r"
+}), " も ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "jI_2x"
+}), " も消える"), "から。降下がゼロになれば端子にはそのまま ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "E_2"
+}), " が出るので ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_{20} \\approx E_2"
+}), " であり、電圧変動率は", /*#__PURE__*/React.createElement("strong", null, "「負荷を外したとき端子電圧がどれだけ戻るか」"), "を見ていることになる。")), /*#__PURE__*/React.createElement(Box, {
+  kind: "formula",
+  label: "試験中に式を作り直す — 30秒でここまで戻せる"
+}, /*#__PURE__*/React.createElement("ol", {
+  style: {
+    margin: "0 0 10px",
+    paddingLeft: 22
+  }
+}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_2"
+}), " を横向きに引く（", /*#__PURE__*/React.createElement("strong", null, "基準はいつも端子電圧"), "）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2"
+}), " を ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\theta"
+}), " だけ下へ倒す（遅れ力率）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2r"
+}), " は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2"
+}), " と同じ向き → なす角 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\theta"
+}), " → ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2r\\cos\\theta"
+})), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "jI_2x"
+}), " は 90° 起こす → なす角 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "90^\\circ-\\theta"
+}), " → ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I_2x\\sin\\theta"
+})), /*#__PURE__*/React.createElement("li", null, "足して ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_n"
+}), " で割る → ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\varepsilon \\approx p\\cos\\theta + q\\sin\\theta"
+}))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: 0,
+    fontSize: 13
+  }
+}, "一行でいえば ", /*#__PURE__*/React.createElement("strong", null, "「R も X も V₂ の向きへ倒す。角が θ なら cos、90°−θ なら sin」"), "。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "覚えるのは式ではなくこの1枚の図"), "で、符号（", /*#__PURE__*/React.createElement("strong", null, "遅れは＋・進みは−"), "）も、すぐ下の進み力率の図から同じやり方で出せる。")), /*#__PURE__*/React.createElement(TransformerPhasorLeading, null), /*#__PURE__*/React.createElement(Box, {
   kind: "mistake",
   label: "進み力率では ε が負になりうる ＝ 負荷をかけた方が電圧が高い"
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(Eq, {
