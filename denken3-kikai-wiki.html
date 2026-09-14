@@ -1128,15 +1128,33 @@ window.WIKI_DATA = {
     note: "問17・問18は選択問題で、どちらか1問だけを解答する（両方解答すると採点されない）。問15・問16にこの注記は無く必須。",
   },
 
+  /* 優先度 prio は過去問台帳（kikai-kakomon-topics.js の KAKOMON_TOPICS のうち
+     KAKOMON_ANALYZED＝一次照合済み R3〜R8上の10回・220小問）の小問シェアで決める。
+     閾値（2026-09 に編集部集計から台帳へ一本化した際に決めた）:
+
+       S … 10%以上   パワエレ14.1 / 誘導機12.3 / 同期機12.3 / 変圧器11.4 / 情報10.9
+       A …  8%以上   直流機9.1 / 自動制御8.2
+       B …  5%以上   電熱6.8 / 照明5.5 / 電動機応用5.0
+       C …  5%未満   メカトロ2.3 / 電気化学1.4 / 単相誘導機0 / 計器用変成器0 / 電気加工0
+
+     閾値の切れ目は分布の谷に置いてある（10.9↔9.1 で1.8pt、8.2↔6.8 で1.4pt、5.0↔2.3 で2.7pt）。
+     難易度（★）は prio に畳み込まない。柱4の2軸のうち頻度側だけを prio が担い、
+     難易度は各ページの meta 行に別列で出す。
+
+     freq（max/high/mid/low）はホームの「重点」抽出に使う粗いバンドで、prio とは別軸。
+     こちらは今回触っていない。
+
+     ページ見出しに出る出題頻度の文言は kikai-components.jsx の kakomonFreqMeta が
+     台帳から算出する。**ここにも本文にも出題数を手書きしない。** */
   chapters: [
     {
       id: "ch1",
       num: "01",
       title: "回転機",
       pages: [
-        { id: "dc-machine",        num: "1.1", title: "直流機",                    prio: "S", freq: "high" },
+        { id: "dc-machine",        num: "1.1", title: "直流機",                    prio: "A", freq: "high" },
         { id: "induction-machine", num: "1.2", title: "三相誘導電動機",          prio: "S", freq: "max", featured: true },
-        { id: "synchronous",       num: "1.3", title: "同期機",                    prio: "A", freq: "high" },
+        { id: "synchronous",       num: "1.3", title: "同期機",                    prio: "S", freq: "high" },
         { id: "single-phase-im",   num: "1.4", title: "単相誘導電動機",          prio: "C", freq: "low" },
       ],
     },
@@ -1149,7 +1167,7 @@ window.WIKI_DATA = {
         // R3〜R8上: A問題 1.1問/回 に加え、B問16 が 10回とも この単元。S へ引き上げ
         { id: "power-elec",    num: "2.2", title: "パワーエレクトロニクス", prio: "S", freq: "max" },
         // R3〜R8上 の10回では出題ゼロ。範囲内なので残すが、着手は後ろへ（A → B）
-        { id: "keiki-yo-henseiki", num: "2.3", title: "計器用変成器（CT・VT）", prio: "B", freq: "low" },
+        { id: "keiki-yo-henseiki", num: "2.3", title: "計器用変成器（CT・VT）", prio: "C", freq: "low" },
       ],
     },
     {
@@ -1159,7 +1177,7 @@ window.WIKI_DATA = {
       pages: [
         { id: "auto-control",  num: "3.1", title: "自動制御",   prio: "A", freq: "high" },
         // R3〜R8上: A問題 1.0問/回、さらに B問18 に 7回。B → A へ引き上げ
-        { id: "info-elec",     num: "3.2", title: "情報・電子回路", prio: "A", freq: "high" },
+        { id: "info-elec",     num: "3.2", title: "情報・電子回路", prio: "S", freq: "high" },
       ],
     },
     {
@@ -2613,6 +2631,16 @@ const KAKOMON_TOPICS = [
   { session: 'R8上', cell: '18b', topic: 'info-elec', subtopic: 'logic', difficulty: 3, title: '論理式の和積形式への簡単化',
     source: '令和8年度上期 第三種電気主任技術者試験 機械科目' },
 ];
+
+/* 一次資料で全問を確認できた試験回。出題傾向の集計はこの範囲だけを対象にする。
+   KAKOMON_SESSIONS（グリッドの行）は電気書院の問題集に合わせて H18 から並べてあるが、
+   そちらは本Wikiで一次照合していないので集計には入れない。
+
+   台帳と同じファイルに置く理由: これは「台帳のどこまでが検証済みか」という台帳自身の性質で、
+   トラッカー固有の設定ではない。読み込み順も kikai-components.jsx より前になり、
+   ページ見出しの出題頻度表示（kakomonFreqMeta）から参照できる。 */
+const KAKOMON_ANALYZED = ['R3', 'R4上', 'R4下', 'R5上', 'R5下', 'R6上', 'R6下', 'R7上', 'R7下', 'R8上'];
+const kakomonAnalyzedSet = new Set(KAKOMON_ANALYZED);
 </script>
   <script>
 /* built from kikai-tweaks.jsx — 直接編集しない。正(SoT)は kikai-tweaks.jsx。編集後に build-kikai-wiki.py を実行する */
@@ -5163,8 +5191,11 @@ function pageDeckSummary(id) {
   return m[id] || "";
 }
 
-/* 優先度は「60点に届くまでの近さ」で付ける。出題頻度そのものではなく、
-   落とすと 60点 に届きにくい順。根拠は編集部集計なので絶対視しない。
+/* 優先度は「60点に届くまでの近さ」で付ける。根拠は過去問台帳（KAKOMON_TOPICS のうち
+   KAKOMON_ANALYZED の回）の小問シェアで、閾値は WIKI_DATA.chapters のコメントに書いてある。
+   以前は「根拠は編集部集計」と書いていたが、その編集部集計は出典が無く、
+   台帳と系統的に食い違っていた（パワエレを 10% と書いて台帳は 14.1%、
+   情報・電子を 5% と書いて台帳は 10.9%）ので 2026-09 に台帳へ一本化した。
    C は「捨ててよい」ではない — 公式試験範囲に含まれるので、選択肢を切れる程度までは触る。 */
 const PRIO_LABEL = {
   S: "60点狙いでも必須",
@@ -5186,6 +5217,98 @@ function prioOfEyebrow(eyebrow) {
   for (const c of chs) for (const pg of c.pages || []) if (pg.num === m[1] && pg.prio) return pg.prio;
   return null;
 }
+
+/* ============================================================
+   出題頻度の表示は過去問台帳から算出する（手書きしない）。
+
+   以前は各ページの PageHeader に「編集部集計: 10年で約NN問・NN%」という**出典のない数字**を
+   手書きし、その隣に台帳の数字を併記していた。両者は系統的に食い違っていた:
+
+     パワエレ   編集部 20問・10%  ↔ 台帳 31小問・14.1%（台帳では1位）
+     情報・電子 編集部 10問・ 5%  ↔ 台帳 24小問・10.9%
+     変圧器     編集部 32問・16%  ↔ 台帳 25小問・11.4%
+     誘導機     編集部 36問        ↔ 台帳 27小問・12.3%
+
+   しかも編集部集計は分母が 200（10年×20問）に揃っており、
+   WIKI_DATA.examFormat（A問14 + B問4×2小問 = 22件/回 → 10回で220）のどの数え方とも合わない。
+   手書きできる場所を残すと必ずまた食い違うので、手書きの余地ごと消して算出に寄せた。
+   自動制御の「A問13 が8回」は台帳と一致していたが、情報・電子の「論理回路だけで9小問」は
+   台帳では 10 小問で、手書き併記はやはりずれていた。
+
+   数え方（kakomonStats と同じ）: B問は (a)(b) を別小問として数える。
+   順位は同数を同順位とする（27小問が2つあれば両方2位）。
+   ============================================================ */
+function kakomonAnalyzedRows() {
+  if (typeof KAKOMON_TOPICS === "undefined" || typeof kakomonAnalyzedSet === "undefined") return [];
+  return KAKOMON_TOPICS.filter(t => kakomonAnalyzedSet.has(t.session));
+}
+
+/* topicId の台帳上の出題実績。台帳が読めないときは null（呼び出し側で行ごと出さない）。 */
+function kakomonFreqOf(topicId) {
+  const rows = kakomonAnalyzedRows();
+  if (!rows.length) return null;
+  const scope = typeof KAKOMON_ANALYZED !== "undefined" ? KAKOMON_ANALYZED : [];
+  const count = new Map();
+  rows.forEach(t => count.set(t.topic, (count.get(t.topic) || 0) + 1));
+  const units = count.get(topicId) || 0;
+  let higher = 0;
+  count.forEach(n => {
+    if (n > units) higher += 1;
+  });
+  const mine = rows.filter(t => t.topic === topicId);
+  const slots = new Map(); // 問番号（a/b を畳む）→ 出題された試験回
+  mine.forEach(t => {
+    const base = String(t.cell).replace(/[ab]$/, "");
+    if (!slots.has(base)) slots.set(base, new Set());
+    slots.get(base).add(t.session);
+  });
+  return {
+    units,
+    total: rows.length,
+    fields: count.size,
+    rank: units ? higher + 1 : 0,
+    sessions: new Set(mine.map(t => t.session)).size,
+    scopeLen: scope.length,
+    scopeLabel: scope.length ? `${scope[0]}〜${scope[scope.length - 1]}の${scope.length}回・${rows.length}小問` : "",
+    pct: rows.length ? 100 * units / rows.length : 0,
+    slots: [...slots.entries()].map(([cell, ss]) => ({
+      cell,
+      n: ss.size,
+      num: parseInt(cell, 10)
+    })).sort((a, b) => b.n - a.n || a.num - b.num)
+  };
+}
+
+/* 問番号 → 「A問10」「B問16」。機械のB問は問15以降（KAKOMON_B_FROM と同じ境界）。 */
+function kakomonSlotLabel(cell) {
+  const n = parseInt(cell, 10);
+  return (n >= 15 ? "B問" : "A問") + cell;
+}
+
+/* PageHeader の meta 行を台帳から作る。
+   zeroNote は「台帳に出題が無い単元」に添える説明（未検証なら honest-hold で書く）。 */
+function kakomonFreqMeta(topicId, zeroNote) {
+  const f = kakomonFreqOf(topicId);
+  if (!f) return [];
+  const label = `出題頻度（過去問台帳 ${f.scopeLabel}）`;
+  if (!f.units) {
+    return [{
+      label,
+      value: `0 小問（この範囲では単独の出題なし）${zeroNote ? "。" + zeroNote : ""}`
+    }];
+  }
+  const rows = [{
+    label,
+    value: `${f.units} 小問・${f.pct.toFixed(1)}%（${f.fields}分野中${f.rank}位）／${f.scopeLen}回中 ${f.sessions}回で出題`
+  }];
+  if (f.slots.length) {
+    rows.push({
+      label: "出題枠（同台帳・B問は(a)(b)を別小問として計数）",
+      value: f.slots.map(s => `${kakomonSlotLabel(s.cell)} が${s.n}回`).join("・")
+    });
+  }
+  return rows;
+}
 function freqLabel(freq) {
   return {
     max: "出題頻度: 最頻出",
@@ -5206,7 +5329,10 @@ Object.assign(window, {
   freqLabel,
   prioLabel,
   prioOfEyebrow,
-  PRIO_LABEL
+  PRIO_LABEL,
+  kakomonFreqOf,
+  kakomonFreqMeta,
+  kakomonSlotLabel
 });
 </script>
   <script>
@@ -6077,11 +6203,10 @@ const kakomonInterval = s => {
    でたらめな節へ紐付けるより空欄のほうが害が小さいと判断したもの。 */
 const kakomonTopicOf = (session, cell) => KAKOMON_TOPICS.find(t => t.session === session && t.cell === cell) || null;
 
-/* 一次資料で全問を確認できた試験回。出題傾向の集計はこの範囲だけを対象にする。
-   KAKOMON_SESSIONS（グリッドの行）は電気書院の問題集に合わせて H18 から並べてあるが、
-   そちらは本Wikiで一次照合していないので集計には入れない。 */
-const KAKOMON_ANALYZED = ['R3', 'R4上', 'R4下', 'R5上', 'R5下', 'R6上', 'R6下', 'R7上', 'R7下', 'R8上'];
-const kakomonAnalyzedSet = new Set(KAKOMON_ANALYZED);
+/* KAKOMON_ANALYZED / kakomonAnalyzedSet（一次照合済みの試験回）は
+   kikai-kakomon-topics.js へ移した。台帳自身の性質であり、
+   ページ見出しの出題頻度表示（kikai-components.jsx の kakomonFreqMeta）からも参照するため、
+   台帳より後に読まれるこのファイルに置いておけない。 */
 
 /* ページ id → { title, num, prio } を WIKI_DATA から引く（単元名を二重に書かない）。 */
 const kakomonPageMeta = id => {
@@ -8434,10 +8559,7 @@ const InductionMachinePage = ({
   eyebrow: "1.2  ROTATING MACHINES — INDUCTION MOTOR",
   title: "三相誘導電動機",
   deck: "機械科目で最頻出の単元。回転磁界・滑り・等価回路・トルク特性が四本柱。計算問題・理論問題ともに毎年必ず出題されるため、最優先で押さえる。",
-  meta: [{
-    label: "出題頻度（編集部集計）",
-    value: "最頻出（編集部集計: 10年で約36問）／過去問台帳（R3〜R8上の10回・全220小問。18a/18b は別小問として計数）では 誘導機 27 小問・12.3%（13分野中2位）"
-  }, {
+  meta: [...kakomonFreqMeta("induction-machine"), {
     label: "難易度",
     value: "★★★★☆"
   }, {
@@ -10296,10 +10418,7 @@ const DCMachinePage = ({
   eyebrow: "1.1  ROTATING MACHINES — DC MACHINE",
   title: "直流機",
   deck: "界磁・電機子・整流子・ブラシで構成される回転機。誘導起電力と速度・トルクの関係、励磁方式の違いによる特性差が出題の中心。",
-  meta: [{
-    label: "出題頻度（編集部集計）",
-    value: "高（編集部集計: 10年で約24問）／過去問台帳（R3〜R8上の10回・全220小問。18a/18b は別小問として計数）では 直流機 20 小問・9.1%（13分野中6位）"
-  }, {
+  meta: [...kakomonFreqMeta("dc-machine"), {
     label: "難易度",
     value: "★★★☆☆"
   }]
@@ -12563,10 +12682,7 @@ const SynchronousPage = ({
   eyebrow: "1.3  SYNCHRONOUS MACHINE",
   title: "同期機",
   deck: "同期速度で回転する交流機。発電所の主機として用いられる同期発電機と、力率改善に使われる同期調相機・同期電動機を扱う。",
-  meta: [{
-    label: "出題頻度（編集部集計）",
-    value: "高（編集部集計: 10年で約22問・11%）／過去問台帳（R3〜R8上の10回・全220小問。18a/18b は別小問として計数）では 同期機 27 小問・12.3%（13分野中2位）"
-  }, {
+  meta: [...kakomonFreqMeta("synchronous"), {
     label: "難易度",
     value: "★★★★☆"
   }]
@@ -14689,10 +14805,7 @@ const SinglePhaseIMPage = ({
   eyebrow: "1.4  SINGLE-PHASE INDUCTION MOTOR",
   title: "単相誘導電動機",
   deck: "単相電源では回転磁界が生じないため、補助巻線で擬似的に二相を作って起動する。分相・コンデンサ始動形は始動後に補助巻線を切り離すが、コンデンサ始動・運転形は運転中も残す。家電・小型機器に多用。",
-  meta: [{
-    label: "出題頻度（編集部集計）",
-    value: "低"
-  }]
+  meta: kakomonFreqMeta("single-phase-im", "台帳では三相誘導電動機の行に含めており、単相機だけを問う小問は R3〜R8上 に無い。家電で身近なぶん出題があると誤解しやすいので、台帳の事実をそのまま書く")
 }), /*#__PURE__*/React.createElement("div", {
   className: "content"
 }, /*#__PURE__*/React.createElement(SinglePhaseIMLayers, null), /*#__PURE__*/React.createElement(ConceptQuiz, {
@@ -17643,10 +17756,7 @@ const TransformerPage = ({
   eyebrow: "2.1  TRANSFORMER",
   title: "変圧器",
   deck: "鉄心と二つの巻線で電圧を変成する静止器。誘導機に並ぶ最頻出単元。巻数比・%Z・電圧変動率・損失と効率・並列運転が出題の柱。",
-  meta: [{
-    label: "出題頻度（編集部集計）",
-    value: "最頻出（編集部集計: 10年で約32問・16%）／過去問台帳（R3〜R8上の10回・全220小問。18a/18b は別小問として計数）では 変圧器 25 小問・11.4%（13分野中4位）"
-  }, {
+  meta: [...kakomonFreqMeta("transformer"), {
     label: "難易度",
     value: "★★★★☆"
   }]
@@ -27025,10 +27135,7 @@ const PowerElecPage = ({
   eyebrow: "2.2  POWER ELECTRONICS",
   title: "パワーエレクトロニクス",
   deck: "半導体スイッチで電力を制御する分野。整流回路（AC→DC）、チョッパ（DC→DC）、インバータ（DC→AC）、サイクロコンバータ（AC→AC）の四つに大別される。",
-  meta: [{
-    label: "出題頻度（編集部集計）",
-    value: "最頻出（編集部集計: 10年で約20問・10%）／過去問台帳（R3〜R8上の10回・全220小問。18a/18b は別小問として計数）では パワエレ 31 小問・14.1% で13分野中1位。台帳基準では機械科目の最頻出分野"
-  }, {
+  meta: [...kakomonFreqMeta("power-elec"), {
     label: "難易度",
     value: "★★★★☆"
   }]
@@ -27468,10 +27575,10 @@ const PowerElecPage = ({
   tex: "v_{d,\\min} = 489.9 \\times \\cos 30^\\circ = 489.9 \\times 0.8660 \\approx 424.3\\;[\\mathrm{V}]"
 }), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "V_{d} = \\frac{3\\sqrt2}{\\pi}\\times 346.4 = 1.350 \\times 346.4 \\approx 467.7\\;[\\mathrm{V}]"
+  tex: "V_{d} = \\frac{3\\sqrt2}{\\pi}\\times 346.4 = 1.3505 \\times 346.4 \\approx 467.8\\;[\\mathrm{V}]"
 }), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "\\delta = \\frac{489.9 - 424.3}{467.7} = \\frac{65.6}{467.7} \\approx 0.140"
+  tex: "\\delta = \\frac{489.9 - 424.3}{467.8} = \\frac{65.6}{467.8} \\approx 0.140"
 }), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "8px 0 0"
@@ -29395,10 +29502,7 @@ const KeikiYoHenseikiPage = ({
   eyebrow: "2.3  INSTRUMENT TRANSFORMERS (CT / VT)",
   title: "計器用変成器（CT・VT）",
   deck: "高圧の電流・電圧を低圧側で安全に測定するための変成器。CT＝電流用・VT＝電圧用。二次禁則が真逆になる理由を「一次側から何を強制するか」の物理から導く。丸暗記すると毎回逆になる典型論点。",
-  meta: [{
-    label: "出題頻度（編集部集計）",
-    value: "高（混同型は機械・法規どちらでも出る。付録 A の分野別集計には単独の枠がない）"
-  }, {
+  meta: [...kakomonFreqMeta("keiki-yo-henseiki", "CT・VT 単独を問う小問は R3〜R8上 の台帳に無い。二次禁則の混同型が法規側で問われるとよく言われるが、法規の出題実績は本Wikiで一次照合しておらず未検証。台帳の範囲では 0 小問という事実だけを書く"), {
     label: "難易度",
     value: "★★★☆☆"
   }]
@@ -30802,10 +30906,7 @@ const AutoControlPage = ({
   eyebrow: "3.1  AUTOMATIC CONTROL",
   title: "自動制御",
   deck: "伝達関数・ブロック線図・周波数応答（ボード線図とベクトル軌跡）・安定判別・PID。出題の中心は s を jω に置き換えた周波数伝達関数と折れ点角周波数で、A問13 の常連（過去10回で8回）。B問（15・18）でも同じ道具を使う。",
-  meta: [{
-    label: "出題頻度（編集部集計）",
-    value: "高（編集部集計: 10年で約18問・9%）／過去問台帳（R3〜R8上の10回・全220小問。18a/18b は別小問として計数）では 自動制御 18 小問・8.2%（13分野中7位）。出題枠は A問13 が8回・B問15 が2回・B問18 が3回"
-  }, {
+  meta: [...kakomonFreqMeta("auto-control"), {
     label: "難易度",
     value: "★★★★☆"
   }]
@@ -33925,7 +34026,7 @@ const StubPage = ({
   title,
   eyebrow,
   deck,
-  freq,
+  freqNote,
   sections,
   onNav,
   prev,
@@ -33942,10 +34043,7 @@ const StubPage = ({
   eyebrow: eyebrow,
   title: title,
   deck: deck,
-  meta: freq ? [{
-    label: "出題頻度（編集部集計）",
-    value: freq
-  }] : null
+  meta: kakomonFreqMeta(id, freqNote)
 }), /*#__PURE__*/React.createElement("div", {
   className: "content"
 }, id && /*#__PURE__*/React.createElement(ConceptQuiz, {
@@ -34001,7 +34099,6 @@ const InfoElecPage = ({
   title: "情報・電子回路",
   eyebrow: "3.2  INFORMATION & ELECTRONIC CIRCUITS",
   deck: "論理回路・順序回路・A/D 変換・進数に加え、BASIC と C の2言語で併記されるプログラム問題の読み方までを扱う。出題範囲は浅く広い。",
-  freq: "中（編集部集計: 10年で約10問・5%）／過去問台帳（R3〜R8上の10回・全220小問。18a/18b は別小問として計数）では 情報・電子回路 24 小問・10.9% で13分野中5位。★台帳基準では「中」より優先度が高い（論理回路だけで9小問）",
   prev: {
     id: "auto-control",
     title: "3.1 自動制御"
@@ -36942,7 +37039,6 @@ const LightingPage = ({
   title: "照明",
   eyebrow: "4.1  LIGHTING",
   deck: "光束・光度・照度・輝度・光束発散度の単位系を理解することが第一歩。計算の主戦場は逆二乗の法則と余弦の法則（複数光源の重ね合わせを含む）で、そのうえで完全拡散面の M=πL と球形・直線光源の輝度を押さえる。",
-  freq: "中（照明・電熱で合算 約16問・8%／単独の内訳は分離集計なし）",
   prev: {
     id: "info-elec",
     title: "3.2 情報・電子回路"
@@ -37468,7 +37564,6 @@ const HeatPage = ({
   title: "電熱",
   eyebrow: "4.2  ELECTRIC HEATING",
   deck: "ジュール熱・顕熱と潜熱・熱回路（熱伝導・熱抵抗・放射）・ヒートポンプ・電気加熱方式（抵抗加熱・赤外線加熱・誘導加熱・誘電加熱・マイクロ波）を扱う。",
-  freq: "中（照明・電熱で合算 約16問・8%／単独の内訳は分離集計なし）",
   prev: {
     id: "lighting",
     title: "4.1 照明"
@@ -38046,7 +38141,6 @@ const ChemPage = ({
   title: "電気化学",
   eyebrow: "4.3  ELECTROCHEMISTRY",
   deck: "ファラデーの法則・電池（鉛蓄電池・NAS電池・EDLC）・電気分解。出題は少ないが、出るときは問12 の正誤問題で確実に取りたい。",
-  freq: "低（付録 A の分野別集計では「その他」に含まれ、単独の内訳なし）",
   prev: {
     id: "heat",
     title: "4.2 電熱"
@@ -38334,7 +38428,6 @@ const DriveMechPage = ({
   title: "電動機応用",
   eyebrow: "4.4  MOTOR APPLICATIONS",
   deck: "所要動力（ポンプ・送風機・巻上機・エレベータ）・減速機・負荷の特性分類・はずみ車効果。実用に近い計算問題が出る。",
-  freq: "中（編集部集計: 10年で約14問・7%）／過去問台帳（R3〜R8上の10回・全220小問。18a/18b は別小問として計数）では 電動機応用 11 小問・5.0%（13分野中10位）",
   prev: {
     id: "chemistry",
     title: "4.3 電気化学"
@@ -39069,7 +39162,7 @@ const DenkiKakouPage = ({
   eyebrow: "4.5  ELECTRICAL MACHINING",
   title: "電気加工",
   deck: "放電・電解・ビーム・超音波・溶接。各方式を「エネルギーの種類 × 媒体 × 導電性の要否 × 工具の消耗」の4軸で見比べれば、知識問題は1枚の表に還元できる。",
-  meta: [{
+  meta: [...kakomonFreqMeta("denki-kakou", "電気加工だけを問う小問は R3〜R8上 の台帳に無い。公式の試験範囲には入っているので、選択肢を切れる程度までは触る"), {
     label: "位置づけ",
     value: "知識（文章）問題中心。方式の横断比較が得点の核"
   }, {
@@ -39363,7 +39456,7 @@ const MechatronicsPage = ({
   eyebrow: "4.6  MECHATRONICS",
   title: "メカトロニクス",
   deck: "センサで測り、制御装置で判断し、アクチュエータで動かす——機械と電気・制御を一体で扱う技術。サーボ機構とステッピングモータが学習の中心で、計算はステップ角まわりに集中する。",
-  meta: [{
+  meta: [...kakomonFreqMeta("mechatronics"), {
     label: "出題形式",
     value: "語句選択・正誤判定が中心（計算はステップ角）"
   }, {
@@ -40218,9 +40311,25 @@ const GuidePage = ({
     id: "plan"
   }, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
-  }, "5."), "3 ヶ月モデル（13週・復習中心）"), /*#__PURE__*/React.createElement("p", null, "順番は", /*#__PURE__*/React.createElement("strong", null, "ホームの「学習戦略」と同じ"), "にそろえてある（以前はこの表とホームで先頭の単元が食い違っていた）。 並び順の根拠は編集部集計の出題比率で、", /*#__PURE__*/React.createElement("span", {
+  }, "5."), "3 ヶ月モデル（13週・復習中心）"), /*#__PURE__*/React.createElement("p", null, "順番は", /*#__PURE__*/React.createElement("strong", null, "ホームの「学習戦略」と同じ"), "にそろえてある（以前はこの表とホームで先頭の単元が食い違っていた）。 得意・不得意に応じて入れ替えてよい。"), /*#__PURE__*/React.createElement(Box, {
+    kind: "warn",
+    label: "この並び順は過去問台帳の出題順ではない（2026-09 時点の未解消点）"
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: 0
+    }
+  }, "この表の並びは、出典のない「編集部集計」の出題比率を降順に並べたものだった。 その編集部集計は", /*#__PURE__*/React.createElement("strong", null, "各ページの見出しからは撤去し、過去問台帳（一次照合済み10回・220小問）に一本化した"), "が、", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "一次資料で検証した統計ではない"), "。 得意・不得意に応じて入れ替えてよい。"), /*#__PURE__*/React.createElement("div", {
+  }, "この13週の並び順だけはまだ入れ替えていない"), "。台帳と食い違う主なものは2つ。"), /*#__PURE__*/React.createElement("ul", {
+    style: {
+      margin: "8px 0 0",
+      paddingLeft: "1.2em"
+    }
+  }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "2.2 パワエレは台帳で1位"), "（31小問・14.1%。B問16 は10回中10回とも パワエレ）なのに、この表では7週目に置かれている"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "3.2 情報・電子回路は台帳で5位"), "（24小問・10.9%）なのに、この表では11週目に置かれている")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: "8px 0 0"
+    }
+  }, "台帳の実績を優先するなら、この2つを前へ動かすことになる。 並べ替えは学習導線そのものの変更なので、事実だけ先に出しておく。")), /*#__PURE__*/React.createElement("div", {
     className: "table-wrap"
   }, /*#__PURE__*/React.createElement("table", {
     className: "data"
