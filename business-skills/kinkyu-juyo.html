@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>緊急と重要の5要素 | Business Skills</title>
+<meta name="description" content="「重要」を大ごと・偉い人が絡む案件と取り違えると4象限は機能しない。緊急は他人の時計、重要は自分の目的。定義・判定質問・第3領域の罠・第1と第2の因果・予定への固定までを5要素で構造化する。">
+<meta property="og:title" content="緊急と重要の5要素 | Business Skills">
+<meta property="og:description" content="重要度を他人に決めさせない。緊急・重要の定義そのものを分解し、判定できる形にする。">
+<meta property="og:type" content="article">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet"></noscript>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* ── ローカル拡張 ──
+   shared.css のライトテーマ・トークンにそのまま乗せる（:root は上書きしない）。
+   :root を上書きすると selfcheck-bridge.js が注入するメモ欄・評価ボタン
+   （固定のライト配色）が読めなくなるため、配色は共有層に合わせる。
+   使用トークンは shared.css に定義があるものだけ（--sp-5 等は未定義なので使わない）。 */
+
+.kj-section { max-width: 900px; margin: 0 auto; padding: 0 var(--sp-4) var(--sp-12); }
+.kj-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--sp-8); }
+.kj-title { font-size: var(--fs-h2); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+.kj-sub { color: var(--text-muted); font-size: var(--fs-sm); margin-bottom: var(--sp-6); line-height: var(--lh-long); }
+.kj-sub strong { color: var(--accent); }
+.kj-section-h { font-size: 1rem; font-weight: 700; color: var(--accent); margin: var(--sp-8) 0 var(--sp-4); letter-spacing: 0.04em; }
+
+/* ── 注記 ── */
+.notice {
+  max-width: 900px; margin: 0 auto var(--sp-6);
+  padding: var(--sp-3) var(--sp-6);
+  background: rgba(0,0,0,0.02);
+  border: 1px dashed rgba(0,0,0,0.14);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem; color: var(--text-muted); line-height: var(--lh-long);
+}
+
+/* ── 2軸の分離図 ── */
+.axis-split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); margin: var(--sp-4) 0 var(--sp-6); }
+.axis-col { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--sp-6); background: rgba(2,132,199,0.04); }
+.axis-col.urgent { border-color: rgba(245,158,11,0.38); background: var(--accent-core-dim); }
+.axis-col-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: var(--sp-2); }
+.axis-col.urgent .axis-col-tag { color: #b45309; }
+.axis-col-def { font-size: 0.95rem; font-weight: 700; color: var(--text); line-height: 1.6; margin-bottom: var(--sp-3); }
+.axis-col-meta { font-size: 0.78rem; color: var(--text-muted); line-height: 1.75; }
+.axis-col-meta b { color: var(--text); }
+
+/* ── 4象限マトリクス ── */
+.quad { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: var(--sp-4) 0 var(--sp-6); }
+.quad-cell { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--sp-6); background: var(--bg-card); }
+.quad-cell.q1 { border-color: rgba(245,158,11,0.40); background: rgba(245,158,11,0.07); }
+.quad-cell.q2 { border-color: rgba(2,132,199,0.40); background: rgba(2,132,199,0.07); }
+.quad-cell.q3 { border-color: rgba(220,38,38,0.30); background: rgba(220,38,38,0.05); }
+.quad-cell.q4 { background: rgba(0,0,0,0.02); }
+.quad-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: var(--sp-2); flex-wrap: wrap; }
+.quad-no { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.1em; color: var(--text-dim); }
+.quad-name { font-size: 0.98rem; font-weight: 700; color: var(--text); }
+.quad-verb { font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(0,0,0,0.06); color: var(--text-muted); }
+.quad-cell.q1 .quad-verb { background: rgba(245,158,11,0.18); color: #92400e; }
+.quad-cell.q2 .quad-verb { background: rgba(2,132,199,0.14); color: #075985; }
+.quad-cell.q3 .quad-verb { background: rgba(220,38,38,0.12); color: #b91c1c; }
+.quad-flag { font-size: 0.72rem; font-weight: 700; color: #b45309; margin-bottom: var(--sp-2); }
+.quad-cell.q2 .quad-flag { color: #075985; }
+.quad-cell.q3 .quad-flag { color: #b91c1c; }
+.quad-list { margin: 0; padding-left: 1.15em; font-size: 0.8rem; color: var(--text-muted); line-height: 1.9; }
+.quad-note { margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px solid rgba(0,0,0,0.09); font-size: 0.76rem; color: var(--text-muted); line-height: 1.75; }
+.quad-note b { color: var(--text); }
+
+/* ── 判定質問カード ── */
+.qcard { border-left: 3px solid var(--accent); background: var(--accent-dim); border-radius: var(--radius-sm); padding: var(--sp-4) var(--sp-6); margin-bottom: var(--sp-4); }
+.qcard.core { border-left-color: #f59e0b; background: var(--accent-core-dim); }
+.qcard-q { font-size: 0.94rem; font-weight: 700; color: var(--text); line-height: 1.65; margin-bottom: var(--sp-2); }
+.qcard-a { font-size: 0.8rem; color: var(--text-muted); line-height: 1.8; }
+.qcard-a b { color: #075985; }
+.qcard.core .qcard-a b { color: #92400e; }
+
+/* ── 演習 ── */
+.ex-card { background: rgba(0,0,0,0.02); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--sp-6); margin-bottom: var(--sp-4); }
+.ex-num { font-size: 0.68rem; font-weight: 700; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: var(--sp-2); }
+.ex-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: var(--sp-3); }
+.ex-body { font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.9; }
+.ex-body b { color: var(--text); }
+.ex-blank { display: inline-block; min-width: 150px; border-bottom: 1px dashed rgba(2,132,199,0.5); padding: 0 6px; color: var(--text-dim); font-style: italic; }
+
+/* ── 出典・限界 ── */
+.src-list { margin: 0; padding-left: 1.2em; font-size: 0.8rem; color: var(--text-muted); line-height: 1.95; }
+.src-list b { color: var(--text); }
+.limit-box { border: 1px dashed rgba(0,0,0,0.18); border-radius: var(--radius-sm); padding: var(--sp-4) var(--sp-6); margin-top: var(--sp-4); font-size: 0.8rem; color: var(--text-muted); line-height: 1.9; }
+.limit-box b { color: #92400e; }
+
+/* ── 関連ページ ── */
+.rel-links { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-4); }
+.rel-link { display: block; flex: 1 1 240px; border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--sp-4); text-decoration: none; background: var(--bg-card); transition: border-color 0.15s, transform 0.15s; }
+.rel-link:hover { border-color: var(--accent); transform: translateY(-2px); }
+.rel-link-t { font-size: 0.88rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.rel-link-d { font-size: 0.76rem; color: var(--text-muted); line-height: 1.65; }
+
+/* ── セルフチェックの記述欄（ライトテーマで見えるように） ── */
+.selfcheck-card textarea {
+  background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.15);
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .axis-split, .quad { grid-template-columns: 1fr; }
+  .kj-card { padding: var(--sp-6); }
+  .ex-blank { min-width: 110px; }
+}
+
+/* ── 今日の1アクション / フットホールド（共通層に無いため本ページで定義） ── */
+.action-now { max-width: 900px; margin: 0 auto var(--sp-8); padding: 0 var(--sp-4); display: grid; grid-template-columns: 1.25fr 1fr; gap: var(--sp-4); align-items: start; }
+.action-now-card { background: var(--accent-core-dim); border: 1px solid rgba(245,158,11,0.38); border-left: 4px solid #f59e0b; border-radius: var(--radius-md); padding: var(--sp-6); }
+.action-now-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; color: #b45309; margin-bottom: var(--sp-2); }
+.action-now-title { font-size: 1rem; font-weight: 700; color: var(--text); line-height: 1.6; margin-bottom: var(--sp-3); }
+.action-now-body { font-size: 0.82rem; color: var(--text-muted); line-height: 1.85; }
+.action-now-body strong { color: var(--text); }
+.foothold-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--sp-6); }
+.foothold-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; color: var(--accent); margin-bottom: var(--sp-3); }
+.foothold-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: var(--sp-3); }
+.foothold-step { font-size: 0.78rem; font-weight: 700; color: var(--text); background: rgba(2,132,199,0.08); border: 1px solid rgba(2,132,199,0.25); border-radius: 999px; padding: 4px 10px; }
+.foothold-arrow { color: var(--text-dim); font-size: 0.85rem; font-weight: 700; }
+.foothold-note { font-size: 0.76rem; color: var(--text-muted); line-height: 1.8; }
+.foothold-note strong { color: var(--text); }
+
+@media (max-width: 640px) {
+  .action-now { grid-template-columns: 1fr; }
+}
+</style>
+<script src="skill-tracker.js" defer></script>
+<script src="selfcheck-bridge.js" defer></script>
+</head>
+<body>
+<nav class="top-nav">
+  <a class="nav-back" href="index.html"><i data-lucide="chevron-left" width="16" height="16"></i>Business Skills</a>
+  <span class="nav-title-text">緊急と重要</span>
+  <div class="nav-spacer"></div>
+</nav>
+
+<header class="hero">
+  <span class="hero-label">Business Skills Series · 55</span>
+  <h1>緊急と<span>重要</span>の5要素</h1>
+  <p class="hero-sub">4象限を知っていても仕分けできないのは、<strong>「重要」の定義が曖昧なまま</strong>だから。緊急は他人の時計、重要は自分の目的。定義・判定質問・第3領域の罠・第1と第2の因果・予定への固定を5要素で構造化する。</p>
+</header>
+
+<div class="notice">
+  <strong>注記：</strong>本ページは「どの手法で優先順位を決めるか」ではなく<strong>「重要とは何か」という定義</strong>に絞っています。MoSCoW・ICE などの順位付け手法は <a href="yusen-juni.html" style="color:var(--accent);">優先順位付けの5要素</a>、カレンダー運用の詳細は <a href="schedule-ai-jutsu.html" style="color:var(--accent);">AI時代の予定設計術</a> を参照してください。
+</div>
+
+<section class="action-now">
+  <div class="action-now-card">
+    <div class="action-now-label">▼ 今日の終業前に1回</div>
+    <div class="action-now-title">今日やった仕事を1つ選び、「明日に回したら今日何が起きたか」を言ってみる</div>
+    <div class="action-now-body">何も起きないなら、それは<strong>緊急ではなかった</strong>。にもかかわらず今日それをやったなら、緊急だと錯覚していたということ。この1問だけで、自分の1日がどの象限に食われているかが見える。</div>
+  </div>
+  <div class="foothold-card">
+    <div class="foothold-label">▲ 2軸はまったく別の質問に答えている</div>
+    <div class="foothold-chain">
+      <span class="foothold-step">緊急＝締切までの距離</span>
+      <span class="foothold-arrow">／</span>
+      <span class="foothold-step">重要＝目的への貢献</span>
+    </div>
+    <div class="foothold-note">緊急は<strong>他人</strong>が決め、重要は<strong>自分</strong>が決める。この2つを1本の「大事さ」に潰した瞬間、マトリクスは動かなくなる。</div>
+  </div>
+</section>
+
+<!-- Structure Map -->
+<section class="structmap-section">
+  <div class="structmap-card">
+    <div class="structmap-hd">
+      <h2 class="structmap-title">5要素の構造マップ</h2>
+      <p class="structmap-hint">クリックで詳細へジャンプ</p>
+    </div>
+    <div class="structmap-body">
+      <div class="smap-band">
+        <div class="smap-band-tag core">CORE — 2つの軸を分ける</div>
+        <div class="smap-center">
+          <button class="smap-node core-node" onclick="goAndScroll(0)">
+            <span class="sn-core-badge">CORE</span>
+            <span class="sn-num">01</span>
+            <span class="sn-name">二軸の分離</span>
+            <span class="sn-sub">緊急＝他人の時計 / 重要＝自分の目的</span>
+            <span class="sn-dmg">⚠ 1本に潰すと「声の大きい順」になる</span>
+          </button>
+        </div>
+      </div>
+      <div class="smap-v-arr">↓</div>
+      <div class="smap-band">
+        <div class="smap-band-tag">DEFINE — 重要度を導出する</div>
+        <div class="smap-pair">
+          <button class="smap-node" onclick="goAndScroll(1)">
+            <span class="sn-num">02</span>
+            <span class="sn-name">目的からの逆算</span>
+            <span class="sn-sub">役割の目的を先に言語化する</span>
+            <span class="sn-dmg">⚠ 目的が無いと重要度は判定できない</span>
+          </button>
+          <span class="smap-h-arr">→</span>
+          <button class="smap-node" onclick="goAndScroll(2)">
+            <span class="sn-num">03</span>
+            <span class="sn-name">第3領域の識別</span>
+            <span class="sn-sub">緊急に化けた非重要を見抜く</span>
+            <span class="sn-dmg">⚠ 体感が第1と同じで区別できない</span>
+          </button>
+        </div>
+      </div>
+      <div class="smap-v-arr">↓</div>
+      <div class="smap-band">
+        <div class="smap-band-tag">OPERATE — 因果を掴んで先手を打つ</div>
+        <div class="smap-pair">
+          <button class="smap-node" onclick="goAndScroll(3)">
+            <span class="sn-num">04</span>
+            <span class="sn-name">第1は遅行指標</span>
+            <span class="sn-sub">第1の量＝過去の第2の不足</span>
+            <span class="sn-dmg">⚠ 対処を頑張るほど第2が削られる</span>
+          </button>
+          <span class="smap-h-arr">+</span>
+          <button class="smap-node" onclick="goAndScroll(4)">
+            <span class="sn-num">05</span>
+            <span class="sn-name">予定への固定</span>
+            <span class="sn-sub">音の出ない仕事に音をつける</span>
+            <span class="sn-dmg">⚠ 意志で守ろうとすると必ず負ける</span>
+          </button>
+        </div>
+      </div>
+      <div class="smap-axiom">
+        <strong>「緊急は向こうから来る。重要は取りに行かないと永遠に来ない」</strong> — だから第2領域だけは予定表に置く
+      </div>
+    </div>
+  </div>
+</section>
+
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab core" data-i="0" onclick="go(0)"><span class="num">01</span><span class="tab-title">二軸の分離</span><span class="core-dot"></span></button>
+    <button class="tab" data-i="1" onclick="go(1)"><span class="num">02</span><span class="tab-title">目的から逆算</span></button>
+    <button class="tab" data-i="2" onclick="go(2)"><span class="num">03</span><span class="tab-title">第3領域</span></button>
+    <button class="tab" data-i="3" onclick="go(3)"><span class="num">04</span><span class="tab-title">遅行指標</span></button>
+    <button class="tab" data-i="4" onclick="go(4)"><span class="num">05</span><span class="tab-title">予定への固定</span></button>
+  </div>
+  <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill core" id="progress"></div></div></div>
+</nav>
+<main class="panel-wrap"><div class="panel" id="panel"></div></main>
+
+<section class="insight-section">
+  <div class="insight-card">
+    <h2 class="insight-title">5要素の統合：重要度を自分で定義し、予定に固定するまで</h2>
+    <div class="insight-flow">
+      <div class="flow-item" onclick="go(0)">①2軸を分ける</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item" onclick="go(1)">②目的から重要度を出す</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item" onclick="go(2)">③第3領域を外す</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item" onclick="go(3)">④第1の因果を掴む</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item" onclick="go(4)">⑤第2を予定に固定</div>
+    </div>
+    <p class="insight-text">
+      5要素は独立した技ではなく<strong>1本の手順</strong>です。①2つの軸を別の質問として分ける→②自分の役割の目的を言語化し、そこから重要度を導く→③緊急に化けた非重要（第3）を外す→④いま第1が多いのは過去に第2を削った結果だと理解する→⑤第2は催促が来ないので予定表に固定する。持ち帰る1文は<strong>「緊急は向こうから来る。重要は取りに行かないと永遠に来ない」</strong>。
+    </p>
+  </div>
+</section>
+
+<section class="selfcheck-section">
+  <div class="selfcheck-card">
+    <h2 class="selfcheck-title">総合セルフチェック</h2>
+    <p class="selfcheck-sub">5問。直近1週間の自分の1日の使い方を振り返る。</p>
+    <div class="check-list">
+      <div class="check-item">
+        <input type="checkbox" id="c1">
+        <label for="c1"><strong>2軸を別々に判定した</strong> — ある依頼について「締切はいつか」と「自分の目的に効くか」を、混ぜずに別々に考えた</label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c2">
+        <label for="c2"><strong>自分の役割の目的を言える</strong> — 「自分の仕事は何を成立させるためにあるか」を3〜5個、その場で言葉にできる</label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c3">
+        <label for="c3"><strong>第3領域を外した</strong> — 緊急そうに見えた依頼を、断る・時間を区切る・人に渡す、のいずれかで処理した</label>
+      </div>
+      <div class="check-item" style="flex-direction:column;align-items:stretch;">
+        <label for="c4-text" style="display:flex;gap:var(--sp-2);align-items:flex-start;cursor:pointer;"><input type="checkbox" id="c4" style="margin-top:3px;flex-shrink:0;"><span><strong>第1の原因を第2に遡って「書字」した</strong> — 直近で起きた突発対応を1つ取り、それがどの予防を削った結果かを書き出す（書けたらチェック）</span></label>
+        <textarea id="c4-text" rows="2" placeholder="例：突発の設備停止 → 点検周期の見直しを半年後回しにしていた／問い合わせ殺到 → 手順書を更新せず口頭運用のままだった 等" style="margin-top:8px;width:100%;border-radius:6px;padding:8px;font-family:var(--font-base);font-size:var(--fs-sm);resize:vertical;"></textarea>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c5">
+        <label for="c5"><strong>第2領域を予定表に置いた</strong> — 今週、誰からも催促されない仕事に開始時刻と所要時間を与え、実際にその時間に着手した</label>
+      </div>
+    </div>
+    <div class="score-display" id="score-disp">
+      <span id="score-num">0</span> / 5 実践中<br>
+      <small id="score-msg" style="color:var(--text-muted);">直近1週間で何個当てはまるか確認してください</small>
+    </div>
+  </div>
+</section>
+
+<!-- ── 2軸の分離 ── -->
+<section class="kj-section">
+  <div class="kj-card">
+    <h2 class="kj-title">定義：2つの軸は別の質問に答えている</h2>
+    <p class="kj-sub">腹落ちしない原因はほぼ1つ。<strong>「重要」を「大ごと・偉い人が絡む・目立つ」の意味で使っている</strong>こと。この定義だと、上位者からの資料依頼が自動的に「重要」になり、マトリクスが現状追認の道具になる。</p>
+
+    <div class="axis-split">
+      <div class="axis-col urgent">
+        <div class="axis-col-tag">Urgent</div>
+        <div class="axis-col-def">緊急<br>＝やらないと<u>今すぐ誰かが困る</u></div>
+        <div class="axis-col-meta">
+          測っているもの：<b>締切までの距離</b><br>
+          決めるのは：<b>他人・外部</b><br>
+          性質：<b>音がする</b>。電話が鳴り、通知が光り、催促が来る。向こうから来る。
+        </div>
+      </div>
+      <div class="axis-col">
+        <div class="axis-col-tag">Important</div>
+        <div class="axis-col-def">重要<br>＝やらないと<u>将来の自分が困る</u></div>
+        <div class="axis-col-meta">
+          測っているもの：<b>目的への貢献度</b><br>
+          決めるのは：<b>自分</b><br>
+          性質：<b>黙っている</b>。誰も催促しない。取りに行かないと永遠に来ない。
+        </div>
+      </div>
+    </div>
+
+    <div class="kj-section-h">判定する2つの質問</div>
+
+    <div class="qcard core">
+      <div class="qcard-q">「これを明日に回したら、<u>今日</u>、何が起きる？」</div>
+      <div class="qcard-a">誰かが待つ・現場が止まる・法令上の期限を割る → <b>緊急</b><br>何も起きない → <b>緊急ではない</b>。自分が落ち着かないだけ。</div>
+    </div>
+    <div class="qcard">
+      <div class="qcard-q">「これをやらなかったら、<u>半年後</u>に何が悪くなる？」</div>
+      <div class="qcard-a">リスクが上がる・人が育たない・同じ作業を繰り返し続ける → <b>重要</b><br>何も悪くならない → <b>重要ではない</b>。誰かの体裁が整わないだけ。</div>
+    </div>
+
+    <div class="limit-box">
+      <b>ここが本ページの主張：</b>第2領域が後回しになるのは意志が弱いからではなく、<b>構造的に音がしないから</b>。音がしないものを意志で守ろうとする限り、何度決意しても同じ場所で崩れる。だから要素05（予定への固定）が要る。
+    </div>
+  </div>
+</section>
+
+<!-- ── 4象限 ── -->
+<section class="kj-section">
+  <div class="kj-card">
+    <h2 class="kj-title">4象限：現場管理職の言葉に置き換える</h2>
+    <p class="kj-sub">分類そのものが目的ではない。狙いは<strong>第3を外して第2の枠を作る</strong>こと、その一点。</p>
+
+    <div class="quad">
+      <div class="quad-cell q1">
+        <div class="quad-head"><span class="quad-no">Q1</span><span class="quad-name">緊急 × 重要</span><span class="quad-verb">対処</span></div>
+        <ul class="quad-list">
+          <li>設備トラブル・異常停止の初動</li>
+          <li>事故・ヒヤリハットの発生対応</li>
+          <li>法令上の期限が迫った手続き・点検</li>
+          <li>大規模工事・停電作業の当日指揮</li>
+          <li>安全上その場で止めるべき作業の是正</li>
+        </ul>
+        <div class="quad-note">入ったら他を全部止めてよい。ただし<b>終わった直後に必ず第2へ変換する</b>（恒久対策・手順書への反映）。ここを省くと同じ第1が再来する。</div>
+      </div>
+
+      <div class="quad-cell q2">
+        <div class="quad-head"><span class="quad-no">Q2</span><span class="quad-name">重要 × 緊急でない</span><span class="quad-verb">投資</span></div>
+        <div class="quad-flag">★ 本丸</div>
+        <ul class="quad-list">
+          <li>ベテランの技術・判断基準の移転</li>
+          <li>予防保全の計画と周期の見直し</li>
+          <li>標準化・手順書化・保存先ルールの統一</li>
+          <li>部下の育成・1on1・OJT設計</li>
+          <li>資格取得など自分の専門性への投資</li>
+          <li>大型案件の事前計画と前回反省の反映</li>
+        </ul>
+        <div class="quad-note">このマスの中でも<b>「時間切れが来たら二度と取り戻せないもの」</b>（退職が迫る人からの技術移転・年1回しかない申込期限）を先に取る。他は遅れても挽回できる。</div>
+      </div>
+
+      <div class="quad-cell q3">
+        <div class="quad-head"><span class="quad-no">Q3</span><span class="quad-name">緊急 × 重要でない</span><span class="quad-verb">渡す</span></div>
+        <div class="quad-flag">⚠ 最大の罠</div>
+        <ul class="quad-list">
+          <li>「聞けば早い」で自分に直接来る質問</li>
+          <li>宛先ではなく共有で回ってくる連絡</li>
+          <li>出席するだけの会議</li>
+          <li>突発の資料依頼・数字の切り出し</li>
+          <li>資料の体裁調整</li>
+          <li>単純な入力作業の肩代わり</li>
+        </ul>
+        <div class="quad-note">断る・時間を区切る・渡す。<b>渡した先の経験になるなら、それは第3を第2に変換できたということ</b>。</div>
+      </div>
+
+      <div class="quad-cell q4">
+        <div class="quad-head"><span class="quad-no">Q4</span><span class="quad-name">どちらでもない</span><span class="quad-verb">捨てる</span></div>
+        <ul class="quad-list">
+          <li>惰性で続いている定例・報告様式</li>
+          <li>必要以上の見た目の作り込み</li>
+          <li>なんとなくのメール・チャット巡回</li>
+          <li>誰も読んでいない記録の更新</li>
+        </ul>
+        <div class="quad-note">第4は意志の問題ではなく<b>導線の問題</b>。目に入る場所から外すのが唯一の対策。</div>
+      </div>
+    </div>
+
+    <div class="kj-section-h">第3領域を見抜く2問</div>
+    <div class="qcard">
+      <div class="qcard-q">「これは、<u>自分がやらないと成立しない</u>のか？」</div>
+      <div class="qcard-a">成立するなら <b>第3</b>。自分でなくてもできる仕事を自分でやっている。</div>
+    </div>
+    <div class="qcard">
+      <div class="qcard-q">「これは、<u>誰の目的</u>に効いているのか？」</div>
+      <div class="qcard-a">他人の目的にしか効いていないなら <b>第3</b>。相手には重要でも、自分の役割の目的には効いていない。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 演習 ── -->
+<section class="kj-section">
+  <div class="kj-card">
+    <h2 class="kj-title">想起演習：読んだ直後に手を動かす</h2>
+    <p class="kj-sub">分類を「知っている」状態と「できる」状態の差は、<strong>自分の実タスクで一度やったかどうか</strong>だけ。</p>
+
+    <div class="ex-card">
+      <div class="ex-num">Exercise 01 — 目的の言語化</div>
+      <div class="ex-title">自分の役割の目的を3〜5個、紙に書く</div>
+      <div class="ex-body">
+        「自分の仕事は、何が成立していれば合格なのか」を箇条書きにする。<br>
+        例：<span class="ex-blank">事故を出さない</span> <span class="ex-blank">設備を止めない</span> <span class="ex-blank">人が育つ</span> <span class="ex-blank">属人化を減らす</span><br>
+        <b>これが書けないうちは、重要度の判定は原理的にできない。</b>4象限より先にこちらを書く。
+      </div>
+    </div>
+
+    <div class="ex-card">
+      <div class="ex-num">Exercise 02 — 昨日の棚卸し</div>
+      <div class="ex-title">昨日やった仕事を10個書き出し、Q1〜Q4を振る</div>
+      <div class="ex-body">
+        判定は2問だけ使う。「明日に回したら今日何が起きるか」「半年後に何が悪くなるか」。<br>
+        終わったら数える → <span class="ex-blank">Q1 __件</span> <span class="ex-blank">Q2 __件</span> <span class="ex-blank">Q3 __件</span> <span class="ex-blank">Q4 __件</span><br>
+        多くの場合 <b>Q3 が最多</b>になる。そこが削れる余地。
+      </div>
+    </div>
+
+    <div class="ex-card">
+      <div class="ex-num">Exercise 03 — 1枠だけ作る</div>
+      <div class="ex-title">来週の予定表に、Q2 のブロックを「1本だけ」入れる</div>
+      <div class="ex-body">
+        いきなり全部を組み替えない。<b>1本だけ</b>入れて、他人から見て埋まっている状態にする。<br>
+        入れる予定：<span class="ex-blank">　　　　　</span> 曜日・時刻：<span class="ex-blank">　　　　</span> 長さ：<span class="ex-blank">　　分</span><br>
+        翌週、そのブロックが守れたかどうかだけ確認する。守れなければ長さを半分にして再挑戦。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 出典と限界 ── -->
+<section class="kj-section">
+  <div class="kj-card">
+    <h2 class="kj-title">出典と、この枠組みの限界</h2>
+
+    <div class="kj-section-h">出典</div>
+    <ul class="src-list">
+      <li><b>「緊急と重要」の対比</b>：ドワイト・アイゼンハワーが1954年、イリノイ州エバンストンで開かれた世界教会協議会 第2回総会での演説において、「私には2種類の問題がある。緊急なものと重要なものだ。緊急なものは重要ではなく、重要なものは決して緊急ではない」という趣旨の言葉を引用した。<b>ただしアイゼンハワー本人はこれを「ある元大学学長の言葉」として紹介しており、自身の考案とは述べていない。引用元の人物が誰かについては諸説あり、確定していない。</b></li>
+      <li><b>2×2マトリクスへの定式化</b>：スティーブン・R・コヴィー『7つの習慣』（原著1989）が「時間管理のマトリックス」として4象限の形にまとめ、第II領域（重要だが緊急でない）を中核に据えた。<b>「アイゼンハワー・マトリクス」という通称は後年の呼び名であり、アイゼンハワー自身がこの図を描いた事実は確認されていない。</b></li>
+      <li><b>収集と2分ルール</b>：デビッド・アレン『Getting Things Done』（原著2001）。気になることを1つの受信箱に集め、2分以内で終わるものはその場で処理する。</li>
+    </ul>
+
+    <div class="limit-box">
+      <b>限界1：このマトリクスは重要度の「測り方」を与えない。</b>4象限は分類の器であって、優先順位を計算するアルゴリズムではない。自分の役割の目的を先に言語化しない限り、器は永久に埋まらない。要素02を飛ばして4象限だけ使うと必ず失敗する。<br><br>
+      <b>限界2：第1が常時あふれている職場では、分類する余裕自体がない。</b>その状態で全面的な仕分けを始めると破綻する。まず第2の枠を1本だけ固定し、そこから広げる（演習03）。<br><br>
+      <b>限界3：割り込みが構造的に入る仕事では、分刻みの予定設計は成立しない。</b>予定で埋めるのは1日の50〜60%までに留め、残りを第1用のバッファとして空けておく。埋め切ると1件の突発で全日程が倒れる。
+    </div>
+
+    <div class="kj-section-h">関連ページ</div>
+    <div class="rel-links">
+      <a class="rel-link" href="yusen-juni.html">
+        <div class="rel-link-t">優先順位付けの5要素 →</div>
+        <div class="rel-link-d">重要だと決まった後、何から着手するか。MoSCoW・ICE・順位を歪めるバイアス。</div>
+      </a>
+      <a class="rel-link" href="schedule-ai-jutsu.html">
+        <div class="rel-link-t">AI時代の予定設計術 →</div>
+        <div class="rel-link-d">第2領域を予定に置いた後の運用。バッファ設計・割込み許容度・カレンダー色分け。</div>
+      </a>
+      <a class="rel-link" href="ikusei-coaching.html">
+        <div class="rel-link-t">育成コーチングの5要素 →</div>
+        <div class="rel-link-d">第3を「渡す」を成立させる技術。渡し方を誤ると第1になって返ってくる。</div>
+      </a>
+      <a class="rel-link" href="jikan-sekkei.html">
+        <div class="rel-link-t">時間設計の5要素 →</div>
+        <div class="rel-link-d">同じ1時間でも価値は一定ではない。エネルギーと注意の配分から設計する。</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<script>
+const PANELS = [
+  {
+    core: true,
+    icon: 'scale',
+    num: 'ELEMENT 01',
+    title: '二軸の分離',
+    theory: '緊急＝他人の時計 / 重要＝自分の目的',
+    badge: 'CORE',
+    summary: '緊急と重要は、強さの違う2つの「大事さ」ではない。まったく別の質問に答えている。緊急は締切までの距離を測り、他人が決める。重要は目的への貢献度を測り、自分が決める。この2つを1本の尺度に潰した瞬間、仕分けは「声の大きい順」に退化する。',
+    why: '多くの人が4象限を使えないのは、図を知らないからではなく「重要」を大ごと・上位者が絡む・目立つ、の意味で使っているから。その定義では上位者からの資料依頼が自動的に重要になり、4象限が現状追認の道具になる。軸を分けた瞬間に、依頼者の役職と重要度が無関係だと分かる。',
+    how: '依頼が来たら、2問を順番に、混ぜずに唱える。「明日に回したら今日何が起きる？」（緊急の判定）「やらなかったら半年後に何が悪くなる？」（重要の判定）。片方ずつ答えを出してから、はじめて象限を決める。同時に考えると必ず混ざる。',
+    deficit: '軸を分けられない人：上位者から来た依頼を全部最優先にする。自分が落ち着かないだけの作業を「急ぎ」と呼ぶ。1日の終わりに「忙しかったが何も進んでいない」と感じる。そしてその日やった仕事の大半が、誰の目的にも効いていない。',
+    check: '今日やった仕事を1つ選び、「明日に回したら今日何が起きたか」を答えてみる。何も起きないなら、それは緊急ではなかった。'
+  },
+  {
+    core: false,
+    icon: 'target',
+    num: 'ELEMENT 02',
+    title: '目的からの逆算',
+    theory: '重要度は単体では決まらない / 役割の目的が先',
+    badge: null,
+    summary: '重要度はタスクそのものの属性ではなく、目的との関係で決まる量。だから「自分の役割は何が成立していれば合格か」を3〜5個言語化しない限り、重要度は原理的に判定できない。4象限が埋まらない人のほとんどは、この一段前でつまずいている。',
+    why: '目的が言語化されていないと、判定の基準が「頼んできた人の圧」や「自分の気分」に置き換わる。逆に目的さえ書いてあれば判定は一瞬で終わる。目的リストは一度書けば数年使えるので、費用対効果が極端に高い。',
+    how: '紙に「自分の仕事は何を成立させるためにあるか」を3〜5個書く。抽象語ではなく、達成・未達が判定できる言葉にする。以後すべての依頼を「このどれに効くか」で測る。どれにも効かないなら、その依頼は自分にとって重要ではない（相手にとっては重要かもしれない、という区別が要る）。',
+    deficit: '目的が無い人：4象限を教わっても、どのタスクも「まあ重要」に見えて仕分けできない。あるいは全部を第1に放り込んで、結局いつも通りの順番で処理する。手法をいくつ覚えても結果が変わらない典型パターン。',
+    check: '今この瞬間、自分の役割の目的を3つ即答できるか。詰まったなら、4象限より先にそれを書く。'
+  },
+  {
+    core: false,
+    icon: 'alert-triangle',
+    num: 'ELEMENT 03',
+    title: '第3領域の識別',
+    theory: '緊急に化けた非重要 / 断る・区切る・渡す',
+    badge: null,
+    summary: '第3領域（緊急だが重要でない）は、体感が第1とまったく同じ。人から来て、締切があって、無視すると気まずい。だから一日中これに対応して「今日は忙しかった」で終わる。4象限の実務的な価値は、ほぼこのマスを識別できるかどうかに集約される。',
+    why: '第1は減らせないが、第3は減らせる。つまり1日の中で唯一まとまった時間を取り戻せる場所が第3。しかも第3を人に渡すと渡された側の経験になるので、第2（育成）に変換される。削るだけでなくプラスに変えられる唯一の象限。',
+    how: '2問で判定する。「これは自分がやらないと成立しないか」「これは誰の目的に効いているか」。成立する／他人の目的にしか効かない、なら第3。処理は3通りだけ。断る、時間の上限を決めて区切る、人に渡す。渡すときは「基準・報告点・撤退条件」をセットで渡す。丸投げは第1になって返ってくる。',
+    deficit: '第3を自分で処理し続ける人：部下が育たず、質問がすべて自分に集まり、その結果さらに時間がなくなる。自分がボトルネックになっていることに気づけない。「忙しいから育成に手が回らない」と言うが、因果は逆で、渡さないから忙しい。',
+    check: '直近1週間で自分に直接来た質問を思い出す。そのうち何件が、自分でなくても答えられたか。'
+  },
+  {
+    core: false,
+    icon: 'activity',
+    num: 'ELEMENT 04',
+    title: '第1は遅行指標',
+    theory: '第1の量＝過去に削った第2の請求書',
+    badge: null,
+    summary: '第1領域が多い職場は、運が悪いのではない。予防・標準化・育成という第2領域を削った結果が、時間差で突発対応として返ってきている。第1は現在の忙しさを示す指標ではなく、過去の投資不足を示す遅行指標である。',
+    why: 'この因果を掴まないと、対処能力を上げる方向にしか改善が向かわない。初動が速くなるほど第2を削る時間が増え、翌年の第1がさらに増える。第1を減らす手段は第2への投資しかない、という一点が腹落ちすると、優先順位の判断が根本から変わる。',
+    how: '突発対応が起きたら、その場で「これはどの第2を削った結果か」を1行書く。点検周期の見直しを先送りした、手順書を更新せず口頭運用のままだった、など。この1行を月末に集めると、翌月に投資すべき第2が名指しで出てくる。第1の処理そのものより、この1行のほうが効く。',
+    deficit: '因果を掴めない組織：突発対応が続くたびに人を増やすか残業で埋め、対処の速さを称賛する。予防に投資した人は「暇そうに見える」ため評価されない。結果として第2がさらに削られ、第1が構造的に増え続ける。',
+    check: '直近の突発対応を1つ取り、「どの予防を削った結果か」を1行で書けるか。'
+  },
+  {
+    core: false,
+    icon: 'calendar-check',
+    num: 'ELEMENT 05',
+    title: '予定への固定',
+    theory: '音の出ない仕事に、音をつける',
+    badge: null,
+    summary: '第2領域は誰も催促しない。つまり放置してもその日は何も起きない。だから「やる気になったらやる」では永久に実行されない。唯一の対策は、開始時刻と所要時間を与えて予定表に置き、他人から見て埋まっている状態にすること。やることリストは「いつやるか」を答えないので、第2は永遠にリストの下に残る。',
+    why: '第2が実行されない理由は意志ではなく構造（音がしない）にある。構造の問題は仕組みで解く。予定表に置くという行為は、音のしない仕事に人工的に音をつける操作にあたる。空き時間に見えた瞬間に他人の第3が流れ込むため、埋まっている状態にすることまでが一組。',
+    how: '来週の予定に第2のブロックを1本だけ置く。予定で埋めるのは1日の50〜60%までとし、残りは第1用のバッファとして空けておく。メールは分類の色を4つ（対処・投資・渡す・捨てる）決めて受信箱を色で読む。共有だけの連絡と自動通知は仕分けルールで別フォルダへ退避し、見るのは1日1回に固定する。チャットは作業ブロックの時間帯に応答不可と通知停止を重ねる。ただし現場からの緊急連絡経路は必ず1本残す。',
+    deficit: '予定に置かない人：毎週「来週こそ」と言い続け、半年後も同じ状態にいる。第2の未着手が積み上がり、やがて期限切れ（人の退職・年1回の申込期限・法定周期）として第1に転化する。そのとき失われるものは、たいてい取り返しがつかない。',
+    check: '来週の予定表に、誰からも催促されない仕事のブロックが1本でも入っているか。'
+  }
+];
+
+let cur = 0;
+
+function renderPanel(i) {
+  const p = PANELS[i];
+  const el = document.getElementById('panel');
+  el.className = 'panel' + (p.core ? ' core' : '');
+  el.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-icon"><i data-lucide="${p.icon}" width="24" height="24"></i></div>
+      <div class="panel-title-wrap">
+        <div class="panel-num">${p.num}</div>
+        <div class="panel-title">${p.title}</div>
+        <div class="panel-theory">${p.theory}</div>
+      </div>
+      ${p.badge ? `<div class="badges"><span class="badge badge-core">${p.badge}</span></div>` : ''}
+    </div>
+    <p class="panel-summary">${p.summary}</p>
+    <div class="detail-grid">
+      <div class="detail-block">
+        <div class="detail-label">なぜ重要か</div>
+        <div class="detail-text">${p.why}</div>
+      </div>
+      <div class="detail-block">
+        <div class="detail-label">どう使うか</div>
+        <div class="detail-text">${p.how}</div>
+      </div>
+    </div>
+    <div class="deficit-block">
+      <div class="deficit-label">欠如すると</div>
+      <div class="deficit-text">${p.deficit}</div>
+    </div>
+    <div class="check-block">
+      <div class="check-label">セルフチェック</div>
+      <div class="check-text">${p.check}</div>
+    </div>
+    <div class="panel-nav">
+      <button class="nav-btn prev" onclick="go(${i - 1})" ${i === 0 ? 'disabled' : ''}>
+        <i data-lucide="chevron-left" width="16" height="16"></i>
+        <span class="nav-btn-label"><span class="nav-btn-hint">PREV</span><span>${i > 0 ? PANELS[i-1].title : ''}</span></span>
+      </button>
+      <button class="nav-btn next" onclick="go(${i + 1})" ${i === PANELS.length - 1 ? 'disabled' : ''}>
+        <span class="nav-btn-label"><span class="nav-btn-hint">NEXT</span><span>${i < PANELS.length - 1 ? PANELS[i+1].title : ''}</span></span>
+        <i data-lucide="chevron-right" width="16" height="16"></i>
+      </button>
+    </div>
+  `;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function updateTabs(i) {
+  document.querySelectorAll('.tab').forEach((t, idx) => {
+    t.classList.toggle('active', idx === i);
+    if (idx === 0) t.classList.toggle('core', idx === i);
+  });
+  const pct = ((i + 1) / PANELS.length) * 100;
+  const fill = document.getElementById('progress');
+  fill.style.width = pct + '%';
+  fill.className = 'progress-fill' + (PANELS[i].core ? ' core' : '');
+}
+
+function go(i) {
+  if (i < 0 || i >= PANELS.length) return;
+  cur = i;
+  renderPanel(i);
+  updateTabs(i);
+}
+
+function goAndScroll(i) {
+  go(i);
+  document.querySelector('.tab-nav').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  go(0);
+});
+</script>
+<div style="text-align:center;padding:1.5rem 0 1rem;"><a href="../index.html" style="color:#8892a0;text-decoration:none;font-size:0.82rem;">← ポータルに戻る</a></div>
+</body>
+</html>
