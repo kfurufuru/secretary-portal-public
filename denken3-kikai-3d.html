@@ -1511,10 +1511,15 @@ const VIEWS = {
   'dc-machine':{target:[-4.5,2.4,0], dist:8.5, theta:.8, phi:1.2},
   'induction-machine':{target:[4.5,2.4,0], dist:9, theta:.8, phi:1.2},
   synchronous:{target:[13,2.4,0], dist:9, theta:.8, phi:1.2},
-  'power-elec':{target:[21.4,2.45,-.3], dist:8.4, theta:.1, phi:1.32, wide:true},   // 盤は横長。縦画面では引く
+  /* 盤の中心は x=22。距離は実測で決めた（枠に収まり、横幅の 7 割前後を占める値）。
+     画面の縦横で距離を変える判定は置かない——開いた直後の #view は
+     レイアウトが確定する前で縦長に見え（実測 0.83 → 確定後 1.36）、
+     camera.aspect も resize() まで構築時の 1 のままなので、どちらを読んでも外す。
+     実測: この距離なら アスペクト 0.83 / 1.00 / 1.36 のいずれでも全体が枠に入る。 */
+  'power-elec':{target:[22,2.45,-.3], dist:10.5, theta:.1, phi:1.32},
 };
 const tfViewKey = () => state.tfView==='core' ? 'transformer' : 'transformer:'+state.tfView;
-function flyTo(v){ cam.want = {target:new THREE.Vector3(...v.target), dist:v.dist * (v.wide && camera.aspect < 1 ? 1.45 : 1), theta:v.theta, phi:v.phi}; }
+function flyTo(v){ cam.want = {target:new THREE.Vector3(...v.target), dist:v.dist, theta:v.theta, phi:v.phi}; }
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let drag=null;
