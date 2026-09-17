@@ -4395,15 +4395,33 @@ const Eq = ({
 }) => {
   const ref = useRef(null);
   useEffect(() => {
-    if (!ref.current || !window.katex) return;
-    try {
-      window.katex.render(tex, ref.current, {
-        displayMode: !!display,
-        throwOnError: false
-      });
-    } catch (e) {
-      ref.current.textContent = tex;
-    }
+    // katex.min.js は defer で読み込まれ、このバンドルは同期 <script> なので、
+    // 初回描画時点では window.katex が無いことがある（ビルド化で
+    // 実行時 Babel を外した結果、React の描画が KaTeX の到着より先になった）。
+    // 以前の実装は「無ければ何もしない」で、最初に開いたページの数式が全部
+    // 空のまま残っていた（公開サイトで 203+24 件を実測。ERRORS.md 参照）。
+    // 到着するまで短い間隔で待ち、来た時点で描く。
+    let cancelled = false;
+    const draw = () => {
+      if (cancelled || !ref.current || !window.katex) return false;
+      try {
+        window.katex.render(tex, ref.current, {
+          displayMode: !!display,
+          throwOnError: false
+        });
+      } catch (e) {
+        ref.current.textContent = tex;
+      }
+      return true;
+    };
+    if (draw()) return undefined;
+    const timer = setInterval(() => {
+      if (draw()) clearInterval(timer);
+    }, 50);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
   }, [tex, display]);
   return display ? /*#__PURE__*/React.createElement("span", {
     className: "katex-display-wrap",
