@@ -1,7 +1,7 @@
 <meta charset="utf-8">
 <title>機械科目 3D工場</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="電験三種 機械科目の主要4機器を3D工場に配置し、機械Wikiと過去問台帳に結びつけて眺めるビューア">
+<meta name="description" content="電験三種 機械科目の主要5機器（回転機・変圧器・電力変換器）を3D工場に配置し、機械Wikiと過去問台帳に結びつけて眺めるビューア">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root{
@@ -279,11 +279,11 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
 /* ============================================================
    データ。Wiki のページID・節ID は機械Wiki（kikai-data.js /
    kikai-pages-units.jsx）と同じ文字列。URL は #page/section 形式。
-   過去問台帳は kikai-kakomon-topics.js から回転機・変圧器分を抜粋。
+   過去問台帳は kikai-kakomon-topics.js から回転機・変圧器・パワエレ分を抜粋。
    ここに試験数値は書かない。数値は Wiki 側だけが持つ。
    ============================================================ */
 const WIKI = 'https://kfurufuru.github.io/secretary-portal-public/denken3-kikai-wiki.html';
-const KAKOMON = [{"s":"R3","c":"1","p":"dc-machine","sec":"excitation","d":2,"t":"分巻・直巻電動機の界磁磁束とトルクの負荷電流依存"},{"s":"R3","c":"2","p":"dc-machine","sec":"emf","d":2,"t":"分巻電動機の端子電圧・界磁抵抗を変えたときの発生トルク"},{"s":"R3","c":"3","p":"induction-machine","sec":"torque","d":2,"t":"二次抵抗・比例推移・二重かご形・深溝形の特性"},{"s":"R3","c":"4","p":"induction-machine","sec":"overview","d":1,"t":"固定子と回転子の分類（回転磁界・スリップリング・端絡環）"},{"s":"R3","c":"5","p":"synchronous","sec":"start-hunting","d":2,"t":"負荷角・脱出トルク・乱調・制動巻線"},{"s":"R3","c":"6","p":"synchronous","sec":"vcurve","d":2,"t":"同期インピーダンスから百分率同期インピーダンスを求める"},{"s":"R3","c":"7","p":"induction-machine","sec":"start","d":2,"t":"各種電動機の始動電流抑制（始動抵抗・Y-Δ・二次抵抗・同期）"},{"s":"R3","c":"8","p":"dc-machine","sec":"brushless-dc","d":1,"t":"ブラシレスDCモータの構成と特徴（誤りを選ぶ）"},{"s":"R3","c":"9","p":"transformer","sec":"vreg","d":3,"t":"全負荷銅損から電圧変動率を近似式で求める"},{"s":"R3","c":"15a","p":"transformer","sec":"loss","d":2,"t":"銅損と鉄損の比から全負荷銅損を求める"},{"s":"R3","c":"15b","p":"transformer","sec":"loss","d":2,"t":"効率が最大となる負荷率"},{"s":"R4上","c":"1","p":"dc-machine","sec":"speed-control","d":2,"t":"始動抵抗・静止レオナード方式・逆転・回生制動"},{"s":"R4上","c":"2","p":"induction-machine","sec":"start","d":3,"t":"拘束試験の結果からY結線始動時の始動電流を求める"},{"s":"R4上","c":"3","p":"induction-machine","sec":"overview","d":1,"t":"三相巻線形誘導電動機の構造（固定子・巻線形回転子）"},{"s":"R4上","c":"4","p":"synchronous","sec":"parallel","d":2,"t":"並行運転の条件・同期検定器・起電力差による横流"},{"s":"R4上","c":"5","p":"synchronous","sec":"vcurve","d":2,"t":"持続短絡電流から短絡比を求める"},{"s":"R4上","c":"8","p":"transformer","sec":"sc-test","d":2,"t":"短絡試験の測定値から一次側の漏れリアクタンスを求める"},{"s":"R4上","c":"9","p":"transformer","sec":"vconn","d":2,"t":"単巻変圧器・V結線・スコット結線（誤りを選ぶ）"},{"s":"R4下","c":"1","p":"dc-machine","sec":"structure","d":1,"t":"直流機の構造（他励式・自励式の分類など。誤りを選ぶ）"},{"s":"R4下","c":"2","p":"induction-machine","sec":"circuit","d":2,"t":"滑りと二次銅損から軸出力を求める（機械損を差し引く）"},{"s":"R4下","c":"3","p":"induction-machine","sec":"overview","d":1,"t":"かご形と巻線形の回転子構造（端絡環・スリップリング）"},{"s":"R4下","c":"4","p":"synchronous","sec":"vcurve","d":1,"t":"同期電動機の位相特性曲線（V曲線）の読み方"},{"s":"R4下","c":"5","p":"synchronous","sec":"vcurve","d":2,"t":"同期インピーダンスから短絡比を求める"},{"s":"R4下","c":"6","p":"synchronous","sec":"structure","d":2,"t":"永久磁石同期モータの回転原理・表面磁石形と埋込磁石形・リラクタンストルク"},{"s":"R4下","c":"7","p":"synchronous","sec":"structure","d":3,"t":"交流機の電機子巻線法（分布巻・短節巻と巻線係数）"},{"s":"R4下","c":"8","p":"transformer","sec":"loss","d":2,"t":"2つの負荷条件の全損失から無負荷損（鉄損）を分離する"},{"s":"R4下","c":"9","p":"transformer","sec":"equiv","d":2,"t":"励磁電流の高調波・鉄損電流と磁化電流・鉄損の周波数依存（誤りを選ぶ）"},{"s":"R5上","c":"1","p":"dc-machine","sec":"structure","d":1,"t":"直流機の固定子・回転子の構成と電機子鉄心の積層"},{"s":"R5上","c":"2","p":"dc-machine","sec":"emf","d":2,"t":"始動電流と定格電流から永久磁石直流電動機の効率を求める"},{"s":"R5上","c":"3","p":"induction-machine","sec":"overview","d":1,"t":"回転磁界と回転子の誘導起電力・起磁力の打ち消し"},{"s":"R5上","c":"4","p":"induction-machine","sec":"torque","d":1,"t":"定格出力と滑りからトルクを求める"},{"s":"R5上","c":"5","p":"synchronous","sec":"vcurve","d":2,"t":"短絡比の大小と外形寸法・安定度・電圧変動率（誤りを選ぶ）"},{"s":"R5上","c":"6","p":"synchronous","sec":"structure","d":2,"t":"E=4.44kfNΦ から無負荷誘導起電力（線間値）を求める"},{"s":"R5上","c":"8","p":"transformer","sec":"parallel","d":2,"t":"三相変圧器の並行運転の条件（極性・変圧比・角変位。誤りを選ぶ）"},{"s":"R5上","c":"9","p":"transformer","sec":"loss","d":2,"t":"最大効率となる負荷率での効率"},{"s":"R5上","c":"15a","p":"transformer","sec":"vconn","d":2,"t":"単巻変圧器の直列巻線に流れる電流"},{"s":"R5上","c":"15b","p":"transformer","sec":"vconn","d":2,"t":"単巻変圧器の自己容量"},{"s":"R5下","c":"1","p":"dc-machine","sec":"reaction","d":2,"t":"直流機の電機子反作用と中性軸の移動（誤りを選ぶ）"},{"s":"R5下","c":"2","p":"dc-machine","sec":"emf","d":2,"t":"無負荷回転数と負荷時の損失から回転数を求める"},{"s":"R5下","c":"3","p":"induction-machine","sec":"speed","d":1,"t":"誘導機の速度制御（周波数制御・極数変換・二次抵抗）"},{"s":"R5下","c":"4","p":"induction-machine","sec":"start","d":2,"t":"Y-Δ始動トルクから定格運転時のトルクを求める"},{"s":"R5下","c":"5","p":"synchronous","sec":"vcurve","d":2,"t":"遅れ力率で運転する円筒形同期電動機のベクトル図"},{"s":"R5下","c":"6","p":"synchronous","sec":"structure","d":1,"t":"極数の違う同期発電機を並行運転するときの回転速度"},{"s":"R5下","c":"7","p":"transformer","sec":"loss","d":2,"t":"電気機器の損失の分類（銅損・渦電流損・ヒステリシス損・漂遊負荷損）"},{"s":"R5下","c":"8","p":"transformer","sec":"basic","d":2,"t":"一次側の諸量を二次側に換算する換算係数（誤りを選ぶ）"},{"s":"R5下","c":"9","p":"transformer","sec":"loss","d":2,"t":"規約効率のための巻線抵抗の75℃換算"},{"s":"R5下","c":"15a","p":"induction-machine","sec":"torque","d":2,"t":"定格回転速度から滑り周波数を求める"},{"s":"R5下","c":"15b","p":"induction-machine","sec":"torque","d":3,"t":"トルク一定負荷で電圧を下げたときの回転速度"},{"s":"R6上","c":"1","p":"dc-machine","sec":"structure","d":2,"t":"ブラシと整流子の役割・補極と補償巻線の要否"},{"s":"R6上","c":"2","p":"dc-machine","sec":"speed-control","d":2,"t":"電機子電圧を変えたときの回転速度（E=V−IaRa から）"},{"s":"R6上","c":"3","p":"induction-machine","sec":"overview","d":1,"t":"回転磁界と相対速度・巻線形のスリップリングと二次抵抗"},{"s":"R6上","c":"4","p":"induction-machine","sec":"speed","d":2,"t":"V/f 一定制御インバータで駆動したときの回転速度"},{"s":"R6上","c":"5","p":"synchronous","sec":"start-hunting","d":2,"t":"制動巻線による自己始動法（誘導トルクの利用）"},{"s":"R6上","c":"6","p":"synchronous","sec":"vcurve","d":2,"t":"力率1で運転する同期電動機の一相の誘導起電力"},{"s":"R6上","c":"8","p":"transformer","sec":"equiv","d":2,"t":"一次側に換算した簡易等価回路の各量"},{"s":"R6上","c":"9","p":"transformer","sec":"sc-test","d":2,"t":"短絡試験の測定値から一次側の漏れリアクタンスを求める"},{"s":"R6上","c":"15a","p":"induction-machine","sec":"torque","d":3,"t":"巻線形誘導電動機を定格の80%トルクで運転したときの滑り"},{"s":"R6上","c":"15b","p":"induction-machine","sec":"torque","d":3,"t":"二次抵抗を加えて回転速度を下げるときの外部抵抗"},{"s":"R6下","c":"1","p":"dc-machine","sec":"emf-blv","d":2,"t":"フレミング右手の法則と e=Blv・直流機の誘導起電力 E=pZΦn/(60a)"},{"s":"R6下","c":"2","p":"dc-machine","sec":"emf","d":2,"t":"電機子電圧・電流・回転数・トルクから電機子巻線抵抗を求める"},{"s":"R6下","c":"3","p":"induction-machine","sec":"torque","d":2,"t":"トルク-回転速度曲線・停動トルク・比例推移"},{"s":"R6下","c":"4","p":"induction-machine","sec":"circuit","d":3,"t":"入力電力と損失の関係から二次銅損を求める"},{"s":"R6下","c":"5","p":"synchronous","sec":"rotor-types","d":1,"t":"水車発電機とタービン発電機の回転速度・極数・回転子形状"},{"s":"R6下","c":"6","p":"synchronous","sec":"vcurve","d":2,"t":"三相短絡電流と界磁電流の比例関係から必要な界磁電流を求める"},{"s":"R6下","c":"7","p":"synchronous","sec":"structure","d":3,"t":"交流機の電機子巻線法（分布巻・短節巻と巻線係数）"},{"s":"R6下","c":"8","p":"transformer","sec":"vconn","d":2,"t":"単巻変圧器の分路巻線・直列巻線・自己容量"},{"s":"R6下","c":"9","p":"transformer","sec":"vconn","d":3,"t":"V-V結線2台で三相負荷をかけたときの負荷損の合計"},{"s":"R6下","c":"15a","p":"synchronous","sec":"vcurve","d":2,"t":"無負荷端子電圧と三相短絡電流から同期インピーダンスを求める"},{"s":"R6下","c":"15b","p":"synchronous","sec":"vcurve","d":3,"t":"短絡比と定格電流から持続短絡電流を求める"},{"s":"R7上","c":"1","p":"dc-machine","sec":"excitation","d":1,"t":"直巻・分巻・複巻電動機の速度特性と用途（誤りを選ぶ）"},{"s":"R7上","c":"2","p":"dc-machine","sec":"emf","d":2,"t":"始動電流と定格電流から永久磁石直流電動機の効率を求める"},{"s":"R7上","c":"3","p":"induction-machine","sec":"overview","d":1,"t":"三相かご形誘導機の構造と発電運転（誤りを選ぶ）"},{"s":"R7上","c":"4","p":"induction-machine","sec":"circuit","d":3,"t":"励磁回路と一次インピーダンスを省略した近似からの電流の変化"},{"s":"R7上","c":"5","p":"synchronous","sec":"parallel","d":1,"t":"並列運転の条件と同期検定器"},{"s":"R7上","c":"6","p":"synchronous","sec":"vcurve","d":2,"t":"短絡比から持続短絡電流を求める"},{"s":"R7上","c":"9","p":"transformer","sec":"loss","d":2,"t":"力率が変わったときの全負荷効率"},{"s":"R7上","c":"15a","p":"induction-machine","sec":"torque","d":3,"t":"r2/s が十分大きいときのトルクの近似式"},{"s":"R7上","c":"15b","p":"induction-machine","sec":"torque","d":3,"t":"電圧・周波数を変えたときのトルクの変化"},{"s":"R7下","c":"1","p":"dc-machine","sec":"excitation","d":2,"t":"直流分巻電動機の速度特性とトルク特性の図を選ぶ"},{"s":"R7下","c":"2","p":"dc-machine","sec":"emf","d":2,"t":"無負荷回転数と負荷時の損失から回転数を求める"},{"s":"R7下","c":"3","p":"induction-machine","sec":"start","d":1,"t":"巻線形の二次抵抗始動とかご形のY-Δ始動"},{"s":"R7下","c":"4","p":"induction-machine","sec":"start","d":2,"t":"Y-Δ始動トルクから定格運転時のトルクを求める"},{"s":"R7下","c":"5","p":"synchronous","sec":"start-hunting","d":2,"t":"制動巻線による自己始動法（誘導トルクの利用）"},{"s":"R7下","c":"6","p":"synchronous","sec":"vcurve","d":2,"t":"無負荷飽和曲線と短絡曲線から同期インピーダンスを求める"},{"s":"R7下","c":"8","p":"transformer","sec":"power-capacitor","d":2,"t":"電力用コンデンサの種類と構造（進相・調相・直列コンデンサ）"},{"s":"R7下","c":"9","p":"transformer","sec":"sc-test","d":2,"t":"短絡試験の測定値から一次側の漏れリアクタンスを求める"},{"s":"R7下","c":"15a","p":"transformer","sec":"loss","d":2,"t":"鉄損と銅損が等しくなる負荷率と効率から鉄損を求める"},{"s":"R7下","c":"15b","p":"transformer","sec":"loss","d":3,"t":"全負荷における効率"},{"s":"R8上","c":"1","p":"dc-machine","sec":"generator","d":2,"t":"分巻発電機の自己励磁・直巻発電機の外部特性・ブラシレスDC（誤りを選ぶ）"},{"s":"R8上","c":"2","p":"dc-machine","sec":"emf-blv","d":2,"t":"1巻きコイルに誘導される起電力（e=Blv・有効導体2本）"},{"s":"R8上","c":"3","p":"induction-machine","sec":"speed","d":2,"t":"V/f一定制御とベクトル制御・VVVF・始動トルク"},{"s":"R8上","c":"4","p":"induction-machine","sec":"circuit","d":2,"t":"トルクと機械出力から二次入力（同期ワット）を求める"},{"s":"R8上","c":"5","p":"synchronous","sec":"rotor-types","d":1,"t":"水車発電機とタービン発電機の回転速度・極数・回転子形状"},{"s":"R8上","c":"6","p":"synchronous","sec":"parallel","d":3,"t":"起電力差と短絡比から並行運転時の横流を求める"},{"s":"R8上","c":"7","p":"dc-machine","sec":"ac-commutator-motor","d":2,"t":"交流整流子モータの原理・積層鉄心・高速特性・ユニバーサルモータ"},{"s":"R8上","c":"8","p":"transformer","sec":"loss","d":3,"t":"返還負荷法の結線と鉄損・銅損の供給方法"},{"s":"R8上","c":"9","p":"transformer","sec":"vconn","d":2,"t":"Δ結線1組とV結線2組の使用可能容量の比"},{"s":"R8上","c":"15a","p":"synchronous","sec":"vcurve","d":3,"t":"力率1で運転する三相同期電動機のトルク"},{"s":"R8上","c":"15b","p":"synchronous","sec":"vcurve","d":3,"t":"界磁電流を増やして進み力率にしたときの誘導起電力"}];
+const KAKOMON = [{"s":"R3","c":"1","p":"dc-machine","sec":"excitation","d":2,"t":"分巻・直巻電動機の界磁磁束とトルクの負荷電流依存"},{"s":"R3","c":"2","p":"dc-machine","sec":"emf","d":2,"t":"分巻電動機の端子電圧・界磁抵抗を変えたときの発生トルク"},{"s":"R3","c":"3","p":"induction-machine","sec":"torque","d":2,"t":"二次抵抗・比例推移・二重かご形・深溝形の特性"},{"s":"R3","c":"4","p":"induction-machine","sec":"overview","d":1,"t":"固定子と回転子の分類（回転磁界・スリップリング・端絡環）"},{"s":"R3","c":"5","p":"synchronous","sec":"start-hunting","d":2,"t":"負荷角・脱出トルク・乱調・制動巻線"},{"s":"R3","c":"6","p":"synchronous","sec":"vcurve","d":2,"t":"同期インピーダンスから百分率同期インピーダンスを求める"},{"s":"R3","c":"7","p":"induction-machine","sec":"start","d":2,"t":"各種電動機の始動電流抑制（始動抵抗・Y-Δ・二次抵抗・同期）"},{"s":"R3","c":"8","p":"dc-machine","sec":"brushless-dc","d":1,"t":"ブラシレスDCモータの構成と特徴（誤りを選ぶ）"},{"s":"R3","c":"9","p":"transformer","sec":"vreg","d":3,"t":"全負荷銅損から電圧変動率を近似式で求める"},{"s":"R3","c":"15a","p":"transformer","sec":"loss","d":2,"t":"銅損と鉄損の比から全負荷銅損を求める"},{"s":"R3","c":"15b","p":"transformer","sec":"loss","d":2,"t":"効率が最大となる負荷率"},{"s":"R4上","c":"1","p":"dc-machine","sec":"speed-control","d":2,"t":"始動抵抗・静止レオナード方式・逆転・回生制動"},{"s":"R4上","c":"2","p":"induction-machine","sec":"start","d":3,"t":"拘束試験の結果からY結線始動時の始動電流を求める"},{"s":"R4上","c":"3","p":"induction-machine","sec":"overview","d":1,"t":"三相巻線形誘導電動機の構造（固定子・巻線形回転子）"},{"s":"R4上","c":"4","p":"synchronous","sec":"parallel","d":2,"t":"並行運転の条件・同期検定器・起電力差による横流"},{"s":"R4上","c":"5","p":"synchronous","sec":"vcurve","d":2,"t":"持続短絡電流から短絡比を求める"},{"s":"R4上","c":"8","p":"transformer","sec":"sc-test","d":2,"t":"短絡試験の測定値から一次側の漏れリアクタンスを求める"},{"s":"R4上","c":"9","p":"transformer","sec":"vconn","d":2,"t":"単巻変圧器・V結線・スコット結線（誤りを選ぶ）"},{"s":"R4下","c":"1","p":"dc-machine","sec":"structure","d":1,"t":"直流機の構造（他励式・自励式の分類など。誤りを選ぶ）"},{"s":"R4下","c":"2","p":"induction-machine","sec":"circuit","d":2,"t":"滑りと二次銅損から軸出力を求める（機械損を差し引く）"},{"s":"R4下","c":"3","p":"induction-machine","sec":"overview","d":1,"t":"かご形と巻線形の回転子構造（端絡環・スリップリング）"},{"s":"R4下","c":"4","p":"synchronous","sec":"vcurve","d":1,"t":"同期電動機の位相特性曲線（V曲線）の読み方"},{"s":"R4下","c":"5","p":"synchronous","sec":"vcurve","d":2,"t":"同期インピーダンスから短絡比を求める"},{"s":"R4下","c":"6","p":"synchronous","sec":"structure","d":2,"t":"永久磁石同期モータの回転原理・表面磁石形と埋込磁石形・リラクタンストルク"},{"s":"R4下","c":"7","p":"synchronous","sec":"structure","d":3,"t":"交流機の電機子巻線法（分布巻・短節巻と巻線係数）"},{"s":"R4下","c":"8","p":"transformer","sec":"loss","d":2,"t":"2つの負荷条件の全損失から無負荷損（鉄損）を分離する"},{"s":"R4下","c":"9","p":"transformer","sec":"equiv","d":2,"t":"励磁電流の高調波・鉄損電流と磁化電流・鉄損の周波数依存（誤りを選ぶ）"},{"s":"R5上","c":"1","p":"dc-machine","sec":"structure","d":1,"t":"直流機の固定子・回転子の構成と電機子鉄心の積層"},{"s":"R5上","c":"2","p":"dc-machine","sec":"emf","d":2,"t":"始動電流と定格電流から永久磁石直流電動機の効率を求める"},{"s":"R5上","c":"3","p":"induction-machine","sec":"overview","d":1,"t":"回転磁界と回転子の誘導起電力・起磁力の打ち消し"},{"s":"R5上","c":"4","p":"induction-machine","sec":"torque","d":1,"t":"定格出力と滑りからトルクを求める"},{"s":"R5上","c":"5","p":"synchronous","sec":"vcurve","d":2,"t":"短絡比の大小と外形寸法・安定度・電圧変動率（誤りを選ぶ）"},{"s":"R5上","c":"6","p":"synchronous","sec":"structure","d":2,"t":"E=4.44kfNΦ から無負荷誘導起電力（線間値）を求める"},{"s":"R5上","c":"8","p":"transformer","sec":"parallel","d":2,"t":"三相変圧器の並行運転の条件（極性・変圧比・角変位。誤りを選ぶ）"},{"s":"R5上","c":"9","p":"transformer","sec":"loss","d":2,"t":"最大効率となる負荷率での効率"},{"s":"R5上","c":"15a","p":"transformer","sec":"vconn","d":2,"t":"単巻変圧器の直列巻線に流れる電流"},{"s":"R5上","c":"15b","p":"transformer","sec":"vconn","d":2,"t":"単巻変圧器の自己容量"},{"s":"R5下","c":"1","p":"dc-machine","sec":"reaction","d":2,"t":"直流機の電機子反作用と中性軸の移動（誤りを選ぶ）"},{"s":"R5下","c":"2","p":"dc-machine","sec":"emf","d":2,"t":"無負荷回転数と負荷時の損失から回転数を求める"},{"s":"R5下","c":"3","p":"induction-machine","sec":"speed","d":1,"t":"誘導機の速度制御（周波数制御・極数変換・二次抵抗）"},{"s":"R5下","c":"4","p":"induction-machine","sec":"start","d":2,"t":"Y-Δ始動トルクから定格運転時のトルクを求める"},{"s":"R5下","c":"5","p":"synchronous","sec":"vcurve","d":2,"t":"遅れ力率で運転する円筒形同期電動機のベクトル図"},{"s":"R5下","c":"6","p":"synchronous","sec":"structure","d":1,"t":"極数の違う同期発電機を並行運転するときの回転速度"},{"s":"R5下","c":"7","p":"transformer","sec":"loss","d":2,"t":"電気機器の損失の分類（銅損・渦電流損・ヒステリシス損・漂遊負荷損）"},{"s":"R5下","c":"8","p":"transformer","sec":"basic","d":2,"t":"一次側の諸量を二次側に換算する換算係数（誤りを選ぶ）"},{"s":"R5下","c":"9","p":"transformer","sec":"loss","d":2,"t":"規約効率のための巻線抵抗の75℃換算"},{"s":"R5下","c":"15a","p":"induction-machine","sec":"torque","d":2,"t":"定格回転速度から滑り周波数を求める"},{"s":"R5下","c":"15b","p":"induction-machine","sec":"torque","d":3,"t":"トルク一定負荷で電圧を下げたときの回転速度"},{"s":"R6上","c":"1","p":"dc-machine","sec":"structure","d":2,"t":"ブラシと整流子の役割・補極と補償巻線の要否"},{"s":"R6上","c":"2","p":"dc-machine","sec":"speed-control","d":2,"t":"電機子電圧を変えたときの回転速度（E=V−IaRa から）"},{"s":"R6上","c":"3","p":"induction-machine","sec":"overview","d":1,"t":"回転磁界と相対速度・巻線形のスリップリングと二次抵抗"},{"s":"R6上","c":"4","p":"induction-machine","sec":"speed","d":2,"t":"V/f 一定制御インバータで駆動したときの回転速度"},{"s":"R6上","c":"5","p":"synchronous","sec":"start-hunting","d":2,"t":"制動巻線による自己始動法（誘導トルクの利用）"},{"s":"R6上","c":"6","p":"synchronous","sec":"vcurve","d":2,"t":"力率1で運転する同期電動機の一相の誘導起電力"},{"s":"R6上","c":"8","p":"transformer","sec":"equiv","d":2,"t":"一次側に換算した簡易等価回路の各量"},{"s":"R6上","c":"9","p":"transformer","sec":"sc-test","d":2,"t":"短絡試験の測定値から一次側の漏れリアクタンスを求める"},{"s":"R6上","c":"15a","p":"induction-machine","sec":"torque","d":3,"t":"巻線形誘導電動機を定格の80%トルクで運転したときの滑り"},{"s":"R6上","c":"15b","p":"induction-machine","sec":"torque","d":3,"t":"二次抵抗を加えて回転速度を下げるときの外部抵抗"},{"s":"R6下","c":"1","p":"dc-machine","sec":"emf-blv","d":2,"t":"フレミング右手の法則と e=Blv・直流機の誘導起電力 E=pZΦn/(60a)"},{"s":"R6下","c":"2","p":"dc-machine","sec":"emf","d":2,"t":"電機子電圧・電流・回転数・トルクから電機子巻線抵抗を求める"},{"s":"R6下","c":"3","p":"induction-machine","sec":"torque","d":2,"t":"トルク-回転速度曲線・停動トルク・比例推移"},{"s":"R6下","c":"4","p":"induction-machine","sec":"circuit","d":3,"t":"入力電力と損失の関係から二次銅損を求める"},{"s":"R6下","c":"5","p":"synchronous","sec":"rotor-types","d":1,"t":"水車発電機とタービン発電機の回転速度・極数・回転子形状"},{"s":"R6下","c":"6","p":"synchronous","sec":"vcurve","d":2,"t":"三相短絡電流と界磁電流の比例関係から必要な界磁電流を求める"},{"s":"R6下","c":"7","p":"synchronous","sec":"structure","d":3,"t":"交流機の電機子巻線法（分布巻・短節巻と巻線係数）"},{"s":"R6下","c":"8","p":"transformer","sec":"vconn","d":2,"t":"単巻変圧器の分路巻線・直列巻線・自己容量"},{"s":"R6下","c":"9","p":"transformer","sec":"vconn","d":3,"t":"V-V結線2台で三相負荷をかけたときの負荷損の合計"},{"s":"R6下","c":"15a","p":"synchronous","sec":"vcurve","d":2,"t":"無負荷端子電圧と三相短絡電流から同期インピーダンスを求める"},{"s":"R6下","c":"15b","p":"synchronous","sec":"vcurve","d":3,"t":"短絡比と定格電流から持続短絡電流を求める"},{"s":"R7上","c":"1","p":"dc-machine","sec":"excitation","d":1,"t":"直巻・分巻・複巻電動機の速度特性と用途（誤りを選ぶ）"},{"s":"R7上","c":"2","p":"dc-machine","sec":"emf","d":2,"t":"始動電流と定格電流から永久磁石直流電動機の効率を求める"},{"s":"R7上","c":"3","p":"induction-machine","sec":"overview","d":1,"t":"三相かご形誘導機の構造と発電運転（誤りを選ぶ）"},{"s":"R7上","c":"4","p":"induction-machine","sec":"circuit","d":3,"t":"励磁回路と一次インピーダンスを省略した近似からの電流の変化"},{"s":"R7上","c":"5","p":"synchronous","sec":"parallel","d":1,"t":"並列運転の条件と同期検定器"},{"s":"R7上","c":"6","p":"synchronous","sec":"vcurve","d":2,"t":"短絡比から持続短絡電流を求める"},{"s":"R7上","c":"9","p":"transformer","sec":"loss","d":2,"t":"力率が変わったときの全負荷効率"},{"s":"R7上","c":"15a","p":"induction-machine","sec":"torque","d":3,"t":"r2/s が十分大きいときのトルクの近似式"},{"s":"R7上","c":"15b","p":"induction-machine","sec":"torque","d":3,"t":"電圧・周波数を変えたときのトルクの変化"},{"s":"R7下","c":"1","p":"dc-machine","sec":"excitation","d":2,"t":"直流分巻電動機の速度特性とトルク特性の図を選ぶ"},{"s":"R7下","c":"2","p":"dc-machine","sec":"emf","d":2,"t":"無負荷回転数と負荷時の損失から回転数を求める"},{"s":"R7下","c":"3","p":"induction-machine","sec":"start","d":1,"t":"巻線形の二次抵抗始動とかご形のY-Δ始動"},{"s":"R7下","c":"4","p":"induction-machine","sec":"start","d":2,"t":"Y-Δ始動トルクから定格運転時のトルクを求める"},{"s":"R7下","c":"5","p":"synchronous","sec":"start-hunting","d":2,"t":"制動巻線による自己始動法（誘導トルクの利用）"},{"s":"R7下","c":"6","p":"synchronous","sec":"vcurve","d":2,"t":"無負荷飽和曲線と短絡曲線から同期インピーダンスを求める"},{"s":"R7下","c":"8","p":"transformer","sec":"power-capacitor","d":2,"t":"電力用コンデンサの種類と構造（進相・調相・直列コンデンサ）"},{"s":"R7下","c":"9","p":"transformer","sec":"sc-test","d":2,"t":"短絡試験の測定値から一次側の漏れリアクタンスを求める"},{"s":"R7下","c":"15a","p":"transformer","sec":"loss","d":2,"t":"鉄損と銅損が等しくなる負荷率と効率から鉄損を求める"},{"s":"R7下","c":"15b","p":"transformer","sec":"loss","d":3,"t":"全負荷における効率"},{"s":"R8上","c":"1","p":"dc-machine","sec":"generator","d":2,"t":"分巻発電機の自己励磁・直巻発電機の外部特性・ブラシレスDC（誤りを選ぶ）"},{"s":"R8上","c":"2","p":"dc-machine","sec":"emf-blv","d":2,"t":"1巻きコイルに誘導される起電力（e=Blv・有効導体2本）"},{"s":"R8上","c":"3","p":"induction-machine","sec":"speed","d":2,"t":"V/f一定制御とベクトル制御・VVVF・始動トルク"},{"s":"R8上","c":"4","p":"induction-machine","sec":"circuit","d":2,"t":"トルクと機械出力から二次入力（同期ワット）を求める"},{"s":"R8上","c":"5","p":"synchronous","sec":"rotor-types","d":1,"t":"水車発電機とタービン発電機の回転速度・極数・回転子形状"},{"s":"R8上","c":"6","p":"synchronous","sec":"parallel","d":3,"t":"起電力差と短絡比から並行運転時の横流を求める"},{"s":"R8上","c":"7","p":"dc-machine","sec":"ac-commutator-motor","d":2,"t":"交流整流子モータの原理・積層鉄心・高速特性・ユニバーサルモータ"},{"s":"R8上","c":"8","p":"transformer","sec":"loss","d":3,"t":"返還負荷法の結線と鉄損・銅損の供給方法"},{"s":"R8上","c":"9","p":"transformer","sec":"vconn","d":2,"t":"Δ結線1組とV結線2組の使用可能容量の比"},{"s":"R8上","c":"15a","p":"synchronous","sec":"vcurve","d":3,"t":"力率1で運転する三相同期電動機のトルク"},{"s":"R8上","c":"15b","p":"synchronous","sec":"vcurve","d":3,"t":"界磁電流を増やして進み力率にしたときの誘導起電力"},{"s":"R3","c":"11","p":"power-elec","sec":"chopper","d":3,"t":"昇降圧チョッパの定常動作（誤りを選ぶ）"},{"s":"R3","c":"16a","p":"power-elec","sec":"rectifier","d":3,"t":"単相半波ダイオード整流（誘導性負荷）の電流が流れる区間"},{"s":"R3","c":"16b","p":"power-elec","sec":"rectifier","d":3,"t":"単相半波ダイオード整流の直流平均電圧"},{"s":"R4上","c":"10","p":"power-elec","sec":"chopper","d":2,"t":"降圧チョッパを構成するデバイスの配置"},{"s":"R4上","c":"16a","p":"power-elec","sec":"inverter","d":3,"t":"単相ブリッジ電圧形インバータの動作と出力電圧"},{"s":"R4上","c":"16b","p":"power-elec","sec":"inverter","d":3,"t":"誘導性負荷における出力電流と還流の経路"},{"s":"R4下","c":"10","p":"power-elec","sec":"rectifier","d":2,"t":"出力電圧波形から電力変換回路を選ぶ"},{"s":"R4下","c":"16a","p":"power-elec","sec":"inverter","d":3,"t":"単相ブリッジ電圧形インバータの動作モード"},{"s":"R4下","c":"16b","p":"power-elec","sec":"inverter","d":3,"t":"各モードで導通するデバイスと電流の向き"},{"s":"R5上","c":"10","p":"power-elec","sec":"devices","d":2,"t":"IGBT とパワーMOSFET の特性比較（誤りを選ぶ）"},{"s":"R5上","c":"16a","p":"power-elec","sec":"inverter","d":3,"t":"単相インバータの負荷電流波形"},{"s":"R5上","c":"16b","p":"power-elec","sec":"inverter","d":3,"t":"直流電流の波形と平均値"},{"s":"R5下","c":"10","p":"power-elec","sec":"devices","d":2,"t":"パワー半導体デバイスの定常動作（誤りを選ぶ）"},{"s":"R5下","c":"16a","p":"power-elec","sec":"chopper","d":3,"t":"降圧チョッパの各期間に電流が流れる経路"},{"s":"R5下","c":"16b","p":"power-elec","sec":"chopper","d":3,"t":"通流率から出力電圧と電流を求める"},{"s":"R6上","c":"10","p":"power-elec","sec":"rectifier","d":2,"t":"単相半波ダイオード整流回路と環流ダイオードの効果"},{"s":"R6上","c":"16a","p":"power-elec","sec":"inverter","d":3,"t":"単相ブリッジ電圧形インバータの動作モード"},{"s":"R6上","c":"16b","p":"power-elec","sec":"inverter","d":3,"t":"各モードで導通するデバイス"},{"s":"R6下","c":"10","p":"power-elec","sec":"inverter","d":2,"t":"太陽光発電用パワーコンディショナ（MPPT・単独運転検出。誤りを選ぶ）"},{"s":"R6下","c":"16a","p":"power-elec","sec":"chopper","d":3,"t":"降圧チョッパの各期間に電流が流れる経路"},{"s":"R6下","c":"16b","p":"power-elec","sec":"chopper","d":3,"t":"通流率から出力電圧・電流のリプルを求める"},{"s":"R7上","c":"8","p":"power-elec","sec":"inverter","d":2,"t":"太陽光発電用パワーコンディショナと系統連系用保護装置"},{"s":"R7上","c":"10","p":"power-elec","sec":"chopper","d":2,"t":"直流チョッパの通流率から負荷電流の平均値を求める"},{"s":"R7上","c":"16a","p":"power-elec","sec":"chopper","d":3,"t":"他励直流機を降圧チョッパで駆動するときの電機子電圧"},{"s":"R7上","c":"16b","p":"power-elec","sec":"chopper","d":3,"t":"回生制動時の動作と通流率"},{"s":"R7下","c":"10","p":"power-elec","sec":"devices","d":2,"t":"パワー半導体デバイスの定常動作（誤りを選ぶ）"},{"s":"R7下","c":"16a","p":"power-elec","sec":"rectifier","d":3,"t":"三相整流装置の直流平均電圧"},{"s":"R7下","c":"16b","p":"power-elec","sec":"rectifier","d":3,"t":"重なり角とダイオード順電圧降下による電圧降下"},{"s":"R8上","c":"10","p":"power-elec","sec":"rectifier","d":2,"t":"入力電流波形から電力変換回路を選ぶ"},{"s":"R8上","c":"16a","p":"power-elec","sec":"rectifier","d":3,"t":"相電圧の実効値から線間電圧の実効値を求める"},{"s":"R8上","c":"16b","p":"power-elec","sec":"rectifier","d":3,"t":"三相ダイオード全波整流の脈動率"}];
 const wikiUrl = (p, s) => WIKI + '#' + p + (s ? '/' + s : '');
 /* ツアーの各歩から過去問を名指しで引くための表。キーは「年度/問番号」 */
 const QID = new Map(KAKOMON.map(q => [q.s + '/' + q.c, q]));
@@ -385,8 +385,29 @@ const MACHINES = {
       ['start-hunting','6. 始動法・乱調・自己励磁','制動巻線で自己始動。乱調は負荷角の振動'],
     ],
   },
+  'power-elec': {
+    num:'2.2', title:'パワーエレクトロニクス', x:22,
+    kicker:'変換器。スイッチの ON/OFF だけで電圧を作る',
+    lead:'盤の中に3枚の回路を置いた。降圧／昇圧チョッパ（直流→直流）、単相ブリッジインバータ（直流→交流）、三相ダイオード整流（交流→直流）。橙の光点が電流の通り道で、いま導通している素子だけが明るくなる。',
+    parts:[
+      ['#3572D6','スイッチ素子（IGBT）','ゲート信号で ON/OFF する自己消弧素子。導通すると明るくなる。ON 時間の割合が通流率 d'],
+      ['#7FB069','ダイオード','電流の向きが順方向のときだけ通す。制御端子は無い。スイッチが切れた瞬間の「帰り道」を作る（環流）'],
+      ['#C07A3A','リアクトル L','電流を急に変えさせない。スイッチが切れても電流は流れ続けようとするので、その分をダイオードが受ける'],
+      ['#E6D3A3','コンデンサ C','電圧を平滑にする。インバータでは直流側に、チョッパでは出力側に置く'],
+      ['#6B7580','負荷（抵抗＋インダクタンス）','**誘導性負荷**では電流が電圧に遅れる。電圧が反転しても電流はしばらく同じ向きに流れ、その間はダイオードが導通する'],
+      ['#F0B57E','電流の光点','いま電流が流れている経路。動く速さも周波数も模式で、実機の値ではない'],
+    ],
+    sections:[
+      ['devices','1. 主な半導体素子','IGBT とパワーMOSFET はどちらも電圧駆動。大容量・高耐圧は IGBT、高速スイッチングは MOSFET。ダイオードだけは制御端子を持たない'],
+      ['rectifier','2. 整流回路','三相ダイオードブリッジは常に2素子が導通し、出力は線間電圧の一番高いところをなぞる。平均は (3√2/π)·V線間 ≒ 1.35·V線間'],
+      ['chopper','3. チョッパ（DC-DC変換）','降圧は Vo = d·E、昇圧は Vo = E/(1−d)。ON の期間は電源から、OFF の期間はダイオードを通って負荷に電流が流れ続ける'],
+      ['inverter','4. インバータと PWM','電圧はスイッチで即反転するが、誘導性負荷の電流は遅れて反転する。その間はダイオードが電流を電源へ戻す'],
+      ['example','5. 例題','通流率・平均電圧・脈動の計算はWiki側で数値を追う'],
+      ['quick-review','6. 1分復習（即答チェック）','3Dで経路を見たあとに回すと抜けが出る'],
+    ],
+  },
 };
-const ORDER = ['transformer','dc-machine','induction-machine','synchronous'];
+const ORDER = ['transformer','dc-machine','induction-machine','synchronous','power-elec'];
 /* 学習の順路。
      30秒理解 → 狙われる論点 → 予想クイズ（予想→操作→確認）→ ツアー → もう一歩 → 即答チェック
    予想クイズの set は3Dと操作帯を実際に動かす。答えを先に見せず、選んでから確かめさせる。
@@ -543,6 +564,16 @@ const STUDY = {
        see:'ブラシは動かない（幾何学的中性軸の位置に固定）。赤い面だけがずれていく。※ブラシは4極配置なので、2極模式で描いた灰色の面の上には乗っていない。',
        so:'この食い違いが火花の原因。対策は ①ブラシを移す ②補極を付ける ③補償巻線を入れる の3つ。',
        q:['R6上/1','R5下/1']},
+      {t:'負荷を増やすと回転が少し落ちる', sec:'emf', focus:'電機子巻線', set:{react:false, load:1, paused:false},
+       op:'負荷（電機子電流）を 1.0 まで上げる。',
+       see:'読み値の E = V − Ia·Ra が下がり、電機子の回転もわずかに遅くなる（Ra = 0.1 pu の模式）。',
+       so:'電動機では端子電圧から電機子抵抗の電圧降下を引いた残りが逆起電力で、回転数はその E に比例する（n ∝ E/Φ）。分巻電動機の速度が負荷でわずかしか下がらない（定速度特性）のはこの式の形から。',
+       q:['R6上/2','R6下/2','R5下/2','R7下/2','R7下/1']},
+      {t:'始動の瞬間は E = 0', sec:'speed-control', focus:'電機子巻線', set:{react:false, load:1, paused:true},
+       op:'「回転」を 止める にする。',
+       see:'電機子が止まり、読み値の E が 0 になる。',
+       so:'E = V − Ia·Ra で E = 0 なら Ia = V/Ra。電機子抵抗は小さいので始動電流は非常に大きい。だから始動抵抗を電機子と直列に入れ、回転が上がって E が育つにつれて抜いていく。',
+       q:['R4上/1','R5上/2','R7上/2']},
     ],
     check: [
       ['電機子反作用で中性軸はどちらへずれるか（電動機）', '回転方向と逆向き。発電機は回転方向と同じ向き。合成起磁力（≒合成磁束の軸）に直角な面が電気的中性軸。'],
@@ -677,6 +708,11 @@ const STUDY = {
        see:'横に太い突極形から、細長い円筒形に変わる。',
        so:'Ns = 120f/p がそのまま形になる。タービンは高速＝2極か4極で、遠心力に耐える細い円筒。水車は低速＝極数が多く、横に太い突極。',
        q:['R6下/5','R8上/5']},
+      {t:'界磁電流と起電力・短絡比', sec:'vcurve', focus:'スリップリング', set:{If:1.4, delta:20, syncP:.5, rotor:'cyl'},
+       op:'界磁電流 If を大きくしていく。',
+       see:'読み値の E₀ ∝ If が界磁電流に比例して増える（不飽和の直線部の模式）。回転の速さと負荷角は変わらない。',
+       so:'無負荷飽和曲線（E₀ と If）も短絡曲線（Is と If）も If の関数。定格電圧を出す If のときの三相短絡電流を定格電流で割ったものが短絡比 Ks で、Ks = 1/Zs[pu] = 100/%Zs。短絡比が大きい機械は同期インピーダンスが小さい。',
+       q:['R3/6','R4上/5','R4下/5','R5上/5','R6下/6','R6下/15a','R6下/15b','R7上/6','R7下/6']},
     ],
     check: [
       ['同期電動機の滑りは', '0。回転磁界と同じ速さで回る。負荷が増えると速度ではなく負荷角δが増える。'],
@@ -685,6 +721,84 @@ const STUDY = {
       ['P ∝ sinδ が使えるのはどんな条件か', '円筒形（非突極）で、電機子抵抗を無視した基本モデルのとき。突極機はリラクタンストルクの項が加わるので同じ式にはならない。'],
     ],
     cards: ['cmp'],
+  },
+  'power-elec': {
+    oneLiner: 'スイッチの ON 時間の割合が電圧を決め、切れた電流の帰り道はダイオードが作る。',
+    exam: [
+      ['降圧チョッパ', 'Vo = d·E　d = Ton/(Ton+Toff)', '通流率＝ON 時間の割合。負荷電流の平均は Vo/R。**下の回路を「降圧チョッパ」にして通流率を動かす**'],
+      ['昇圧チョッパ', 'Vo = E/(1−d)', 'ON でリアクトルにためて、OFF で電源電圧に上乗せして押し出す。d→1 で理想式は発散するが実機は損失で頭打ち'],
+      ['電流の経路', 'ON: 電源→S→L→負荷／OFF: L→負荷→D→L', '**変わるのは帰り道だけ**。リアクトルの電流は途切れない（環流）'],
+      ['インバータの4モード', '電圧は即反転・電流は遅れて反転', '遅れの期間はダイオードが導通し電源へ電流を戻す。**抵抗負荷ではこの期間は無い**'],
+      ['三相ダイオード整流', 'Ed = (3√2/π)·V線間 ≒ 1.35·V線間', '常に2素子導通・60°ごとに交代・6パルス。単相全波は ≒0.9·V、単相半波は ≒0.45·V（どの実効値に掛けるかまで一緒に覚える）'],
+    ],
+    predict: [
+      { q:'E = 200 V の降圧チョッパを通流率 0.4 で運転した。出力電圧の平均値は？',
+        opts:['80 V','120 V','200 V','500 V'], ans:0, set:{peConv:'buck', peD:.4}, hi:'vo',
+        why:'Vo = d·E = 0.4 × 200 = 80 V。ON の割合そのもの。同じ d で昇圧チョッパなら E/(1−d) = 333 V になる。3Dではスイッチが明るい時間が 4 割になっている。' },
+      { q:'降圧チョッパでスイッチが OFF の期間、負荷電流はどこを通るか。',
+        opts:['流れない','電源→スイッチ→負荷','リアクトル→負荷→ダイオード→リアクトル','電源→ダイオード→負荷'], ans:2, set:{peConv:'buck', peD:.5}, hi:'path',
+        why:'リアクトルが電流を維持しようとするので、行き先を失った電流はダイオードを通る小さな輪で流れ続ける（環流）。電源を通らないのがポイント。3Dでスイッチが暗い期間の光点を追うと、電源の前を通っていない。' },
+      { q:'単相ブリッジインバータで誘導性負荷を駆動している。S1・S4 を切って S2・S3 にゲートを入れた直後、電流が流れる素子は？',
+        opts:['S2・S3','D2・D3','D1・D4','S1・S4'], ans:1, set:{peConv:'inv', peLoad:'RL'}, hi:'dev',
+        why:'電流はまだ a→b の向きに流れ続けている。S2・S3 はゲートは入っているが電流の向きが逆なので通せず、並列のダイオード D2・D3 が導通して電源へ電流を戻す。抵抗負荷ならこの期間は無い。' },
+      { q:'三相ダイオードブリッジ整流で、同時に導通しているダイオードの数は？',
+        opts:['1','2','3','6'], ans:1, set:{peConv:'rect'}, hi:'dev',
+        why:'上側は相電圧が最も高い相、下側は最も低い相の各1つ。60°ごとに片方ずつ入れ替わるので、出力は1周期に6山（6パルス）で脈動が小さい。' },
+    ],
+    points: [
+      ['通流率 d が出力電圧を決める', '降圧 Vo = d·E、昇圧 Vo = E/(1−d)。ON の割合そのもの'],
+      ['切れた電流の帰り道はダイオード', 'リアクトルは電流を急に変えさせない。OFF のあいだはダイオードを通って負荷に流れ続ける'],
+      ['電圧は即反転・電流は遅れて反転', 'インバータの誘導性負荷。遅れの期間はダイオードが電流を電源へ戻す（4モードのうち2つ）'],
+    ],
+    tour: [
+      {t:'ON の期間：電源から負荷へ', sec:'chopper', focus:'スイッチ素子', set:{peConv:'buck', peD:.6, paused:false},
+       op:'回路を「降圧チョッパ」にし、スイッチが明るくなっている期間を見る。',
+       see:'光点が 電源→スイッチ→リアクトル→負荷→電源 と一周する。ダイオードは暗いまま。',
+       so:'ON のあいだ負荷側には E がかかり、リアクトルの電流は増えていく。',
+       q:['R4上/10','R5下/16a','R6下/16a']},
+      {t:'OFF の期間：帰り道はダイオード', sec:'chopper', focus:'ダイオード', set:{peConv:'buck', peD:.6, paused:false},
+       op:'スイッチが暗くなる期間を見る。',
+       see:'光点は電源を通らず、リアクトル→負荷→ダイオード→リアクトル の小さい輪を回る。',
+       so:'リアクトルが電流を止めさせないので、行き先を失った電流はダイオードを通って負荷に流れ続ける（環流）。変わるのは帰り道だけで、負荷の電流は途切れない。',
+       q:['R5下/16a','R6下/16a']},
+      {t:'通流率が出力電圧を決める', sec:'chopper', focus:'スイッチ素子', set:{peConv:'buck', peD:.3},
+       op:'通流率 d を 0.3 まで下げる。',
+       see:'スイッチが明るい時間が短くなり、下の波形の平均線（d·E）が下がる。',
+       so:'降圧チョッパの出力平均電圧は Vo = d·E。ON の割合そのもの。負荷電流の平均は Vo/R で、リプルは L とスイッチング周波数で決まる。',
+       q:['R5下/16b','R7上/10','R6下/16b','R7上/16a']},
+      {t:'昇圧は「ため込んで押し出す」', sec:'chopper', focus:'リアクトル', set:{peConv:'boost', peD:.6},
+       op:'回路を「昇圧チョッパ」に切り替える。',
+       see:'ON では電源→リアクトル→スイッチ の輪だけが光り、負荷はコンデンサから食べている。OFF ではリアクトルの電流がダイオードを通って負荷側へ押し出される。',
+       so:'ON でためたエネルギーを OFF で電源電圧に上乗せして出すので Vo = E/(1−d)。降圧とは素子の並びが入れ替わっているのが見える（L が電源側、S が並列、D が直列）。',
+       q:['R3/11','R7上/16b']},
+      {t:'インバータ：電圧は即反転する', sec:'inverter', focus:'スイッチ素子', set:{peConv:'inv', peLoad:'R'},
+       op:'回路を「単相インバータ」にし、負荷を「抵抗負荷」にする。',
+       see:'S1・S4 が明るい半周期は左上→右下、S2・S3 の半周期は逆向きに光点が流れる。ダイオードは一度も光らない。',
+       so:'対角のスイッチを交互に ON すると、負荷の電圧は +E と −E を往復する。抵抗負荷なら電流も電圧と同時に反転する。',
+       q:['R4上/16a','R4下/16a','R6上/16a']},
+      {t:'誘導性負荷：電流は遅れて反転する', sec:'inverter', focus:'ダイオード', set:{peConv:'inv', peLoad:'RL'},
+       op:'負荷を「誘導性負荷」にする。',
+       see:'スイッチが切り替わった直後、光点はまだ同じ向きに流れ続け、対角のダイオード（D2・D3、または D1・D4）が光る。このとき光点は電源を逆向きに通っている。',
+       so:'電圧はスイッチで即反転するが、リアクトルの電流はすぐには変われない。この間は還流ダイオードが電流を電源側へ戻す。1周期は4つのモードでできていて、そのうち2つがダイオードの期間。',
+       q:['R4上/16b','R4下/16b','R6上/16b','R5上/16a','R5上/16b']},
+      {t:'三相整流：いつも2つが導通', sec:'rectifier', focus:'ダイオード', set:{peConv:'rect'},
+       op:'回路を「三相整流」にし、明るいダイオードを数える。',
+       see:'上側で1つ、下側で1つ、常に2つだけが光る。60°ごとに片方ずつ入れ替わり、一周で6回変わる。',
+       so:'上側は相電圧が最も高い相、下側は最も低い相が受け持つ。負荷にかかるのはその2相の線間電圧で、平均は Ed = (3√2/π)·V線間 ≒ 1.35·V線間。6パルスなので脈動は小さい。',
+       q:['R7下/16a','R8上/16b','R8上/16a','R4下/10','R8上/10']},
+      {t:'素子の区別', sec:'devices', focus:'スイッチ素子', set:{peConv:'buck', peD:.6},
+       op:'凡例で「スイッチ素子」と「ダイオード」を交互に指す。',
+       see:'スイッチはゲート信号のリズムで明滅し、ダイオードは電流の向きが順方向のときだけ光る。',
+       so:'IGBT・MOSFET はゲート電圧で ON/OFF できる自己消弧素子。ダイオードは制御端子を持たず、回路の都合で勝手に導通・遮断する。細かい特性比較はWikiの節1へ。',
+       q:['R5上/10','R5下/10','R7下/10']},
+    ],
+    check: [
+      ['降圧チョッパの出力平均電圧は', 'd·E。d は ON 時間の割合（通流率）。昇圧なら E/(1−d)。'],
+      ['スイッチが OFF のとき電流はどこを通るか', 'ダイオード。リアクトルが電流を維持し、負荷→ダイオード→リアクトルの輪で流れ続ける（環流）。電源は通らない。'],
+      ['インバータでダイオードが導通するのはいつか', '電圧が反転したのに電流の向きがまだ変わっていない期間。誘導性負荷で起きる。抵抗負荷では起きない。'],
+      ['三相ダイオードブリッジで同時に導通する素子数と交代の周期', '2つ。60°ごとに片方が交代し、1周期で6回。出力は6パルス。'],
+    ],
+    cards: ['pepath','peavg'],
   },
 };
 
@@ -701,6 +815,8 @@ const CARDS = {
   pz:   { t:'短絡試験から %Z へ、%Z から短絡電流へ', body:'pz' },
   eff:  { t:'効率の出し方（通常・全日・規約）と損失の分類', body:'eff' },
   conn3:{ t:'三相結線の組み合わせとスコット結線', body:'conn3' },
+  pepath:{ t:'なぜ OFF でも電流が流れるのか（環流）', body:'pepath' },
+  peavg:{ t:'平均電圧のものさし（0.45／0.9／1.35）', body:'peavg' },
 };
 
 /* ============================================================ 3D */
@@ -1155,7 +1271,7 @@ function buildDC(g){
 }
 function animDC(g, t, st, dt){
   const u = g.userData;
-  u.arm.rotation.x -= (st.paused?0:st.ws)*dt*.9;
+  u.arm.rotation.x -= (st.paused?0:st.ws)*dt*.9*(1-.1*st.load);   // n ∝ E = V − Ia·Ra（Ra = 0.1 pu の模式）。読み値と同じ式
   u.react.visible = st.react;
   /* 矢印が見えなくならないための表示下限と、角度そのものは分ける。
      下限を角度にも効かせると Ia=0 でも中性軸が 5°ずれたままになり、
@@ -1205,11 +1321,171 @@ function animSync(g, t, st, dt){
   u.rotor.rotation.x = u.arrow.rotation.x + st.delta*Math.PI/180;   // 同期。負荷角だけ遅れる
 }
 
+/* ---------- パワーエレクトロニクス ----------
+   盤の中に3枚の回路（降圧／昇圧チョッパ・単相ブリッジインバータ・三相ダイオード整流）を置き、
+   1枚だけを表示する。電流は光点が経路をなぞる模式で、導通している素子だけを明るくする。
+   周期は目で追える速さ（チョッパ 2 s・インバータ 6 s・整流 6 s）にしてあり、実機の周波数ではない。
+   ---------- */
+const PE_MAT = {
+  sw:   std({color:0x3572d6, metalness:.3, roughness:.5}),
+  swOn: std({color:0x6ea0f0, emissive:0x3572d6, emissiveIntensity:1.1}),
+  di:   std({color:0x7fb069, metalness:.3, roughness:.5}),
+  diOn: std({color:0xb2e39a, emissive:0x7fb069, emissiveIntensity:1.1}),
+  wire: std({color:0x9aa5b1, metalness:.5, roughness:.5}),
+  src:  std({color:0x2b2b2b, roughness:.8}),
+  load: std({color:0x6b7580, metalness:.4, roughness:.6}),
+};
+const PE_PERIOD = {buck:2, boost:2, inv:6, rect:6};
+function buildPE(g){
+  mesh(new THREE.BoxGeometry(6.8, 4.8, .14), M.steelDark, g, 0, 2.5, -1.15);
+  for (const s of [-1,1]) mesh(new THREE.BoxGeometry(.14, 4.8, 2.0), M.steelDark, g, s*3.4, 2.5, -.2);
+  mesh(new THREE.BoxGeometry(6.8, .14, 2.0), M.steelDark, g, 0, 4.9, -.2);
+  const V = (x,y,z=0) => new THREE.Vector3(x, y, z);
+  const boards = {};
+  const makeBoard = (key) => { const b = new THREE.Group(); b.position.set(0, 2.45, -.65); g.add(b); b.visible = false;
+    b.userData = {devs:{}, paths:{}, labels:[]}; boards[key] = b; return b; };
+  const wire = (b, pts) => { for (let i=0;i<pts.length-1;i++) wire3(pts[i], pts[i+1], PE_MAT.wire, b, .04); };
+  const sw = (b, name, x, y) => { const o = mesh(new THREE.BoxGeometry(.42,.6,.3), PE_MAT.sw, b, x, y, 0);
+    mesh(new THREE.BoxGeometry(.1,.1,.08), M.brass, b, x-.3, y, .12);       // ゲート端子
+    b.userData.devs[name] = {o, kind:'sw'}; b.userData.labels.push({obj:o, t:'スイッチ素子（IGBT）', c:'#3572D6'}); return o; };
+  /* dir: 電流が流れる向き（'up'＝下→上、'right'＝左→右）。帯がカソード側 */
+  const di = (b, name, x, y, dir) => { const o = mesh(new THREE.CylinderGeometry(.13,.13,.5,12), PE_MAT.di, b, x, y, 0);
+    const band = mesh(new THREE.CylinderGeometry(.155,.155,.06,12), M.steelLight, b, x, y, 0);
+    if (dir==='right'){ o.rotation.z = Math.PI/2; band.rotation.z = Math.PI/2; band.position.x += .18; } else band.position.y += .18;
+    b.userData.devs[name] = {o, kind:'di'}; b.userData.labels.push({obj:o, t:'ダイオード', c:'#7FB069'}); return o; };
+  const ind = (b, x, y, horiz) => { const grp = new THREE.Group(); grp.position.set(x,y,0); b.add(grp);
+    for (let i=-2;i<=2;i++){ const t = mesh(new THREE.TorusGeometry(.14,.05,8,16), M.copper, grp, horiz? i*.15:0, horiz? 0:i*.15, 0);
+      if (horiz) t.rotation.y = Math.PI/2; else t.rotation.x = Math.PI/2; }
+    b.userData.labels.push({obj:grp, t:'リアクトル L', c:'#C07A3A'}); return grp; };
+  const cap = (b, x, y) => { const grp = new THREE.Group(); grp.position.set(x,y,0); b.add(grp);
+    for (const s of [-1,1]) mesh(new THREE.BoxGeometry(.4,.05,.3), M.ceramic, grp, 0, s*.07, 0);
+    b.userData.labels.push({obj:grp, t:'コンデンサ C', c:'#E6D3A3'}); return grp; };
+  const src = (b, x, y) => { const o = mesh(new THREE.BoxGeometry(.5,1.0,.36), PE_MAT.src, b, x, y, 0);
+    mesh(new THREE.BoxGeometry(.2,.05,.05), M.brass, b, x, y+.36, .2); mesh(new THREE.BoxGeometry(.05,.2,.05), M.brass, b, x, y+.36, .2);   // ＋印
+    mesh(new THREE.BoxGeometry(.2,.05,.05), M.brass, b, x, y-.36, .2);                                                                    // −印
+    b.userData.labels.push({obj:o, t:'直流電源 E（上が＋）', c:'#2B2B2B'}); return o; };
+  const load = (b, x, y, horiz) => { const grp = new THREE.Group(); grp.position.set(x,y,0); b.add(grp);
+    mesh(new THREE.BoxGeometry(horiz? .7:.3, horiz? .3:.7, .3), PE_MAT.load, grp, horiz? -.3:0, horiz? 0:.3, 0);
+    for (let i=0;i<3;i++){ const t = mesh(new THREE.TorusGeometry(.12,.045,8,16), M.copper, grp, horiz? .3+i*.13:0, horiz? 0:-.3-i*.13, 0);
+      if (horiz) t.rotation.y = Math.PI/2; else t.rotation.x = Math.PI/2; }
+    b.userData.labels.push({obj:grp, t:'負荷（抵抗＋インダクタンス）', c:'#6B7580'}); return grp; };
+  /* 電流の光点が走る閉路。pts の順が電流の向き。最後に先頭へ戻して閉じる */
+  const path = (b, name, pts, n=14) => { pts = pts.concat([pts[0]]); const cum=[0];
+    for (let i=1;i<pts.length;i++) cum.push(cum[i-1] + pts[i].distanceTo(pts[i-1]));
+    const dots = []; for (let i=0;i<n;i++){ const d = mesh(new THREE.SphereGeometry(.075,10,10), M.curr, b, 0,0,0); d.castShadow=false; d.visible=false; dots.push(d); }
+    b.userData.paths[name] = {pts, cum, total:cum[cum.length-1], dots}; };
+  const yT = 1.0, yB = -1.0;
+
+  /* --- 降圧チョッパ --- */
+  { const b = makeBoard('buck'); const xE=-2.5, xS=-1.5, xA=-.7, xL=.3, xB=1.1, xR=1.9;
+    src(b, xE, 0); sw(b, 'S', xS, yT); di(b, 'D', xA, 0, 'up'); ind(b, xL, yT, true); cap(b, xB, 0); load(b, xR, 0, false);
+    wire(b, [V(xE,.5), V(xE,yT), V(xR,yT), V(xR,yB), V(xE,yB), V(xE,-.5)]);
+    wire(b, [V(xA,yT), V(xA,yB)]); wire(b, [V(xB,yT), V(xB,yB)]);
+    path(b, 'on',  [V(xE,.5), V(xE,yT), V(xR,yT), V(xR,yB), V(xE,yB), V(xE,-.5)], 18);
+    path(b, 'off', [V(xA,yT), V(xR,yT), V(xR,yB), V(xA,yB)], 12);
+  }
+  /* --- 昇圧チョッパ。L が電源側、S が並列、D が直列 --- */
+  { const b = makeBoard('boost'); const xE=-2.5, xL=-1.6, xA=-.7, xD=.2, xB=1.1, xR=1.9;
+    src(b, xE, 0); ind(b, xL, yT, true); sw(b, 'S', xA, 0); di(b, 'D', xD, yT, 'right'); cap(b, xB, 0); load(b, xR, 0, false);
+    wire(b, [V(xE,.5), V(xE,yT), V(xR,yT), V(xR,yB), V(xE,yB), V(xE,-.5)]);
+    wire(b, [V(xA,yT), V(xA,yB)]); wire(b, [V(xB,yT), V(xB,yB)]);
+    path(b, 'on',    [V(xE,.5), V(xE,yT), V(xA,yT), V(xA,yB), V(xE,yB), V(xE,-.5)], 14);
+    path(b, 'cload', [V(xB,yT), V(xR,yT), V(xR,yB), V(xB,yB)], 8);
+    path(b, 'off',   [V(xE,.5), V(xE,yT), V(xR,yT), V(xR,yB), V(xE,yB), V(xE,-.5)], 18);
+  }
+  /* --- 単相ブリッジ電圧形インバータ。a＝左脚の中点、b＝右脚の中点。負荷電流の正は a→b --- */
+  { const b = makeBoard('inv'); const xE=-2.6, xC=-1.9, x1=-.5, x2=.9, d=.35;
+    src(b, xE, 0); cap(b, xC, 0);
+    sw(b,'S1', x1, .55); sw(b,'S2', x1, -.55); sw(b,'S3', x2, .55); sw(b,'S4', x2, -.55);
+    di(b,'D1', x1+d, .55, 'up'); di(b,'D2', x1+d, -.55, 'up'); di(b,'D3', x2+d, .55, 'up'); di(b,'D4', x2+d, -.55, 'up');
+    load(b, .2, 0, true);
+    wire(b, [V(xE,.5), V(xE,yT), V(x2+d,yT)]); wire(b, [V(xE,-.5), V(xE,yB), V(x2+d,yB)]);
+    wire(b, [V(xC,yT), V(xC,yB)]); wire(b, [V(x1,yT), V(x1,yB)]); wire(b, [V(x2,yT), V(x2,yB)]);
+    wire(b, [V(x1+d,yT), V(x1+d,yB)]); wire(b, [V(x2+d,yT), V(x2+d,yB)]);
+    wire(b, [V(x1,0), V(x2,0)]); wire(b, [V(x1,0), V(x1+d,0)]); wire(b, [V(x2,0), V(x2+d,0)]);
+    path(b, 'm1', [V(xE,.5), V(xE,yT), V(x1,yT), V(x1,0), V(x2,0), V(x2,yB), V(xE,yB), V(xE,-.5)], 18);
+    path(b, 'm2', [V(x1,0), V(x2,0), V(x2+d,0), V(x2+d,yT), V(xE,yT), V(xE,.5), V(xE,-.5), V(xE,yB), V(x1+d,yB), V(x1+d,0)], 18);
+    path(b, 'm3', [V(xE,.5), V(xE,yT), V(x2,yT), V(x2,0), V(x1,0), V(x1,yB), V(xE,yB), V(xE,-.5)], 18);
+    path(b, 'm4', [V(x2,0), V(x1,0), V(x1+d,0), V(x1+d,yT), V(xE,yT), V(xE,.5), V(xE,-.5), V(xE,yB), V(x2+d,yB), V(x2+d,0)], 18);
+  }
+  /* --- 三相ダイオードブリッジ整流。上側 D1(u)・D3(v)・D5(w)、下側 D4(u)・D6(v)・D2(w) --- */
+  { const b = makeBoard('rect'); const xN=-3.0, xS=-2.2, legs=[-1.1,-.3,.5], ys=[.6,0,-.6], xR=1.9, zb=-.3;
+    const ph = ['u','v','w'], up = ['D1','D3','D5'], dn = ['D4','D6','D2'], pm = [M.u, M.v, M.w];
+    const srcs = [];
+    for (let i=0;i<3;i++){ const o = mesh(new THREE.CylinderGeometry(.22,.22,.3,20), pm[i], b, xS, ys[i], 0); o.rotation.x = Math.PI/2; srcs.push(o);
+      wire(b, [V(xN,ys[i]), V(xS-.22,ys[i])]);
+      wire(b, [V(xS+.22,ys[i]), V(xS+.5,ys[i],zb), V(legs[i],ys[i],zb), V(legs[i],ys[i])]);
+      wire(b, [V(legs[i],yT), V(legs[i],yB)]);
+      di(b, up[i], legs[i], (yT+ys[i])/2, 'up'); di(b, dn[i], legs[i], (yB+ys[i])/2, 'up'); }
+    wire(b, [V(xN,ys[0]), V(xN,ys[2])]);
+    wire(b, [V(legs[0],yT), V(xR,yT), V(xR,yB), V(legs[0],yB)]);
+    cap(b, 1.2, 0); wire(b, [V(1.2,yT), V(1.2,yB)]); load(b, xR, 0, false);
+    b.userData.labels.push({obj:srcs[0], t:'三相交流電源 u・v・w', c:'#D24A43'}, {obj:srcs[1], t:'三相交流電源 u・v・w', c:'#D24A43'}, {obj:srcs[2], t:'三相交流電源 u・v・w', c:'#D24A43'});
+    for (let hi=0;hi<3;hi++) for (let lo=0;lo<3;lo++){ if (hi===lo) continue;
+      path(b, ph[hi]+ph[lo], [V(xN,ys[hi]), V(xS-.22,ys[hi]), V(xS+.22,ys[hi]), V(xS+.5,ys[hi],zb), V(legs[hi],ys[hi],zb), V(legs[hi],ys[hi]), V(legs[hi],yT),
+        V(xR,yT), V(xR,yB), V(legs[lo],yB), V(legs[lo],ys[lo]), V(legs[lo],ys[lo],zb), V(xS+.5,ys[lo],zb), V(xS+.22,ys[lo]), V(xS-.22,ys[lo]), V(xN,ys[lo])], 22); }
+    b.userData.ph = ph; b.userData.up = up; b.userData.dn = dn;
+  }
+  Object.assign(g.userData, {boards, T:0, info:{}, shown:null});
+  g.userData.labels = (st) => boards[st.peConv].userData.labels;
+}
+const _pePos = new THREE.Vector3();
+function pePosOn(p, s){
+  s = ((s % p.total) + p.total) % p.total;
+  let i = 1; while (i < p.cum.length-1 && p.cum[i] < s) i++;
+  const f = (s - p.cum[i-1]) / ((p.cum[i] - p.cum[i-1]) || 1);
+  return _pePos.copy(p.pts[i-1]).lerp(p.pts[i], f);
+}
+/* いまの導通状態。3D・読み値・波形の3つがこの1関数を見る（別々に計算すると食い違う） */
+function peState(st, T){
+  const conv = st.peConv, u = (T % PE_PERIOD[conv]) / PE_PERIOD[conv];
+  if (conv==='buck' || conv==='boost'){
+    const on = u < st.peD;
+    return {u, on, lit: on ? ['S'] : ['D'],
+      paths: on ? (conv==='buck' ? ['on'] : ['on','cload']) : ['off'],
+      mode: on ? 'ON（スイッチ導通）' : 'OFF（ダイオード導通）',
+      dev: on ? 'S' : 'D',
+      path: conv==='buck' ? (on ? '電源→S→L→負荷→電源' : 'L→負荷→D→L（電源を通らない）')
+                          : (on ? '電源→L→S→電源（負荷はCから）' : '電源→L→D→負荷→電源')};
+  }
+  if (conv==='inv'){
+    const lag = st.peLoad==='RL' ? .3 : 0;    // 電流の遅れ（半周期に対する割合）。模式
+    let m; if (u < .5) m = (u < .5*lag) ? 4 : 1; else m = (u-.5 < .5*lag) ? 2 : 3;
+    const lit = {1:['S1','S4'], 2:['D2','D3'], 3:['S2','S3'], 4:['D1','D4']}[m];
+    return {u, m, lit, paths:['m'+m],
+      mode: 'モード'+m + (m===1||m===3 ? '（スイッチ導通）' : '（ダイオード導通・電源へ戻る）'),
+      dev: lit.join('・'),
+      path: (m===1||m===2) ? '負荷電流 a→b' : '負荷電流 b→a',
+      vo: (m===1||m===4) ? '+E（S1・S4 側にゲート）' : '−E（S2・S3 側にゲート）'};
+  }
+  const th = u*Math.PI*2, v = [Math.sin(th), Math.sin(th-Math.PI*2/3), Math.sin(th-Math.PI*4/3)];
+  let hi=0, lo=0; for (let i=1;i<3;i++){ if (v[i]>v[hi]) hi=i; if (v[i]<v[lo]) lo=i; }
+  const ph=['u','v','w'], up=['D1','D3','D5'], dn=['D4','D6','D2'];
+  return {u, v, hi, lo, lit:[up[hi], dn[lo]], paths:[ph[hi]+ph[lo]],
+    mode: ph[hi]+'相が最高・'+ph[lo]+'相が最低',
+    dev: up[hi]+'（'+ph[hi]+'上）・'+dn[lo]+'（'+ph[lo]+'下）',
+    path: ph[hi]+'→'+up[hi]+'→負荷→'+dn[lo]+'→'+ph[lo],
+    vo: '線間 v'+ph[hi]+ph[lo]+' = '+(v[hi]-v[lo]).toFixed(2)+'·Em'};
+}
+function animPE(g, t, st, dt){
+  const u = g.userData; if (!st.paused) u.T += dt*(st.ws/1.6);
+  const conv = st.peConv, b = u.boards[conv];
+  if (u.shown !== conv){ for (const k in u.boards){ u.boards[k].visible = (k===conv); for (const p of Object.values(u.boards[k].userData.paths)) p.dots.forEach(d=>d.visible=false); } u.shown = conv; }
+  const s = peState(st, u.T); u.info = s;
+  for (const [name, d] of Object.entries(b.userData.devs)) d.o.material = s.lit.includes(name) ? (d.kind==='sw' ? PE_MAT.swOn : PE_MAT.diOn) : (d.kind==='sw' ? PE_MAT.sw : PE_MAT.di);
+  const speed = 2.2 * (st.paused ? 0 : 1);
+  for (const [name, p] of Object.entries(b.userData.paths)){
+    const on = s.paths.includes(name);
+    p.dots.forEach((d, i) => { d.visible = on; if (!on) return;
+      const pos = pePosOn(p, u.T*speed + i/p.dots.length*p.total); d.position.set(pos.x, pos.y, pos.z + .12); });
+  }
+}
+
 /* ---------- 組み立て ---------- */
 const groups = {};
-const builders = {transformer:buildTransformer, 'dc-machine':buildDC, 'induction-machine':buildIM, synchronous:buildSync};
-const animators = {transformer:animTransformer, 'dc-machine':animDC, 'induction-machine':animIM, synchronous:animSync};
-for (const id of ORDER){ const g = new THREE.Group(); g.position.set(MACHINES[id].x, id==='transformer'? .3 : 2.5, 0); builders[id](g); g.userData.id = id; scene.add(g); groups[id] = g; }
+const builders = {transformer:buildTransformer, 'dc-machine':buildDC, 'induction-machine':buildIM, synchronous:buildSync, 'power-elec':buildPE};
+const animators = {transformer:animTransformer, 'dc-machine':animDC, 'induction-machine':animIM, synchronous:animSync, 'power-elec':animPE};
+for (const id of ORDER){ const g = new THREE.Group(); g.position.set(MACHINES[id].x, (id==='transformer'||id==='power-elec')? .3 : 2.5, 0); builders[id](g); g.userData.id = id; scene.add(g); groups[id] = g; }
 
 const state = {
   current:null, paused:false, ws:1.6,
@@ -1218,6 +1494,7 @@ const state = {
   rotor:'salient', delta:20, If:1.0, syncP:.5,
   tfLoad:.7, tfView:'core', bankV:false, autoA:1.2,
   tfTest:'run', tfIron:'off', tfLam:true,
+  peConv:'buck', peD:.6, peLoad:'RL',
 };
 
 /* ---------- カメラ ---------- */
@@ -1227,16 +1504,17 @@ function applyCam(){
   camera.position.copy(p); camera.lookAt(cam.target);
 }
 const VIEWS = {
-  overview:{target:[0,2,0], dist:34, theta:.35, phi:1.15},
+  overview:{target:[4.5,2,0], dist:46, theta:.35, phi:1.15},
   transformer:{target:[-13,3.3,0], dist:12, theta:.55, phi:1.2},
   'transformer:bank':{target:[-13,2.6,0], dist:12, theta:.35, phi:1.2},
   'transformer:auto':{target:[-13,2.4,0], dist:11, theta:.7, phi:1.2},
   'dc-machine':{target:[-4.5,2.4,0], dist:8.5, theta:.8, phi:1.2},
   'induction-machine':{target:[4.5,2.4,0], dist:9, theta:.8, phi:1.2},
   synchronous:{target:[13,2.4,0], dist:9, theta:.8, phi:1.2},
+  'power-elec':{target:[21.4,2.45,-.3], dist:8.4, theta:.1, phi:1.32, wide:true},   // 盤は横長。縦画面では引く
 };
 const tfViewKey = () => state.tfView==='core' ? 'transformer' : 'transformer:'+state.tfView;
-function flyTo(v){ cam.want = {target:new THREE.Vector3(...v.target), dist:v.dist, theta:v.theta, phi:v.phi}; }
+function flyTo(v){ cam.want = {target:new THREE.Vector3(...v.target), dist:v.dist * (v.wide && camera.aspect < 1 ? 1.45 : 1), theta:v.theta, phi:v.phi}; }
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let drag=null;
@@ -1434,9 +1712,9 @@ function buildCtrl(){
   ctrlbar.innerHTML=''; readoutEl=null;
   const id = state.current;
   const title=document.createElement('div'); title.className='title'; ctrlbar.appendChild(title);
-  if (!id){ title.textContent='工場全景'; const d=document.createElement('div'); d.style.cssText='font-size:12.5px;color:#C5CCD3;align-self:center'; d.textContent='左から 変圧器 → 直流機 → 三相誘導電動機 → 同期機。ラベルか機器をクリックすると寄る。'; ctrlbar.appendChild(d); return; }
+  if (!id){ title.textContent='工場全景'; const d=document.createElement('div'); d.style.cssText='font-size:12.5px;color:#C5CCD3;align-self:center'; d.textContent='左から 変圧器 → 直流機 → 三相誘導電動機 → 同期機 → パワーエレクトロニクス。ラベルか機器をクリックすると寄る。'; ctrlbar.appendChild(d); return; }
   title.textContent = MACHINES[id].title + (id==='transformer' ? ' / ' + ({core:'鉄心と巻線', bank:'三相結線', auto:'単巻変圧器'})[state.tfView] : '');
-  ctrlbar.appendChild(group('回転', seg([[false,'▶ 回す'],[true,'❚❚ 止める']], 'paused')));
+  ctrlbar.appendChild(group(id==='power-elec' ? 'スイッチング' : '回転', seg([[false, id==='power-elec' ? '▶ 動かす' : '▶ 回す'],[true,'❚❚ 止める']], 'paused')));
   if (id==='induction-machine'){
     ctrlbar.appendChild(range('滑り s', 0, 1, .01, 'slip', v=>v.toFixed(2)));
     ctrlbar.appendChild(group('回転子', seg([[false,'かご形'],[true,'巻線形＋外部抵抗']], 'wound')));
@@ -1450,6 +1728,10 @@ function buildCtrl(){
   } else if (id==='dc-machine'){
     ctrlbar.appendChild(range('負荷（電機子電流）', 0, 1, .01, 'load', v=>v.toFixed(2)+' pu'));
     ctrlbar.appendChild(group('電機子反作用', seg([[false,'隠す'],[true,'表示']], 'react')));
+  } else if (id==='power-elec'){
+    ctrlbar.appendChild(group('回路', seg([['buck','降圧チョッパ'],['boost','昇圧チョッパ'],['inv','単相インバータ'],['rect','三相整流']], 'peConv')));
+    if (state.peConv==='buck' || state.peConv==='boost') ctrlbar.appendChild(range('通流率 d', .1, .9, .01, 'peD', v=>v.toFixed(2)));
+    if (state.peConv==='inv') ctrlbar.appendChild(group('負荷', seg([['R','抵抗負荷'],['RL','誘導性負荷']], 'peLoad')));
   } else if (id==='transformer'){
     ctrlbar.appendChild(group('見る対象', seg([['core','鉄心と巻線'],['bank','三相結線'],['auto','単巻変圧器']], 'tfView')));
     if (state.tfView==='core'){
@@ -1469,9 +1751,13 @@ function syncCtrl(){
   ctrlbar.querySelectorAll('.cg[data-key]').forEach(g=>{ if(g._input){ g._input.value = state[g.dataset.key]; g.querySelector('.val').textContent = g._fmt(state[g.dataset.key]); } });
   ctrlbar.querySelectorAll('.seg[data-key]').forEach(d=>{ [...d.children].forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===String(state[d.dataset.key])))); });
 }
-let _lastTfSig = null;
+let _lastTfSig = null, _lastPeConv = null;
 const tfSig = () => state.tfView + '/' + state.bankV;
 function refreshCtrl(){
+  /* 回路を切り替えると操作帯の中身（通流率／負荷）と凡例が変わる */
+  if (state.current==='power-elec' && state.peConv !== _lastPeConv){
+    _lastPeConv = state.peConv; buildCtrl(); rebuildLabels(); return;   // buildCtrl から refreshCtrl が呼び直される
+  }
   /* 試験中の負荷率は試験のほうが決める（開放＝0、短絡＝定格）。
      ツアーや予想クイズが state を書き換えたときも表示が食い違わないよう、ここで揃える */
   if (state.current==='transformer' && state.tfView==='core' && state.tfTest!=='run')
@@ -1505,13 +1791,31 @@ function refreshCtrl(){
     rows=[['slip0','滑り','0（磁界と同じ速さ）'],
           ['delta','負荷角 δ', state.delta+'°'],
           ['P','出力 ∝ sinδ', sd.toFixed(2)+(state.delta>=90?'（限界）':'')],
-          ['pf','力率', d<-.05?'遅れ（不足励磁）':d>.05?'進み（過励磁）':'1 付近']];
-    note='※ P は1相あたり。円筒形・抵抗無視の基本モデル';
+          ['pf','力率', d<-.05?'遅れ（不足励磁）':d>.05?'進み（過励磁）':'1 付近'],
+          ['E0','無負荷起電力 E₀ ∝ If（不飽和）', state.If.toFixed(2)+' pu']];
+    note='※ P は1相あたり。円筒形・抵抗無視の基本モデル。E₀ は無負荷飽和曲線の直線部だけを模した値';
   }
   if (id==='dc-machine'){
-    rows=[['ia','電機子電流', state.load.toFixed(2)+' pu'],
+    const E = state.paused ? 0 : 1 - .1*state.load;   // animDC の回転速度と同じ式
+    rows=[['ia','電機子電流 Ia', state.paused ? '10 pu（= V/Ra。始動電流の模式）' : state.load.toFixed(2)+' pu'],
+          ['E','逆起電力 E = V − Ia·Ra', E.toFixed(2)+' pu'],
+          ['n','回転数 n ∝ E/Φ', state.paused ? '0（始動の瞬間）' : E.toFixed(2)+' pu'],
           ['shift','中性軸のずれ', state.react? '表示中（電流に比例）':'非表示']];
-    note='※ 3D のずれ角は模式表示。実機の値ではない';
+    note='※ V = 1・Ra = 0.1 pu・Φ 一定の模式。止めると E = 0 で、そのとき Ia = V/Ra が始動電流。3D のずれ角も模式表示';
+  }
+  if (id==='power-elec'){
+    const s = groups['power-elec'].userData.info || {};
+    const c = state.peConv;
+    rows=[['mode','いま', s.mode||''],
+          ['dev','導通している素子', s.dev||''],
+          ['path','電流の経路', s.path||''],
+          ['vo','出力電圧', c==='buck' ? 'Vo = d·E = '+state.peD.toFixed(2)+' E'
+                         : c==='boost' ? 'Vo = E/(1−d) = '+(1/(1-state.peD)).toFixed(2)+' E'
+                         : (s.vo||'')]];
+    if (c==='rect') rows.push(['avg','平均 Ed','(3√2/π)·V線間 ≒ 1.35·V線間']);
+    note = c==='inv' ? '※ 電流の遅れは模式（誘導性で半周期の 3 割）。実際の遅れは負荷の R と L で決まる'
+         : c==='rect' ? '※ Em は相電圧の最大値。導通は 60°ごとに交代し、1周期で6回'
+         : '※ 周期は目で追える速さにしてある。連続導通（電流が途切れない）を前提にした表示';
   }
   if (id==='transformer' && state.tfView==='core'){
     const a=state.tfLoad, T=state.tfTest;
@@ -1564,6 +1868,15 @@ function refreshCtrl(){
   }
   drawMini(); drawMini2(); drawComm(); drawReact(); syncCards();
 }
+/* パワエレの導通状態は時間で変わるので、読み値の値だけを約20fpsで書き換える（作り直さない＝ハイライトを保つ） */
+function peLive(){
+  if (!readoutEl || state.current!=='power-elec') return;
+  const s = groups['power-elec'].userData.info || {};
+  const put = (k, v) => { const dd = readoutEl.querySelector('dd[data-k="'+k+'"]'); if (dd && v!==undefined && dd.textContent!==v) dd.textContent = v; };
+  put('mode', s.mode); put('dev', s.dev); put('path', s.path);
+  if (state.peConv==='inv' || state.peConv==='rect') put('vo', s.vo);
+  drawMini();
+}
 /* 予想クイズが当てた読み値を数秒だけ光らせる。どの数字の話かを取り違えないため。 */
 let litTimer = null;
 function litReadout(key){
@@ -1591,7 +1904,7 @@ function renderPanel(){
     panel.innerHTML = `
       <div class="kicker">使い方</div>
       <h2>丸暗記を、置き場所のある記憶に</h2>
-      <p class="lead">機械科目で暗記になりがちな回転機と変圧器を、工場の床に実物として並べた。過去問で引っかかった論点をWikiで確かめ、ここで「どこの部品の話か」を見て閉じる。</p>
+      <p class="lead">機械科目で暗記になりがちな回転機・変圧器・電力変換器を、工場の床に実物として並べた。過去問で引っかかった論点をWikiで確かめ、ここで「どこの部品の話か」を見て閉じる。</p>
       <ol class="flow">
         <li><b>過去問を解く</b><span>間違えた問題の単元（例: 1.2 三相誘導電動機 ▸ トルク特性）を控える</span></li>
         <li><b>Wikiで詳細を確認</b><span><a href="${WIKI}" target="_blank" rel="noopener">機械Wiki ↗</a> の該当節を読む。数値・式・過去問解説はWikiだけが持つ</span></li>
@@ -1710,6 +2023,25 @@ function bindQuiz(st){
 
 /* ---------- もう一歩カード ---------- */
 function cardBody(k){
+  if (k==='pepath') return `
+    <p><b>リアクトルは電流を急に変えさせない。</b>v = L·di/dt なので、スイッチが切れて電流を止めようとすると、
+    リアクトルは電流を続ける向きに大きな電圧を出す。行き先が無いとその電圧はスイッチを壊す。
+    そこでダイオードを1本置いて「帰り道」を作る。これが環流（フリーホイール）で、
+    <b>変わるのは帰り道だけ、負荷の電流は途切れない</b>。</p>
+    <p>降圧チョッパでは ON の期間に電流が増え（di/dt = (E−Vo)/L）、OFF の期間に減る（di/dt = −Vo/L）。
+    1周期で増えた分と減った分が釣り合う条件から Vo = d·E が出る。増減の幅（リプル）は L が大きいほど、
+    スイッチング周波数が高いほど小さい。数値の追い方はWikiの節3。</p>`;
+  if (k==='peavg') return `
+    <p><b>平均電圧は「交流側の実効値 × 定数」で覚える。</b>どの実効値（相か線間か）に掛けるかまで一緒に。</p>
+    <div class="tbl"><table>
+      <tr><th>回路（抵抗負荷・ダイオード）</th><th>平均電圧 Ed</th><th>定数</th></tr>
+      <tr><td>単相半波</td><td>(√2/π)·V</td><td>≒ 0.45·V</td></tr>
+      <tr><td>単相全波（ブリッジ）</td><td>(2√2/π)·V</td><td>≒ 0.90·V</td></tr>
+      <tr><td>三相全波（ブリッジ）</td><td>(3√2/π)·V<sub>線間</sub></td><td>≒ 1.35·V<sub>線間</sub> ≒ 2.34·V<sub>相</sub></td></tr>
+    </table></div>
+    <p>V は交流側の実効値。三相全波だけは<b>線間</b>電圧で書くのが普通で、相電圧が与えられたら √3 倍してから掛ける。
+    導通する区間が変わる（サイリスタで制御角を付ける・誘導性負荷で電流が遅れる）と定数はそのまま使えないので、
+    Wikiの節2で波形から追う。</p>`;
   if (k==='conv') return `
     <p><b>そのままでは1つの回路として足せない。</b>一次と二次は巻数が違うので、電圧も電流も桁が違う。
     そこで二次側の抵抗・リアクタンスを <b>a² 倍</b>して「一次側から見た値」にそろえる。これが一次側換算。
@@ -2048,6 +2380,57 @@ function drawMini(){
     panelBox(L+bw+52, 9, '積層（9枚）');
     ctx.fillStyle=ink; ctx.fillText('→', L+bw+14, y0+bh*.55);
     cap.textContent = '鉄心の断面を上から見た図。橙の輪が渦電流の通り道。板厚を 1/9 にすると輪の幅も 1/9 になり、渦電流損は板厚の2乗で効くので約 1/81 になる（Pe ∝ t²f²Bm²）。板が互いに絶縁され、板厚が表皮深さより十分薄いときの話。';
+  } else if (state.current==='power-elec'){
+    const s = groups['power-elec'].userData.info || peState(state, 0), u = s.u || 0, c = state.peConv;
+    const xOf = f => L + f*(R-L);
+    axes();
+    if (c==='buck' || c==='boost'){
+      /* 上段: スイッチの ON/OFF（2周期）。下段: リアクトル電流の増減。平均線は Vo */
+      const d = state.peD, yHi = T+16, yLo = T+70, yAvg = c==='buck' ? yLo-(yLo-yHi)*d : yHi;
+      ctx.strokeStyle=steel; ctx.beginPath();
+      for (let k=0;k<2;k++){ const x0=xOf(k/2), x1=xOf((k+d)/2), x2=xOf((k+1)/2); ctx.moveTo(x0,yLo); ctx.lineTo(x0,yHi); ctx.lineTo(x1,yHi); ctx.lineTo(x1,yLo); ctx.lineTo(x2,yLo); }
+      ctx.stroke();
+      ctx.strokeStyle=acc; ctx.setLineDash([6,6]); ctx.beginPath(); ctx.moveTo(L,yAvg); ctx.lineTo(R,yAvg); ctx.stroke(); ctx.setLineDash([]);
+      const iT = B-60, iA = 34; ctx.strokeStyle=acc; ctx.beginPath();
+      for (let k=0;k<2;k++){ const x0=xOf(k/2), x1=xOf((k+d)/2), x2=xOf((k+1)/2); if(k===0) ctx.moveTo(x0, iT+iA/2); ctx.lineTo(x1, iT-iA/2); ctx.lineTo(x2, iT+iA/2); }
+      ctx.stroke();
+      const xm = xOf(u/2); ctx.strokeStyle=ink3; ctx.setLineDash([2,4]); ctx.beginPath(); ctx.moveTo(xm,T); ctx.lineTo(xm,B); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=ink3; ctx.fillText('ON', xOf(d/4)-12, yHi-4); ctx.fillText('OFF', xOf((1+d)/4)-18, yLo+22);
+      ctx.fillStyle=ink; ctx.fillText(c==='buck' ? '出力の平均 Vo = d·E' : 'スイッチの電圧（ON=0）', xOf(.52), yHi-4);
+      ctx.fillText('リアクトル電流 iL', xOf(.02), iT-iA/2-8);
+      ctx.fillStyle=ink3; ctx.fillText('t →', R-40, B+30);
+      cap.textContent = c==='buck'
+        ? '上: スイッチが ON のあいだ負荷側の電圧は E、OFF で 0。破線が平均 Vo = d·E。下: リアクトル電流は ON で増え OFF で減り、1周期で釣り合う。縦の点線がいまの位置。'
+        : '上: スイッチ両端の電圧（ON で 0）。下: リアクトル電流は ON でため込み OFF で押し出す。出力は E/(1−d) で電源より高い。縦の点線がいまの位置。';
+    } else if (c==='inv'){
+      const lag = state.peLoad==='RL' ? .3 : 0, mid=(T+B)/2, A=(B-T)*.36;
+      ctx.strokeStyle=line; ctx.beginPath(); ctx.moveTo(L,mid); ctx.lineTo(R,mid); ctx.stroke();
+      ctx.strokeStyle=steel; ctx.beginPath(); ctx.moveTo(xOf(0),mid-A); ctx.lineTo(xOf(.5),mid-A); ctx.lineTo(xOf(.5),mid+A); ctx.lineTo(xOf(1),mid+A); ctx.lineTo(xOf(1),mid-A); ctx.stroke();
+      ctx.strokeStyle=acc; ctx.beginPath();
+      for (let i=0;i<=200;i++){ const f=i/200; const io = lag ? Math.sin((f-lag/2)*Math.PI*2)*.85 : (f<.5?1:-1)*.85; const y=mid-io*A; i? ctx.lineTo(xOf(f),y): ctx.moveTo(xOf(f),y); }
+      ctx.stroke();
+      ctx.fillStyle=line; ctx.globalAlpha=.35; ctx.fillRect(xOf(0),T,xOf(lag/2)-xOf(0),B-T); ctx.fillRect(xOf(.5),T,xOf(.5+lag/2)-xOf(.5),B-T); ctx.globalAlpha=1;
+      const xm = xOf(u); ctx.strokeStyle=ink3; ctx.setLineDash([2,4]); ctx.beginPath(); ctx.moveTo(xm,T); ctx.lineTo(xm,B); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=steel; ctx.fillText('vo = +E', xOf(.14), mid-A-6); ctx.fillText('−E', xOf(.9), mid+A+22);
+      ctx.fillStyle=acc; ctx.fillText('io', xOf(.30), mid-A*.85-8);
+      ctx.fillStyle=ink3; if (lag){ ctx.fillText('D1D4', xOf(0)+2, B-6); ctx.fillText('D2D3', xOf(.5)+2, B-6); } ctx.fillText('S1S4', xOf(.28), B-6); ctx.fillText('S2S3', xOf(.78), B-6);
+      cap.textContent = lag
+        ? '青の電圧はスイッチで即反転するが、橙の電流は遅れて反転する。網掛けの区間は電圧と電流の向きが食い違い、ダイオードが導通して電源へ戻す（モード2・4）。'
+        : '抵抗負荷では電流が電圧と同じ形で同時に反転する。ダイオードが導通する区間は無い。負荷を「誘導性負荷」にすると差が出る。';
+    } else {
+      const mid=(T+B)/2, A=(B-T)*.40; const v=(f,k)=>Math.sin(f*Math.PI*2-k*Math.PI*2/3);
+      ctx.strokeStyle=line; ctx.beginPath(); ctx.moveTo(L,mid); ctx.lineTo(R,mid); ctx.stroke();
+      const cols=['#D24A43','#C9A227','#3572D6']; ctx.lineWidth=1.5;
+      for (let k=0;k<3;k++){ ctx.strokeStyle=cols[k]; ctx.beginPath(); for (let i=0;i<=200;i++){ const f=i/200, y=mid-v(f,k)*A*.5; i? ctx.lineTo(xOf(f),y): ctx.moveTo(xOf(f),y); } ctx.stroke(); }
+      ctx.lineWidth=2.5; ctx.strokeStyle=acc; ctx.beginPath();
+      for (let i=0;i<=300;i++){ const f=i/300; const vs=[v(f,0),v(f,1),v(f,2)]; const y=mid-(Math.max(...vs)-Math.min(...vs))*A*.5; i? ctx.lineTo(xOf(f),y): ctx.moveTo(xOf(f),y); }
+      ctx.stroke();
+      ctx.strokeStyle=acc; ctx.setLineDash([6,6]); ctx.beginPath(); ctx.moveTo(L,mid-1.654*A*.5); ctx.lineTo(R,mid-1.654*A*.5); ctx.stroke(); ctx.setLineDash([]);
+      const xm = xOf(u); ctx.strokeStyle=ink3; ctx.setLineDash([2,4]); ctx.beginPath(); ctx.moveTo(xm,T); ctx.lineTo(xm,B); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=acc; ctx.fillText('出力 v_hi − v_lo（6パルス）', xOf(.02), T+14);
+      ctx.fillStyle=ink3; ctx.fillText('u v w 相電圧', xOf(.02), mid+A*.5+24); ctx.fillText('平均 Ed', R-100, mid-1.654*A*.5+22); ctx.fillText('θ →', R-44, B+30);
+      cap.textContent = '細い3本が u・v・w の相電圧。橙は最高相と最低相の差＝負荷にかかる線間電圧で、60°ごとに山が入れ替わる6パルス。破線が平均 Ed ≒ 1.35·V線間（＝(3√3/π)·Em）。縦の点線がいまの位置。';
+    }
   } else if (state.current==='transformer'){
     const Pi=.25, Pc=1, a0=state.tfLoad;
     axes(); ctx.fillStyle=ink3; ctx.fillText('α=0', L-8, B+30); ctx.fillText('α=1', L+(1/1.2)*(R-L)-30, B+30); ctx.fillText('損失', L-52, T+10);
@@ -2264,6 +2647,7 @@ function select(id){
   if (reduced){ const v = VIEWS[id||'overview']; cam.target.set(...v.target); cam.dist=v.dist; cam.theta=v.theta; cam.phi=v.phi; cam.want=null; }
   else flyTo(VIEWS[(id==='transformer') ? tfViewKey() : (id||'overview')]);
   _lastTfSig = (id==='transformer') ? tfSig() : null;
+  _lastPeConv = (id==='power-elec') ? state.peConv : null;
   renderChips(); buildCtrl(); renderPanel(); rebuildLabels();
   panel.scrollTop = 0;
   try { history.replaceState(null, '', id ? '#'+id : location.pathname); } catch (e) {}
@@ -2284,7 +2668,7 @@ function resize(){
 let rzPending=false;
 addEventListener('resize', ()=>{ if(rzPending) return; rzPending=true; requestAnimationFrame(()=>{ rzPending=false; resize(); }); });
 resize();
-let last = performance.now(), lastComm = 0, lastIron = 0;
+let last = performance.now(), lastComm = 0, lastIron = 0, lastPE = 0;
 function loop(now){
   const dt = Math.min(.05, (now-last)/1000); last = now; const t = now/1000;
   if (cam.want){ const k = 1 - Math.pow(.001, dt); cam.target.lerp(cam.want.target, k); cam.dist += (cam.want.dist-cam.dist)*k; cam.theta += (cam.want.theta-cam.theta)*k; cam.phi += (cam.want.phi-cam.phi)*k; if (cam.target.distanceTo(cam.want.target)<.01 && Math.abs(cam.dist-cam.want.dist)<.01) cam.want=null; }
@@ -2299,6 +2683,7 @@ function loop(now){
   if (state.current === 'transformer' && state.tfView === 'core' && state.tfIron !== 'off' && now - lastIron > 50){
     lastIron = now; drawMini();
   }
+  if (state.current === 'power-elec' && now - lastPE > 50){ lastPE = now; peLive(); }
   /* 整流子の波形は3Dの電機子と位相をそろえる。毎フレームは要らないので約20fpsに間引く */
   if (state.current === 'dc-machine'){
     commPhase = -groups['dc-machine'].userData.arm.rotation.x;
