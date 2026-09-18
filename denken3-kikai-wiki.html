@@ -459,6 +459,34 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   background: linear-gradient(transparent 55%, oklch(0.55 0.16 95 / 0.55) 55%);
   color: var(--ink);
 }
+/* 過去問の穴埋め空欄（Blank）。マーカーと同じ黄色で「ここが問われている」と示し、
+   押すと答えに変わる。伏せている間も開いた後も幅が動きすぎないよう最小幅を持たせる。 */
+.blank {
+  display: inline-block;
+  min-width: 5.5em;
+  margin: 0 2px;
+  padding: 1px 8px;
+  border: 0;
+  border-bottom: 2px solid oklch(0.72 0.16 95);
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(transparent 45%, oklch(0.92 0.18 95) 45%);
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+.blank:hover { background: linear-gradient(transparent 30%, oklch(0.92 0.18 95) 30%); }
+.blank:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.blank.is-open { letter-spacing: normal; }
+.blank .blank-mark { margin-left: 4px; font-size: 11px; font-weight: 400; color: var(--ink-mute); }
+[data-theme="dark"] .blank {
+  border-bottom-color: oklch(0.6 0.14 95);
+  background: linear-gradient(transparent 45%, oklch(0.55 0.16 95 / 0.55) 45%);
+}
+[data-theme="dark"] .blank:hover { background: linear-gradient(transparent 30%, oklch(0.55 0.16 95 / 0.55) 30%); }
+
 .content ul, .content ol { padding-left: 22px; margin: 6px 0 16px; }
 /* 狭い端末では左インデントが効きすぎて長い項目がコンテナからはみ出す。
    （この宣言はカスケード順で上の padding-left より後ろに置くこと） */
@@ -4575,6 +4603,26 @@ const Fold = ({
     padding: "2px 12px 10px"
   }
 }, children));
+
+/* 過去問の穴埋め空欄。黄色マーカーで空欄と分かるようにし、押すと答えが出る。
+   紙で解くときと同じで「自分で埋めてから確認する」順を崩さないため、
+   初期状態は必ず伏せる（リロードでも復元しない＝保存しない）。
+   a11y: button + aria-pressed で、読み上げでも「押せる空欄」だと分かるようにする。 */
+const Blank = ({
+  mark,
+  children
+}) => {
+  const [open, setOpen] = React.useState(false);
+  return /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: `blank${open ? ' is-open' : ''}`,
+    "aria-pressed": open,
+    "aria-label": open ? `空欄（${mark}）の答え ${children}` : `空欄（${mark}）。押すと答えを表示`,
+    onClick: () => setOpen(v => !v)
+  }, open ? /*#__PURE__*/React.createElement(React.Fragment, null, children, /*#__PURE__*/React.createElement("span", {
+    className: "blank-mark"
+  }, "（", mark, "）")) : /*#__PURE__*/React.createElement(React.Fragment, null, "（\u3000", mark, "\u3000）"));
+};
 const FormulaCard = ({
   num,
   name,
@@ -21933,7 +21981,140 @@ const TransformerPage = ({
   href: "https://kfurufuru.github.io/secretary-portal-public/denken3-riron-wiki.html#magnetic-circuit:explain:B-H",
   target: "_blank",
   rel: "noopener"
-}, "→ 理論Wiki「磁気回路」で Ph の出どころ（ヒステリシスループの面積 Wh=∮H dB → Ph=f·Wh）と、上の Bm 一定条件つきの周波数依存を B-H 曲線の図つきで深掘り（H18問3・R01問3）"))), /*#__PURE__*/React.createElement("h4", null, "なぜ銅損は負荷率の2乗になるのか"), /*#__PURE__*/React.createElement("p", null, "銅損は巻線抵抗の発熱そのもの（", /*#__PURE__*/React.createElement(Eq, {
+}, "→ 理論Wiki「磁気回路」で Ph の出どころ（ヒステリシスループの面積 Wh=∮H dB → Ph=f·Wh）と、上の Bm 一定条件つきの周波数依存を B-H 曲線の図つきで深掘り（H18問3・R01問3）"))), /*#__PURE__*/React.createElement(Box, {
+  kind: "example",
+  label: "過去問そのまま — R5下 問7「電気機器の損失」（問題文が損失の分類の説明になっている）"
+}, /*#__PURE__*/React.createElement("p", {
+  style: {
+    fontSize: 12.5,
+    color: "var(--ink-mute)",
+    margin: "0 0 10px"
+  }
+}, "出典: 令和5年度下期 第三種電気主任技術者試験 機械科目 問7（一般財団法人 電気技術者試験センター）。", /*#__PURE__*/React.createElement("strong", null, "R1 問7 の再出題"), "。 この問題は", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "問題文そのものが「損失をどう分類するか」の定義文になっている"), "ので、解説として読む価値がある。", /*#__PURE__*/React.createElement("strong", null, "黄色の空欄は押すと答えが出る。"), "先に自分で埋めてから開くこと。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "0 0 10px"
+  }
+}, "次の文章は、電気機器の損失に関する記述である。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "0 0 10px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "a"), "\u3000コイルの電流とコイルの抵抗によるジュール熱が ", /*#__PURE__*/React.createElement(Blank, {
+  mark: "ア"
+}, "銅損"), " であり、この損失を低減するため、コイルを構成する電線の断面積を大きくする。交流電流が並列コイルに分かれて流れると、並列コイル間の電流不平衡からこの損失が増加する。この損失を低減するため、並列回路を構成する各コイルの鎖交磁束と抵抗値、すなわち、各コイルのインピーダンスを等しくする。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "0 0 10px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "b"), "\u3000鉄心に交流磁束が通ると損失が発生する。その成分は ", /*#__PURE__*/React.createElement(Blank, {
+  mark: "イ"
+}, "渦電流損"), " と ", /*#__PURE__*/React.createElement(Blank, {
+  mark: "ウ"
+}, "ヒステリシス損"), " の二つに分類される。前者は、交流磁束によって誘導された電流が鉄心を流れてジュール熱として発生する。そこで、電気抵抗が高い強磁性材料や、表面を絶縁膜で覆った薄い鉄板を積層した積層鉄心を磁気回路に用いて、電流の経路を断つことで損失を低減する。後者は、鉄心の磁束が磁界の履歴に依存するために発生する。この ", /*#__PURE__*/React.createElement(Blank, {
+  mark: "ウ"
+}, "ヒステリシス損"), " を低減するために電磁鋼板が磁気回路に広く用いられている。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "0 0 10px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "c"), "\u3000上記の電磁気要因の損失のほか、電動機や発電機では、回転子の運動による軸受け摩擦損や冷却ファンの空気抵抗による損失などの ", /*#__PURE__*/React.createElement(Blank, {
+  mark: "エ"
+}, "機械損"), " がある。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "0 0 6px"
+  }
+}, "上記の記述中の空白箇所（ア）〜（エ）に当てはまる組合せとして、正しいものを次の（1）〜（5）のうちから一つ選べ。"), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data-table"
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "（ア）"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "（イ）"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "（ウ）"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "（エ）"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "(1)"), /*#__PURE__*/React.createElement("td", null, "銅損"), /*#__PURE__*/React.createElement("td", null, "渦電流損"), /*#__PURE__*/React.createElement("td", null, "ヒステリシス損"), /*#__PURE__*/React.createElement("td", null, "機械損")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "(2)"), /*#__PURE__*/React.createElement("td", null, "鉄損"), /*#__PURE__*/React.createElement("td", null, "抵抗損"), /*#__PURE__*/React.createElement("td", null, "ヒステリシス損"), /*#__PURE__*/React.createElement("td", null, "銅損")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "(3)"), /*#__PURE__*/React.createElement("td", null, "銅損"), /*#__PURE__*/React.createElement("td", null, "渦電流損"), /*#__PURE__*/React.createElement("td", null, "インダクタンス損"), /*#__PURE__*/React.createElement("td", null, "機械損")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "(4)"), /*#__PURE__*/React.createElement("td", null, "鉄損"), /*#__PURE__*/React.createElement("td", null, "機械損"), /*#__PURE__*/React.createElement("td", null, "ヒステリシス損"), /*#__PURE__*/React.createElement("td", null, "銅損")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "(5)"), /*#__PURE__*/React.createElement("td", null, "銅損"), /*#__PURE__*/React.createElement("td", null, "抵抗損"), /*#__PURE__*/React.createElement("td", null, "インダクタンス損"), /*#__PURE__*/React.createElement("td", null, "機械損"))))), /*#__PURE__*/React.createElement(Fold, {
+  label: "解答と読みどころを開く",
+  sub: "空欄を埋めてから"
+}, /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "6px 0 10px",
+    fontSize: 15
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "答え: (1)"), "\u3000ア 銅損／イ 渦電流損／ウ ヒステリシス損／エ 機械損"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "0 0 4px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "選択肢はこう削れる。"), "4つ全部を当てにいく必要はない。"), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data-table"
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "見るところ"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "判断"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "残る／落ちる"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "（ア）は「コイルの電流とコイルの抵抗による ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I^2R"
+}), "」"), /*#__PURE__*/React.createElement("td", null, "巻線で出る損失なので", /*#__PURE__*/React.createElement("strong", null, "銅損"), "。鉄心の話ではない"), /*#__PURE__*/React.createElement("td", null, "(2)(4) が落ちる")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "（ウ）は「磁界の履歴に依存」"), /*#__PURE__*/React.createElement("td", null, "履歴＝ヒステリシス。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "「インダクタンス損」という損失は存在しない")), /*#__PURE__*/React.createElement("td", null, "(3)(5) が落ちる")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "残り"), /*#__PURE__*/React.createElement("td", null, "—"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "(1)")))))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "10px 0 4px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "a の後半（並列コイルの電流不平衡）が本問の山。"), "巻線を並列に分けたとき、各コイルの鎖交磁束と抵抗が揃っていないとインピーダンスが揃わず、 負荷電流の分担が偏るうえに", /*#__PURE__*/React.createElement("strong", null, "コイル間を回る循環電流"), "が重なる。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I^2R"
+}), " は電流の2乗で効くので、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "合計電流が同じでも、偏って流れるほど銅損は増える"), "。 だから対策は「太くする」だけでなく「", /*#__PURE__*/React.createElement("strong", null, "各並列路のインピーダンスを揃える"), "」になる。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "10px 0 4px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "b は対策の書き分けに注意。"), "渦電流損は", /*#__PURE__*/React.createElement("strong", null, "電流の経路を断つ"), "（電気抵抗の高い材料・絶縁被膜つき薄板の積層）、 ヒステリシス損は", /*#__PURE__*/React.createElement("strong", null, "材料そのものを変える"), "（電磁鋼板＝ヒステリシスループの面積が小さい材料）。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "積層は渦電流損の対策であってヒステリシス損の対策ではない"), "——ここを入れ替えた選択肢が作られやすい。 式の形（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_e \\propto f^2 B_m^2 t^2"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_h \\propto f B_m^{\\,n}"
+}), "）は上の折りたたみ「鉄損の内訳」にある。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "10px 0 4px"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "c の機械損は、変圧器には無い。"), "回転するものが無いので軸受け摩擦損も風損も出ない。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "機械損は回転機だけの損失"), "で、 変圧器の効率計算に機械損の項が出てきたらその時点で誤り。逆に電動機・発電機の効率では 鉄損・銅損に機械損（＋漂遊負荷損）を足して入力を作る。"), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data-table"
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "損失"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "どこで出るか"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "何で決まるか"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "変圧器"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "回転機"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "銅損"), "（抵抗損）"), /*#__PURE__*/React.createElement("td", null, "巻線"), /*#__PURE__*/React.createElement("td", null, "電流の2乗 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I^2R"
+})), /*#__PURE__*/React.createElement("td", null, "あり（負荷損）"), /*#__PURE__*/React.createElement("td", null, "あり")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "渦電流損")), /*#__PURE__*/React.createElement("td", null, "鉄心"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "f^2 B_m^2 t^2"
+}), "（板厚の2乗）"), /*#__PURE__*/React.createElement("td", null, "あり（鉄損）"), /*#__PURE__*/React.createElement("td", null, "あり")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "ヒステリシス損")), /*#__PURE__*/React.createElement("td", null, "鉄心"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "f B_m^{\\,n}"
+}), "（材料の履歴面積）"), /*#__PURE__*/React.createElement("td", null, "あり（鉄損）"), /*#__PURE__*/React.createElement("td", null, "あり")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "機械損")), /*#__PURE__*/React.createElement("td", null, "軸受け・冷却ファン"), /*#__PURE__*/React.createElement("td", null, "回転速度（負荷にほぼ依らない）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "無し")), /*#__PURE__*/React.createElement("td", null, "あり")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "漂遊負荷損")), /*#__PURE__*/React.createElement("td", null, "漏れ磁束が当たる金属部・タンク"), /*#__PURE__*/React.createElement("td", null, "電流の2乗（測りにくい残り）"), /*#__PURE__*/React.createElement("td", null, "あり（負荷損）"), /*#__PURE__*/React.createElement("td", null, "あり"))))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "6px 0 0",
+    fontSize: 12.5,
+    color: "var(--ink-mute)"
+  }
+}, "この表の上2段＋ヒステリシス損が、この節の ", /*#__PURE__*/React.createElement("strong", null, "無負荷損＝鉄損／負荷損＝銅損"), " という割り方の中身である。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "分類を言えることと、効率の式を立てられることは別の力"), "で、本問は前者だけを問うている。"))), /*#__PURE__*/React.createElement("h4", null, "なぜ銅損は負荷率の2乗になるのか"), /*#__PURE__*/React.createElement("p", null, "銅損は巻線抵抗の発熱そのもの（", /*#__PURE__*/React.createElement(Eq, {
   tex: "P_c = I^2 R"
 }), "）。電圧が一定なら電流は皮相電力に比例（三相では ", /*#__PURE__*/React.createElement(Eq, {
   tex: "I = S / (\\sqrt{3}V)"
