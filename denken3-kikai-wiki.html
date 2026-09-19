@@ -1058,6 +1058,121 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 5px; border: 2px solid var(--bg); }
 ::-webkit-scrollbar-thumb:hover { background: var(--ink-mute); }
+
+/* ── TrapTable（よくあるひっかけ）─────────────────────────────
+   色はトークンだけで書く。生色を置くと check_text_color_token.py と
+   check_theme_contrast.py の台帳がずれ、dark 側だけ沈む。
+   390px で横スクロールさせないため、狭い幅では表を縦積みにする
+   （check_svg_frame.py は図しか見ないので、表は自分で畳む）。 */
+.trap-wrap {
+  margin: 28px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--warn);
+  border-radius: 12px;
+  background: var(--warn-soft);
+}
+
+.trap-title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.trap-lead {
+  margin: 0 0 12px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+
+.trap-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.trap-table th {
+  padding: 8px 12px;
+  background: var(--bg-sunken);
+  color: var(--ink-soft);
+  font-size: 12px;
+  text-align: left;
+  border: 1px solid var(--rule);
+}
+
+.trap-table td {
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  font-size: 13px;
+  line-height: 1.8;
+  vertical-align: top;
+}
+
+.trap-q { color: var(--ink); }
+
+.trap-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.trap-btn {
+  padding: 5px 14px;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.trap-btn.maru   { border: 1.5px solid var(--info);   color: var(--info); }
+.trap-btn.batsu  { border: 1.5px solid var(--danger); color: var(--danger); }
+.trap-btn:hover  { background: var(--bg-sunken); }
+.trap-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.trap-verdict { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+.trap-verdict.ok { color: var(--ok); }
+.trap-verdict.ng { color: var(--warn); }
+
+.trap-correct { font-size: 13px; line-height: 1.8; color: var(--ink); }
+
+.trap-why {
+  margin-top: 6px;
+  padding: 6px 9px;
+  background: var(--bg-sunken);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+
+.trap-why strong { color: var(--accent-ink); }
+
+.trap-ev {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--ink-mute);
+}
+
+.trap-prev {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.trap-prev.ok { color: var(--ok); }
+.trap-prev.ng { color: var(--warn); }
+
+/* スマホ: 2列の表を縦積みにする。移動中の閲覧が前提（柱4）。 */
+@media (max-width: 600px) {
+  .trap-wrap { padding: 14px 12px; }
+  .trap-table thead { display: none; }
+  .trap-table, .trap-table tbody, .trap-table tr, .trap-table td { display: block; width: 100%; }
+  .trap-table tr { margin-bottom: 12px; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+  .trap-table td { border: 0; border-bottom: 1px solid var(--rule-soft); }
+  .trap-table td:last-child { border-bottom: 0; }
+}
   </style>
 <script>
   /* dark/light 早期適用（React mount 前・フラッシュ防止）。法規Wiki の
@@ -2076,7 +2191,7 @@ const KIKAI_DAILY_POOL = [
     q:'2進数 (1101)₂ と (1011)₂ の排他的論理和（ExOR）はどれか。',
     choices:[{key:'A',label:'(0110)₂',correct:true},{key:'B',label:'(1111)₂',correct:false},{key:'C',label:'(1001)₂',correct:false},{key:'D',label:'(0100)₂',correct:false}],
     tags:['#公式','#頻出A','#類似用語の区別'],
-    explanation:'ExOR はビットが異なるとき 1。1101 と 1011 を桁ごとに比べると 1/1→0、1/0→1、0/1→1、1/1→0 で 0110。1111 は論理和(OR)、1001 は一致(ExNOR)、0100 は論理積(AND)の結果で、いずれも選択肢に並ぶ。「異なれば1」を口に出してから桁を追う。',
+    explanation:'ExOR はビットが異なるとき 1。1101 と 1011 を桁ごとに比べると 1/1→0、1/0→1、0/1→1、1/1→0 で 0110。1111 は論理和(OR)。1001 は一致(ExNOR)で、この組では論理積(AND)も同じ 1001 になる。0100 は「A が1で B が0」の桁だけを拾った形。「異なれば1」を口に出してから桁を追う。',
     evidence:['本ページ 論理回路のセクション'], verified:'high',
     wikiPageId:'info-elec' },
   { id:'k67', topic:'情報・電子', rank:'B',
@@ -5885,6 +6000,131 @@ const SectionCheckSummary = ({
       fontWeight: 600
     }
   }, "✨ すべてのセクションが ◎ または ○ です。お疲れさまでした！"));
+};
+
+/* ---- TrapTable: よくあるひっかけ（混同ペアを○✕で先に判定させる） ----
+
+   柱3「混同ペアを潰す」の実装。法規Wiki hoki-components.jsx の TrapTable を
+   機械へ移植したもので、契約（先に○✕ → 判定後に正答と理由 → 間違いノート集約）は同じ。
+   機械側に合わせた違いは2点:
+     - slug を location.hash から作らず pageId を prop で受ける
+       （機械は #<page>/<anchor> 形式の SPA ルータなので hash 分解が当てにならない）
+     - 保存キーと payload を ConceptQuizItem と同じ形にそろえる
+       （denken_check::kikai_<pageId>::trap::<hash>。hoki 側の間違いノートが
+        denken_check:: prefix を走査して集約するので、形を変えると拾われない）
+
+   traps の各行は { wrong, correct, why?, ev? }。**wrong は常に誤りの記述**なので、
+   正しい判定は「✕ 誤り」。○を選ぶ＝ひっかけを見抜けなかった。
+   ev は根拠（本文の節・確認問題ID）。捏造防止のため、根拠を書けない行は足さない。 */
+
+/* 行の識別子。並べ替えても記録が付いて回るよう、本文から作る（hoki の qrDjb2 と同型）。
+   文言を直すと旧記録は orphan するが、それは hoki/QuickReview と同じ既知の割り切り。 */
+const kikaiTrapHash = str => {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = (h << 5) + h + str.charCodeAt(i) | 0;
+  return (h >>> 0).toString(36);
+};
+const TrapTable = ({
+  pageId,
+  pageTitle,
+  traps
+}) => {
+  const keyOf = t => `denken_check::kikai_${pageId}::trap::${kikaiTrapHash(t.wrong + '::' + t.correct)}`;
+  const loadAll = () => {
+    const r = {};
+    (traps || []).forEach((t, i) => {
+      try {
+        const v = localStorage.getItem(keyOf(t));
+        r[i] = v ? JSON.parse(v) : null;
+      } catch (e) {
+        r[i] = null;
+      }
+    });
+    return r;
+  };
+  const [records, setRecords] = React.useState(loadAll);
+  /* 前回（＝前セッション）の記録は mount 時に凍結する。再訪時に答えを自動展開せず
+     もう一度○✕で解き直させるため（テスト効果の維持）。 */
+  const prevRef = React.useRef(null);
+  if (prevRef.current === null) prevRef.current = records;
+  const [answered, setAnswered] = React.useState({});
+  const judge = (i, t, choice) => {
+    setAnswered(prev => ({
+      ...prev,
+      [i]: choice
+    }));
+    const sawIt = choice === '誤'; // wrong は常に誤り＝「誤」が正答
+    const status = sawIt ? 'understood' : 'wrong';
+    try {
+      const raw = localStorage.getItem(keyOf(t));
+      const base = raw ? JSON.parse(raw) || {} : {};
+      const now = new Date().toISOString();
+      const rec = Object.assign({}, base, {
+        status,
+        updatedAt: now,
+        firstSeenAt: base.firstSeenAt || now,
+        reviewCount: (base.reviewCount || 0) + 1,
+        source: 'kikai-trap',
+        itemType: 'trap',
+        articleTitle: '機械 よくあるひっかけ — ' + pageTitle,
+        itemTitle: '【ひっかけ】' + (t.wrong.length > 44 ? t.wrong.slice(0, 44) + '…' : t.wrong),
+        articleUrl: 'denken3-kikai-wiki.html#' + pageId,
+        memo: '正: ' + t.correct,
+        lastAnswerCorrect: sawIt
+      });
+      localStorage.setItem(keyOf(t), JSON.stringify(rec));
+      setRecords(prev => ({
+        ...prev,
+        [i]: rec
+      }));
+      window.dispatchEvent(new CustomEvent('section-check-changed', {
+        detail: {
+          key: keyOf(t),
+          status
+        }
+      }));
+    } catch (e) {/* localStorage 不可でもその場の判定は動く */}
+  };
+  if (!traps || !traps.length) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "trap-wrap"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "trap-title"
+  }, "⚠ よくあるひっかけ — まず○✕で判定する"), /*#__PURE__*/React.createElement("p", {
+    className: "trap-lead"
+  }, "どれも ", /*#__PURE__*/React.createElement("strong", null, "実際に取り違えが起きている記述"), "を並べてある。答えを見る前に○✕を選ぶ。 ひっかかった行は", /*#__PURE__*/React.createElement("strong", null, "間違いノート"), "に集まる。"), /*#__PURE__*/React.createElement("table", {
+    className: "trap-table"
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "記述 — 正しい？ 誤り？"), /*#__PURE__*/React.createElement("th", null, "判定 → 正しくは"))), /*#__PURE__*/React.createElement("tbody", null, traps.map((t, i) => {
+    const ans = answered[i];
+    const revealed = ans !== undefined && ans !== null;
+    const sawIt = ans === '誤';
+    const prev = prevRef.current ? prevRef.current[i] : null;
+    return /*#__PURE__*/React.createElement("tr", {
+      key: i
+    }, /*#__PURE__*/React.createElement("td", {
+      className: "trap-q"
+    }, t.wrong, prev && !revealed && /*#__PURE__*/React.createElement("div", {
+      className: `trap-prev${prev.status === 'understood' ? ' ok' : ' ng'}`
+    }, "前回 ", prev.status === 'understood' ? '✓ 見抜いた' : '✗ ひっかかった', prev.updatedAt ? '（' + String(prev.updatedAt).slice(0, 10) + '）' : '')), /*#__PURE__*/React.createElement("td", null, !revealed ? /*#__PURE__*/React.createElement("div", {
+      className: "trap-btns"
+    }, /*#__PURE__*/React.createElement("button", {
+      type: "button",
+      className: "trap-btn maru",
+      onClick: () => judge(i, t, '正')
+    }, "○ 正しい"), /*#__PURE__*/React.createElement("button", {
+      type: "button",
+      className: "trap-btn batsu",
+      onClick: () => judge(i, t, '誤')
+    }, "✕ 誤り")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      className: `trap-verdict${sawIt ? ' ok' : ' ng'}`
+    }, sawIt ? '✓ 見抜いた（これは誤り）' : '✗ ひっかけ！ 正しくは↓'), /*#__PURE__*/React.createElement("div", {
+      className: "trap-correct"
+    }, t.correct), t.why && /*#__PURE__*/React.createElement("div", {
+      className: "trap-why"
+    }, /*#__PURE__*/React.createElement("strong", null, "なぜ "), t.why), t.ev && /*#__PURE__*/React.createElement("div", {
+      className: "trap-ev"
+    }, "根拠: ", t.ev))));
+  }))));
 };
 
 /* ---- ConceptQuizItem: 1問分の確認問題（正誤判定 → localStorage → 間違いノート集約） ---- */
@@ -10010,6 +10250,40 @@ const InductionMachinePage = ({
 }), " 倍"), "。同期速度は電圧で変わらないので、動くのは滑りだけ（3.0 % → 3.7 %）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "停動滑り s_m の式は？停動トルクに入らない量は？"), "s_m = r₂′/√(r₁² + (x₁+x₂′)²)。", /*#__PURE__*/React.createElement("strong", null, "T_max に r₂′ は入らない"), "（二次抵抗は山の位置だけを動かす）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "等価回路の定数を決める3つの測定と、それぞれ何が分かるか？"), /*#__PURE__*/React.createElement("strong", null, "無負荷試験"), "（鉄損・励磁回路 r₀, x₀）／", /*#__PURE__*/React.createElement("strong", null, "拘束試験"), "（銅損・r₁+r₂′・x₁+x₂′）／", /*#__PURE__*/React.createElement("strong", null, "一次抵抗測定"), "（r₁ を分離）。円線図はこの3つから描く"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "制動法3種と、それぞれ滑りはどの領域？"), /*#__PURE__*/React.createElement("strong", null, "回生"), ": s < 0（同期速度より速い・電源へ返す）／", /*#__PURE__*/React.createElement("strong", null, "発電"), ": 直流励磁（熱）／", /*#__PURE__*/React.createElement("strong", null, "逆相（プラッギング）"), ": s ≈ 2、2線入替（熱・止まったら切る）")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "induction-machine",
   sectionId: "quick-review"
+}), /*#__PURE__*/React.createElement(TrapTable, {
+  pageId: "induction-machine",
+  pageTitle: "1.2 三相誘導電動機",
+  traps: [{
+    wrong: "同期速度は Ns = 60f/p で求める",
+    correct: "Ns = 120f/p（p は極数）。",
+    why: "60f/p は p を極対数で数えたときの形。三種では p は極数が標準で、極数と極対数の混同が定番の失点源。",
+    ev: "本ページ 1節 公式01（同期速度）／確認問題 k01"
+  }, {
+    wrong: "滑りは s = (Ns − N)/N で定義される（分母は実回転速度）",
+    correct: "s = (Ns − N)/Ns。分母は同期速度 Ns。",
+    why: "分母を取り違えても値が近いので気づきにくい。電動機域は 0 < s < 1、s < 0 は誘導発電機、s > 1 は制動域。",
+    ev: "本ページ 1節 公式02（滑り）／確認問題 k02"
+  }, {
+    wrong: "Y-Δ 始動では、始動電流が 1/√3、始動トルクが 1/3 になる",
+    correct: "電流・トルクとも 1/3。",
+    why: "Y では相電圧が 1/√3 になり、トルクは電圧の2乗に比例するので 1/3。電流を 1/√3 と答えるのは線電流と相電流の混同。",
+    ev: "本ページ 4節「頻出の誤答」Box／確認問題 k04"
+  }, {
+    wrong: "電源電圧が 0.9 倍に下がると、トルクもおよそ 0.9 倍になる",
+    correct: "同じ滑りで比べると 0.81 倍。トルクは電圧の2乗に比例する（T ∝ V₁²）。始動トルク・最大トルクも同じく2乗で効く。",
+    why: "2乗を落とすと常に過大評価になる。なお V₁² が前に出るのは滑りを固定して比べたときで、負荷トルク一定の定常運転では発生トルクは負荷に等しいまま滑りが増えて釣り合う。",
+    ev: "本ページ 3節 公式05（トルク式（簡易形））／確認問題 k06"
+  }, {
+    wrong: "二次銅損は Pc2 = (1 − s)·P₂ である",
+    correct: "Pc2 = s·P₂。(1 − s) 倍になるのは機械的出力 Pm のほう。",
+    why: "P₂ : Pc2 : Pm = 1 : s : (1 − s)。3つのうち1つ与えられれば残りが出るB問題の軸なので、s と (1 − s) の担当を取り違えると全問落とす。",
+    ev: "本ページ 2節「重要な比率」・公式03／確認問題 k03"
+  }, {
+    wrong: "かご形誘導電動機でも、二次抵抗を大きくすれば比例推移で始動トルクを増やせる",
+    correct: "比例推移が使えるのは巻線形だけ。かご形は二次抵抗を外から変えられない。",
+    why: "巻線形はスリップリング経由で外部抵抗を入れられる。二次抵抗を k 倍にすると同一トルクの滑りも k 倍になる、というのがその機種限定の性質。",
+    ev: "本ページ 3節「比例推移（巻線形のみ）」／確認問題 k05"
+  }]
 }), /*#__PURE__*/React.createElement(SectionCheckSummary, {
   pageId: "induction-machine",
   sections: [{
@@ -15484,6 +15758,40 @@ const SynchronousPage = ({
 }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期機の同期速度と滑りは？"), "N_s = 120f/p。同期運転中は滑りゼロ（誘導機と異なり同期速度で回る）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "電機子反作用（同期発電機）：遅れ／進み力率の作用は？"), "発電機では遅れ=減磁・電圧低下／進み=増磁・電圧上昇／力率1=交差磁化。同期電動機では逆（遅れ=増磁・進み=減磁）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "V カーブの底点は何力率？"), "力率1（電機子電流が最小の点）。左側=不足励磁で遅れ・右側=過励磁で進み力率"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "巻線係数は何の積か？ 分布巻・短節巻で起電力は増えるか減るか？"), "k_w = k_d（分布係数）× k_p（短節係数）。", /*#__PURE__*/React.createElement("strong", null, "どちらも1未満なので起電力は減る"), "。得られるのは正弦波に近い波形と高調波の低減"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期発電機の電圧変動率の定義は？ 負になることはあるか？"), "ε = (V₀ − V_n)/V_n × 100（V₀ は界磁と速度をそのままに無負荷にしたときの端子電圧）。", /*#__PURE__*/React.createElement("strong", null, "進み力率の負荷では負になりうる")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期調相機を過励磁にすると何と同じ働きか？"), /*#__PURE__*/React.createElement("strong", null, "進相コンデンサ"), "（不足励磁なら分路リアクトル）。界磁電流で連続的に両方向へ調整できるのが取り柄"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期電動機に始動トルクが無いのはなぜか？"), "回転磁界が半周期ごとに N/S を入れ替えるので、静止した界磁極が受けるトルクの向きが反転し、", /*#__PURE__*/React.createElement("strong", null, "1周期の平均がゼロ"), "になるから"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "乱調の原因を4つ挙げよ。対策は？"), "原動機トルクの脈動／負荷の急変／電源の電圧・周波数変動／", /*#__PURE__*/React.createElement("strong", null, "制動巻線の抵抗が大きい"), "（抵抗が大きいほど減衰トルクが小さい）。対策は制動巻線とはずみ車"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "脱出トルクとは？ 大きくするには？"), "δ = 90°（P_max = EV/x_s）で出力が頭打ちになり、超えると脱調する。その限界のトルク。", /*#__PURE__*/React.createElement("strong", null, "界磁を強めて E を大きくすれば増える")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "SPM と IPM の違いは？ リラクタンストルクが使えるのはどちら？"), "表面磁石形（SPM）は突極性が無くマグネットトルクのみ。", /*#__PURE__*/React.createElement("strong", null, "埋込磁石形（IPM）"), "は突極性があり", /*#__PURE__*/React.createElement("strong", null, "リラクタンストルクも足して"), "使える。高速回転にも有利"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "短絡比 K_s は？大きいと何が良い？"), "K_s = I_f0 / I_fs ≈ 1 / x_s[p.u.]。大きいほど安定度が高く電圧変動が小さい"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "円筒形同期機が最大出力となる内部相差角 δ は？"), "δ = π/2（P = (E·V / x_s)·sinδ）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期電動機の始動法は？なぜ自力始動できない？"), "始動トルクがないため、制動巻線による自己始動法／始動電動機法／低周波始動を使う。始動中は界磁巻線を抵抗経由で短絡"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "乱調とは？その対策は？"), "負荷急変で内部相差角 δ が振動する現象。制動巻線の誘導トルクで減衰させる（はずみ車は慣性で急変を緩和する補助）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "E = 4.44fNΦ の 4.44 の出どころは？"), "4.44 = (1/√2)·(π/2)·2·2 = √2·π。1/√2 は最大値→実効値の変換、π/2 は平均値 (2/π) の逆数、2 は「1周期で 2τ 進む」、2 は「1巻き＝導体2辺」。導体1本の起電力が 2.22fΦ、1相 N 巻＝導体 2N 本なので 2 倍して 4.44fNΦ"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "水車発電機とタービン発電機の回転子の形は？"), "水車＝低速・多極・突極形・大径短軸／タービン＝高速・少極・円筒形・小径長軸（高速では遠心力 F∝rω² で太くできない）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "並行運転で起電力の大きさに差があると何が流れるか？"), "横流（循環電流）。I_c = |E₁−E₂|/(2x_s)。ほぼ無効分で仕事をせず損失だけ増やす"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "短絡比から x_s[Ω] を求める式は？"), "x_s[p.u.] ≈ 1/K_s、Z_base = V_n²/S_n（線間電圧・三相容量のままで1相ぶん）。掛けて x_s[Ω]")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "synchronous",
   sectionId: "quick-review"
+}), /*#__PURE__*/React.createElement(TrapTable, {
+  pageId: "synchronous",
+  pageTitle: "1.3 同期機",
+  traps: [{
+    wrong: "同期電動機も負荷が増えると滑りが生じて回転速度が下がる",
+    correct: "同期機に滑りは無い。常に同期速度 Ns = 120f/p で回る。",
+    why: "同期速度の式は誘導機と共通なので混ざりやすいが、滑りの有無が両者を分ける核心。負荷で変わるのは速度ではなく内部相差角 δ。",
+    ev: "本ページ 1節・3節「混同に注意」Box／確認問題 k15"
+  }, {
+    wrong: "同期発電機が遅れ力率の負荷を負うと、電機子反作用は増磁作用になる",
+    correct: "減磁作用（電圧低下）。発電機では 遅れ＝減磁・進み＝増磁・力率1＝交差磁化。",
+    why: "同期電動機では対応が逆（遅れ＝増磁）になる。だから「発電機か電動機か」の主語を付けずに覚えると必ずどちらかで外す。",
+    ev: "本ページ 2節（電機子反作用）／確認問題 k16"
+  }, {
+    wrong: "短絡比 Ks が大きい同期発電機は、短絡電流も小さい",
+    correct: "むしろ大きい。Is = Ks × In。",
+    why: "Ks ≈ 1/xs[p.u.] なので短絡比大 ⇔ 同期リアクタンス小。安定度が高く電圧変動が小さいのは正しいが、短絡電流だけは逆に増える。",
+    ev: "本ページ 3節 公式02（短絡比）・例題1.3.1／確認問題 k18"
+  }, {
+    wrong: "同期電動機の V カーブの底点は、電機子電流が最大になる点である",
+    correct: "底点は力率1で電機子電流が最小。",
+    why: "底の左が不足励磁で遅れ力率、右が過励磁で進み力率。過励磁で進み電流を取れる性質が同期調相機の力率改善に使われる。",
+    ev: "本ページ 3節（V カーブと位相特性）／確認問題 k17"
+  }, {
+    wrong: "1極の磁束 Φ を求めるときは、磁束密度の実効値 Bm/√2 を使う",
+    correct: "平均値 (2/π)Bm ≈ 0.637Bm を使う。",
+    why: "Φ は磁束密度×面積の総和なので、極面上で平均した値を積む。実効値 0.707Bm を当てるのが最頻の誤りで、値が近いぶん気づきにくい。",
+    ev: "本ページ 1節 折りたたみ「4.44 はどこから来るか」段4／確認問題 k21"
+  }, {
+    wrong: "同期電動機が自力始動できないのは、始動電流が流れないからである",
+    correct: "始動トルクが無いから。静止した回転子は回転磁界に追従できない。",
+    why: "電流は流れる。制動巻線をかご形導体として使う自己始動法、始動電動機法、低周波始動などで一度同期速度付近まで持っていく必要がある。",
+    ev: "本ページ 5節（始動法・乱調・自己励磁）／確認問題 k20"
+  }]
 }), /*#__PURE__*/React.createElement(SectionCheckSummary, {
   pageId: "synchronous",
   sections: [{
@@ -27458,7 +27766,41 @@ const TransformerPage = ({
     e.preventDefault();
     onNav('study-log');
   }
-}, " リファレンス E「学習記録」"), "に集約してある。グリッドは", /*#__PURE__*/React.createElement("strong", null, "機械まるごと1枚"), "で、単元ごとには分けていない （R3 問15 は1つの問題なので、単元ごとに同じマスを持つと二重管理になる）。"), /*#__PURE__*/React.createElement(SectionCheckSummary, {
+}, " リファレンス E「学習記録」"), "に集約してある。グリッドは", /*#__PURE__*/React.createElement("strong", null, "機械まるごと1枚"), "で、単元ごとには分けていない （R3 問15 は1つの問題なので、単元ごとに同じマスを持つと二重管理になる）。"), /*#__PURE__*/React.createElement(TrapTable, {
+  pageId: "transformer",
+  pageTitle: "2.1 変圧器",
+  traps: [{
+    wrong: "負荷率が 50% になれば、銅損も半分の 0.5 PcN になる",
+    correct: "0.25 PcN。銅損は I²R なので負荷率の2乗に比例する。",
+    why: "負荷によらずほぼ一定なのは鉄損のほう。「負荷半分なら損失も半分」は、鉄損と銅損のどちらの話かを決めずに読むと出る。",
+    ev: "本ページ 7節 公式06（銅損は負荷率の2乗）／確認問題 k10"
+  }, {
+    wrong: "変圧器の効率は定格負荷（負荷率 100%）のときに最大になる",
+    correct: "鉄損（無負荷損）＝銅損（負荷損）のときに最大。そのときの負荷率は x = √(Pi/PcN)。",
+    why: "最小になるのは損失そのものではなく「出力1kWあたりの損失」(Pi/x + x·PcN)。これが最小になるのが両者の交点で、一般に定格より低い負荷率に来る。全損失 Pi + x²PcN のほうは負荷が増えるほど増え続ける。",
+    ev: "本ページ 7節・付録D 5節（最大効率の条件）／確認問題 k09"
+  }, {
+    wrong: "巻数比 a = N₁/N₂ のとき、電流も I₁/I₂ = a で巻数比に比例する",
+    correct: "電流は逆比で I₂/I₁ = a。電圧が比例、電流が逆比。",
+    why: "一次と二次で電力が等しいから、電圧が上がる側は電流が下がる。インピーダンスの一次換算が a² 倍になるのもここから来る。",
+    ev: "本ページ 2節 公式01・02／確認問題 k08"
+  }, {
+    wrong: "無負荷（負荷ゼロ）で通電しているだけなら、鉄損は発生しない",
+    correct: "電圧が加わっている間ずっと発生する。24時間通電なら鉄損電力量は Wi = Pi × 24。",
+    why: "「無負荷」は電圧を印加したまま負荷がゼロという意味で、電源から切り離した状態とは別物。ゼロになるのは切り離したときだけ。",
+    ev: "本ページ 7節「無負荷と電源切離しは別物」Box・24時間タイムライン図／確認問題 k12"
+  }, {
+    wrong: "%Z が小さい変圧器ほど、短絡したときの短絡電流も小さい",
+    correct: "逆。Is = (100/%Z) × In なので、%Z が小さいほど短絡電流は大きい。",
+    why: "%Z が小さい＝内部インピーダンスが小さいので、電圧変動は小さく済むが遮断器の負担は重くなる。良し悪しが逆を向く。",
+    ev: "本ページ 8節 公式12（短絡電流）／確認問題 k11"
+  }, {
+    wrong: "2台の並行運転で無負荷なのに循環電流が流れるのは、%Z が等しくないからである",
+    correct: "変圧比（巻数比）が等しくないから。二次起電力に差が生じ、無負荷でも巻線間に電流が流れる。極性や三相の角変位が合っていないときも同じく無負荷で流れる。",
+    why: "%Z の不一致は「負荷時の分担が容量比にならない」原因、X/R 比の不一致は「分担電流に位相差が出る」原因で、起きる現象がそれぞれ違う。",
+    ev: "本ページ 10節「並行運転の条件」／確認問題 k13"
+  }]
+}), /*#__PURE__*/React.createElement(SectionCheckSummary, {
   pageId: "transformer",
   sections: [{
     id: "basic",
@@ -29993,6 +30335,40 @@ const PowerElecPage = ({
 }, "「停電したのに自分が運転を続けている状態」"), "。発電と負荷が釣り合うと電圧も周波数も動かず", /*#__PURE__*/React.createElement("strong", null, "受動的方式では検出できない（不感帯）"), "ので、", /*#__PURE__*/React.createElement("strong", null, "能動的方式を併用"), "する"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "三相インバータの基本構成は？"), "IGBT を 6 個ブリッジ接続し PWM で正弦波に近い出力を作る")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "power-elec",
   sectionId: "quick-review"
+}), /*#__PURE__*/React.createElement(TrapTable, {
+  pageId: "power-elec",
+  pageTitle: "2.2 パワーエレクトロニクス",
+  traps: [{
+    wrong: "三相ダイオード全波（ブリッジ）整流の直流平均電圧は Vd ≈ 0.90 × 交流電圧である",
+    correct: "Vd = (3√2/π)·V_L ≈ 1.35 V_L。0.90 は単相全波、0.45 は単相半波の係数。",
+    why: "単相か三相かで係数が丸ごと変わる。どの回路の係数かを言えないまま 0.90 を書くのが定番。",
+    ev: "本ページ 2節 公式02／確認問題 k29"
+  }, {
+    wrong: "三相ダイオード全波整流で 1.35 を掛ける相手は相電圧である",
+    correct: "線間電圧。負荷は最も高い相と最も低い相の間につながるので、出力は2相の差＝線間電圧。",
+    why: "相電圧に掛けるなら 1.35×√3 ≈ 2.34 倍になる。√3 を入れるか入れないかで答えが 1.7 倍ずれるので、掛ける相手が線間か相かを毎回確かめる。",
+    ev: "本ページ 2節「出力にどの電圧が出るか」／確認問題 k64・k29"
+  }, {
+    wrong: "三相ダイオード全波整流では、ダイオード1個あたりの導通角は 60° である",
+    correct: "1個あたり 120°。60° ごとに切り替わるのは導通する「組」のほう。",
+    why: "上側と下側が交互に切り替わるので組は 60° ごとに変わるが、同じダイオードは2区間続けて導通する。切替周期を素子の導通角と取り違えるのが定番。",
+    ev: "本ページ 2節「誰が導通するか」導通表／確認問題 k32"
+  }, {
+    wrong: "昇圧チョッパの出力は Vo = D·Vi、降圧チョッパは Vo = Vi/(1 − D) である",
+    correct: "逆。降圧が Vo = D·Vi、昇圧が Vo = Vi/(1 − D)。",
+    why: "降圧は掛ける・昇圧は割る。D = 0 と D = 1 を入れて極端な場合が正しいかを見れば、式を覚えていなくてもその場で判別できる。",
+    ev: "本ページ 3節 公式03・04／確認問題 k31"
+  }, {
+    wrong: "逆阻止三端子サイリスタ（SCR）はゲート信号でいつでもオフにできる",
+    correct: "自己消弧できない。オフにするには電流の零点が要る。同じサイリスタでも GTO はゲートの逆電流で消弧できる。",
+    why: "ゲートでオフまでできるのは GTO・IGBT・パワーMOSFET などの自己消弧形。ダイオードはそもそも制御端子を持たず、印加電圧の極性だけで導通が決まる。「サイリスタ」と一括りにすると GTO で外す。",
+    ev: "本ページ 1節 主な半導体素子（自己消弧・駆動方式の表）／確認問題 k33"
+  }, {
+    wrong: "PWM インバータで出力電圧の大きさを変えるには、直流電源電圧を変える",
+    correct: "スイッチング素子のオン時間の比率（パルス幅）を変える。",
+    why: "直流電圧を一定にしたまま、出力の大きさと周波数を独立に操作できる。これがあるから誘導電動機の V/f 一定制御が成り立つ。",
+    ev: "本ページ 4節 インバータと PWM／確認問題 k65"
+  }]
 }), /*#__PURE__*/React.createElement(SectionCheckSummary, {
   pageId: "power-elec",
   sections: [{
@@ -36026,6 +36402,7 @@ const StubPage = ({
   deck,
   freqNote,
   sections,
+  traps,
   onNav,
   prev,
   next
@@ -36056,7 +36433,11 @@ const StubPage = ({
 }, i + 1, "."), s.heading), s.body, id && /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: id,
   sectionId: s.id
-}))), id && /*#__PURE__*/React.createElement(SectionCheckSummary, {
+}))), id && traps && traps.length > 0 && /*#__PURE__*/React.createElement(TrapTable, {
+  pageId: id,
+  pageTitle: title,
+  traps: traps
+}), id && /*#__PURE__*/React.createElement(SectionCheckSummary, {
   pageId: id,
   sections: sections.map((s, i) => ({
     id: s.id,
@@ -36095,6 +36476,37 @@ const InfoElecPage = ({
 }) => /*#__PURE__*/React.createElement(StubPage, {
   id: "info-elec",
   title: "情報・電子回路",
+  traps: [{
+    wrong: "和積形式（POS）を作るときは、出力が 0 の行で、値が 0 の変数に否定を付ける",
+    correct: "値が 1 の変数に否定を付ける。",
+    why: "積和は 1 の行を拾い 0 の変数に否定、和積は 0 の行を拾い 1 の変数に否定。見る行も否定の向きもつなぎ方も全部逆なので、積和のやり方をそのまま持ち込むと必ずここで外す。",
+    ev: "本ページ「真理値表から論理式を作る — 積和形式と和積形式」／確認問題 k69"
+  }, {
+    wrong: "全加算器に A = 1、B = 1、C_in = 1 を入れると、S = 0、C_out = 1 になる",
+    correct: "S = 1、C_out = 1。",
+    why: "入力3つのうち 1 の個数を数えて2進で書くと (11)₂。S = 0 は半加算器の 1 + 1 = (10)₂ を引きずった形で、これは C_in = 0 の行の答え。",
+    ev: "本ページ 1節 公式02（全加算器）／確認問題 k68"
+  }, {
+    wrong: "分解能 8 ビットは 8² = 64 段階なので、0〜5 V なら1ステップは約 78 mV になる",
+    correct: "2⁸ = 256 段階で、5/256 ≈ 19.5 mV。",
+    why: "ビット数は 2 の指数であって底ではない。ビットが1つ増えるごとに刻みが半分になる、という向きで検算できる。なお 2ⁿ−1 = 255 で割る流儀なら 19.6 mV で、選択肢はどちらでも同じ肢に落ちる。",
+    ev: "本ページ A/D 変換のセクション／確認問題 k67"
+  }, {
+    wrong: "D フリップフロップは、クロックのたびに出力が必ず反転する",
+    correct: "入力 D と一致した出力を行う（データラッチ）。",
+    why: "毎回反転するのは T-FF、入力を共に 1 にできないのが RS-FF、共に 1 で反転するのが JK-FF。4種類を「1 のときどうなるか」で並べて覚えると選択肢の入れ替えに強い。",
+    ev: "本ページ フリップフロップのセクション／確認問題 k46"
+  }, {
+    wrong: "(1101)₂ と (1011)₂ の排他的論理和（ExOR）は (1111)₂ である",
+    correct: "(0110)₂。ExOR はビットが異なるときだけ 1。",
+    why: "(1111)₂ は論理和 OR。(1001)₂ は一致 ExNOR で、この組では論理積 AND も同じ 1001 になる。(0100)₂ は「A が1で B が0」の桁だけを拾った形。「異なれば1」を口に出してから桁を追う。",
+    ev: "本ページ 論理回路のセクション／確認問題 k66"
+  }, {
+    wrong: "2進7桁の (1010101)₂ は、2桁の (57)₁₆ より大きい",
+    correct: "(1010101)₂ = 85、(57)₁₆ = 87 で、16進のほうが大きい。",
+    why: "基数が違う数は、どちらも10進へそろえてから比べる。桁数の見た目（7桁と2桁）に引きずられない。",
+    ev: "本ページ 進数のセクション／確認問題 k45"
+  }],
   eyebrow: "3.2  INFORMATION & ELECTRONIC CIRCUITS",
   deck: "論理回路・順序回路・A/D 変換・進数に加え、BASIC と C の2言語で併記されるプログラム問題の読み方までを扱う。出題範囲は浅く広い。",
   prev: {
