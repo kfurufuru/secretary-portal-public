@@ -142,6 +142,35 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   margin-bottom: 16px;
 }
 
+/* テーマ切替ボタン（brand 行の右端）。色はトークンだけで書く
+   — 生色を置くと check_text_color_token.py / check_theme_contrast.py の
+   台帳がずれ、dark 側だけ沈む事故になる。 */
+.theme-toggle {
+  margin-left: auto;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--bg-elev);
+  color: var(--ink-mute);
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.theme-toggle:hover {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .brand-mark {
   width: 36px;
   height: 36px;
@@ -1030,6 +1059,24 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
 ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 5px; border: 2px solid var(--bg); }
 ::-webkit-scrollbar-thumb:hover { background: var(--ink-mute); }
   </style>
+<script>
+  /* dark/light 早期適用（React mount 前・フラッシュ防止）。法規Wiki の
+     hoki-head-template.html と同じ手法で、キーだけ 'kikai_theme' に分ける。
+
+     優先順位: ①利用者が明示選択した値（localStorage）② OS の設定
+     （prefers-color-scheme）③ light。②を見るのは、夜の学習が主で
+     端末側を夜間ダークにしている利用者に、毎回の手動切替を強いないため。
+     明示選択があるときは OS 設定より利用者の意思を優先する。
+
+     <html> の data-theme="light" は no-JS 時のフォールバック。ここで上書きする。 */
+  try {
+    var __kt = localStorage.getItem('kikai_theme');
+    var __dark = __kt === 'dark'
+      || (__kt !== 'light' && window.matchMedia
+          && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', __dark ? 'dark' : 'light');
+  } catch (e) { /* localStorage 不可（プライベートモード等）でも light で動く */ }
+</script>
 <style>/* a11y: badge/callout label contrast (WCAG AA) */
 .box-warn>.box-label{color:var(--warn)}
 .box-tip>.box-label{color:var(--ok)}
@@ -42884,6 +42931,77 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "lineHeight": 1.85
 } /*EDITMODE-END*/;
 
+/* ---------- テーマ（dark/light） ----------
+   CSS 側には [data-theme="dark"] のトークンが最初から揃っていたのに、
+   切り替える手段が無く到達できなかった。
+   TWEAK_DEFAULTS.theme は Tweaks パネル（開発時のみ host が開く）用の値で、
+   利用者には届かない。ここは利用者が触れる側として別に持つ。
+
+   初期値は kikai-head-template.html の早期適用スクリプトが
+   localStorage → OS 設定 の順で解決して data-theme に入れてある。
+   二重に解決すると両者がずれるので、ここは DOM の結果を読むだけにする。 */
+const useKikaiTheme = () => {
+  const [theme, setThemeState] = useState(() => {
+    try {
+      return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    } catch (e) {
+      return 'light';
+    }
+  });
+  const setTheme = next => {
+    setThemeState(next);
+    try {
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('kikai_theme', next); // 明示選択は OS 設定より優先する
+    } catch (e) {/* localStorage 不可でもその場の切替は効く */}
+  };
+
+  // 開いている最中の OS 設定変更には追従しない。追従を足すと
+  // matchMedia の change を実ブラウザで発火させる必要があるが、
+  // 手元の検証環境（Browser pane の colorScheme エミュレーション）では
+  // change イベントが飛ばず、実装を検証できないまま出すことになる。
+  // 読み込み時の解決（上の早期適用スクリプト）で夜に開けば暗い、は満たせている。
+
+  return [theme, setTheme];
+};
+const ThemeToggle = ({
+  theme,
+  onToggle
+}) => /*#__PURE__*/React.createElement("button", {
+  type: "button",
+  className: "theme-toggle",
+  onClick: e => {
+    e.stopPropagation();
+    onToggle(theme === 'dark' ? 'light' : 'dark');
+  },
+  "aria-label": theme === 'dark' ? 'ライトテーマに切り替える' : 'ダークテーマに切り替える',
+  title: theme === 'dark' ? 'ライトテーマに切り替える' : 'ダークテーマに切り替える'
+}, theme === 'dark' ? /*#__PURE__*/React.createElement("svg", {
+  width: "15",
+  height: "15",
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  "aria-hidden": true
+}, /*#__PURE__*/React.createElement("circle", {
+  cx: "12",
+  cy: "12",
+  r: "4"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+})) : /*#__PURE__*/React.createElement("svg", {
+  width: "15",
+  height: "15",
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  "aria-hidden": true
+}, /*#__PURE__*/React.createElement("path", {
+  d: "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"
+})));
+
 /* ---------- Sidebar ---------- */
 const Sidebar = ({
   chapters,
@@ -42894,7 +43012,9 @@ const Sidebar = ({
   searchQuery,
   onSearchChange,
   searchResults,
-  onSearchSelect
+  onSearchSelect,
+  theme,
+  onThemeChange
 }) => {
   const [openChapters, setOpenChapters] = useState(() => Object.fromEntries(chapters.map(c => [c.id, true])));
   const toggle = id => setOpenChapters(s => ({
@@ -42929,7 +43049,10 @@ const Sidebar = ({
     className: "brand-title"
   }, "機械Wiki"), /*#__PURE__*/React.createElement("div", {
     className: "brand-sub"
-  }, "DENKEN-3 / MACHINERY"))), /*#__PURE__*/React.createElement("div", {
+  }, "DENKEN-3 / MACHINERY")), /*#__PURE__*/React.createElement(ThemeToggle, {
+    theme: theme,
+    onToggle: onThemeChange
+  })), /*#__PURE__*/React.createElement("div", {
     className: "search"
   }, /*#__PURE__*/React.createElement("span", {
     className: "search-icon",
@@ -43250,6 +43373,7 @@ function parseHash() {
 const App = () => {
   const data = window.WIKI_DATA;
   const [tweaks, setTweak] = window.useTweaks ? window.useTweaks(TWEAK_DEFAULTS) : [TWEAK_DEFAULTS, () => {}];
+  const [theme, setTheme] = useKikaiTheme();
   const [page, setPage] = useState(() => {
     const {
       page: p
@@ -43267,8 +43391,10 @@ const App = () => {
   const searchResults = useMemo(() => searchIndex(searchIdx, searchQuery), [searchIdx, searchQuery]);
 
   // Apply tweaks to root
+  // theme はここで触らない。利用者の切替（useKikaiTheme）と Tweaks パネルの
+  // 両方が data-theme を書くと、再描画のたびに Tweaks 側の既定値 "light" が
+  // 利用者の選択を上書きしてしまう。theme の所有者は useKikaiTheme 一本にする。
   useEffect(() => {
-    document.documentElement.dataset.theme = tweaks.theme;
     document.documentElement.dataset.accent = tweaks.accent;
     document.documentElement.style.setProperty('--fs-base', tweaks.fontSize + 'px');
     document.documentElement.style.setProperty('--lh-base', tweaks.lineHeight);
@@ -43398,7 +43524,9 @@ const App = () => {
       });
       navigate(r.id, r.anchor);
       setSearchQuery('');
-    }
+    },
+    theme: theme,
+    onThemeChange: setTheme
   }), /*#__PURE__*/React.createElement("main", {
     className: "main",
     key: page
