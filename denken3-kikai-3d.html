@@ -413,7 +413,7 @@ const MACHINES = {
     parts:[
       ['#3B5A73','門型フレームとドラム','荷が上がる局面はロープを巻き取り、下がる局面は繰り出す。**ドラムの回転角は出入りしたロープの長さそのもの**（Δθ = Δℓ/R）で、電動機の回転数と巻上速度はここで結びつく'],
       ['#C07A3A','ロープと荷','荷を持ち上げる有効出力は m·g·v。電動機として持ち上げる（力行）なら所要出力はこれを効率で**割った**値で、必ず大きくなる。おもりのほうが重い回生側では向きが逆になる'],
-      ['#7FB069','釣合いおもり（エレベータ）','**見る対象を切り替えると出る**。電動機が受け持つのはかご側とおもり側の**差**だけ。m をそのまま入れると大きく外す'],
+      ['#7FB069','釣合いおもり（エレベータ）','**見る対象を切り替えると出る**。**等速で昇降しているとき**、電動機が受け持つのはかご側とおもり側の**差**だけ。m をそのまま入れると大きく外す。加減速中は慣性の分が加わり、そちらは質量の**和**で効く'],
       ['#D9C7A0','小歯車（電動機側）と大歯車（負荷側）','歯数の比が減速比 i。速度は 1/i 倍、トルクは i 倍。損失を無視すれば動力は変わらない'],
       ['#5C6B78','はずみ車','回転体の慣性でエネルギーを貯める。W = ½Jω² で、J は **GD² を 4 で割った**値'],
       ['#F0B57E','回転と昇降の目印','速さの模式。実機の値ではない'],
@@ -1626,27 +1626,34 @@ function buildDrive(g){
   const teeth = (parent, r, n, mat) => { for (let i=0;i<n;i++){ const a=i/n*Math.PI*2;
     const th = mesh(new THREE.BoxGeometry(.26,.16,.16), mat, parent);
     th.position.set(0, Math.sin(a)*r, Math.cos(a)*r); th.rotation.x = -a; } };
-  const axisY = 2.0;
-  const gMotor = mesh(new THREE.CylinderGeometry(.42,.42,1.0,20), M.frame, G, -2.0, axisY, 0); gMotor.rotation.z = Math.PI/2;
-  const small = new THREE.Group(); G.add(small); small.position.set(-.85, axisY, 0);
-  mesh(new THREE.CylinderGeometry(.35,.35,.24,24), DM_MAT.gear, small).rotation.z = Math.PI/2;
-  teeth(small, .35, 12, DM_MAT.gear);
-  mesh(new THREE.BoxGeometry(.06,.62,.1), M.steelDark, small, .14, .18, 0);      // 回転の目印
-  const shaftA = mesh(new THREE.CylinderGeometry(.11,.11,1.6,12), M.steelLight, G, -1.6, axisY, 0); shaftA.rotation.z = Math.PI/2;
+  /* 歯車は rotation.z = π/2 で倒してあるので**軸は x 方向**。外接してかみ合うには、
+     中心間距離を**軸に垂直な面内**（ここでは y）に取らなければならない。
+     x 方向にずらすと同軸に並べただけになり、歯数比も逆回転も意味を持たない。 */
+  const bigY = 2.2;                       // 負荷側の軸の高さは固定（減速比で動くと見比べにくい）
   const bigs = {};
   for (const i of DM_RATIOS){
     const r = .35*i;
-    const B = new THREE.Group(); G.add(B); B.visible = false; B.position.set(-.85 + .35 + r, axisY, 0);
+    const B = new THREE.Group(); G.add(B); B.visible = false; B.position.set(0, bigY, 0);
     mesh(new THREE.CylinderGeometry(r, r, .24, 40), DM_MAT.gear2, B).rotation.z = Math.PI/2;
     teeth(B, r, 12*i, DM_MAT.gear2);
     mesh(new THREE.BoxGeometry(.06, r*.9, .1), M.steelDark, B, .14, r*.45, 0);   // 回転の目印
     bigs[i] = B;
   }
+  /* 電動機側は大歯車の真上。中心間距離 = 小半径 + 大半径 になる高さへ animDrive が動かす */
+  const drive = new THREE.Group(); G.add(drive);
+  const small = new THREE.Group(); drive.add(small);
+  mesh(new THREE.CylinderGeometry(.35,.35,.24,24), DM_MAT.gear, small).rotation.z = Math.PI/2;
+  teeth(small, .35, 12, DM_MAT.gear);
+  mesh(new THREE.BoxGeometry(.06,.62,.1), M.steelDark, small, .14, .18, 0);      // 回転の目印
+  const gMotor = mesh(new THREE.CylinderGeometry(.42,.42,1.0,20), M.frame, drive, -1.6, 0, 0); gMotor.rotation.z = Math.PI/2;
+  const shaftA = mesh(new THREE.CylinderGeometry(.11,.11,1.2,12), M.steelLight, drive, -.8, 0, 0); shaftA.rotation.z = Math.PI/2;
+  const shaftB = mesh(new THREE.CylinderGeometry(.13,.13,1.6,12), M.steelLight, G, 1.2, bigY, 0); shaftB.rotation.z = Math.PI/2;
   G.userData.labels = [
     {obj:gMotor, t:'電動機（入力側）', c:'#3B5A73'},
     {obj:small, t:'小歯車（電動機側）', c:'#D9C7A0'},
-    {obj:bigs[DM_RATIOS[0]], t:'大歯車（負荷側）', c:'#C9A227', key:'big'},
-    {obj:shaftA, t:'軸', c:'#8E9AA6'},
+    /* 表示中の1枚だけに引き出し線が出る（rebuildLabels が見えているものだけ拾う） */
+    ...DM_RATIOS.map(i => ({obj:bigs[i], t:'大歯車（負荷側）', c:'#C9A227'})),
+    {obj:shaftB, t:'負荷側の軸', c:'#8E9AA6'},
   ];
 
   /* --- はずみ車 --- */
@@ -1667,7 +1674,7 @@ function buildDrive(g){
     {obj:fShaft, t:'軸', c:'#8E9AA6'},
   ];
 
-  Object.assign(g.userData, {views, bigs, drum, drumR, drumY, rope, load, cwGrp, cwRope, cw, small, wheel, ph:0, shown:null, up:true});
+  Object.assign(g.userData, {views, bigs, drum, drumR, drumY, rope, load, cwGrp, cwRope, cw, small, drive, bigY, wheel, ph:0, shown:null, up:true});
   g.userData.labels = (st) => views[st.dmView].userData.labels;
 }
 /* ロープを2点間に張る。中点に置いて長さぶんだけ y 方向に伸ばす */
@@ -1702,6 +1709,8 @@ function animDrive(g, t, st, dt){
     }
   } else if (st.dmView === 'gear'){
     for (const i of DM_RATIOS) u.bigs[i].visible = (i === st.dmI);
+    /* 中心間距離 = 小半径 + 大半径。軸に垂直（y）に取ってはじめて外接してかみ合う */
+    u.drive.position.y = u.bigY + .35 + .35*st.dmI;
     u.small.rotation.x -= ws*dt*1.1;
     u.bigs[st.dmI].rotation.x += ws*dt*1.1/st.dmI;    // かみ合うので逆回り・1/i の速さ
   } else {
@@ -2109,10 +2118,11 @@ function refreshCtrl(){
             ['m','受け持つ質量', state.dmCw ? (state.dmM+' − '+state.dmMc+' = '+dm+' kg'+(regen?'（おもりが重い）':'')) : state.dmM+' kg'],
             ['u','有効出力 |m|·g·v', Math.round(useful)+' W'],
             ['P', regen ? '回生電力 ≒ 有効出力 × η' : '所要出力 P = m·g·v/η', Math.round(P)+' W']];
-      note = regen
-        ? '※ 差が負なので、この向き（上昇）は回生側。電動機は受け取る側なので効率は掛ける（回収できる電気は機械側の動力より小さい）。力行なら割る'
-        : '※ g = 9.8 m/s²。効率は分母で、所要出力は有効出力より大きい。'
-          + (state.dmCw ? '釣合いおもり付きは差 (m − m_c) だけを受け持つ' : 'おもりを付けると差だけになる');
+      note = '※ 3Dの荷はゆっくり往復する模式で、読み値は「スライダーの速さで等速に上昇している」としたときの値。3Dの瞬間の速さではない。'
+        + (regen
+          ? ' 差が負なので、この向き（上昇）は回生側。電動機は受け取る側なので効率は掛ける（回収できる電気は機械側の動力より小さい）。力行なら割る'
+          : ' g = 9.8 m/s²。効率は分母で、所要出力は有効出力より大きい。'
+            + (state.dmCw ? '釣合いおもり付きは、等速で昇降しているあいだ差 (m − m_c) だけを受け持つ' : 'おもりを付けると差だけになる'));
     } else if (state.dmView==='gear'){
       const NM = 1500, TM = 20, NL = NM/state.dmI, TL = TM*state.dmI;
       const pw = (n,tq) => 2*Math.PI*n*tq/60;
@@ -2130,7 +2140,7 @@ function refreshCtrl(){
             ['t','静止から回し上げる時間 t = Jω/T', '加速トルク T = 100 N·m なら '+(J*w/100).toFixed(1)+' s']];
       note='※ GD² は 4 で割って J にする。速度変化で出し入れするのは ½J(ω₁²−ω₂²) で、2乗の差であって差の2乗ではない';
     }
-    rows.push(['stab','負荷の種類（下の図）', ({const:'定トルク（クレーン・エレベータ）', sq:'二乗低減（ポンプ・送風機。P ∝ N³）', cp:'定出力（巻取機。T ∝ 1/N）'})[state.dmLoad]]);
+    rows.push(['stab','負荷の種類（下の図）', ({const:'定トルク（クレーン・エレベータ）', sq:'二乗低減（ポンプ・送風機。P ∝ N³）', cp:'定出力（巻取機。張力と線速度が一定のとき T ∝ 1/N）'})[state.dmLoad]]);
   }
   if (id==='transformer' && state.tfView==='core'){
     const a=state.tfLoad, T=state.tfTest;
@@ -2347,7 +2357,7 @@ function cardBody(k){
     「割る」と覚えるのではなく、<b>どちらの向きでも電気側が損をするほうに効く</b>と覚える。
     3Dでおもりを荷より重くすると、読み値がこの向きに切り替わる。</p>
     <div class="tbl"><table>
-      <tr><th>型</th><th>機械側（有効出力）</th><th>電気側（入力／回収）</th><th>取り違え</th></tr>
+      <tr><th>型</th><th>機械側（有効出力）</th><th>効率で割った（掛けた）値</th><th>取り違え</th></tr>
       <tr><td>巻上機</td><td>m·g·v</td><td>m·g·v / η</td><td>η を掛けて小さくする</td></tr>
       <tr><td>エレベータ</td><td>(m − m_c)·g·v</td><td>(m − m_c)·g·v / η</td><td>m をそのまま入れる</td></tr>
       <tr><td>ポンプ</td><td>ρ·g·Q·H</td><td>ρ·g·Q·H / η</td><td>H を実揚程だけにする／Q の単位</td></tr>
@@ -2355,15 +2365,18 @@ function cardBody(k){
     </table></div>
     <p><b>単位の入口で2つ落とす。</b>速度が [m/min] なら 60 で割って [m/s]、流量が [m³/min] なら 60 で割って [m³/s]。
     ポンプの H は<b>全揚程</b>で、実揚程（持ち上げる高さ）＋損失水頭。問題文が分けて与えたら足してから入れる。</p>
-    <p>効率が2段で与えられることもある。「ポンプ軸動力」ならポンプ効率だけ、「電動機入力」なら電動機効率まで割る。
-    効率が1つしか与えられていなければ総合効率とみなして1回でよい。数値はWikiの例題で追う。</p>`;
+    <p><b>割った先がどこかは、与えられた効率が何の効率かで決まる。</b>装置の効率だけで割った値は
+    その装置の<b>軸動力</b>であって、電動機の電気入力ではない。電気入力まで問われたら電動機効率でもう一度割る
+    （ポンプなら P<sub>軸</sub> = ρgQH/η<sub>p</sub>、P<sub>電気</sub> = ρgQH/(η<sub>p</sub>·η<sub>m</sub>)）。
+    <b>効率が1つしか書いていないから総合効率だ、と決めつけない。</b>個数ではなく定義で決まる。
+    設問が「ポンプ軸動力」と言っているのか「電動機入力」と言っているのかを読む。数値はWikiの例題で追う。</p>`;
   if (k==='dmload') return `
     <p><b>負荷は「速度が変わったときトルクがどう動くか」で3つに分かれる。</b></p>
     <div class="tbl"><table>
       <tr><th>分類</th><th>トルク</th><th>動力</th><th>例</th></tr>
       <tr><td>定トルク</td><td>一定</td><td>P ∝ N</td><td>クレーン・エレベータ</td></tr>
       <tr><td>二乗低減トルク</td><td>T ∝ N²</td><td><b>P ∝ N³</b></td><td>ポンプ・送風機</td></tr>
-      <tr><td>定出力</td><td>T ∝ 1/N</td><td>一定</td><td>巻取機（張力一定）</td></tr>
+      <tr><td>定出力</td><td>T ∝ 1/N</td><td>一定</td><td>巻取機（張力と<b>線速度</b>が一定）</td></tr>
     </table></div>
     <p>ポンプ・送風機で回転数を落とすと動力が<b>3乗</b>で減る。インバータ化が省エネになる根拠はここで、
     定トルク負荷では同じことは起きない。なお T ∝ N²・P ∝ N³ は遠心形を相似な状態で運転したときの相似則で、
@@ -2737,7 +2750,9 @@ function drawMini(){
        負荷側の係数は「定トルク負荷が N/Ns = 0.95 で交わる」ように合わせてあり、
        3本を同じ土俵で見比べられるようにしている（絶対値ではなく形を見る図）。 */
     const r1=.08, x=.5, r2=.08;
-    const TM = nn => { const s=Math.max(1-nn, .004), R_=r2/s; return R_/((r1+R_)**2 + x*x); };
+    /* すべりの下限は「0 除算を避ける」ためだけに置く。.004 まで丸めると
+       同期速度（nn=1）で最大トルクの 5.8% が残り、「s=0 でトルク0」と食い違う。 */
+    const TM = nn => { const s=Math.max(1-nn, 1e-9), R_=r2/s; return R_/((r1+R_)**2 + x*x); };
     let mx=0; for (let nn=0;nn<=1;nn+=.004) mx=Math.max(mx,TM(nn));
     const Tm = nn => TM(nn)/mx;                       // 0〜1 に正規化
     const k = Tm(.95);
@@ -2753,7 +2768,9 @@ function drawMini(){
     /* 交点を総当たりで拾い、傾きの大小で安定・不安定を分ける */
     const pts=[]; let prev = Tm(0)-TLf(0);
     for (let i=1;i<=400;i++){ const nn=i/400, d=Tm(nn)-TLf(nn);
-      if (prev===0 || d===0 || (prev<0)!==(d<0)){ const h=.004;
+      /* ちょうど 0 か、厳密な符号変化だけを拾う。prev===0 を条件に入れると
+         次の刻みでも登録され、交点でない点に「安定」が描かれる（3種とも起きていた）。 */
+      if (d===0 || prev*d<0){ const h=.004;
         const sm=(Tm(nn+h)-Tm(nn-h))/(2*h), sl=(TLf(nn+h)-TLf(nn-h))/(2*h);
         pts.push({nn, T:Tm(nn), stable: sl > sm}); }
       prev = d; }
