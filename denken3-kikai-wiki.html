@@ -486,6 +486,9 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   background: linear-gradient(transparent 45%, oklch(0.55 0.16 95 / 0.55) 45%);
 }
 [data-theme="dark"] .blank:hover { background: linear-gradient(transparent 30%, oklch(0.55 0.16 95 / 0.55) 30%); }
+/* 遅延マウント（LazySections）で、まだ本文を出していない節の場所取り。
+   高さだけを持つ空の箱で、見た目には何も描かない。読み上げからも外す。 */
+.lazy-ph { display: block; }
 
 .content ul, .content ol { padding-left: 22px; margin: 6px 0 16px; }
 /* 狭い端末では左インデントが効きすぎて長い項目がコンテナからはみ出す。
@@ -4622,6 +4625,175 @@ const Blank = ({
   }, open ? /*#__PURE__*/React.createElement(React.Fragment, null, children, /*#__PURE__*/React.createElement("span", {
     className: "blank-mark"
   }, "（", mark, "）")) : /*#__PURE__*/React.createElement(React.Fragment, null, "（\u3000", mark, "\u3000）"));
+};
+
+/* ============================================================ 節ごとの遅延マウント */
+
+/* 長いページ（変圧器は本文だけで DOM 66,000 ノード・数式 1,169 個）を一度に描くと、
+   ページ切替に数秒かかる。ここでは children を h2 で区切り、
+   見出しはすべて常にマウントしたまま、本文だけを上から順に必要な分だけマウントする。
+
+   見出しを常に出すのは、右レールの目次・#<page>/<節id> の着地・他ページからの
+   onNav が「その h2 が DOM にあること」に依存しているため。目次から節が消えない。
+
+   マウントは常に「上から連続した前半」で、飛び地を作らない。こうすると
+   いま見ている位置より上の高さが動かないので、読んでいる最中に本文がずれない。
+
+   一度マウントしたら外さない。全日効率シミュレータの入力値・details の開閉・
+   理解度ボタンの状態が消えないことを、描画コストより優先する（柱5）。
+
+   全部マウントする条件（どれか1つで足りる）:
+     - ?mountall=1 または window.__KIKAI_MOUNT_ALL（検査スクリプト用）
+     - 印刷（beforeprint）——印刷物が空の節だらけになるのを防ぐ
+     - 役割フィルタ（BoxLegend）が data-box-filter を立てたとき。未マウントの節の
+       枠が拾われないと「絞り込んだら節が消えた」に見えるため
+     - IntersectionObserver が無いブラウザ（fail-open で従来どおり全部描く）
+   アンカーが h2 を指していればそこまで一気にマウントし、h2 以外（h3 等）で
+   DOM に見つからなければ全部マウントする（深いリンクを壊さないため）。
+
+   未マウント部分の高さは実測値を sessionStorage に覚えて次回に使う。
+   初回だけは既定値なのでスクロールバーの長さが動く。 */
+const LazySections = ({
+  className,
+  pageId,
+  children,
+  estimate = 1800
+}) => {
+  const segs = [{
+    id: null,
+    head: null,
+    body: []
+  }];
+  for (const k of React.Children.toArray(children)) {
+    if (k && k.type === 'h2') segs.push({
+      id: k.props && k.props.id || null,
+      head: k,
+      body: []
+    });else segs[segs.length - 1].body.push(k);
+  }
+  const last = segs.length - 1;
+  const storeKey = 'kikai-lazy::' + (pageId || 'page');
+  const readStore = () => {
+    try {
+      return JSON.parse(sessionStorage.getItem(storeKey) || '{}') || {};
+    } catch (e) {
+      return {};
+    }
+  };
+  const [heights] = useState(readStore);
+  const [upTo, setUpTo] = useState(2);
+  const boxRef = useRef(null);
+  const all = () => setUpTo(u => u >= last ? u : last);
+
+  /* 検査・印刷・役割フィルタ — どれも「全部見えていること」が前提なので全展開する */
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') {
+      all();
+      return;
+    }
+    if (typeof window !== 'undefined' && (window.__KIKAI_MOUNT_ALL === true || /[?&]mountall=1/.test(location.search))) {
+      all();
+      return;
+    }
+    window.addEventListener('beforeprint', all);
+    let mo = null;
+    if (boxRef.current && typeof MutationObserver !== 'undefined') {
+      mo = new MutationObserver(() => {
+        if (boxRef.current.hasAttribute('data-box-filter')) all();
+      });
+      mo.observe(boxRef.current, {
+        attributes: true,
+        attributeFilter: ['data-box-filter']
+      });
+    }
+    return () => {
+      window.removeEventListener('beforeprint', all);
+      if (mo) mo.disconnect();
+    };
+  }, [last]);
+
+  /* アンカー着地。h2 ならそこまで、見つからない id なら全部 */
+  useEffect(() => {
+    const onHash = () => {
+      const a = decodeURIComponent((location.hash || '').split('/')[1] || '');
+      if (!a) return;
+      const i = segs.findIndex(s => s.id === a);
+      if (i > 0) setUpTo(u => u >= i ? u : i);else if (!document.getElementById(a)) all();
+    };
+    onHash();
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, [last]);
+
+  /* 未マウントの場所取りを**全部**観測し、近づいた中でいちばん下の節までを一気に
+     マウントする。先頭の1つだけを観測すると、スクロールバーを中ほどへ投げたときに
+     その1つを飛び越してしまい、以後どれも交差せず**本文が真っ白のまま止まる**
+     （実測で再発。2秒待ってもノード数 6,902 のまま動かなかった）。
+     マウントは常に上から連続した前半に保つ——飛び地を作ると、後から間が埋まった
+     ときに読んでいる位置が動く。 */
+  useEffect(() => {
+    if (upTo >= last) return;
+    const box = boxRef.current;
+    if (!box || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(es => {
+      let want = -1;
+      for (const e of es) {
+        if (!e.isIntersecting) continue;
+        const i = Number(e.target.dataset.idx);
+        if (i > want) want = i;
+      }
+      if (want >= 0) setUpTo(u => u >= want ? u : Math.min(want, last));
+    }, {
+      rootMargin: '1200px 0px'
+    });
+    box.querySelectorAll('.lazy-ph[data-idx]').forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, [upTo, last]);
+
+  /* マウント済みの節の実高さを覚える。KaTeX は遅れて描かれるので落ち着いてから測る */
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const box = boxRef.current;
+      if (!box) return;
+      const store = readStore();
+      let changed = false;
+      for (let i = 1; i <= Math.min(upTo, last); i++) {
+        const a = document.getElementById(segs[i].id);
+        if (!a) continue;
+        const nx = i < last ? document.getElementById(segs[i + 1].id) : null;
+        const bottom = nx ? nx.offsetTop : box.offsetTop + box.offsetHeight;
+        const h = Math.round(bottom - a.offsetTop);
+        if (h > 40 && store[segs[i].id] !== h) {
+          store[segs[i].id] = h;
+          changed = true;
+        }
+      }
+      if (changed) {
+        try {
+          sessionStorage.setItem(storeKey, JSON.stringify(store));
+        } catch (e) {}
+      }
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [upTo, last]);
+  const out = [];
+  out.push(...segs[0].body);
+  for (let i = 1; i <= last; i++) {
+    out.push(segs[i].head);
+    if (i <= upTo) out.push(...segs[i].body);else out.push(/*#__PURE__*/React.createElement("div", {
+      key: 'lazy-ph-' + (segs[i].id || i),
+      className: "lazy-ph",
+      "aria-hidden": "true",
+      "data-idx": i,
+      style: {
+        height: (heights[segs[i].id] || estimate) + 'px'
+      }
+    }));
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: className,
+    ref: boxRef
+  }, out);
 };
 const FormulaCard = ({
   num,
@@ -18787,8 +18959,9 @@ const TransformerPage = ({
     label: "難易度",
     value: "★★★★☆"
   }]
-}), /*#__PURE__*/React.createElement("div", {
-  className: "content"
+}), /*#__PURE__*/React.createElement(LazySections, {
+  className: "content",
+  pageId: "transformer"
 }, /*#__PURE__*/React.createElement(TransformerLayers, null), /*#__PURE__*/React.createElement(ConceptQuiz, {
   pageId: "transformer",
   pageTitle: "変圧器"
