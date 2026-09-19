@@ -42592,21 +42592,42 @@ const TOC = ({
       clearTimeout(t);
     };
   }, [page]);
+  /* スクロール追従は rAF で間引き、見出しの集合は上の items を使い回す。
+     以前は scroll イベントが来るたびに .main 配下（変圧器ページでは 66,584 ノード）を
+     querySelectorAll で走査し直していた。変圧器ページで実測 9.7ms/回・throttle 無しで、
+     60fps の予算 16ms をこれだけで食い潰していた（スクロールのカクつきの実体）。
+     見出しの「どれがあるか」は items が既に持っているので、走査をやめて id 引きにする。
+     座標はキャッシュしない——details の開閉・KaTeX の後着描画・文字サイズの変更で
+     見出しの位置は動くので、持つと必ず狂う。レイアウトが確定していれば 60 回の
+     getBoundingClientRect は軽い（9.7ms のうち支配的なのは走査側）。
+     offsetParent の判定は残す（タブ型ページで非表示タブの見出しを拾わないため）。 */
   useEffect(() => {
-    const onScroll = () => {
-      const heads = [...document.querySelectorAll('.main h2[id], .main h3[id]')].filter(h => h.offsetParent !== null);
+    let raf = 0;
+    let cancelled = false;
+    const measure = () => {
+      raf = 0;
+      if (cancelled) return;
       let cur = null;
-      for (const h of heads) {
-        if (h.getBoundingClientRect().top < 80) cur = h.id;
+      for (const it of items) {
+        const h = document.getElementById(it.id);
+        if (!h || h.offsetParent === null) continue;
+        if (h.getBoundingClientRect().top < 80) cur = it.id;
       }
       setActive(prev => prev === cur ? prev : cur);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(measure);
     };
     window.addEventListener('scroll', onScroll, {
       passive: true
     });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [page]);
+    measure();
+    return () => {
+      cancelled = true;
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, [items]);
   if (items.length === 0) return /*#__PURE__*/React.createElement("aside", {
     className: "toc"
   });
