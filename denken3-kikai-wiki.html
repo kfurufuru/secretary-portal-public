@@ -1173,6 +1173,60 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
   .trap-table td { border: 0; border-bottom: 1px solid var(--rule-soft); }
   .trap-table td:last-child { border-bottom: 0; }
 }
+
+/* ── ConclusionBox（まず覚える結論）────────────────────────
+   色はトークンのみ。--ok を枠に使い、TrapTable（--warn）と役割で色を分ける。
+   「先に渡す結論」と「取り違えの警告」を同じ色にすると見分けがつかない。 */
+.conclusion-box {
+  margin: 20px 0 26px;
+  padding: 14px 18px;
+  border: 2px solid var(--ok);
+  border-radius: 12px;
+  background: var(--ok-soft);
+}
+
+.conclusion-label {
+  font-weight: 700;
+  color: var(--ok);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+}
+
+.conclusion-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 14px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.conclusion-list dt {
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.conclusion-list dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+.conclusion-note {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+
+/* スマホ: 見出しと中身を縦に積む（max-content 列だと式が潰れる）。 */
+@media (max-width: 600px) {
+  .conclusion-box { padding: 12px 12px; }
+  .conclusion-list { grid-template-columns: 1fr; gap: 2px; }
+  .conclusion-list dt { margin-top: 8px; }
+  .conclusion-list dt:first-child { margin-top: 0; }
+}
   </style>
 <script>
   /* dark/light 早期適用（React mount 前・フラッシュ防止）。法規Wiki の
@@ -4957,6 +5011,33 @@ const LazySections = ({
     ref: boxRef
   }, out);
 };
+
+/* ---- ConclusionBox: まず覚える結論（柱4 結論先制） ----
+
+   法規Wiki hoki-components.jsx の ConclusionBox と同じ役割。表示だけの部品で
+   状態を持たないため、tracker ではなくここ（共通UI）に置く。
+
+   置き場所は **ConceptQuiz の直後**。ページ冒頭に置くと確認問題の答えを
+   先に見せてしまい「まず腕試し」が成立しない（柱5 テスト効果）。
+   冷たい状態で解かせる → 結論を先に渡す → 本文を読む、の順にする。
+
+   items は結論の配列。各要素は { t: 見出し, d: 中身 }。
+   **ここに新しい数値・公式を書かない。** 本文と確認問題で検証済みのものだけを
+   要約する場所であって、増やす場所ではない（増やすと二重管理になる）。 */
+const ConclusionBox = ({
+  items,
+  note
+}) => /*#__PURE__*/React.createElement("div", {
+  className: "conclusion-box"
+}, /*#__PURE__*/React.createElement("div", {
+  className: "conclusion-label"
+}, "まず覚える結論"), /*#__PURE__*/React.createElement("dl", {
+  className: "conclusion-list"
+}, items.map((it, i) => /*#__PURE__*/React.createElement(React.Fragment, {
+  key: i
+}, /*#__PURE__*/React.createElement("dt", null, it.t), /*#__PURE__*/React.createElement("dd", null, it.d)))), note && /*#__PURE__*/React.createElement("div", {
+  className: "conclusion-note"
+}, note));
 const FormulaCard = ({
   num,
   name,
@@ -9135,6 +9216,38 @@ const InductionMachinePage = ({
 }, /*#__PURE__*/React.createElement(InductionMachineLayers, null), /*#__PURE__*/React.createElement(ConceptQuiz, {
   pageId: "induction-machine",
   pageTitle: "三相誘導電動機"
+}), /*#__PURE__*/React.createElement(ConclusionBox, {
+  items: [{
+    t: "同期速度",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "N_s = 120f/p"
+    }), "（", /*#__PURE__*/React.createElement("strong", null, "p は極数"), "。極対数で数えるなら 60f/p）。")
+  }, {
+    t: "滑り",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "s = (N_s - N)/N_s"
+    }), "。", /*#__PURE__*/React.createElement("strong", null, "分母は同期速度"), "。電動機域は 0 < s < 1。")
+  }, {
+    t: "電力の比",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, "P₂ : Pc2 : Pm = 1 : s : (1−s)。1つ分かれば残り2つが出る。")
+  }, {
+    t: "トルク",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, "同じ滑りで比べると", /*#__PURE__*/React.createElement("strong", null, "電圧の2乗に比例"), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "T \\propto V_1^{\\,2}"
+    }), "）。")
+  }, {
+    t: "比例推移",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, "二次抵抗を k 倍にすると同一トルクの滑りも k 倍。", /*#__PURE__*/React.createElement("strong", null, "最大トルクの大きさは変わらず"), "、それを出す滑りが動くだけ。", /*#__PURE__*/React.createElement("strong", null, "巻線形だけ"), "で使える。")
+  }, {
+    t: "Y-Δ 始動",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, "始動電流・始動トルクとも ", /*#__PURE__*/React.createElement("strong", null, "1/3"), "（1/√3 ではない）。")
+  }, {
+    t: "V/f 一定",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, "磁束 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\varPhi \\propto V/f"
+    }), " を一定に保って鉄心の飽和を避ける。")
+  }],
+  note: "出題シェアは台帳で12.3%。この7つを言えるようにしてから本文に入ると、どの節が何を埋めているかが見える。"
 }), /*#__PURE__*/React.createElement("h2", {
   id: "overview"
 }, /*#__PURE__*/React.createElement("span", {
@@ -13923,6 +14036,37 @@ const SynchronousPage = ({
 }, /*#__PURE__*/React.createElement(SynchronousLayers, null), /*#__PURE__*/React.createElement(ConceptQuiz, {
   pageId: "synchronous",
   pageTitle: "同期機"
+}), /*#__PURE__*/React.createElement(ConclusionBox, {
+  items: [{
+    t: "滑り",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, "無い"), "。常に ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "N_s = 120f/p"
+    }), " で回る。負荷で変わるのは内部相差角 δ。")
+  }, {
+    t: "出力",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, "1相分"), " ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "P = (EV/x_s)\\sin\\delta"
+    }), "（E・V は", /*#__PURE__*/React.createElement("strong", null, "相電圧"), "。三相合計は3倍、線間値なら掛けずに済む）。円筒形で最大は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\delta = \\pi/2"
+    }), "。実運転はそれより十分小さい δ。")
+  }, {
+    t: "電機子反作用",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, "発電機"), "は 遅れ＝減磁・進み＝増磁・力率1＝交差磁化。", /*#__PURE__*/React.createElement("strong", null, "電動機は逆"), "。")
+  }, {
+    t: "短絡比",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "K_s \\approx 1/x_s\\,[\\mathrm{p.u.}]"
+    }), "、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "I_s = K_s \\times I_n"
+    }), "。短絡比が大きい＝リアクタンス小＝", /*#__PURE__*/React.createElement("strong", null, "安定度高い・電圧変動率が小さい"), "。ただし", /*#__PURE__*/React.createElement("strong", null, "短絡電流は大きい"), "。")
+  }, {
+    t: "V カーブ",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, "同期電動機"), "の話。底は", /*#__PURE__*/React.createElement("strong", null, "力率1・電機子電流最小"), "。左が不足励磁（遅れ）、右が過励磁（進み）。")
+  }, {
+    t: "始動",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, "始動トルクが無い"), "ので自力始動できない。制動巻線による自己始動法などを使う。")
+  }],
+  note: "誘導機と式の形が似ているので、滑りの有無と「発電機か電動機か」の主語を先に固定してから読む。"
 }), /*#__PURE__*/React.createElement("h2", {
   id: "structure"
 }, /*#__PURE__*/React.createElement("span", {
@@ -19320,6 +19464,47 @@ const TransformerPage = ({
 }, /*#__PURE__*/React.createElement(TransformerLayers, null), /*#__PURE__*/React.createElement(ConceptQuiz, {
   pageId: "transformer",
   pageTitle: "変圧器"
+}), /*#__PURE__*/React.createElement(ConclusionBox, {
+  items: [{
+    t: "巻数比",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, "a = N₁/N₂ = V₁/V₂ = I₂/I₁。", /*#__PURE__*/React.createElement("strong", null, "電圧は比例・電流は逆比"), "。インピーダンスの一次換算は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "a^2"
+    }), " 倍。")
+  }, {
+    t: "磁束",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "E = 4.44\\,f N \\varPhi_m"
+    }), "（E は", /*#__PURE__*/React.createElement("strong", null, "実効値"), "・", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\varPhi_m"
+    }), " は", /*#__PURE__*/React.createElement("strong", null, "最大値"), "）より ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\varPhi_m \\propto V/f"
+    }), "。周波数だけ下げると磁束が増えて飽和する。")
+  }, {
+    t: "損失",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, "鉄損は電圧・周波数が一定なら負荷によらず一定"), "（負荷ゼロでも出る）。", /*#__PURE__*/React.createElement("strong", null, "銅損は負荷率の2乗"), "。全日効率では鉄損は24時間ぶん、銅損は負荷時間ぶんで積む。")
+  }, {
+    t: "最大効率",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, "鉄損＝銅損のとき。そのときの負荷率 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "x = \\sqrt{P_i/P_{cN}}"
+    }), " で、ふつう定格より低い。")
+  }, {
+    t: "電圧変動率",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\varepsilon \\approx p\\cos\\theta \\pm q\\sin\\theta"
+    }), "。", /*#__PURE__*/React.createElement("strong", null, "＋が遅れ・−が進み"), "（p: %抵抗降下、q: %リアクタンス降下）。")
+  }, {
+    t: "短絡電流",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "I_s = (100/\\%Z) \\times I_n"
+    }), "。", /*#__PURE__*/React.createElement("strong", null, "%Z が小さいほど短絡電流は大きい"), "。")
+  }, {
+    t: "V 結線",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, "2台で三相を送る。出力 = √3 × 単器容量。", /*#__PURE__*/React.createElement("strong", null, "利用率 √3/2 ≈ 86.6%"), "（使用中2台に対する比）／", /*#__PURE__*/React.createElement("strong", null, "Δ結線3台比の出力は 1/√3 ≈ 57.7%"), "。分子は同じで", /*#__PURE__*/React.createElement("strong", null, "分母が違う"), "。")
+  }, {
+    t: "並行運転",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, "無負荷で循環電流が流れるのは", /*#__PURE__*/React.createElement("strong", null, "変圧比・極性・角変位"), "の不一致。%Z と X/R の不一致は負荷時にしか出ない。")
+  }],
+  note: "この7つで変圧器のA問題はほぼ拾える。以下の節は、この結論がなぜそうなるかを追うために読む。"
 }), /*#__PURE__*/React.createElement(BoxLegend, null), /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
   label: "60点狙いで読む順（節の並びとは違う）"
@@ -28874,6 +29059,33 @@ const PowerElecPage = ({
 }, /*#__PURE__*/React.createElement(PowerElecLayers, null), /*#__PURE__*/React.createElement(ConceptQuiz, {
   pageId: "power-elec",
   pageTitle: "パワーエレクトロニクス"
+}), /*#__PURE__*/React.createElement(ConclusionBox, {
+  items: [{
+    t: "整流の平均電圧",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, "ダイオード（制御角 α = 0）"), "で 三相全波 ", /*#__PURE__*/React.createElement("strong", null, "1.35 × 線間電圧"), "／単相全波 0.90／単相半波 0.45（いずれも", /*#__PURE__*/React.createElement("strong", null, "実効値"), "に掛ける）。サイリスタの位相制御なら ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "V_d = V_{d0}\\cos\\alpha"
+    }), "。", /*#__PURE__*/React.createElement("strong", null, "掛ける相手がどの電圧か"), "を毎回確かめる。")
+  }, {
+    t: "三相全波の中身",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, "ダイオード1個あたり", /*#__PURE__*/React.createElement("strong", null, "120°導通"), "、導通する組は", /*#__PURE__*/React.createElement("strong", null, "60°ごと"), "に切替（6パルス）。脈動率（(最大−最小)/平均 の定義で）≈ 0.14。")
+  }, {
+    t: "チョッパ",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, "降圧 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "V_o = D V_i"
+    }), "（掛ける）／昇圧 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "V_o = V_i/(1-D)"
+    }), "（割る）。D = 0 と 1 を入れれば その場で確かめられる。")
+  }, {
+    t: "素子",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, "逆阻止三端子サイリスタ（SCR）は", /*#__PURE__*/React.createElement("strong", null, "自己消弧できない"), "（電流の零点が要る）。GTO・IGBT・MOSFET は自己消弧できる。")
+  }, {
+    t: "PWM",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, "パルス幅"), "で出力電圧の大きさを作る。直流電圧は一定のまま、大きさと周波数を独立に操作できる。")
+  }, {
+    t: "還流ダイオード",
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, "誘導性負荷では", /*#__PURE__*/React.createElement("strong", null, "電圧はすぐ反転しても電流は遅れて反転する"), "。その間の電流の帰り道が還流ダイオード。変わるのは帰り道が電源かダイオードかだけ。")
+  }],
+  note: "台帳シェア14.1%で機械の最頻出。B問16は10回とも この単元から出ている。"
 }), /*#__PURE__*/React.createElement("h2", {
   id: "devices"
 }, /*#__PURE__*/React.createElement("span", {
@@ -36403,6 +36615,7 @@ const StubPage = ({
   freqNote,
   sections,
   traps,
+  conclusion,
   onNav,
   prev,
   next
@@ -36424,6 +36637,9 @@ const StubPage = ({
 }, id && /*#__PURE__*/React.createElement(ConceptQuiz, {
   pageId: id,
   pageTitle: title
+}), conclusion && /*#__PURE__*/React.createElement(ConclusionBox, {
+  items: conclusion.items,
+  note: conclusion.note
 }), sections.map((s, i) => /*#__PURE__*/React.createElement(React.Fragment, {
   key: i
 }, /*#__PURE__*/React.createElement("h2", {
@@ -36476,6 +36692,28 @@ const InfoElecPage = ({
 }) => /*#__PURE__*/React.createElement(StubPage, {
   id: "info-elec",
   title: "情報・電子回路",
+  conclusion: {
+    items: [{
+      t: "積和と和積",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, "積和(SOP)は出力", /*#__PURE__*/React.createElement("strong", null, "1"), "の行を拾い", /*#__PURE__*/React.createElement("strong", null, "0"), "の変数に否定、AND の項を OR でつなぐ。和積(POS)は出力", /*#__PURE__*/React.createElement("strong", null, "0"), "の行を拾い", /*#__PURE__*/React.createElement("strong", null, "1"), "の変数に否定、OR の項を AND でつなぐ。", /*#__PURE__*/React.createElement("strong", null, "見る行も否定の向きも逆"), "。")
+    }, {
+      t: "全加算器",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, "入力3つのうち", /*#__PURE__*/React.createElement("strong", null, "1 の個数を数えて2進で書く"), "。1 が3個なら (11)₂ で S = 1、C_out = 1。")
+    }, {
+      t: "分解能",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, "n ビットは ", /*#__PURE__*/React.createElement("strong", null, "2ⁿ 段階"), "（8 ビットで 256）。ビットが1つ増えるごとに刻みは半分。")
+    }, {
+      t: "フリップフロップ",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, "D は取り込み・T は反転・RS は両方1が禁止・JK は両方1で反転。「", /*#__PURE__*/React.createElement("strong", null, "1 のときどうなるか"), "」で4種を並べる。")
+    }, {
+      t: "ド・モルガン",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, "全体の否定＝", /*#__PURE__*/React.createElement("strong", null, "各変数を否定して AND と OR を入れ替える"), "。式を圧縮するときの土台。")
+    }, {
+      t: "進数",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, "16進1桁＝2進4桁でそのまま対応。基数が違う数は", /*#__PURE__*/React.createElement("strong", null, "10進へそろえてから"), "比べる。")
+    }],
+    note: "台帳シェア10.9%。B問18に7回出ており、論理回路と進数で確実に取りに行く単元。"
+  },
   traps: [{
     wrong: "和積形式（POS）を作るときは、出力が 0 の行で、値が 0 の変数に否定を付ける",
     correct: "値が 1 の変数に否定を付ける。",
