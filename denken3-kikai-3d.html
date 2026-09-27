@@ -326,7 +326,7 @@ const MACHINES = {
     kicker:'回転機。整流子が交流を直流に見せる',
     lead:'固定子の界磁磁極（N・S交互）の中で電機子が回り、軸端の整流子とブラシが電流の向きを切り替える。手前の磁極を透かして内部を見せている。',
     parts:[
-      ['#3B5A73','継鉄と界磁磁極（N・S）','磁束Φを作る。他励・分巻・直巻は「この磁極の巻線をどこから給電するか」の違い。操作帯の「励磁方式」で切り替えると、界磁巻線の明るさ（＝Φ）と回転数が変わる'],
+      ['#3B5A73','継鉄と界磁磁極（N・S）','磁束Φを作る。他励・分巻・直巻は「この磁極の巻線をどこから給電するか」の違い。操作帯の「励磁方式」で切り替えると、界磁巻線の明るさ（＝Φ）と回転数が変わる。「運転」を 発電機 にすると、自己励磁と外部特性を見られる'],
       ['#C07A3A','電機子巻線','導体1本ごとに e = Blv。全体では E = pZΦn/(60a)'],
       ['#D9C7A0','整流子（銅片の環）','回転しながら導体の電流の向きを反転させ、外から見ると直流になる'],
       ['#2B2B2B','ブラシ','整流子に接触して電流を出し入れ。幾何学的中性軸に置く'],
@@ -541,20 +541,25 @@ const STUDY = {
       ['速度制御', 'n ∝ (V − Ia·Ra)/Φ', '電圧制御・界磁制御・抵抗制御の3方式はこの式のどこを動かすか'],
       ['電機子反作用', '中性軸がずれる → 補極・補償巻線', '電機子起磁力が電機子電流に比例するので、補極を電機子と直列に入れれば負荷に応じて自動で釣り合う'],
       ['励磁方式', '分巻: T ∝ Ia・ほぼ定速　直巻: T ∝ Ia²・n はほぼ 1/Ia（飽和前）', '直巻は界磁が電機子と直列なので **Φ ∝ Ia**。重負荷で大トルク・低速、軽負荷で高速になり、**無負荷で暴走**する。和動複巻はその中間。**操作帯の「励磁方式」で切り替えて下の特性図を見る**'],
+      ['発電機の自己励磁と外部特性', '分巻: 残留磁気＋正しい界磁接続＋所定の回転速度＋ Rf < 臨界抵抗　直巻: 飽和前は I とともに V が上がる', '分巻発電機は自分の端子電圧で界磁を励磁するので、**残留磁気**を種に電圧が育つ。外部特性は 他励 → 分巻の順に大きく下がり、直巻は飽和前の範囲で**負荷電流とともに電圧が上がる**。**操作帯の「運転」を 発電機 にして見る**'],
     ],
     predict: [
       { q:'直流分巻電動機で界磁磁束Φを弱めた。回転数 n はどうなるか（電源電圧一定）。',
-        opts:['上がる','下がる','変わらない','停止する'], ans:0, set:{dcExc:'shunt', react:false, load:.5},
+        opts:['上がる','下がる','変わらない','停止する'], ans:0, set:{dcMode:'motor', dcExc:'shunt', react:false, load:.5},
         why:'n ∝ (V − Ia·Ra)/Φ なので、Φを小さくすると n は上がる（Ia·Ra は V に比べて小さいという前提）。なお定トルク負荷では T = KΦIa が一定に保たれるので、Φ が減った分だけ Ia は増える。直巻電動機を無負荷で回すと危険なほど回転が上がるのも、負荷が減って界磁磁束が弱まるため。' },
       { q:'電機子反作用による中性軸のずれが大きくなるのは、どんなときか。',
-        opts:['界磁電流が大きいとき','電機子電流が大きいとき','回転数が低いとき','電源電圧が低いとき'], ans:1, set:{dcExc:'shunt', react:true, load:.95},
+        opts:['界磁電流が大きいとき','電機子電流が大きいとき','回転数が低いとき','電源電圧が低いとき'], ans:1, set:{dcMode:'motor', dcExc:'shunt', react:true, load:.95},
         why:'反作用は電機子電流が作る磁界によるもの。だから負荷（電機子電流）が大きいほどずれが大きい。補極を電機子巻線と直列に入れれば、負荷に応じて自動で打ち消せる。' },
       { q:'整流子の役割として正しいのはどれか。',
-        opts:['交流を昇圧する','電機子導体の電流の向きを切り替える','界磁磁束を作る','回転速度を検出する'], ans:1, set:{dcExc:'shunt', react:false, load:.5},
+        opts:['交流を昇圧する','電機子導体の電流の向きを切り替える','界磁磁束を作る','回転速度を検出する'], ans:1, set:{dcMode:'motor', dcExc:'shunt', react:false, load:.5},
         why:'電機子導体の起電力は、N極の下とS極の下で向きが逆になる。整流子が回りながら接続を切り替えるので、ブラシの外側では一方向の電圧・電流になる。「整流子＝機械式の整流器」。' },
       { q:'磁気飽和を無視できる直流直巻電動機で、負荷電流が半分になった。トルクは元の何倍か。',
-        opts:['1/4 倍','1/2 倍','変わらない','2 倍'], ans:0, set:{dcExc:'series', react:false, load:.5, paused:false}, hi:'T',
+        opts:['1/4 倍','1/2 倍','変わらない','2 倍'], ans:0, set:{dcMode:'motor', dcExc:'series', react:false, load:.5, paused:false}, hi:'T',
         why:'直巻は界磁巻線に負荷電流がそのまま流れるので Φ ∝ I。T ∝ Φ·I ∝ I² となり、(1/2)² = 1/4 倍。分巻なら Φ は一定なので 1/2 倍。磁気飽和が進むと Φ が頭打ちになり、直巻でも I に比例する形へ近づく。' },
+      { q:'直流分巻発電機が自己励磁で電圧を確立するための条件として、必要でないものはどれか。',
+        opts:['残留磁気があること','界磁巻線の接続が残留磁束を強める向きであること','界磁回路の抵抗が臨界抵抗より小さいこと','負荷を接続しておくこと'], ans:3,
+        set:{dcMode:'gen', dcExc:'shunt', dcRf:1.2, load:0, react:false, paused:false}, hi:'V',
+        why:'自己励磁は残留磁気でわずかに出た電圧が界磁電流を流し、それが磁束を強めてさらに電圧を上げる、という正帰還で育つ。だから ①残留磁気 ②残留磁束を強める向きの界磁接続 ③界磁抵抗が臨界抵抗より小さい、の3つが要る（回転方向も、残留磁束を強める向きの起電力が出る向きであること）。電圧の確立は無負荷で行う。重い負荷をつないだままだと、育つ前に電圧が負荷に取られて立ち上がりにくい。' },
     ],
     points: [
       ['整流子が「交流を直流に見せる」', '導体の起電力はN極の下とS極の下で逆向き。整流子が回るたびに接続を切り替え、ブラシから見ると同じ向きになる'],
@@ -562,67 +567,88 @@ const STUDY = {
       ['電機子反作用は電機子電流に比例', '負荷が増えるほど中性軸がずれる。だから補極は電機子電流で励磁して自動で打ち消す'],
     ],
     tour: [
-      {t:'整流子の役目', sec:'structure', focus:'整流子', set:{dcExc:'shunt', react:false},
+      {t:'整流子の役目', sec:'structure', focus:'整流子', set:{dcMode:'motor', dcExc:'shunt', react:false},
        op:'軸の右端にある銅片の環を見る。',
        see:'環が電機子と一緒に回り、そのたびにブラシとの接触相手が入れ替わる。下の波形図で向きがそろう。',
        so:'導体の中は交流的なまま、ブラシの外だけが直流になる。整流子は機械式の整流器だと覚える。',
        q:['R6上/1','R4下/1','R5上/1']},
-      {t:'導体1本の起電力', sec:'emf-blv', focus:'電機子巻線', set:{dcExc:'shunt', react:false},
+      {t:'導体1本の起電力', sec:'emf-blv', focus:'電機子巻線', set:{dcMode:'motor', dcExc:'shunt', react:false},
        op:'磁極の下を通っていく導体を1本だけ目で追う。',
        see:'その1本が磁束を横切るあいだだけ、起電力が出ている。',
        so:'1本では e = Blv。全部を直列に足すと E = pZΦn/(60a)。磁束Φと回転数nに比例する形がここから来る。',
        q:['R6下/1','R8上/2']},
-      {t:'負荷をかけると中性軸がずれる', sec:'reaction', focus:'電気的中性軸', set:{dcExc:'shunt', react:true, load:.9},
+      {t:'負荷をかけると中性軸がずれる', sec:'reaction', focus:'電気的中性軸', set:{dcMode:'motor', dcExc:'shunt', react:true, load:.9},
        op:'「電機子反作用」を 表示 にし、負荷（電機子電流）を 0.9 まで上げる。',
        see:'縦の界磁起磁力（橙）に横向きの赤い矢印（電機子起磁力）が足され、合成（白）が傾く。それに直角な赤い面が灰色の面からずれていく。',
        so:'赤い面が電気的中性軸。灰色の面（幾何学的中性軸）からのずれが、そのまま整流の悪化＝火花になる。',
        q:['R5下/1']},
-      {t:'ずれは電流に比例する', sec:'reaction', focus:'電気的中性軸', set:{dcExc:'shunt', react:true, load:.05},
+      {t:'ずれは電流に比例する', sec:'reaction', focus:'電気的中性軸', set:{dcMode:'motor', dcExc:'shunt', react:true, load:.05},
        op:'負荷を 0.05 まで下げる。',
        see:'赤い矢印が縮み、赤い面が灰色の面に重なっていく。',
        so:'反作用の大きさは電機子電流に比例する。だから補極を電機子巻線と直列に入れれば、負荷の大小に応じて自動で打ち消せる。',
        q:['R5下/1']},
-      {t:'ブラシの位置と3つの対策', sec:'reaction', focus:'ブラシ', set:{dcExc:'shunt', react:true, load:.6},
+      {t:'ブラシの位置と3つの対策', sec:'reaction', focus:'ブラシ', set:{dcMode:'motor', dcExc:'shunt', react:true, load:.6},
        op:'負荷を 0.6 に戻し、ブラシの位置と赤い面を見比べる。',
        see:'ブラシは動かない（幾何学的中性軸の位置に固定）。赤い面だけがずれていく。※ブラシは4極配置なので、2極模式で描いた灰色の面の上には乗っていない。',
        so:'この食い違いが火花の原因。対策は ①ブラシを移す ②補極を付ける ③補償巻線を入れる の3つ。',
        q:['R6上/1','R5下/1']},
-      {t:'負荷を増やすと回転が少し落ちる', sec:'emf', focus:'電機子巻線', set:{dcExc:'shunt', react:false, load:1, paused:false},
+      {t:'負荷を増やすと回転が少し落ちる', sec:'emf', focus:'電機子巻線', set:{dcMode:'motor', dcExc:'shunt', react:false, load:1, paused:false},
        op:'負荷（電機子電流）を 1.0 まで上げる。',
        see:'読み値の E = V − Ia·Ra が下がり、電機子の回転もわずかに遅くなる（Ra = 0.1 pu の模式）。',
        so:'電動機では端子電圧から電機子抵抗の電圧降下を引いた残りが逆起電力で、回転数はその E に比例する（n ∝ E/Φ）。分巻電動機の速度が負荷でわずかしか下がらない（定速度特性）のはこの式の形から。',
        q:['R6上/2','R6下/2','R5下/2','R7下/2','R7下/1','R3/2']},
-      {t:'始動の瞬間は E = 0', sec:'speed-control', focus:'電機子巻線', set:{dcExc:'shunt', react:false, load:1, paused:true},
+      {t:'始動の瞬間は E = 0', sec:'speed-control', focus:'電機子巻線', set:{dcMode:'motor', dcExc:'shunt', react:false, load:1, paused:true},
        op:'「回転」を 止める にする。',
        see:'電機子が止まり、読み値の E が 0 になる。',
        so:'E = V − Ia·Ra で E = 0 なら Ia = V/Ra。電機子抵抗は小さいので始動電流は非常に大きい。だから始動抵抗を電機子と直列に入れ、回転が上がって E が育つにつれて抜いていく。',
        q:['R4上/1','R5上/2','R7上/2']},
-      {t:'分巻：負荷が変わっても磁束は一定', sec:'excitation', focus:'界磁巻線（明るさ＝磁束Φ）', set:{dcExc:'shunt', react:false, load:.2, paused:false},
+      {t:'分巻：負荷が変わっても磁束は一定', sec:'excitation', focus:'界磁巻線（明るさ＝磁束Φ）', set:{dcMode:'motor', dcExc:'shunt', react:false, load:.2, paused:false},
        op:'「励磁方式」を 分巻 にし、負荷を 0.2 から 1.0 まで動かす。',
        see:'界磁巻線の明るさ（＝Φ）は変わらない。下の左図で動作点はほぼ水平な線の上をわずかに下がり、右図のトルクは直線で増える。',
        so:'界磁は電機子と並列で電源電圧がそのままかかるので Φ は一定。だから T ∝ Ia、回転数は n ∝ (V − Ia·Ra)/Φ でほぼ一定（定速度特性）。他励も電源電圧一定なら同じ形で、違うのは界磁をどこから給電するかだけ。',
        q:['R3/1','R7上/1']},
-      {t:'直巻：磁束が電流と一緒に増える', sec:'excitation', focus:'界磁巻線（明るさ＝磁束Φ）', set:{dcExc:'series', react:false, load:1, paused:false},
+      {t:'直巻：磁束が電流と一緒に増える', sec:'excitation', focus:'界磁巻線（明るさ＝磁束Φ）', set:{dcMode:'motor', dcExc:'series', react:false, load:1, paused:false},
        op:'「励磁方式」を 直巻 にし、負荷を 1.0 から 0.3 まで下げる。',
        see:'負荷を下げるほど界磁巻線が暗くなり（Φ が減り）、電機子の回転が目に見えて速くなる。左図の動作点は曲線を駆け上がり、右図のトルクは放物線で落ちる。',
        so:'界磁が電機子と直列なので Φ ∝ Ia（飽和前）。T ∝ Ia² で、回転数はほぼ 1/Ia に比例する。重い負荷では大トルク・低速、軽い負荷では高速になるので、起動トルクが要る電車やクレーンに向く。',
        q:['R3/1','R7上/1']},
-      {t:'直巻を無負荷にしてはいけない', sec:'excitation', focus:'界磁巻線（明るさ＝磁束Φ）', set:{dcExc:'series', react:false, load:.05, paused:false},
+      {t:'直巻を無負荷にしてはいけない', sec:'excitation', focus:'界磁巻線（明るさ＝磁束Φ）', set:{dcMode:'motor', dcExc:'series', react:false, load:.05, paused:false},
        op:'負荷を 0.05 まで下げる。',
        see:'読み値の回転数が「暴走域」に跳ね上がり、界磁巻線はほとんど光らない。3D の回転は見やすさのため頭打ちにしてある。',
        so:'理想式では Ia → 0 で Φ → 0 なので、n ∝ E/Φ に上限がない。実機では損失や残留磁気で無限大にはならないが、危険な高速になる。だから直巻電動機は無負荷で運転しない。ベルトが外れると無負荷になるので、ベルト掛けにせず歯車などで負荷と直結する。',
        q:['R7上/1']},
-      {t:'和動複巻：分巻と直巻のあいだ', sec:'excitation', focus:'界磁巻線（明るさ＝磁束Φ）', set:{dcExc:'comp', react:false, load:.2, paused:false},
+      {t:'和動複巻：分巻と直巻のあいだ', sec:'excitation', focus:'界磁巻線（明るさ＝磁束Φ）', set:{dcMode:'motor', dcExc:'comp', react:false, load:.2, paused:false},
        op:'「励磁方式」を 和動複巻 にし、負荷を動かす。',
        see:'左右の図で、橙の曲線が分巻（破線）と直巻（破線）のあいだを通る。負荷を 0 近くまで下げても、回転数は直巻のように発散せず有限の値にとどまる。',
        so:'分巻界磁が無負荷でも磁束を残すので暴走しない。直巻界磁が負荷とともに磁束を足すのでトルクも稼げる。両者の性質を併せ持つ。',
        q:['R7上/1']},
+      {t:'発電機：分巻は残留磁気から電圧が育つ', sec:'generator', focus:'界磁巻線（明るさ＝磁束Φ）', set:{dcMode:'gen', dcExc:'shunt', dcRf:1.2, load:0, react:false, paused:false},
+       op:'「運転」を 発電機 にし、励磁方式を 分巻、負荷電流を 0 にする。',
+       see:'左の図で、残留電圧から出発した橙の階段が、界磁抵抗線（破線）と無負荷飽和曲線のあいだを上っていき、交点で止まる。',
+       so:'分巻発電機の界磁は自分の端子電圧で励磁される。残留磁気でわずかな電圧 → 界磁電流 → 磁束が増えて起電力が上がる → さらに界磁電流…と正帰還で育ち、抵抗線と飽和曲線の交点で落ち着く。残留磁気と、界磁が残留磁束を強める向きにつながっていることが前提。',
+       q:['R8上/1']},
+      {t:'界磁抵抗が臨界抵抗を超えると電圧が立たない', sec:'generator', focus:'界磁巻線（明るさ＝磁束Φ）', set:{dcMode:'gen', dcExc:'shunt', dcRf:1.8, load:0, react:false, paused:false},
+       op:'界磁抵抗 Rf を 1.8 まで上げる。',
+       see:'抵抗線が「臨界 Rc」の線より急になり、飽和曲線と原点の近くでしか交わらない。階段はすぐに止まり、読み値の端子電圧は小さいまま。',
+       so:'飽和曲線の立ち上がり（直線部）の傾きが臨界抵抗（この図では残留電圧の分を除いた傾き）。界磁抵抗がこれより大きいと、抵抗線は直線部の低い電圧でしか飽和曲線と交わらず、正帰還が定格付近まで回らない。自己励磁の条件は「界磁抵抗 < 臨界抵抗」。',
+       q:['R8上/1']},
+      {t:'外部特性：分巻は他励より大きく下がる', sec:'generator', focus:'界磁巻線（明るさ＝磁束Φ）', set:{dcMode:'gen', dcExc:'shunt', dcRf:1.2, load:1, react:false, paused:false},
+       op:'界磁抵抗を 1.2 に戻し、負荷電流を 0 から 1.0 まで上げる。',
+       see:'右の図で、分巻（実線）の端子電圧は他励（破線）より大きく下がる。',
+       so:'他励の電圧降下は電機子抵抗の分だけ。分巻はそれに加えて、端子電圧が下がると界磁電流も減り、起電力まで下がる。電機子反作用もあるが、この図では無視している。'},
+      {t:'直巻発電機：負荷電流で電圧が上がる', sec:'generator', focus:'界磁巻線（明るさ＝磁束Φ）', set:{dcMode:'gen', dcExc:'series', load:.1, react:false, paused:false},
+       op:'励磁方式を 直巻 にし、負荷電流を 0.1 から 1.0 まで上げる。',
+       see:'負荷電流が小さいあいだは界磁巻線が暗く、端子電圧もほとんど出ない。負荷を増やすと界磁が明るくなり、右の図の直巻の曲線に沿って電圧が上がる。',
+       so:'直巻は界磁に負荷電流そのものが流れるので、無負荷では残留電圧しか出ず、飽和する前の範囲では負荷とともに電圧が上がる（重負荷側では飽和や電機子反作用で頭打ち・低下もある）。負荷で電圧が大きく変わるので、定電圧の電源には向かない。',
+       q:['R8上/1']},
     ],
     check: [
       ['電機子反作用で中性軸はどちらへずれるか（電動機）', '回転方向と逆向き。発電機は回転方向と同じ向き。合成起磁力（≒合成磁束の軸）に直角な面が電気的中性軸。'],
       ['界磁を弱めると回転数はどうなるか', '上がる。n ∝ (V − Ia·Ra)/Φ なので、Φが小さいほど速い。直巻電動機を無負荷で回すと暴走するのも同じ理由。'],
       ['補極は何で励磁するか', '電機子電流。反作用は電機子電流に比例するので、直列にすれば負荷に応じて自動で打ち消せる。'],
       ['整流子が無いと何が起きるか', 'ブラシから見た起電力が交流のままになる。整流子は回転する導体の接続を切り替えて、外部では一方向にそろえている。'],
+      ['分巻発電機が自己励磁するための条件', '①残留磁気がある ②界磁の接続が残留磁束を強める向き（回転方向もそれに合っている） ③界磁回路の抵抗が臨界抵抗より小さい。回転速度が低すぎても、飽和曲線全体が下がって臨界抵抗も小さくなるので確立しない。電圧の確立は無負荷で行う。'],
+      ['直巻発電機を定電圧電源に使わない理由', '界磁電流＝負荷電流なので、無負荷では残留電圧しか出ず、負荷電流とともに端子電圧が大きく変わるから。'],
       ['直巻電動機を無負荷で運転してはいけない理由', '界磁に負荷電流が流れるので、無負荷で電流が小さくなると磁束も小さくなり、n ∝ E/Φ が危険な高速まで上がる（暴走）。だからベルト掛けにせず負荷と直結する。'],
     ],
     cards: ['comm','react'],
@@ -1379,6 +1405,44 @@ function dcModel(exc, ia){
   const phi = dcFlux(exc, ia), E = 1 - .1*ia;
   return {phi, E, T: phi*ia, n: phi > 1e-9 ? E/phi : Infinity};
 }
+/* 発電機（原動機で一定速度に回す）。すべて pu・電機子反作用は無視。値は形を見るための例で、実機の値ではない。
+   無負荷飽和曲線は「原点付近は直線、その先で飽和」の形にする（直線部が無いと臨界抵抗の境目がぼやける）。
+     If ≤ If1:  E = Er + k·If            （直線部。残留電圧を除いた立ち上がりの傾き k を、この模式の臨界抵抗 Rc とする）
+     If > If1:  E = Er + k·If1 + A2·tanh((If − If1)/x1)、x1 = A2/k で傾きを連続に
+   Er は残留磁気による残留電圧。
+   分巻・複巻は自分の端子電圧で界磁を励磁するので V = E(V/Rf + ks·I) − Ra·I を反復して解く
+   （界磁電流は負荷電流に比べて小さいので、それによる電機子の電圧降下は無視。教科書の作図と同じで、
+   無負荷電圧は界磁抵抗線と飽和曲線の交点そのもの）。外部特性は無負荷で確立した電圧から追う（上側の安定点）。
+   分巻の外部特性は最大電流で折れ返るので、I(V) = (E(V/Rf) − V)/Ra を V について描き、最大電流を超える負荷は「流せない」とする。
+   既定 Rf = 1.2 で無負荷電圧 ≒ 1.55、定格負荷で約 11% 下がる。他励は無負荷電圧を分巻にそろえ、
+   和動複巻は無負荷と定格負荷の電圧が等しい平複巻（ks = 0.4）、直巻は界磁電流＝負荷電流で、定格で ≒ 1.27 になる例 */
+const DG = {Er:.02, k:1.5, If1:.45, A2:1, Ra:.1, ks:.4, kser:1, Rf0:1.2};
+DG.x1 = DG.A2/DG.k; DG.Rc = DG.k;
+function dgE(If){ return If <= DG.If1 ? DG.Er + DG.k*If : DG.Er + DG.k*DG.If1 + DG.A2*Math.tanh((If - DG.If1)/DG.x1); }
+function dgSelf(I, Rf, ks, V){                       // 分巻・複巻の定常点。V は反復の出発点
+  for (let k=0;k<3000;k++){ const Vn = Math.max(0, dgE(V/Rf + ks*I) - DG.Ra*I); if (Math.abs(Vn - V) < 1e-7){ V = Vn; break; } V = Vn; }
+  return V;
+}
+/* 分巻の外部特性（折れ返りを含む）。V を 0 から無負荷電圧まで動かし、そのとき流せる負荷電流 I を求める */
+function dgShuntCurve(Rf){
+  const v0 = dgSelf(0, Rf, 0, 3), pts = [];
+  for (let i=0;i<=400;i++){ const V = v0*i/400, I = (dgE(V/Rf) - V)/DG.Ra; if (I >= 0) pts.push([I, V]); }
+  return pts;                                        // V=0 が短絡（I = Er/Ra）、V=v0 が無負荷
+}
+function dgImax(Rf){ return Math.max(0, ...dgShuntCurve(Rf).map(p => p[0])); }
+DG.Ifsep = (() => { const v = dgSelf(0, DG.Rf0, 0, 3); let lo = 0, hi = 5; for (let i=0;i<80;i++){ const m = (lo+hi)/2; dgE(m) < v ? lo = m : hi = m; } return lo; })();
+function dgModel(exc, I, Rf){
+  let If, V, over = false;
+  if (exc==='sep'){ If = DG.Ifsep; V = dgE(If) - DG.Ra*I; }
+  else if (exc==='series'){ If = DG.kser*I; V = Math.max(0, dgE(If) - DG.Ra*I); }
+  else {
+    const ks = exc==='comp' ? DG.ks : 0; V = dgSelf(I, Rf, ks, 3); If = V/Rf + ks*I;
+    over = exc==='shunt' ? I > dgImax(Rf) : V < .02;   // 分巻は折れ返りの最大電流を超えたら流せない
+  }
+  return {If, E: dgE(If), V, over};
+}
+/* 無負荷で残留電圧から電圧が育つ過程（階段）。落ち着くまで回す */
+function dgBuildUp(Rf){ const st = []; let V = DG.Er; for (let k=0;k<80;k++){ const If = V/Rf, Vn = dgE(If); st.push([If, V, Vn]); if (Math.abs(Vn - V) < 2e-3) break; V = Vn; } return st; }
 function buildDC(g){
   const r=1.55, len=2.2;
   const yoke = mesh(new THREE.CylinderGeometry(r+.4, r+.4, len, 48, 1, true, Math.PI*.2, Math.PI*1.6), M.frame, g); yoke.rotation.z = Math.PI/2;
@@ -1426,17 +1490,28 @@ function buildDC(g){
 }
 function animDC(g, t, st, dt){
   const u = g.userData;
-  const dm = dcModel(st.dcExc, st.load);
-  /* n ∝ E/Φ。読み値と同じ式。直巻の軽負荷は際限なく速くなるので、見た目の回転だけ 3 pu で頭打ちにする */
-  u.arm.rotation.x -= (st.paused?0:st.ws)*dt*.9*Math.min(dm.n, 3);
-  for (const m of u.fieldMats) m.emissiveIntensity = st.paused ? .45 : .45*dm.phi;   // 停止（始動の瞬間）は Φ を模式で示さない
+  if (st.dcMode==='gen'){
+    /* 発電機は原動機が一定速度で回す。界磁の明るさは磁束 ∝ E（速度一定なので）で示す */
+    const gm = dgModel(st.dcExc, st.load, st.dcRf);
+    u.arm.rotation.x -= (st.paused?0:st.ws)*dt*.9;
+    for (const m of u.fieldMats) m.emissiveIntensity = st.paused ? .45 : .45*gm.E;
+  } else {
+    const dm = dcModel(st.dcExc, st.load);
+    /* n ∝ E/Φ。読み値と同じ式。直巻の軽負荷は際限なく速くなるので、見た目の回転だけ 3 pu で頭打ちにする */
+    u.arm.rotation.x -= (st.paused?0:st.ws)*dt*.9*Math.min(dm.n, 3);
+    for (const m of u.fieldMats) m.emissiveIntensity = st.paused ? .45 : .45*dm.phi;
+  }   // 停止（始動の瞬間）は Φ を模式で示さない
   u.react.visible = st.react;
   /* 矢印が見えなくならないための表示下限と、角度そのものは分ける。
      下限を角度にも効かせると Ia=0 でも中性軸が 5°ずれたままになり、
      「電流が小さければ反作用も小さい」の歩と食い違う */
   u.armF.scale.set(1, .15 + st.load, 1);
   u.armF.visible = st.load > .02;      // 電流ゼロで矢印だけ残ると「起磁力があるのにずれない」と読める
-  const ang = reactAng(st.load);                // 合成起磁力の傾き。右パネルの図と同じ式
+  /* 発電機は同じ回転方向でも電機子電流が電動機と逆向きなので、電機子起磁力と中性軸のずれも逆になる
+     （電動機は回転方向と逆、発電機は回転方向と同じ向きにずれる）。右パネルの図も同じ sgn を使う */
+  const sgn = st.dcMode==='gen' ? -1 : 1;
+  u.armF.rotation.x = sgn*Math.PI/2;
+  const ang = sgn*reactAng(st.load);            // 合成起磁力の傾き。右パネルの図と同じ式
   u.res.rotation.x = ang; u.res.scale.set(1, Math.hypot(1.9, 1.2*st.load)/2.1, 1);
   // 幾何学的中性軸 = 主磁束に直角の面（水平）。電気的中性軸 = 合成磁束に直角 → ang だけ回る
   u.gn.rotation.set(Math.PI/2, 0, 0);
@@ -1847,7 +1922,7 @@ for (const id of ORDER){ const g = new THREE.Group(); g.position.set(MACHINES[id
 const state = {
   current:null, paused:false, ws:1.6,
   slip:.05, wound:false, im_p:4, im_f:50,
-  react:false, load:.5, dcExc:'shunt',
+  react:false, load:.5, dcExc:'shunt', dcMode:'motor', dcRf:1.2,
   rotor:'salient', delta:20, If:1.0, syncP:.5,
   tfLoad:.7, tfView:'core', bankV:false, autoA:1.2,
   tfTest:'run', tfIron:'off', tfLam:true,
@@ -2113,8 +2188,11 @@ function buildCtrl(){
     ctrlbar.appendChild(group('回転子', seg([['salient','突極形（水車）'],['cyl','円筒形（タービン）']], 'rotor')));
     ctrlbar.appendChild(group('負荷（Vカーブ）', seg([[0,'無負荷'],[.5,'半負荷'],[1,'全負荷']], 'syncP')));
   } else if (id==='dc-machine'){
-    ctrlbar.appendChild(range('負荷（電機子電流）', 0, 1, .01, 'load', v=>v.toFixed(2)+' pu'));
+    ctrlbar.appendChild(group('運転', seg([['motor','電動機'],['gen','発電機']], 'dcMode')));
+    ctrlbar.appendChild(range(state.dcMode==='gen' ? '負荷電流 I' : '負荷（電機子電流）', 0, 1, .01, 'load', v=>v.toFixed(2)+' pu'));
     ctrlbar.appendChild(group('励磁方式', seg(Object.entries(DC_EXC), 'dcExc')));
+    if (state.dcMode==='gen' && (state.dcExc==='shunt' || state.dcExc==='comp'))
+      ctrlbar.appendChild(range('界磁抵抗 Rf', .9, 2, .01, 'dcRf', v=>v.toFixed(2)+' pu'));
     ctrlbar.appendChild(group('電機子反作用', seg([[false,'隠す'],[true,'表示']], 'react')));
   } else if (id==='power-elec'){
     ctrlbar.appendChild(group('回路', seg([['buck','降圧チョッパ'],['boost','昇圧チョッパ'],['inv','単相インバータ'],['rect','三相整流'],['half','単相半波整流']], 'peConv')));
@@ -2157,7 +2235,7 @@ function syncCtrl(){
   ctrlbar.querySelectorAll('.cg[data-key]').forEach(g=>{ if(g._input){ g._input.value = state[g.dataset.key]; g.querySelector('.val').textContent = g._fmt(state[g.dataset.key]); } });
   ctrlbar.querySelectorAll('.seg[data-key]').forEach(d=>{ [...d.children].forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===String(state[d.dataset.key])))); });
 }
-let _lastTfSig = null, _lastPeConv = null, _lastDmView = null, _lastPeHw = null;
+let _lastTfSig = null, _lastPeConv = null, _lastDmView = null, _lastPeHw = null, _lastDcSig = null;
 const tfSig = () => state.tfView + '/' + state.bankV;
 function refreshCtrl(){
   /* 回路を切り替えると操作帯の中身（通流率／負荷）と凡例が変わる */
@@ -2165,6 +2243,10 @@ function refreshCtrl(){
     _lastPeConv = state.peConv; buildCtrl(); rebuildLabels(); return;   // buildCtrl から refreshCtrl が呼び直される
   }
   /* 単相半波で環流ダイオードを出し入れしたら、凡例の DF 行も出し入れする */
+  /* 直流機は運転（電動機／発電機）と励磁方式で操作帯の中身（負荷の名前・界磁抵抗）が変わる */
+  if (state.current==='dc-machine' && state.dcMode+'/'+state.dcExc !== _lastDcSig){
+    _lastDcSig = state.dcMode+'/'+state.dcExc; buildCtrl(); return;
+  }
   if (state.current==='power-elec' && state.peConv==='half' && state.peHw !== _lastPeHw){  // DF の行・負荷の名前
     _lastPeHw = state.peHw; rebuildLabels();
   }
@@ -2208,7 +2290,25 @@ function refreshCtrl(){
           ['E0','無負荷起電力 E₀ ∝ If（不飽和）', state.If.toFixed(2)+' pu']];
     note='※ P は1相あたり。円筒形・抵抗無視の基本モデル。E₀ は無負荷飽和曲線の直線部だけを模した値';
   }
-  if (id==='dc-machine'){
+  if (id==='dc-machine' && state.dcMode==='gen'){
+    const exc = state.dcExc, g = dgModel(exc, state.load, state.dcRf), p = state.paused;
+    const self = exc==='shunt' || exc==='comp';
+    const imax = exc==='shunt' ? dgImax(state.dcRf) : null;
+    rows=[['exc','励磁方式', DC_EXC[exc] + ({sep:'（界磁は別電源）', shunt:'（界磁は自分の端子電圧から）', series:'（界磁に負荷電流が流れる）', comp: Math.abs(state.dcRf - DG.Rf0) < .005 ? '（分巻＋直巻・この Rf で平複巻の例）' : '（分巻＋直巻）'})[exc]],
+          ['I','負荷電流 I', state.load.toFixed(2)+' pu'],
+          ['If', exc==='comp' ? '分巻界磁の電流 V/Rf' : '界磁電流 If',
+            p || g.over ? '—' : exc==='comp' ? (g.V/state.dcRf).toFixed(2)+' pu（直巻界磁には負荷電流 I が流れる）'
+                      : g.If.toFixed(2)+' pu'+(exc==='series' ? '（= I）' : '')],
+          ['E','誘導起電力 E', p ? '0（止めている）' : g.over ? '—' : g.E.toFixed(2)+' pu'],
+          ['V','端子電圧 V', p ? '0' : g.over
+             ? (exc==='shunt' ? 'この Rf では I ≒ '+imax.toFixed(2)+' pu までしか流せない' : '電圧を保てない')
+             : g.V.toFixed(2)+' pu']];
+    if (self) rows.push(['Rf', exc==='comp' ? '分巻界磁抵抗 Rf / 臨界抵抗 Rc' : '界磁抵抗 Rf / 臨界抵抗 Rc', state.dcRf.toFixed(2)+' / '+DG.Rc.toFixed(2)+' pu'
+      + (state.dcRf > DG.Rc ? (exc==='comp' ? '（Rc を超えている＝無負荷では確立しない。負荷時は直巻界磁が加わる）' : '（Rc を超えている＝電圧が確立しない）') : '')]);
+    rows.push(['shift','中性軸のずれ', state.react ? '表示中（発電機：回転方向と同じ向き）' : '非表示']);
+    note='※ 原動機で一定速度に回した模式。無負荷飽和曲線は直線部（残留電圧を除いた傾き＝臨界抵抗 1.5）と飽和部をつないだ例で、残留電圧 0.02 pu。'
+      + '電機子回路の抵抗 0.1 pu（直巻・複巻は直巻界磁を含む）。界磁電流による電圧降下と電機子反作用による電圧低下は無視。分巻・複巻では厳密には電機子電流 Ia = I + If だが、If は小さいとして反作用も負荷電流 I で描く。値は形を見るための例で、実機の値ではない';
+  } else if (id==='dc-machine'){
     const exc = state.dcExc, ser = exc==='series' || exc==='comp';
     const m = dcModel(exc, state.load), E = state.paused ? 0 : m.E;   // animDC の回転速度と同じ式
     const Rtxt = ser ? '(Ra+Rs)' : 'Ra';
@@ -2932,6 +3032,72 @@ function drawMini(){
       + '速度が微増したとき「電動機トルク − 負荷トルク」が負になれば減速して戻るので安定。'
       + '判定は符号込みの傾きの大小（負荷側の傾きが電動機側より大きければ安定）で、'
       + '「立ち上がっているか」では決まらない。曲線の形を見る図で、目盛は正規化してある。';
+  } else if (state.current==='dc-machine' && state.dcMode==='gen'){
+    /* 左: 無負荷飽和曲線 E−If。分巻・複巻は界磁抵抗線（V = Rf·If）・臨界抵抗線と、残留電圧から電圧が育つ階段を重ねる。
+       右: 外部特性 V−I。4方式を重ね、選んだ方式だけ実線。分巻は最大電流で折れ返る形まで描く。式は dgModel などと同じ */
+    const exc = state.dcExc, gap = 70, mX = (L+R)/2, self = exc==='shunt' || exc==='comp', Rf = state.dcRf;
+    const P1 = {x0:L, x1:mX-gap/2}, P2 = {x0:mX+gap/2, x1:R}, ifMax = 2.2, eMax = 1.9, iMax = 2.4, vMax = 1.9;
+    const lx = If => P1.x0 + Math.min(If, ifMax)/ifMax*(P1.x1-P1.x0), ly = v => B - Math.min(Math.max(v,0), eMax)/eMax*(B-T);
+    const rx = I => P2.x0 + Math.min(I, iMax)/iMax*(P2.x1-P2.x0), ry = v => B - Math.min(Math.max(v,0), vMax)/vMax*(B-T);
+    ctx.strokeStyle=line; ctx.beginPath();
+    for (const P of [P1, P2]){ ctx.moveTo(P.x0,B); ctx.lineTo(P.x1,B); ctx.moveTo(P.x0,T); ctx.lineTo(P.x0,B); }
+    ctx.stroke();
+    /* 左図 */
+    ctx.strokeStyle=steel; ctx.lineWidth=2.5; ctx.beginPath();
+    for (let i=0;i<=220;i++){ const If=i/220*ifMax, x=lx(If), y=ly(dgE(If)); i? ctx.lineTo(x,y): ctx.moveTo(x,y); } ctx.stroke();
+    ctx.fillStyle=steel; ctx.fillText('無負荷飽和曲線', lx(1.15), ly(dgE(2.2))+48);
+    if (self){
+      const rcEnd = eMax/DG.Rc, rfEnd = Math.min(ifMax, eMax/Rf);
+      ctx.strokeStyle=ink3; ctx.lineWidth=1.5; ctx.setLineDash([2,5]); ctx.beginPath(); ctx.moveTo(lx(0),ly(0)); ctx.lineTo(lx(rcEnd), ly(eMax)); ctx.stroke();
+      ctx.fillStyle=ink3; ctx.fillText('臨界 Rc', lx(rcEnd)-96, T+14);
+      ctx.strokeStyle=acc; ctx.setLineDash([7,5]); ctx.beginPath(); ctx.moveTo(lx(0),ly(0)); ctx.lineTo(lx(rfEnd), ly(Rf*rfEnd)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=acc; ctx.fillText('Rf', lx(eMax*.5/Rf)+12, ly(eMax*.5)+10);
+      /* 階段: 端子電圧 V → 界磁電流 If = V/Rf（抵抗線の上）→ 起電力 E(If)（飽和曲線の上）→ 新しい V */
+      ctx.strokeStyle=acc; ctx.lineWidth=1.5; ctx.beginPath(); let first = true;
+      for (const [If, V, Vn] of dgBuildUp(Rf)){ if (first){ ctx.moveTo(lx(0), ly(V)); first = false; }
+        ctx.lineTo(lx(If), ly(V)); ctx.lineTo(lx(If), ly(Vn)); }
+      ctx.stroke(); ctx.lineWidth=2.5;
+      const v0 = dgSelf(0, Rf, 0, DG.Er);                       // 残留電圧から育って落ち着く無負荷電圧
+      if (!state.paused){ ctx.fillStyle=acc; ctx.beginPath(); ctx.arc(lx(v0/Rf), ly(v0), 7, 0, Math.PI*2); ctx.fill(); }
+      ctx.fillStyle=ink3; ctx.fillText('残留', lx(0)+6, ly(DG.Er)-8);
+    } else {
+      const If = exc==='sep' ? DG.Ifsep : DG.kser*state.load;
+      ctx.strokeStyle=ink3; ctx.lineWidth=1.5; ctx.setLineDash([2,5]); ctx.beginPath(); ctx.moveTo(lx(If), B); ctx.lineTo(lx(If), ly(dgE(If))); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth=2.5;
+      if (!state.paused){ ctx.fillStyle=acc; ctx.beginPath(); ctx.arc(lx(If), ly(dgE(If)), 7, 0, Math.PI*2); ctx.fill(); }
+      ctx.fillStyle=ink3; ctx.fillText(exc==='sep' ? 'If 一定（別電源）' : 'If = I', lx(If)+8, B-8);
+    }
+    ctx.fillStyle=ink3; ctx.fillText('E', P1.x0-26, (T+B)/2+8); ctx.fillText('If →', P1.x1-54, B+30);
+    /* 右図。比べる側の破線は既定の界磁抵抗で描く（界磁抵抗の操作が出ていない方式で、見えない値に曲線が左右されないように） */
+    const names = {sep:'他励', shunt:'分巻', comp:'和動複巻', series:'直巻'};
+    const curve = (k, rf) => k==='shunt' ? dgShuntCurve(rf) : Array.from({length:101}, (_, i) => { const I = i/100; return [I, dgModel(k, I, rf).V]; });
+    const lab = {comp:[.25,-12], sep:[1.02,-10], shunt:[1.55,-10], series:[.62,24]};
+    for (const k of ['sep','shunt','comp','series']){
+      const sel = k===exc, rf = sel ? Rf : DG.Rf0, pts = curve(k, rf);
+      ctx.strokeStyle = sel ? acc : ink3; ctx.lineWidth = sel ? 3 : 1.5; ctx.setLineDash(sel ? [] : [5,6]);
+      ctx.beginPath(); pts.forEach(([I, v], i) => i ? ctx.lineTo(rx(I), ry(v)) : ctx.moveTo(rx(I), ry(v))); ctx.stroke();
+      ctx.setLineDash([]); ctx.lineWidth = 2.5;
+      const [li, dy] = lab[k], near = pts.reduce((b, p) => Math.abs(p[0]-li) < Math.abs(b[0]-li) ? p : b, pts[0]);
+      ctx.fillStyle = sel ? acc : ink3; ctx.fillText(names[k], rx(near[0])-14, Math.min(B-8, ry(near[1])+dy));
+    }
+    ctx.strokeStyle=line; ctx.lineWidth=1; ctx.setLineDash([2,4]); ctx.beginPath(); ctx.moveTo(rx(1), T); ctx.lineTo(rx(1), B); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth=2.5;
+    ctx.fillStyle=ink3; ctx.fillText('定格', rx(1)-24, B+30);
+    const g = dgModel(exc, state.load, Rf);
+    if (!state.paused && !g.over){ ctx.fillStyle=acc; ctx.beginPath(); ctx.arc(rx(state.load), ry(g.V), 8, 0, Math.PI*2); ctx.fill(); }
+    ctx.fillStyle=ink3; ctx.fillText('V', P2.x0-26, (T+B)/2+8); ctx.fillText('I →', P2.x1-44, B+30);
+    cap.textContent = (self
+        ? (Rf > DG.Rc
+          ? '左: 界磁抵抗線（橙の破線）が臨界抵抗線より急なので、飽和曲線とは直線部の低い電圧でしか交わらず、無負荷では定格付近の電圧が確立しない。'
+            + (exc==='comp' ? '（和動複巻は負荷をとると直巻界磁の分だけ電圧が上がる。右図）' : '')
+          : '左: 残留電圧から出発し、「電圧 → 界磁電流 → 起電力 → 電圧」と階段を上って、界磁抵抗線と飽和曲線の交点（点）で落ち着く。これが自己励磁。')
+        : exc==='sep'
+        ? '左: 他励は界磁電流が別電源で一定なので、起電力も一定。'
+        : '左: 直巻は界磁電流＝負荷電流。無負荷では界磁電流が 0 で、起電力は残留電圧だけ。')
+      + ' 右: 外部特性（負荷電流と端子電圧。縦の点線が定格）。'
+      + ({sep:'他励は電機子抵抗の電圧降下だけ下がる。',
+          shunt:'分巻は電圧が下がると界磁電流も減るので他励より大きく下がり、最大電流を超えると折れ返る。短絡電流は残留電圧で決まる小さな値。',
+          comp: Math.abs(Rf - DG.Rf0) < .005 ? '和動複巻は直巻界磁が電圧降下を補う。この設定（Rf = '+DG.Rf0+'）は無負荷と定格負荷の電圧が等しい平複巻の例。' : '和動複巻は直巻界磁が電圧降下を補う。平複巻になるかは分巻界磁抵抗と直巻界磁の強さの組合せで決まる（Rf を '+DG.Rf0+' に戻すと平複巻の例）。',
+          series:'直巻は、飽和や電機子反作用による低下が目立つ前の範囲では負荷電流とともに電圧が上がり、無負荷ではほぼ出ない。定電圧電源には向かない。'})[exc]
+      + ' 電機子反作用による電圧低下は無視した模式。';
   } else if (state.current==='dc-machine'){
     /* 左: 速度特性 n−Ia、右: トルク特性 T−Ia。3方式を重ね、選んだ方式だけ実線（他励と分巻は同じ曲線）。
        式は dcModel と同じ。直巻の n は Ia → 0 で発散するので、縦軸 3 pu で切る */
@@ -3164,8 +3330,9 @@ function drawReact(){
   const ink=css.getPropertyValue('--ink').trim(), ink3=css.getPropertyValue('--ink-3').trim(),
         acc=css.getPropertyValue('--accent').trim(), line=css.getPropertyValue('--line').trim();
   const RED='#D24A43';
-  const th = reactAng(state.load);
-  const Ox=176, Oy=246, Lf=150, La=Lf*(1.2*state.load)/1.9;   // 3D と同じ長さ比
+  const sgn = state.dcMode==='gen' ? -1 : 1;                  // 発電機は電機子起磁力が逆向き（3D と同じ）
+  const th = sgn*reactAng(state.load);
+  const Ox=176, Oy=246, Lf=150, La=sgn*Lf*(1.2*state.load)/1.9;   // 3D と同じ長さ比
   const fyT=Oy-Lf, axT=Ox+La;
   const arrow=(x1,y1,x2,y2,col)=>{
     ctx.strokeStyle=col; ctx.lineWidth=3;
@@ -3187,21 +3354,23 @@ function drawReact(){
   ctx.stroke();
   ctx.setLineDash([]);
   ctx.strokeStyle=RED; ctx.lineWidth=2;
-  ctx.beginPath(); ctx.arc(Ox, Oy, 104, 0, th); ctx.stroke();
+  ctx.beginPath(); ctx.arc(Ox, Oy, 104, 0, th, th < 0); ctx.stroke();
   /* 3本の矢印。色は 3D の橙・赤・合成に合わせる（合成だけは白だと明色テーマで消えるので ink） */
   arrow(Ox, Oy, Ox, fyT, acc);
-  if (La > 2) arrow(Ox, fyT, axT, fyT, RED);   // Ia=0 では矢頭だけが残らないようにする
+  if (Math.abs(La) > 2) arrow(Ox, fyT, axT, fyT, RED);   // Ia=0 では矢頭だけが残らないようにする
   arrow(Ox, Oy, axT, fyT, ink);
   ctx.strokeStyle=line; ctx.lineWidth=1; ctx.setLineDash([3,4]);
   ctx.beginPath(); ctx.moveTo(axT, fyT); ctx.lineTo(axT, Oy); ctx.stroke(); ctx.setLineDash([]);
   ctx.font='19px "JetBrains Mono", monospace';
-  ctx.fillStyle=acc; ctx.textAlign='right'; ctx.fillText('Ff', Ox-10, Oy-Lf/2+7); ctx.textAlign='left';
+  /* 文字は矢印の外側に置く。発電機（sgn<0）は図が左右反転するので、Ff と Fr の置き場も入れ替える */
+  ctx.fillStyle=acc; ctx.textAlign = sgn > 0 ? 'right' : 'left'; ctx.fillText('Ff', Ox - sgn*10, Oy-Lf/2+7); ctx.textAlign='left';
   ctx.fillStyle=RED; ctx.fillText('Fa', Ox+La/2-16, fyT-12);
-  ctx.fillStyle=ink; ctx.fillText('Fr', Ox+La/2+14, Oy-Lf/2+22);
-  ctx.fillStyle=ink; ctx.fillText('θ='+(th*180/Math.PI).toFixed(0)+'°', Ox+112, Oy-12);
+  ctx.fillStyle=ink; ctx.fillText('Fr', Ox+La/2 + (sgn > 0 ? 14 : -40), Oy-Lf/2+22);
+  ctx.fillStyle=ink; ctx.fillText('θ='+Math.abs(th*180/Math.PI).toFixed(0)+'°', Ox+112, Oy-12);
   ctx.font='15px "JetBrains Mono", monospace';
   ctx.fillStyle=ink3; ctx.fillText('幾何学的中性軸', Ox-140, Oy+22);
-  ctx.fillStyle=RED;  ctx.fillText('電気的中性軸', Ox-134*Math.cos(th), Oy-134*Math.sin(th)-26);
+  ctx.fillStyle=RED;  if (sgn > 0) ctx.fillText('電気的中性軸', Ox-134*Math.cos(th), Oy-134*Math.sin(th)-26);
+  else ctx.fillText('電気的中性軸', Ox+150*Math.cos(th)+12, Oy+150*Math.sin(th)-6);
   /* 右側の読み */
   const X=432;
   ctx.font='17px "JetBrains Mono", monospace';
@@ -3214,8 +3383,8 @@ function drawReact(){
   ctx.font='15px "JetBrains Mono", monospace';
   ctx.fillStyle=ink3; ctx.fillText('発電機：回転方向と同じ', X, 188);
   ctx.fillText('電動機：回転方向と逆', X, 212);
-  ctx.fillStyle=ink3; ctx.fillText('この3Dは電動機の向き', X, 236);
-  ctx.fillText('（発電機は赤が逆向き）', X, 258);
+  ctx.fillStyle=ink3; ctx.fillText(sgn > 0 ? 'いまは電動機の向き' : 'いまは発電機の向き', X, 236);
+  ctx.fillText(sgn > 0 ? '（発電機にすると逆向き）' : '（電動機とは逆向き）', X, 258);
   ctx.fillText('Ia = '+state.load.toFixed(2)+' pu', X, 284);
 }
 
@@ -3258,6 +3427,7 @@ function select(id){
   _lastTfSig = (id==='transformer') ? tfSig() : null;
   _lastPeConv = (id==='power-elec') ? state.peConv : null;
   _lastDmView = (id==='drive-mech') ? state.dmView : null;
+  _lastDcSig = (id==='dc-machine') ? state.dcMode+'/'+state.dcExc : null;
   renderChips(); buildCtrl(); renderPanel(); rebuildLabels();
   panel.scrollTop = 0;
   try { history.replaceState(null, '', id ? '#'+id : location.pathname); } catch (e) {}
