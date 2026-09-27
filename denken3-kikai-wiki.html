@@ -1227,6 +1227,56 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
   .conclusion-list dt { margin-top: 8px; }
   .conclusion-list dt:first-child { margin-top: 0; }
 }
+
+/* ── QuickReview（1分復習の記録）───────────────────────────
+   既存の <details> は触らず、下にボタン行を足すだけ。
+   色はトークンのみ（生色を置くとラチェット台帳がずれる）。 */
+.qr-wrap { margin: 8px 0 4px; }
+
+.qr-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.qr-item {
+  border-bottom: 1px solid var(--rule-soft);
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+.qr-item:last-child { border-bottom: 0; }
+
+.qr-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 4px 0 0 2px;
+}
+
+.qr-btn {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink-mute);
+  cursor: pointer;
+  font-size: 11px;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.qr-btn:hover { background: var(--bg-sunken); }
+.qr-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.qr-btn.ok.on { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); font-weight: 700; }
+.qr-btn.ng.on { border-color: var(--warn); color: var(--warn); background: var(--warn-soft); font-weight: 700; }
+
+.qr-meta { font-size: 11px; color: var(--ink-mute); }
   </style>
 <script>
   /* dark/light 早期適用（React mount 前・フラッシュ防止）。法規Wiki の
@@ -6083,6 +6133,144 @@ const SectionCheckSummary = ({
   }, "✨ すべてのセクションが ◎ または ○ です。お疲れさまでした！"));
 };
 
+/* ---- QuickReview: 1分復習に記録を足す（柱5 リトリーバル練習） ----
+
+   機械Wikiには「1分復習（即答チェック）」の節が最初から全ページにあったが、
+   素の <details> だったので **何回見たか・どれが不安か**が残らなかった。
+   柱5 が QuickReview に求めているのは reviewCount / lastSeen の記録なので、
+   ここで足すのは記録だけにする。
+
+   **問と答えには一切触らない。** 既存の <details> をそのまま子として受け取り、
+   下にボタンを添えるだけ。本文を書き換えないので、移送中に取りこぼす事故が起きない。
+
+   鍵は設問文（<summary> のテキスト）から作る。並べ替えても記録が付いて回る。
+   保存キーと payload は ConceptQuizItem・TrapTable と同じ形にそろえる
+   （hoki 側の間違いノートが denken_check:: prefix を走査して集約するため）。 */
+
+/* React 要素の中の文字列だけを拾う。<summary> に <strong> 等が入っていても鍵を作れる。 */
+const qrText = node => {
+  if (node === null || node === undefined || typeof node === 'boolean') return '';
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(qrText).join('');
+  if (node.props && node.props.children !== undefined) return qrText(node.props.children);
+  return '';
+};
+
+/* 子要素（<details>）から <summary> のテキストを取り出す。見つからなければ全文から作る。 */
+const qrSummaryText = el => {
+  const kids = React.Children.toArray(el && el.props ? el.props.children : []);
+  const sum = kids.find(k => k && k.type === 'summary');
+  return (sum ? qrText(sum) : qrText(el)).trim();
+};
+const QuickReviewItem = ({
+  pageId,
+  pageTitle,
+  q,
+  children
+}) => {
+  const key = `denken_check::kikai_${pageId}::quickreview::${kikaiTrapHash(q)}`;
+  const [rec, setRec] = React.useState(() => {
+    try {
+      const v = localStorage.getItem(key);
+      return v ? JSON.parse(v) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const mark = status => {
+    if (rec && rec.status === status) {
+      // 同じボタンをもう一度＝記録を取り消す
+      try {
+        localStorage.removeItem(key);
+      } catch (e) {}
+      setRec(null);
+      try {
+        window.dispatchEvent(new CustomEvent('section-check-changed', {
+          detail: {
+            key,
+            status: ''
+          }
+        }));
+      } catch (e) {}
+      return;
+    }
+    const now = new Date().toISOString();
+    const next = Object.assign({}, rec || {}, {
+      status,
+      updatedAt: now,
+      lastSeen: now,
+      firstSeenAt: rec && rec.firstSeenAt || now,
+      reviewCount: (rec && rec.reviewCount || 0) + 1,
+      source: 'kikai-quickreview',
+      itemType: 'quick-review',
+      articleTitle: '機械 1分復習 — ' + pageTitle,
+      itemTitle: q.length > 44 ? q.slice(0, 44) + '…' : q,
+      articleUrl: 'denken3-kikai-wiki.html#' + pageId,
+      memo: status === 'understood' ? '即答できた' : '要復習'
+    });
+    try {
+      localStorage.setItem(key, JSON.stringify(next));
+    } catch (e) {}
+    setRec(next);
+    try {
+      window.dispatchEvent(new CustomEvent('section-check-changed', {
+        detail: {
+          key,
+          status
+        }
+      }));
+    } catch (e) {}
+  };
+  const st = rec ? rec.status : null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "qr-item"
+  }, children, /*#__PURE__*/React.createElement("div", {
+    className: "qr-row"
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: `qr-btn ok${st === 'understood' ? ' on' : ''}`,
+    "aria-pressed": st === 'understood',
+    onClick: () => mark('understood')
+  }, "✓ 即答できた"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: `qr-btn ng${st === 'review' ? ' on' : ''}`,
+    "aria-pressed": st === 'review',
+    onClick: () => mark('review')
+  }, "⚠ 要復習"), rec && rec.reviewCount > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "qr-meta"
+  }, rec.reviewCount, " 回目", rec.lastSeen ? '・' + String(rec.lastSeen).slice(0, 10) : '')));
+};
+
+/* 既存の <details> 群をそのまま包む。ページ側は要素を並べ替えずに済む。 */
+const QuickReview = ({
+  pageId,
+  pageTitle,
+  children
+}) => {
+  const items = React.Children.toArray(children).filter(Boolean);
+  const done = items.filter(el => {
+    try {
+      return !!localStorage.getItem(`denken_check::kikai_${pageId}::quickreview::${kikaiTrapHash(qrSummaryText(el))}`);
+    } catch (e) {
+      return false;
+    }
+  }).length;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "qr-wrap"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "qr-head"
+  }, /*#__PURE__*/React.createElement("strong", null, "1分復習"), /*#__PURE__*/React.createElement("span", {
+    className: "qr-meta"
+  }, "答えを開く前に、必ず自分で言ってみる。⚠ を押した問題は", /*#__PURE__*/React.createElement("strong", null, "間違いノート"), "に集まる。"), done > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "qr-meta"
+  }, "（記録済み ", done, "/", items.length, "）")), items.map((el, i) => /*#__PURE__*/React.createElement(QuickReviewItem, {
+    key: i,
+    pageId: pageId,
+    pageTitle: pageTitle,
+    q: qrSummaryText(el)
+  }, el)));
+};
+
 /* ---- TrapTable: よくあるひっかけ（混同ペアを○✕で先に判定させる） ----
 
    柱3「混同ペアを潰す」の実装。法規Wiki hoki-components.jsx の TrapTable を
@@ -10344,6 +10532,9 @@ const InductionMachinePage = ({
   className: "h-num"
 }, "9."), "1分復習（即答チェック）"), /*#__PURE__*/React.createElement("div", {
   className: "box"
+}, /*#__PURE__*/React.createElement(QuickReview, {
+  pageId: "induction-machine",
+  pageTitle: "1.2 三相誘導電動機"
 }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期速度 N_s の式は？（4極・50Hz では？）"), "N_s = 120f/p（120×50/4 = ", /*#__PURE__*/React.createElement("strong", null, "1500 min⁻¹"), "）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "滑り s の定義は？"), "s = (N_s − N) / N_s（電動機域は 0 < s < 1）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "回転子（二次）周波数 f₂ は？"), "f₂ = s · f₁（滑り×一次周波数）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "二次入力 P₂ の電力配分比は？"), "P₂ : P_c2 : P_m = ", /*#__PURE__*/React.createElement("strong", null, "1 : s : (1−s)"), "（二次銅損は s 倍、機械出力は (1−s) 倍）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Y-Δ 始動で始動電流・トルクは全電圧始動の何倍？"), /*#__PURE__*/React.createElement("strong", null, "1/3"), "（始動電流・始動トルクともに 1/3）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "「二次抵抗を k 倍にすると同一トルクの滑りも k 倍」と「トルクは滑りに比例」— 厳密なのはどちら？"), /*#__PURE__*/React.createElement("strong", null, "前者（比例推移）だけが厳密"), "。厳密式は ", /*#__PURE__*/React.createElement(Eq, {
   tex: "r_2'"
 }), " と ", /*#__PURE__*/React.createElement(Eq, {
@@ -10360,7 +10551,7 @@ const InductionMachinePage = ({
   tex: "T \\propto V_1^2 s"
 }), " より ", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
   tex: "1/0.81 = 1.23"
-}), " 倍"), "。同期速度は電圧で変わらないので、動くのは滑りだけ（3.0 % → 3.7 %）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "停動滑り s_m の式は？停動トルクに入らない量は？"), "s_m = r₂′/√(r₁² + (x₁+x₂′)²)。", /*#__PURE__*/React.createElement("strong", null, "T_max に r₂′ は入らない"), "（二次抵抗は山の位置だけを動かす）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "等価回路の定数を決める3つの測定と、それぞれ何が分かるか？"), /*#__PURE__*/React.createElement("strong", null, "無負荷試験"), "（鉄損・励磁回路 r₀, x₀）／", /*#__PURE__*/React.createElement("strong", null, "拘束試験"), "（銅損・r₁+r₂′・x₁+x₂′）／", /*#__PURE__*/React.createElement("strong", null, "一次抵抗測定"), "（r₁ を分離）。円線図はこの3つから描く"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "制動法3種と、それぞれ滑りはどの領域？"), /*#__PURE__*/React.createElement("strong", null, "回生"), ": s < 0（同期速度より速い・電源へ返す）／", /*#__PURE__*/React.createElement("strong", null, "発電"), ": 直流励磁（熱）／", /*#__PURE__*/React.createElement("strong", null, "逆相（プラッギング）"), ": s ≈ 2、2線入替（熱・止まったら切る）")), /*#__PURE__*/React.createElement(SectionCheck, {
+}), " 倍"), "。同期速度は電圧で変わらないので、動くのは滑りだけ（3.0 % → 3.7 %）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "停動滑り s_m の式は？停動トルクに入らない量は？"), "s_m = r₂′/√(r₁² + (x₁+x₂′)²)。", /*#__PURE__*/React.createElement("strong", null, "T_max に r₂′ は入らない"), "（二次抵抗は山の位置だけを動かす）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "等価回路の定数を決める3つの測定と、それぞれ何が分かるか？"), /*#__PURE__*/React.createElement("strong", null, "無負荷試験"), "（鉄損・励磁回路 r₀, x₀）／", /*#__PURE__*/React.createElement("strong", null, "拘束試験"), "（銅損・r₁+r₂′・x₁+x₂′）／", /*#__PURE__*/React.createElement("strong", null, "一次抵抗測定"), "（r₁ を分離）。円線図はこの3つから描く"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "制動法3種と、それぞれ滑りはどの領域？"), /*#__PURE__*/React.createElement("strong", null, "回生"), ": s < 0（同期速度より速い・電源へ返す）／", /*#__PURE__*/React.createElement("strong", null, "発電"), ": 直流励磁（熱）／", /*#__PURE__*/React.createElement("strong", null, "逆相（プラッギング）"), ": s ≈ 2、2線入替（熱・止まったら切る）"))), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "induction-machine",
   sectionId: "quick-review"
 }), /*#__PURE__*/React.createElement(TrapTable, {
@@ -11839,19 +12030,62 @@ const DCMachinePage = ({
   tex: "p,\\ Z,\\ a"
 }), " が与えられていなければ ", /*#__PURE__*/React.createElement(Eq, {
   tex: "K"
-}), " は出せない"), "（ただし ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "a"
-}), " は「波巻なら ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "a = 2"
-}), "、重ね巻なら ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "a = p"
-}), "」と巻き方の語から読み替える。問題文は数値でなく巻き方で与えることが多い）。", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+}), " は出せない"), "。", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
   tex: "B,\\ \\ell,\\ D,\\ n"
 }), " だけが与えられている問題は、", /*#__PURE__*/React.createElement(Eq, {
   tex: "E = K\\phi N"
 }), " ではなく ", /*#__PURE__*/React.createElement(Eq, {
   tex: "e = B\\ell v"
 }), " で解け"), "という合図である。 どちらの式を使うかは、与えられた量を見れば1秒で決まる。"), /*#__PURE__*/React.createElement(Box, {
+  kind: "mistake",
+  label: "並列回路数 a は「巻線法」で決まる — 極数 p と混同すると答えが2倍・半分になる"
+}, /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "0 0 8px"
+  }
+}, "問題文にある", /*#__PURE__*/React.createElement("strong", null, "「重ね巻」「波巻」の一語が ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "a"
+}), " を指定している"), "。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, /*#__PURE__*/React.createElement(Eq, {
+  tex: "a"
+}), " は数値で与えられるとは限らない"), "。極数 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "p"
+}), " から決めるのでもない。"), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data-table"
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "巻線法"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "並列回路数 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "a"
+})), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "直列導体数"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "重ね巻"), /*#__PURE__*/React.createElement("br", null), "（並列巻）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "a = p"
+}), /*#__PURE__*/React.createElement("br", null), "極数と同じ"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z/p"
+}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "波巻"), /*#__PURE__*/React.createElement("br", null), "（直列巻）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "a = 2"
+}), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "極数によらず常に 2")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z/2"
+})))))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, "ブラシ数も連動する。重ね巻は", /*#__PURE__*/React.createElement("strong", null, "極数と同数"), "、波巻は", /*#__PURE__*/React.createElement("strong", null, "2本"), "（正負1対）。 並列路の多い重ね巻は", /*#__PURE__*/React.createElement("strong", null, "低電圧・大電流"), "機に、直列導体の多い波巻は", /*#__PURE__*/React.createElement("strong", null, "高電圧・小電流"), "機に向く。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, "❌ 4極で波巻なのに a=4 としてしまう → ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "E"
+}), " が正解の半分になる。", /*#__PURE__*/React.createElement("br", null), "✅ ", /*#__PURE__*/React.createElement("strong", null, "波巻は極数がいくつでも ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "a=2"
+})), "。4極でも6極でも直列導体数は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "Z/2"
+}), " のまま。")), /*#__PURE__*/React.createElement(Box, {
   kind: "example",
   label: "例題 1.1.1（導体1本 → 1巻き）"
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 磁極数 2 の直流発電機がある。電機子の直径 ", /*#__PURE__*/React.createElement(Eq, {
@@ -11916,7 +12150,13 @@ const DCMachinePage = ({
   tex: "K"
 }), " は ", /*#__PURE__*/React.createElement(Eq, {
   tex: "p,Z,a"
-}), " が無いと出せない")), /*#__PURE__*/React.createElement(SectionCheck, {
+}), " が無いと出せない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "並列回路数 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "a"
+}), " は何で決まるか？"), /*#__PURE__*/React.createElement("strong", null, "巻線法"), "。重ね巻は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "a=p"
+}), "（極数と同じ）／波巻は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "a=2"
+}), "（極数によらず常に2）")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "dc-machine",
   sectionId: "emf-blv"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -12679,7 +12919,10 @@ const DCMachinePage = ({
   className: "h-num"
 }, "12."), "1分復習（即答チェック）"), /*#__PURE__*/React.createElement("div", {
   className: "box"
-}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直流機の誘導起電力 E とトルク T の式は？"), "E = K·φ·N／T = K'·φ·I_a（トルクは磁束×電機子電流）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直流電動機の端子電圧 V と E の関係は？"), "V = E + I_a·R_a（発電機は V = E − I_a·R_a）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直巻電動機を無負荷運転してはいけない理由は？"), "軽負荷で I_a が小さくなり磁束 φ が減少 → E = KφN を保つため N が発散（過速度で破壊）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直巻式の特徴と代表用途は？"), "始動トルク大・無負荷で過速度。電車・クレーン"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "定格以上の高速度域で使う速度制御は？"), "界磁制御（弱め界磁＝磁束 φ を弱める）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "回転速度 N の式は？ 電圧を上げる・磁束を弱める、それぞれ速度はどうなる？"), "N = (V − I_a·R_a)/(Kφ)。", /*#__PURE__*/React.createElement("strong", null, "電圧を上げれば速く・磁束を弱めれば速く"), "（φ は分母）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "E·I_a は何を表すか？ トルクとの関係は？"), /*#__PURE__*/React.createElement("strong", null, "機械出力"), "。P_m = E·I_a = ωT（ω = 2πN/60）。ここから「E と I_a → トルク」が出せる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "始動時に大電流が流れる理由は？ 対策は？"), "N = 0 なので ", /*#__PURE__*/React.createElement("strong", null, "E = 0"), "、I_a = V/R_a で定格の10〜20倍。", /*#__PURE__*/React.createElement("strong", null, "始動抵抗"), "を直列に入れ、加速につれ段階的に短絡する"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "電気制動3種と、電力の行き先は？"), /*#__PURE__*/React.createElement("strong", null, "回生"), "＝電源へ返す／", /*#__PURE__*/React.createElement("strong", null, "発電（抵抗）"), "＝抵抗で熱／", /*#__PURE__*/React.createElement("strong", null, "逆転（プラッギング）"), "＝熱・止まったら切る"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直流電動機を逆転させるには何を逆にするか？"), "電機子電流", /*#__PURE__*/React.createElement("strong", null, "か"), "界磁電流の", /*#__PURE__*/React.createElement("strong", null, "どちらか一方"), "。両方逆にすると元に戻る"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "分巻と直巻でトルク特性はどう違うか？"), "分巻（φ 一定）は ", /*#__PURE__*/React.createElement("strong", null, "T ∝ I_a"), "、直巻（φ ∝ I_a）は ", /*#__PURE__*/React.createElement("strong", null, "T ∝ I_a²"), "。ただし直巻も飽和域では 1乗に近づく"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "補極と補償巻線の役割の違いは？"), "補極=整流中の導体の起電力を打ち消し整流改善／補償巻線=磁極片に埋め込み電機子反作用そのものを打ち消す（どちらも電機子回路と直列）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "導体1本の起電力と、1巻きコイルの起電力は？"), "e₁ = Blv／1巻きは有効導体2本なので 2Blv。周速度は v = πDn/60（直径・毎分→毎秒）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "分巻発電機が自力で電圧を立ち上げる仕組みは？"), "残留磁束が種火 → 界磁電流 → 磁束増 → 電圧上昇の正帰還。磁気飽和して界磁抵抗線と交わる点で確定"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直巻発電機の電圧が安定するのはどちらの領域か？"), "磁気飽和している（負荷電流が大きい）領域。不飽和域は φ∝I で電圧が急変する"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "交流整流子電動機が交流でも同じ向きに回るのはなぜか？"), "直巻なので磁束と電機子電流がともに逆になる。T ∝ I² で常に正"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "交流整流子電動機で界磁鉄心を積層にする理由と、回転速度は？"), "磁束が交番してうず電流損（∝板厚²）が出るため積層／回転速度は高速。交直両用のものをユニバーサルモータという"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ブラシレス DC モータは何を半導体で置き換えたか？"), "ブラシと整流子による機械的な整流。切り替えは回転子の位置検出で行う（整流子・ブラシは無い）")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, /*#__PURE__*/React.createElement(QuickReview, {
+  pageId: "dc-machine",
+  pageTitle: "1.1 直流機"
+}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直流機の誘導起電力 E とトルク T の式は？"), "E = K·φ·N／T = K'·φ·I_a（トルクは磁束×電機子電流）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直流電動機の端子電圧 V と E の関係は？"), "V = E + I_a·R_a（発電機は V = E − I_a·R_a）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直巻電動機を無負荷運転してはいけない理由は？"), "軽負荷で I_a が小さくなり磁束 φ が減少 → E = KφN を保つため N が発散（過速度で破壊）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直巻式の特徴と代表用途は？"), "始動トルク大・無負荷で過速度。電車・クレーン"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "定格以上の高速度域で使う速度制御は？"), "界磁制御（弱め界磁＝磁束 φ を弱める）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "回転速度 N の式は？ 電圧を上げる・磁束を弱める、それぞれ速度はどうなる？"), "N = (V − I_a·R_a)/(Kφ)。", /*#__PURE__*/React.createElement("strong", null, "電圧を上げれば速く・磁束を弱めれば速く"), "（φ は分母）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "E·I_a は何を表すか？ トルクとの関係は？"), /*#__PURE__*/React.createElement("strong", null, "機械出力"), "。P_m = E·I_a = ωT（ω = 2πN/60）。ここから「E と I_a → トルク」が出せる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "始動時に大電流が流れる理由は？ 対策は？"), "N = 0 なので ", /*#__PURE__*/React.createElement("strong", null, "E = 0"), "、I_a = V/R_a で定格の10〜20倍。", /*#__PURE__*/React.createElement("strong", null, "始動抵抗"), "を直列に入れ、加速につれ段階的に短絡する"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "電気制動3種と、電力の行き先は？"), /*#__PURE__*/React.createElement("strong", null, "回生"), "＝電源へ返す／", /*#__PURE__*/React.createElement("strong", null, "発電（抵抗）"), "＝抵抗で熱／", /*#__PURE__*/React.createElement("strong", null, "逆転（プラッギング）"), "＝熱・止まったら切る"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直流電動機を逆転させるには何を逆にするか？"), "電機子電流", /*#__PURE__*/React.createElement("strong", null, "か"), "界磁電流の", /*#__PURE__*/React.createElement("strong", null, "どちらか一方"), "。両方逆にすると元に戻る"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "分巻と直巻でトルク特性はどう違うか？"), "分巻（φ 一定）は ", /*#__PURE__*/React.createElement("strong", null, "T ∝ I_a"), "、直巻（φ ∝ I_a）は ", /*#__PURE__*/React.createElement("strong", null, "T ∝ I_a²"), "。ただし直巻も飽和域では 1乗に近づく"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "補極と補償巻線の役割の違いは？"), "補極=整流中の導体の起電力を打ち消し整流改善／補償巻線=磁極片に埋め込み電機子反作用そのものを打ち消す（どちらも電機子回路と直列）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "導体1本の起電力と、1巻きコイルの起電力は？"), "e₁ = Blv／1巻きは有効導体2本なので 2Blv。周速度は v = πDn/60（直径・毎分→毎秒）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "分巻発電機が自力で電圧を立ち上げる仕組みは？"), "残留磁束が種火 → 界磁電流 → 磁束増 → 電圧上昇の正帰還。磁気飽和して界磁抵抗線と交わる点で確定"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直巻発電機の電圧が安定するのはどちらの領域か？"), "磁気飽和している（負荷電流が大きい）領域。不飽和域は φ∝I で電圧が急変する"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "交流整流子電動機が交流でも同じ向きに回るのはなぜか？"), "直巻なので磁束と電機子電流がともに逆になる。T ∝ I² で常に正"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "交流整流子電動機で界磁鉄心を積層にする理由と、回転速度は？"), "磁束が交番してうず電流損（∝板厚²）が出るため積層／回転速度は高速。交直両用のものをユニバーサルモータという"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ブラシレス DC モータは何を半導体で置き換えたか？"), "ブラシと整流子による機械的な整流。切り替えは回転子の位置検出で行う（整流子・ブラシは無い）"))), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "dc-machine",
   sectionId: "quick-review"
 }), /*#__PURE__*/React.createElement(SectionCheckSummary, {
@@ -15981,7 +16224,10 @@ const SynchronousPage = ({
   className: "h-num"
 }, "9."), "1分復習（即答チェック）"), /*#__PURE__*/React.createElement("div", {
   className: "box"
-}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期機の同期速度と滑りは？"), "N_s = 120f/p。同期運転中は滑りゼロ（誘導機と異なり同期速度で回る）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "電機子反作用（同期発電機）：遅れ／進み力率の作用は？"), "発電機では遅れ=減磁・電圧低下／進み=増磁・電圧上昇／力率1=交差磁化。同期電動機では逆（遅れ=増磁・進み=減磁）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "V カーブの底点は何力率？"), "力率1（電機子電流が最小の点）。左側=不足励磁で遅れ・右側=過励磁で進み力率"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "巻線係数は何の積か？ 分布巻・短節巻で起電力は増えるか減るか？"), "k_w = k_d（分布係数）× k_p（短節係数）。", /*#__PURE__*/React.createElement("strong", null, "どちらも1未満なので起電力は減る"), "。得られるのは正弦波に近い波形と高調波の低減"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期発電機の電圧変動率の定義は？ 負になることはあるか？"), "ε = (V₀ − V_n)/V_n × 100（V₀ は界磁と速度をそのままに無負荷にしたときの端子電圧）。", /*#__PURE__*/React.createElement("strong", null, "進み力率の負荷では負になりうる")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期調相機を過励磁にすると何と同じ働きか？"), /*#__PURE__*/React.createElement("strong", null, "進相コンデンサ"), "（不足励磁なら分路リアクトル）。界磁電流で連続的に両方向へ調整できるのが取り柄"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期電動機に始動トルクが無いのはなぜか？"), "回転磁界が半周期ごとに N/S を入れ替えるので、静止した界磁極が受けるトルクの向きが反転し、", /*#__PURE__*/React.createElement("strong", null, "1周期の平均がゼロ"), "になるから"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "乱調の原因を4つ挙げよ。対策は？"), "原動機トルクの脈動／負荷の急変／電源の電圧・周波数変動／", /*#__PURE__*/React.createElement("strong", null, "制動巻線の抵抗が大きい"), "（抵抗が大きいほど減衰トルクが小さい）。対策は制動巻線とはずみ車"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "脱出トルクとは？ 大きくするには？"), "δ = 90°（P_max = EV/x_s）で出力が頭打ちになり、超えると脱調する。その限界のトルク。", /*#__PURE__*/React.createElement("strong", null, "界磁を強めて E を大きくすれば増える")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "SPM と IPM の違いは？ リラクタンストルクが使えるのはどちら？"), "表面磁石形（SPM）は突極性が無くマグネットトルクのみ。", /*#__PURE__*/React.createElement("strong", null, "埋込磁石形（IPM）"), "は突極性があり", /*#__PURE__*/React.createElement("strong", null, "リラクタンストルクも足して"), "使える。高速回転にも有利"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "短絡比 K_s は？大きいと何が良い？"), "K_s = I_f0 / I_fs ≈ 1 / x_s[p.u.]。大きいほど安定度が高く電圧変動が小さい"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "円筒形同期機が最大出力となる内部相差角 δ は？"), "δ = π/2（P = (E·V / x_s)·sinδ）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期電動機の始動法は？なぜ自力始動できない？"), "始動トルクがないため、制動巻線による自己始動法／始動電動機法／低周波始動を使う。始動中は界磁巻線を抵抗経由で短絡"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "乱調とは？その対策は？"), "負荷急変で内部相差角 δ が振動する現象。制動巻線の誘導トルクで減衰させる（はずみ車は慣性で急変を緩和する補助）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "E = 4.44fNΦ の 4.44 の出どころは？"), "4.44 = (1/√2)·(π/2)·2·2 = √2·π。1/√2 は最大値→実効値の変換、π/2 は平均値 (2/π) の逆数、2 は「1周期で 2τ 進む」、2 は「1巻き＝導体2辺」。導体1本の起電力が 2.22fΦ、1相 N 巻＝導体 2N 本なので 2 倍して 4.44fNΦ"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "水車発電機とタービン発電機の回転子の形は？"), "水車＝低速・多極・突極形・大径短軸／タービン＝高速・少極・円筒形・小径長軸（高速では遠心力 F∝rω² で太くできない）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "並行運転で起電力の大きさに差があると何が流れるか？"), "横流（循環電流）。I_c = |E₁−E₂|/(2x_s)。ほぼ無効分で仕事をせず損失だけ増やす"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "短絡比から x_s[Ω] を求める式は？"), "x_s[p.u.] ≈ 1/K_s、Z_base = V_n²/S_n（線間電圧・三相容量のままで1相ぶん）。掛けて x_s[Ω]")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, /*#__PURE__*/React.createElement(QuickReview, {
+  pageId: "synchronous",
+  pageTitle: "1.3 同期機"
+}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期機の同期速度と滑りは？"), "N_s = 120f/p。同期運転中は滑りゼロ（誘導機と異なり同期速度で回る）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "電機子反作用（同期発電機）：遅れ／進み力率の作用は？"), "発電機では遅れ=減磁・電圧低下／進み=増磁・電圧上昇／力率1=交差磁化。同期電動機では逆（遅れ=増磁・進み=減磁）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "V カーブの底点は何力率？"), "力率1（電機子電流が最小の点）。左側=不足励磁で遅れ・右側=過励磁で進み力率"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "巻線係数は何の積か？ 分布巻・短節巻で起電力は増えるか減るか？"), "k_w = k_d（分布係数）× k_p（短節係数）。", /*#__PURE__*/React.createElement("strong", null, "どちらも1未満なので起電力は減る"), "。得られるのは正弦波に近い波形と高調波の低減"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期発電機の電圧変動率の定義は？ 負になることはあるか？"), "ε = (V₀ − V_n)/V_n × 100（V₀ は界磁と速度をそのままに無負荷にしたときの端子電圧）。", /*#__PURE__*/React.createElement("strong", null, "進み力率の負荷では負になりうる")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期調相機を過励磁にすると何と同じ働きか？"), /*#__PURE__*/React.createElement("strong", null, "進相コンデンサ"), "（不足励磁なら分路リアクトル）。界磁電流で連続的に両方向へ調整できるのが取り柄"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期電動機に始動トルクが無いのはなぜか？"), "回転磁界が半周期ごとに N/S を入れ替えるので、静止した界磁極が受けるトルクの向きが反転し、", /*#__PURE__*/React.createElement("strong", null, "1周期の平均がゼロ"), "になるから"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "乱調の原因を4つ挙げよ。対策は？"), "原動機トルクの脈動／負荷の急変／電源の電圧・周波数変動／", /*#__PURE__*/React.createElement("strong", null, "制動巻線の抵抗が大きい"), "（抵抗が大きいほど減衰トルクが小さい）。対策は制動巻線とはずみ車"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "脱出トルクとは？ 大きくするには？"), "δ = 90°（P_max = EV/x_s）で出力が頭打ちになり、超えると脱調する。その限界のトルク。", /*#__PURE__*/React.createElement("strong", null, "界磁を強めて E を大きくすれば増える")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "SPM と IPM の違いは？ リラクタンストルクが使えるのはどちら？"), "表面磁石形（SPM）は突極性が無くマグネットトルクのみ。", /*#__PURE__*/React.createElement("strong", null, "埋込磁石形（IPM）"), "は突極性があり", /*#__PURE__*/React.createElement("strong", null, "リラクタンストルクも足して"), "使える。高速回転にも有利"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "短絡比 K_s は？大きいと何が良い？"), "K_s = I_f0 / I_fs ≈ 1 / x_s[p.u.]。大きいほど安定度が高く電圧変動が小さい"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "円筒形同期機が最大出力となる内部相差角 δ は？"), "δ = π/2（P = (E·V / x_s)·sinδ）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期電動機の始動法は？なぜ自力始動できない？"), "始動トルクがないため、制動巻線による自己始動法／始動電動機法／低周波始動を使う。始動中は界磁巻線を抵抗経由で短絡"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "乱調とは？その対策は？"), "負荷急変で内部相差角 δ が振動する現象。制動巻線の誘導トルクで減衰させる（はずみ車は慣性で急変を緩和する補助）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "E = 4.44fNΦ の 4.44 の出どころは？"), "4.44 = (1/√2)·(π/2)·2·2 = √2·π。1/√2 は最大値→実効値の変換、π/2 は平均値 (2/π) の逆数、2 は「1周期で 2τ 進む」、2 は「1巻き＝導体2辺」。導体1本の起電力が 2.22fΦ、1相 N 巻＝導体 2N 本なので 2 倍して 4.44fNΦ"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "水車発電機とタービン発電機の回転子の形は？"), "水車＝低速・多極・突極形・大径短軸／タービン＝高速・少極・円筒形・小径長軸（高速では遠心力 F∝rω² で太くできない）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "並行運転で起電力の大きさに差があると何が流れるか？"), "横流（循環電流）。I_c = |E₁−E₂|/(2x_s)。ほぼ無効分で仕事をせず損失だけ増やす"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "短絡比から x_s[Ω] を求める式は？"), "x_s[p.u.] ≈ 1/K_s、Z_base = V_n²/S_n（線間電圧・三相容量のままで1相ぶん）。掛けて x_s[Ω]"))), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "synchronous",
   sectionId: "quick-review"
 }), /*#__PURE__*/React.createElement(TrapTable, {
@@ -19169,9 +19415,14 @@ const TransformerQuick = ({
       color: "var(--ink-soft)",
       margin: "12px 0 4px"
     }
-  }, label), items.map(it => /*#__PURE__*/React.createElement("details", {
+  }, label), items.map(it => s ? /*#__PURE__*/React.createElement("details", {
     key: it.q
-  }, /*#__PURE__*/React.createElement("summary", null, it.q), it.a)))));
+  }, /*#__PURE__*/React.createElement("summary", null, it.q), it.a) : /*#__PURE__*/React.createElement(QuickReviewItem, {
+    key: it.q,
+    pageId: "transformer",
+    pageTitle: "2.1 変圧器",
+    q: it.q
+  }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, it.q), it.a))))));
 };
 
 /* 図2.1.11 単巻変圧器の結線と電流。
@@ -30588,6 +30839,9 @@ const PowerElecPage = ({
   className: "h-num"
 }, "6."), "1分復習（即答チェック）"), /*#__PURE__*/React.createElement("div", {
   className: "box"
+}, /*#__PURE__*/React.createElement(QuickReview, {
+  pageId: "power-elec",
+  pageTitle: "2.2 パワーエレクトロニクス"
 }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "4変換（整流・チョッパ・インバータ・サイクロコンバータ）の入出力は？"), "整流=AC→DC／チョッパ=DC→DC／インバータ=DC→AC／サイクロコンバータ=AC→AC"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "単相全波・三相全波整流の直流平均値は？"), "単相全波 Vd ≈ 0.90·V／三相全波 Vd ≈ 1.35·V_L（V_L=線間電圧の実効値）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "降圧・昇圧チョッパの出力電圧は？（D=通流率）"), "降圧 Vo = D·Vi／昇圧 Vo = Vi/(1−D)"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "降圧チョッパでオフ期間に導通するのは？電源はどうなる？"), /*#__PURE__*/React.createElement("strong", null, "還流ダイオード"), "（", /*#__PURE__*/React.createElement(Eq, {
   tex: "D_F"
 }), "）。電源は", /*#__PURE__*/React.createElement("span", {
@@ -30626,7 +30880,7 @@ const PowerElecPage = ({
   className: "marker"
 }, "残りを「1割」と数えない"), "——実効値は二乗で合成されるので、高調波は", /*#__PURE__*/React.createElement("strong", null, "電力で 19%"), "・実効値で 0.435E・歪み率 ", /*#__PURE__*/React.createElement("strong", null, "48%")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "単独運転検出は何を検出する？受動的方式の弱点は？"), "停電そのものではなく", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "「停電したのに自分が運転を続けている状態」"), "。発電と負荷が釣り合うと電圧も周波数も動かず", /*#__PURE__*/React.createElement("strong", null, "受動的方式では検出できない（不感帯）"), "ので、", /*#__PURE__*/React.createElement("strong", null, "能動的方式を併用"), "する"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "三相インバータの基本構成は？"), "IGBT を 6 個ブリッジ接続し PWM で正弦波に近い出力を作る")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, "「停電したのに自分が運転を続けている状態」"), "。発電と負荷が釣り合うと電圧も周波数も動かず", /*#__PURE__*/React.createElement("strong", null, "受動的方式では検出できない（不感帯）"), "ので、", /*#__PURE__*/React.createElement("strong", null, "能動的方式を併用"), "する"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "三相インバータの基本構成は？"), "IGBT を 6 個ブリッジ接続し PWM で正弦波に近い出力を作る"))), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "power-elec",
   sectionId: "quick-review"
 }), /*#__PURE__*/React.createElement(TrapTable, {
@@ -34730,11 +34984,14 @@ const AutoControlPage = ({
   className: "h-num"
 }, "8."), "1分復習（即答チェック）"), /*#__PURE__*/React.createElement("div", {
   className: "box"
+}, /*#__PURE__*/React.createElement(QuickReview, {
+  pageId: "auto-control",
+  pageTitle: "3.1 自動制御"
 }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れ系の伝達関数は？"), "G(s) = K / (1 + Ts)（T:時定数, K:ゲイン。ステップ応答は指数的に立ち上がる）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "二次系の減衰係数 ζ による応答の違いは？"), "ζ<1 振動的／ζ=1 臨界制動／ζ>1 過制動"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ステップ応答の4指標は？ それぞれ何 % を測る？"), /*#__PURE__*/React.createElement("strong", null, "遅れ時間"), "=50%到達／", /*#__PURE__*/React.createElement("strong", null, "立上り時間"), "=10%→90%／", /*#__PURE__*/React.createElement("strong", null, "整定時間"), "=±2%(±5%)に収まる／", /*#__PURE__*/React.createElement("strong", null, "行過ぎ量"), "=最終値を超えた最大分"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れ系で、時定数 T のとき最終値の何 % に達するか？"), /*#__PURE__*/React.createElement("strong", null, "63.2 %"), "（1−e⁻¹）。50 % は遅れ時間 0.69T のほうで別物。整定時間（±2%）は約 4T"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ステップ入力に対する定常偏差の式は？ ゼロにするには？"), "e(∞) = 1/(1+K_p)（K_p は一巡伝達関数の直流ゲイン）。", /*#__PURE__*/React.createElement("strong", null, "積分要素 1/s を入れれば 0"), "。ゲインを上げるだけでは 0 にならない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "PID の伝達関数は？ T_i を小さくすると積分は強くなるか弱くなるか？"), "G_c = K_c(1 + 1/(T_i s) + T_D s)。", /*#__PURE__*/React.createElement("strong", null, "T_i は分母なので、小さくするほど積分動作は強い")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "I 動作と D 動作は安定度をどちらへ動かすか？"), "I は位相を −90° 回すので", /*#__PURE__*/React.createElement("strong", null, "下げる"), "／D は +90° 回すので", /*#__PURE__*/React.createElement("strong", null, "上げる"), "。D は偏差の変化率を見るので定常偏差には効かない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "シーケンス制御とフィードバック制御の決定的な違いは？"), "制御量を", /*#__PURE__*/React.createElement("strong", null, "測って戻すかどうか"), "。シーケンスは開ループで外乱に弱い。フィードバックは閉ループで偏差を打ち消す"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "自己保持回路とインタロックは、それぞれ何接点を使うか？"), /*#__PURE__*/React.createElement("strong", null, "自己保持"), "=自分の a 接点で保持（停止は b 接点を直列）／", /*#__PURE__*/React.createElement("strong", null, "インタロック"), "=相手の b 接点を入れて同時動作を防ぐ"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "フィードバック結合の閉ループ伝達関数は？一巡伝達関数との違いは？"), "閉ループは Y/R = G / (1 + GH)（単位フィードバックは H=1）。", /*#__PURE__*/React.createElement("strong", null, "負帰還なら分母は 1+GH・正帰還なら 1−GH"), " と加え合わせ点の符号と逆になる。", /*#__PURE__*/React.createElement("strong", null, "一巡伝達関数はループを1か所で切って一周した積 GH"), " で、閉ループの", /*#__PURE__*/React.createElement("strong", null, "分母に出てくるほう"), "。「一巡を求めよ」なら割り算はしない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直列・並列の合成は？ループが複数あるときの手順は？"), "直列＝", /*#__PURE__*/React.createElement("strong", null, "掛ける"), " G₁G₂／並列＝", /*#__PURE__*/React.createElement("strong", null, "足す"), " G₁±G₂。ループは", /*#__PURE__*/React.createElement("strong", null, "内側から1つずつ閉じて1ブロックに置き換える"), "。分母が「1 ＋ 各ループの一巡伝達関数の和」で止まるのは", /*#__PURE__*/React.createElement("strong", null, "どのループも互いに接触している"), "とき（入れ子・交差とも可）で、", /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "離れたループが2つあると積の項が加わる"), "（G₁H₁·G₂H₂）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "引出点・加え合わせ点をブロック G の後ろへ移すと？"), /*#__PURE__*/React.createElement("strong", null, "引出点は枝に 1/G"), "（取り出す側は割る）／", /*#__PURE__*/React.createElement("strong", null, "加え合わせ点は枝に G"), "（足す側は掛ける）。", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "2つで補正が逆"), "。", /*#__PURE__*/React.createElement("strong", null, "前へ移すときは4通りとも逆"), "になる。迷ったら移動後の式を書いて元と一致させる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "周波数伝達関数はどう作る？ゲインの dB は？"), "伝達関数の ", /*#__PURE__*/React.createElement("strong", null, "s を jω に置き換える"), "だけ。見るのは大きさ |G| と偏角 ∠G。dB は振幅比なので ", /*#__PURE__*/React.createElement("strong", null, "20log₁₀|G|"), "（電力比の 10log と混同しない）。|G|=1→0 dB、1/√2→−3 dB、1/10→−20 dB"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れの折れ点角周波数・そこでのゲインと位相は？"), "G=K/(1+jωT) の折れ点は ", /*#__PURE__*/React.createElement("strong", null, "ω=1/T"), "（時定数の逆数）。折れ点で ", /*#__PURE__*/React.createElement("strong", null, "−3 dB・−45°"), "。以降は ", /*#__PURE__*/React.createElement("strong", null, "−20 dB/dec"), " で下がり、位相は −90° へ漸近。周波数 [Hz] を聞かれたら f=ω/(2π)"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "RC・RL 回路の時定数は？"), "RC は ", /*#__PURE__*/React.createElement("strong", null, "掛ける"), "（T=CR）、RL は ", /*#__PURE__*/React.createElement("strong", null, "割る"), "（T=L/R）。次元で確かめられる（Ω×F=s、H/Ω=s）。伝達関数は「出力素子のインピーダンス ÷ 直列合計」の分圧で作る"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "負帰還をかけると直流ゲインと折れ点はどうなる？"), /*#__PURE__*/React.createElement("strong", null, "前向きが一次遅れ1段・フィードバックが定数 H のとき"), "、直流ゲインは ", /*#__PURE__*/React.createElement("strong", null, "1/(1+KH) 倍に下がり"), "、折れ点角周波数は ", /*#__PURE__*/React.createElement("strong", null, "(1+KH) 倍に上がる"), "（単位フィードバックなら H=1 で 1/(1+K)・(1+K) 倍）。帯域が広がる＝速応性が上がる。ゲインを捨てて帯域を買っており、", /*#__PURE__*/React.createElement("strong", null, "直流ゲイン×折れ点＝K/T は不変"), "（検算に使える）。前向きが二次以上ならこの形では言えない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "RLC 直列（出力＝C）の共振角周波数と共振時のゲインは？"), "分母 1−ω²LC+jωCR の", /*#__PURE__*/React.createElement("strong", null, "実部が 0"), " になる点で、", /*#__PURE__*/React.createElement("strong", null, "ω₀ = 1/√(LC)"), "（R は入らない）。そのとき |G| = 1/(ω₀CR) = ", /*#__PURE__*/React.createElement("strong", null, "√(L/C)/R"), " で ", /*#__PURE__*/React.createElement("strong", null, "1 を超えうる"), "、位相はちょうど −90°。共振", /*#__PURE__*/React.createElement("strong", null, "周波数"), " f₀ = ω₀/(2π) との取り違えに注意"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れ・積分要素のベクトル軌跡は？"), "一次遅れ K/(1+jωT)＝中心 (K/2, 0)・半径 K/2 の", /*#__PURE__*/React.createElement("strong", null, "下半円"), "（ω=0 で実軸の K、ω→∞ で原点）／積分 1/(jωT)＝", /*#__PURE__*/React.createElement("strong", null, "負の虚軸"), "（位相 −90° 一定）。選択肢は ω=0 の点と ω→∞ の向きの2点で絞れる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "3つの安定判別法は？"), "ラウス・フルビッツ（係数から代数判定）／ナイキスト（−1+j0 を囲むか）／ボード線図（ゲイン余裕・位相余裕）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "安定度の実用的な目安は？"), "位相余裕 30〜60°・ゲイン余裕 6 dB 以上"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "P・I・D 各動作の特徴は？"), "P=偏差に比例（一般に定常偏差が残る）／I=偏差を積分（定常偏差を除去）／D=変化率で先回り（速応性・減衰性を改善）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "フィードバック制御とシーケンス制御の違いは？"), "フィードバック=目標値と比較して訂正し続ける制御／シーケンス=あらかじめ定めた順序または条件に従い各段階を逐次進める制御（a接点・b接点・自己保持回路）")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, "2つで補正が逆"), "。", /*#__PURE__*/React.createElement("strong", null, "前へ移すときは4通りとも逆"), "になる。迷ったら移動後の式を書いて元と一致させる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "周波数伝達関数はどう作る？ゲインの dB は？"), "伝達関数の ", /*#__PURE__*/React.createElement("strong", null, "s を jω に置き換える"), "だけ。見るのは大きさ |G| と偏角 ∠G。dB は振幅比なので ", /*#__PURE__*/React.createElement("strong", null, "20log₁₀|G|"), "（電力比の 10log と混同しない）。|G|=1→0 dB、1/√2→−3 dB、1/10→−20 dB"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れの折れ点角周波数・そこでのゲインと位相は？"), "G=K/(1+jωT) の折れ点は ", /*#__PURE__*/React.createElement("strong", null, "ω=1/T"), "（時定数の逆数）。折れ点で ", /*#__PURE__*/React.createElement("strong", null, "−3 dB・−45°"), "。以降は ", /*#__PURE__*/React.createElement("strong", null, "−20 dB/dec"), " で下がり、位相は −90° へ漸近。周波数 [Hz] を聞かれたら f=ω/(2π)"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "RC・RL 回路の時定数は？"), "RC は ", /*#__PURE__*/React.createElement("strong", null, "掛ける"), "（T=CR）、RL は ", /*#__PURE__*/React.createElement("strong", null, "割る"), "（T=L/R）。次元で確かめられる（Ω×F=s、H/Ω=s）。伝達関数は「出力素子のインピーダンス ÷ 直列合計」の分圧で作る"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "負帰還をかけると直流ゲインと折れ点はどうなる？"), /*#__PURE__*/React.createElement("strong", null, "前向きが一次遅れ1段・フィードバックが定数 H のとき"), "、直流ゲインは ", /*#__PURE__*/React.createElement("strong", null, "1/(1+KH) 倍に下がり"), "、折れ点角周波数は ", /*#__PURE__*/React.createElement("strong", null, "(1+KH) 倍に上がる"), "（単位フィードバックなら H=1 で 1/(1+K)・(1+K) 倍）。帯域が広がる＝速応性が上がる。ゲインを捨てて帯域を買っており、", /*#__PURE__*/React.createElement("strong", null, "直流ゲイン×折れ点＝K/T は不変"), "（検算に使える）。前向きが二次以上ならこの形では言えない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "RLC 直列（出力＝C）の共振角周波数と共振時のゲインは？"), "分母 1−ω²LC+jωCR の", /*#__PURE__*/React.createElement("strong", null, "実部が 0"), " になる点で、", /*#__PURE__*/React.createElement("strong", null, "ω₀ = 1/√(LC)"), "（R は入らない）。そのとき |G| = 1/(ω₀CR) = ", /*#__PURE__*/React.createElement("strong", null, "√(L/C)/R"), " で ", /*#__PURE__*/React.createElement("strong", null, "1 を超えうる"), "、位相はちょうど −90°。共振", /*#__PURE__*/React.createElement("strong", null, "周波数"), " f₀ = ω₀/(2π) との取り違えに注意"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れ・積分要素のベクトル軌跡は？"), "一次遅れ K/(1+jωT)＝中心 (K/2, 0)・半径 K/2 の", /*#__PURE__*/React.createElement("strong", null, "下半円"), "（ω=0 で実軸の K、ω→∞ で原点）／積分 1/(jωT)＝", /*#__PURE__*/React.createElement("strong", null, "負の虚軸"), "（位相 −90° 一定）。選択肢は ω=0 の点と ω→∞ の向きの2点で絞れる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "3つの安定判別法は？"), "ラウス・フルビッツ（係数から代数判定）／ナイキスト（−1+j0 を囲むか）／ボード線図（ゲイン余裕・位相余裕）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "安定度の実用的な目安は？"), "位相余裕 30〜60°・ゲイン余裕 6 dB 以上"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "P・I・D 各動作の特徴は？"), "P=偏差に比例（一般に定常偏差が残る）／I=偏差を積分（定常偏差を除去）／D=変化率で先回り（速応性・減衰性を改善）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "フィードバック制御とシーケンス制御の違いは？"), "フィードバック=目標値と比較して訂正し続ける制御／シーケンス=あらかじめ定めた順序または条件に従い各段階を逐次進める制御（a接点・b接点・自己保持回路）"))), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "auto-control",
   sectionId: "quick-review"
 }), /*#__PURE__*/React.createElement(SectionCheckSummary, {
@@ -38688,6 +38945,9 @@ const InfoElecPage = ({
     heading: "1分復習（即答チェック）",
     body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       className: "box"
+    }, /*#__PURE__*/React.createElement(QuickReview, {
+      pageId: "info-elec",
+      pageTitle: "3.2 情報・電子回路"
     }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ド・モルガンの定理は？"), "A+B 全体の否定 = Āと B̄ の積／A·B 全体の否定 = Ā と B̄ の和（バーを分配すると + と · が入れ替わる）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "RS-FF の禁止入力は？JK-FF の J=K=1 は？"), "RS-FF は NOR 形（正論理入力）なら R=S=1 が禁止／NAND 形（負論理入力）なら両入力 0 が禁止。JK-FF の J=K=1 は反転動作で", /*#__PURE__*/React.createElement("strong", null, "禁止入力なし"), "——JK は RS に S=JQ̄・R=KQ を足したもので、", /*#__PURE__*/React.createElement("span", {
       className: "marker"
     }, "SR=JK(Q̄Q)=0 だから S と R が同時に 1 にならない")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "4種の FF は何が違う？T-FF は？"), "できる動作の違いだけ。", /*#__PURE__*/React.createElement("strong", null, "保持／セット／リセット／反転の4つ全部を持つのは JK だけ"), "（RS は反転できない・D は保持と反転ができない・T は保持と反転だけ）。", /*#__PURE__*/React.createElement("span", {
@@ -38756,7 +39016,7 @@ const InfoElecPage = ({
       className: "marker"
     }, "逆数なのは「1秒あたりの命令数」と t"), "（積がちょうど 1）で、", /*#__PURE__*/React.createElement("strong", null, "MIPS はそのまま逆数ではない"), "（MIPS × t = 10⁻⁶）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "r 進 n 桁で表せる範囲は？必要な桁数は？"), "0 〜 ", /*#__PURE__*/React.createElement("strong", null, "rⁿ − 1"), " の rⁿ 通り。", /*#__PURE__*/React.createElement("strong", null, "1 以上の整数"), " N を表すのに要る桁数は ", /*#__PURE__*/React.createElement("strong", null, "⌊log_r N⌋ + 1"), "。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
-    }, "255 は2進8桁だが 256 は9桁"), "——「−1」を落とすと境界で1桁ずれる")))
+    }, "255 は2進8桁だが 256 は9桁"), "——「−1」を落とすと境界で1桁ずれる"))))
   }, {
     id: "program-howto",
     heading: "プログラム問題の読み方（BASIC・C の2言語併記）",
@@ -39829,6 +40089,60 @@ const LightingPage = ({
   title: "照明",
   eyebrow: "4.1  LIGHTING",
   deck: "光束・光度・照度・輝度・光束発散度の単位系を理解することが第一歩。計算の主戦場は逆二乗の法則と余弦の法則（複数光源の重ね合わせを含む）で、そのうえで完全拡散面の M=πL と球形・直線光源の輝度を押さえる。",
+  conclusion: {
+    items: [{
+      t: "単位の並び",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, "光束 F [lm] → 光度 ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "I = F/\\omega"
+      }), " [cd] → 照度 [lx]（", /*#__PURE__*/React.createElement("strong", null, "受ける側"), "）／輝度 [cd/m²]（", /*#__PURE__*/React.createElement("strong", null, "光る面の見え方"), "）。", /*#__PURE__*/React.createElement("strong", null, "点光源からの照度は距離の2乗に反比例、輝度は距離によらない"), "（直線・面光源は逆二乗にならない）。")
+    }, {
+      t: "均等点光源",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, "全方向の立体角は 4π sr なので ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "I = F/(4\\pi)"
+      }), "。半球にしか出さないなら 2π で割る。", /*#__PURE__*/React.createElement("strong", null, "どれだけの立体角に出しているか"), "で分母が変わる。")
+    }, {
+      t: "2つの法則",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, "逆二乗 ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "E = I/r^2"
+      }), "（法線照度）に入射角余弦を掛けて水平面照度 ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "E_h = (I/r^2)\\cos\\theta"
+      }), "。", /*#__PURE__*/React.createElement("strong", null, "r は光源からその点までの斜め距離"), "で、真下までの高さではない。")
+    }, {
+      t: "完全拡散面",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+        tex: "M = \\pi L"
+      }), "（", /*#__PURE__*/React.createElement("strong", null, "π であって 2π ではない"), "）。反射面なら ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "M = \\rho E"
+      }), "。")
+    }, {
+      t: "ルーメン法",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+        tex: "E = FNUM/A"
+      }), "。ランプ光束 F・灯数 N・照明率 U・", /*#__PURE__*/React.createElement("strong", null, "保守率 M"), "（光束発散度の M とは", /*#__PURE__*/React.createElement("strong", null, "別物"), "・無次元）・面積 A。", /*#__PURE__*/React.createElement("strong", null, "U と M はどちらも1以下で分子"), "。")
+    }],
+    note: "台帳シェア5.5%。計算の主戦場は逆二乗と余弦で、単位の取り違えと cosθ の掛け忘れが失点源。"
+  },
+  traps: [{
+    wrong: "点光源から距離 r、入射角 θ の面の水平面照度は Eh = I/r² である",
+    correct: "Eh = (I/r²)·cosθ。法線照度に入射角余弦を掛ける。",
+    why: "cosθ を掛け忘れるのが定番。r は光源から「その点まで」の斜め距離であって、真下までの高さではない点にも注意。",
+    ev: "本ページ 2節 照明の法則／確認問題 k47"
+  }, {
+    wrong: "全光束 F の均等放射点光源の平均光度は I = F/(2π) である",
+    correct: "I = F/(4π)。全方向の立体角は 4π sr。",
+    why: "2π で割るのは半球にしか光を出さない光源の場合。「どれだけの立体角に出しているか」で分母が決まる。全光束 3000 lm なら I ≈ 239 cd。",
+    ev: "本ページ 1節 単位・2節 法則／確認問題 k48"
+  }, {
+    wrong: "照度は光源側の量、輝度は受照面側の量である",
+    correct: "逆。照度が受照面に入る光束の面密度 [lx]、輝度が光源面の単位投影面積あたりの光度 [cd/m²]。",
+    why: "照度は「入ってくる側」、輝度は「光っている面の見た目の明るさ」。輝度は遠ざかっても変わらないが、点光源からの照度は距離の2乗に反比例する。",
+    ev: "本ページ 1節 単位／確認問題 k49"
+  }, {
+    wrong: "完全拡散面では光束発散度と輝度の関係は M = 2πL である",
+    correct: "M = πL。",
+    why: "立体角の 2π（半球）と混同しやすいが、完全拡散面の積分では cos が入るため π になる。",
+    ev: "本ページ 3節「輝度と光束発散度 — 完全拡散面」"
+  }],
   prev: {
     id: "info-elec",
     title: "3.2 情報・電子回路"
@@ -40486,7 +40800,10 @@ const LightingPage = ({
     heading: "1分復習（即答チェック）",
     body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       className: "box"
-    }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "光束・光度・照度・輝度・光束発散度の単位は？"), "光束=lm（ルーメン）／光度=cd（カンデラ）／照度=lx（ルクス）／輝度=cd/m²／光束発散度=lm/m²（面から出ていく側）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "点光源・距離 r の面の照度（逆二乗の法則）は？"), "E = I/r²（垂直入射）。傾き θ なら E = I·cosθ/r²（余弦の法則）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "屋内照明の平均照度の式は？"), "E = F·N·U·M / A（N:灯具数, U:照明率, M:保守率, A:被照面積）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "均等放射の点光源の全光束は？平均光度は？"), "F = 4πI（全立体角 4π sr × 光度 I）。逆に全光束から平均光度は ", /*#__PURE__*/React.createElement("strong", null, "I = F/(4π)")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "光源が複数あるときの照度は？"), /*#__PURE__*/React.createElement("strong", null, "そのまま足す"), "（照度はスカラー）。同じ向きの面どうしに限る。対称配置なら1灯ぶん×灯数。四隅型の水平距離は", /*#__PURE__*/React.createElement("strong", null, "対角線の半分"), "（一辺の半分ではない）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "輝度の式は？球形光源では何で割る？"), "L = I/A'（A' は", /*#__PURE__*/React.createElement("strong", null, "見かけの投影面積"), "）。球なら投影は円なので ", /*#__PURE__*/React.createElement("strong", null, "πD²/4"), " で割る。表面積 πD² で割ると4倍小さい"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "完全拡散面の M と L の関係は？反射面では？"), /*#__PURE__*/React.createElement("strong", null, "M = πL"), "（4π ではない）。反射面は M = ρE なので ", /*#__PURE__*/React.createElement("strong", null, "L = ρE/π"), "。π を落とすと 3.14 倍ずれる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直管（円筒）光源の実面積と投影面積は？"), "実面積は側面 ", /*#__PURE__*/React.createElement("strong", null, "πdl"), "（M=F/A の分母）、真下から見た投影面積は長方形 ", /*#__PURE__*/React.createElement("strong", null, "d·l"), "（L=I/A' の分母）。", /*#__PURE__*/React.createElement("strong", null, "π が付くのは実面積だけ"), "。真下の光度は I⊥ = L·(dl) = ", /*#__PURE__*/React.createElement("strong", null, "F/π²"), " で寸法によらない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直下から外れた点の照度が最大になる高さは？"), "E_h = Ih/(h²+x²)^", 3 / 2, " を h で微分して ", /*#__PURE__*/React.createElement("strong", null, "h = x/√2"), "（そのとき E = 2I/(3√3x²) ≈ 0.385I/x²）。", /*#__PURE__*/React.createElement("strong", null, "真下（x=0）だけは山が無く単調に暗くなる"), "。低すぎると cosθ が小さくなってかえって暗い。高さを変える比の問題は I を消して h/(h²+x²)^", 3 / 2, " の比で解く"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "立体角の単位と、全立体角は？"), /*#__PURE__*/React.createElement("strong", null, "sr（ステラジアン）"), "。ω = S/r² で定義され", /*#__PURE__*/React.createElement("strong", null, "無次元"), "。全球で ", /*#__PURE__*/React.createElement("strong", null, "4π sr"), "（F = 4πI の 4π はこれ）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "照明率 U と保守率 M は何の割合か？"), /*#__PURE__*/React.createElement("strong", null, "U"), "=全光束のうち作業面に届く割合（配光・反射率・室指数で決まる）／", /*#__PURE__*/React.createElement("strong", null, "M"), "=ランプの光束低下と汚れによる経年の目減り（設計では 0.7 前後）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "記号 M が2つ出てくるのは？"), /*#__PURE__*/React.createElement("strong", null, "光束発散度"), " M [lm/m²]（M=F/A・πL・ρE）と", /*#__PURE__*/React.createElement("strong", null, "保守率"), " M（無次元、E=FNUM/A の中）。式のどこに出るかで見分ける"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "光束発散度 M の式と、照度 E との違いは？"), "M = F/A（A は", /*#__PURE__*/React.createElement("strong", null, "発光面の実面積"), "。球なら πD²、円筒なら側面 πdl）。単位は E と同じ lm/m² だが、", /*#__PURE__*/React.createElement("strong", null, "E は入ってくる光・M は出ていく光"))))
+    }, /*#__PURE__*/React.createElement(QuickReview, {
+      pageId: "lighting",
+      pageTitle: "4.1 照明"
+    }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "光束・光度・照度・輝度・光束発散度の単位は？"), "光束=lm（ルーメン）／光度=cd（カンデラ）／照度=lx（ルクス）／輝度=cd/m²／光束発散度=lm/m²（面から出ていく側）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "点光源・距離 r の面の照度（逆二乗の法則）は？"), "E = I/r²（垂直入射）。傾き θ なら E = I·cosθ/r²（余弦の法則）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "屋内照明の平均照度の式は？"), "E = F·N·U·M / A（N:灯具数, U:照明率, M:保守率, A:被照面積）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "均等放射の点光源の全光束は？平均光度は？"), "F = 4πI（全立体角 4π sr × 光度 I）。逆に全光束から平均光度は ", /*#__PURE__*/React.createElement("strong", null, "I = F/(4π)")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "光源が複数あるときの照度は？"), /*#__PURE__*/React.createElement("strong", null, "そのまま足す"), "（照度はスカラー）。同じ向きの面どうしに限る。対称配置なら1灯ぶん×灯数。四隅型の水平距離は", /*#__PURE__*/React.createElement("strong", null, "対角線の半分"), "（一辺の半分ではない）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "輝度の式は？球形光源では何で割る？"), "L = I/A'（A' は", /*#__PURE__*/React.createElement("strong", null, "見かけの投影面積"), "）。球なら投影は円なので ", /*#__PURE__*/React.createElement("strong", null, "πD²/4"), " で割る。表面積 πD² で割ると4倍小さい"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "完全拡散面の M と L の関係は？反射面では？"), /*#__PURE__*/React.createElement("strong", null, "M = πL"), "（4π ではない）。反射面は M = ρE なので ", /*#__PURE__*/React.createElement("strong", null, "L = ρE/π"), "。π を落とすと 3.14 倍ずれる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直管（円筒）光源の実面積と投影面積は？"), "実面積は側面 ", /*#__PURE__*/React.createElement("strong", null, "πdl"), "（M=F/A の分母）、真下から見た投影面積は長方形 ", /*#__PURE__*/React.createElement("strong", null, "d·l"), "（L=I/A' の分母）。", /*#__PURE__*/React.createElement("strong", null, "π が付くのは実面積だけ"), "。真下の光度は I⊥ = L·(dl) = ", /*#__PURE__*/React.createElement("strong", null, "F/π²"), " で寸法によらない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直下から外れた点の照度が最大になる高さは？"), "E_h = Ih/(h²+x²)^", 3 / 2, " を h で微分して ", /*#__PURE__*/React.createElement("strong", null, "h = x/√2"), "（そのとき E = 2I/(3√3x²) ≈ 0.385I/x²）。", /*#__PURE__*/React.createElement("strong", null, "真下（x=0）だけは山が無く単調に暗くなる"), "。低すぎると cosθ が小さくなってかえって暗い。高さを変える比の問題は I を消して h/(h²+x²)^", 3 / 2, " の比で解く"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "立体角の単位と、全立体角は？"), /*#__PURE__*/React.createElement("strong", null, "sr（ステラジアン）"), "。ω = S/r² で定義され", /*#__PURE__*/React.createElement("strong", null, "無次元"), "。全球で ", /*#__PURE__*/React.createElement("strong", null, "4π sr"), "（F = 4πI の 4π はこれ）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "照明率 U と保守率 M は何の割合か？"), /*#__PURE__*/React.createElement("strong", null, "U"), "=全光束のうち作業面に届く割合（配光・反射率・室指数で決まる）／", /*#__PURE__*/React.createElement("strong", null, "M"), "=ランプの光束低下と汚れによる経年の目減り（設計では 0.7 前後）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "記号 M が2つ出てくるのは？"), /*#__PURE__*/React.createElement("strong", null, "光束発散度"), " M [lm/m²]（M=F/A・πL・ρE）と", /*#__PURE__*/React.createElement("strong", null, "保守率"), " M（無次元、E=FNUM/A の中）。式のどこに出るかで見分ける"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "光束発散度 M の式と、照度 E との違いは？"), "M = F/A（A は", /*#__PURE__*/React.createElement("strong", null, "発光面の実面積"), "。球なら πD²、円筒なら側面 πdl）。単位は E と同じ lm/m² だが、", /*#__PURE__*/React.createElement("strong", null, "E は入ってくる光・M は出ていく光")))))
   }]
 });
 const HeatPage = ({
@@ -40496,6 +40813,57 @@ const HeatPage = ({
   title: "電熱",
   eyebrow: "4.2  ELECTRIC HEATING",
   deck: "ジュール熱・顕熱と潜熱・熱回路（熱伝導・熱抵抗・放射）・ヒートポンプ・電気加熱方式（抵抗加熱・赤外線加熱・誘導加熱・誘電加熱・マイクロ波）を扱う。",
+  conclusion: {
+    items: [{
+      t: "顕熱と潜熱",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, "温度が変わるのが", /*#__PURE__*/React.createElement("strong", null, "顕熱"), " ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "Q = c m \\Delta T"
+      }), "、状態が変わるのが", /*#__PURE__*/React.createElement("strong", null, "潜熱"), " ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "Q = mL"
+      }), "。", /*#__PURE__*/React.createElement("strong", null, "潜熱に ΔT は掛けない"), "。", /*#__PURE__*/React.createElement("strong", null, "20 ℃の水を沸騰させる場合"), "、潜熱は顕熱の約7倍（2260 対 335 kJ/kg）で、乾燥計算では潜熱が支配的。")
+    }, {
+      t: "質量の仕分け",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, "乾燥の計算は", /*#__PURE__*/React.createElement("strong", null, "3つの質量を先に分ける"), "。水の顕熱＝", /*#__PURE__*/React.createElement("strong", null, "最初にあった水の全量"), "／蒸発の潜熱＝", /*#__PURE__*/React.createElement("strong", null, "蒸発する分だけ"), "／乾物の顕熱＝全体−水（", /*#__PURE__*/React.createElement("strong", null, "比熱が「完全乾燥状態の値」で与えられたとき"), "。湿り比熱なら全質量で1本にする）。")
+    }, {
+      t: "所要時間",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+        tex: "t = Q/(P\\eta)"
+      }), "。", /*#__PURE__*/React.createElement("strong", null, "効率は分母"), "（悪いほど長くかかる）。[kJ]÷[kW] は秒。時間で答えるなら 3600 で割る。")
+    }, {
+      t: "熱回路",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, "定常の伝導・対流"), "は電気回路と同じ形。温度差が電圧、熱流が電流、", /*#__PURE__*/React.createElement("strong", null, "熱抵抗"), "が抵抗。直列なら足す。", /*#__PURE__*/React.createElement("strong", null, "放射は T⁴ の差に比例するので熱抵抗に括れない"), "。")
+    }, {
+      t: "誘導と誘電",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, "誘導加熱＝導体"), "（渦電流・表皮効果で表面に集中）、", /*#__PURE__*/React.createElement("strong", null, "誘電加熱＝絶縁体"), "（誘電体損で内部から）。加熱する相手が逆。")
+    }, {
+      t: "ヒートポンプ",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, "暖房 ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "\\mathrm{COP}_h = Q_h/W = 1 + \\mathrm{COP}_c"
+      }), "。汲み上げたぶんを足すので", /*#__PURE__*/React.createElement("strong", null, "暖房 COP は必ず1を超える"), "（電気ヒータの COP=1 相当より効率がよい）。冷房 COP にはこの下限が無い。")
+    }],
+    note: "台帳シェア6.8%でBランク最上位。計算は乾燥（顕熱＋潜熱）と所要時間が主戦場。"
+  },
+  traps: [{
+    wrong: "100 ℃の水を蒸発させる熱は Q = mLΔT で求める",
+    correct: "Q = mL。状態変化は温度が変わらないので ΔT を掛けない。",
+    why: "温度が変わるのが顕熱 Q = cmΔT、変わらないのが潜熱 Q = mL。水では潜熱（約2260 kJ/kg）が顕熱（20→100 ℃で約335 kJ/kg）の約7倍あり、乾燥では潜熱の項が支配的になる。",
+    ev: "本ページ 2節 顕熱と潜熱 公式04・05／確認問題 k50"
+  }, {
+    wrong: "含水量 70 kg を含む木材 100 kg の水を 5 kg まで減らすとき、「水の顕熱」は蒸発する 65 kg で計算する",
+    correct: "70 kg（最初にあった水の全量）。残る 5 kg も加熱温度まで温められる。",
+    why: "65 kg を掛けるのは「蒸発の潜熱」のほうで対象が違う。乾物の顕熱は 100 − 70 = 30 kg。3つの質量を最初に仕分けてから式に入れる。",
+    ev: "本ページ 2節「水分を含む物体を乾燥させる」3項の表／確認問題 k51"
+  }, {
+    wrong: "必要熱量 Q、消費電力 P、効率 η のときの所要時間は t = Q·η/P である",
+    correct: "t = Q/(P·η)。効率は分母。",
+    why: "効率が悪いほど時間は長くかかる。η を分子に置くと「効率が悪いほど早く終わる」というあり得ない向きになるので、その場で気付ける。",
+    ev: "本ページ 2節 公式06／確認問題 k52"
+  }, {
+    wrong: "誘導加熱は絶縁体を、誘電加熱は導体を加熱する方式である",
+    correct: "逆。誘導加熱が導体（渦電流）、誘電加熱が絶縁体（誘電体損）。",
+    why: "名前と相手が入れ替わって覚えられやすい。誘導は電磁誘導で渦電流を流すので導体が要る。誘電は分子の振動なので絶縁体（誘電体）に効く。",
+    ev: "本ページ 5節「誘導加熱と誘電加熱 — 周波数で何が変わるか」"
+  }],
   prev: {
     id: "lighting",
     title: "4.1 照明"
@@ -41126,7 +41494,10 @@ const HeatPage = ({
     heading: "1分復習（即答チェック）",
     body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       className: "box"
-    }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ジュール熱の式は？"), "Q = I²Rt = Pt [J]"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "温度上昇の式は？"), "Q = c·m·ΔT（c:比熱, m:質量, ΔT:温度差）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "IH調理器・焼入れの加熱方式は？電子レンジは？塗装の乾燥は？"), "IH・焼入れ=誘導加熱（渦電流）／電子レンジ=マイクロ波加熱（誘電加熱の一種・水分子（双極子）の向きが交番電界に追従しきれず誘電損失として発熱。共鳴ではない）／塗装の乾燥・焼付け=", /*#__PURE__*/React.createElement("strong", null, "赤外線加熱"), "（放射）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ヒートポンプの COP はなぜ 1 を超える？"), "電力で熱を作るのではなく外気から汲み上げて運ぶため。COP = Q/W（実用機で3〜6）。加熱COP = 冷房COP + 1（同一運転状態での関係）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "顕熱と潜熱の式は？潜熱の値は？"), "顕熱 Q = cmΔT（温度が変わる）／潜熱 Q = mL（温度は変わらず状態が変わる。ΔT を掛けない）。水の", /*#__PURE__*/React.createElement("strong", null, "蒸発"), "潜熱 ≈ 2.26×10³ kJ/kg、氷の", /*#__PURE__*/React.createElement("strong", null, "融解"), "潜熱 ≈ 334 kJ/kg。氷→水蒸気は融解→顕熱→蒸発の3段"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "含水物体の乾燥に要る熱の3項は？"), "①乾物の顕熱（全質量−含水量）②水の顕熱（", /*#__PURE__*/React.createElement("strong", null, "最初の水の全量"), "）③蒸発の潜熱（", /*#__PURE__*/React.createElement("strong", null, "減った水の分"), "）。効率込みの時間は t = Q/(Pη)"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "熱と電気の対応は？熱抵抗の式は？"), "温度差↔電圧／熱流[W]↔電流／熱抵抗[K/W]↔抵抗／熱容量 cm↔静電容量（効くのは", /*#__PURE__*/React.createElement("strong", null, "過渡"), "だけ）。平板は R_th = l/(λA)、定常なら ΔT = Φ·R_th、多層壁は直列で足す。熱伝達率 h が与えられれば", /*#__PURE__*/React.createElement("strong", null, "対流も R = 1/(hA)"), " として直列に足せる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "「単位面積当たりの熱損失」と言われたら？"), "熱流密度 q = λ·ΔT/l [W/m²] を使う（面積 A を持ち込まない）。ΔT/l が", /*#__PURE__*/React.createElement("strong", null, "温度こう配"), " [K/m]"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "放射で熱流を求める式は？"), "Φ = εσA(T₁⁴−T₂⁴)。σ = 5.67×10⁻⁸ W/(m²·K⁴)、ε は放射率（黒体で1）、2面間は形態係数 F を掛ける。", /*#__PURE__*/React.createElement("strong", null, "T は絶対温度 [K]"), "（℃ のまま4乗しない）。(T₁−T₂)⁴ ではなく", /*#__PURE__*/React.createElement("strong", null, "4乗してから引く"), "。放射だけは熱抵抗で括れない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "誘導加熱と誘電加熱、周波数を上げると何が起きる？"), "誘導加熱＝浸透深さ δ ∝ 1/√f で", /*#__PURE__*/React.createElement("strong", null, "発熱が表面に集中"), "（表面焼入れは高周波・溶解は低周波）。ただし発熱量自体は √f で", /*#__PURE__*/React.createElement("strong", null, "増える"), "ので「発熱しなくなる」ではない。誘電加熱＝発熱 P ∝ f·E²·εr·tanδ で", /*#__PURE__*/React.createElement("strong", null, "周波数に比例・電界の2乗に比例"), "。対象は誘導＝導体のみ／誘電＝絶縁物"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "熱量 [kJ] を電力量 [kWh] に直すには？COP は掛けるか割るか？"), /*#__PURE__*/React.createElement("strong", null, "[kWh] で答えるときだけ"), " 3600 で割る（1 kWh = 1 kW × 3600 s = 3600 kJ）。[s]・[kJ]・[W] で答える設問では割らない。COP は", /*#__PURE__*/React.createElement("strong", null, "向きで決まる"), " —— 熱量 Q から電力量 W を出すなら", /*#__PURE__*/React.createElement("strong", null, "割る"), "（W = Q/COP）、電力量 W から得られる熱量を出すなら", /*#__PURE__*/React.createElement("strong", null, "掛ける"), "（Q = COP·W）")))
+    }, /*#__PURE__*/React.createElement(QuickReview, {
+      pageId: "heat",
+      pageTitle: "4.2 電熱"
+    }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ジュール熱の式は？"), "Q = I²Rt = Pt [J]"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "温度上昇の式は？"), "Q = c·m·ΔT（c:比熱, m:質量, ΔT:温度差）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "IH調理器・焼入れの加熱方式は？電子レンジは？塗装の乾燥は？"), "IH・焼入れ=誘導加熱（渦電流）／電子レンジ=マイクロ波加熱（誘電加熱の一種・水分子（双極子）の向きが交番電界に追従しきれず誘電損失として発熱。共鳴ではない）／塗装の乾燥・焼付け=", /*#__PURE__*/React.createElement("strong", null, "赤外線加熱"), "（放射）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ヒートポンプの COP はなぜ 1 を超える？"), "電力で熱を作るのではなく外気から汲み上げて運ぶため。COP = Q/W（実用機で3〜6）。加熱COP = 冷房COP + 1（同一運転状態での関係）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "顕熱と潜熱の式は？潜熱の値は？"), "顕熱 Q = cmΔT（温度が変わる）／潜熱 Q = mL（温度は変わらず状態が変わる。ΔT を掛けない）。水の", /*#__PURE__*/React.createElement("strong", null, "蒸発"), "潜熱 ≈ 2.26×10³ kJ/kg、氷の", /*#__PURE__*/React.createElement("strong", null, "融解"), "潜熱 ≈ 334 kJ/kg。氷→水蒸気は融解→顕熱→蒸発の3段"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "含水物体の乾燥に要る熱の3項は？"), "①乾物の顕熱（全質量−含水量）②水の顕熱（", /*#__PURE__*/React.createElement("strong", null, "最初の水の全量"), "）③蒸発の潜熱（", /*#__PURE__*/React.createElement("strong", null, "減った水の分"), "）。効率込みの時間は t = Q/(Pη)"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "熱と電気の対応は？熱抵抗の式は？"), "温度差↔電圧／熱流[W]↔電流／熱抵抗[K/W]↔抵抗／熱容量 cm↔静電容量（効くのは", /*#__PURE__*/React.createElement("strong", null, "過渡"), "だけ）。平板は R_th = l/(λA)、定常なら ΔT = Φ·R_th、多層壁は直列で足す。熱伝達率 h が与えられれば", /*#__PURE__*/React.createElement("strong", null, "対流も R = 1/(hA)"), " として直列に足せる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "「単位面積当たりの熱損失」と言われたら？"), "熱流密度 q = λ·ΔT/l [W/m²] を使う（面積 A を持ち込まない）。ΔT/l が", /*#__PURE__*/React.createElement("strong", null, "温度こう配"), " [K/m]"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "放射で熱流を求める式は？"), "Φ = εσA(T₁⁴−T₂⁴)。σ = 5.67×10⁻⁸ W/(m²·K⁴)、ε は放射率（黒体で1）、2面間は形態係数 F を掛ける。", /*#__PURE__*/React.createElement("strong", null, "T は絶対温度 [K]"), "（℃ のまま4乗しない）。(T₁−T₂)⁴ ではなく", /*#__PURE__*/React.createElement("strong", null, "4乗してから引く"), "。放射だけは熱抵抗で括れない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "誘導加熱と誘電加熱、周波数を上げると何が起きる？"), "誘導加熱＝浸透深さ δ ∝ 1/√f で", /*#__PURE__*/React.createElement("strong", null, "発熱が表面に集中"), "（表面焼入れは高周波・溶解は低周波）。ただし発熱量自体は √f で", /*#__PURE__*/React.createElement("strong", null, "増える"), "ので「発熱しなくなる」ではない。誘電加熱＝発熱 P ∝ f·E²·εr·tanδ で", /*#__PURE__*/React.createElement("strong", null, "周波数に比例・電界の2乗に比例"), "。対象は誘導＝導体のみ／誘電＝絶縁物"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "熱量 [kJ] を電力量 [kWh] に直すには？COP は掛けるか割るか？"), /*#__PURE__*/React.createElement("strong", null, "[kWh] で答えるときだけ"), " 3600 で割る（1 kWh = 1 kW × 3600 s = 3600 kJ）。[s]・[kJ]・[W] で答える設問では割らない。COP は", /*#__PURE__*/React.createElement("strong", null, "向きで決まる"), " —— 熱量 Q から電力量 W を出すなら", /*#__PURE__*/React.createElement("strong", null, "割る"), "（W = Q/COP）、電力量 W から得られる熱量を出すなら", /*#__PURE__*/React.createElement("strong", null, "掛ける"), "（Q = COP·W）"))))
   }]
 });
 const ChemPage = ({
@@ -41423,6 +41794,62 @@ const DriveMechPage = ({
   title: "電動機応用",
   eyebrow: "4.4  MOTOR APPLICATIONS",
   deck: "所要動力（ポンプ・送風機・巻上機・エレベータ）・減速機・負荷の特性分類・はずみ車効果。実用に近い計算問題が出る。",
+  conclusion: {
+    items: [{
+      t: "巻上げ動力",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+        tex: "P = mgv/\\eta"
+      }), "。", /*#__PURE__*/React.createElement("strong", null, "効率は分母"), "。入力のほうが出力より大きい、で向きを確かめる。")
+    }, {
+      t: "ポンプ・送風機",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+        tex: "P = \\dfrac{\\rho g Q H}{\\eta}"
+      }), "（ポンプ）／", /*#__PURE__*/React.createElement(Eq, {
+        tex: "P = \\dfrac{Q\\,\\Delta p}{\\eta}"
+      }), "（送風機）。ここでも効率は分母。", /*#__PURE__*/React.createElement("strong", null, "Q は [m³/s]"), "（[m³/min] で与えられたら 60 で割る）・H は", /*#__PURE__*/React.createElement("strong", null, "全揚程"), " [m]・Δp は", /*#__PURE__*/React.createElement("strong", null, "全圧"), " [Pa]。")
+    }, {
+      t: "はずみ車",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+        tex: "J = GD^2/4"
+      }), "。", /*#__PURE__*/React.createElement(Eq, {
+        tex: "GD^2"
+      }), " は", /*#__PURE__*/React.createElement("strong", null, "慣性モーメントの4倍と定義された量"), "なので、与えられたら 4 で割る。蓄えるエネルギーは ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "E = \\tfrac{1}{2}J\\omega^2"
+      }), " で、", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Eq, {
+        tex: "\\omega = 2\\pi N/60"
+      }), " [rad/s] に直してから使う"), "（N [min⁻¹] のまま入れると約91倍ずれる）。")
+    }, {
+      t: "負荷の分類",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, "定トルク"), "（クレーン・コンベヤ）／", /*#__PURE__*/React.createElement("strong", null, "定出力"), "（巻取り）／", /*#__PURE__*/React.createElement("strong", null, "二乗低減トルク"), "（ポンプ・送風機）。二乗低減は動力が回転速度の3乗で効くので、可変速で省エネが大きい。")
+    }, {
+      t: "減速機",
+      d: /*#__PURE__*/React.createElement(React.Fragment, null, "減速比 i（入力/出力・1より大）なら 電動機側 N, T → ", /*#__PURE__*/React.createElement("strong", null, "負荷側は N/i、i·T·η"), "。逆に", /*#__PURE__*/React.createElement("strong", null, "負荷トルクから電動機の所要トルクを出すなら ", /*#__PURE__*/React.createElement(Eq, {
+        tex: "T_M = T_L/(i\\eta)"
+      })), "。η を掛ける側を取り違えると η² ずれる。", /*#__PURE__*/React.createElement("strong", null, "速度が下がった分だけトルクが上がる"), "（損失を無視すれば動力が保たれる）。")
+    }],
+    note: "台帳シェア5.0%。効率をどちらに置くかと GD² の 4 で落とす。"
+  },
+  traps: [{
+    wrong: "質量 1000 kg を 0.5 m/s で巻き上げるとき、機械効率 90% なら必要な電動機出力は約 4.4 kW である",
+    correct: "約 5.4 kW。P = mgv/η = 1000×9.8×0.5/0.9 ≈ 5.44 kW。",
+    why: "4.4 kW は効率を掛けてしまった値、4.9 kW は効率で割り忘れた値で、どちらも選択肢に置かれる。効率は必ず分母（入力のほうが大きいから）。",
+    ev: "本ページ 1節 所要動力／確認問題 k53"
+  }, {
+    wrong: "はずみ車効果 GD² と慣性モーメント J は J = GD² の関係にある",
+    correct: "J = GD²/4。",
+    why: "GD² は「慣性モーメントの4倍」と定義された量（回転半径を D/2 と置いて J = m(D/2)²）。だから GD² が与えられたら 4 で割る。幾何から導くものではない（一様円板なら J = mD²/8 で値が違う）。蓄えられる運動エネルギー E = (1/2)Jω² でもこの J を使う。",
+    ev: "本ページ 3節 はずみ車／確認問題 k54"
+  }, {
+    wrong: "減速比 i（入力回転速度 ÷ 出力回転速度、1より大）の減速機を介すと、負荷側の回転速度は i·N になる",
+    correct: "N/i。減速なので遅くなる。そのぶん軸トルクが i·T·η に増える。",
+    why: "動力＝トルク×角速度なので、速度が 1/i になればトルクは i 倍（損失のぶん η を掛ける）。なお問題文が減速比を「1/10」の分数で与えることもあるので、i がどちら向きの比かを最初に確かめる。",
+    ev: "本ページ 1節 所要動力・2節 負荷の種類／確認問題 k55"
+  }, {
+    wrong: "ポンプや送風機は定トルク負荷なので、回転速度を下げても動力はあまり減らない",
+    correct: "二乗低減トルク負荷。動力は回転速度の3乗で効くので、少し下げるだけで大きく減る。",
+    why: "トルクが回転速度の2乗、動力＝トルク×回転速度なので3乗。ここが可変速駆動で省エネになる理由。定トルクはクレーン・コンベヤ、定出力は巻取り。",
+    ev: "本ページ 2節 負荷の特性分類"
+  }],
   prev: {
     id: "chemistry",
     title: "4.3 電気化学"
@@ -41869,7 +42296,10 @@ const DriveMechPage = ({
     heading: "1分復習（即答チェック）",
     body: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       className: "box"
-    }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプの所要動力の式は？"), "P = ρgQH/η（Q:流量[m³/s], H:全揚程[m]）。効率 η は分母＝入力は出力より大きい"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプ・送風機の負荷特性は？"), "二乗低減トルク負荷（T ∝ N²）。回転速度を下げると軸動力は N³ で減る＝インバータ省エネの根拠"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車が貯えるエネルギーは？"), "W = ½Jω²（J:慣性モーメント, ω:角速度）。負荷急変時に出し入れして速度変動を平滑化"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車を静止から回し上げる時間は？"), "回転の運動方程式 T = J·dω/dt から、加速トルク T が一定なら ", /*#__PURE__*/React.createElement("strong", null, "t = J(ω₂−ω₁)/T"), "。ここでの T は", /*#__PURE__*/React.createElement("strong", null, "電動機トルク − 負荷トルク"), "の余り。直線運動の F = ma と同じ形"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車効果 GD² から慣性モーメント J を出すには？"), /*#__PURE__*/React.createElement("strong", null, "4 で割る"), "（J = GD²/4）。半径 D/2 の2乗が効くため。速度変化で出し入れするエネルギーは W = ½J(ω₁²−ω₂²)＝", /*#__PURE__*/React.createElement("strong", null, "2乗の差"), "で、差の2乗ではない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "釣合いおもり付きエレベータの所要出力は？"), "P = (m−m_c)gv/η。電動機が受け持つのは", /*#__PURE__*/React.createElement("strong", null, "かご＋荷とおもりの差"), "だけ。m をそのまま入れると大きく外す。力行／回生は ", /*#__PURE__*/React.createElement("strong", null, "m と m_c の大小"), "で決まり、m > m_c なら上昇＝力行・下降＝回生、空かごなど m < m_c では逆転する"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "減速比 i の減速機を通すと速度・トルク・動力は？"), "速度 1/i 倍・トルク i 倍・", /*#__PURE__*/React.createElement("strong", null, "動力は不変"), "（損失無視）。両側で P = Tω を出して一致するかが検算。負荷慣性のモータ軸換算は 1/i²"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプの H は何を指す？流量の単位は？"), "H は", /*#__PURE__*/React.createElement("strong", null, "全揚程 ＝ 実揚程 ＋ 損失水頭"), "。流量が [m³/min] なら 60 で割って [m³/s] にしてから式に入れる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "トルク曲線の交点はいつ安定運転できる？"), "速度が微増したとき「電動機トルク − 負荷トルク」が", /*#__PURE__*/React.createElement("strong", null, "負"), "になれば安定（減速して戻る）。式では ", /*#__PURE__*/React.createElement("strong", null, "dT_L/dN > dT_M/dN"), "（符号込みの傾きの大小）。定トルク負荷なら停動トルクより左側は不安定だが、二乗低減トルク負荷では左側でも安定になりうるので「左側は必ず不安定」と覚えない。", /*#__PURE__*/React.createElement("strong", null, "交点であることは必要条件で、十分条件ではない"))))
+    }, /*#__PURE__*/React.createElement(QuickReview, {
+      pageId: "drive-mech",
+      pageTitle: "4.4 電動機応用"
+    }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプの所要動力の式は？"), "P = ρgQH/η（Q:流量[m³/s], H:全揚程[m]）。効率 η は分母＝入力は出力より大きい"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプ・送風機の負荷特性は？"), "二乗低減トルク負荷（T ∝ N²）。回転速度を下げると軸動力は N³ で減る＝インバータ省エネの根拠"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車が貯えるエネルギーは？"), "W = ½Jω²（J:慣性モーメント, ω:角速度）。負荷急変時に出し入れして速度変動を平滑化"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車を静止から回し上げる時間は？"), "回転の運動方程式 T = J·dω/dt から、加速トルク T が一定なら ", /*#__PURE__*/React.createElement("strong", null, "t = J(ω₂−ω₁)/T"), "。ここでの T は", /*#__PURE__*/React.createElement("strong", null, "電動機トルク − 負荷トルク"), "の余り。直線運動の F = ma と同じ形"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車効果 GD² から慣性モーメント J を出すには？"), /*#__PURE__*/React.createElement("strong", null, "4 で割る"), "（J = GD²/4）。半径 D/2 の2乗が効くため。速度変化で出し入れするエネルギーは W = ½J(ω₁²−ω₂²)＝", /*#__PURE__*/React.createElement("strong", null, "2乗の差"), "で、差の2乗ではない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "釣合いおもり付きエレベータの所要出力は？"), "P = (m−m_c)gv/η。電動機が受け持つのは", /*#__PURE__*/React.createElement("strong", null, "かご＋荷とおもりの差"), "だけ。m をそのまま入れると大きく外す。力行／回生は ", /*#__PURE__*/React.createElement("strong", null, "m と m_c の大小"), "で決まり、m > m_c なら上昇＝力行・下降＝回生、空かごなど m < m_c では逆転する"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "減速比 i の減速機を通すと速度・トルク・動力は？"), "速度 1/i 倍・トルク i 倍・", /*#__PURE__*/React.createElement("strong", null, "動力は不変"), "（損失無視）。両側で P = Tω を出して一致するかが検算。負荷慣性のモータ軸換算は 1/i²"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプの H は何を指す？流量の単位は？"), "H は", /*#__PURE__*/React.createElement("strong", null, "全揚程 ＝ 実揚程 ＋ 損失水頭"), "。流量が [m³/min] なら 60 で割って [m³/s] にしてから式に入れる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "トルク曲線の交点はいつ安定運転できる？"), "速度が微増したとき「電動機トルク − 負荷トルク」が", /*#__PURE__*/React.createElement("strong", null, "負"), "になれば安定（減速して戻る）。式では ", /*#__PURE__*/React.createElement("strong", null, "dT_L/dN > dT_M/dN"), "（符号込みの傾きの大小）。定トルク負荷なら停動トルクより左側は不安定だが、二乗低減トルク負荷では左側でも安定になりうるので「左側は必ず不安定」と覚えない。", /*#__PURE__*/React.createElement("strong", null, "交点であることは必要条件で、十分条件ではない")))))
   }]
 });
 Object.assign(window, {
