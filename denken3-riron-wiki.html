@@ -14806,6 +14806,7 @@ const CoilCrossingFieldSim = () => {
   );
 
   const eOK = predE === "zero";        // 正解：完全内部では e=0
+  const skipped = !predE && !predDir;  // 「予測をとばす」で開いた（○✗ を付けない）
   const dOK = predDir === "opposite";  // 正解：進入と退出で逆向き
 
   // Φ-x グラフ（台形）の頂点
@@ -14861,22 +14862,24 @@ const CoilCrossingFieldSim = () => {
               background: (!predE || !predDir) ? "var(--rule)" : "var(--accent)",
               color: (!predE || !predDir) ? "var(--ink-mute)" : "var(--bg)",
             }}>答え合わせして動かす</button>
-          <button type="button" onClick={() => { setPredE("zero"); setPredDir("opposite"); setRevealed(true); }}
+          {/* とばしたときは正解を代入しない。代入すると予測していないのに ○ が出て自己評価を狂わせる */}
+          <button type="button" onClick={() => { setPredE(null); setPredDir(null); setRevealed(true); }}
             style={{ marginLeft: 12, fontSize: 11.5, background: "none", border: "none", color: "var(--ink-mute)", textDecoration: "underline", cursor: "pointer" }}>予測をとばす</button>
         </div>
       )}
 
       {revealed && (
-        <div style={{ background: (eOK && dOK) ? "var(--ok-soft)" : "var(--warn-soft)", border: "1px solid var(--rule)", borderRadius: 6, padding: "10px 12px", marginBottom: 12, fontSize: 12.5 }}>
+        <div style={{ background: skipped ? "var(--bg)" : (eOK && dOK) ? "var(--ok-soft)" : "var(--warn-soft)", border: "1px solid var(--rule)", borderRadius: 6, padding: "10px 12px", marginBottom: 12, fontSize: 12.5 }}>
+          {skipped && <div style={{ marginBottom: 4, color: "var(--ink-soft)" }}>予測をとばしたので ○✗ は付けない。正解だけ示す。</div>}
           <div style={{ marginBottom: 4 }}>
-            <strong style={{ color: eOK ? "var(--ok)" : "var(--danger)" }}>{eOK ? "○" : "✗"} 予測①</strong>：正解は<strong>ゼロになる</strong>
-            {!eOK && <span style={{ color: "var(--ink-soft)" }}>（誤モデル：<strong>磁束があれば起電力／Φ が大きいほど e が大きい</strong>。起電力を作るのは Φ ではなく Φ の<strong>変化</strong>）</span>}
+            {skipped ? <strong style={{ color: "var(--ink-soft)" }}>— 予測①</strong> : <strong style={{ color: eOK ? "var(--ok)" : "var(--danger)" }}>{eOK ? "○" : "✗"} 予測①</strong>}：正解は<strong>ゼロになる</strong>
+            {(skipped || !eOK) && <span style={{ color: "var(--ink-soft)" }}>（誤モデル：<strong>磁束があれば起電力／Φ が大きいほど e が大きい</strong>。起電力を作るのは Φ ではなく Φ の<strong>変化</strong>）</span>}
           </div>
           <div>
-            <strong style={{ color: dOK ? "var(--ok)" : "var(--danger)" }}>{dOK ? "○" : "✗"} 予測②</strong>：正解は<strong>逆向き</strong>
-            {!dOK && <span style={{ color: "var(--ink-soft)" }}>（誤モデル：<strong>レンツのマイナス＝常に B と逆向き</strong>。決めるのは B の向きではなく Φ が<strong>増えているか減っているか</strong>）</span>}
+            {skipped ? <strong style={{ color: "var(--ink-soft)" }}>— 予測②</strong> : <strong style={{ color: dOK ? "var(--ok)" : "var(--danger)" }}>{dOK ? "○" : "✗"} 予測②</strong>}：正解は<strong>逆向き</strong>
+            {(skipped || !dOK) && <span style={{ color: "var(--ink-soft)" }}>（誤モデル：<strong>レンツのマイナス＝常に B と逆向き</strong>。決めるのは B の向きではなく Φ が<strong>増えているか減っているか</strong>）</span>}
           </div>
-          {(!eOK || !dOK) && <div style={{ marginTop: 6, color: "var(--ink-soft)" }}>外した項目は、このセクションの自己評価で <strong>△（要確認）</strong> を押して弱点に残すこと。</div>}
+          {!skipped && (!eOK || !dOK) && <div style={{ marginTop: 6, color: "var(--ink-soft)" }}>外した項目は、このセクションの自己評価で <strong>△（要確認）</strong> を押して弱点に残すこと。</div>}
         </div>
       )}
 
@@ -15844,6 +15847,9 @@ const ParallelWireFieldProbe = () => {
   const [predZone, setPredZone] = useState(null);
   const [predForce, setPredForce] = useState(null);
   const [revealed, setRevealed] = useState(false);
+  // 答え合わせした瞬間の条件と正解。○✗ はこれで判定する（答え合わせ後に電流スライダーを
+  // 動かすと零点の位置が変わり、正しかった予測が ✗ に化けて △ 記録へ誘導してしまうため）
+  const [judged, setJudged] = useState(null);
 
   const MU0 = 4 * Math.PI * 1e-7;
   const s = same ? 1 : -1;                    // B の電流向き（+1: A と同方向）
@@ -15857,7 +15863,8 @@ const ParallelWireFieldProbe = () => {
   const denom = IA + s * IB;
   const zeroX = Math.abs(denom) < 1e-9 ? null : (IA * d) / denom;
   const zeroZone = zeroX === null ? "none" : (zeroX < 0 ? "outA" : (zeroX > d ? "outB" : "between"));
-  const zoneLabel = { between: "2導体の間", outA: "A の外側", outB: "B の外側", none: "存在しない（無限遠）" }[zeroZone];
+  const ZONE_LABEL = { between: "2導体の間", outA: "A の外側", outB: "B の外側", none: "存在しない（無限遠）" };
+  const zoneLabel = ZONE_LABEL[zeroZone];
   const forceKind = same ? "attract" : "repel";
   const forceLabel = same ? "吸引（引き合う）" : "反発（押し合う）";
   const FperL = (MU0 * IA * IB) / (2 * Math.PI * d);   // [N/m]
@@ -15946,11 +15953,16 @@ const ParallelWireFieldProbe = () => {
     return <line x1={x} y1={AXY} x2={x} y2={y2} stroke={color} strokeWidth={width} markerEnd={`url(#${mid})`} />;
   };
 
-  const resetGate = () => { setPredZone(null); setPredForce(null); setRevealed(false); };
+  const resetGate = () => { setPredZone(null); setPredForce(null); setJudged(null); setRevealed(false); };
+  const reveal = () => {
+    setJudged({ zone: zeroZone, force: forceKind, forceLabel, cond: `${same ? "同方向" : "逆方向"}・A=${IA} A・B=${IB} A` });
+    setRevealed(true);
+  };
   const flipDir = (v) => { setSame(v); resetGate(); };
 
-  const zoneOK = predZone === zeroZone;
-  const forceOK = predForce === forceKind;
+  const zoneOK = judged !== null && predZone === judged.zone;
+  const forceOK = judged !== null && predForce === judged.force;
+  const skipped = !predZone && !predForce;   // 「予測をとばす」で開いた（○✗ を付けない）
 
   return (
     <figure style={{ margin: "14px 0", background: "var(--bg-elev)", borderRadius: "8px", padding: "14px 16px", border: "1px solid var(--rule)" }}>
@@ -15981,14 +15993,14 @@ const ParallelWireFieldProbe = () => {
             <PredBtn val="repel" cur={predForce} set={setPredForce}>反発</PredBtn>
             <PredBtn val="zero" cur={predForce} set={setPredForce}>働かない</PredBtn>
           </div>
-          <button type="button" disabled={!predZone || !predForce} onClick={() => setRevealed(true)}
+          <button type="button" disabled={!predZone || !predForce} onClick={reveal}
             style={{
               padding: "8px 16px", fontSize: 13, fontWeight: 700, borderRadius: 6,
               border: "none", cursor: (!predZone || !predForce) ? "not-allowed" : "pointer",
               background: (!predZone || !predForce) ? "var(--rule)" : "var(--accent)",
               color: (!predZone || !predForce) ? "var(--ink-mute)" : "var(--bg)",
             }}>答え合わせして動かす</button>
-          <button type="button" onClick={() => { setPredZone(zeroZone); setPredForce(forceKind); setRevealed(true); }}
+          <button type="button" onClick={() => { setPredZone(null); setPredForce(null); reveal(); }}
             style={{ marginLeft: 12, fontSize: 11.5, background: "none", border: "none", color: "var(--ink-mute)", textDecoration: "underline", cursor: "pointer" }}>
             予測をとばす
           </button>
@@ -15996,18 +16008,26 @@ const ParallelWireFieldProbe = () => {
       )}
 
       {revealed && (
-        <div style={{ background: (zoneOK && forceOK) ? "var(--ok-soft, var(--bg))" : "var(--warn-soft, var(--bg))", border: "1px solid var(--rule)", borderRadius: 6, padding: "10px 12px", marginBottom: 12, fontSize: 12.5 }}>
+        <div style={{ background: skipped ? "var(--bg)" : (zoneOK && forceOK) ? "var(--ok-soft, var(--bg))" : "var(--warn-soft, var(--bg))", border: "1px solid var(--rule)", borderRadius: 6, padding: "10px 12px", marginBottom: 12, fontSize: 12.5 }}>
+          <div style={{ marginBottom: 4, color: "var(--ink-soft)" }}>
+            {skipped ? "予測をとばしたので ○✗ は付けない。" : ""}答え合わせした時の条件（{judged && judged.cond}）での正解：
+          </div>
           <div style={{ marginBottom: 4 }}>
-            <strong style={{ color: zoneOK ? "var(--ok)" : "var(--danger)" }}>{zoneOK ? "○" : "✗"} 予測①</strong>
-            ：正解は<strong>{zoneLabel}</strong>
-            {!zoneOK && <span style={{ color: "var(--ink-soft)" }}>（誤モデル：<strong>零点は常に中点・常に間にある</strong>）</span>}
+            {skipped ? <strong style={{ color: "var(--ink-soft)" }}>— 予測①</strong> : <strong style={{ color: zoneOK ? "var(--ok)" : "var(--danger)" }}>{zoneOK ? "○" : "✗"} 予測①</strong>}
+            ：正解は<strong>{judged && ZONE_LABEL[judged.zone]}</strong>
+            {(skipped || !zoneOK) && <span style={{ color: "var(--ink-soft)" }}>（誤モデル：<strong>零点は常に中点・常に間にある</strong>）</span>}
           </div>
           <div>
-            <strong style={{ color: forceOK ? "var(--ok)" : "var(--danger)" }}>{forceOK ? "○" : "✗"} 予測②</strong>
-            ：正解は<strong>{forceLabel}</strong>
-            {!forceOK && <span style={{ color: "var(--ink-soft)" }}>（誤モデル：<strong>観測点の磁界がゼロなら力もゼロ</strong>／同方向と逆方向の取り違え）</span>}
+            {skipped ? <strong style={{ color: "var(--ink-soft)" }}>— 予測②</strong> : <strong style={{ color: forceOK ? "var(--ok)" : "var(--danger)" }}>{forceOK ? "○" : "✗"} 予測②</strong>}
+            ：正解は<strong>{judged && judged.forceLabel}</strong>
+            {(skipped || !forceOK) && <span style={{ color: "var(--ink-soft)" }}>（誤モデル：<strong>観測点の磁界がゼロなら力もゼロ</strong>／同方向と逆方向の取り違え）</span>}
           </div>
-          {(!zoneOK || !forceOK) && (
+          {judged && judged.zone !== zeroZone && (
+            <div style={{ marginTop: 6, color: "var(--ink-soft)" }}>
+              いまの電流では零点は<strong>{zoneLabel}</strong>に移った（判定は答え合わせ時の条件のまま）。
+            </div>
+          )}
+          {!skipped && (!zoneOK || !forceOK) && (
             <div style={{ marginTop: 6, color: "var(--ink-soft)" }}>
               外した項目は、このセクションの自己評価で <strong>△（要確認）</strong> を押して弱点に残すこと。
             </div>
