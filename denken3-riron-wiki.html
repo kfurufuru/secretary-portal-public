@@ -14967,20 +14967,21 @@ const CoilCrossingFieldSim = () => {
 
         {/* e-x グラフ（Φ の傾きに対応する矩形パルス） */}
         <line x1="30" y1={EY0} x2="350" y2={EY0} stroke="var(--ink-mute)" strokeWidth="1" />
-        {ePulses.map((p, i) => (
+        {/* 速度 0 では Φ が時間変化しないので全区間 e=0。パルスを残すと数値表示（0.000 V）と矛盾する */}
+        {v !== 0 && ePulses.map((p, i) => (
           <rect key={i} x={sx(p.x0)} y={p.s > 0 ? EY0 - EH : EY0} width={sx(p.x1) - sx(p.x0)} height={EH}
             fill="var(--danger)" opacity="0.18" stroke="var(--danger)" strokeWidth="1.2" />
         ))}
-        <text x="30" y={EY0 + EH + 12} fontSize="10" fill="var(--ink-mute)">起電力 e ＝ Φ の傾き（水平な区間では e＝0）</text>
+        <text x="30" y={EY0 + EH + 12} fontSize="10" fill="var(--ink-mute)">{v !== 0 ? "起電力 e ＝ Φ の傾き（水平な区間では e＝0）" : "速度 0：コイルが静止しているので Φ は時間変化せず、全区間で e＝0"}</text>
         <text x="352" y={EY0 + 4} fontSize="10" fill="var(--ink-mute)">位置</text>
       </svg>
 
       {revealed && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
           {!reduceMotion ? (
-            <button type="button" onClick={() => { if (playing) { setPlaying(false); } else { setXc(-0.20); setPlaying(true); } }}
-              style={{ padding: "7px 14px", fontSize: 12.5, fontWeight: 700, borderRadius: 6, border: "none", background: playing ? "var(--rule)" : "var(--accent)", color: playing ? "var(--ink)" : "var(--bg)", cursor: "pointer" }}>
-              {playing ? "■ 停止" : "▶ 通過を1回再生"}
+            <button type="button" disabled={v === 0 && !playing} onClick={() => { if (playing) { setPlaying(false); } else { setXc(-0.20); setPlaying(true); } }}
+              style={{ padding: "7px 14px", fontSize: 12.5, fontWeight: 700, borderRadius: 6, border: "none", background: playing || v === 0 ? "var(--rule)" : "var(--accent)", color: playing ? "var(--ink)" : v === 0 ? "var(--ink-mute)" : "var(--bg)", cursor: v === 0 && !playing ? "not-allowed" : "pointer" }}>
+              {playing ? "■ 停止" : v === 0 ? "速度 0 では通過しない" : "▶ 通過を1回再生"}
             </button>
           ) : (
             <>
@@ -15000,7 +15001,7 @@ const CoilCrossingFieldSim = () => {
       {revealed && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginTop: 14 }}>
           <Slider label="コイルの位置" value={xc} min={-0.2} max={0.5} step={0.01} unit=" m" onChange={(x) => { setPlaying(false); setXc(x); }} />
-          <Slider label="速度" value={v} min={-1} max={1} step={0.1} unit=" m/s" onChange={setV} />
+          <Slider label="速度" value={v} min={-1} max={1} step={0.1} unit=" m/s" onChange={(x) => { setV(x); if (x === 0) setPlaying(false); }} />
           <Slider label="磁束密度 B" value={B} min={0.1} max={1} step={0.1} unit=" T" onChange={setB} />
           <Slider label="巻数 N" value={N} min={1} max={50} step={1} unit=" 回" onChange={setN} />
         </div>
@@ -17349,6 +17350,12 @@ const MagneticCircuitGapCalc = () => {
           <div><span style={{ fontSize: 24, fontWeight: 800, color: "var(--ink)", fontFamily: "var(--font-mono)" }}>{B.toFixed(3)}</span><span style={{ fontSize: 13, fontWeight: 700 }}> T</span></div>
         </div>
       </div>
+      {/* この計算は μr 一定の線形モデル。空隙を詰めると現実の鉄心ではあり得ない B が出るので注記する */}
+      {B > 1.5 && (
+        <div style={{ fontSize: 12, color: "var(--ink)", background: "var(--warn-soft, var(--bg))", border: "1px solid var(--warn)", borderRadius: 6, padding: "6px 10px", margin: "0 0 8px" }}>
+          ⚠ B = {B.toFixed(3)} T は<strong>μᵣ を一定とみなした線形モデルの計算値</strong>。実際の鉄心は B が大きくなると磁気飽和で μᵣ が急に下がるため、この値までは増えない（電磁鋼板の鉄心なら飽和の目安はおおむね 1.5〜2 T。フェライトはもっと低い。<strong>教材上の目安で公式根拠ではない</strong>）。試験の計算問題は飽和を考えない前提なので、式どおりに解けばよい。
+        </div>
+      )}
 
       {/* Rm 内訳 stacked bar：空隙が広がるほど赤（空隙）が全体を乗っ取る */}
       <div style={{ marginTop: 6, padding: "10px 8px", background: "var(--bg)", borderRadius: 6, border: "1px dashed var(--rule)" }}>
@@ -17363,7 +17370,7 @@ const MagneticCircuitGapCalc = () => {
       </div>
 
       <figcaption style={{ fontSize: 12, color: "var(--ink-mute)", textAlign: "center", marginTop: 10, lineHeight: 1.6 }}>
-        空隙 lg は μᵣ=1（空気）なので、わずか数mmでも <strong>Rm,gap が鉄心の Rm,iron を上回り全体を支配</strong>する。だから「<strong>起磁力の大半が空隙で消費される</strong>」（R05上問3・H26問3 の論説）。上の「1mm＝4倍」の数字を、スライダーで動かして確かめられる。
+        空隙 lg は μᵣ=1（空気）なので、わずか数mmでも <strong>Rm,gap が鉄心の Rm,iron を上回り全体を支配</strong>する。だから「<strong>起磁力の大半が空隙で消費される</strong>」（R05上問3・H26問3 の論説）。上の「1mm の空隙でも 0.5m の鉄心の 4 倍」は、<strong>μᵣ=1600・空隙 lg=1 mm</strong> にすると確かめられる（この図の鉄心は 0.4 m 固定。0.4/1600 と 0.5/2000 は同じ値なので、空隙：鉄心＝4.0：1 になる）。
       </figcaption>
     </figure>
   );
@@ -23095,7 +23102,7 @@ const InductanceLiveCalc = () => {
   const fmt = (x) => (x >= 100 ? x.toFixed(0) : x >= 10 ? x.toFixed(1) : x.toFixed(2));
   // N² 可視化バー：高さ比は常に ¼ : 1 : 4（＝この素子の「N の2乗」性）
   const bars = [
-    { label: "N/2", sub: `${Math.round(N / 2)}巻`, val: Lhalf, h: 12, cur: false },
+    { label: "N/2", sub: `${N / 2}巻`, val: Lhalf, h: 12, cur: false },   // N は偶数刻みなので N/2 は整数
     { label: "N（現在）", sub: `${N}巻`, val: L, h: 46, cur: true },
     { label: "2N", sub: `${N * 2}巻`, val: Ldouble, h: 184, cur: false },
   ];
@@ -23122,7 +23129,7 @@ const InductanceLiveCalc = () => {
         4つのスライダーを動かすと L が即時に変わる。とくに<strong>巻数 N を動かした時の効き方</strong>に注目（初期値は例題 問3 と同じ ≒10 mH）。
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: "10px 18px" }}>
-        <Slider label="巻数 N" value={N} min={25} max={400} step={5} unit=" 巻" onChange={setN} />
+        <Slider label="巻数 N" value={N} min={20} max={400} step={10} unit=" 巻" onChange={setN} />
         <Slider label="比透磁率 μᵣ" value={mur} min={1} max={2000} step={1} unit="" onChange={setMur} />
         <Slider label="断面積 A" value={Acm} min={1} max={20} step={0.5} unit=" cm²" onChange={setAcm} />
         <Slider label="磁路長 ℓ" value={lcm} min={2} max={50} step={1} unit=" cm" onChange={setLcm} />
