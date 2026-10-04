@@ -425,20 +425,26 @@ function buildExp(){
 function calc(){
   const P=+$('#cP').value, t=+$('#cT').value, B=+$('#cB').value, H=+$('#cH').value;
   const W=P*1000*t, Wk=W*3600, Q=B*1000*H, eta=Q>0?Wk/Q*100:NaN;
+  const ok=P>0&&t>0&&B>0&&H>0;   // 1つでも正でなければ効率の値は出さない（負の効率を表示しない）
   $('#cOut').textContent =
 `発電電力量 W = ${P} MW × ${t} h = ${(W).toLocaleString()} kWh
   熱量に直す = W × 3600 = ${Wk.toExponential(3)} kJ
 入熱 Q = B × H = ${(B*1000).toLocaleString()} kg × ${H.toLocaleString()} kJ/kg = ${Q.toExponential(3)} kJ
-η = 3600W / (BH) = ${isFinite(eta)?eta.toFixed(1):'—'} %${(!(B>0)||!(H>0)||!(P>0)||!(t>0))?'\n※ 入力は正の数にしてください':(eta>100?'\n※ 100%を超えている。燃料量か発熱量の単位（t と kg、MJ と kJ）を確認':'')}`;
+η = 3600W / (BH) = ${ok&&isFinite(eta)?eta.toFixed(1):'—'} %${!ok?'\n※ 入力は正の数にしてください':(eta>100?'\n※ 100%を超えている。燃料量か発熱量の単位（t と kg、MJ と kJ）を確認':'')}`;
   const g=id=>+$(id).value;
   const eB=g('#sB'),eC=g('#sC'),eT=g('#sT'),eG=g('#sG'),L=g('#sL');
   [['#vB',eB],['#vC',eC],['#vT',eT],['#vG',eG],['#vL',L]].forEach(([id,v])=>$(id).textContent=(v*100).toFixed(1)+'%');
   const gen=eB*eC*eT*eG, send=gen*(1-L);
+  // 掛け算では最も小さい係数が全体を最も押し下げる。どの段階かを名指しする
+  const fs=[['ボイラ効率 ηB',eB],['熱サイクル効率 ηC',eC],['タービン効率 ηT',eT],['発電機効率 ηG',eG]];
+  const [mn,mv]=fs.reduce((a,b)=>b[1]<a[1]?b:a);
+  const minNote=`いちばん小さい係数 = ${mn} ${(mv*100).toFixed(1)} %`+(mn.includes('ηC')?`（サイクルに入った熱の ${((1-mv)*100).toFixed(1)} % は主に復水器で冷却水に捨てられる）`:'')+` → 発電端効率を最も押し下げている段階`;
   $('#mOut').textContent =
 `発電端熱効率 = ηB × ηC × ηT × ηG
             = ${eB.toFixed(2)} × ${eC.toFixed(2)} × ${eT.toFixed(2)} × ${eG.toFixed(3)} = ${(gen*100).toFixed(1)} %
 送電端熱効率 = 発電端 × (1 − L)
-            = ${(gen*100).toFixed(1)} % × ${(1-L).toFixed(3)} = ${(send*100).toFixed(1)} %`;
+            = ${(gen*100).toFixed(1)} % × ${(1-L).toFixed(3)} = ${(send*100).toFixed(1)} %
+${minNote}`;
 }
 ['#cP','#cT','#cB','#cH','#sB','#sC','#sT','#sG','#sL'].forEach(id=>$(id).addEventListener('input',calc));
 
