@@ -1958,12 +1958,21 @@ const Eq = ({
       return true;
     };
     if (draw()) return undefined;
-    const timer = setInterval(() => {
-      if (draw()) clearInterval(timer);
-    }, 50);
+    // 最初は 50ms 刻みで待ち、だんだん間隔を広げて約 77 秒で諦める。上限なしの
+    // setInterval だと、KaTeX が来ない（オフライン・CDN 遮断）ときに数式の数だけ
+    // 50ms ごとの再試行が止まらず、スマホの CPU と電池を使い続ける。
+    let tries = 0;
+    let timer = null;
+    const retry = () => {
+      if (cancelled || draw()) return;
+      tries += 1;
+      if (tries > 40) return;
+      timer = setTimeout(retry, Math.min(50 * 2 ** Math.floor(tries / 4), 4000));
+    };
+    timer = setTimeout(retry, 50);
     return () => {
       cancelled = true;
-      clearInterval(timer);
+      clearTimeout(timer);
     };
   }, [tex, display]);
   return display ? /*#__PURE__*/React.createElement("span", {
