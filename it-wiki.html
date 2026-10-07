@@ -1017,6 +1017,19 @@
       .chip-mat { flex-wrap: nowrap; gap: var(--sp-2); }
       .chip-mat td { padding: 2px 6px; }
     }
+
+    /* ---- 表示切替（用語辞典 / 図解） ---- */
+    .view-switch { display: flex; gap: var(--sp-2); margin: 0 0 var(--sp-8); border-bottom: 1px solid var(--border); }
+    .view-btn { padding: 10px 18px; border: none; border-bottom: 2px solid transparent; background: none; color: var(--text2); font-family: var(--font-base); font-size: 0.92rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: var(--sp-2); margin-bottom: -1px; transition: var(--transition); }
+    .view-btn:hover { color: var(--accent); }
+    .view-btn[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+    .view-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .view-btn .tab-count { font-size: 0.68rem; }
+    .zukai-index { list-style: none; margin: 0 0 var(--sp-8); padding: 0; display: grid; gap: var(--sp-2); }
+    .zukai-index a { display: block; padding: var(--sp-3) var(--sp-4); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); text-decoration: none; font-size: 0.88rem; }
+    .zukai-index a:hover { border-color: var(--border-h); color: var(--accent); }
+    #viewZukai .concept-section { scroll-margin-top: 72px; }
+    .zukai-index small { display: block; color: var(--text3); font-size: 0.74rem; margin-top: 2px; }
   </style>
 <style>/* a11y: danger accent contrast on dark (WCAG AA) */
 .creason-num,.cn-block-badge{color:#f87171 !important}
@@ -1080,6 +1093,21 @@
       <!-- STATS BAR -->
       <div class="stats-bar" id="statsBar"></div>
     </section>
+
+    <!-- =====================================================
+         VIEW SWITCH: 用語辞典 / 図解
+    ===================================================== -->
+    <div class="view-switch" role="tablist" aria-label="表示切替">
+      <button class="view-btn" role="tab" id="viewBtnDict" data-view="dict" aria-controls="viewDict" aria-selected="true">
+        <i data-lucide="book-open" width="15" height="15"></i>用語辞典
+      </button>
+      <button class="view-btn" role="tab" id="viewBtnZukai" data-view="zukai" aria-controls="viewZukai" aria-selected="false" tabindex="-1">
+        <i data-lucide="presentation" width="15" height="15"></i>図解 <span class="tab-count" id="count-zukai">0</span>
+      </button>
+    </div>
+
+    <div id="viewZukai" role="tabpanel" aria-labelledby="viewBtnZukai" hidden>
+    <ul class="zukai-index" id="zukaiIndex"></ul>
 
     <!-- =====================================================
          CONCEPT VISUAL: ChatGPT × localhost
@@ -1361,7 +1389,9 @@
 
       </div><!-- /concept-body -->
     </section><!-- /chipSection -->
+    </div><!-- /viewZukai -->
 
+    <div id="viewDict" role="tabpanel" aria-labelledby="viewBtnDict">
     <!-- PINNED BOOKMARKS -->
     <section class="pinned-section" id="pinnedSection">
       <p class="section-label">
@@ -1431,6 +1461,7 @@
       </div>
     </div>
 
+    </div><!-- /viewDict -->
   </main>
 
   <!-- SCROLL TO TOP -->
@@ -3238,6 +3269,7 @@
       input.value = query;
       currentQuery = query;
       toggleClearBtn();
+      if (query) setView('dict');
       applyFilter();
       input.focus();
     }
@@ -3265,6 +3297,72 @@
       });
     }
 
+
+    /* =====================================================
+       VIEW SWITCH（用語辞典 / 図解）
+       図解 = #viewZukai 内の .concept-section。URL ハッシュ #zukai または各図解の id で直接開ける
+    ===================================================== */
+    function setView(view, opts = {}) {
+      const isZukai = view === 'zukai';
+      document.getElementById('viewZukai').hidden = !isZukai;
+      document.getElementById('viewDict').hidden = isZukai;
+      [['viewBtnDict', !isZukai], ['viewBtnZukai', isZukai]].forEach(([id, on]) => {
+        const b = document.getElementById(id);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+        b.tabIndex = on ? 0 : -1;
+      });
+      if (opts.updateHash !== false) {
+        const url = location.pathname + location.search + (isZukai ? '#zukai' : '');
+        history.replaceState(null, '', url);
+      }
+      if (!isZukai) observeCards();
+    }
+
+    function viewFromHash() {
+      const h = decodeURIComponent(location.hash.slice(1));
+      if (!h) return null;
+      if (h === 'zukai') return { view: 'zukai' };
+      const el = document.getElementById(h);
+      if (el && el.closest('#viewZukai')) return { view: 'zukai', target: el };
+      return null;
+    }
+
+    function applyHash() {
+      const r = viewFromHash();
+      if (!r) return;
+      setView(r.view, { updateHash: false });
+      if (r.target) r.target.scrollIntoView();
+    }
+
+    function initViewSwitch() {
+      const sections = [...document.querySelectorAll('#viewZukai .concept-section')];
+      document.getElementById('count-zukai').textContent = sections.length;
+      const index = document.getElementById('zukaiIndex');
+      sections.forEach(sec => {
+        const title = sec.querySelector('.concept-title');
+        const sub = sec.querySelector('.concept-subtitle');
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = '#' + sec.id;
+        a.textContent = title ? title.textContent : sec.id;
+        if (sub) { const sm = document.createElement('small'); sm.textContent = sub.textContent; a.appendChild(sm); }
+        a.addEventListener('click', (e) => { e.preventDefault(); sec.scrollIntoView({ behavior: 'smooth' }); });
+        li.appendChild(a); index.appendChild(li);
+      });
+
+      const btns = [...document.querySelectorAll('.view-btn')];
+      btns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+      document.querySelector('.view-switch').addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        const i = btns.indexOf(document.activeElement);
+        if (i < 0) return;
+        const next = btns[(i + (e.key === 'ArrowRight' ? 1 : btns.length - 1)) % btns.length];
+        next.focus(); setView(next.dataset.view);
+      });
+      window.addEventListener('hashchange', applyHash);
+      applyHash();
+    }
+
     /* =====================================================
        INIT
     ===================================================== */
@@ -3285,6 +3383,9 @@
 
       // 全用語レンダリング
       applyFilter();
+
+      // 表示切替（用語辞典 / 図解）
+      initViewSwitch();
 
       /* ---- タブ ---- */
       document.getElementById('tabs').addEventListener('click', (e) => {
@@ -3310,6 +3411,7 @@
       document.getElementById('searchInput').addEventListener('input', (e) => {
         currentQuery = e.target.value.trim();
         toggleClearBtn();
+        if (currentQuery) setView('dict');
         applyFilter();
       });
 
