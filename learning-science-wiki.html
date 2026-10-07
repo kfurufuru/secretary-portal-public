@@ -230,11 +230,14 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .theme-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 /* Mobile hamburger */
 .mobile-bar { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--bg-elev); border-bottom: 1px solid var(--rule); padding: 10px 16px; align-items: center; gap: 12px; }
-@media (max-width: 760px) { .mobile-bar { display: flex; } .main { padding-top: 64px; } }
-.hamburger { background: none; border: 1px solid var(--rule); border-radius: 5px; padding: 5px 8px; cursor: pointer; color: var(--ink); }
+@media (max-width: 760px) { .mobile-bar { display: flex; } .main { padding-top: 66px; } }
+.hamburger { background: none; border: 1px solid var(--rule); border-radius: 5px; padding: 5px 8px; cursor: pointer; color: var(--ink); min-width: 44px; min-height: 44px; display: grid; place-items: center; }
 .mobile-drawer { position: fixed; inset: 0; z-index: 200; display: flex; }
 .mobile-drawer-overlay { flex: 1; background: oklch(0 0 0 / 0.45); }
-.mobile-drawer-panel { width: 280px; background: var(--bg-sunken); overflow-y: auto; padding: 22px 18px 60px; }
+.mobile-drawer-panel { width: 280px; background: var(--bg-sunken); overflow-y: auto; overscroll-behavior: contain; padding: 22px 18px 60px; }
+.mobile-drawer-panel:focus { outline: none; }
+/* ドロワー内ではサイドバーを表示する（760px 以下の .sidebar { display: none } を打ち消す） */
+.mobile-drawer .sidebar { display: block; position: static; height: auto; overflow: visible; border-right: 0; padding: 0; background: none; }
 /* Timeline (schedule pages) */
 .timeline { position: relative; padding-left: 28px; margin: 16px 0; }
 .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--rule); }
@@ -290,7 +293,8 @@ window.WIKI_DATA = {
 /* ============================================================
    Shared Components
    ============================================================ */
-const Crumbs = ({ items, onNav }) => (
+// onNav を渡していないページでも動くよう、無いときは URL ハッシュで遷移する（App が hashchange を監視している）
+const Crumbs = ({ items, onNav = (id) => { location.hash = id; window.scrollTo(0, 0); } }) => (
   <nav className="crumbs">
     <span className="crumb" onClick={() => onNav('home')}>ホーム</span>
     {items.map((it, i) => (
@@ -332,13 +336,11 @@ const Adm = ({ type = 'info', title, children }) => {
   );
 };
 
-const Sidebar = ({ chapters, currentPage, onNav }) => {
+const Sidebar = ({ chapters, currentPage, onNav, theme, setT }) => {
   const init = {};
   chapters.forEach(c => { init[c.id] = true; });
   const [open, setOpen] = useState(init);
-  const [theme, setTheme] = useState('light');
   const toggle = id => setOpen(p => ({ ...p, [id]: !p[id] }));
-  const setT = t => { setTheme(t); document.documentElement.dataset.theme = t; };
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -411,7 +413,7 @@ const HomePage = ({ data, onNav }) => (
         <div className="stat"><div className="stat-label">理想の1日設計</div><div className="stat-value">3 P</div><div className="stat-sub">平日・休日OFF・休日勉強</div></div>
       </div>
       <h2><span className="h-num">1</span>このWikiの使い方</h2>
-      <p>左のサイドバーから章・ページを選んでナビゲート。各ページはそれぞれ独立して読める構造になっている。初めての場合は <strong>1.1 脳の可塑性と活性化</strong> → <strong>2.1 学習効率を上げる原則</strong> → <strong>4.1 平日スケジュール設計</strong> の順で通読すると全体像をつかみやすい。</p>
+      <p>左のサイドバー（スマホでは左上の ☰ メニュー）から章・ページを選んでナビゲート。各ページはそれぞれ独立して読める構造になっている。初めての場合は <strong>1.1 脳の可塑性と活性化</strong> → <strong>2.1 学習効率を上げる原則</strong> → <strong>4.1 平日スケジュール設計</strong> の順で通読すると全体像をつかみやすい。</p>
       <h2><span className="h-num">2</span>章一覧</h2>
       <div className="card-grid">
         {data.chapters.map(ch => (
@@ -1626,6 +1628,29 @@ const App = () => {
     return allIds.includes(h) ? h : 'home';
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'light');
+  const setT = t => { setTheme(t); document.documentElement.dataset.theme = t; };
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setMobileOpen(false); };
+    const wide = window.matchMedia('(min-width: 761px)');
+    const onWide = (e) => { if (e.matches) setMobileOpen(false); };
+    const bg = [document.querySelector('.app'), document.querySelector('.mobile-bar')];
+    window.addEventListener('keydown', onKey);
+    wide.addEventListener('change', onWide);
+    document.body.style.overflow = 'hidden';
+    bg.forEach(el => { if (el) el.inert = true; });
+    const panel = document.querySelector('.mobile-drawer-panel');
+    if (panel) panel.focus();
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      wide.removeEventListener('change', onWide);
+      document.body.style.overflow = '';
+      bg.forEach(el => { if (el) el.inert = false; });
+      const hb = document.querySelector('.hamburger');
+      if (hb && hb.offsetParent !== null) hb.focus();
+    };
+  }, [mobileOpen]);
 
   const navigate = (id) => {
     setPage(id); location.hash = id; window.scrollTo({top:0, behavior:'auto'});
@@ -1660,16 +1685,22 @@ const App = () => {
 
   return (
     <>
+      <div className="mobile-bar">
+        <button className="hamburger" aria-label="メニューを開く" aria-expanded={mobileOpen} aria-controls="mobile-drawer" onClick={() => setMobileOpen(true)}>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M2 4h14M2 9h14M2 14h14"/></svg>
+        </button>
+        <span className="brand-title">学習科学Wiki</span>
+      </div>
       <div className="app">
-        <Sidebar chapters={data.chapters} currentPage={page} onNav={navigate} />
+        <Sidebar chapters={data.chapters} currentPage={page} onNav={navigate} theme={theme} setT={setT} />
         <main className="main">{renderPage()}</main>
       </div>
       {mobileOpen && (
-        <div className="mobile-drawer">
-          <div className="mobile-drawer-overlay" onClick={() => setMobileOpen(false)} />
-          <div className="mobile-drawer-panel">
-            <Sidebar chapters={data.chapters} currentPage={page} onNav={(id) => { navigate(id); setMobileOpen(false); }} />
+        <div className="mobile-drawer" id="mobile-drawer" role="dialog" aria-modal="true" aria-label="メニュー">
+          <div className="mobile-drawer-panel" tabIndex={-1}>
+            <Sidebar chapters={data.chapters} currentPage={page} onNav={(id) => { navigate(id); setMobileOpen(false); }} theme={theme} setT={setT} />
           </div>
+          <div className="mobile-drawer-overlay" onClick={() => setMobileOpen(false)} />
         </div>
       )}
     </>
