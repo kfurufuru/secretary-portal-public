@@ -2424,6 +2424,12 @@ function resolveFocus(){
   pinIdx = row ? legendRows.indexOf(row) : null;
   paintLegend();
   const nodes = row ? row.nodes.filter(n=>visibleInScene(n.obj)) : [];
+  /* 同じ部品の歩が続くなら、動いているかを判定する前に画角を固定する。判定を先にすると、
+     一時停止の歩（直流機8歩目「始動の瞬間は E = 0」）で回る電機子が「静止」と出て、
+     比較の歩なのに寄ってしまう（2026-10-11 measure_3d_tour_camera.py で検出） */
+  const part = nodes.length ? viewKey() + '|' + row.name + '|' + nodes.map(n=>n.obj.uuid).join(',') : null;
+  if (part && part === camPart){ frameWait = null; return; }
+  camPart = part;
   /* 動いているかは数フレーム後の姿勢と比べて決める（frameTick） */
   frameWait = nodes.length ? {row, nodes, m0:nodes.map(n=>n.obj.matrixWorld.clone()), left:3} : null;
   if (!nodes.length) shoot(null);       // 指すものが無い・見えない歩は機器の基本視点へ
@@ -2443,6 +2449,7 @@ function resolveFocus(){
 const FRAME_FILL = .35, FRAME_MIN = .6;
 let camShot = null;      // いまのカメラが合わせている画（視点キー＋行名＋物体）。null = 未定
 let frameWait = null;    // 動いているかの判定待ち
+let camPart = null;      // 直前の歩が指した部品（視点キー＋行名＋物体）。同じなら画角を変えない
 const viewKey = () => state.current==='transformer' ? tfViewKey() : state.current;
 const _vb = new THREE.Box3();
 /* 見えているメッシュだけの外接箱（Box3.expandByObject は非表示の子も数える） */
@@ -4197,7 +4204,7 @@ function select(id){
   backBtn.classList.toggle('hidden', !id);
   if (reduced){ const v = VIEWS[id||'overview']; cam.target.set(...v.target); cam.dist=v.dist; cam.theta=v.theta; cam.phi=v.phi; cam.want=null; camShot = null; }
   else flyTo(VIEWS[(id==='transformer') ? tfViewKey() : (id||'overview')]);
-  focusReq = undefined; frameWait = null;
+  focusReq = undefined; frameWait = null; camPart = null;
   _lastTfSig = (id==='transformer') ? tfSig() : null;
   _lastPeConv = (id==='power-elec') ? state.peConv : null;
   _lastDmView = (id==='drive-mech') ? state.dmView+'/'+state.dmCw : null;
