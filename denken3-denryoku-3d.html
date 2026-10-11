@@ -1,7 +1,7 @@
 <meta charset="utf-8">
 <title>電力科目 3D工場</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="電験三種 電力科目の6つの設備（水力・火力・原子力・変電所・架空送電・配電）を3Dに並べ、電力Wikiと過去20年の過去問台帳に結びつけて眺めるビューア">
+<meta name="description" content="電験三種 電力科目の7つの設備（水力・火力・原子力・変電所・架空送電・地中送電・配電）を3Dに並べ、電力Wikiと過去20年の過去問台帳に結びつけて眺めるビューア">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root{
@@ -297,7 +297,7 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
 /* ============================================================
    データ。Wiki のページID・節ID は電力Wiki（denryoku-data.js / denryoku-page-stubs.jsx）と同じ文字列。
    URL は #page:section 形式（電力Wikiは「:」区切り）。節のキーが「page:section」の形なら別ページの節を指す。
-   過去問台帳は電力Wikiの K2 分野別一覧（H18〜R08上・全25回）から、6つの設備に当たる分野を抜き出したもの。
+   過去問台帳は電力Wikiの K2 分野別一覧（H18〜R08上・全25回）から、7つの設備に当たる分野を抜き出したもの（地中ケーブルの問は送電・配電の欄から 3.2 地中送電へ移した）。
    題名は出典（電験王）の分類と題名をWikiが写した索引で、問題冊子との一次照合はしていない。
    ここに試験の答えは書かない。予想クイズの数値は自作の練習用の算数で、過去問の解答ではない。
    ============================================================ */
@@ -305,13 +305,13 @@ const WIKI = 'https://kfurufuru.github.io/secretary-portal-public/denken3-denryo
 const wikiUrl = (p, s) => WIKI + '#' + p + (s ? ':' + s : '');
 /* 設備の節。別ページの節は 'page:section' と書く */
 const secUrl = (id, sec) => sec && sec.includes(':') ? WIKI + '#' + sec : wikiUrl(MACHINES[id].page, sec);
-const KAKOMON = [{"s": "R08上", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電所に用いられるダムの種別と特徴"}, {"s": "R08上", "c": "2", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "ある地域の想定される理論的包蔵水力"}, {"s": "R08上", "c": "15", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "揚水発電所の出力や入力及び効率等運用"}, {"s": "R07下", "c": "1", "p": "suiryoku", "sec": "intro", "k": "穴埋", "t": "水力発電所の落差分類"}, {"s": "R07下", "c": "2", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "単位体積当たりの水の運動エネルギー"}, {"s": "R07上", "c": "1", "p": "suiryoku", "sec": "formula", "k": "穴埋", "t": "水力発電所の理論出力と各単位"}, {"s": "R07上", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "調整池式水力発電所の使用水量と有効貯水容量"}, {"s": "R06下", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "水力発電の水車・発電機・主変圧器の特徴"}, {"s": "R06上", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "衝動水車を中心とした水力発電所"}, {"s": "R06上", "c": "2", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "揚水発電所の電動機入力と発電機出力"}, {"s": "R06上", "c": "15", "p": "suiryoku", "sec": "suisha", "k": "計算", "t": "水車の回転速度と比速度および水車の種類"}, {"s": "R05下", "c": "1", "p": "suiryoku", "sec": "formula", "k": "穴埋", "t": "水力発電所の落差と理論式"}, {"s": "R05下", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "水力発電所の発電電力量と汽力発電所の重油使用量"}, {"s": "R05上", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車の比速度の定義と特徴"}, {"s": "R04下", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電の特徴や現在の概況"}, {"s": "R04下", "c": "2", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水力発電で使用される水車の特徴"}, {"s": "R04上", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "水力発電所における水車の特徴及び監視制御方式"}, {"s": "R04上", "c": "15", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "揚水発電所の揚水運転時の必要電力量及び流量"}, {"s": "R03", "c": "1", "p": "suiryoku", "sec": "intro", "k": "穴埋", "t": "水力発電所の落差を得る方法や流量調整による分類"}, {"s": "R03", "c": "2", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "連続の定理及びベルヌーイの定理"}, {"s": "R02", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "ダム水路式発電所における水撃作用及びサージタンク"}, {"s": "R02", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "貯水池を有する水力発電所の発電計画"}, {"s": "R01", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "水力発電所の水車及び発電機"}, {"s": "R01", "c": "2", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車の構造と特徴"}, {"s": "H30", "c": "2", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車の比速度の定義と特徴"}, {"s": "H30", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "調整池式発電所の出力"}, {"s": "H29", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電所に用いられるダム"}, {"s": "H29", "c": "2", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車のキャビテーション"}, {"s": "H28", "c": "1", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "揚水発電所の出力や入力及び効率"}, {"s": "H28", "c": "2", "p": "suiryoku", "sec": "seigo", "k": "穴埋", "t": "同期発電機の比較"}, {"s": "H27", "c": "1", "p": "suiryoku", "sec": "formula", "k": "穴埋", "t": "水力の理論出力と各単位"}, {"s": "H27", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "速度調定率と出力の関係"}, {"s": "H26", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車の調速機の機能と構造"}, {"s": "H26", "c": "15", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "ベルヌーイの定理を利用した計算"}, {"s": "H25", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水力発電に用いる水車"}, {"s": "H24", "c": "1", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "水力発電所の落差と理論式"}, {"s": "H23", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電所の不具合原因箇所特定"}, {"s": "H22", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水力発電所で使用される衝動水車の原理や特徴"}, {"s": "H21", "c": "1", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "部分負荷運転している水力発電所の流量"}, {"s": "H20", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水力発電所で使用される水車の種類と特徴"}, {"s": "H20", "c": "2", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電所の理論や特徴"}, {"s": "H19", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "水力発電の水車と発電機，主変圧器の特徴"}, {"s": "H19", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "速度調定率を用いた負荷急変時の周波数と出力変化"}, {"s": "H18", "c": "12", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "水管内を流れる流水の流速と圧力"}, {"s": "R08上", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "火力発電所の復水器"}, {"s": "R07下", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "汽力発電所で使用される保護装置"}, {"s": "R07下", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "重油専焼火力発電所の熱効率と二酸化炭素発生量"}, {"s": "R07上", "c": "2", "p": "karyoku", "sec": "formula", "k": "計算", "t": "タービン効率と使用蒸気量の関係"}, {"s": "R07上", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "水と蒸気及び燃焼ガスの通過する順序"}, {"s": "R06下", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電における熱効率向上対策"}, {"s": "R06下", "c": "3", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "衝動タービンと反動タービンの比較"}, {"s": "R06下", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "重油消費量と二酸化炭素排出量"}, {"s": "R06上", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電と汽力発電の比較"}, {"s": "R05下", "c": "2", "p": "karyoku", "sec": "suiryoku:kaiho", "k": "計算", "t": "速度調定率の異なる発電機の出力変化"}, {"s": "R05下", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "復水器の特徴"}, {"s": "R05上", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "熱回収コンバインドサイクル発電の特徴"}, {"s": "R05上", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "火力発電所の煙風道系統"}, {"s": "R05上", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "石炭火力発電所の熱効率と二酸化炭素排出量"}, {"s": "R04下", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電方式の特徴"}, {"s": "R04下", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所の復水器で失われる熱量"}, {"s": "R04上", "c": "2", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "火力発電所のタービン発電機"}, {"s": "R04上", "c": "3", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電設備のタービン効率"}, {"s": "R03", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "汽力発電におけるボイラ設備"}, {"s": "R03", "c": "4", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "電気集じん装置のメカニズム"}, {"s": "R03", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "火力発電所の送電端電力量及び発電端効率"}, {"s": "R02", "c": "2", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "汽力発電所の復水器の機能及び特徴，損失"}, {"s": "R02", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "火力発電所で使用される保護装置"}, {"s": "R01", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電所における熱効率向上方法"}, {"s": "R01", "c": "5", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電"}, {"s": "R01", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所のタービン出力及び海水温度"}, {"s": "H30", "c": "1", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "タービン発電機の水素冷却方式の特徴"}, {"s": "H30", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "汽力発電所の蒸気タービン設備"}, {"s": "H29", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "火力発電所の環境対策"}, {"s": "H29", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "火力発電所の燃料使用量，空気量"}, {"s": "H28", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "汽力発電所のボイラ及びその付属設備"}, {"s": "H28", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所のタービン効率及び発電機効率"}, {"s": "H27", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電所における再生サイクル及び再熱サイクル"}, {"s": "H27", "c": "3", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所のボイラ効率"}, {"s": "H26", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電所の熱サイクル"}, {"s": "H26", "c": "3", "p": "karyoku", "sec": "cycle", "k": "穴埋", "t": "コンバインドサイクルの高効率化"}, {"s": "H26", "c": "17", "p": "karyoku", "sec": "formula", "k": "計算", "t": "火力発電所の燃焼計算"}, {"s": "H25", "c": "2", "p": "karyoku", "sec": "cycle", "k": "計算", "t": "コンバインドサイクル発電の熱効率"}, {"s": "H25", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "汽力発電所の蒸気タービンの分類"}, {"s": "H25", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "火力発電所の効率計算"}, {"s": "H24", "c": "2", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "汽力発電所のタービン発電機の特徴"}, {"s": "H24", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "汽力発電所の保護装置"}, {"s": "H24", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "石炭火力発電所の送電端電力量と発電端効率"}, {"s": "H23", "c": "2", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "火力発電所のボイラ設備の説明"}, {"s": "H23", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "汽力発電所の復水器に関する一般的説明"}, {"s": "H23", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所における必要燃料重量と理論空気量"}, {"s": "H22", "c": "2", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "火力発電所排ガス中の環境に悪影響を及ぼす物質とその対策"}, {"s": "H22", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電の特徴"}, {"s": "H22", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "石炭火力発電所の熱効率"}, {"s": "H21", "c": "2", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "タービン発電機の水素冷却方式"}, {"s": "H21", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電所の熱効率向上対策"}, {"s": "H21", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "重油専焼火力発電所の熱効率と二酸化炭素発生量"}, {"s": "H20", "c": "3", "p": "karyoku", "sec": "cycle", "k": "穴埋", "t": "汽力発電所の基本的な熱サイクル"}, {"s": "H20", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所の発電電力量と送電端熱効率"}, {"s": "H19", "c": "2", "p": "karyoku", "sec": "cycle", "k": "計算", "t": "汽力発電の基本サイクルであるランキンサイクルの効率"}, {"s": "H19", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電方式と汽力発電方式の比較"}, {"s": "H19", "c": "5", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "各発電所の二酸化炭素排出量の違い"}, {"s": "H18", "c": "1", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "汽力発電所で使用される復水器"}, {"s": "H18", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電における燃焼用空気の流れ"}, {"s": "H18", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所の復水器での損失とタービン室効率"}, {"s": "R08上", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "原子核の質量と原子力発電の原理"}, {"s": "R07下", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "将来に向けた新型炉の検討"}, {"s": "R07上", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "原子力発電における核燃料サイクル"}, {"s": "R06下", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "論説", "t": "原子力発電で使用される燃料と原理"}, {"s": "R06上", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウランの核分裂エネルギーと石炭の発熱量の比較"}, {"s": "R05下", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "論説", "t": "軽水炉で使用される原子燃料"}, {"s": "R05上", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウランの発生エネルギーと重油量の比較"}, {"s": "R04下", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "穴埋", "t": "日本で採用されている原子炉の型と特性"}, {"s": "R04上", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "沸騰水型原子炉（BWR）の特徴"}, {"s": "R03", "c": "5", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "日本で使用されている原子力発電の構造や特徴"}, {"s": "R02", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "ウラン235など原子燃料に使用される物質"}, {"s": "R01", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウランと石炭の燃料消費量の違い"}, {"s": "H30", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "穴埋", "t": "原子力発電所の蒸気タービンの特徴"}, {"s": "H29", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "原子力発電所の電力による揚水発電量"}, {"s": "H28", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "原子力発電における核燃料サイクル"}, {"s": "H27", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "穴埋", "t": "原子炉の加圧水型と沸騰水型の比較"}, {"s": "H26", "c": "4", "p": "genshiryoku", "sec": "intro", "k": "論説", "t": "原子力発電"}, {"s": "H25", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "原子力発電所の軽水炉"}, {"s": "H24", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウランと重油の燃料消費量の違い"}, {"s": "H23", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウラン235が核分裂により発生するエネルギー"}, {"s": "H22", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "加圧水型原子炉(PWR)の構成及び特徴"}, {"s": "H21", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "原子力発電の原理や原子燃料"}, {"s": "H20", "c": "4", "p": "genshiryoku", "sec": "rinkai", "k": "穴埋", "t": "軽水炉における出力調整の方法"}, {"s": "H19", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "穴埋", "t": "原子力発電所で採用されている原子炉の種類や特徴"}, {"s": "H18", "c": "13", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "原子力発電のエネルギーが揚水発電所で揚水できる水量"}, {"s": "R08上", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "論説", "t": "変圧器のV結線方式"}, {"s": "R08上", "c": "12", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器故障発生時を想定した供給可能な総負荷の導出"}, {"s": "R07下", "c": "6", "p": "kaihei-hogo", "sec": "zetsuen-hakai:hiraiki", "k": "穴埋", "t": "避雷器に使用される素子とその特徴"}, {"s": "R07上", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "ガス絶縁開閉装置の特徴"}, {"s": "R06下", "c": "6", "p": "kaihei-hogo", "sec": "setsubi", "k": "穴埋", "t": "調相設備接続による無効電力の調整"}, {"s": "R06下", "c": "7", "p": "kaihei-hogo", "sec": "keiki-hensei:intro", "k": "穴埋", "t": "計器用変成器の取扱い上の注意点"}, {"s": "R06上", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "穴埋", "t": "ガス絶縁開閉装置（GIS）"}, {"s": "R06上", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "変圧器に設置する遮断器の定格遮断電流と負荷分担"}, {"s": "R05下", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "穴埋", "t": "変圧器のY-Y結線の特徴"}, {"s": "R05上", "c": "7", "p": "kaihei-hogo", "sec": "keiki-hensei:intro", "k": "穴埋", "t": "変電所の計器用変成器"}, {"s": "R05上", "c": "13", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器並行運転時の過負荷容量"}, {"s": "R05上", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相変圧器二次側の遮断器定格遮断電流"}, {"s": "R04下", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相変圧器の百分率リアクタンス導出"}, {"s": "R04下", "c": "7", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "穴埋", "t": "変圧器の結線方式の違いと特性"}, {"s": "R04上", "c": "7", "p": "kaihei-hogo", "sec": "hogo-keiden:tokusei", "k": "穴埋", "t": "過電流継電器の限時特性"}, {"s": "R04上", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "変圧器に設置する遮断器の定格遮断電流"}, {"s": "R03", "c": "7", "p": "kaihei-hogo", "sec": "keiki-hensei:intro", "k": "穴埋", "t": "変電所の計器用変成器"}, {"s": "R03", "c": "8", "p": "kaihei-hogo", "sec": "shadanki:intro", "k": "論説", "t": "変電所で使用される断路器"}, {"s": "R03", "c": "9", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器故障時の過負荷運転"}, {"s": "R02", "c": "7", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "真空遮断器の特徴及び動作メカニズム"}, {"s": "R02", "c": "9", "p": "kaihei-hogo", "sec": "zetsuen-hakai:hiraiki", "k": "穴埋", "t": "避雷器に使用される物質とその特徴"}, {"s": "R01", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "ガス絶縁開閉装置"}, {"s": "R01", "c": "7", "p": "kaihei-hogo", "sec": "setsubi", "k": "穴埋", "t": "変電所の主な役割と用途上の分類"}, {"s": "R01", "c": "8", "p": "kaihei-hogo", "sec": "hogo-keiden:tokusei", "k": "計算", "t": "保護継電器の動作時間"}, {"s": "H30", "c": "7", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "変圧器の保全・診断"}, {"s": "H30", "c": "12", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "論説", "t": "変圧器のV結線方式"}, {"s": "H29", "c": "7", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "穴埋", "t": "変圧器のY-Y結線方式の特徴"}, {"s": "H28", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器の容量"}, {"s": "H28", "c": "7", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "遮断器"}, {"s": "H28", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "事故時に流れる電流"}, {"s": "H27", "c": "7", "p": "kaihei-hogo", "sec": "zetsuen-hakai:hiraiki", "k": "穴埋", "t": "避雷器"}, {"s": "H26", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "配電用変電所の容量"}, {"s": "H25", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "論説", "t": "変圧器の結線方式として用いられるY－Y－Δ結線"}, {"s": "H24", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "穴埋", "t": "ガス絶縁開閉装置（ＧＩＳ）"}, {"s": "H24", "c": "8", "p": "kaihei-hogo", "sec": "setsubi", "k": "穴埋", "t": "調相設備による力率調整"}, {"s": "H24", "c": "17", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器の過負荷運転防止"}, {"s": "H23", "c": "8", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "受変電設備や送配電設備に設置されるリアクトル"}, {"s": "H23", "c": "10", "p": "kaihei-hogo", "sec": "zetsuen-hakai:hiraiki", "k": "穴埋", "t": "発変電所で使用される避雷器の特性や特徴"}, {"s": "H22", "c": "6", "p": "kaihei-hogo", "sec": "setsubi", "k": "計算", "t": "三相コンデンサを設置することによる配電線の力率改善"}, {"s": "H22", "c": "7", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "穴埋", "t": "大容量発電所の主変圧器の結線方式とその理由"}, {"s": "H22", "c": "8", "p": "kaihei-hogo", "sec": "denryoku-keitou:chuseiten", "k": "論説", "t": "中性点接地方式の目的や使用される電圧の違い"}, {"s": "H22", "c": "9", "p": "kaihei-hogo", "sec": "keiki-hensei:intro", "k": "穴埋", "t": "変流器の特徴と取り扱い上の注意点"}, {"s": "H22", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "変圧器に設置する遮断器の定格遮断電流と変圧器の負荷分担"}, {"s": "H21", "c": "6", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "電力系統における変電所の役割と機能"}, {"s": "H20", "c": "6", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "変電所に設置される機器"}, {"s": "H20", "c": "8", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相変圧器の百分率リアクタンス"}, {"s": "H19", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "ガス絶縁開閉装置の特徴"}, {"s": "H19", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "計算", "t": "異容量 V 結線方式のベクトル図と過負荷にならない容量"}, {"s": "H18", "c": "4", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "変電所に設置される機器"}, {"s": "H18", "c": "5", "p": "kaihei-hogo", "sec": "setsubi", "k": "穴埋", "t": "変電所等に設置する調相設備"}, {"s": "R08上", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路で用いられる電線の太さを決定する要因"}, {"s": "R08上", "c": "9", "p": "kakuu-souden", "sec": "denryoku-keitou:chuseiten", "k": "論説", "t": "非接地方式で1線地絡が発生した場合の現象"}, {"s": "R08上", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路の電力ケーブルで発生する損失の特徴"}, {"s": "R08上", "c": "16", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架空電線路の径間，電線の長さ及びたるみ"}, {"s": "R07下", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路の振動及び落雷に関連する設備"}, {"s": "R07下", "c": "9", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路の雷による過電圧とその対策"}, {"s": "R07下", "c": "11", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "直流送電の交流送電と比較した特徴"}, {"s": "R07上", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成部品"}, {"s": "R07上", "c": "9", "p": "kakuu-souden", "sec": "yudo-shougai:conclusion", "k": "穴埋", "t": "架空送電線路に発生する誘導障害"}, {"s": "R07上", "c": "12", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架空電線路の電線の実長"}, {"s": "R06下", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "がいしの塩害とその対策"}, {"s": "R06下", "c": "12", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "三相3線式送電線の電力損失率"}, {"s": "R06下", "c": "13", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "送電線のたるみの温度による変化"}, {"s": "R06下", "c": "16", "p": "kakuu-souden", "sec": "tokusei", "k": "計算", "t": "T形等価回路を用いた分布定数回路"}, {"s": "R06下", "c": "17", "p": "kakuu-souden", "sec": "tokusei", "k": "計算", "t": "送電線のフェランチ現象を模式化した演算"}, {"s": "R06上", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "送電線に発生する振動とその対策"}, {"s": "R06上", "c": "9", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "電力系統に現れる過電圧の種類と対策"}, {"s": "R06上", "c": "12", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架線の張力を変更することによる送電線のたるみの調整"}, {"s": "R06上", "c": "13", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "送電線の損失上限値を超えないための電線の最小断面積"}, {"s": "R05下", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成要素"}, {"s": "R05下", "c": "9", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "送電線路に施設する架空地線"}, {"s": "R05下", "c": "11", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "直流送電の特徴や注意点"}, {"s": "R05下", "c": "12", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架空送電線のたるみの導出"}, {"s": "R05上", "c": "9", "p": "kakuu-souden", "sec": "corona", "k": "穴埋", "t": "送電線に発生するコロナ損"}, {"s": "R04下", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成要素"}, {"s": "R04下", "c": "9", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "送電線で送電される三相有効電力"}, {"s": "R04下", "c": "16", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "受電端に接続可能な皮相電力及び必要調相設備の容量"}, {"s": "R04上", "c": "6", "p": "kakuu-souden", "sec": "kaiho", "k": "論説", "t": "電力系統の電圧調整及び力率調整"}, {"s": "R04上", "c": "8", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "送電線路での抵抗による全電力損失"}, {"s": "R04上", "c": "9", "p": "kakuu-souden", "sec": "tokusei", "k": "論説", "t": "送電線路のフェランチ効果発生原因とその対策"}, {"s": "R04上", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "送電線の各振動の発生原因と名称"}, {"s": "R04上", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路の故障点位置標定"}, {"s": "R03", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "架空送電線のがいしの塩害及びその対策"}, {"s": "R03", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路に使用される電力ケーブルの許容電流"}, {"s": "R03", "c": "16", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "電線の導体温度変化時の電線の実長及び水平張力"}, {"s": "R02", "c": "6", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路における振動及び落雷対策"}, {"s": "R02", "c": "10", "p": "kakuu-souden", "sec": "tokusei", "k": "穴埋", "t": "架空送電線路の線路定数とその考え方"}, {"s": "R02", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "架空送電線路と比較した地中送電線路の特徴"}, {"s": "R02", "c": "16", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "三相平衡負荷を流れる電流及び送電損失"}, {"s": "R01", "c": "9", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線の構成部品"}, {"s": "R01", "c": "10", "p": "kakuu-souden", "sec": "corona", "k": "穴埋", "t": "コロナ放電によるコロナ損"}, {"s": "R01", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "電力ケーブルの布設方式"}, {"s": "R01", "c": "13", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "支線に加わる送電線の張力"}, {"s": "R01", "c": "16", "p": "kakuu-souden", "sec": "tokusei", "k": "計算", "t": "送電線のフェランチ現象"}, {"s": "H30", "c": "6", "p": "kakuu-souden", "sec": "hogo-keiden:tokusei", "k": "穴埋", "t": "保護リレー"}, {"s": "H30", "c": "9", "p": "kakuu-souden", "sec": "setsubi", "k": "穴埋", "t": "架空送電線の多導体方式"}, {"s": "H30", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "送配電系統における過電圧の特徴"}, {"s": "H30", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路に使用される各種電力ケーブル"}, {"s": "H30", "c": "17", "p": "kakuu-souden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスと送電電力"}, {"s": "H29", "c": "6", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "電力系統で使用される直流送電系統の特徴"}, {"s": "H29", "c": "8", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "送電線のたるみからの水平張力の導出"}, {"s": "H29", "c": "9", "p": "kakuu-souden", "sec": "setsubi", "k": "穴埋", "t": "架空送電に関する知識"}, {"s": "H29", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路に使用される電力ケーブルで発生する損失"}, {"s": "H29", "c": "11", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "異なる配線方式の送電線の損失"}, {"s": "H29", "c": "16", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "計算", "t": "ケーブルの対地静電容量"}, {"s": "H28", "c": "8", "p": "kakuu-souden", "sec": "yudo-shougai:conclusion", "k": "穴埋", "t": "誘導障害"}, {"s": "H28", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路の故障点位置標定"}, {"s": "H27", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "架空送電線の振動"}, {"s": "H27", "c": "9", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "がいしの塩害現象及びその対策"}, {"s": "H27", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "計算", "t": "ケーブルの誘電体損"}, {"s": "H27", "c": "17", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "電力系統の送電電力"}, {"s": "H26", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路の雷害対策"}, {"s": "H26", "c": "9", "p": "kakuu-souden", "sec": "corona", "k": "論説", "t": "架空送電線路におけるコロナ放電及び障害"}, {"s": "H26", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "穴埋", "t": "地中送電線の布設方式"}, {"s": "H26", "c": "16", "p": "kakuu-souden", "sec": "denryoku-keitou:chuseiten", "k": "計算", "t": "送電線の１線地絡事故"}, {"s": "H25", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成要素"}, {"s": "H25", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中電線における各損失"}, {"s": "H25", "c": "16", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "架空送電線路の力率計算"}, {"s": "H25", "c": "17", "p": "kakuu-souden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスの諸計算"}, {"s": "H24", "c": "7", "p": "kakuu-souden", "sec": "kaiho", "k": "論説", "t": "送電線の送電容量"}, {"s": "H24", "c": "9", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "直流送電のメリットデメリット"}, {"s": "H24", "c": "10", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "送電線での送電損失"}, {"s": "H24", "c": "12", "p": "kakuu-souden", "sec": "tokusei", "k": "論説", "t": "送配電線路のフェランチ効果"}, {"s": "H24", "c": "13", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "送電線のたるみの温度による変化"}, {"s": "H24", "c": "16", "p": "kakuu-souden", "sec": "tokusei", "k": "計算", "t": "π形等価回路の回路計算"}, {"s": "H23", "c": "6", "p": "kakuu-souden", "sec": "yudo-shougai:conclusion", "k": "論説", "t": "架空送配電線路の誘導障害"}, {"s": "H23", "c": "7", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "送配電線路に発生する外部過電圧と内部過電圧"}, {"s": "H23", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "穴埋", "t": "マーレ―ループ法の原理と測定方法"}, {"s": "H22", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "送電線に発生する振動の種類とその原因"}, {"s": "H22", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中電力ケーブルの送電容量増大対策"}, {"s": "H21", "c": "7", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "交流三相3線式送電線路の送電電力"}, {"s": "H21", "c": "9", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "直流送電と交流送電の比較"}, {"s": "H21", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "計算", "t": "三相３線式地中電線路の誘電体損の導出"}, {"s": "H21", "c": "16", "p": "kakuu-souden", "sec": "henatsuki:tanraku", "k": "計算", "t": "系統の百分率インピーダンスと三相短絡電流"}, {"s": "H20", "c": "7", "p": "kakuu-souden", "sec": "corona", "k": "論説", "t": "送配電線路や変電機器等におけるコロナ障害"}, {"s": "H20", "c": "9", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成要素"}, {"s": "H20", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "がいしの塩害とその対策"}, {"s": "H20", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中電線路の絶縁劣化診断方法"}, {"s": "H20", "c": "16", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "三相3線式線路における電圧降下率"}, {"s": "H19", "c": "7", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "電力系統に現れる過電圧の種類と対策"}, {"s": "H19", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路の架空地線"}, {"s": "H19", "c": "9", "p": "kakuu-souden", "sec": "tokusei", "k": "穴埋", "t": "受電端電圧が送電端電圧より高くなる現象の名称や特徴"}, {"s": "H19", "c": "10", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "三相3線式送電線の電力損失率"}, {"s": "H19", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "穴埋", "t": "CVTケーブルのCV-3Cケーブルと比較した特徴"}, {"s": "H18", "c": "6", "p": "kakuu-souden", "sec": "yudo-shougai:conclusion", "k": "穴埋", "t": "架空送電線路に発生する誘導障害"}, {"s": "H18", "c": "7", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "がいしの性能を表す要素"}, {"s": "H18", "c": "8", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中ケーブルの付設方法の違いと特徴"}, {"s": "H18", "c": "14", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架空送電線のたるみの導出"}, {"s": "R08上", "c": "7", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "論説", "t": "配電線の一般的な保護"}, {"s": "R08上", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "スポットネットワーク方式及び低圧ネットワーク方式"}, {"s": "R08上", "c": "13", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "単相3線式配電線路の各電圧や電流の導出"}, {"s": "R08上", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "バランサ接続前後の電流及び線路損失"}, {"s": "R07下", "c": "7", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "論説", "t": "6.6kV非接地方式配電線及び高圧受電設備の保護"}, {"s": "R07下", "c": "12", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相変圧器二次側遮断器の定格遮断電流"}, {"s": "R07下", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "増設可能な負荷の皮相電力"}, {"s": "R07下", "c": "16", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線の電圧降下と負荷電力の関係"}, {"s": "R07下", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "力率の異なる負荷接続時の線路電流と電圧降下"}, {"s": "R07上", "c": "7", "p": "haiden", "sec": "denryoku-keitou:renkei", "k": "論説", "t": "分散型電源の配電系統連系"}, {"s": "R07上", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "単相3線式配電方式の特徴"}, {"s": "R07上", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "力率変化に伴う配電線の負荷電力の変化"}, {"s": "R07上", "c": "16", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相短絡事故発生時の事故電流と電圧変化"}, {"s": "R07上", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "負荷追加した変圧器の過負荷運転防止"}, {"s": "R06下", "c": "9", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "高低圧配電系統における保護"}, {"s": "R06下", "c": "10", "p": "haiden", "sec": "chichuu-souden:formula", "k": "計算", "t": "三相3線式地中電線路の無負荷充電容量"}, {"s": "R06下", "c": "11", "p": "haiden", "sec": "seigo", "k": "論説", "t": "高圧受電設備を構成する機器"}, {"s": "R06上", "c": "7", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路の電圧維持対策"}, {"s": "R06上", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "交流三相方式の送配電方式"}, {"s": "R06上", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式ループ配電線路の電圧降下"}, {"s": "R05下", "c": "7", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路の電圧調整"}, {"s": "R05下", "c": "13", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "単相2線式及び単相3線式線路での電力損失"}, {"s": "R05下", "c": "16", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスと過電流遮断器の整定"}, {"s": "R05下", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "太陽光発電設備が接続された単相 3 線式配電線路"}, {"s": "R05上", "c": "6", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路に設置される開閉器類"}, {"s": "R05上", "c": "8", "p": "haiden", "sec": "seigo", "k": "選択", "t": "配電用機材と関連語句の選択"}, {"s": "R05上", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "22(33)kV配電系統と6.6kV配電系統の比較"}, {"s": "R05上", "c": "12", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式配電線路の電圧降下率"}, {"s": "R05上", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相 3 線式高圧配電線路の電圧降下"}, {"s": "R04下", "c": "12", "p": "haiden", "sec": "seigo", "k": "穴埋", "t": "配電線路の電圧を適正範囲に維持するための調整"}, {"s": "R04下", "c": "13", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "低圧ネットワーク方式の特徴"}, {"s": "R04下", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "不平衡負荷を接続した単相３線式配電線路"}, {"s": "R04上", "c": "12", "p": "haiden", "sec": "seigo", "k": "穴埋", "t": "柱上変圧器"}, {"s": "R04上", "c": "13", "p": "haiden", "sec": "seigo", "k": "選択", "t": "高圧配電線路構成機材の用語選択"}, {"s": "R04上", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線の送電電力及び力率変化後の送電電力の導出"}, {"s": "R03", "c": "12", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "単相3線式配電方式の特徴"}, {"s": "R03", "c": "13", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "高低圧配電系統における保護"}, {"s": "R03", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "単相2線式配電線路の電圧降下"}, {"s": "R02", "c": "8", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスを用いた三相短絡電流の導出"}, {"s": "R02", "c": "12", "p": "haiden", "sec": "seigo", "k": "論説", "t": "高圧架空配電線路の構成機材"}, {"s": "R02", "c": "13", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "スポットネットワーク方式"}, {"s": "R02", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式ループ配電線路の電圧降下"}, {"s": "R01", "c": "12", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "配電線路の電気方式"}, {"s": "R01", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線の電力損失及び電圧降下"}, {"s": "H30", "c": "8", "p": "haiden", "sec": "formula", "k": "計算", "t": "平衡三相負荷への供給電力"}, {"s": "H30", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "高圧配電線の力率の導出"}, {"s": "H30", "c": "16", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "太陽光発電所接続前後の負荷バランス"}, {"s": "H29", "c": "12", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "高低圧配電系統の保護"}, {"s": "H29", "c": "13", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路の電圧調整"}, {"s": "H29", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式送電線の力率改善"}, {"s": "H28", "c": "9", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式送電線路の電圧降下"}, {"s": "H28", "c": "11", "p": "haiden", "sec": "seigo", "k": "論説", "t": "地中配電線路に用いられる機器"}, {"s": "H28", "c": "12", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "低圧配電系統の構成"}, {"s": "H28", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "単相2線式の電圧降下"}, {"s": "H28", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "バランサを接続した単相3線式配電線路"}, {"s": "H27", "c": "5", "p": "haiden", "sec": "denryoku-keitou:renkei", "k": "論説", "t": "分散型電源の配電系統連系"}, {"s": "H27", "c": "6", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "論説", "t": "各種保護リレーの特徴"}, {"s": "H27", "c": "11", "p": "haiden", "sec": "seigo", "k": "穴埋", "t": "地中配電線路の得失"}, {"s": "H27", "c": "12", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "スポットネットワーク方式及び低圧ネットワーク方式の特徴"}, {"s": "H27", "c": "13", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "低圧配電方式の最大送電電力"}, {"s": "H27", "c": "16", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式の回路計算"}, {"s": "H26", "c": "7", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線路の電圧降下率"}, {"s": "H26", "c": "11", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "配電線路接地方式や一線地絡事故が発生した場合の現象"}, {"s": "H26", "c": "12", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相4線式低圧配電線の容量"}, {"s": "H26", "c": "13", "p": "haiden", "sec": "seigo", "k": "論説", "t": "高圧架空配電系統を構成する機材とその特徴"}, {"s": "H25", "c": "7", "p": "haiden", "sec": "shadanki:shurui", "k": "穴埋", "t": "真空遮断器の構造や特徴"}, {"s": "H25", "c": "9", "p": "haiden", "sec": "kakuu-souden:tarumi", "k": "計算", "t": "架線の張力と支線と追支線の関係"}, {"s": "H25", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "我が国の配電系統の特徴"}, {"s": "H25", "c": "12", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "配電線の保護方式"}, {"s": "H25", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式配電線路線路の電圧降下"}, {"s": "H24", "c": "11", "p": "haiden", "sec": "chichuu-souden:formula", "k": "計算", "t": "地中配電ケーブルの充電容量"}, {"s": "H23", "c": "9", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "単相3線式配電線路における電圧及び電流の値"}, {"s": "H23", "c": "12", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "大都市で採用されるスポットネットワーク方式"}, {"s": "H23", "c": "13", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路の電圧調整の方法"}, {"s": "H23", "c": "16", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相短絡事故発生時の事故電流"}, {"s": "H23", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "昇圧器を含む単相2線式配電線路の電圧降下"}, {"s": "H22", "c": "12", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路に設置される開閉器等の機器"}, {"s": "H22", "c": "13", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電設備の記述の正誤の組み合わせ"}, {"s": "H22", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "単相２線式配電線路の電圧降下と負荷電流"}, {"s": "H21", "c": "8", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "22(33)kV配電系統の6.6kV配電系統に対する比較"}, {"s": "H21", "c": "10", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相３線式高圧配電線路の電圧降下"}, {"s": "H21", "c": "12", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路に使用される変圧器"}, {"s": "H21", "c": "13", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "論説", "t": "配電設備や屋内設備における保護装置の特徴"}, {"s": "H21", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "電力用コンデンサを接続したときの無効電力と力率の変化"}, {"s": "H20", "c": "12", "p": "haiden", "sec": "seigo", "k": "論説", "t": "架空配電線路と比較したときの地中配電線路の一般的な特徴"}, {"s": "H20", "c": "13", "p": "haiden", "sec": "seigo", "k": "穴埋", "t": "配電線路の電圧調整"}, {"s": "H20", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式配電線路の電圧降下"}, {"s": "H19", "c": "12", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相短絡事故が発生した時の短絡電流"}, {"s": "H19", "c": "13", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "高低圧配電系統に採用されている配電方式"}, {"s": "H19", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "太陽光発電設備が接続された単相 3 線式配電線路"}, {"s": "H18", "c": "9", "p": "haiden", "sec": "seigo", "k": "選択", "t": "配電用機材とそれに関係の深い語句の組合せ"}, {"s": "H18", "c": "10", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "スポットネットワーク受電設備"}, {"s": "H18", "c": "16", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線の電圧降下と負荷電力の関係"}, {"s": "H18", "c": "17", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスと過電流遮断器の整定"}, {"s": "R07下", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中ケーブルの付設方法の違いと特徴"}, {"s": "R07上", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路に使用される各種電力ケーブル"}, {"s": "R06上", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "穴埋", "t": "マーレーループ法による故障点位置標定"}, {"s": "R05下", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路の特徴や布設方法"}, {"s": "R05上", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路の線路定数"}, {"s": "R04下", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送配電線の各布設方式の特徴"}];
+const KAKOMON = [{"s": "R08上", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電所に用いられるダムの種別と特徴"}, {"s": "R08上", "c": "2", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "ある地域の想定される理論的包蔵水力"}, {"s": "R08上", "c": "15", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "揚水発電所の出力や入力及び効率等運用"}, {"s": "R07下", "c": "1", "p": "suiryoku", "sec": "intro", "k": "穴埋", "t": "水力発電所の落差分類"}, {"s": "R07下", "c": "2", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "単位体積当たりの水の運動エネルギー"}, {"s": "R07上", "c": "1", "p": "suiryoku", "sec": "formula", "k": "穴埋", "t": "水力発電所の理論出力と各単位"}, {"s": "R07上", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "調整池式水力発電所の使用水量と有効貯水容量"}, {"s": "R06下", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "水力発電の水車・発電機・主変圧器の特徴"}, {"s": "R06上", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "衝動水車を中心とした水力発電所"}, {"s": "R06上", "c": "2", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "揚水発電所の電動機入力と発電機出力"}, {"s": "R06上", "c": "15", "p": "suiryoku", "sec": "suisha", "k": "計算", "t": "水車の回転速度と比速度および水車の種類"}, {"s": "R05下", "c": "1", "p": "suiryoku", "sec": "formula", "k": "穴埋", "t": "水力発電所の落差と理論式"}, {"s": "R05下", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "水力発電所の発電電力量と汽力発電所の重油使用量"}, {"s": "R05上", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車の比速度の定義と特徴"}, {"s": "R04下", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電の特徴や現在の概況"}, {"s": "R04下", "c": "2", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水力発電で使用される水車の特徴"}, {"s": "R04上", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "水力発電所における水車の特徴及び監視制御方式"}, {"s": "R04上", "c": "15", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "揚水発電所の揚水運転時の必要電力量及び流量"}, {"s": "R03", "c": "1", "p": "suiryoku", "sec": "intro", "k": "穴埋", "t": "水力発電所の落差を得る方法や流量調整による分類"}, {"s": "R03", "c": "2", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "連続の定理及びベルヌーイの定理"}, {"s": "R02", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "ダム水路式発電所における水撃作用及びサージタンク"}, {"s": "R02", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "貯水池を有する水力発電所の発電計画"}, {"s": "R01", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "水力発電所の水車及び発電機"}, {"s": "R01", "c": "2", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車の構造と特徴"}, {"s": "H30", "c": "2", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車の比速度の定義と特徴"}, {"s": "H30", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "調整池式発電所の出力"}, {"s": "H29", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電所に用いられるダム"}, {"s": "H29", "c": "2", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車のキャビテーション"}, {"s": "H28", "c": "1", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "揚水発電所の出力や入力及び効率"}, {"s": "H28", "c": "2", "p": "suiryoku", "sec": "seigo", "k": "穴埋", "t": "同期発電機の比較"}, {"s": "H27", "c": "1", "p": "suiryoku", "sec": "formula", "k": "穴埋", "t": "水力の理論出力と各単位"}, {"s": "H27", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "速度調定率と出力の関係"}, {"s": "H26", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車の調速機の機能と構造"}, {"s": "H26", "c": "15", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "ベルヌーイの定理を利用した計算"}, {"s": "H25", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水力発電に用いる水車"}, {"s": "H24", "c": "1", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "水力発電所の落差と理論式"}, {"s": "H23", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電所の不具合原因箇所特定"}, {"s": "H22", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水力発電所で使用される衝動水車の原理や特徴"}, {"s": "H21", "c": "1", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "部分負荷運転している水力発電所の流量"}, {"s": "H20", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水力発電所で使用される水車の種類と特徴"}, {"s": "H20", "c": "2", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電所の理論や特徴"}, {"s": "H19", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "水力発電の水車と発電機，主変圧器の特徴"}, {"s": "H19", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "速度調定率を用いた負荷急変時の周波数と出力変化"}, {"s": "H18", "c": "12", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "水管内を流れる流水の流速と圧力"}, {"s": "R08上", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "火力発電所の復水器"}, {"s": "R07下", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "汽力発電所で使用される保護装置"}, {"s": "R07下", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "重油専焼火力発電所の熱効率と二酸化炭素発生量"}, {"s": "R07上", "c": "2", "p": "karyoku", "sec": "formula", "k": "計算", "t": "タービン効率と使用蒸気量の関係"}, {"s": "R07上", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "水と蒸気及び燃焼ガスの通過する順序"}, {"s": "R06下", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電における熱効率向上対策"}, {"s": "R06下", "c": "3", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "衝動タービンと反動タービンの比較"}, {"s": "R06下", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "重油消費量と二酸化炭素排出量"}, {"s": "R06上", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電と汽力発電の比較"}, {"s": "R05下", "c": "2", "p": "karyoku", "sec": "suiryoku:kaiho", "k": "計算", "t": "速度調定率の異なる発電機の出力変化"}, {"s": "R05下", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "復水器の特徴"}, {"s": "R05上", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "熱回収コンバインドサイクル発電の特徴"}, {"s": "R05上", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "火力発電所の煙風道系統"}, {"s": "R05上", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "石炭火力発電所の熱効率と二酸化炭素排出量"}, {"s": "R04下", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電方式の特徴"}, {"s": "R04下", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所の復水器で失われる熱量"}, {"s": "R04上", "c": "2", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "火力発電所のタービン発電機"}, {"s": "R04上", "c": "3", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電設備のタービン効率"}, {"s": "R03", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "汽力発電におけるボイラ設備"}, {"s": "R03", "c": "4", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "電気集じん装置のメカニズム"}, {"s": "R03", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "火力発電所の送電端電力量及び発電端効率"}, {"s": "R02", "c": "2", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "汽力発電所の復水器の機能及び特徴，損失"}, {"s": "R02", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "火力発電所で使用される保護装置"}, {"s": "R01", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電所における熱効率向上方法"}, {"s": "R01", "c": "5", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電"}, {"s": "R01", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所のタービン出力及び海水温度"}, {"s": "H30", "c": "1", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "タービン発電機の水素冷却方式の特徴"}, {"s": "H30", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "汽力発電所の蒸気タービン設備"}, {"s": "H29", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "火力発電所の環境対策"}, {"s": "H29", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "火力発電所の燃料使用量，空気量"}, {"s": "H28", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "汽力発電所のボイラ及びその付属設備"}, {"s": "H28", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所のタービン効率及び発電機効率"}, {"s": "H27", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電所における再生サイクル及び再熱サイクル"}, {"s": "H27", "c": "3", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所のボイラ効率"}, {"s": "H26", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電所の熱サイクル"}, {"s": "H26", "c": "3", "p": "karyoku", "sec": "cycle", "k": "穴埋", "t": "コンバインドサイクルの高効率化"}, {"s": "H26", "c": "17", "p": "karyoku", "sec": "formula", "k": "計算", "t": "火力発電所の燃焼計算"}, {"s": "H25", "c": "2", "p": "karyoku", "sec": "cycle", "k": "計算", "t": "コンバインドサイクル発電の熱効率"}, {"s": "H25", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "汽力発電所の蒸気タービンの分類"}, {"s": "H25", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "火力発電所の効率計算"}, {"s": "H24", "c": "2", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "汽力発電所のタービン発電機の特徴"}, {"s": "H24", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "汽力発電所の保護装置"}, {"s": "H24", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "石炭火力発電所の送電端電力量と発電端効率"}, {"s": "H23", "c": "2", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "火力発電所のボイラ設備の説明"}, {"s": "H23", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "汽力発電所の復水器に関する一般的説明"}, {"s": "H23", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所における必要燃料重量と理論空気量"}, {"s": "H22", "c": "2", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "火力発電所排ガス中の環境に悪影響を及ぼす物質とその対策"}, {"s": "H22", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電の特徴"}, {"s": "H22", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "石炭火力発電所の熱効率"}, {"s": "H21", "c": "2", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "タービン発電機の水素冷却方式"}, {"s": "H21", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電所の熱効率向上対策"}, {"s": "H21", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "重油専焼火力発電所の熱効率と二酸化炭素発生量"}, {"s": "H20", "c": "3", "p": "karyoku", "sec": "cycle", "k": "穴埋", "t": "汽力発電所の基本的な熱サイクル"}, {"s": "H20", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所の発電電力量と送電端熱効率"}, {"s": "H19", "c": "2", "p": "karyoku", "sec": "cycle", "k": "計算", "t": "汽力発電の基本サイクルであるランキンサイクルの効率"}, {"s": "H19", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電方式と汽力発電方式の比較"}, {"s": "H19", "c": "5", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "各発電所の二酸化炭素排出量の違い"}, {"s": "H18", "c": "1", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "汽力発電所で使用される復水器"}, {"s": "H18", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電における燃焼用空気の流れ"}, {"s": "H18", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所の復水器での損失とタービン室効率"}, {"s": "R08上", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "原子核の質量と原子力発電の原理"}, {"s": "R07下", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "将来に向けた新型炉の検討"}, {"s": "R07上", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "原子力発電における核燃料サイクル"}, {"s": "R06下", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "論説", "t": "原子力発電で使用される燃料と原理"}, {"s": "R06上", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウランの核分裂エネルギーと石炭の発熱量の比較"}, {"s": "R05下", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "論説", "t": "軽水炉で使用される原子燃料"}, {"s": "R05上", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウランの発生エネルギーと重油量の比較"}, {"s": "R04下", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "穴埋", "t": "日本で採用されている原子炉の型と特性"}, {"s": "R04上", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "沸騰水型原子炉（BWR）の特徴"}, {"s": "R03", "c": "5", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "日本で使用されている原子力発電の構造や特徴"}, {"s": "R02", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "ウラン235など原子燃料に使用される物質"}, {"s": "R01", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウランと石炭の燃料消費量の違い"}, {"s": "H30", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "穴埋", "t": "原子力発電所の蒸気タービンの特徴"}, {"s": "H29", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "原子力発電所の電力による揚水発電量"}, {"s": "H28", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "原子力発電における核燃料サイクル"}, {"s": "H27", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "穴埋", "t": "原子炉の加圧水型と沸騰水型の比較"}, {"s": "H26", "c": "4", "p": "genshiryoku", "sec": "intro", "k": "論説", "t": "原子力発電"}, {"s": "H25", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "原子力発電所の軽水炉"}, {"s": "H24", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウランと重油の燃料消費量の違い"}, {"s": "H23", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウラン235が核分裂により発生するエネルギー"}, {"s": "H22", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "加圧水型原子炉(PWR)の構成及び特徴"}, {"s": "H21", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "原子力発電の原理や原子燃料"}, {"s": "H20", "c": "4", "p": "genshiryoku", "sec": "rinkai", "k": "穴埋", "t": "軽水炉における出力調整の方法"}, {"s": "H19", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "穴埋", "t": "原子力発電所で採用されている原子炉の種類や特徴"}, {"s": "H18", "c": "13", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "原子力発電のエネルギーが揚水発電所で揚水できる水量"}, {"s": "R08上", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "論説", "t": "変圧器のV結線方式"}, {"s": "R08上", "c": "12", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器故障発生時を想定した供給可能な総負荷の導出"}, {"s": "R07下", "c": "6", "p": "kaihei-hogo", "sec": "zetsuen-hakai:hiraiki", "k": "穴埋", "t": "避雷器に使用される素子とその特徴"}, {"s": "R07上", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "ガス絶縁開閉装置の特徴"}, {"s": "R06下", "c": "6", "p": "kaihei-hogo", "sec": "setsubi", "k": "穴埋", "t": "調相設備接続による無効電力の調整"}, {"s": "R06下", "c": "7", "p": "kaihei-hogo", "sec": "keiki-hensei:intro", "k": "穴埋", "t": "計器用変成器の取扱い上の注意点"}, {"s": "R06上", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "穴埋", "t": "ガス絶縁開閉装置（GIS）"}, {"s": "R06上", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "変圧器に設置する遮断器の定格遮断電流と負荷分担"}, {"s": "R05下", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "穴埋", "t": "変圧器のY-Y結線の特徴"}, {"s": "R05上", "c": "7", "p": "kaihei-hogo", "sec": "keiki-hensei:intro", "k": "穴埋", "t": "変電所の計器用変成器"}, {"s": "R05上", "c": "13", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器並行運転時の過負荷容量"}, {"s": "R05上", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相変圧器二次側の遮断器定格遮断電流"}, {"s": "R04下", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相変圧器の百分率リアクタンス導出"}, {"s": "R04下", "c": "7", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "穴埋", "t": "変圧器の結線方式の違いと特性"}, {"s": "R04上", "c": "7", "p": "kaihei-hogo", "sec": "hogo-keiden:tokusei", "k": "穴埋", "t": "過電流継電器の限時特性"}, {"s": "R04上", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "変圧器に設置する遮断器の定格遮断電流"}, {"s": "R03", "c": "7", "p": "kaihei-hogo", "sec": "keiki-hensei:intro", "k": "穴埋", "t": "変電所の計器用変成器"}, {"s": "R03", "c": "8", "p": "kaihei-hogo", "sec": "shadanki:intro", "k": "論説", "t": "変電所で使用される断路器"}, {"s": "R03", "c": "9", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器故障時の過負荷運転"}, {"s": "R02", "c": "7", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "真空遮断器の特徴及び動作メカニズム"}, {"s": "R02", "c": "9", "p": "kaihei-hogo", "sec": "zetsuen-hakai:hiraiki", "k": "穴埋", "t": "避雷器に使用される物質とその特徴"}, {"s": "R01", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "ガス絶縁開閉装置"}, {"s": "R01", "c": "7", "p": "kaihei-hogo", "sec": "setsubi", "k": "穴埋", "t": "変電所の主な役割と用途上の分類"}, {"s": "R01", "c": "8", "p": "kaihei-hogo", "sec": "hogo-keiden:tokusei", "k": "計算", "t": "保護継電器の動作時間"}, {"s": "H30", "c": "7", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "変圧器の保全・診断"}, {"s": "H30", "c": "12", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "論説", "t": "変圧器のV結線方式"}, {"s": "H29", "c": "7", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "穴埋", "t": "変圧器のY-Y結線方式の特徴"}, {"s": "H28", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器の容量"}, {"s": "H28", "c": "7", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "遮断器"}, {"s": "H28", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "事故時に流れる電流"}, {"s": "H27", "c": "7", "p": "kaihei-hogo", "sec": "zetsuen-hakai:hiraiki", "k": "穴埋", "t": "避雷器"}, {"s": "H26", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "配電用変電所の容量"}, {"s": "H25", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "論説", "t": "変圧器の結線方式として用いられるY－Y－Δ結線"}, {"s": "H24", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "穴埋", "t": "ガス絶縁開閉装置（ＧＩＳ）"}, {"s": "H24", "c": "8", "p": "kaihei-hogo", "sec": "setsubi", "k": "穴埋", "t": "調相設備による力率調整"}, {"s": "H24", "c": "17", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器の過負荷運転防止"}, {"s": "H23", "c": "8", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "受変電設備や送配電設備に設置されるリアクトル"}, {"s": "H23", "c": "10", "p": "kaihei-hogo", "sec": "zetsuen-hakai:hiraiki", "k": "穴埋", "t": "発変電所で使用される避雷器の特性や特徴"}, {"s": "H22", "c": "6", "p": "kaihei-hogo", "sec": "setsubi", "k": "計算", "t": "三相コンデンサを設置することによる配電線の力率改善"}, {"s": "H22", "c": "7", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "穴埋", "t": "大容量発電所の主変圧器の結線方式とその理由"}, {"s": "H22", "c": "8", "p": "kaihei-hogo", "sec": "denryoku-keitou:chuseiten", "k": "論説", "t": "中性点接地方式の目的や使用される電圧の違い"}, {"s": "H22", "c": "9", "p": "kaihei-hogo", "sec": "keiki-hensei:intro", "k": "穴埋", "t": "変流器の特徴と取り扱い上の注意点"}, {"s": "H22", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "変圧器に設置する遮断器の定格遮断電流と変圧器の負荷分担"}, {"s": "H21", "c": "6", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "電力系統における変電所の役割と機能"}, {"s": "H20", "c": "6", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "変電所に設置される機器"}, {"s": "H20", "c": "8", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相変圧器の百分率リアクタンス"}, {"s": "H19", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "ガス絶縁開閉装置の特徴"}, {"s": "H19", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "計算", "t": "異容量 V 結線方式のベクトル図と過負荷にならない容量"}, {"s": "H18", "c": "4", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "変電所に設置される機器"}, {"s": "H18", "c": "5", "p": "kaihei-hogo", "sec": "setsubi", "k": "穴埋", "t": "変電所等に設置する調相設備"}, {"s": "R08上", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路で用いられる電線の太さを決定する要因"}, {"s": "R08上", "c": "9", "p": "kakuu-souden", "sec": "denryoku-keitou:chuseiten", "k": "論説", "t": "非接地方式で1線地絡が発生した場合の現象"}, {"s": "R08上", "c": "10", "p": "chichuu-souden", "sec": "formula", "k": "論説", "t": "地中送電線路の電力ケーブルで発生する損失の特徴"}, {"s": "R08上", "c": "16", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架空電線路の径間，電線の長さ及びたるみ"}, {"s": "R07下", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路の振動及び落雷に関連する設備"}, {"s": "R07下", "c": "9", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路の雷による過電圧とその対策"}, {"s": "R07下", "c": "11", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "直流送電の交流送電と比較した特徴"}, {"s": "R07上", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成部品"}, {"s": "R07上", "c": "9", "p": "kakuu-souden", "sec": "yudo-shougai:conclusion", "k": "穴埋", "t": "架空送電線路に発生する誘導障害"}, {"s": "R07上", "c": "12", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架空電線路の電線の実長"}, {"s": "R06下", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "がいしの塩害とその対策"}, {"s": "R06下", "c": "12", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "三相3線式送電線の電力損失率"}, {"s": "R06下", "c": "13", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "送電線のたるみの温度による変化"}, {"s": "R06下", "c": "16", "p": "kakuu-souden", "sec": "tokusei", "k": "計算", "t": "T形等価回路を用いた分布定数回路"}, {"s": "R06下", "c": "17", "p": "kakuu-souden", "sec": "tokusei", "k": "計算", "t": "送電線のフェランチ現象を模式化した演算"}, {"s": "R06上", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "送電線に発生する振動とその対策"}, {"s": "R06上", "c": "9", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "電力系統に現れる過電圧の種類と対策"}, {"s": "R06上", "c": "12", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架線の張力を変更することによる送電線のたるみの調整"}, {"s": "R06上", "c": "13", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "送電線の損失上限値を超えないための電線の最小断面積"}, {"s": "R05下", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成要素"}, {"s": "R05下", "c": "9", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "送電線路に施設する架空地線"}, {"s": "R05下", "c": "11", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "直流送電の特徴や注意点"}, {"s": "R05下", "c": "12", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架空送電線のたるみの導出"}, {"s": "R05上", "c": "9", "p": "kakuu-souden", "sec": "corona", "k": "穴埋", "t": "送電線に発生するコロナ損"}, {"s": "R04下", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成要素"}, {"s": "R04下", "c": "9", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "送電線で送電される三相有効電力"}, {"s": "R04下", "c": "16", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "受電端に接続可能な皮相電力及び必要調相設備の容量"}, {"s": "R04上", "c": "6", "p": "kakuu-souden", "sec": "kaiho", "k": "論説", "t": "電力系統の電圧調整及び力率調整"}, {"s": "R04上", "c": "8", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "送電線路での抵抗による全電力損失"}, {"s": "R04上", "c": "9", "p": "kakuu-souden", "sec": "tokusei", "k": "論説", "t": "送電線路のフェランチ効果発生原因とその対策"}, {"s": "R04上", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "送電線の各振動の発生原因と名称"}, {"s": "R04上", "c": "11", "p": "chichuu-souden", "sec": "hikaku", "k": "論説", "t": "地中送電線路の故障点位置標定"}, {"s": "R03", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "架空送電線のがいしの塩害及びその対策"}, {"s": "R03", "c": "11", "p": "chichuu-souden", "sec": "formula", "k": "論説", "t": "地中送電線路に使用される電力ケーブルの許容電流"}, {"s": "R03", "c": "16", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "電線の導体温度変化時の電線の実長及び水平張力"}, {"s": "R02", "c": "6", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路における振動及び落雷対策"}, {"s": "R02", "c": "10", "p": "kakuu-souden", "sec": "tokusei", "k": "穴埋", "t": "架空送電線路の線路定数とその考え方"}, {"s": "R02", "c": "11", "p": "chichuu-souden", "sec": "hikaku", "k": "論説", "t": "架空送電線路と比較した地中送電線路の特徴"}, {"s": "R02", "c": "16", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "三相平衡負荷を流れる電流及び送電損失"}, {"s": "R01", "c": "9", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線の構成部品"}, {"s": "R01", "c": "10", "p": "kakuu-souden", "sec": "corona", "k": "穴埋", "t": "コロナ放電によるコロナ損"}, {"s": "R01", "c": "11", "p": "chichuu-souden", "sec": "fusetsu", "k": "論説", "t": "電力ケーブルの布設方式"}, {"s": "R01", "c": "13", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "支線に加わる送電線の張力"}, {"s": "R01", "c": "16", "p": "kakuu-souden", "sec": "tokusei", "k": "計算", "t": "送電線のフェランチ現象"}, {"s": "H30", "c": "6", "p": "kakuu-souden", "sec": "hogo-keiden:tokusei", "k": "穴埋", "t": "保護リレー"}, {"s": "H30", "c": "9", "p": "kakuu-souden", "sec": "setsubi", "k": "穴埋", "t": "架空送電線の多導体方式"}, {"s": "H30", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "送配電系統における過電圧の特徴"}, {"s": "H30", "c": "11", "p": "chichuu-souden", "sec": "cable", "k": "論説", "t": "地中送電線路に使用される各種電力ケーブル"}, {"s": "H30", "c": "17", "p": "kakuu-souden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスと送電電力"}, {"s": "H29", "c": "6", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "電力系統で使用される直流送電系統の特徴"}, {"s": "H29", "c": "8", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "送電線のたるみからの水平張力の導出"}, {"s": "H29", "c": "9", "p": "kakuu-souden", "sec": "setsubi", "k": "穴埋", "t": "架空送電に関する知識"}, {"s": "H29", "c": "10", "p": "chichuu-souden", "sec": "formula", "k": "論説", "t": "地中送電線路に使用される電力ケーブルで発生する損失"}, {"s": "H29", "c": "11", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "異なる配線方式の送電線の損失"}, {"s": "H29", "c": "16", "p": "chichuu-souden", "sec": "kaiho", "k": "計算", "t": "ケーブルの対地静電容量"}, {"s": "H28", "c": "8", "p": "kakuu-souden", "sec": "yudo-shougai:conclusion", "k": "穴埋", "t": "誘導障害"}, {"s": "H28", "c": "10", "p": "chichuu-souden", "sec": "hikaku", "k": "論説", "t": "地中送電線路の故障点位置標定"}, {"s": "H27", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "架空送電線の振動"}, {"s": "H27", "c": "9", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "がいしの塩害現象及びその対策"}, {"s": "H27", "c": "10", "p": "chichuu-souden", "sec": "formula", "k": "計算", "t": "ケーブルの誘電体損"}, {"s": "H27", "c": "17", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "電力系統の送電電力"}, {"s": "H26", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路の雷害対策"}, {"s": "H26", "c": "9", "p": "kakuu-souden", "sec": "corona", "k": "論説", "t": "架空送電線路におけるコロナ放電及び障害"}, {"s": "H26", "c": "10", "p": "chichuu-souden", "sec": "fusetsu", "k": "穴埋", "t": "地中送電線の布設方式"}, {"s": "H26", "c": "16", "p": "kakuu-souden", "sec": "denryoku-keitou:chuseiten", "k": "計算", "t": "送電線の１線地絡事故"}, {"s": "H25", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成要素"}, {"s": "H25", "c": "10", "p": "chichuu-souden", "sec": "formula", "k": "論説", "t": "地中電線における各損失"}, {"s": "H25", "c": "16", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "架空送電線路の力率計算"}, {"s": "H25", "c": "17", "p": "kakuu-souden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスの諸計算"}, {"s": "H24", "c": "7", "p": "kakuu-souden", "sec": "kaiho", "k": "論説", "t": "送電線の送電容量"}, {"s": "H24", "c": "9", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "直流送電のメリットデメリット"}, {"s": "H24", "c": "10", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "送電線での送電損失"}, {"s": "H24", "c": "12", "p": "kakuu-souden", "sec": "tokusei", "k": "論説", "t": "送配電線路のフェランチ効果"}, {"s": "H24", "c": "13", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "送電線のたるみの温度による変化"}, {"s": "H24", "c": "16", "p": "kakuu-souden", "sec": "tokusei", "k": "計算", "t": "π形等価回路の回路計算"}, {"s": "H23", "c": "6", "p": "kakuu-souden", "sec": "yudo-shougai:conclusion", "k": "論説", "t": "架空送配電線路の誘導障害"}, {"s": "H23", "c": "7", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "送配電線路に発生する外部過電圧と内部過電圧"}, {"s": "H23", "c": "11", "p": "chichuu-souden", "sec": "hikaku", "k": "穴埋", "t": "マーレ―ループ法の原理と測定方法"}, {"s": "H22", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "送電線に発生する振動の種類とその原因"}, {"s": "H22", "c": "11", "p": "chichuu-souden", "sec": "formula", "k": "論説", "t": "地中電力ケーブルの送電容量増大対策"}, {"s": "H21", "c": "7", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "交流三相3線式送電線路の送電電力"}, {"s": "H21", "c": "9", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "直流送電と交流送電の比較"}, {"s": "H21", "c": "11", "p": "chichuu-souden", "sec": "formula", "k": "計算", "t": "三相３線式地中電線路の誘電体損の導出"}, {"s": "H21", "c": "16", "p": "kakuu-souden", "sec": "henatsuki:tanraku", "k": "計算", "t": "系統の百分率インピーダンスと三相短絡電流"}, {"s": "H20", "c": "7", "p": "kakuu-souden", "sec": "corona", "k": "論説", "t": "送配電線路や変電機器等におけるコロナ障害"}, {"s": "H20", "c": "9", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成要素"}, {"s": "H20", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "がいしの塩害とその対策"}, {"s": "H20", "c": "11", "p": "chichuu-souden", "sec": "zetsuen-hakai:rekka", "k": "論説", "t": "地中電線路の絶縁劣化診断方法"}, {"s": "H20", "c": "16", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "三相3線式線路における電圧降下率"}, {"s": "H19", "c": "7", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "電力系統に現れる過電圧の種類と対策"}, {"s": "H19", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路の架空地線"}, {"s": "H19", "c": "9", "p": "kakuu-souden", "sec": "tokusei", "k": "穴埋", "t": "受電端電圧が送電端電圧より高くなる現象の名称や特徴"}, {"s": "H19", "c": "10", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "三相3線式送電線の電力損失率"}, {"s": "H19", "c": "11", "p": "chichuu-souden", "sec": "cable", "k": "穴埋", "t": "CVTケーブルのCV-3Cケーブルと比較した特徴"}, {"s": "H18", "c": "6", "p": "kakuu-souden", "sec": "yudo-shougai:conclusion", "k": "穴埋", "t": "架空送電線路に発生する誘導障害"}, {"s": "H18", "c": "7", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "がいしの性能を表す要素"}, {"s": "H18", "c": "8", "p": "chichuu-souden", "sec": "fusetsu", "k": "論説", "t": "地中ケーブルの付設方法の違いと特徴"}, {"s": "H18", "c": "14", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架空送電線のたるみの導出"}, {"s": "R08上", "c": "7", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "論説", "t": "配電線の一般的な保護"}, {"s": "R08上", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "スポットネットワーク方式及び低圧ネットワーク方式"}, {"s": "R08上", "c": "13", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "単相3線式配電線路の各電圧や電流の導出"}, {"s": "R08上", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "バランサ接続前後の電流及び線路損失"}, {"s": "R07下", "c": "7", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "論説", "t": "6.6kV非接地方式配電線及び高圧受電設備の保護"}, {"s": "R07下", "c": "12", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相変圧器二次側遮断器の定格遮断電流"}, {"s": "R07下", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "増設可能な負荷の皮相電力"}, {"s": "R07下", "c": "16", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線の電圧降下と負荷電力の関係"}, {"s": "R07下", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "力率の異なる負荷接続時の線路電流と電圧降下"}, {"s": "R07上", "c": "7", "p": "haiden", "sec": "denryoku-keitou:renkei", "k": "論説", "t": "分散型電源の配電系統連系"}, {"s": "R07上", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "単相3線式配電方式の特徴"}, {"s": "R07上", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "力率変化に伴う配電線の負荷電力の変化"}, {"s": "R07上", "c": "16", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相短絡事故発生時の事故電流と電圧変化"}, {"s": "R07上", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "負荷追加した変圧器の過負荷運転防止"}, {"s": "R06下", "c": "9", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "高低圧配電系統における保護"}, {"s": "R06下", "c": "10", "p": "chichuu-souden", "sec": "kaiho", "k": "計算", "t": "三相3線式地中電線路の無負荷充電容量"}, {"s": "R06下", "c": "11", "p": "haiden", "sec": "seigo", "k": "論説", "t": "高圧受電設備を構成する機器"}, {"s": "R06上", "c": "7", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路の電圧維持対策"}, {"s": "R06上", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "交流三相方式の送配電方式"}, {"s": "R06上", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式ループ配電線路の電圧降下"}, {"s": "R05下", "c": "7", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路の電圧調整"}, {"s": "R05下", "c": "13", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "単相2線式及び単相3線式線路での電力損失"}, {"s": "R05下", "c": "16", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスと過電流遮断器の整定"}, {"s": "R05下", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "太陽光発電設備が接続された単相 3 線式配電線路"}, {"s": "R05上", "c": "6", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路に設置される開閉器類"}, {"s": "R05上", "c": "8", "p": "haiden", "sec": "seigo", "k": "選択", "t": "配電用機材と関連語句の選択"}, {"s": "R05上", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "22(33)kV配電系統と6.6kV配電系統の比較"}, {"s": "R05上", "c": "12", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式配電線路の電圧降下率"}, {"s": "R05上", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相 3 線式高圧配電線路の電圧降下"}, {"s": "R04下", "c": "12", "p": "haiden", "sec": "seigo", "k": "穴埋", "t": "配電線路の電圧を適正範囲に維持するための調整"}, {"s": "R04下", "c": "13", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "低圧ネットワーク方式の特徴"}, {"s": "R04下", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "不平衡負荷を接続した単相３線式配電線路"}, {"s": "R04上", "c": "12", "p": "haiden", "sec": "seigo", "k": "穴埋", "t": "柱上変圧器"}, {"s": "R04上", "c": "13", "p": "haiden", "sec": "seigo", "k": "選択", "t": "高圧配電線路構成機材の用語選択"}, {"s": "R04上", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線の送電電力及び力率変化後の送電電力の導出"}, {"s": "R03", "c": "12", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "単相3線式配電方式の特徴"}, {"s": "R03", "c": "13", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "高低圧配電系統における保護"}, {"s": "R03", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "単相2線式配電線路の電圧降下"}, {"s": "R02", "c": "8", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスを用いた三相短絡電流の導出"}, {"s": "R02", "c": "12", "p": "haiden", "sec": "seigo", "k": "論説", "t": "高圧架空配電線路の構成機材"}, {"s": "R02", "c": "13", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "スポットネットワーク方式"}, {"s": "R02", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式ループ配電線路の電圧降下"}, {"s": "R01", "c": "12", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "配電線路の電気方式"}, {"s": "R01", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線の電力損失及び電圧降下"}, {"s": "H30", "c": "8", "p": "haiden", "sec": "formula", "k": "計算", "t": "平衡三相負荷への供給電力"}, {"s": "H30", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "高圧配電線の力率の導出"}, {"s": "H30", "c": "16", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "太陽光発電所接続前後の負荷バランス"}, {"s": "H29", "c": "12", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "高低圧配電系統の保護"}, {"s": "H29", "c": "13", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路の電圧調整"}, {"s": "H29", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式送電線の力率改善"}, {"s": "H28", "c": "9", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式送電線路の電圧降下"}, {"s": "H28", "c": "11", "p": "haiden", "sec": "seigo", "k": "論説", "t": "地中配電線路に用いられる機器"}, {"s": "H28", "c": "12", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "低圧配電系統の構成"}, {"s": "H28", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "単相2線式の電圧降下"}, {"s": "H28", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "バランサを接続した単相3線式配電線路"}, {"s": "H27", "c": "5", "p": "haiden", "sec": "denryoku-keitou:renkei", "k": "論説", "t": "分散型電源の配電系統連系"}, {"s": "H27", "c": "6", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "論説", "t": "各種保護リレーの特徴"}, {"s": "H27", "c": "11", "p": "haiden", "sec": "seigo", "k": "穴埋", "t": "地中配電線路の得失"}, {"s": "H27", "c": "12", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "スポットネットワーク方式及び低圧ネットワーク方式の特徴"}, {"s": "H27", "c": "13", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "低圧配電方式の最大送電電力"}, {"s": "H27", "c": "16", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式の回路計算"}, {"s": "H26", "c": "7", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線路の電圧降下率"}, {"s": "H26", "c": "11", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "配電線路接地方式や一線地絡事故が発生した場合の現象"}, {"s": "H26", "c": "12", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相4線式低圧配電線の容量"}, {"s": "H26", "c": "13", "p": "haiden", "sec": "seigo", "k": "論説", "t": "高圧架空配電系統を構成する機材とその特徴"}, {"s": "H25", "c": "7", "p": "haiden", "sec": "shadanki:shurui", "k": "穴埋", "t": "真空遮断器の構造や特徴"}, {"s": "H25", "c": "9", "p": "haiden", "sec": "kakuu-souden:tarumi", "k": "計算", "t": "架線の張力と支線と追支線の関係"}, {"s": "H25", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "我が国の配電系統の特徴"}, {"s": "H25", "c": "12", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "配電線の保護方式"}, {"s": "H25", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式配電線路線路の電圧降下"}, {"s": "H24", "c": "11", "p": "chichuu-souden", "sec": "kaiho", "k": "計算", "t": "地中配電ケーブルの充電容量"}, {"s": "H23", "c": "9", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "単相3線式配電線路における電圧及び電流の値"}, {"s": "H23", "c": "12", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "大都市で採用されるスポットネットワーク方式"}, {"s": "H23", "c": "13", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路の電圧調整の方法"}, {"s": "H23", "c": "16", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相短絡事故発生時の事故電流"}, {"s": "H23", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "昇圧器を含む単相2線式配電線路の電圧降下"}, {"s": "H22", "c": "12", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路に設置される開閉器等の機器"}, {"s": "H22", "c": "13", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電設備の記述の正誤の組み合わせ"}, {"s": "H22", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "単相２線式配電線路の電圧降下と負荷電流"}, {"s": "H21", "c": "8", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "22(33)kV配電系統の6.6kV配電系統に対する比較"}, {"s": "H21", "c": "10", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相３線式高圧配電線路の電圧降下"}, {"s": "H21", "c": "12", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路に使用される変圧器"}, {"s": "H21", "c": "13", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "論説", "t": "配電設備や屋内設備における保護装置の特徴"}, {"s": "H21", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "電力用コンデンサを接続したときの無効電力と力率の変化"}, {"s": "H20", "c": "12", "p": "haiden", "sec": "seigo", "k": "論説", "t": "架空配電線路と比較したときの地中配電線路の一般的な特徴"}, {"s": "H20", "c": "13", "p": "haiden", "sec": "seigo", "k": "穴埋", "t": "配電線路の電圧調整"}, {"s": "H20", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式配電線路の電圧降下"}, {"s": "H19", "c": "12", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相短絡事故が発生した時の短絡電流"}, {"s": "H19", "c": "13", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "高低圧配電系統に採用されている配電方式"}, {"s": "H19", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "太陽光発電設備が接続された単相 3 線式配電線路"}, {"s": "H18", "c": "9", "p": "haiden", "sec": "seigo", "k": "選択", "t": "配電用機材とそれに関係の深い語句の組合せ"}, {"s": "H18", "c": "10", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "スポットネットワーク受電設備"}, {"s": "H18", "c": "16", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線の電圧降下と負荷電力の関係"}, {"s": "H18", "c": "17", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスと過電流遮断器の整定"}, {"s": "R07下", "c": "10", "p": "chichuu-souden", "sec": "fusetsu", "k": "論説", "t": "地中ケーブルの付設方法の違いと特徴"}, {"s": "R07上", "c": "10", "p": "chichuu-souden", "sec": "cable", "k": "論説", "t": "地中送電線路に使用される各種電力ケーブル"}, {"s": "R06上", "c": "10", "p": "chichuu-souden", "sec": "hikaku", "k": "穴埋", "t": "マーレーループ法による故障点位置標定"}, {"s": "R05下", "c": "10", "p": "chichuu-souden", "sec": "fusetsu", "k": "論説", "t": "地中送電線路の特徴や布設方法"}, {"s": "R05上", "c": "10", "p": "chichuu-souden", "sec": "hikaku", "k": "論説", "t": "地中送電線路の線路定数"}, {"s": "R04下", "c": "10", "p": "chichuu-souden", "sec": "fusetsu", "k": "論説", "t": "地中送配電線の各布設方式の特徴"}];
 const MACHINES = {
  "suiryoku": {
   "num": "1.1",
   "title": "水力発電所",
   "short": "水力",
-  "x": -25,
+  "x": -30,
   "page": "suiryoku",
   "kicker": "落差と流量が出力を決める。揚水では向きが逆",
   "lead": "ダムの貯水池から導水路・サージタンク・水圧管路を通って水車を回し、放水路へ出る。水の点が流れの向き。水車は形式を切り替えると形が変わり、揚水にすると流れが逆になる。",
@@ -379,7 +379,7 @@ const MACHINES = {
   "num": "1.2",
   "title": "火力発電所（汽力）",
   "short": "火力",
-  "x": -15,
+  "x": -20,
   "page": "karyoku",
   "kicker": "水を蒸気にしてタービンを回し、復水器で水に戻す閉じた輪",
   "lead": "ボイラで水を蒸気にし、過熱器でさらに熱してタービンを回す。タービンを出た蒸気は復水器で水に戻り、給水ポンプで節炭器からボイラへ戻る。燃焼ガスは過熱器・節炭器・空気予熱器に熱を渡して煙突へ出る。",
@@ -462,7 +462,7 @@ const MACHINES = {
   "num": "1.3",
   "title": "原子力発電所",
   "short": "原子力",
-  "x": -5,
+  "x": -10,
   "page": "genshiryoku",
   "kicker": "火力との違いは熱源だけ。PWR と BWR の差が頻出",
   "lead": "格納容器の中の原子炉で核分裂の熱をつくり、蒸気でタービンを回す。炉型を切り替えると、加圧水型（PWR）は蒸気発生器と加圧器が現れ、沸騰水型（BWR）は原子炉から直接タービンへ蒸気が行く。",
@@ -530,7 +530,7 @@ const MACHINES = {
   "num": "2.6",
   "title": "変電所",
   "short": "変電所",
-  "x": 5,
+  "x": 0,
   "page": "kaihei-hogo",
   "kicker": "測る・判断する・切る・電圧を変える",
   "lead": "送電線を受ける鉄構から、避雷器・断路器・遮断器・変流器を通って主変圧器へ入り、二次側の母線から配電線へ出ていく。断路器と遮断器は操作でき、順序を間違えると止められる。",
@@ -628,7 +628,7 @@ const MACHINES = {
   "num": "3.1",
   "title": "架空送電線路",
   "short": "送電",
-  "x": 15,
+  "x": 10,
   "page": "kakuu-souden",
   "kicker": "高い電圧で送るのは損失を減らすため。たるみの計算が頻出",
   "lead": "鉄塔3基・2径間に、3相2回線の電線と、頂部に架空地線を張った。見る対象を「たるみ」にすると張力・径間・温度で電線が実際に垂れ下がる（10倍に誇張）。「電圧降下・損失」では送電電圧を変えて損失を比べる。",
@@ -691,11 +691,6 @@ const MACHINES = {
     "√3·I(R cosθ + X sinθ) の型"
    ],
    [
-    "chichuu-souden:intro",
-    "地中送電・電力ケーブル 1. 直感的理解",
-    "地中送電は3Dの対象外。Wikiの別ページで"
-   ],
-   [
     "yudo-shougai:conclusion",
     "誘導障害 1. まず結論",
     "静電誘導は電圧由来、電磁誘導は電流由来"
@@ -722,11 +717,109 @@ const MACHINES = {
    ]
   ]
  },
+ "chichuu-souden": {
+  "num": "3.2",
+  "title": "地中送電線路",
+  "short": "地中",
+  "x": 20,
+  "page": "chichuu-souden",
+  "kicker": "架空と L・C が逆転。充電電流・3つの損失・布設方式・故障点標定",
+  "lead": "見る対象を切り替えて3つを見る。ケーブル断面では CV ケーブルを段むきにして6層を見せ、充電電流・誘電体損・抵抗損・電界を読む。布設方式では直接埋設式・管路式・暗きょ式を土の断面で並べる。マーレーループでは、故障線と健全線を遠端で短絡し、ブリッジの比を動かして故障点を探す。",
+  "parts": [
+   [
+    "#C07A3A",
+    "① 導体",
+    "電流を流す。銅またはアルミ"
+   ],
+   [
+    "#2A2D31",
+    "② 内部半導電層・④ 外部半導電層",
+    "絶縁体の内外の面で電界を均一にし、電界集中を防ぐ"
+   ],
+   [
+    "#E9EDF0",
+    "③ 絶縁体（XLPE）",
+    "電気絶縁の主体。CV の XLPE は tanδ が小さく誘電体損が少ない"
+   ],
+   [
+    "#C07A3A",
+    "⑤ 遮へい銅テープ",
+    "接地する。単心ケーブルではここにシース損が出る"
+   ],
+   [
+    "#1F2226",
+    "⑥ シース",
+    "機械的保護・防水"
+   ],
+   [
+    "#E6D3A3",
+    "布設方式3つ",
+    "**直接埋設式**は安く放熱が良いが外傷・増設に弱い。**管路式・暗きょ式**はその裏返し"
+   ],
+   [
+    "#D24A43",
+    "故障点とループ",
+    "マーレーループ法は、故障線と健全線を遠端で短絡したループの抵抗の比から故障点を出す"
+   ]
+  ],
+  "sections": [
+   [
+    "intro",
+    "1. 直感的理解 — 地中ケーブルの3大問題",
+    "コスト高・放熱困難・充電電流大"
+   ],
+   [
+    "setsubi",
+    "2. 設備を歩く — CVケーブルの断面構造",
+    "段むきの6層を3Dで内側から順に見る"
+   ],
+   [
+    "denkai",
+    "3. 同軸円筒ケーブルの電界分布と電位傾度",
+    "E は 1/r で減り、導体表面で最大"
+   ],
+   [
+    "hikaku",
+    "4. 架空送電 vs 地中送電 比較表（最重要）",
+    "L 小・C 大・フェランチ効果が起きやすい・事故復旧に時間"
+   ],
+   [
+    "cable",
+    "5. ケーブルの種類比較（CV と OF）",
+    "tanδ と最高使用温度"
+   ],
+   [
+    "fusetsu",
+    "7. 布設方式の3分類",
+    "直接埋設・管路・暗きょを土の断面で比べる"
+   ],
+   [
+    "formula",
+    "8. 公式マップ（最重要）",
+    "Ic = ωCE・誘電体損・C = 2πε/ln(D/d)・3つの損失"
+   ],
+   [
+    "kaiho",
+    "9. 解法パターン（充電電流の計算）",
+    "E は相電圧。線間電圧をそのまま入れない"
+   ],
+   [
+    "trap",
+    "10. 引っかけ・誤答ポイント",
+    "L と C の大小、事故復旧の時間"
+   ],
+   [
+    "zetsuen-hakai:rekka",
+    "絶縁破壊・絶縁協調 10. 絶縁の劣化と診断",
+    "地中ケーブルの絶縁劣化診断（3Dでは扱わない）"
+   ]
+  ]
+ },
  "haiden": {
   "num": "4.1",
   "title": "配電線路",
   "short": "配電",
-  "x": 25,
+  "x": 30,
   "page": "haiden",
   "kicker": "単相3線式は中性線、三相3線式は電圧降下率と力率改善",
   "lead": "方式を切り替えて2つの配電を見る。単相3線式では、柱上変圧器で 6.6 kV を下げ、外線 a・中性線 n・外線 b の3本で2軒の負荷へ送る。中性線を断線させると電圧が偏り、バランサを付けると偏りが消える。三相3線式では、高圧配電線の3本から工場へ送り、力率改善用コンデンサで電流・電圧降下・損失がどう減るかを見る。",
@@ -819,11 +912,6 @@ const MACHINES = {
     "分散型電源の連系"
    ],
    [
-    "chichuu-souden:formula",
-    "地中送電 8. 公式マップ",
-    "ケーブルの充電容量"
-   ],
-   [
     "kakuu-souden:tarumi",
     "架空送電 5. たるみと実長",
     "支線の張力"
@@ -836,7 +924,7 @@ const MACHINES = {
   ]
  }
 };
-const ORDER = ["suiryoku", "karyoku", "genshiryoku", "kaihei-hogo", "kakuu-souden", "haiden"];
+const ORDER = ["suiryoku", "karyoku", "genshiryoku", "kaihei-hogo", "kakuu-souden", "chichuu-souden", "haiden"];
 const STUDY = {
  "suiryoku": {
   "oneLiner": "出力は 9.8 × 流量 × 有効落差 × 効率。揚水では落差に損失を足し、効率で割る。",
@@ -2291,7 +2379,6 @@ const STUDY = {
      "H27/17",
      "H25/16",
      "H24/7",
-     "H22/11",
      "H21/7",
      "H20/16"
     ]
@@ -2453,6 +2540,399 @@ const STUDY = {
    [
     "フェランチ効果とは",
     "軽負荷のとき、線路の静電容量の電流で受電端電圧が送電端より高くなること（3Dでは扱わない）。"
+   ]
+  ],
+  "cards": []
+ },
+ "chichuu-souden": {
+  "oneLiner": "地中ケーブルは架空線より L が小さく C が大きい。充電電流 Ic = ωCE は相電圧で、誘電体損は電圧だけで決まり無負荷でも出る。",
+  "exam": [
+   [
+    "充電電流",
+    "Ic = ωCE = 2πfCE",
+    "E は**相電圧**（線間電圧 ÷ √3）。C は全長の静電容量"
+   ],
+   [
+    "誘電体損",
+    "Pd = ωCE²tanδ（1相）／三相 ωCV²tanδ",
+    "電圧が掛かっていれば**無負荷でも出る**。CV は tanδ が小さい"
+   ],
+   [
+    "同軸の静電容量と電界",
+    "C = 2πε/ln(D/d)、Emax = 2E/(d·ln(D/d))",
+    "絶縁を薄くすると C も Emax も大きくなる"
+   ],
+   [
+    "架空との比較",
+    "L 小・C 大・フェランチ効果が起きやすい",
+    "事故は少ないが、起きると探査・復旧に時間がかかる"
+   ],
+   [
+    "マーレーループ法",
+    "P·(2L − x) = Q·x → x = 2L·P/(P+Q)",
+    "故障線と健全線を遠端で短絡したループ（往復 2L）"
+   ]
+  ],
+  "predict": [
+   {
+    "q": "線間 66 kV・50 Hz、1相の静電容量 0.2 μF/km、長さ 5 km の三相ケーブル。1線の充電電流は？",
+    "opts": [
+     "約 6.9 A",
+     "約 12.0 A",
+     "約 20.7 A",
+     "約 36 A"
+    ],
+    "ans": 1,
+    "set": {
+     "cView": "cable",
+     "cType": "cv",
+     "cV": 66,
+     "cF": 50,
+     "cC": 0.2,
+     "cLen": 5,
+     "cI": 400,
+     "cR": 0.05,
+     "cd": 30,
+     "cDs": 60
+    },
+    "hi": "Ic",
+    "why": "C = 0.2 × 5 = 1 μF、E = 66/√3 ≒ 38.1 kV。Ic = 2π × 50 × 1×10⁻⁶ × 38.1×10³ ≒ 12.0 A。線間電圧のまま入れると √3 倍の 20.7 A になる（Wiki の解法パターンの急所）。"
+   },
+   {
+    "q": "同じケーブルの三相の充電容量は？",
+    "opts": [
+     "約 456 kvar",
+     "約 790 kvar",
+     "約 1370 kvar",
+     "約 4100 kvar"
+    ],
+    "ans": 2,
+    "set": {
+     "cView": "cable",
+     "cType": "cv",
+     "cV": 66,
+     "cF": 50,
+     "cC": 0.2,
+     "cLen": 5,
+     "cI": 400,
+     "cR": 0.05,
+     "cd": 30,
+     "cDs": 60
+    },
+    "hi": "Qc",
+    "why": "Qc = 3·E·Ic = √3·V·Ic = ωCV² = 2π × 50 × 1×10⁻⁶ × (66×10³)² ≒ 1,368 kvar。1相分だけだと 456 kvar。"
+   },
+   {
+    "q": "電圧は掛かっているが負荷電流がゼロ（無負荷）のケーブル。それでも発生する損失は？",
+    "opts": [
+     "抵抗損",
+     "誘電体損",
+     "シース損",
+     "どれも発生しない"
+    ],
+    "ans": 1,
+    "set": {
+     "cView": "cable",
+     "cType": "cv",
+     "cV": 66,
+     "cF": 50,
+     "cC": 0.2,
+     "cLen": 5,
+     "cI": 0,
+     "cR": 0.05,
+     "cd": 30,
+     "cDs": 60
+    },
+    "hi": "Pd",
+    "why": "誘電体損 ωCE²tanδ は電圧だけで決まるので無負荷でも出る。抵抗損は導体の電流、シース損は導体電流がつくる磁束で遮へいに誘起される電流によるので、負荷電流がゼロならほぼ出ない。"
+   },
+   {
+    "q": "マーレーループ法。ケーブル長 2 km（ループ往復 4 km）。故障線側の比例辺 P と健全線側の Q が P:Q = 1:4 で平衡した。故障点は測定端から何 km か。",
+    "opts": [
+     "0.4 km",
+     "0.8 km",
+     "1.6 km",
+     "3.2 km"
+    ],
+    "ans": 1,
+    "set": {
+     "cView": "murray",
+     "mL": 2,
+     "mX": 0.8,
+     "mR": 0.2
+    },
+    "hi": "est",
+    "why": "平衡条件 P·(2L − x) = Q·x から x = 2L·P/(P+Q) = 4 × 1/5 = 0.8 km。2L ではなく L を掛けると 0.4 km、P と Q を逆に取ると 3.2 km になる。"
+   }
+  ],
+  "points": [
+   [
+    "L と C が架空線と逆",
+    "導体と遮へいの距離が mm 単位なので C が大きく、L は小さい"
+   ],
+   [
+    "損失は3点セット",
+    "抵抗損（電流）・誘電体損（電圧）・シース損（単心の遮へい）"
+   ],
+   [
+    "布設方式は裏返しの関係",
+    "直接埋設式の長所（安い・放熱良い）は、管路式・暗きょ式の短所"
+   ]
+  ],
+  "tour": [
+   {
+    "t": "CV ケーブルの6層",
+    "sec": "setsubi",
+    "focus": "導体",
+    "set": {
+     "cView": "cable",
+     "cType": "cv",
+     "cV": 66,
+     "cF": 50,
+     "cC": 0.2,
+     "cLen": 5,
+     "cI": 400,
+     "cR": 0.05,
+     "cd": 30,
+     "cDs": 60
+    },
+    "op": "段むきのケーブルを、右端の導体から左へ外側の層へと順に見る。",
+    "see": "① 導体 → ② 内部半導電層 → ③ 絶縁体 XLPE → ④ 外部半導電層 → ⑤ 遮へい銅テープ → ⑥ シース。外側の層ほど手前で切ってある。",
+    "so": "半導電層は絶縁体の内外の面を滑らかにして電界の集中を防ぐ。遮へいは接地して電界を絶縁体の中に閉じ込める。導体と遮へいの距離が mm 単位なので、静電容量 C が架空線より桁違いに大きい。",
+    "q": [
+     "H30/11",
+     "H19/11",
+     "R07上/10"
+    ]
+   },
+   {
+    "t": "絶縁を薄くすると",
+    "sec": "denkai",
+    "focus": "絶縁体",
+    "set": {
+     "cView": "cable",
+     "cType": "cv",
+     "cV": 66,
+     "cF": 50,
+     "cC": 0.2,
+     "cLen": 5,
+     "cI": 400,
+     "cR": 0.05,
+     "cd": 30,
+     "cDs": 60
+    },
+    "hi": [
+     "Cg",
+     "Emax"
+    ],
+    "op": "詳しい操作の 遮へいの内径 D を 60 mm から 40 mm にする（導体径 d は 30 mm のまま）。",
+    "see": "C を決める 1/ln(D/d) が 1.44 → 3.48 に増える（読み値の「1相の静電容量」は入力した値なので、ここでは動かない）。導体表面の最大電位傾度も 3.66 → 8.83 kV/mm に上がる。右の図は左端（導体表面）がいちばん高い。",
+    "so": "電界 E(r) = E/(r·ln(D/d)) は 1/r で減り、導体表面で最大。絶縁を薄くすると C は大きくなるが、絶縁体にかかるストレスも大きくなる。導体径と絶縁の厚さは、Emax が材料の耐えられる値を超えないように決める。",
+    "q": [
+     "R05上/10"
+    ]
+   },
+   {
+    "t": "充電電流 Ic = ωCE",
+    "sec": "kaiho",
+    "set": {
+     "cView": "cable",
+     "cType": "cv",
+     "cV": 66,
+     "cF": 50,
+     "cC": 0.2,
+     "cLen": 5,
+     "cI": 400,
+     "cR": 0.05,
+     "cd": 30,
+     "cDs": 60
+    },
+    "hi": [
+     "Ic",
+     "Qc"
+    ],
+    "op": "線間電圧 V を 66 kV から 154 kV にする。",
+    "see": "充電電流は 12.0 A → 27.9 A（電圧に比例）、三相の充電容量は 1,368 → 7,451 kvar（電圧の2乗に比例）。光る点が大きく揺れる。",
+    "so": "ケーブルは長いコンデンサ。E は相電圧（V/√3）で、線間電圧のまま入れると √3 倍ずれる。C が大きいので充電電流が大きく、軽負荷では受電端電圧が上がるフェランチ効果が架空線より起きやすい。",
+    "q": [
+     "H29/16",
+     "R06下/10",
+     "H24/11"
+    ]
+   },
+   {
+    "t": "損失の3点セット",
+    "sec": "formula",
+    "set": {
+     "cView": "cable",
+     "cType": "cv",
+     "cV": 66,
+     "cF": 50,
+     "cC": 0.2,
+     "cLen": 5,
+     "cI": 400,
+     "cR": 0.05,
+     "cd": 30,
+     "cDs": 60
+    },
+    "hi": [
+     "Pd",
+     "Pr"
+    ],
+    "op": "負荷電流 I を 400 A から 0 A にする。",
+    "see": "負荷電流による抵抗損が 120.0 kW から 0 になる（実際は充電電流が流れるのでわずかに残る）。誘電体損 0.68 kW は変わらない。",
+    "so": "抵抗損は電流の2乗で、通常の負荷運転では3つのうち最大。誘電体損は電圧の2乗で、無負荷でも出る。シース損は単心ケーブルの遮へいに誘起される電流によるもので、クロスボンド接地で循環電流を減らす。許容電流は、これらの熱をどれだけ逃がせるか（布設方式・土の熱抵抗）で決まる。",
+    "q": [
+     "R08上/10",
+     "R03/11",
+     "H29/10",
+     "H27/10",
+     "H25/10",
+     "H22/11",
+     "H21/11"
+    ]
+   },
+   {
+    "t": "CV と OF",
+    "sec": "cable",
+    "set": {
+     "cView": "cable",
+     "cType": "cv",
+     "cV": 66,
+     "cF": 50,
+     "cC": 0.2,
+     "cLen": 5,
+     "cI": 400,
+     "cR": 0.05,
+     "cd": 30,
+     "cDs": 60
+    },
+    "hi": [
+     "tan",
+     "Pd"
+    ],
+    "op": "ケーブルの種類を CV から OF にする。",
+    "see": "tanδ が 0.0005 から 0.003 になり、誘電体損が 0.68 → 4.11 kW と6倍になる。",
+    "so": "OF ケーブルの絶縁は油を含んだ紙（浸油紙）で tanδ が大きい。CV（XLPE）は tanδ が小さく、最高使用温度も CV 90 ℃・OF 75〜85 ℃ と CV のほうが高い。油が要らず軽いので、現在の主流は CV 系。",
+    "q": [
+     "H30/11",
+     "H19/11",
+     "R07上/10"
+    ]
+   },
+   {
+    "t": "布設方式を比べる",
+    "sec": "fusetsu",
+    "focus": "直接埋設",
+    "set": {
+     "cView": "fusetsu",
+     "cLay": "direct"
+    },
+    "hi": [
+     "cost",
+     "heat",
+     "ext",
+     "maint"
+    ],
+    "op": "見る対象を 布設方式 にし、直接埋設式 → 管路式 → 暗きょ式 と切り替える。",
+    "see": "枠が移り、読み値の 建設費・放熱・外傷・保守 が入れ替わる。直接埋設式はトラフに入れて土に埋め、管路式は管に引き入れ（上段は予備管）、暗きょ式は人が入れるトンネルの棚に並べる。",
+    "so": "直接埋設式は安く工期が短く、土に直接触れるので放熱も良い。代わりに外傷を受けやすく、増設や事故復旧には掘削が要る。管路式は管の中の空気層で熱がこもり許容電流が小さい。暗きょ式は高いが多条に向き、保守が容易。",
+    "q": [
+     "R01/11",
+     "H26/10",
+     "H18/8",
+     "R07下/10",
+     "R05下/10",
+     "R04下/10"
+    ]
+   },
+   {
+    "t": "マーレーループで故障点を探す",
+    "sec": "hikaku",
+    "focus": "ブリッジ",
+    "set": {
+     "cView": "murray",
+     "mL": 2,
+     "mX": 0.8,
+     "mR": 0.5
+    },
+    "hi": [
+     "est",
+     "g",
+     "x"
+    ],
+    "op": "見る対象を マーレーループ にし、比例辺の比 P/(P+Q) を 0.50 から下げて、検流計の振れが 0 になる位置を探す。",
+    "see": "0.20 で振れが 0 になり、読んだ故障点 2L·P/(P+Q) = 0.8 km が実際の故障点（赤）と一致する。",
+    "so": "故障した線と健全な線を遠端で短絡し、往復 2L のループの抵抗をブリッジで比べる。平衡すると P·(2L − x) = Q·x なので x = 2L·P/(P+Q)。地中は事故が少ない代わりに、目で見えないのでこうした標定が要り、復旧に時間がかかる。",
+    "q": [
+     "R04上/11",
+     "H28/10",
+     "H23/11",
+     "R06上/10"
+    ]
+   },
+   {
+    "t": "架空線との違い",
+    "sec": "hikaku",
+    "set": {
+     "cView": "cable",
+     "cType": "cv",
+     "cV": 66,
+     "cF": 50,
+     "cC": 0.2,
+     "cLen": 5,
+     "cI": 400,
+     "cR": 0.05,
+     "cd": 30,
+     "cDs": 60
+    },
+    "hi": [
+     "C",
+     "Ic"
+    ],
+    "op": "ケーブル断面のまま、線路長を 5 km から 20 km にする。",
+    "see": "全長の静電容量が 4 倍の 4 μF になり、充電電流も 4 倍の約 48 A になる。",
+    "so": "地中ケーブルは L が小さく C が大きい（架空線と逆）。長い地中線では充電電流だけで電線の容量を食い、軽負荷時のフェランチ効果も起きやすい。雷・風雪の影響は受けにくく事故は少ないが、建設費は高い。",
+    "q": [
+     "R08上/10",
+     "R02/11",
+     "H19/11",
+     "H18/8",
+     "R07下/10",
+     "R05下/10",
+     "R05上/10",
+     "R04下/10"
+    ]
+   }
+  ],
+  "check": [
+   [
+    "地中ケーブルと架空送電線で、L と C はどちらが大きいか",
+    "地中ケーブルは L が小さく C が大きい。導体と遮へいの距離が小さいから。"
+   ],
+   [
+    "充電電流の式の E は何の電圧か",
+    "相電圧（対地電圧）。三相なら線間電圧 ÷ √3。"
+   ],
+   [
+    "無負荷でも発生するケーブルの損失は",
+    "誘電体損（電圧だけで決まる）。"
+   ],
+   [
+    "シース損を減らす接地方式は",
+    "クロスボンド接地。"
+   ],
+   [
+    "CV と OF で tanδ・最高使用温度はどちらが有利か",
+    "CV。tanδ が小さく、最高使用温度は CV 90 ℃・OF 75〜85 ℃。"
+   ],
+   [
+    "直接埋設式の長所と短所",
+    "長所: 安い・工期が短い・放熱が良い。短所: 外傷を受けやすい・増設や復旧に掘削が要る。"
+   ],
+   [
+    "マーレーループ法の平衡条件",
+    "P·(2L − x) = Q·x（P は故障線側、Q は健全線側の比例辺）。"
    ]
   ],
   "cards": []
@@ -3013,6 +3493,25 @@ function hd3(){
   return {P, Q, S, I, pf: P/S, v, rate: v/V*100, Vs: V + v, loss, lossP: loss/P*100};
 }
 
+/* 地中ケーブル（三相・電力Wiki 3.2 の公式）。E は相電圧（対地電圧）= V/√3。
+   充電電流 Ic = ωCE、三相の充電容量 Qc = 3·E·Ic = ωCV²、三相の誘電体損 Pd = 3ωCE²tanδ = ωCV²tanδ。
+   C は 1相の静電容量（μF/km）× 線路長。抵抗損は 3I²R（負荷電流 I が流れたときだけ出る）。
+   同軸の電界 E(r) = E/(r·ln(D/d)) は導体表面 r = d/2 で最大 Emax = 2E/(d·ln(D/d)) */
+const CC_TAN = {cv:.0005, of:.003};          // 誘電正接の目安（Wiki 3.2 の表: CV 0.0003〜0.001、OF 0.002〜0.004）
+function ccModel(){
+  const st = state, w = 2*Math.PI*st.cF, V = st.cV*1e3, E = V/Math.sqrt(3), C = st.cC*1e-6*st.cLen, tan = CC_TAN[st.cType];
+  const Ic = w*C*E, Qc = w*C*V*V, Pd = w*C*V*V*tan, Pr = 3*st.cI*st.cI*st.cR*st.cLen;
+  const Emax = 2*E/(st.cd*Math.log(st.cDs/st.cd));          // V/mm（d, D は mm）
+  return {w, E, C, tan, Ic, Qc, Pd, Pr, Emax};
+}
+/* マーレーループ法。故障線と健全線を遠端で短絡してループ（往復 2L）にし、比例辺 P（故障線側）・Q（健全線側）で
+   ブリッジを組む。電源は P・Q の接続点と故障点（大地）のあいだ。平衡条件 P·(2L − x) = Q·x → x = 2L·P/(P + Q)。
+   検流計の振れは 2L·r − x（r = P/(P + Q)）に比例するとして描く */
+function mlModel(){
+  const st = state, est = 2*st.mL*st.mR, x = Math.min(st.mX, st.mL);   // 故障点は故障線の上（遠端まで）に限る
+  return {est, x, g: (est - x)/(2*st.mL)};
+}
+
 const state = {
   current:null, paused:false,
   sMode:'gen', sType:'francis', sHg:100, sHl:5, sQ:50, sEt:.9, sEg:.97, sEp:.85, sEm:.97, sN:300,
@@ -3022,6 +3521,7 @@ const state = {
   tView:'sag', tS:300, tT:20, tW:10, tDt:0, tAl:18, tV:154, tP:100, tPf:.9, tR:5, tX:15,
   hView:'sp', hP1:1000, hP2:1000, hBreak:false, hBal:false, hR:.1, hRn:.1,
   h3Vr:6.6, h3P:2000, h3Pf:.8, h3R:.5, h3X:1, h3Qc:0,
+  cView:'cable', cType:'cv', cV:66, cF:50, cC:.2, cLen:5, cI:400, cR:.05, cd:30, cDs:60, cLay:'direct', mL:2, mX:1.2, mR:.5,
 };
 
 /* ---------- カメラ ---------- */
@@ -3032,12 +3532,13 @@ function applyCam(){
 }
 const VIEWS = {
   overview:{target:[0,2,0], dist:60, theta:.35, phi:1.15},
-  suiryoku:{target:[-25,1.8,0], dist:10.5, theta:.45, phi:1.25},
-  karyoku:{target:[-15.3,2.2,0], dist:13, theta:.5, phi:1.2},
-  genshiryoku:{target:[-5,1.4,0], dist:9.5, theta:.45, phi:1.2},
-  'kaihei-hogo':{target:[5,1.3,0], dist:10, theta:.4, phi:1.2},
-  'kakuu-souden':{target:[15,2.2,0], dist:11, theta:.3, phi:1.3},
-  haiden:{target:[25,2.0,0], dist:10, theta:.45, phi:1.2},
+  suiryoku:{target:[-30,1.8,0], dist:10.5, theta:.45, phi:1.25},
+  karyoku:{target:[-20.3,2.2,0], dist:13, theta:.5, phi:1.2},
+  genshiryoku:{target:[-10,1.4,0], dist:9.5, theta:.45, phi:1.2},
+  'kaihei-hogo':{target:[0,1.3,0], dist:10, theta:.4, phi:1.2},
+  'kakuu-souden':{target:[10,2.2,0], dist:11, theta:.3, phi:1.3},
+  'chichuu-souden':{target:[20,1.0,0], dist:9.5, theta:.35, phi:1.15},
+  haiden:{target:[30,2.0,0], dist:10, theta:.45, phi:1.2},
 };
 
 /* --- 工場フロア（発電 → 変電 → 送電 → 配電 の順に左から並べる） --- */
@@ -3334,6 +3835,102 @@ function animSouden(g, t, st, dt){
   }
 }
 
+/* ---------- 3.2 地中送電 ----------
+   3つの見る対象を持つ。
+     cable  … CV ケーブルの段むき断面（内側から 導体・内部半導電層・XLPE・外部半導電層・遮へい・シース）
+     fusetsu … 布設方式3つの土の断面（直接埋設・管路・暗きょ）
+     murray … マーレーループ法（故障線と健全線を遠端で短絡し、ブリッジで故障点を探す）
+   ---------- */
+const CC_LAY_X = {direct:-2.1, duct:0, tunnel:2.1};
+function buildChichuu(g){
+  const ax = (r, x0, x1, mat, parent) => { const o = mesh(new THREE.CylinderGeometry(r, r, x1-x0, 40), mat, parent, (x0+x1)/2, 1.1, 0); o.rotation.z = Math.PI/2; return o; };
+  /* ケーブル断面（段むき）。外側の層ほど手前で切ってある */
+  const cab = new THREE.Group(); g.add(cab);
+  const xlpeMat = std({color:0xe9edf0, transparent:true, opacity:.55, roughness:.3});
+  const semiMat = std({color:0x2a2d31, roughness:.7});
+  const sheath = ax(.62, -2.6, -.9, M.black, cab);
+  const shield = ax(.58, -2.6, -.3, M.copper, cab);
+  const osemi = ax(.555, -2.6, .2, semiMat, cab);
+  const xlpe = ax(.53, -2.6, 1.2, xlpeMat, cab);
+  const isemi = ax(.25, -2.6, 1.6, semiMat, cab);
+  const cond = ax(.23, -2.6, 2.4, M.copper, cab);
+  /* 充電電流の模式: 導体と遮へいのあいだを半径方向に行き来する点（電圧の向きが変わるたびに充電・放電） */
+  const charges = [];
+  for (let i=0;i<12;i++){ const a = i/12*Math.PI*2, d = mesh(new THREE.SphereGeometry(.035,8,8), DK.dotS, cab, 1.21, 1.1, 0); d.castShadow = false; d.userData.a = a; charges.push(d); }
+  /* 布設方式。土の断面を手前に切って見せる */
+  const lay = new THREE.Group(); g.add(lay);
+  const soilMat = std({color:0x8a6a48, transparent:true, opacity:.35, roughness:.95});
+  mesh(new THREE.BoxGeometry(6.6, 1.8, 2.2), soilMat, lay, 0, .9, 0);
+  mesh(new THREE.BoxGeometry(6.6, .06, 2.2), std({color:0x4a5058, transparent:true, opacity:.35}), lay, 0, 1.83, 0);   // 舗装面（中が見えるよう半透明）
+  const cableBlk = std({color:0x1f2226, roughness:.6});
+  const trio = (parent, x, y, r=.07) => { for (const dx of [-r*1.1, r*1.1]) mesh(new THREE.CylinderGeometry(r,r,2.2,14), cableBlk, parent, x+dx, y, 0).rotation.x = Math.PI/2;
+    mesh(new THREE.CylinderGeometry(r,r,2.2,14), cableBlk, parent, x, y+r*1.9, 0).rotation.x = Math.PI/2; };
+  const direct = new THREE.Group(); lay.add(direct);
+  trio(direct, CC_LAY_X.direct, 1.1);
+  for (const [w,h,dx,dy] of [[.7,.06,0,.95],[.06,.4,-.33,1.15],[.06,.4,.33,1.15],[.7,.06,0,1.38]]) mesh(new THREE.BoxGeometry(w,h,2.2), M.ceramic, direct, CC_LAY_X.direct+dx, dy, 0);
+  const duct = new THREE.Group(); lay.add(duct);
+  const pipeMat = std({color:0xb9c2ca, transparent:true, opacity:.6, roughness:.4});
+  for (const [i,j] of [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]]){
+    const x = CC_LAY_X.duct - .4 + i*.4, y = .95 + j*.4;
+    mesh(new THREE.CylinderGeometry(.16,.16,2.2,18,1,true), pipeMat, duct, x, y, 0).rotation.x = Math.PI/2;
+    if (j===0) mesh(new THREE.CylinderGeometry(.08,.08,2.2,14), cableBlk, duct, x, y-.06, 0).rotation.x = Math.PI/2;   // 下段だけ使用中、上段は予備管
+  }
+  const tunnel = new THREE.Group(); lay.add(tunnel);
+  for (const [w,h,dx,dy] of [[1.6,.08,0,.2],[1.6,.08,0,1.45],[.08,1.3,-.78,.82],[.08,1.3,.78,.82]]) mesh(new THREE.BoxGeometry(w,h,2.2), DK.concrete, tunnel, CC_LAY_X.tunnel+dx, dy, 0);
+  for (const y of [.55,.85,1.15]){ mesh(new THREE.BoxGeometry(.35,.03,2.2), M.steel, tunnel, CC_LAY_X.tunnel-.5, y, 0); trio(tunnel, CC_LAY_X.tunnel-.5, y+.08, .05); }
+  const person = new THREE.Group(); tunnel.add(person);
+  mesh(new THREE.CylinderGeometry(.09,.09,.55,10), M.u, person, CC_LAY_X.tunnel+.3, .55, .3);
+  mesh(new THREE.SphereGeometry(.09,10,10), DK.house, person, CC_LAY_X.tunnel+.3, .92, .3);
+  const hl = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.75, 2.3), new THREE.MeshBasicMaterial({color:0xf0b57e, wireframe:true}));
+  hl.position.set(0, .9, 0); lay.add(hl);
+  /* マーレーループ法 */
+  const mur = new THREE.Group(); g.add(mur);
+  const MX0 = -2.4, MX1 = 2.8;
+  const c1 = pipe(V3(MX0,1.0,-.35), V3(MX1,1.0,-.35), cableBlk, mur, .06);
+  const c2 = pipe(V3(MX0,1.0,.35), V3(MX1,1.0,.35), cableBlk, mur, .06);
+  const jump = pipe(V3(MX1,1.0,-.35), V3(MX1,1.0,.35), M.copper, mur, .04);
+  const fault = new THREE.Group(); mur.add(fault);
+  mesh(new THREE.SphereGeometry(.11,14,14), std({color:0xd24a43, emissive:0xd24a43, emissiveIntensity:1.2}), fault, 0, 1.0, -.35);
+  pipe(V3(0,1.0,-.35), V3(0,.05,-.35), M.u, fault, .015);
+  const bridge = mesh(new THREE.BoxGeometry(.8,1.0,1.1), M.tank, mur, -3.0, .8, 0);
+  for (const z of [-.35,.35]) pipe(V3(-2.6,1.0,z), V3(MX0,1.0,z), M.copper, mur, .03);
+  const dial = mesh(new THREE.CylinderGeometry(.28,.28,.04,24), M.ceramic, mur, -3.0, 1.0, .56); dial.rotation.x = Math.PI/2;
+  const needle = new THREE.Group(); needle.position.set(-3.0, 1.0, .6); mur.add(needle);
+  mesh(new THREE.BoxGeometry(.03,.24,.02), M.u, needle, 0, .12, 0);
+  Object.assign(g.userData, {cab, lay, mur, charges, hl, fault, needle, MX0, MX1, direct, duct, tunnel, T:0});
+  g.userData.labels = (st) => st.cView==='fusetsu' ? [
+    {obj:direct, t:'直接埋設式（トラフに入れて土に埋める）', c:'#E6D3A3'},
+    {obj:duct, t:'管路式（管に引き入れる。上段は予備管）', c:'#B9C2CA'},
+    {obj:tunnel, t:'暗きょ式（洞道。人が入って保守できる）', c:'#9AA1A6'},
+  ] : st.cView==='murray' ? [
+    {obj:c1, t:'故障した線（故障点まで x）', c:'#D24A43'},
+    {obj:c2, t:'健全な線（遠端で故障線と短絡）', c:'#B9C2CA'},
+    {obj:jump, t:'遠端の短絡（ループ往復 2L）', c:'#C07A3A'},
+    {obj:fault, t:'故障点（地絡）', c:'#D24A43'},
+    {obj:bridge, t:'ブリッジ（比例辺 P・Q と検流計）', c:'#4A5B68'},
+  ] : [
+    {obj:cond, t:'① 導体（銅）', c:'#C07A3A'},
+    {obj:isemi, t:'② 内部半導電層（導体表面の電界を均一化）', c:'#2A2D31'},
+    {obj:xlpe, t:'③ 絶縁体 XLPE（架橋ポリエチレン）', c:'#E9EDF0'},
+    {obj:osemi, t:'④ 外部半導電層', c:'#2A2D31'},
+    {obj:shield, t:'⑤ 遮へい銅テープ（接地する）', c:'#C07A3A'},
+    {obj:sheath, t:'⑥ シース（ビニル防食層）', c:'#1F2226'},
+  ];
+}
+function animChichuu(g, t, st, dt){
+  const u = g.userData; if (!st.paused) u.T += dt;
+  u.cab.visible = st.cView==='cable'; u.lay.visible = st.cView==='fusetsu'; u.mur.visible = st.cView==='murray';
+  if (st.cView==='cable'){
+    const m = ccModel(), amp = Math.min(1, m.Ic/30);           // 充電電流が大きいほど大きく揺れる（模式）
+    u.charges.forEach(d => { const r = .26 + .26*(.5 - .5*Math.cos(u.T*3))*(.3 + .7*amp); d.position.set(1.21, 1.1 + r*Math.sin(d.userData.a), r*Math.cos(d.userData.a)); });
+  } else if (st.cView==='fusetsu'){
+    u.hl.position.x = CC_LAY_X[st.cLay];
+  } else {
+    u.fault.position.x = u.MX0 + (u.MX1 - u.MX0)*mlModel().x/st.mL;
+    u.needle.rotation.z = -Math.max(-1.2, Math.min(1.2, mlModel().g*6));
+  }
+}
+
 /* ---------- 3.2 配電（単相3線式） ----------
    柱上変圧器の低圧側は 外線a・中性線n・外線b の3本。a–n と n–b に 100 V、a–b に 200 V */
 function buildHaiden(g){
@@ -3404,8 +4001,8 @@ function animHaiden(g, t, st, dt){
 
 /* ---------- 組み立て ---------- */
 const groups = {};
-const builders = {suiryoku:buildSuiryoku, karyoku:buildKaryoku, genshiryoku:buildGenshiryoku, 'kaihei-hogo':buildHenden, 'kakuu-souden':buildSouden, haiden:buildHaiden};
-const animators = {suiryoku:animSuiryoku, karyoku:animKaryoku, genshiryoku:animGenshiryoku, 'kaihei-hogo':animHenden, 'kakuu-souden':animSouden, haiden:animHaiden};
+const builders = {suiryoku:buildSuiryoku, karyoku:buildKaryoku, genshiryoku:buildGenshiryoku, 'kaihei-hogo':buildHenden, 'kakuu-souden':buildSouden, 'chichuu-souden':buildChichuu, haiden:buildHaiden};
+const animators = {suiryoku:animSuiryoku, karyoku:animKaryoku, genshiryoku:animGenshiryoku, 'kaihei-hogo':animHenden, 'kakuu-souden':animSouden, 'chichuu-souden':animChichuu, haiden:animHaiden};
 for (const id of ORDER){ const g = new THREE.Group(); g.position.set(MACHINES[id].x, .3, 0); builders[id](g); g.userData.id = id; scene.add(g); groups[id] = g; }
 
 function flyTo(v){ cam.want = {target:new THREE.Vector3(...v.target), dist:v.dist, theta:v.theta, phi:v.phi}; }
@@ -3645,7 +4242,7 @@ function buildCtrl(){
   ctrlbar.innerHTML=''; readoutEl=null;
   const id = state.current;
   const title=document.createElement('div'); title.className='title'; ctrlbar.appendChild(title);
-  if (!id){ title.textContent='全景'; const d=document.createElement('div'); d.style.cssText='font-size:12.5px;color:#C5CCD3;align-self:center'; d.textContent='左から 水力 → 火力 → 原子力 → 変電所 → 架空送電 → 配電。発電所でつくった電気が、変電所で電圧を変え、送電線と配電線を通って家に届く順に並べた。ラベルか設備をクリックすると寄る。'; ctrlbar.appendChild(d); return; }
+  if (!id){ title.textContent='全景'; const d=document.createElement('div'); d.style.cssText='font-size:12.5px;color:#C5CCD3;align-self:center'; d.textContent='左から 水力 → 火力 → 原子力 → 変電所 → 架空送電 → 地中送電 → 配電。発電所でつくった電気が、変電所で電圧を変え、送電線と配電線を通って家に届く順に並べた。ラベルか設備をクリックすると寄る。'; ctrlbar.appendChild(d); return; }
   title.textContent = MACHINES[id].title;
   const moreEl = document.createElement('details'); moreEl.className = 'more';
   const moreSum = document.createElement('summary'), moreGrid = document.createElement('div'); moreGrid.className = 'moregrid';
@@ -3709,6 +4306,25 @@ function buildCtrl(){
       adv.appendChild(range('1線の抵抗 R', 1, 20, .5, 'tR', v=>v.toFixed(1)+' Ω'));
       adv.appendChild(range('1線のリアクタンス X', 2, 40, .5, 'tX', v=>v.toFixed(1)+' Ω'));
     }
+  } else if (id==='chichuu-souden'){
+    ctrlbar.appendChild(group('見る対象', seg([['cable','ケーブル断面'],['fusetsu','布設方式'],['murray','マーレーループ']], 'cView')));
+    if (state.cView==='cable'){
+      ctrlbar.appendChild(group('ケーブルの種類', seg([['cv','CV（XLPE）'],['of','OF（油浸紙）']], 'cType')));
+      ctrlbar.appendChild(group('線間電圧 V', seg([[6.6,'6.6 kV'],[22,'22 kV'],[66,'66 kV'],[154,'154 kV']], 'cV')));
+      ctrlbar.appendChild(range('負荷電流 I', 0, 1000, 10, 'cI', v=>v+' A'));
+      adv.appendChild(range('1相の静電容量 C', .05, .6, .01, 'cC', v=>v.toFixed(2)+' μF/km'));
+      adv.appendChild(range('線路長', 1, 30, 1, 'cLen', v=>v+' km'));
+      adv.appendChild(group('周波数', seg([[50,'50 Hz'],[60,'60 Hz']], 'cF')));
+      adv.appendChild(range('導体の抵抗', .01, .2, .01, 'cR', v=>v.toFixed(2)+' Ω/km'));
+      adv.appendChild(range('導体径 d', 10, 60, 1, 'cd', v=>v+' mm'));
+      adv.appendChild(range('遮へいの内径 D', 20, 120, 1, 'cDs', v=>v+' mm'));
+    } else if (state.cView==='fusetsu'){
+      ctrlbar.appendChild(group('布設方式', seg([['direct','直接埋設式'],['duct','管路式'],['tunnel','暗きょ式']], 'cLay')));
+    } else {
+      ctrlbar.appendChild(range('比例辺の比 P/(P+Q)', 0, 1, .01, 'mR', v=>v.toFixed(2)));
+      adv.appendChild(range('ケーブル長 L（片道）', .5, 5, .1, 'mL', v=>v.toFixed(1)+' km'));
+      adv.appendChild(range('故障点（答え合わせ用・遠端までで止まる）', .05, 5, .05, 'mX', v=>v.toFixed(2)+' km'));
+    }
   } else if (id==='haiden' && state.hView==='tp'){
     ctrlbar.appendChild(group('方式', seg([['sp','単相3線式'],['tp','三相3線式']], 'hView')));
     ctrlbar.appendChild(range('負荷の有効電力 P', 200, 5000, 100, 'h3P', v=>v+' kW'));
@@ -3736,7 +4352,7 @@ function syncCtrl(){
   ctrlbar.querySelectorAll('.seg[data-key]').forEach(d=>{ [...d.children].forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===String(state[d.dataset.key])))); });
 }
 /* 操作帯の中身と凡例が変わる状態。変わったら作り直す */
-const ctrlSig = () => state.current + '|' + ({'kakuu-souden':state.tView, genshiryoku:state.gCalc+'/'+state.gType, suiryoku:state.sType+'/'+state.sMode, haiden:state.hView})[state.current];
+const ctrlSig = () => state.current + '|' + ({'kakuu-souden':state.tView, genshiryoku:state.gCalc+'/'+state.gType, suiryoku:state.sType+'/'+state.sMode, haiden:state.hView, 'chichuu-souden':state.cView})[state.current];
 let _lastSig = null;
 const f1 = (x, d=1) => Number(x).toLocaleString('ja-JP', {minimumFractionDigits:d, maximumFractionDigits:d});
 const sci = (x) => { const e = Math.floor(Math.log10(x)), m = x/Math.pow(10, e); return m.toFixed(2)+'×10'+String(e).split('').map(c=>'⁰¹²³⁴⁵⁶⁷⁸⁹⁻'['0123456789-'.indexOf(c)]).join(''); };
@@ -3819,7 +4435,33 @@ function refreshCtrl(){
       note='※ 同じ電力・力率・抵抗なら、電流は 1/V、損失は 1/V² に比例。高い電圧で送る理由がこれ';
     }
   }
-  if (id==='haiden' && state.hView==='tp'){
+  if (id==='chichuu-souden'){
+    if (state.cView==='cable'){
+      const m = ccModel();
+      rows=[['C','1相の静電容量（全長）', f1(state.cC,2)+' μF/km × '+state.cLen+' km = '+f1(m.C*1e6,2)+' μF'],
+            ['Ic','充電電流 Ic = ωCE（E は相電圧）', f1(m.Ic,1)+' A（E = '+f1(m.E/1e3,1)+' kV）'],
+            ['Qc','三相の充電容量 ωCV²', f1(m.Qc/1e3,0)+' kvar'],
+            ['tan','誘電正接 tanδ（目安）', state.cType==='cv' ? '0.0005（CV・XLPE は小さい）' : '0.003（OF・油浸紙は大きい）'],
+            ['Pd','誘電体損（三相）ωCV²tanδ', f1(m.Pd/1e3,2)+' kW（電圧だけで決まる。無負荷でも出る）'],
+            ['Pr','抵抗損（三相・負荷電流の分）3I²R', f1(m.Pr/1e3,2)+' kW（無負荷でも充電電流の分がわずかに出る）'],
+            ['Cg','寸法から見た C の大きさ 1/ln(D/d)', state.cDs > state.cd ? f1(1/Math.log(state.cDs/state.cd),2)+'（C = 2πε/ln(D/d) の形。大きいほど C が大きい）' : '—'],
+            ['Emax','導体表面の最大電位傾度 2E/(d·ln(D/d))', state.cDs > state.cd ? f1(m.Emax/1e3,2)+' kV/mm' : '— （D は d より大きくする）']];
+      note='※ 損失は3点セット: 抵抗損（電流の2乗）・誘電体損（電圧の2乗）・シース損（単心ケーブルの遮へいに誘起される。クロスボンド接地で減らす）。最高使用温度は CV 90 ℃、OF 75〜85 ℃';
+    } else if (state.cView==='fusetsu'){
+      const T = {direct:['安い・短い','良い（土に直接触れる）','受けやすい','困難（掘削が要る）','不向き'],
+                 duct:['中','悪い（管内の空気層で熱がこもる）','受けにくい','容易（マンホールから引替。予備管があれば増設）','中'],
+                 tunnel:['高い・長い','換気で確保（多条時は相互加熱に注意）','受けにくい','容易（人が立ち入れる）','最も多条に対応']}[state.cLay];
+      rows=[['cost','建設費・工期', T[0]], ['heat','放熱・許容電流', T[1]], ['ext','外傷・第三者被害', T[2]], ['maint','増設・引替・保守', T[3]], ['multi','多条数の布設', T[4]]];
+      note='※ 電力Wiki 3.2 の比較表と同じ内容。直接埋設式は「安くて放熱も良いが、外傷に弱く掘り返しが要る」、管路式・暗きょ式はその裏返し';
+    } else {
+      const m = mlModel();
+      rows=[['bal','平衡条件', 'P·(2L − x) = Q·x'],
+            ['est','いまの比で読む故障点 2L·P/(P+Q)', f1(m.est,2)+' km（2L = '+f1(2*state.mL,1)+' km）'],
+            ['g','検流計の振れ', Math.abs(m.g) < .005 ? '0（平衡）' : (m.g > 0 ? '右へ振れる（P が大きすぎる）' : '左へ振れる（P が小さすぎる）')],
+            ['x','実際の故障点（答え合わせ）', f1(m.x,2)+' km']];
+      note='※ P は故障した線側、Q は健全な線側の比例辺。電源は P・Q の接続点と故障点（大地）のあいだ。導体の抵抗が長さに比例し、2本の線が同じ太さであることが前提。平衡の式はWikiに無いので、ブリッジの電位から導いた';
+    }
+  } else if (id==='haiden' && state.hView==='tp'){
     const m = hd3();
     rows=[['I','線電流 I = S/(√3·Vr)', f1(m.I,1)+' A'],
           ['Q','無効電力 P·tanθ − Qc', f1(m.Q/1e3,0)+' kvar'+(m.Q < 0 ? '（進み。コンデンサの入れすぎ）' : '')],
@@ -3922,6 +4564,28 @@ function drawMini(){
       ctx.fillStyle=ink3; ctx.fillText('66 kV', L, B+28); ctx.fillText('500 kV', R-80, B+28); ctx.fillText('損失率', L+8, T+16);
       cap.textContent = '同じ電力を送るときの損失率と送電電圧。損失は 1/V² で減る。点がいまの電圧。';
     }
+  } else if (id==='chichuu-souden' && state.cView==='cable'){
+    /* 同軸の電界 E(r) = E/(r·ln(D/d))。導体表面で最大、遮へいで最小 */
+    const m = ccModel(), d = state.cd, D = Math.max(state.cd+1, state.cDs), Er = r => m.E/(r*Math.log(D/d))/1e3;   // kV/mm
+    const mx = Er(d/2), xOf = r => L + (r - d/2)/(D/2 - d/2)*(R-L), yOf = v => B - v/mx*(B-T);
+    ctx.strokeStyle=line; ctx.beginPath(); ctx.moveTo(L,B); ctx.lineTo(R,B); ctx.moveTo(L,T); ctx.lineTo(L,B); ctx.stroke();
+    ctx.strokeStyle=acc; ctx.beginPath(); for (let i=0;i<=60;i++){ const r = d/2 + (D/2 - d/2)*i/60; i? ctx.lineTo(xOf(r), yOf(Er(r))) : ctx.moveTo(xOf(r), yOf(Er(r))); } ctx.stroke();
+    ctx.fillStyle=ink; ctx.fillText('Emax = '+f1(mx,2)+' kV/mm', L+12, T+20);
+    ctx.fillStyle=ink3; ctx.fillText('導体表面 d/2', L, B+28); ctx.fillText('遮へい D/2', R-130, B+28);
+    cap.textContent = '絶縁体の中の電界の強さ。導体表面（左端）で最大で、1/r で減って遮へい（右端）で最小になる。導体を細くすると左端がさらに高くなる。';
+  } else if (id==='chichuu-souden' && state.cView==='murray'){
+    /* ループを1本に伸ばして描く。故障点 x と、いまの比で読んだ位置 2L·r */
+    const m = mlModel(), xOf = s => L + s/(2*state.mL)*(R-L), yM = (T+B)/2;
+    ctx.strokeStyle=line; ctx.beginPath(); ctx.moveTo(L,yM); ctx.lineTo(R,yM); ctx.stroke();
+    ctx.setLineDash([5,5]); ctx.beginPath(); ctx.moveTo(xOf(state.mL),T); ctx.lineTo(xOf(state.mL),B); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#D24A43'; ctx.beginPath(); ctx.arc(xOf(m.x), yM, 9, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle=acc; ctx.beginPath(); ctx.moveTo(xOf(Math.min(2*state.mL, m.est)), T+10); ctx.lineTo(xOf(Math.min(2*state.mL, m.est)), B-10); ctx.stroke();
+    ctx.fillStyle=ink3; ctx.fillText('測定端', L, B+28); ctx.fillText('遠端（短絡）', xOf(state.mL)-60, T-4); ctx.fillText('測定端に戻る', R-150, B+28);
+    cap.textContent = '故障線（左半分）から遠端で折り返して健全線（右半分）を戻るループを1本に伸ばした図。赤が故障点、縦線がいまの比 P/(P+Q) から読んだ位置。2つが重なると検流計の振れが 0 になる。';
+  } else if (id==='chichuu-souden'){
+    const T2 = {direct:[1,3,1], duct:[2,1,2], tunnel:[3,2,3]}[state.cLay];
+    bars([['建設費', T2[0], steel], ['放熱', T2[1], acc], ['保守のしやすさ', T2[2], steel]], '');
+    cap.textContent = '3段階の相対比較（3 が最も大きい・良い）。数値は電力Wiki 3.2 の表を並べ替えた目安で、実測値ではない。';
   } else if (id==='haiden' && state.hView==='tp'){
     /* 線路損失とコンデンサ容量。遅れ無効電力をちょうど打ち消す点（力率 1）で最小になる */
     const P = state.h3P*1e3, Q0 = P*Math.tan(Math.acos(state.h3Pf)), qmax = Math.max(3e6, Q0*1.6), R0 = state.h3R, V = state.h3Vr*1e3;
@@ -3950,7 +4614,7 @@ function bindCards(){ syncCards(); }
 const VIEWNOTE = {};
 function syncCards(){
   const vn = document.getElementById('viewnote');
-  if (vn) vn.innerHTML = state.current==='haiden' ? (state.hView==='tp' ? 'いま見ているのは<b>三相3線式</b>（高圧配電線から工場へ）。' : 'いま見ているのは<b>単相3線式</b>（柱上変圧器から家へ）。') : state.current==='kakuu-souden' ? (state.tView==='sag' ? 'いま見ているのは<b>たるみ</b>。3D の電線が実際に垂れ下がる（10 倍に誇張）。' : 'いま見ているのは<b>電圧降下と損失</b>。3D はそのまま、読み値と図で比べる。') : '';
+  if (vn) vn.innerHTML = state.current==='chichuu-souden' ? ({cable:'いま見ているのは<b>ケーブル断面</b>（段むき）。光る点は充電電流の模式。', fusetsu:'いま見ているのは<b>布設方式</b>（土の断面）。枠で囲んだのが選んだ方式。', murray:'いま見ているのは<b>マーレーループ法</b>。比を動かして検流計の振れを 0 にする。'})[state.cView] : state.current==='haiden' ? (state.hView==='tp' ? 'いま見ているのは<b>三相3線式</b>（高圧配電線から工場へ）。' : 'いま見ているのは<b>単相3線式</b>（柱上変圧器から家へ）。') : state.current==='kakuu-souden' ? (state.tView==='sag' ? 'いま見ているのは<b>たるみ</b>。3D の電線が実際に垂れ下がる（10 倍に誇張）。' : 'いま見ているのは<b>電圧降下と損失</b>。3D はそのまま、読み値と図で比べる。') : '';
 }
 
 /* 予想クイズが当てた読み値を数秒だけ光らせる。どの数字の話かを取り違えないため。 */
@@ -3980,7 +4644,7 @@ function renderPanel(){
     panel.innerHTML = `
       <div class="kicker">使い方</div>
       <h2>丸暗記を、置き場所のある記憶に</h2>
-      <p class="lead">電気が生まれてから家に届くまでの6つの設備を、左から順に床に並べた。発電所で電気をつくり、変電所で電圧を変え、送電線と配電線で運ぶ。過去問で引っかかった論点をWikiで確かめ、ここで「どこの設備の、どの量の話か」を見て閉じる。</p>
+      <p class="lead">電気が生まれてから家に届くまでの7つの設備を、左から順に床に並べた。発電所で電気をつくり、変電所で電圧を変え、送電線と配電線で運ぶ。過去問で引っかかった論点をWikiで確かめ、ここで「どこの設備の、どの量の話か」を見て閉じる。</p>
       <ol class="flow">
         <li><b>過去問を解く</b><span>間違えた問題の分野（例: 3.1 架空送電線路 ▸ たるみ）を控える</span></li>
         <li><b>Wikiで詳細を確認</b><span><a href="${WIKI}" target="_blank" rel="noopener">電力Wiki ↗</a> の該当節を読む。数値・式・過去問解説はWikiだけが持つ</span></li>
@@ -3989,7 +4653,7 @@ function renderPanel(){
       <h3>設備を選ぶ</h3>
       <div class="overview-grid">${ORDER.map(k=>`<button data-id="${k}"><span class="num">${MACHINES[k].num}</span><span class="t">${MACHINES[k].title}</span><span class="c">過去問 ${cnt[k]}問</span><span class="s">${esc(MACHINES[k].kicker)}</span></button>`).join('')}</div>
       <div class="note"><b>使い方は3つだけ。</b>ドラッグで回す、ホイールで寄る、凡例の行に触れると部品を指す。<br>
-      <b>過去問の答えはここに書かない。</b>この3Dは形と動きと式の向きを担当し、過去問の解答・解説は電力Wiki側だけが正本として持つ。予想クイズの数値は自作の練習用の算数で、過去問の解答ではない。過去問台帳（H18〜R08上の${KAKOMON.length}問）は電力Wikiの「分野別一覧」から6つの設備に当たる分を抜き出したもの。題名は出典（電験王）の題名の写しで、問題冊子との一次照合はしていない。地中送電・誘導障害など3Dに無い論点は、行のリンク先が別ページになる。</div>`;
+      <b>過去問の答えはここに書かない。</b>この3Dは形と動きと式の向きを担当し、過去問の解答・解説は電力Wiki側だけが正本として持つ。予想クイズの数値は自作の練習用の算数で、過去問の解答ではない。過去問台帳（H18〜R08上の${KAKOMON.length}問）は電力Wikiの「分野別一覧」から7つの設備に当たる分を抜き出したもの。題名は出典（電験王）の題名の写しで、問題冊子との一次照合はしていない。誘導障害・直流送電など3Dに無い論点は、行のリンク先が別ページになる。</div>`;
     panel.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>select(b.dataset.id));
     return;
   }
