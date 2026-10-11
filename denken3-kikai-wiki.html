@@ -7373,6 +7373,8 @@ const layerStageCounts = (topicId, stageMap) => {
     operate: n(stageMap.operate || []),
     unmapped: rows.filter(r => !mapped.includes(r.subtopic)).length,
     dup,
+    // 対応表が空（台帳に行が無い前提のページ）。行が入ってきたら段ごとの数は出さず「未作成」と出す
+    noMap: mapped.length === 0,
     bySub
   };
 };
@@ -7496,7 +7498,7 @@ const LayerStage = ({
     layer: m.layer,
     q: q || m.q,
     count: c[stage],
-    total: c.total,
+    total: c.noMap ? 0 : c.total,
     jump: jump
   }), children);
 };
@@ -7632,10 +7634,24 @@ const LayerSubBox = ({
 const LayerCountNote = ({
   c,
   stageMap,
-  labels
+  labels,
+  emptyNote
 }) => {
-  if (!c.total) return null;
   const scope = typeof kakomonScope === "function" ? kakomonScope() : null;
+  const range = scope ? `${scope.first}〜${scope.last}` : "照合済みの回";
+  const noteStyle = {
+    fontSize: 12,
+    color: "var(--ink-mute)",
+    margin: "6px 0 4px",
+    lineHeight: 1.6
+  };
+  // 台帳にこの単元の小問が無いページは、数字の代わりに emptyNote（無い理由）を出す。範囲は台帳から作る
+  if (!c.total) return emptyNote ? /*#__PURE__*/React.createElement("p", {
+    style: noteStyle
+  }, typeof emptyNote === "function" ? emptyNote(range) : emptyNote) : null;
+  if (c.noMap) return /*#__PURE__*/React.createElement("p", {
+    style: noteStyle
+  }, "出題＝", range, " の台帳にこの単元の小問が ", c.total, " ある。段への振り分け（対応表）はまだ作っていない。");
   const mapText = Object.entries(stageMap).map(([k, subs]) => `${LAYER_STAGE_NAME[k]}＝${subs.length ? subs.map(x => `「${labels[x] || x}」`).join("") : "なし"}`).join("／");
   return /*#__PURE__*/React.createElement("p", {
     style: {
@@ -19890,516 +19906,573 @@ const SynchronousPage = ({
   },
   onNav: onNav
 }));
-const SinglePhaseIMLayers = () => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
-  id: "layers"
-}, /*#__PURE__*/React.createElement("span", {
-  className: "h-num"
-}, "0."), "このページ（単相誘導電動機）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 13,
-    color: "var(--ink-soft)",
-    margin: "0 0 4px"
-  }
-}, "同じテーマを ", /*#__PURE__*/React.createElement("strong", null, "森（俯瞰）→ ミクロ（なぜ）→ マクロ（解く）"), " の3層で見る。まず森でこのページの位置を掴み、ミクロで機構を、マクロで解き方を押さえる。"), /*#__PURE__*/React.createElement("figure", {
-  style: {
-    margin: "10px 0 14px",
-    background: "var(--bg-elev)",
-    borderRadius: "8px",
-    padding: "12px 8px 8px"
-  }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 480 170",
-  role: "img",
-  "aria-label": "単相誘導電動機の位置づけ：三相誘導電動機の回転磁界から来て、単相では交番磁界しか得られず始動トルクがゼロのため、補助巻線・コンデンサで擬似二相を作って始動し、家電・小型機器へつながる俯瞰図",
-  style: {
-    display: "block",
-    width: "100%",
-    height: "auto",
-    maxWidth: "480px",
-    margin: "0 auto"
-  }
-}, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
-  id: "ksp-mori-arr",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--ink-mute)"
-}))), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "前提（入口）"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "このページ"), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "つながる先（出口）"), /*#__PURE__*/React.createElement("rect", {
-  x: "16",
-  y: "40",
-  width: "108",
-  height: "86",
-  rx: "6",
-  fill: "var(--bg)",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "66",
-  textAnchor: "middle",
-  fontSize: "13",
-  fontWeight: "600",
-  fill: "var(--ink)"
-}, "三相誘導機"), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "88",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink-soft)"
-}, "回転磁界"), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "107",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink-soft)"
-}, "Nₛ = 120f/p"), /*#__PURE__*/React.createElement("line", {
-  x1: "126",
-  y1: "83",
-  x2: "159",
-  y2: "83",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "2",
-  markerEnd: "url(#ksp-mori-arr)"
-}), /*#__PURE__*/React.createElement("rect", {
-  x: "162",
-  y: "32",
-  width: "156",
-  height: "102",
-  rx: "8",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "2"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "55",
-  textAnchor: "middle",
-  fontSize: "14",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "単相誘導電動機"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "77",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "交番磁界＝正転＋逆転"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "95",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "静止時 始動トルク 0"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "113",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "補助巻線で擬似二相"), /*#__PURE__*/React.createElement("line", {
-  x1: "320",
-  y1: "83",
-  x2: "353",
-  y2: "83",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "2",
-  markerEnd: "url(#ksp-mori-arr)"
-}), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "40",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "57",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "家電＝くま取り"), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "70",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "87",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "ポンプ＝C始動"), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "100",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "117",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "小型機器全般"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "154",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "三相の回転磁界から来て、単相は自力始動できず、始動方式の使い分けへ")), /*#__PURE__*/React.createElement("figcaption", {
-  style: {
-    fontSize: "12px",
-    color: "var(--ink-mute)",
-    textAlign: "center",
-    marginTop: "6px",
-    lineHeight: 1.6
-  }
-}, "森（俯瞰）：三相誘導電動機の回転磁界を土台に、単相では交番磁界しか得られず自力で始動トルクを生めない。補助巻線・コンデンサ・くま取りコイルで擬似二相を作って始動し、家電・小型機器で活躍する。")), /*#__PURE__*/React.createElement("div", {
-  className: "table-wrap"
-}, /*#__PURE__*/React.createElement("table", {
-  className: "data-table"
-}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "視点"), /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "何を見るか"), /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "代表する式・量"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "ミクロ"), /*#__PURE__*/React.createElement("br", null), "（なぜ）"), /*#__PURE__*/React.createElement("td", null, "単相の交番磁界は", /*#__PURE__*/React.createElement("strong", null, "互いに逆回転する2つの回転磁界の合成"), "。静止時は両者のトルクが打ち消し合い", /*#__PURE__*/React.createElement("strong", null, "始動トルクゼロ"), "（↓図解）"), /*#__PURE__*/React.createElement("td", null, "二回転磁界・トルクの相殺")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "マクロ"), /*#__PURE__*/React.createElement("br", null), "（解く）"), /*#__PURE__*/React.createElement("td", null, "磁束ベクトルは毎回追わず、", /*#__PURE__*/React.createElement("strong", null, "始動方式5種と始動トルクの大小"), "で整理して答える。"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
-  tex: "X_C=\\dfrac{1}{\\omega C}"
-}), "・くま取り＜分相＜コンデンサ始動＜反発始動")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "静音・小型が要る家電は", /*#__PURE__*/React.createElement("strong", null, "くま取りコイル形"), "、始動トルクが要る井戸ポンプは", /*#__PURE__*/React.createElement("strong", null, "コンデンサ始動形"), "が多い"), /*#__PURE__*/React.createElement("td", null, "用途別の始動方式選定"))))), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 13,
-    fontWeight: 700,
-    color: "var(--accent-ink)",
-    margin: "16px 0 4px"
-  }
-}, "▼ ミクロを図で掘り下げる：なぜ単相は自力で始動できず、コンデンサで始動できるか"), /*#__PURE__*/React.createElement("figure", {
-  style: {
-    margin: "6px 0 14px",
-    background: "var(--bg-elev)",
-    borderRadius: "8px",
-    padding: "12px 8px 8px"
-  }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 470 296",
-  role: "img",
-  "aria-label": "単相誘導電動機の始動機構：①単相の交番磁界は正転・逆転2つの回転磁界の合成。②静止時は両成分のトルクが同じ大きさで逆向きに働き打ち消し合って始動トルクゼロ。③補助巻線に直列コンデンサを入れて進み電流を流し主巻線との位相差を作る。④擬似二相で回転磁界が復活し始動トルクが生まれる機構図",
-  style: {
-    display: "block",
-    width: "100%",
-    height: "auto",
-    maxWidth: "470px",
-    margin: "0 auto"
-  }
-}, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
-  id: "ksp-alt-arr",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--ink)"
-})), /*#__PURE__*/React.createElement("marker", {
-  id: "ksp-rot-f",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--accent)"
-})), /*#__PURE__*/React.createElement("marker", {
-  id: "ksp-rot-b",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--warn)"
-})), /*#__PURE__*/React.createElement("marker", {
-  id: "ksp-flow-arr",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--ink-mute)"
-}))), /*#__PURE__*/React.createElement("text", {
-  x: "235",
-  y: "24",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "bold",
-  fill: "var(--accent-ink)"
-}, "① 交番磁界は 正転＋逆転の2つの回転磁界の合成"), /*#__PURE__*/React.createElement("line", {
-  x1: "95",
-  y1: "68",
-  x2: "95",
-  y2: "46",
-  stroke: "var(--ink)",
-  strokeWidth: "2",
-  markerEnd: "url(#ksp-alt-arr)"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "95",
-  y1: "68",
-  x2: "95",
-  y2: "90",
-  stroke: "var(--ink)",
-  strokeWidth: "2",
-  markerEnd: "url(#ksp-alt-arr)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "95",
-  y: "106",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-soft)"
-}, "交番磁界（脈動）"), /*#__PURE__*/React.createElement("text", {
-  x: "152",
-  y: "73",
-  textAnchor: "middle",
-  fontSize: "15",
-  fill: "var(--ink-mute)"
-}, "＝"), /*#__PURE__*/React.createElement("path", {
-  d: "M 197 60 A 20 20 0 1 0 233 60",
-  fill: "none",
-  stroke: "var(--accent)",
-  strokeWidth: "2.2",
-  markerEnd: "url(#ksp-rot-f)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "215",
-  y: "72",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "正転"), /*#__PURE__*/React.createElement("text", {
-  x: "272",
-  y: "73",
-  textAnchor: "middle",
-  fontSize: "15",
-  fill: "var(--ink-mute)"
-}, "＋"), /*#__PURE__*/React.createElement("path", {
-  d: "M 348 60 A 20 20 0 1 1 312 60",
-  fill: "none",
-  stroke: "var(--warn)",
-  strokeWidth: "2.2",
-  markerEnd: "url(#ksp-rot-b)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "330",
-  y: "72",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--warn)"
-}, "逆転"), /*#__PURE__*/React.createElement("text", {
-  x: "235",
-  y: "124",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "bold",
-  fill: "var(--ink)"
-}, "② 静止時：両成分のトルクが同大・逆向きで打ち消し合う"), /*#__PURE__*/React.createElement("circle", {
-  cx: "235",
-  cy: "152",
-  r: "18",
-  fill: "var(--bg)",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "1.6"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "235",
-  y: "156",
-  textAnchor: "middle",
-  fontSize: "10",
-  fill: "var(--ink-soft)"
-}, "回転子"), /*#__PURE__*/React.createElement("line", {
-  x1: "257",
-  y1: "152",
-  x2: "322",
-  y2: "152",
-  stroke: "var(--accent)",
-  strokeWidth: "2.4",
-  strokeLinecap: "round",
-  markerEnd: "url(#ksp-rot-f)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "294",
-  y: "142",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--accent-ink)"
-}, "正転成分のトルク"), /*#__PURE__*/React.createElement("line", {
-  x1: "213",
-  y1: "152",
-  x2: "148",
-  y2: "152",
-  stroke: "var(--warn)",
-  strokeWidth: "2.4",
-  strokeLinecap: "round",
-  markerEnd: "url(#ksp-rot-b)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "176",
-  y: "142",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--warn)"
-}, "逆転成分のトルク"), /*#__PURE__*/React.createElement("text", {
-  x: "235",
-  y: "182",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fontWeight: "bold",
-  fill: "var(--warn)"
-}, "→ 合計トルク 0：静止（s＝1）のまま・自力では始動できない"), /*#__PURE__*/React.createElement("text", {
-  x: "235",
-  y: "202",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "bold",
-  fill: "var(--accent-ink)"
-}, "③ 補助巻線＋直列コンデンサ：進み電流で位相差を作る"), /*#__PURE__*/React.createElement("rect", {
-  x: "24",
-  y: "210",
-  width: "136",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "92",
-  y: "227",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink)"
-}, "主巻線＝遅れ電流"), /*#__PURE__*/React.createElement("text", {
-  x: "168",
-  y: "227",
-  textAnchor: "middle",
-  fontSize: "13",
-  fill: "var(--ink-mute)"
-}, "＋"), /*#__PURE__*/React.createElement("rect", {
-  x: "176",
-  y: "210",
-  width: "158",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "255",
-  y: "227",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink)"
-}, "補助巻線＋C＝進み電流"), /*#__PURE__*/React.createElement("line", {
-  x1: "336",
-  y1: "223",
-  x2: "350",
-  y2: "223",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "2",
-  markerEnd: "url(#ksp-flow-arr)"
-}), /*#__PURE__*/React.createElement("rect", {
-  x: "354",
-  y: "210",
-  width: "94",
-  height: "26",
-  rx: "5",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "401",
-  y: "227",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "回転磁界"), /*#__PURE__*/React.createElement("rect", {
-  x: "34",
-  y: "246",
-  width: "402",
-  height: "40",
-  rx: "6",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "235",
-  y: "263",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  x: "235",
-  dy: "0"
-}, "④ 擬似二相で回転磁界が復活 → 始動トルクが生まれ始動できる"), /*#__PURE__*/React.createElement("tspan", {
-  x: "235",
-  dy: "18"
-}, "位相差が90°に近いほど始動トルク大：分相＜コンデンサ始動"))), /*#__PURE__*/React.createElement("figcaption", {
-  style: {
-    fontSize: "12px",
-    color: "var(--ink-mute)",
-    textAlign: "center",
-    marginTop: "6px",
-    lineHeight: 1.6
-  }
-}, "ミクロ（なぜ）：単相の交番磁界は互いに逆回転する2つの回転磁界の合成。静止時（s＝1）は両者のトルクが打ち消し合って始動トルクゼロ。補助巻線に直列コンデンサで進み電流を流し、空間的にずれた主巻線との位相差で回転磁界を作って始動する。")), /*#__PURE__*/React.createElement("div", {
-  style: {
-    background: "var(--accent-soft)",
-    borderRadius: "6px",
-    padding: "12px 14px",
-    margin: "14px 0"
-  }
-}, /*#__PURE__*/React.createElement("div", {
-  style: {
-    fontSize: "12px",
-    fontWeight: 700,
-    color: "var(--accent-ink)",
-    marginBottom: 8,
-    letterSpacing: "0.04em"
-  }
-}, "🔬 ミクロの因果（なぜ単相は自力で始動できないか）"), /*#__PURE__*/React.createElement("ol", {
-  style: {
-    margin: 0,
-    paddingLeft: 24,
-    lineHeight: 1.9
-  }
-}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "単相交流を1つの巻線に流すと交番磁界"), "（同じ軸上で大きさだけ脈動）——これは互いに逆回転する", /*#__PURE__*/React.createElement("strong", null, "正転・逆転2つの回転磁界の合成"), "と等価"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "静止時（s＝1）"), "は正転・逆転成分のトルクが同じ大きさ・逆向き → 打ち消し合って", /*#__PURE__*/React.createElement("strong", null, "始動トルクゼロ")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "補助巻線に直列コンデンサ"), "を入れると電流が進み（", /*#__PURE__*/React.createElement(Eq, {
-  tex: "X_C=\\dfrac{1}{\\omega C}"
-}), "）、遅れ気味の主巻線電流との間に位相差 Δφ が生まれる"), /*#__PURE__*/React.createElement("li", null, "空間的にずれた2巻線 × 時間位相差の擬似二相で", /*#__PURE__*/React.createElement("strong", null, "回転磁界が復活し始動トルク発生"), "。位相差が90°に近いほど大きく、分相よりコンデンサ始動の始動トルクが大きいのはこのため。暗記用の序列は くま取り＜分相＜コンデンサ始動＜反発始動"))));
+
+/* 全体像（核＋3段）。部品は kikai-components.jsx の Layer*。台帳に単相機だけの小問が無いので出題数は出さない */
+const SP_STAGE_SUBTOPICS = {
+  principle: [],
+  law: [],
+  operate: []
+};
+const SinglePhaseIMLayers = () => {
+  const c = layerStageCounts("single-phase-im", SP_STAGE_SUBTOPICS);
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
+    id: "layers"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "h-num"
+  }, "0."), "このページ（単相誘導電動機）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--ink-soft)",
+      margin: "0 0 4px"
+    }
+  }, "まず", /*#__PURE__*/React.createElement("strong", null, "森"), "でこのページの位置を掴む。次に", /*#__PURE__*/React.createElement("strong", null, "核"), "（1行）を持ち、そこから", /*#__PURE__*/React.createElement("strong", null, "原理（ミクロ・なぜ動く）→ 法則（マクロ・何で決まる）→ 操作（実務・どう動かす）"), "の3段をつなげて読む。"), /*#__PURE__*/React.createElement("figure", {
+    style: {
+      margin: "10px 0 14px",
+      background: "var(--bg-elev)",
+      borderRadius: "8px",
+      padding: "12px 8px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 480 170",
+    role: "img",
+    "aria-label": "単相誘導電動機の位置づけ：三相誘導電動機の回転磁界から来て、単相では交番磁界しか得られず始動トルクがゼロのため、補助巻線・コンデンサで擬似二相を作って始動し、家電・小型機器へつながる俯瞰図",
+    style: {
+      display: "block",
+      width: "100%",
+      height: "auto",
+      maxWidth: "480px",
+      margin: "0 auto"
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "ksp-mori-arr",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--ink-mute)"
+  }))), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "前提（入口）"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "このページ"), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "つながる先（出口）"), /*#__PURE__*/React.createElement("rect", {
+    x: "16",
+    y: "40",
+    width: "108",
+    height: "86",
+    rx: "6",
+    fill: "var(--bg)",
+    stroke: "var(--rule)",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "66",
+    textAnchor: "middle",
+    fontSize: "13",
+    fontWeight: "600",
+    fill: "var(--ink)"
+  }, "三相誘導機"), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "88",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink-soft)"
+  }, "回転磁界"), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "107",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink-soft)"
+  }, "Nₛ = 120f/p"), /*#__PURE__*/React.createElement("line", {
+    x1: "126",
+    y1: "83",
+    x2: "159",
+    y2: "83",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "2",
+    markerEnd: "url(#ksp-mori-arr)"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "162",
+    y: "32",
+    width: "156",
+    height: "102",
+    rx: "8",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "55",
+    textAnchor: "middle",
+    fontSize: "14",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "単相誘導電動機"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "77",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "交番磁界＝正転＋逆転"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "95",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "静止時 始動トルク 0"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "113",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "補助巻線で擬似二相"), /*#__PURE__*/React.createElement("line", {
+    x1: "320",
+    y1: "83",
+    x2: "353",
+    y2: "83",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "2",
+    markerEnd: "url(#ksp-mori-arr)"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "40",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "57",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "家電＝くま取り"), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "70",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "87",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "ポンプ＝C始動"), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "100",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "117",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "小型機器全般"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "154",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "三相の回転磁界から来て、単相は自力始動できず、始動方式の使い分けへ")), /*#__PURE__*/React.createElement("figcaption", {
+    style: {
+      fontSize: "12px",
+      color: "var(--ink-mute)",
+      textAlign: "center",
+      marginTop: "6px",
+      lineHeight: 1.6
+    }
+  }, "森（俯瞰）：三相誘導電動機の回転磁界を土台に、単相では交番磁界しか得られず自力で始動トルクを生めない。補助巻線・コンデンサ・くま取りコイルで擬似二相を作って始動し、家電・小型機器で活躍する。")), /*#__PURE__*/React.createElement(LayerCore, {
+    sub: "交番磁界＝互いに逆向きに回る2つの回転磁界の和（二重回転磁界理論）。一度回り出せば、回っている向きのトルクが勝って回り続ける。"
+  }, "単相の巻線1つでは", /*#__PURE__*/React.createElement(LayerKey, null, "交番磁界"), "しかできず、静止中はトルクが0で自分では始動できない。 反発始動以外の始動方式は、補助巻線などで", /*#__PURE__*/React.createElement(LayerKey, null, "回転磁界を作り出す"), "工夫である（反発始動は整流子とブラシの反発電動機のトルクで始動する）。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "principle",
+    c: c,
+    jump: "↓図解・1節"
+  }, /*#__PURE__*/React.createElement(LayerChain, {
+    steps: [["単相電流を1つの巻線に", "交番磁界"], ["正転・逆転2つの回転磁界の和", null], ["静止中は2つのトルクが打ち消す", "始動トルク0"], ["補助巻線で位相差を作る", "空間90°＋電流の時間差"], ["回転磁界ができて始動", null]]
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--ink-soft)",
+      margin: "4px 0 0",
+      lineHeight: 1.7
+    }
+  }, "コンデンサの電流は電圧より進む（", /*#__PURE__*/React.createElement(Eq, {
+    tex: "X_C = \\dfrac{1}{\\omega C}",
+    inline: true
+  }), "）。補助巻線にコンデンサを入れると、遅れ気味の主巻線電流との位相差が大きくなる。位相差が 90° に近いほど始動トルクが大きい。")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700,
+      color: "var(--accent-ink)",
+      margin: "16px 0 4px"
+    }
+  }, "▼ ミクロを図で掘り下げる：なぜ単相は自力で始動できず、コンデンサで始動できるか"), /*#__PURE__*/React.createElement("figure", {
+    style: {
+      margin: "6px 0 14px",
+      background: "var(--bg-elev)",
+      borderRadius: "8px",
+      padding: "12px 8px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 470 296",
+    role: "img",
+    "aria-label": "単相誘導電動機の始動機構：①単相の交番磁界は正転・逆転2つの回転磁界の合成。②静止時は両成分のトルクが同じ大きさで逆向きに働き打ち消し合って始動トルクゼロ。③補助巻線に直列コンデンサを入れて進み電流を流し主巻線との位相差を作る。④擬似二相で回転磁界が復活し始動トルクが生まれる機構図",
+    style: {
+      display: "block",
+      width: "100%",
+      height: "auto",
+      maxWidth: "470px",
+      margin: "0 auto"
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "ksp-alt-arr",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--ink)"
+  })), /*#__PURE__*/React.createElement("marker", {
+    id: "ksp-rot-f",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--accent)"
+  })), /*#__PURE__*/React.createElement("marker", {
+    id: "ksp-rot-b",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--warn)"
+  })), /*#__PURE__*/React.createElement("marker", {
+    id: "ksp-flow-arr",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--ink-mute)"
+  }))), /*#__PURE__*/React.createElement("text", {
+    x: "235",
+    y: "24",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "var(--accent-ink)"
+  }, "① 交番磁界は 正転＋逆転の2つの回転磁界の合成"), /*#__PURE__*/React.createElement("line", {
+    x1: "95",
+    y1: "68",
+    x2: "95",
+    y2: "46",
+    stroke: "var(--ink)",
+    strokeWidth: "2",
+    markerEnd: "url(#ksp-alt-arr)"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "95",
+    y1: "68",
+    x2: "95",
+    y2: "90",
+    stroke: "var(--ink)",
+    strokeWidth: "2",
+    markerEnd: "url(#ksp-alt-arr)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "95",
+    y: "106",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-soft)"
+  }, "交番磁界（脈動）"), /*#__PURE__*/React.createElement("text", {
+    x: "152",
+    y: "73",
+    textAnchor: "middle",
+    fontSize: "15",
+    fill: "var(--ink-mute)"
+  }, "＝"), /*#__PURE__*/React.createElement("path", {
+    d: "M 197 60 A 20 20 0 1 0 233 60",
+    fill: "none",
+    stroke: "var(--accent)",
+    strokeWidth: "2.2",
+    markerEnd: "url(#ksp-rot-f)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "215",
+    y: "72",
+    textAnchor: "middle",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "正転"), /*#__PURE__*/React.createElement("text", {
+    x: "272",
+    y: "73",
+    textAnchor: "middle",
+    fontSize: "15",
+    fill: "var(--ink-mute)"
+  }, "＋"), /*#__PURE__*/React.createElement("path", {
+    d: "M 348 60 A 20 20 0 1 1 312 60",
+    fill: "none",
+    stroke: "var(--warn)",
+    strokeWidth: "2.2",
+    markerEnd: "url(#ksp-rot-b)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "330",
+    y: "72",
+    textAnchor: "middle",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--warn)"
+  }, "逆転"), /*#__PURE__*/React.createElement("text", {
+    x: "235",
+    y: "124",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "var(--ink)"
+  }, "② 静止時：両成分のトルクが同大・逆向きで打ち消し合う"), /*#__PURE__*/React.createElement("circle", {
+    cx: "235",
+    cy: "152",
+    r: "18",
+    fill: "var(--bg)",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "235",
+    y: "156",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--ink-soft)"
+  }, "回転子"), /*#__PURE__*/React.createElement("line", {
+    x1: "257",
+    y1: "152",
+    x2: "322",
+    y2: "152",
+    stroke: "var(--accent)",
+    strokeWidth: "2.4",
+    strokeLinecap: "round",
+    markerEnd: "url(#ksp-rot-f)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "294",
+    y: "142",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--accent-ink)"
+  }, "正転成分のトルク"), /*#__PURE__*/React.createElement("line", {
+    x1: "213",
+    y1: "152",
+    x2: "148",
+    y2: "152",
+    stroke: "var(--warn)",
+    strokeWidth: "2.4",
+    strokeLinecap: "round",
+    markerEnd: "url(#ksp-rot-b)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "176",
+    y: "142",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--warn)"
+  }, "逆転成分のトルク"), /*#__PURE__*/React.createElement("text", {
+    x: "235",
+    y: "182",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fontWeight: "bold",
+    fill: "var(--warn)"
+  }, "→ 合計トルク 0：静止（s＝1）のまま・自力では始動できない"), /*#__PURE__*/React.createElement("text", {
+    x: "235",
+    y: "202",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "var(--accent-ink)"
+  }, "③ 補助巻線＋直列コンデンサ：進み電流で位相差を作る"), /*#__PURE__*/React.createElement("rect", {
+    x: "24",
+    y: "210",
+    width: "136",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "92",
+    y: "227",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink)"
+  }, "主巻線＝遅れ電流"), /*#__PURE__*/React.createElement("text", {
+    x: "168",
+    y: "227",
+    textAnchor: "middle",
+    fontSize: "13",
+    fill: "var(--ink-mute)"
+  }, "＋"), /*#__PURE__*/React.createElement("rect", {
+    x: "176",
+    y: "210",
+    width: "158",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "255",
+    y: "227",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink)"
+  }, "補助巻線＋C＝進み電流"), /*#__PURE__*/React.createElement("line", {
+    x1: "336",
+    y1: "223",
+    x2: "350",
+    y2: "223",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "2",
+    markerEnd: "url(#ksp-flow-arr)"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "354",
+    y: "210",
+    width: "94",
+    height: "26",
+    rx: "5",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "401",
+    y: "227",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "回転磁界"), /*#__PURE__*/React.createElement("rect", {
+    x: "34",
+    y: "246",
+    width: "402",
+    height: "40",
+    rx: "6",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "235",
+    y: "263",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, /*#__PURE__*/React.createElement("tspan", {
+    x: "235",
+    dy: "0"
+  }, "④ 擬似二相で回転磁界が復活 → 始動トルクが生まれ始動できる"), /*#__PURE__*/React.createElement("tspan", {
+    x: "235",
+    dy: "18"
+  }, "位相差が90°に近いほど始動トルク大：分相＜コンデンサ始動"))), /*#__PURE__*/React.createElement("figcaption", {
+    style: {
+      fontSize: "12px",
+      color: "var(--ink-mute)",
+      textAlign: "center",
+      marginTop: "6px",
+      lineHeight: 1.6
+    }
+  }, "ミクロ（なぜ）：単相の交番磁界は互いに逆回転する2つの回転磁界の合成。静止時（s＝1）は両者のトルクが打ち消し合って始動トルクゼロ。補助巻線に直列コンデンサで進み電流を流し、空間的にずれた主巻線との位相差で回転磁界を作って始動する。")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--accent-soft)",
+      borderRadius: "6px",
+      padding: "12px 14px",
+      margin: "14px 0"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "12px",
+      fontWeight: 700,
+      color: "var(--accent-ink)",
+      marginBottom: 8,
+      letterSpacing: "0.04em"
+    }
+  }, "🔬 ミクロの因果（なぜ単相は自力で始動できないか）"), /*#__PURE__*/React.createElement("ol", {
+    style: {
+      margin: 0,
+      paddingLeft: 24,
+      lineHeight: 1.9
+    }
+  }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "単相交流を1つの巻線に流すと交番磁界"), "（同じ軸上で大きさだけ脈動）——これは互いに逆回転する", /*#__PURE__*/React.createElement("strong", null, "正転・逆転2つの回転磁界の合成"), "と等価"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "静止時（s＝1）"), "は正転・逆転成分のトルクが同じ大きさ・逆向き → 打ち消し合って", /*#__PURE__*/React.createElement("strong", null, "始動トルクゼロ")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "補助巻線に直列コンデンサ"), "を入れると電流が進み（", /*#__PURE__*/React.createElement(Eq, {
+    tex: "X_C=\\dfrac{1}{\\omega C}"
+  }), "）、遅れ気味の主巻線電流との間に位相差 Δφ が生まれる"), /*#__PURE__*/React.createElement("li", null, "空間的にずれた2巻線 × 時間位相差の擬似二相で", /*#__PURE__*/React.createElement("strong", null, "回転磁界が復活し始動トルク発生"), "。位相差が90°に近いほど大きく、分相よりコンデンサ始動の始動トルクが大きいのはこのため。暗記用の序列は くま取り＜分相＜コンデンサ始動＜反発始動"))), /*#__PURE__*/React.createElement(LayerBridge, {
+    label: "橋①"
+  }, "磁界の向きを毎回追わず、各方式を「", /*#__PURE__*/React.createElement("strong", null, "どうやって位相差（回る磁束）を作るか"), "」と「", /*#__PURE__*/React.createElement("strong", null, "始動トルクの大小"), "」で並べる。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "law",
+    c: c,
+    jump: "↓1節"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13.5,
+      lineHeight: 1.8
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "始動トルクの大小（一般的傾向）"), "\u3000くま取り ＜ 分相 ＜ コンデンサ始動 ＜ 反発始動"), /*#__PURE__*/React.createElement("ul", {
+    style: {
+      margin: "4px 0 0",
+      paddingLeft: 18,
+      fontSize: 13,
+      lineHeight: 1.75
+    }
+  }, /*#__PURE__*/React.createElement("li", null, "分相始動：補助巻線の抵抗を大きくして位相差を作る（位相差が小さく、始動トルクも小さい）。始動後は遠心力スイッチで補助巻線を切り離す"), /*#__PURE__*/React.createElement("li", null, "コンデンサ始動：補助巻線に直列コンデンサ。始動後は遠心力スイッチで補助巻線ごと切り離す"), /*#__PURE__*/React.createElement("li", null, "コンデンサ始動・運転：始動用を外し、運転用の小さいコンデンサを残す（力率・振動・騒音がよい）。永久コンデンサ形は1個を常につないだまま（遠心力スイッチが要らず静かだが、容量を運転向きに選ぶので始動トルクは小さい）"), /*#__PURE__*/React.createElement("li", null, "くま取りコイル：磁極の一部の銅環が磁束の変化を遅らせ、銅環の無い側からある側へ回る。構造は簡単だが始動トルク・効率が小さい"), /*#__PURE__*/React.createElement("li", null, "反発始動：整流子とブラシで反発電動機として始動。始動トルクは最大"))), /*#__PURE__*/React.createElement(LayerBridge, {
+    label: "橋②"
+  }, "外から選ぶのは、", /*#__PURE__*/React.createElement("strong", null, "始動方式（コンデンサの有無と残し方）"), "と、逆転のときに", /*#__PURE__*/React.createElement("strong", null, "どちらの巻線の接続を入れ替えるか"), "。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "operate",
+    c: c,
+    jump: "↓1節「回り出した後と逆転」",
+    q: "どう選ぶ・どう回す？"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...LAYER_GRID,
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "用途で選ぶ"
+  }, /*#__PURE__*/React.createElement("li", null, "小容量で安価、始動トルクが小さくてよい機器 → くま取りコイル形"), /*#__PURE__*/React.createElement("li", null, "静かさが要る扇風機・換気扇など → 永久コンデンサ形"), /*#__PURE__*/React.createElement("li", null, "始動トルクが要る井戸ポンプなど → コンデンサ始動形")), /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "逆転"
+  }, /*#__PURE__*/React.createElement("li", null, "主巻線か補助巻線の、", /*#__PURE__*/React.createElement("strong", null, "どちらか一方"), "の接続を入れ替える"), /*#__PURE__*/React.createElement("li", null, "電源の2線を入れ替えても両方の巻線が同時に反転するだけで、逆転しない"), /*#__PURE__*/React.createElement("li", null, "くま取りコイル形はコイルの位置で向きが決まり（無い側からある側へ）、電気的には逆転できない")))), /*#__PURE__*/React.createElement(LayerCountNote, {
+    c: c,
+    stageMap: SP_STAGE_SUBTOPICS,
+    labels: {},
+    emptyNote: range => `出題数: 単相誘導電動機を問う小問は ${range} の台帳に無い。`
+  }));
+};
 const SinglePhaseIMPage = ({
   onNav
 }) => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Crumbs, {
@@ -20516,506 +20589,631 @@ const SinglePhaseIMPage = ({
   },
   onNav: onNav
 }));
-const TransformerLayers = () => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
-  id: "layers"
-}, /*#__PURE__*/React.createElement("span", {
-  className: "h-num"
-}, "0."), "このページ（変圧器）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 13,
-    color: "var(--ink-soft)",
-    margin: "0 0 4px"
-  }
-}, "同じテーマを ", /*#__PURE__*/React.createElement("strong", null, "森（俯瞰）→ ミクロ（なぜ）→ マクロ（解く）"), " の3層で見る。まず森でこのページの位置を掴み、ミクロで機構を、マクロで解き方を押さえる。"), /*#__PURE__*/React.createElement("figure", {
-  style: {
-    margin: "10px 0 14px",
-    background: "var(--bg-elev)",
-    borderRadius: "8px",
-    padding: "12px 8px 8px"
-  }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 480 170",
-  role: "img",
-  "aria-label": "変圧器の位置づけ：理論の電磁誘導 e=N·dΦ/dt から来て、変圧器で巻数比・%Z・効率を扱い、送配電の昇降圧・短絡電流計算・並行運転へつながる俯瞰図",
-  style: {
-    display: "block",
-    width: "100%",
-    height: "auto",
-    maxWidth: "480px",
-    margin: "0 auto"
-  }
-}, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
-  id: "ktr-mori-arr",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--ink-mute)"
-}))), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "前提（入口）"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "このページ"), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "つながる先（出口）"), /*#__PURE__*/React.createElement("rect", {
-  x: "16",
-  y: "40",
-  width: "108",
-  height: "86",
-  rx: "6",
-  fill: "var(--bg)",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "66",
-  textAnchor: "middle",
-  fontSize: "13",
-  fontWeight: "600",
-  fill: "var(--ink)"
-}, "電磁誘導（理論）"), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "88",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink-soft)"
-}, "e = N·dΦ/dt"), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "107",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink-soft)"
-}, "相互誘導 M"), /*#__PURE__*/React.createElement("line", {
-  x1: "126",
-  y1: "83",
-  x2: "159",
-  y2: "83",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "2",
-  markerEnd: "url(#ktr-mori-arr)"
-}), /*#__PURE__*/React.createElement("rect", {
-  x: "162",
-  y: "32",
-  width: "156",
-  height: "102",
-  rx: "8",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "2"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "55",
-  textAnchor: "middle",
-  fontSize: "14",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "変圧器"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "77",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "a = N₁/N₂ = V₁/V₂"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "95",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "I", /*#__PURE__*/React.createElement("tspan", {
-  fontSize: "10",
-  dy: "3"
-}, "sc"), /*#__PURE__*/React.createElement("tspan", {
-  dy: "-3"
-}, " = (100/%Z)·Iₙ")), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "113",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "鉄損＝銅損で効率最大"), /*#__PURE__*/React.createElement("line", {
-  x1: "320",
-  y1: "83",
-  x2: "353",
-  y2: "83",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "2",
-  markerEnd: "url(#ktr-mori-arr)"
-}), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "40",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "57",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "送配電の昇降圧"), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "70",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "87",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "%Z・短絡電流"), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "100",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "117",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "並行運転"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "154",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "電磁誘導から来て、巻数比で電圧を変え、昇降圧・短絡計算・並行運転へ枝分かれ")), /*#__PURE__*/React.createElement("figcaption", {
-  style: {
-    fontSize: "12px",
-    color: "var(--ink-mute)",
-    textAlign: "center",
-    marginTop: "6px",
-    lineHeight: 1.6
-  }
-}, "森（俯瞰）：理論で学ぶ電磁誘導 e = N·dΦ/dt を土台に、変圧器は鉄心の共通磁束と巻数比で電圧を変成する静止器。ここから送配電の昇降圧・%Zによる短絡電流計算・並行運転へ枝分かれする。")), /*#__PURE__*/React.createElement("div", {
-  className: "table-wrap"
-}, /*#__PURE__*/React.createElement("table", {
-  className: "data-table"
-}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "視点"), /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "何を見るか"), /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "代表する式・量"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "ミクロ"), /*#__PURE__*/React.createElement("br", null), "（なぜ）"), /*#__PURE__*/React.createElement("td", null, "一次巻線の交流が鉄心に", /*#__PURE__*/React.createElement("strong", null, "交番磁束 Φ"), " を作り、共通磁束が両巻線を貫いて ", /*#__PURE__*/React.createElement("strong", null, "e = N·dΦ/dt"), " を誘起。だから電圧は巻数に比例する（↓図解）"), /*#__PURE__*/React.createElement("td", null, "電磁誘導・共通磁束")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "マクロ"), /*#__PURE__*/React.createElement("br", null), "（解く）"), /*#__PURE__*/React.createElement("td", null, "磁束は1本ずつ追わず、巻数比・%Z・損失という", /*#__PURE__*/React.createElement("strong", null, "測れる量"), "で扱う。"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
-  tex: "a = \\dfrac{N_1}{N_2} = \\dfrac{V_1}{V_2}"
-}), "・", /*#__PURE__*/React.createElement(Eq, {
-  tex: "I_{sc} = \\dfrac{100}{\\%Z} I_n"
-}), "・", /*#__PURE__*/React.createElement(Eq, {
-  tex: "P_i = P_c"
-}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "設備で何に化けるか。柱上・配電用変圧器の昇降圧、%Zからの", /*#__PURE__*/React.createElement("strong", null, "短絡電流計算"), "（遮断器選定）、並行運転・全日効率"), /*#__PURE__*/React.createElement("td", null, "%Z・全日効率"))))), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 13,
-    fontWeight: 700,
-    color: "var(--accent-ink)",
-    margin: "16px 0 4px"
-  }
-}, "▼ ミクロを図で掘り下げる：なぜ巻数比 N₁/N₂ どおりに電圧が変わるか"), /*#__PURE__*/React.createElement("figure", {
-  style: {
-    margin: "6px 0 14px",
-    background: "var(--bg-elev)",
-    borderRadius: "8px",
-    padding: "12px 8px 8px"
-  }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 470 300",
-  role: "img",
-  "aria-label": "変圧器の動作原理：①一次巻線の交流電流が②鉄心に交番磁束Φを作り、磁束の通り道である鉄心を通って共通磁束が両巻線を貫き、③各巻線にe=N·dΦ/dtを誘起、④電圧は巻数比V1/V2=N1/N2、負荷時の電流は逆比になる機構図",
-  style: {
-    display: "block",
-    width: "100%",
-    height: "auto",
-    maxWidth: "470px",
-    margin: "0 auto"
-  }
-}, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
-  id: "ktr-micro-flux",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--accent)"
-}))), /*#__PURE__*/React.createElement("text", {
-  x: "12",
-  y: "24",
-  textAnchor: "start",
-  fontSize: "12",
-  fontWeight: "bold",
-  fill: "var(--accent-ink)"
-}, "① 一次巻線に交流電圧 v₁（励磁電流が流れる）"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "48",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "bold",
-  fill: "var(--accent-ink)"
-}, "② 鉄心に交番磁束 Φ（共通磁束が鉄心を一周）"), /*#__PURE__*/React.createElement("circle", {
-  cx: "48",
-  cy: "145",
-  r: "13",
-  fill: "var(--bg)",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "1.5"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "48",
-  y: "150",
-  textAnchor: "middle",
-  fontSize: "14",
-  fill: "var(--ink)"
-}, "~"), /*#__PURE__*/React.createElement("polyline", {
-  points: "48,132 48,104 134,104",
-  fill: "none",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "1.5"
-}), /*#__PURE__*/React.createElement("polyline", {
-  points: "48,158 48,186 134,186",
-  fill: "none",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "1.5"
-}), /*#__PURE__*/React.createElement("rect", {
-  x: "150",
-  y: "86",
-  width: "180",
-  height: "118",
-  rx: "4",
-  fill: "none",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "12"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "140",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "鉄心"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "156",
-  textAnchor: "middle",
-  fontSize: "10.5",
-  fill: "var(--ink-mute)"
-}, "（磁束の通り道）"), /*#__PURE__*/React.createElement("rect", {
-  x: "150",
-  y: "86",
-  width: "180",
-  height: "118",
-  rx: "4",
-  fill: "none",
-  stroke: "var(--accent)",
-  strokeWidth: "2",
-  strokeDasharray: "7 5"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "225",
-  y1: "86",
-  x2: "258",
-  y2: "86",
-  stroke: "var(--accent)",
-  strokeWidth: "2",
-  markerEnd: "url(#ktr-micro-flux)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "272",
-  y: "80",
-  textAnchor: "middle",
-  fontSize: "13",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "Φ"), /*#__PURE__*/React.createElement("ellipse", {
-  cx: "150",
-  cy: "104",
-  rx: "17",
-  ry: "10",
-  fill: "none",
-  stroke: "var(--accent)",
-  strokeWidth: "2.5"
-}), /*#__PURE__*/React.createElement("ellipse", {
-  cx: "150",
-  cy: "131",
-  rx: "17",
-  ry: "10",
-  fill: "none",
-  stroke: "var(--accent)",
-  strokeWidth: "2.5"
-}), /*#__PURE__*/React.createElement("ellipse", {
-  cx: "150",
-  cy: "158",
-  rx: "17",
-  ry: "10",
-  fill: "none",
-  stroke: "var(--accent)",
-  strokeWidth: "2.5"
-}), /*#__PURE__*/React.createElement("ellipse", {
-  cx: "150",
-  cy: "185",
-  rx: "17",
-  ry: "10",
-  fill: "none",
-  stroke: "var(--accent)",
-  strokeWidth: "2.5"
-}), /*#__PURE__*/React.createElement("ellipse", {
-  cx: "330",
-  cy: "113",
-  rx: "17",
-  ry: "10",
-  fill: "none",
-  stroke: "var(--ok)",
-  strokeWidth: "2.5"
-}), /*#__PURE__*/React.createElement("ellipse", {
-  cx: "330",
-  cy: "145",
-  rx: "17",
-  ry: "10",
-  fill: "none",
-  stroke: "var(--ok)",
-  strokeWidth: "2.5"
-}), /*#__PURE__*/React.createElement("ellipse", {
-  cx: "330",
-  cy: "177",
-  rx: "17",
-  ry: "10",
-  fill: "none",
-  stroke: "var(--ok)",
-  strokeWidth: "2.5"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "347",
-  y1: "113",
-  x2: "410",
-  y2: "113",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "1.5"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "347",
-  y1: "177",
-  x2: "410",
-  y2: "177",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "1.5"
-}), /*#__PURE__*/React.createElement("circle", {
-  cx: "412",
-  cy: "113",
-  r: "3",
-  fill: "var(--ok)"
-}), /*#__PURE__*/React.createElement("circle", {
-  cx: "412",
-  cy: "177",
-  r: "3",
-  fill: "var(--ok)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "428",
-  y: "150",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--ok)"
-}, "v₂"), /*#__PURE__*/React.createElement("text", {
-  x: "110",
-  y: "224",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "一次巻線 N₁"), /*#__PURE__*/React.createElement("text", {
-  x: "370",
-  y: "224",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--ok)"
-}, "二次巻線 N₂"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "244",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "bold",
-  fill: "var(--ink)"
-}, "③ 同じ Φ が両巻線を貫き、各巻線に e = N·dΦ/dt を誘起"), /*#__PURE__*/React.createElement("rect", {
-  x: "34",
-  y: "252",
-  width: "402",
-  height: "40",
-  rx: "6",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "235",
-  y: "268",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  x: "235",
-  dy: "0"
-}, "④ 電圧は巻数に比例 → V₁/V₂ = N₁/N₂ = a（巻数比）"), /*#__PURE__*/React.createElement("tspan", {
-  x: "235",
-  dy: "18"
-}, "負荷時の電流は逆比 I₂/I₁ = a（V₁I₁ ≒ V₂I₂）"))), /*#__PURE__*/React.createElement("figcaption", {
-  style: {
-    fontSize: "12px",
-    color: "var(--ink-mute)",
-    textAlign: "center",
-    marginTop: "6px",
-    lineHeight: 1.6
-  }
-}, "ミクロ（なぜ）：一次巻線の交流が鉄心に交番磁束 Φ を作り、磁束の通り道である鉄心を通って同じ Φ が二次巻線も貫く。各巻線に e = N·dΦ/dt が誘起されるので電圧は巻数に比例し、V₁/V₂ = N₁/N₂。負荷をつなぐと電流は逆比になる（漏れ磁束なしの理想変圧器で考えた場合）。")), /*#__PURE__*/React.createElement("div", {
-  style: {
-    background: "var(--accent-soft)",
-    borderRadius: "6px",
-    padding: "12px 14px",
-    margin: "14px 0"
-  }
-}, /*#__PURE__*/React.createElement("div", {
-  style: {
-    fontSize: "12px",
-    fontWeight: 700,
-    color: "var(--accent-ink)",
-    marginBottom: 8,
-    letterSpacing: "0.04em"
-  }
-}, "🔬 ミクロの因果（なぜ巻数比で電圧が変わるか）"), /*#__PURE__*/React.createElement("ol", {
-  style: {
-    margin: 0,
-    paddingLeft: 24,
-    lineHeight: 1.9
-  }
-}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "一次巻線に交流電圧 v₁"), " を加える → 励磁電流が鉄心に交番磁束 Φ を作る（鉄心＝磁束の通り道）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "共通磁束 Φ が一次・二次の両巻線を貫く"), "（漏れ磁束なしの理想変圧器なら同じ Φ）"), /*#__PURE__*/React.createElement("li", null, "各巻線に電磁誘導で ", /*#__PURE__*/React.createElement("strong", null, "e = N·dΦ/dt"), " が誘起 → 電圧は巻数 N に比例"), /*#__PURE__*/React.createElement("li", null, "結果、", /*#__PURE__*/React.createElement("strong", null, "巻数比どおりに電圧が変わる"), "：", /*#__PURE__*/React.createElement(Eq, {
-  tex: "\\dfrac{V_1}{V_2} = \\dfrac{N_1}{N_2} = a"
-}), "。負荷時の電流は逆比 ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "\\dfrac{I_2}{I_1} = a"
-}), "（V₁I₁ ≒ V₂I₂）"))), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 12,
-    color: "var(--ink-soft)",
-    margin: "0 0 4px"
-  }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、下のセクション9「電圧変動率」の ", /*#__PURE__*/React.createElement("strong", null, "図2.1.1 簡易ベクトル図"), "を参照（ε ≈ p·cosθ + q·sinθ の幾何的な意味がわかる）。"));
+
+/* 全体像（核＋3段）。部品は kikai-components.jsx の Layer*。段への振り分けは台帳の小分類を問題の中身で割り当てた */
+const TR_STAGE_SUBTOPICS = {
+  principle: ["basic", "equiv"],
+  law: ["loss", "vreg", "sc-test"],
+  operate: ["vconn", "parallel", "power-capacitor"]
+};
+const TR_SUBTOPIC_LABEL = {
+  basic: "巻数比と換算",
+  equiv: "等価回路と励磁電流",
+  loss: "損失・効率・返還負荷法",
+  vreg: "電圧変動率",
+  "sc-test": "短絡試験",
+  vconn: "V結線・単巻変圧器",
+  parallel: "並行運転",
+  "power-capacitor": "電力用コンデンサ"
+};
+const TransformerLayers = () => {
+  const c = layerStageCounts("transformer", TR_STAGE_SUBTOPICS);
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
+    id: "layers"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "h-num"
+  }, "0."), "このページ（変圧器）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--ink-soft)",
+      margin: "0 0 4px"
+    }
+  }, "まず", /*#__PURE__*/React.createElement("strong", null, "森"), "でこのページの位置を掴む。次に", /*#__PURE__*/React.createElement("strong", null, "核"), "（1行）を持ち、そこから", /*#__PURE__*/React.createElement("strong", null, "原理（ミクロ・なぜ動く）→ 法則（マクロ・何で決まる）→ 操作（実務・どう動かす）"), "の3段をつなげて読む。"), /*#__PURE__*/React.createElement("figure", {
+    style: {
+      margin: "10px 0 14px",
+      background: "var(--bg-elev)",
+      borderRadius: "8px",
+      padding: "12px 8px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 480 170",
+    role: "img",
+    "aria-label": "変圧器の位置づけ：理論の電磁誘導 e=N·dΦ/dt から来て、変圧器で巻数比・%Z・効率を扱い、送配電の昇降圧・短絡電流計算・並行運転へつながる俯瞰図",
+    style: {
+      display: "block",
+      width: "100%",
+      height: "auto",
+      maxWidth: "480px",
+      margin: "0 auto"
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "ktr-mori-arr",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--ink-mute)"
+  }))), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "前提（入口）"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "このページ"), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "つながる先（出口）"), /*#__PURE__*/React.createElement("rect", {
+    x: "16",
+    y: "40",
+    width: "108",
+    height: "86",
+    rx: "6",
+    fill: "var(--bg)",
+    stroke: "var(--rule)",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "66",
+    textAnchor: "middle",
+    fontSize: "13",
+    fontWeight: "600",
+    fill: "var(--ink)"
+  }, "電磁誘導（理論）"), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "88",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink-soft)"
+  }, "e = N·dΦ/dt"), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "107",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink-soft)"
+  }, "相互誘導 M"), /*#__PURE__*/React.createElement("line", {
+    x1: "126",
+    y1: "83",
+    x2: "159",
+    y2: "83",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "2",
+    markerEnd: "url(#ktr-mori-arr)"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "162",
+    y: "32",
+    width: "156",
+    height: "102",
+    rx: "8",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "55",
+    textAnchor: "middle",
+    fontSize: "14",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "変圧器"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "77",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "a = N₁/N₂ = V₁/V₂"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "95",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "I", /*#__PURE__*/React.createElement("tspan", {
+    fontSize: "10",
+    dy: "3"
+  }, "sc"), /*#__PURE__*/React.createElement("tspan", {
+    dy: "-3"
+  }, " = (100/%Z)·Iₙ")), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "113",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "鉄損＝銅損で効率最大"), /*#__PURE__*/React.createElement("line", {
+    x1: "320",
+    y1: "83",
+    x2: "353",
+    y2: "83",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "2",
+    markerEnd: "url(#ktr-mori-arr)"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "40",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "57",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "送配電の昇降圧"), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "70",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "87",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "%Z・短絡電流"), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "100",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "117",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "並行運転"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "154",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "電磁誘導から来て、巻数比で電圧を変え、昇降圧・短絡計算・並行運転へ枝分かれ")), /*#__PURE__*/React.createElement("figcaption", {
+    style: {
+      fontSize: "12px",
+      color: "var(--ink-mute)",
+      textAlign: "center",
+      marginTop: "6px",
+      lineHeight: 1.6
+    }
+  }, "森（俯瞰）：理論で学ぶ電磁誘導 e = N·dΦ/dt を土台に、変圧器は鉄心の共通磁束と巻数比で電圧を変成する静止器。ここから送配電の昇降圧・%Zによる短絡電流計算・並行運転へ枝分かれする。")), /*#__PURE__*/React.createElement(LayerCore, {
+    sub: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "E = 4.44\\,f N \\Phi_m",
+      inline: true
+    }), "。三種の計算では、損失を鉄損 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "P_i",
+      inline: true
+    }), "（電圧・周波数が一定なら負荷によらない。", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\Phi_m \\propto V/f",
+      inline: true
+    }), " なので周波数を下げると増える）と銅損 ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "x^2 P_{cN}",
+      inline: true
+    }), "（負荷率 x の2乗）の2つで代表させる（厳密には漂遊負荷損なども別にある）。")
+  }, "変圧器は一次と二次を", /*#__PURE__*/React.createElement(LayerKey, null, "同じ磁束 Φ"), "が貫くので、電圧は巻数に比例し、電流は巻数に反比例する。 実際の変圧器と理想との差は、", /*#__PURE__*/React.createElement(LayerKey, null, "巻線のインピーダンス（％Z・銅損）と鉄心の励磁（鉄損）"), "に集まる。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "principle",
+    c: c,
+    jump: "↓図解・2節・3節・4節"
+  }, /*#__PURE__*/React.createElement(LayerChain, {
+    steps: [["一次に交流電圧 V₁", "励磁電流"], ["鉄心に交番磁束 Φ", null], ["両巻線を同じ Φ が貫く", null], ["各巻線に起電力", /*#__PURE__*/React.createElement(Eq, {
+      tex: "e = N\\,\\dfrac{d\\Phi}{dt}",
+      inline: true
+    })], ["電圧は巻数に比例", /*#__PURE__*/React.createElement(Eq, {
+      tex: "V_1/V_2 = N_1/N_2 = a",
+      inline: true
+    })]]
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--ink-soft)",
+      margin: "4px 0 0",
+      lineHeight: 1.7
+    }
+  }, "負荷電流 I₂ が流れると、その起磁力を打ち消す一次負荷電流 ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "I_2' = I_2/a",
+    inline: true
+  }), " が一次に流れ込む（", /*#__PURE__*/React.createElement(Eq, {
+    tex: "N_1 I_2' = N_2 I_2",
+    inline: true
+  }), "）。励磁電流は鉄損電流と磁化電流から成り、鉄心が飽和するので波形がひずむ（第3高調波を含む）。")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700,
+      color: "var(--accent-ink)",
+      margin: "16px 0 4px"
+    }
+  }, "▼ ミクロを図で掘り下げる：なぜ巻数比 N₁/N₂ どおりに電圧が変わるか"), /*#__PURE__*/React.createElement("figure", {
+    style: {
+      margin: "6px 0 14px",
+      background: "var(--bg-elev)",
+      borderRadius: "8px",
+      padding: "12px 8px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 470 300",
+    role: "img",
+    "aria-label": "変圧器の動作原理：①一次巻線の交流電流が②鉄心に交番磁束Φを作り、磁束の通り道である鉄心を通って共通磁束が両巻線を貫き、③各巻線にe=N·dΦ/dtを誘起、④電圧は巻数比V1/V2=N1/N2、負荷時の電流は逆比になる機構図",
+    style: {
+      display: "block",
+      width: "100%",
+      height: "auto",
+      maxWidth: "470px",
+      margin: "0 auto"
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "ktr-micro-flux",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--accent)"
+  }))), /*#__PURE__*/React.createElement("text", {
+    x: "12",
+    y: "24",
+    textAnchor: "start",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "var(--accent-ink)"
+  }, "① 一次巻線に交流電圧 v₁（励磁電流が流れる）"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "48",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "var(--accent-ink)"
+  }, "② 鉄心に交番磁束 Φ（共通磁束が鉄心を一周）"), /*#__PURE__*/React.createElement("circle", {
+    cx: "48",
+    cy: "145",
+    r: "13",
+    fill: "var(--bg)",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "1.5"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "48",
+    y: "150",
+    textAnchor: "middle",
+    fontSize: "14",
+    fill: "var(--ink)"
+  }, "~"), /*#__PURE__*/React.createElement("polyline", {
+    points: "48,132 48,104 134,104",
+    fill: "none",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "1.5"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "48,158 48,186 134,186",
+    fill: "none",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "1.5"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "150",
+    y: "86",
+    width: "180",
+    height: "118",
+    rx: "4",
+    fill: "none",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "12"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "140",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "鉄心"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "156",
+    textAnchor: "middle",
+    fontSize: "10.5",
+    fill: "var(--ink-mute)"
+  }, "（磁束の通り道）"), /*#__PURE__*/React.createElement("rect", {
+    x: "150",
+    y: "86",
+    width: "180",
+    height: "118",
+    rx: "4",
+    fill: "none",
+    stroke: "var(--accent)",
+    strokeWidth: "2",
+    strokeDasharray: "7 5"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "225",
+    y1: "86",
+    x2: "258",
+    y2: "86",
+    stroke: "var(--accent)",
+    strokeWidth: "2",
+    markerEnd: "url(#ktr-micro-flux)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "272",
+    y: "80",
+    textAnchor: "middle",
+    fontSize: "13",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "Φ"), /*#__PURE__*/React.createElement("ellipse", {
+    cx: "150",
+    cy: "104",
+    rx: "17",
+    ry: "10",
+    fill: "none",
+    stroke: "var(--accent)",
+    strokeWidth: "2.5"
+  }), /*#__PURE__*/React.createElement("ellipse", {
+    cx: "150",
+    cy: "131",
+    rx: "17",
+    ry: "10",
+    fill: "none",
+    stroke: "var(--accent)",
+    strokeWidth: "2.5"
+  }), /*#__PURE__*/React.createElement("ellipse", {
+    cx: "150",
+    cy: "158",
+    rx: "17",
+    ry: "10",
+    fill: "none",
+    stroke: "var(--accent)",
+    strokeWidth: "2.5"
+  }), /*#__PURE__*/React.createElement("ellipse", {
+    cx: "150",
+    cy: "185",
+    rx: "17",
+    ry: "10",
+    fill: "none",
+    stroke: "var(--accent)",
+    strokeWidth: "2.5"
+  }), /*#__PURE__*/React.createElement("ellipse", {
+    cx: "330",
+    cy: "113",
+    rx: "17",
+    ry: "10",
+    fill: "none",
+    stroke: "var(--ok)",
+    strokeWidth: "2.5"
+  }), /*#__PURE__*/React.createElement("ellipse", {
+    cx: "330",
+    cy: "145",
+    rx: "17",
+    ry: "10",
+    fill: "none",
+    stroke: "var(--ok)",
+    strokeWidth: "2.5"
+  }), /*#__PURE__*/React.createElement("ellipse", {
+    cx: "330",
+    cy: "177",
+    rx: "17",
+    ry: "10",
+    fill: "none",
+    stroke: "var(--ok)",
+    strokeWidth: "2.5"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "347",
+    y1: "113",
+    x2: "410",
+    y2: "113",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "1.5"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "347",
+    y1: "177",
+    x2: "410",
+    y2: "177",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "1.5"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "412",
+    cy: "113",
+    r: "3",
+    fill: "var(--ok)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "412",
+    cy: "177",
+    r: "3",
+    fill: "var(--ok)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "428",
+    y: "150",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--ok)"
+  }, "v₂"), /*#__PURE__*/React.createElement("text", {
+    x: "110",
+    y: "224",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "一次巻線 N₁"), /*#__PURE__*/React.createElement("text", {
+    x: "370",
+    y: "224",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--ok)"
+  }, "二次巻線 N₂"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "244",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "var(--ink)"
+  }, "③ 同じ Φ が両巻線を貫き、各巻線に e = N·dΦ/dt を誘起"), /*#__PURE__*/React.createElement("rect", {
+    x: "34",
+    y: "252",
+    width: "402",
+    height: "40",
+    rx: "6",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "235",
+    y: "268",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, /*#__PURE__*/React.createElement("tspan", {
+    x: "235",
+    dy: "0"
+  }, "④ 電圧は巻数に比例 → V₁/V₂ = N₁/N₂ = a（巻数比）"), /*#__PURE__*/React.createElement("tspan", {
+    x: "235",
+    dy: "18"
+  }, "負荷時の電流は逆比 I₂/I₁ = a（V₁I₁ ≒ V₂I₂）"))), /*#__PURE__*/React.createElement("figcaption", {
+    style: {
+      fontSize: "12px",
+      color: "var(--ink-mute)",
+      textAlign: "center",
+      marginTop: "6px",
+      lineHeight: 1.6
+    }
+  }, "ミクロ（なぜ）：一次巻線の交流が鉄心に交番磁束 Φ を作り、磁束の通り道である鉄心を通って同じ Φ が二次巻線も貫く。各巻線に e = N·dΦ/dt が誘起されるので電圧は巻数に比例し、V₁/V₂ = N₁/N₂。負荷をつなぐと電流は逆比になる（漏れ磁束なしの理想変圧器で考えた場合）。")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--accent-soft)",
+      borderRadius: "6px",
+      padding: "12px 14px",
+      margin: "14px 0"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "12px",
+      fontWeight: 700,
+      color: "var(--accent-ink)",
+      marginBottom: 8,
+      letterSpacing: "0.04em"
+    }
+  }, "🔬 ミクロの因果（なぜ巻数比で電圧が変わるか）"), /*#__PURE__*/React.createElement("ol", {
+    style: {
+      margin: 0,
+      paddingLeft: 24,
+      lineHeight: 1.9
+    }
+  }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "一次巻線に交流電圧 v₁"), " を加える → 励磁電流が鉄心に交番磁束 Φ を作る（鉄心＝磁束の通り道）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "共通磁束 Φ が一次・二次の両巻線を貫く"), "（漏れ磁束なしの理想変圧器なら同じ Φ）"), /*#__PURE__*/React.createElement("li", null, "各巻線に電磁誘導で ", /*#__PURE__*/React.createElement("strong", null, "e = N·dΦ/dt"), " が誘起 → 電圧は巻数 N に比例"), /*#__PURE__*/React.createElement("li", null, "結果、", /*#__PURE__*/React.createElement("strong", null, "巻数比どおりに電圧が変わる"), "：", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\dfrac{V_1}{V_2} = \\dfrac{N_1}{N_2} = a"
+  }), "。負荷時の電流は逆比 ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\dfrac{I_2}{I_1} = a"
+  }), "（V₁I₁ ≒ V₂I₂）"))), /*#__PURE__*/React.createElement(LayerBridge, {
+    label: "橋①"
+  }, "巻線1回ずつは追わず、", /*#__PURE__*/React.createElement("strong", null, "等価回路"), "にまとめる。二次側の量は一次側へ換算する（電圧×a、電流÷a、抵抗・リアクタンス×a²）。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "law",
+    c: c,
+    jump: "↓5節〜9節"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...LAYER_GRID,
+      gap: "2px 16px",
+      fontSize: 13.5,
+      lineHeight: 1.8
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "効率"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\eta = \\dfrac{P_{out}}{P_{out} + P_i + x^2 P_{cN}}",
+    inline: true
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "最高効率"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
+    tex: "P_i = x^2 P_{cN}",
+    inline: true
+  }), "（鉄損＝銅損）"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "電圧変動率"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\varepsilon \\approx p\\cos\\theta \\pm q\\sin\\theta",
+    inline: true
+  }), "（＋は遅れ力率）"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "短絡電流"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
+    tex: "I_{sc} = \\dfrac{100}{\\%Z}\\,I_n",
+    inline: true
+  }), "（上位系統を無視した簡易式）")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13.5,
+      lineHeight: 1.8,
+      marginTop: 2
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "試験"), "\u3000無負荷試験（定格電圧を加える）で鉄損と励磁電流、短絡試験（低い電圧で定格電流を流す）で銅損と等価インピーダンス（％Z）を測る。"), /*#__PURE__*/React.createElement(LayerTopNote, {
+    c: c,
+    sub: "loss",
+    labels: TR_SUBTOPIC_LABEL
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12.5,
+      color: "var(--ink-soft)",
+      margin: "6px 0 0"
+    }
+  }, "図で見るなら、9節「電圧変動率」の", /*#__PURE__*/React.createElement("strong", null, "図2.1.1 簡易ベクトル図"), "（", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\varepsilon \\approx p\\cos\\theta + q\\sin\\theta",
+    inline: true
+  }), " の幾何的な意味）。")), /*#__PURE__*/React.createElement(LayerBridge, {
+    label: "橋②"
+  }, "外から選ぶのは、", /*#__PURE__*/React.createElement("strong", null, "結線（Y・Δ・V）・台数と並べ方（並行運転）・負荷率と運転時間"), "。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "operate",
+    c: c,
+    jump: "↓10節〜14節",
+    q: "どうつなぐ・どう使う？"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...LAYER_GRID,
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "結線"
+  }, /*#__PURE__*/React.createElement("li", null, "V結線：Δ結線の ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "1/\\sqrt{3}",
+    inline: true
+  }), "（約 57.7％）の容量。設備の利用率は ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\sqrt{3}/2",
+    inline: true
+  }), "（約 86.6％）"), /*#__PURE__*/React.createElement("li", null, "単巻変圧器：自己容量 ＝ 負荷容量 × ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\dfrac{V_h - V_l}{V_h}",
+    inline: true
+  }), "（電圧差が小さいほど小さくて済む。ただし一次と二次は絶縁されない）")), /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "並行運転"
+  }, /*#__PURE__*/React.createElement("li", null, "必須：極性・巻数比（変圧比）がそろう（三相は相順と角変位も）。外れると無負荷でも循環電流が流れる"), /*#__PURE__*/React.createElement("li", null, "分担を適正にする：％Z と X/R 比がそろう（外れても運転はできるが、分担が偏る）"), /*#__PURE__*/React.createElement("li", null, "負荷の分担は「定格容量 ÷ ％Z（各自の定格を基準）」に比例する（", /*#__PURE__*/React.createElement(Eq, {
+    tex: "S_A : S_B = \\dfrac{S_{NA}}{z_A} : \\dfrac{S_{NB}}{z_B}",
+    inline: true
+  }), "）")), /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "電力用コンデンサ"
+  }, /*#__PURE__*/React.createElement("li", null, "進相コンデンサ：負荷と", /*#__PURE__*/React.createElement("strong", null, "並列"), "につなぎ、遅れ無効電流を減らして力率を改善"), /*#__PURE__*/React.createElement("li", null, "直列コンデンサ：線路と", /*#__PURE__*/React.createElement("strong", null, "直列"), "につなぎ、線路のリアクタンスを打ち消す")))), /*#__PURE__*/React.createElement(LayerCountNote, {
+    c: c,
+    stageMap: TR_STAGE_SUBTOPICS,
+    labels: TR_SUBTOPIC_LABEL
+  }));
+};
 
 /* ============================================================
    全日効率シミュレータ（変圧器ページ セクション4）
@@ -35143,501 +35341,568 @@ const BHCurveSVG = () => /*#__PURE__*/React.createElement("svg", {
     fill: 'var(--ink-soft)'
   }
 }, "→ ここに突入すると波形歪み"));
-const KeikiYoHenseikiLayers = () => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
-  id: "layers"
-}, /*#__PURE__*/React.createElement("span", {
-  className: "h-num"
-}, "0."), "このページ（計器用変成器）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 13,
-    color: "var(--ink-soft)",
-    margin: "0 0 4px"
-  }
-}, "同じテーマを ", /*#__PURE__*/React.createElement("strong", null, "森（俯瞰）→ ミクロ（なぜ）→ マクロ（解く）"), " の3層で見る。まず森でこのページの位置を掴み、ミクロで機構を、マクロで解き方を押さえる。"), /*#__PURE__*/React.createElement("figure", {
-  style: {
-    margin: "10px 0 14px",
-    background: "var(--bg-elev)",
-    borderRadius: "8px",
-    padding: "12px 8px 8px"
-  }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 480 170",
-  role: "img",
-  "aria-label": "計器用変成器の位置づけ：変圧器の電磁誘導・磁気平衡から来て、CT・VTで高圧回路の電流・電圧を安全に縮小し、保護継電器・電力量計・地絡保護へつながる俯瞰図",
-  style: {
-    display: "block",
-    width: "100%",
-    height: "auto",
-    maxWidth: "480px",
-    margin: "0 auto"
-  }
-}, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
-  id: "kct-mori-arr",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--ink-mute)"
-}))), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "前提（入口）"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "このページ"), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "つながる先（出口）"), /*#__PURE__*/React.createElement("rect", {
-  x: "16",
-  y: "40",
-  width: "108",
-  height: "86",
-  rx: "6",
-  fill: "var(--bg)",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "66",
-  textAnchor: "middle",
-  fontSize: "13",
-  fontWeight: "600",
-  fill: "var(--ink)"
-}, "変圧器"), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "88",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink-soft)"
-}, "電磁誘導"), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "107",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink-soft)"
-}, "N₁I₁ ≈ N₂I₂"), /*#__PURE__*/React.createElement("line", {
-  x1: "126",
-  y1: "83",
-  x2: "159",
-  y2: "83",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "2",
-  markerEnd: "url(#kct-mori-arr)"
-}), /*#__PURE__*/React.createElement("rect", {
-  x: "162",
-  y: "32",
-  width: "156",
-  height: "102",
-  rx: "8",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "2"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "55",
-  textAnchor: "middle",
-  fontSize: "14",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "計器用変成器"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "77",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "CT：I₁/I₂ ≈ N₂/N₁"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "95",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "VT：V₁/V₂ ＝ N₁/N₂"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "113",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "CT開放・VT短絡 厳禁"), /*#__PURE__*/React.createElement("line", {
-  x1: "320",
-  y1: "83",
-  x2: "353",
-  y2: "83",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "2",
-  markerEnd: "url(#kct-mori-arr)"
-}), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "40",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "57",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "保護継電器"), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "70",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "87",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "電力量計・計器"), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "100",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "117",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "ZCT・地絡保護"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "154",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "変圧器の物理を土台に、大電流・高電圧を安全な大きさへ縮小し、保護・計測へ枝分かれ")), /*#__PURE__*/React.createElement("figcaption", {
-  style: {
-    fontSize: "12px",
-    color: "var(--ink-mute)",
-    textAlign: "center",
-    marginTop: "6px",
-    lineHeight: 1.6
-  }
-}, "森（俯瞰）：変圧器の電磁誘導・磁気平衡を土台に、計器用変成器は高圧回路の電流（CT）・電圧（VT）を低圧側へ安全に縮小する。ここから保護継電器・電力量計・地絡保護（ZCT）へ枝分かれする。")), /*#__PURE__*/React.createElement("div", {
-  className: "table-wrap"
-}, /*#__PURE__*/React.createElement("table", {
-  className: "data-table"
-}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "視点"), /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "何を見るか"), /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "代表する式・量"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "ミクロ"), /*#__PURE__*/React.createElement("br", null), "（なぜ）"), /*#__PURE__*/React.createElement("td", null, "鉄心の", /*#__PURE__*/React.createElement("strong", null, "磁気平衡 N₁I₁ ≈ N₂I₂"), " と B-H 飽和がすべての出発点。CTは一次が", /*#__PURE__*/React.createElement("strong", null, "電流を強制"), "・VTは", /*#__PURE__*/React.createElement("strong", null, "電圧を強制"), "するので、二次禁則が真逆になる（↓図解）"), /*#__PURE__*/React.createElement("td", null, "磁気平衡・磁気飽和・dΦ/dt")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "マクロ"), /*#__PURE__*/React.createElement("br", null), "（解く）"), /*#__PURE__*/React.createElement("td", null, "内部の磁束は追わず、", /*#__PURE__*/React.createElement("strong", null, "定格変成比を掛けるだけ"), "で一次値を求める。"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
-  tex: "\\dfrac{I_1}{I_2} \\approx \\dfrac{N_2}{N_1}"
-}), "・", /*#__PURE__*/React.createElement(Eq, {
-  tex: "\\dfrac{V_1}{V_2} = \\dfrac{N_1}{N_2}"
-}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "受電設備の", /*#__PURE__*/React.createElement("strong", null, "計測・保護"), "の入口。CT二次は", /*#__PURE__*/React.createElement("strong", null, "短絡端子"), "で常時閉路を維持し、二次1端子は", /*#__PURE__*/React.createElement("strong", null, "接地"), "して感電防止（高圧D種・特別高圧A種）"), /*#__PURE__*/React.createElement("td", null, "短絡端子・二次側接地（解釈第28条）"))))), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 13,
-    fontWeight: 700,
-    color: "var(--accent-ink)",
-    margin: "16px 0 4px"
-  }
-}, "▼ ミクロを図で掘り下げる：なぜ CT の二次開放は危険か（磁気平衡が壊れて深飽和）"), /*#__PURE__*/React.createElement("figure", {
-  style: {
-    margin: "6px 0 14px",
-    background: "var(--bg-elev)",
-    borderRadius: "8px",
-    padding: "12px 8px 8px"
-  }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 470 258",
-  role: "img",
-  "aria-label": "CT二次開放の機構：①一次大電流I1は貫通のまま流れ続ける。②二次閉路ならI2の逆向きの起磁力がN1I1を相殺し磁束は小さく正常。③開放するとI2=0で相殺が消滅し全起磁力が励磁になり鉄心が深飽和。④磁束が方形波化しゼロクロスでdΦ/dtが巨大になり二次に数kVスパイクが誘起され危険",
-  style: {
-    display: "block",
-    width: "100%",
-    height: "auto",
-    maxWidth: "470px",
-    margin: "0 auto"
-  }
-}, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
-  id: "kct-micro-i1",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--accent)"
-})), /*#__PURE__*/React.createElement("marker", {
-  id: "kct-micro-i2",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--ok)"
-}))), /*#__PURE__*/React.createElement("text", {
-  x: "235",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "bold",
-  fill: "var(--accent-ink)"
-}, "① 一次大電流 I₁ は貫通のまま流れ続ける（CT は I₁ を止められない）"), /*#__PURE__*/React.createElement("line", {
-  x1: "235",
-  y1: "36",
-  x2: "235",
-  y2: "192",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "4 4"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "120",
-  y: "48",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "bold",
-  fill: "var(--ok)"
-}, "② 二次閉路（正常）"), /*#__PURE__*/React.createElement("line", {
-  x1: "30",
-  y1: "80",
-  x2: "210",
-  y2: "80",
-  stroke: "var(--accent)",
-  strokeWidth: "2.5",
-  strokeLinecap: "round",
-  markerEnd: "url(#kct-micro-i1)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "42",
-  y: "72",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "I₁"), /*#__PURE__*/React.createElement("rect", {
-  x: "102",
-  y: "62",
-  width: "36",
-  height: "36",
-  fill: "none",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "5"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "145",
-  y: "70",
-  textAnchor: "start",
-  fontSize: "10",
-  fill: "var(--ink-mute)"
-}, "鉄心"), /*#__PURE__*/React.createElement("polyline", {
-  points: "110,98 110,134 130,134 130,98",
-  fill: "none",
-  stroke: "var(--ok)",
-  strokeWidth: "2"
-}), /*#__PURE__*/React.createElement("circle", {
-  cx: "120",
-  cy: "134",
-  r: "8",
-  fill: "var(--ok-soft)",
-  stroke: "var(--ok)",
-  strokeWidth: "1.4"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "120",
-  y: "138",
-  textAnchor: "middle",
-  fontSize: "10",
-  fontWeight: "700",
-  fill: "var(--ok)"
-}, "A"), /*#__PURE__*/React.createElement("line", {
-  x1: "142",
-  y1: "130",
-  x2: "142",
-  y2: "108",
-  stroke: "var(--ok)",
-  strokeWidth: "2",
-  markerEnd: "url(#kct-micro-i2)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "148",
-  y: "122",
-  textAnchor: "start",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--ok)"
-}, "I₂"), /*#__PURE__*/React.createElement("text", {
-  x: "120",
-  y: "157",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--ok)"
-}, "磁気平衡 N₁I₁ ≈ N₂I₂ 成立"), /*#__PURE__*/React.createElement("text", {
-  x: "120",
-  y: "172",
-  textAnchor: "middle",
-  fontSize: "10.5",
-  fill: "var(--ink-soft)"
-}, "I₂ の逆向き起磁力が N₁I₁ を相殺"), /*#__PURE__*/React.createElement("text", {
-  x: "120",
-  y: "187",
-  textAnchor: "middle",
-  fontSize: "10.5",
-  fill: "var(--ink-soft)"
-}, "磁束は小さく B-H 直線域"), /*#__PURE__*/React.createElement("text", {
-  x: "350",
-  y: "48",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "bold",
-  fill: "var(--warn)"
-}, "③ 二次開放（危険）"), /*#__PURE__*/React.createElement("line", {
-  x1: "260",
-  y1: "80",
-  x2: "440",
-  y2: "80",
-  stroke: "var(--accent)",
-  strokeWidth: "2.5",
-  strokeLinecap: "round",
-  markerEnd: "url(#kct-micro-i1)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "272",
-  y: "72",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "I₁"), /*#__PURE__*/React.createElement("rect", {
-  x: "332",
-  y: "62",
-  width: "36",
-  height: "36",
-  fill: "none",
-  stroke: "var(--warn)",
-  strokeWidth: "5"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "375",
-  y: "70",
-  textAnchor: "start",
-  fontSize: "10",
-  fill: "var(--warn)"
-}, "鉄心 深飽和"), /*#__PURE__*/React.createElement("line", {
-  x1: "340",
-  y1: "98",
-  x2: "340",
-  y2: "126",
-  stroke: "var(--warn)",
-  strokeWidth: "2"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "360",
-  y1: "98",
-  x2: "360",
-  y2: "126",
-  stroke: "var(--warn)",
-  strokeWidth: "2"
-}), /*#__PURE__*/React.createElement("circle", {
-  cx: "340",
-  cy: "130",
-  r: "2.5",
-  fill: "var(--warn)"
-}), /*#__PURE__*/React.createElement("circle", {
-  cx: "360",
-  cy: "130",
-  r: "2.5",
-  fill: "var(--warn)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "350",
-  y: "157",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--warn)"
-}, "V₂＝数kV スパイク！"), /*#__PURE__*/React.createElement("text", {
-  x: "350",
-  y: "172",
-  textAnchor: "middle",
-  fontSize: "10.5",
-  fill: "var(--warn)"
-}, "I₂＝0 → 相殺消滅・全部が励磁に"), /*#__PURE__*/React.createElement("text", {
-  x: "350",
-  y: "187",
-  textAnchor: "middle",
-  fontSize: "10.5",
-  fill: "var(--ink-soft)"
-}, "鉄心は飽和限界へ深く突入"), /*#__PURE__*/React.createElement("rect", {
-  x: "30",
-  y: "204",
-  width: "410",
-  height: "44",
-  rx: "6",
-  fill: "var(--bg)",
-  stroke: "var(--warn)",
-  strokeWidth: "1.5"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "235",
-  y: "221",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--warn)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  x: "235",
-  dy: "0"
-}, "④ 深飽和で Φ が方形波化 → ゼロクロスで dΦ/dt が巨大"), /*#__PURE__*/React.createElement("tspan", {
-  x: "235",
-  dy: "18"
-}, "→ V₂＝−N₂·dΦ/dt が数kVに跳ね上がり絶縁破壊・感電の危険"))), /*#__PURE__*/React.createElement("figcaption", {
-  style: {
-    fontSize: "12px",
-    color: "var(--ink-mute)",
-    textAlign: "center",
-    marginTop: "6px",
-    lineHeight: 1.6
-  }
-}, "ミクロ（なぜ）：一次大電流 I₁ が流れ続けるまま二次だけを開くと、N₁I₁ を打ち消していた二次起磁力 N₂I₂ が消え、鉄心が深飽和して二次に高電圧スパイクが誘起される。閉路（短絡・電流計接続）なら磁気平衡が成立して正常。")), /*#__PURE__*/React.createElement("div", {
-  style: {
-    background: "var(--accent-soft)",
-    borderRadius: "6px",
-    padding: "12px 14px",
-    margin: "14px 0"
-  }
-}, /*#__PURE__*/React.createElement("div", {
-  style: {
-    fontSize: "12px",
-    fontWeight: 700,
-    color: "var(--accent-ink)",
-    marginBottom: 8,
-    letterSpacing: "0.04em"
-  }
-}, "🔬 ミクロの因果（なぜ CT の二次開放が危険か）"), /*#__PURE__*/React.createElement("ol", {
-  style: {
-    margin: 0,
-    paddingLeft: 24,
-    lineHeight: 1.9
-  }
-}, /*#__PURE__*/React.createElement("li", null, "CTは被測定回路に直列で、", /*#__PURE__*/React.createElement("strong", null, "一次大電流 I₁ を止められない"), "（VTと違い、CT自身は I₁ を変えられない）"), /*#__PURE__*/React.createElement("li", null, "二次が閉路なら ", /*#__PURE__*/React.createElement("strong", null, "I₂ のつくる逆向きの起磁力 N₂I₂ が N₁I₁ を相殺"), "し、磁束は B-H 直線域に収まる（正常）"), /*#__PURE__*/React.createElement("li", null, "二次を開放すると I₂＝0 で", /*#__PURE__*/React.createElement("strong", null, "相殺が消滅"), "し、N₁I₁ の全部が励磁起磁力となって鉄心が", /*#__PURE__*/React.createElement("strong", null, "深飽和")), /*#__PURE__*/React.createElement("li", null, "Φ が方形波化しゼロクロスで dΦ/dt が巨大 → ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "V_2 = -N_2\\,\\dfrac{d\\Phi}{dt}"
-}), " より", /*#__PURE__*/React.createElement("strong", null, "二次に数kVスパイク＝絶縁破壊・感電")))), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 12,
-    color: "var(--ink-soft)",
-    margin: "0 0 4px"
-  }
-}, "▶ 深飽和の土台となる ", /*#__PURE__*/React.createElement("strong", null, "B-H 曲線（直線域→ニー→飽和域）"), "は、この下のセクション1-2の図を参照。", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の変成比計算はセクション5へ。"));
+
+/* 全体像（核＋3段）。部品は kikai-components.jsx の Layer*。台帳に CT・VT 単独の小問が無いので出題数は出さない */
+const KY_STAGE_SUBTOPICS = {
+  principle: [],
+  law: [],
+  operate: []
+};
+const KeikiYoHenseikiLayers = () => {
+  const c = layerStageCounts("keiki-yo-henseiki", KY_STAGE_SUBTOPICS);
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
+    id: "layers"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "h-num"
+  }, "0."), "このページ（計器用変成器）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--ink-soft)",
+      margin: "0 0 4px"
+    }
+  }, "まず", /*#__PURE__*/React.createElement("strong", null, "森"), "でこのページの位置を掴む。次に", /*#__PURE__*/React.createElement("strong", null, "核"), "（1行）を持ち、そこから", /*#__PURE__*/React.createElement("strong", null, "原理（ミクロ・なぜ動く）→ 法則（マクロ・何で決まる）→ 操作（実務・どう動かす）"), "の3段をつなげて読む。"), /*#__PURE__*/React.createElement("figure", {
+    style: {
+      margin: "10px 0 14px",
+      background: "var(--bg-elev)",
+      borderRadius: "8px",
+      padding: "12px 8px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 480 170",
+    role: "img",
+    "aria-label": "計器用変成器の位置づけ：変圧器の電磁誘導・磁気平衡から来て、CT・VTで高圧回路の電流・電圧を安全に縮小し、保護継電器・電力量計・地絡保護へつながる俯瞰図",
+    style: {
+      display: "block",
+      width: "100%",
+      height: "auto",
+      maxWidth: "480px",
+      margin: "0 auto"
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "kct-mori-arr",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--ink-mute)"
+  }))), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "前提（入口）"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "このページ"), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "つながる先（出口）"), /*#__PURE__*/React.createElement("rect", {
+    x: "16",
+    y: "40",
+    width: "108",
+    height: "86",
+    rx: "6",
+    fill: "var(--bg)",
+    stroke: "var(--rule)",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "66",
+    textAnchor: "middle",
+    fontSize: "13",
+    fontWeight: "600",
+    fill: "var(--ink)"
+  }, "変圧器"), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "88",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink-soft)"
+  }, "電磁誘導"), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "107",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink-soft)"
+  }, "N₁I₁ ≈ N₂I₂"), /*#__PURE__*/React.createElement("line", {
+    x1: "126",
+    y1: "83",
+    x2: "159",
+    y2: "83",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "2",
+    markerEnd: "url(#kct-mori-arr)"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "162",
+    y: "32",
+    width: "156",
+    height: "102",
+    rx: "8",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "55",
+    textAnchor: "middle",
+    fontSize: "14",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "計器用変成器"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "77",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "CT：I₁/I₂ ≈ N₂/N₁"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "95",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "VT：V₁/V₂ ＝ N₁/N₂"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "113",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "CT開放・VT短絡 厳禁"), /*#__PURE__*/React.createElement("line", {
+    x1: "320",
+    y1: "83",
+    x2: "353",
+    y2: "83",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "2",
+    markerEnd: "url(#kct-mori-arr)"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "40",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "57",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "保護継電器"), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "70",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "87",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "電力量計・計器"), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "100",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "117",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "ZCT・地絡保護"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "154",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "変圧器の物理を土台に、大電流・高電圧を安全な大きさへ縮小し、保護・計測へ枝分かれ")), /*#__PURE__*/React.createElement("figcaption", {
+    style: {
+      fontSize: "12px",
+      color: "var(--ink-mute)",
+      textAlign: "center",
+      marginTop: "6px",
+      lineHeight: 1.6
+    }
+  }, "森（俯瞰）：変圧器の電磁誘導・磁気平衡を土台に、計器用変成器は高圧回路の電流（CT）・電圧（VT）を低圧側へ安全に縮小する。ここから保護継電器・電力量計・地絡保護（ZCT）へ枝分かれする。")), /*#__PURE__*/React.createElement(LayerCore, {
+    sub: "VT は二次を開放しても無負荷と同じで安全、短絡すると過電流で焼損。CT は二次を短絡しても正常、開放すると二次に高電圧。"
+  }, "計器用変成器は変圧器そのもの。違いは一次側が何を強制するかで、", /*#__PURE__*/React.createElement(LayerKey, null, "VT は電圧"), "を、", /*#__PURE__*/React.createElement(LayerKey, null, "CT は電流"), "を強制する。 だから二次の禁則が逆になる。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "principle",
+    c: c,
+    jump: "↓図解・1節・3節"
+  }, /*#__PURE__*/React.createElement(LayerChain, {
+    steps: [["CT は回路に直列", "一次電流 I₁ を止められない"], ["二次が閉じていれば N₂I₂ が N₁I₁ を打ち消す", "磁気平衡"], ["二次を開放すると打ち消しが消える", null], ["鉄心が深く飽和", null], ["dΦ/dt が巨大", "二次に高電圧（鉄損増で過熱も）"]]
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--ink-soft)",
+      margin: "4px 0 0",
+      lineHeight: 1.7
+    }
+  }, "VT は回路に並列につなぎ、一次電圧が磁束を決めるので、二次を開放しても磁束は変わらない（無負荷と同じ）。二次を短絡すると、巻線の小さいインピーダンスだけで電流が決まり、過電流で焼損する。")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700,
+      color: "var(--accent-ink)",
+      margin: "16px 0 4px"
+    }
+  }, "▼ ミクロを図で掘り下げる：なぜ CT の二次開放は危険か（磁気平衡が壊れて深飽和）"), /*#__PURE__*/React.createElement("figure", {
+    style: {
+      margin: "6px 0 14px",
+      background: "var(--bg-elev)",
+      borderRadius: "8px",
+      padding: "12px 8px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 470 258",
+    role: "img",
+    "aria-label": "CT二次開放の機構：①一次大電流I1は貫通のまま流れ続ける。②二次閉路ならI2の逆向きの起磁力がN1I1を相殺し磁束は小さく正常。③開放するとI2=0で相殺が消滅し全起磁力が励磁になり鉄心が深飽和。④磁束が方形波化しゼロクロスでdΦ/dtが巨大になり二次に数kVスパイクが誘起され危険",
+    style: {
+      display: "block",
+      width: "100%",
+      height: "auto",
+      maxWidth: "470px",
+      margin: "0 auto"
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "kct-micro-i1",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--accent)"
+  })), /*#__PURE__*/React.createElement("marker", {
+    id: "kct-micro-i2",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--ok)"
+  }))), /*#__PURE__*/React.createElement("text", {
+    x: "235",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "var(--accent-ink)"
+  }, "① 一次大電流 I₁ は貫通のまま流れ続ける（CT は I₁ を止められない）"), /*#__PURE__*/React.createElement("line", {
+    x1: "235",
+    y1: "36",
+    x2: "235",
+    y2: "192",
+    stroke: "var(--rule)",
+    strokeWidth: "1",
+    strokeDasharray: "4 4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "120",
+    y: "48",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "var(--ok)"
+  }, "② 二次閉路（正常）"), /*#__PURE__*/React.createElement("line", {
+    x1: "30",
+    y1: "80",
+    x2: "210",
+    y2: "80",
+    stroke: "var(--accent)",
+    strokeWidth: "2.5",
+    strokeLinecap: "round",
+    markerEnd: "url(#kct-micro-i1)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "42",
+    y: "72",
+    textAnchor: "middle",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "I₁"), /*#__PURE__*/React.createElement("rect", {
+    x: "102",
+    y: "62",
+    width: "36",
+    height: "36",
+    fill: "none",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "5"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "145",
+    y: "70",
+    textAnchor: "start",
+    fontSize: "10",
+    fill: "var(--ink-mute)"
+  }, "鉄心"), /*#__PURE__*/React.createElement("polyline", {
+    points: "110,98 110,134 130,134 130,98",
+    fill: "none",
+    stroke: "var(--ok)",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "120",
+    cy: "134",
+    r: "8",
+    fill: "var(--ok-soft)",
+    stroke: "var(--ok)",
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "120",
+    y: "138",
+    textAnchor: "middle",
+    fontSize: "10",
+    fontWeight: "700",
+    fill: "var(--ok)"
+  }, "A"), /*#__PURE__*/React.createElement("line", {
+    x1: "142",
+    y1: "130",
+    x2: "142",
+    y2: "108",
+    stroke: "var(--ok)",
+    strokeWidth: "2",
+    markerEnd: "url(#kct-micro-i2)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "148",
+    y: "122",
+    textAnchor: "start",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--ok)"
+  }, "I₂"), /*#__PURE__*/React.createElement("text", {
+    x: "120",
+    y: "157",
+    textAnchor: "middle",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--ok)"
+  }, "磁気平衡 N₁I₁ ≈ N₂I₂ 成立"), /*#__PURE__*/React.createElement("text", {
+    x: "120",
+    y: "172",
+    textAnchor: "middle",
+    fontSize: "10.5",
+    fill: "var(--ink-soft)"
+  }, "I₂ の逆向き起磁力が N₁I₁ を相殺"), /*#__PURE__*/React.createElement("text", {
+    x: "120",
+    y: "187",
+    textAnchor: "middle",
+    fontSize: "10.5",
+    fill: "var(--ink-soft)"
+  }, "磁束は小さく B-H 直線域"), /*#__PURE__*/React.createElement("text", {
+    x: "350",
+    y: "48",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "var(--warn)"
+  }, "③ 二次開放（危険）"), /*#__PURE__*/React.createElement("line", {
+    x1: "260",
+    y1: "80",
+    x2: "440",
+    y2: "80",
+    stroke: "var(--accent)",
+    strokeWidth: "2.5",
+    strokeLinecap: "round",
+    markerEnd: "url(#kct-micro-i1)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "272",
+    y: "72",
+    textAnchor: "middle",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "I₁"), /*#__PURE__*/React.createElement("rect", {
+    x: "332",
+    y: "62",
+    width: "36",
+    height: "36",
+    fill: "none",
+    stroke: "var(--warn)",
+    strokeWidth: "5"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "375",
+    y: "70",
+    textAnchor: "start",
+    fontSize: "10",
+    fill: "var(--warn)"
+  }, "鉄心 深飽和"), /*#__PURE__*/React.createElement("line", {
+    x1: "340",
+    y1: "98",
+    x2: "340",
+    y2: "126",
+    stroke: "var(--warn)",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "360",
+    y1: "98",
+    x2: "360",
+    y2: "126",
+    stroke: "var(--warn)",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "340",
+    cy: "130",
+    r: "2.5",
+    fill: "var(--warn)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "360",
+    cy: "130",
+    r: "2.5",
+    fill: "var(--warn)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "350",
+    y: "157",
+    textAnchor: "middle",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--warn)"
+  }, "V₂＝数kV スパイク！"), /*#__PURE__*/React.createElement("text", {
+    x: "350",
+    y: "172",
+    textAnchor: "middle",
+    fontSize: "10.5",
+    fill: "var(--warn)"
+  }, "I₂＝0 → 相殺消滅・全部が励磁に"), /*#__PURE__*/React.createElement("text", {
+    x: "350",
+    y: "187",
+    textAnchor: "middle",
+    fontSize: "10.5",
+    fill: "var(--ink-soft)"
+  }, "鉄心は飽和限界へ深く突入"), /*#__PURE__*/React.createElement("rect", {
+    x: "30",
+    y: "204",
+    width: "410",
+    height: "44",
+    rx: "6",
+    fill: "var(--bg)",
+    stroke: "var(--warn)",
+    strokeWidth: "1.5"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "235",
+    y: "221",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--warn)"
+  }, /*#__PURE__*/React.createElement("tspan", {
+    x: "235",
+    dy: "0"
+  }, "④ 深飽和で Φ が方形波化 → ゼロクロスで dΦ/dt が巨大"), /*#__PURE__*/React.createElement("tspan", {
+    x: "235",
+    dy: "18"
+  }, "→ V₂＝−N₂·dΦ/dt が数kVに跳ね上がり絶縁破壊・感電の危険"))), /*#__PURE__*/React.createElement("figcaption", {
+    style: {
+      fontSize: "12px",
+      color: "var(--ink-mute)",
+      textAlign: "center",
+      marginTop: "6px",
+      lineHeight: 1.6
+    }
+  }, "ミクロ（なぜ）：一次大電流 I₁ が流れ続けるまま二次だけを開くと、N₁I₁ を打ち消していた二次起磁力 N₂I₂ が消え、鉄心が深飽和して二次に高電圧スパイクが誘起される。閉路（短絡・電流計接続）なら磁気平衡が成立して正常。")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--accent-soft)",
+      borderRadius: "6px",
+      padding: "12px 14px",
+      margin: "14px 0"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "12px",
+      fontWeight: 700,
+      color: "var(--accent-ink)",
+      marginBottom: 8,
+      letterSpacing: "0.04em"
+    }
+  }, "🔬 ミクロの因果（なぜ CT の二次開放が危険か）"), /*#__PURE__*/React.createElement("ol", {
+    style: {
+      margin: 0,
+      paddingLeft: 24,
+      lineHeight: 1.9
+    }
+  }, /*#__PURE__*/React.createElement("li", null, "CTは被測定回路に直列で、", /*#__PURE__*/React.createElement("strong", null, "一次大電流 I₁ を止められない"), "（VTと違い、CT自身は I₁ を変えられない）"), /*#__PURE__*/React.createElement("li", null, "二次が閉路なら ", /*#__PURE__*/React.createElement("strong", null, "I₂ のつくる逆向きの起磁力 N₂I₂ が N₁I₁ を相殺"), "し、磁束は B-H 直線域に収まる（正常）"), /*#__PURE__*/React.createElement("li", null, "二次を開放すると I₂＝0 で", /*#__PURE__*/React.createElement("strong", null, "相殺が消滅"), "し、N₁I₁ の全部が励磁起磁力となって鉄心が", /*#__PURE__*/React.createElement("strong", null, "深飽和")), /*#__PURE__*/React.createElement("li", null, "Φ が方形波化しゼロクロスで dΦ/dt が巨大 → ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "V_2 = -N_2\\,\\dfrac{d\\Phi}{dt}"
+  }), " より", /*#__PURE__*/React.createElement("strong", null, "二次に数kVスパイク＝絶縁破壊・感電")))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      color: "var(--ink-soft)",
+      margin: "0 0 4px"
+    }
+  }, "▶ 深飽和の土台となる ", /*#__PURE__*/React.createElement("strong", null, "B-H 曲線（直線域→ニー→飽和域）"), "は、この下のセクション1-2の図を参照。"), /*#__PURE__*/React.createElement(LayerBridge, {
+    label: "橋①"
+  }, "磁束は追わず、", /*#__PURE__*/React.createElement("strong", null, "磁気平衡 ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "N_1 I_1 \\approx N_2 I_2",
+    inline: true
+  })), " と電磁誘導から出る", /*#__PURE__*/React.createElement("strong", null, "巻数比"), "だけで一次値を出す。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "law",
+    c: c,
+    jump: "↓5節"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...LAYER_GRID,
+      gap: "2px 16px",
+      fontSize: 13.5,
+      lineHeight: 1.8
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "VT"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
+    tex: "V_1 = \\dfrac{N_1}{N_2}\\,V_2",
+    inline: true
+  }), "（定格変成比を掛ける）"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "CT"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
+    tex: "I_1 \\approx \\dfrac{N_2}{N_1}\\,I_2",
+    inline: true
+  }), "（励磁電流を無視）")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--ink-soft)",
+      margin: "4px 0 0",
+      lineHeight: 1.7
+    }
+  }, "定格負担の範囲内なら、CT の I₂ は I₁ で決まり、二次を短絡しても電流計をつないでも変わらない（定格負担を超えると誤差が増える）（1000/5 A の CT に一次 1000 A なら、どちらでも 5 A）。")), /*#__PURE__*/React.createElement(LayerBridge, {
+    label: "橋②"
+  }, "外から選ぶのは、", /*#__PURE__*/React.createElement("strong", null, "二次側の終端（短絡端子・計器）と接地"), "。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "operate",
+    c: c,
+    jump: "↓2節・3節・4節",
+    q: "どう扱う？"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...LAYER_GRID,
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "CT"
+  }, /*#__PURE__*/React.createElement("li", null, "計器を外すときは、先に二次を短絡端子で短絡する（二次を開放しない）"), /*#__PURE__*/React.createElement("li", null, "二次にヒューズを入れない（溶断すると二次開放になる）")), /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "VT"
+  }, /*#__PURE__*/React.createElement("li", null, "二次を短絡しない（過電流で焼損）。二次側はヒューズで保護する")), /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "接地（法規の論点）"
+  }, /*#__PURE__*/React.createElement("li", null, "二次側の1端子を接地して、混触時に高電圧が計器・人体へ及ぶのを防ぐ。高圧はD種、特別高圧はA種（電技解釈第28条）")))), /*#__PURE__*/React.createElement(LayerCountNote, {
+    c: c,
+    stageMap: KY_STAGE_SUBTOPICS,
+    labels: {},
+    emptyNote: range => `出題数: CT・VT 単独を問う小問は ${range} の台帳に無い（法規側での出題は本Wikiで一次照合していない）。`
+  }));
+};
 
 /* CT は直列挿入・VT は並列接続：実配線の左右比較 */
 const CtVtWiringFig = () => /*#__PURE__*/React.createElement("figure", {
