@@ -11217,6 +11217,32 @@ const YDeltaStartFig = () => /*#__PURE__*/React.createElement("figure", {
     lineHeight: 1.6
   }
 }, "図1.2.4\u3000Y-Δ 始動で 1/3 になる理由。相電圧・相電流は 1/√3 だが、Δ では線電流が相電流の √3 倍あるため線電流の比は 1/3。トルクは相電圧の2乗に比例するので同じく 1/3。「1/√3」と答える誤りは、相電流と線電流を取り違えたときに起きる。"));
+
+/* 3節「低滑り域の線形近似」冒頭の数え上げ。件数は台帳から描画時に数える（本文に数字を書かない）。
+   下の「線形近似 4・比例推移だけ 1・滑り周波数だけ 1」は人が問題を読んで仕分けた結果なので、
+   仕分けた小問を IM_LOWSLIP_SORTED に持ち、台帳に増えた B問題のうち未仕分けのものを名指しで出す。 */
+const IM_LOWSLIP_SORTED = ["R5下 15a", "R5下 15b", "R6上 15a", "R6上 15b", "R7上 15a", "R7上 15b"];
+const InductionTorqueTally = () => {
+  const rows = typeof kakomonForTopic === "function" ? kakomonForTopic("induction-machine").filter(r => r.subtopic === "torque") : [];
+  if (!rows.length) return /*#__PURE__*/React.createElement(React.Fragment, null, "台帳（セクション7）のトルク特性の小問を、解き方で仕分ける。");
+  const b = rows.filter(r => /[ab]$/.test(r.cell));
+  // kakomonForTopic は新しい回から並ぶので、古い回から読めるよう逆順にして回ごとに (a)(b) をまとめる
+  const bySession = [];
+  [...b].reverse().forEach(r => {
+    const last = bySession[bySession.length - 1];
+    const part = `(${r.cell.slice(-1)})`;
+    if (last && last.session === r.session) last.parts.push(part);else bySession.push({
+      session: r.session,
+      parts: [part]
+    });
+  });
+  bySession.forEach(x => x.parts.sort());
+  const qs = [...new Set(b.map(r => r.cell.replace(/[ab]$/, "")))].join("・");
+  const unsorted = b.filter(r => !IM_LOWSLIP_SORTED.includes(`${r.session} ${r.cell}`));
+  return /*#__PURE__*/React.createElement(React.Fragment, null, "台帳（セクション7）でこの単元のトルク特性は ", rows.length, " 小問あり、", /*#__PURE__*/React.createElement("span", {
+    className: "marker"
+  }, "うち ", b.length, " 問が B問題", qs && `（問${qs}）`), "である（", bySession.map(x => x.session + x.parts.join("")).join("・"), "）。", unsorted.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, "下の仕分けは ", IM_LOWSLIP_SORTED.length, " 問ぶんで、", unsorted.map(r => `${r.session} ${r.cell}`).join("・"), " は", /*#__PURE__*/React.createElement("strong", null, "まだ仕分けていない"), "。"));
+};
 const InductionMachinePage = ({
   data,
   onNav
@@ -11877,9 +11903,7 @@ const InductionMachinePage = ({
   }
 }, "どちらも", /*#__PURE__*/React.createElement("strong", null, "普通かご形より始動トルクが大きく始動電流が小さい"), "が、漏れリアクタンスが大きい分だけ", /*#__PURE__*/React.createElement("strong", null, "力率と停動トルクは普通かご形より低い"), "。ここが正誤問題の切り口（R3 問3）。")), /*#__PURE__*/React.createElement("h3", {
   id: "torque-lowslip"
-}, "低滑り域の線形近似 — B問題（問15）の計算はここから出る"), /*#__PURE__*/React.createElement("p", null, "台帳（セクション7）でこの単元のトルク特性は 9 小問あり、", /*#__PURE__*/React.createElement("span", {
-  className: "marker"
-}, "うち 6 問が B問題（問15）"), "である（R5下・R6上・R7上 の各 (a)(b)）。 その 6 問の内訳は", /*#__PURE__*/React.createElement("strong", null, "この節の線形近似で解くもの 4 問"), "（R5下(b)・R6上(a)・R7上(a)(b)）、", /*#__PURE__*/React.createElement("strong", null, "比例推移だけで解けて近似が要らないもの 1 問"), "（R6上(b)）、", /*#__PURE__*/React.createElement("strong", null, "滑り周波数 ", /*#__PURE__*/React.createElement(Eq, {
+}, "低滑り域の線形近似 — B問題（問15）の計算はここから出る"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(InductionTorqueTally, null), "その内訳は", /*#__PURE__*/React.createElement("strong", null, "この節の線形近似で解くもの 4 問"), "（R5下(b)・R6上(a)・R7上(a)(b)）、", /*#__PURE__*/React.createElement("strong", null, "比例推移だけで解けて近似が要らないもの 1 問"), "（R6上(b)）、", /*#__PURE__*/React.createElement("strong", null, "滑り周波数 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "f_2 = s f_1"
 }), " だけで済むもの 1 問"), "（R5下(a)）である。", /*#__PURE__*/React.createElement("span", {
   className: "marker"
@@ -11932,13 +11956,19 @@ const InductionMachinePage = ({
   tex: "T \\propto V_1^{2}"
 })), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
   tex: "s"
-}), " と ", /*#__PURE__*/React.createElement(Eq, {
+}), "・", /*#__PURE__*/React.createElement(Eq, {
   tex: "r_2'"
+}), "・", /*#__PURE__*/React.createElement(Eq, {
+  tex: "f_1"
 })), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "厳密")), /*#__PURE__*/React.createElement("td", null, "上の厳密式が ", /*#__PURE__*/React.createElement(Eq, {
   tex: "V_1^{2}"
 }), " を", /*#__PURE__*/React.createElement("strong", null, "丸ごと因数に持つ"), "。近似を経由しない")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
   tex: "r_2'/s"
-}), " が同じならトルクも同じ（比例推移）"), /*#__PURE__*/React.createElement("td", null, "トルク"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "厳密")), /*#__PURE__*/React.createElement("td", null, "厳密式は ", /*#__PURE__*/React.createElement(Eq, {
+}), " が同じならトルクも同じ（比例推移）"), /*#__PURE__*/React.createElement("td", null, "トルク（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_1"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "f_1"
+}), " は同じ）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "厳密")), /*#__PURE__*/React.createElement("td", null, "厳密式は ", /*#__PURE__*/React.createElement(Eq, {
   tex: "r_2'"
 }), " と ", /*#__PURE__*/React.createElement(Eq, {
   tex: "s"
@@ -11954,8 +11984,10 @@ const InductionMachinePage = ({
   tex: "T \\propto s"
 })), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
   tex: "V_1"
-}), " と ", /*#__PURE__*/React.createElement(Eq, {
+}), "・", /*#__PURE__*/React.createElement(Eq, {
   tex: "r_2'"
+}), "・", /*#__PURE__*/React.createElement(Eq, {
+  tex: "f_1"
 })), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "近似"), "（低滑り域のみ）"), /*#__PURE__*/React.createElement("td", null, "分母の ", /*#__PURE__*/React.createElement(Eq, {
   tex: "r_1"
 }), "・", /*#__PURE__*/React.createElement(Eq, {
@@ -11970,7 +12002,25 @@ const InductionMachinePage = ({
   style: {
     margin: "8px 0 0"
   }
-}, "混同しやすいのは 2 行目と 3 行目。どちらも「滑りが k 倍」という形で現れるが、", /*#__PURE__*/React.createElement("strong", null, "二次抵抗も一緒に k 倍にするなら厳密"), "、", /*#__PURE__*/React.createElement("strong", null, "二次抵抗を据え置いて滑りだけ動かすなら近似"), "である。")), /*#__PURE__*/React.createElement(Box, {
+}, "混同しやすいのは 2 行目と 3 行目。どちらも「滑りが k 倍」という形で現れるが、", /*#__PURE__*/React.createElement("strong", null, "二次抵抗も一緒に k 倍にするなら厳密"), "、", /*#__PURE__*/React.createElement("strong", null, "二次抵抗を据え置いて滑りだけ動かすなら近似"), "である。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "6px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "3行とも ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "f_1"
+}), " を固定した比較である。"), /*#__PURE__*/React.createElement(Eq, {
+  tex: "f_1"
+}), " を変えると、厳密式の", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\omega_s"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "x_1+x_2'"
+}), " がどちらも ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "f_1"
+}), " に比例して動くので、どの行もそのままでは使えない。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "電圧と周波数を同時に変える問題は、下の公式08"), "（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "T \\propto (V_1/f_1)^2 f_2"
+}), "）で扱う。")), /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
   label: "近似の誤差は「トルクの絶対値」には出るが「回転速度」にはほとんど出ない（実測）"
 }, /*#__PURE__*/React.createElement("p", null, "1相あたり ", /*#__PURE__*/React.createElement(Eq, {
