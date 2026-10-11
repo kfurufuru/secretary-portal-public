@@ -271,6 +271,35 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
   .oneliner{font-size:14px}
 }
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* 比べる表示（操作帯の先頭。3D の下にあるので色は操作帯と同じ固定値） */
+.causal{flex-basis:100%;order:-1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:6px 10px 7px;color:#E6E9E4;font-size:12px;line-height:1.5}
+.causal[hidden]{display:none}
+.cz-head{display:flex;align-items:center;gap:6px;font-weight:700;color:#F0B57E}
+.cz-head span{flex:1}
+.cz-reset{background:none;border:1px solid rgba(255,255,255,.28);color:#E6E9E4;border-radius:4px;padding:2px 9px;font-size:11.5px;min-height:28px}
+.cz-hide{background:none;border:0;color:#AEB6BD;font-size:17px;min-width:28px;min-height:28px;padding:0}
+.cz-show{background:none;border:0;color:#AEB6BD;font-size:11.5px;min-height:28px;padding:0 4px}
+.cz-cause{margin:2px 0 4px;font-size:12.5px}
+.cz-cause b{color:#F0B57E;font-weight:700}
+.cz-rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));column-gap:22px}
+.cz-row{display:grid;grid-template-columns:7.5em 1fr 5.4em;align-items:center;gap:6px;margin:2px 0}
+.cz-lab{color:#C5CCD3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cz-bar{position:relative;height:14px;background:rgba(255,255,255,.05);border-radius:3px}
+.cz-bar i{position:absolute;left:0;border-radius:3px}
+.cz-bar .cz-was{top:0;height:14px;background:rgba(255,255,255,.24)}
+.cz-bar .cz-now{top:4px;height:6px}
+.cz-now.up{background:#F0B57E}
+.cz-now.down{background:#7FB3E6}
+.cz-r{font-weight:700;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cz-r.up{color:#F0B57E}
+.cz-r.down{color:#9CC6EE}
+.cz-same,.cz-note{margin:3px 0 0;color:#AEB6BD;font-size:11px}
+@media (max-width:600px){
+  /* スマホ: 棒を省き「量・倍率」を2列に詰める。3D と操作帯の両方を画面に残すため */
+  .cz-rows{grid-template-columns:1fr 1fr;column-gap:12px}
+  .cz-row{grid-template-columns:minmax(0,1fr) auto}
+  .cz-bar,.cz-key{display:none}
+}
 </style>
 
 <div class="app">
@@ -315,7 +344,7 @@ const MACHINES = {
   "x": -32,
   "page": "capacitor",
   "kicker": "平行平板。誘電体の入れ方と「電圧一定か電荷一定か」で全部が決まる",
-  "lead": "向かい合う2枚の極板と電源。誘電体を全体・上下に積層・左右に分割と入れ替え、電源をつないだまま（電圧一定）か切り離したか（電荷一定）を切り替える。電気力線の濃さが電界の強さ、極板の点の数が電荷の量。",
+  "lead": "向かい合う2枚の極板と電源。誘電体を全体・上下に積層・左右に分割と入れ替え、電源をつないだまま（電圧一定）か切り離したか（電荷一定）を切り替える。電気力線の本数（密度）が電界の強さ、極板の点の数が電荷の量。",
   "parts": [
    [
     "#D24A43",
@@ -330,7 +359,7 @@ const MACHINES = {
    [
     "#F0B57E",
     "電気力線",
-    "正から負へ。濃いほど電界が強い。極板の間では平行（平等電界）"
+    "正から負へ。本数（密度）が多いほど電界が強い。極板の間では平行（平等電界）"
    ],
    [
     "#3B5A73",
@@ -1413,7 +1442,7 @@ const STUDY = {
      "Ea"
     ],
     "op": "極板の間の電気力線を見る。次に電源電圧を 100 V から 200 V にする（詳しい操作）。",
-    "see": "電気力線は上の極板（＋）から下の極板（−）へまっすぐ平行に並ぶ。電圧を上げると線が濃くなる。",
+    "see": "電気力線は上の極板（＋）から下の極板（−）へまっすぐ平行に並ぶ。電圧を 2 倍にすると、電界も 2 倍になり、線の本数が 2 倍に増える。",
     "so": "電気力線は正から負へ向かい、その密度が電界の強さ。極板の間は向きも強さも一様な平等電界で、E = V/d。電位は電気力線に沿って一定の割合で下がり、等電位面は電気力線と直交する。",
     "q": [
      "H19/3",
@@ -1499,7 +1528,7 @@ const STUDY = {
      "Ed"
     ],
     "op": "誘電体を なし から 上下に積層 にする（厚さの半分）。",
-    "see": "静電容量は 1.6 倍の 70.8 pF。空気中の電界 8.00×10⁴ V/m に対し、誘電体中は 2.00×10⁴ V/m と 1/4。空気側の電気力線が濃い。",
+    "see": "静電容量は 1.6 倍の 70.8 pF。空気中の電界 8.00×10⁴ V/m に対し、誘電体中は 2.00×10⁴ V/m と 1/4。空気側の電気力線のほうが本数が多い。",
     "so": "極板と平行な層は2つのコンデンサの直列。電荷 Q（電束密度 D）が共通なので、E = D/ε は誘電率に反比例する。誘電体に空気のすき間（ボイド）があると、そこに電界が集中して部分放電の原因になる。",
     "q": [
      "H18/2",
@@ -3484,12 +3513,24 @@ const E0 = 8.854e-12, MU0 = 4*Math.PI*1e-7, QE = 1.602e-19, ME = 9.109e-31;
 
 /* 1. 平行平板コンデンサ。面積 S は 0.01 m²（10 cm 角）に固定。
    誘電体: none（空気）・full（全体）・stack（厚さの半分を上下に積層＝直列）・split（面積の半分を左右に分割＝並列）。
-   定電圧（電源につないだまま）なら V 一定、定電荷（空気のまま充電して切り離した）なら Q = C0·V0 一定 */
+   定電圧（電源につないだまま）なら V 一定。定電荷（切り離した）なら Q = Cchg·V0 で一定。
+   Cchg は「切り離したときの静電容量」。切り離したあとに間隔や誘電体を変えても Q は動かない
+   （電荷の逃げ道が無い）。V0 は最初の充電電圧（eV）。
+   Cchg の決め方: ツアー・予想クイズで状態を当てたときは、本文の前提どおり「空気のまま、その間隔で
+   充電して切り離した」とみなす（esCchg = null → 空気の C0）。操作帯で「切り離した」を押したときは、
+   押した瞬間の静電容量で固定する（押しただけで電圧が飛ばないように）。 */
 const ES_S = .01;
-function esModel(){
+let esCchg = null, esLastMode = 'v';   // esLastMode: 直前に計算したときの電源の状態（押し直しを見分ける）
+function esCap(){
   const st = state, d = st.eD*1e-3, C0 = E0*ES_S/d, er = st.eEr;
   const C = st.eFill==='full' ? er*C0 : st.eFill==='stack' ? C0*2*er/(1+er) : st.eFill==='split' ? C0*(1+er)/2 : C0;
-  const Q = st.eMode==='v' ? C*st.eV : C0*st.eV, V = Q/C, W = Q*Q/(2*C);
+  return {d, C0, C, er};
+}
+function esModel(){
+  const st = state, {d, C0, C, er} = esCap();
+  if (st.eMode==='q' && esCchg===null) esCchg = C0;
+  const Q = st.eMode==='v' ? C*st.eV : esCchg*st.eV, V = Q/C, W = Q*Q/(2*C);
+  esLastMode = st.eMode;
   /* 空気部分と誘電体部分の電界。積層（直列）は電束密度 D = Q/S が共通、分割（並列）・全体は E = V/d が共通 */
   let Ea, Ed;
   if (st.eFill==='stack'){ const D = Q/ES_S; Ea = D/E0; Ed = D/(E0*er); }
@@ -3635,14 +3676,14 @@ const VIEWS = {
 /* ---------- 理論の実験台で使う材質と共通の部品 ---------- */
 const RR = {
   plate: std({color:0xb9c2ca, metalness:.7, roughness:.3}),
-  diel: std({color:0xf0b57e, transparent:true, opacity:.45, roughness:.4}),
+  diel: std({color:0xf0b57e, transparent:true, opacity:.4, roughness:.4, depthWrite:false}),   // 中の電気力線が透けて見えるように深度を書かない
   board: std({color:0x2c3a2f, roughness:.9}),
   res: std({color:0xd9c7a0, roughness:.6}),
   dotP: std({color:0xff8a7a, emissive:0xd24a43, emissiveIntensity:1.1}),
   dotN: std({color:0x8ab8ff, emissive:0x3572d6, emissiveIntensity:1.1}),
   dotI: std({color:0xffe0a0, emissive:0xf0b57e, emissiveIntensity:1.2}),
   glass: std({color:0x9fb3c4, transparent:true, opacity:.18, roughness:.1, side:THREE.DoubleSide}),
-  field: new THREE.LineBasicMaterial({color:0xf0b57e, transparent:true, opacity:.8}),
+  field: new THREE.LineBasicMaterial({color:0xfff4d6, transparent:true, opacity:.8}),   // 誘電体（橙）の中でも見分けられる明るい色
   fieldD: new THREE.LineBasicMaterial({color:0xffd9b0, transparent:true, opacity:.8}),
   core: std({color:0x6b7580, metalness:.6, roughness:.45}),
   chip: std({color:0x1f2226, roughness:.5}),
@@ -3685,16 +3726,19 @@ function dial(parent, x, y, z, r=.35){
 }
 
 /* ---------- 1. 静電気・コンデンサ ----------
-   平行平板。誘電体の入れ方を切り替え、電気力線の濃さで電界の強さ、極板の点の数で電荷を見せる */
+   平行平板。量に比例させた誇張表示で、変化を目で数えられるようにする（実寸ではない）:
+   極板の間隔 ∝ d／電気力線の本数 ∝ 電界 E（力線の密度＝電界の強さ、という定義どおり）／極板の粒の数 ∝ 電荷 Q */
+const ES_DOTS = 40, ES_LINES = 28, ES_E_REF = 100/2e-3;   // 粒・力線の上限。電界の基準は 100 V・2 mm（5×10⁴ V/m で 7 本）
 function buildStatics(g){
   board(g, 5, 3);
   const top = mesh(new THREE.BoxGeometry(2.6,.06,1.8), RR.plate, g, 0, 2.0, 0);
   const bot = mesh(new THREE.BoxGeometry(2.6,.06,1.8), RR.plate, g, 0, .9, 0);
   const slab = mesh(new THREE.BoxGeometry(1,1,1), RR.diel, g); slab.castShadow = false;
   const lines = [], lineGeo = new THREE.BufferGeometry().setFromPoints([P3(0,0,0), P3(0,1,0)]);
-  for (let i=0;i<7;i++) for (let j=0;j<4;j++) for (const half of [0,1]){ const l = new THREE.Line(lineGeo, RR.field.clone()); l.position.set(-1.05 + i*.35, 0, -.6 + j*.4); l.userData.x = l.position.x; l.userData.half = half; g.add(l); lines.push(l); }   // half 0 = 下半分、1 = 上半分
+  /* 7×4 の格子に 28 本。rank は「何本目に表示するか」。11 は 28 と互いに素なので、少ない本数でも格子全体に散らばる */
+  for (let i=0;i<7;i++) for (let j=0;j<4;j++) for (const half of [0,1]){ const l = new THREE.Line(lineGeo, RR.field.clone()); l.position.set(-1.05 + i*.35, 0, -.6 + j*.4); l.userData.x = l.position.x; l.userData.half = half; l.userData.rank = ((i*4 + j)*11) % 28; g.add(l); lines.push(l); }   // half 0 = 下半分、1 = 上半分
   const pos = [], neg = [];
-  for (let i=0;i<24;i++){ const x = -1.15 + (i%8)*.33, z = -.6 + Math.floor(i/8)*.6;
+  for (let i=0;i<ES_DOTS;i++){ const x = -1.15 + (i%8)*.33, z = -.72 + Math.floor(i/8)*.36;
     const p = mesh(new THREE.SphereGeometry(.05,8,8), RR.dotP, g, x, 0, z); p.castShadow = false; pos.push(p);
     const n = mesh(new THREE.SphereGeometry(.05,8,8), RR.dotN, g, x, 0, z); n.castShadow = false; neg.push(n); }
   const bat = mesh(new THREE.BoxGeometry(.4,.6,.4), M.steelDark, g, 2.0, .45, 0);
@@ -3706,28 +3750,28 @@ function buildStatics(g){
     {obj:top, t:'上の極板（＋電荷）', c:'#D24A43'},
     {obj:bot, t:'下の極板（−電荷）', c:'#3572D6'},
     ...(st.eFill!=='none' ? [{obj:slab, t: st.eFill==='stack' ? '誘電体（上下に積層＝直列）' : st.eFill==='split' ? '誘電体（左右に分割＝並列）' : '誘電体（全体）', c:'#F0B57E'}] : []),
-    {obj:lines[13], t:'電気力線（濃いほど電界が強い）', c:'#F0B57E'},
+    {obj:lines[13], t:'電気力線（本数が多いほど電界が強い）', c:'#F0B57E'},
     {obj:bat, t: st.eMode==='v' ? '電源（つないだまま＝電圧一定）' : '電源（切り離した＝電荷一定）', c:'#3B5A73'},
   ];
 }
 function animStatics(g, t, st, dt){
-  const u = g.userData, m = esModel(), gap = .5 + st.eD*.18, y0 = .9, y1 = y0 + gap;
+  const u = g.userData, m = esModel(), gap = st.eD*.28, y0 = .9, y1 = y0 + gap;   // 間隔は d に比例
   u.top.position.y = y1; u.wTop.position.y = y1 - 2.0; u.wTop.children[1].visible = st.eMode==='v';
   /* 誘電体の形 */
   u.slab.visible = st.eFill!=='none';
   if (st.eFill==='full'){ u.slab.scale.set(2.6, gap-.06, 1.8); u.slab.position.set(0, y0 + gap/2, 0); }
   else if (st.eFill==='stack'){ u.slab.scale.set(2.6, gap/2-.03, 1.8); u.slab.position.set(0, y0 + gap/4, 0); }
   else if (st.eFill==='split'){ u.slab.scale.set(1.3, gap-.06, 1.8); u.slab.position.set(-.65, y0 + gap/2, 0); }
-  /* 電気力線: 本数は固定、濃さ（不透明度）で電界の強さを見せる。最大は空気・d 最小・100 V 程度の目安で割る */
-  const norm = 1/(100/1e-3);                            // 100 V・1 mm（10⁵ V/m）を最も濃い基準にする
+  /* 電気力線: 本数を電界 E に比例させる（基準 5×10⁴ V/m で 7 本、28 本で頭打ち）。
+     積層では下半分が誘電体なので、上下の半分で本数が変わる。分割・全体は E が共通 */
   u.lines.forEach(l => {
-    /* 誘電体の中を通る部分か。積層では誘電体が下半分にある */
     const inDiel = st.eFill==='full' || (st.eFill==='split' && l.userData.x < 0) || (st.eFill==='stack' && l.userData.half===0);
+    const E = inDiel ? (m.Ed || 0) : (m.Ea || 0), n = E > 0 ? Math.max(1, Math.min(ES_LINES, Math.round(7*E/ES_E_REF))) : 0;   // 電界があれば最低1本
     l.position.y = y0 + .03 + l.userData.half*(gap/2 - .03); l.scale.y = gap/2 - .03;
-    l.material.opacity = Math.min(1, .15 + (inDiel ? (m.Ed || 0) : (m.Ea || 0))*norm*.85);
+    l.visible = l.userData.rank < n; l.material.opacity = .85;
   });
-  /* 電荷: 定電圧の空気・d 2 mm・100 V のとき 6 個を基準に、Q に比例して点の数を増減（最大 24） */
-  const q0 = esModel.ref || (esModel.ref = E0*ES_S/(2e-3)*100), nq = Math.max(1, Math.min(24, Math.round(6*m.Q/q0)));   // 基準 6 個。4 倍で 24 個
+  /* 電荷: 空気・d 2 mm・100 V のときの Q を 6 粒として、Q に比例させる（40 粒で頭打ち） */
+  const q0 = E0*ES_S/(2e-3)*100, nq = Math.max(1, Math.min(ES_DOTS, Math.round(6*m.Q/q0)));
   u.pos.forEach((p, i) => { p.visible = i < nq; p.position.y = y1 + .06; });
   u.neg.forEach((p, i) => { p.visible = i < nq; p.position.y = y0 - .06; });
 }
@@ -4299,11 +4343,15 @@ function buildCtrl(){
   const adv = { appendChild: el => moreGrid.appendChild(el) };
   ctrlbar.appendChild(group('動き', seg([[false,'▶ 動かす'],[true,'❚❚ 止める']], 'paused')));
   if (id==='statics'){
-    ctrlbar.appendChild(group('電源', seg([['v','つないだまま（V 一定）'],['q','切り離した（Q 一定）']], 'eMode')));
+    /* 「切り離した」を押した瞬間の静電容量で電荷を固定し、その瞬間を比べる基準にする
+       （切り離しただけでは何も変わらない。ここから先が「Q 一定」の変化）。
+       すでに切り離しているときの押し直しは何もしない（seg は選択中でも on を呼ぶため） */
+    ctrlbar.appendChild(group('電源', seg([['v','つないだまま（V 一定）'],['q','切り離した（Q 一定）']], 'eMode', v => { if (v==='q' && esLastMode!=='q'){ esCchg = esCap().C; causalReset(); } })));
     ctrlbar.appendChild(group('誘電体', seg([['none','なし'],['full','全体'],['stack','上下に積層'],['split','左右に分割']], 'eFill')));
     ctrlbar.appendChild(range('比誘電率 εr', 1, 10, .5, 'eEr', v=>v.toFixed(1)));
     ctrlbar.appendChild(range('極板の間隔 d', 1, 5, .5, 'eD', v=>v.toFixed(1)+' mm'));
-    adv.appendChild(range('電源電圧 V（最初の充電電圧）', 10, 300, 10, 'eV', v=>v+' V'));
+    /* 切り離したあとは電源が無いので、充電電圧のつまみは出さない（動かすと Q が変わり「Q 一定」と矛盾する） */
+    if (state.eMode==='v') adv.appendChild(range('電源電圧 V（最初の充電電圧）', 10, 300, 10, 'eV', v=>v+' V'));
   } else if (id==='magnet'){
     ctrlbar.appendChild(group('見る対象', seg([['core','磁気回路'],['force','平行導体の力']], 'mView')));
     if (state.mView==='force'){
@@ -4401,6 +4449,7 @@ function refreshCtrl(){
     if (had){ buildCtrl(); rebuildLabels(); return; }
   }
   syncCtrl();
+  renderCausal();
   if (!readoutEl) return; const id=state.current; let rows=[], note='';
   if (id==='statics'){
     const m = esModel();
@@ -4663,6 +4712,116 @@ function syncCards(){
   vn.innerHTML = N[state.current] ? N[state.current]() : '';
 }
 
+/* ---------- 比べる（原因 → 結果を、基準の値と並べて操作帯の先頭に出す） ----------
+   3D に重ねると、スマホでは誇張した 3D（間隔・力線・粒）が隠れる。だから 3D のすぐ下の操作帯に置く。
+   読み値の表だけでは「何が何倍になったか」が見えず、動かすと前の値も消える。
+   そこで基準（実験台に入ったとき・ツアーの歩を当てたとき・「いまを基準にする」を押したとき）を覚えておき、
+   変えた原因と、変わった結果を「基準 → 今」の棒と倍率で並べる。
+   予想クイズの答え合わせでは、実験台の初期状態を基準にする（クイズは初期状態からの変化として書いてある）。
+   棒は行ごとに、基準と今の大きいほうを全幅にする（2本を同じ物差しで比べるため）。 */
+const CAUSAL = {
+  statics: {
+    inputs: [
+      ['eMode', '電源', v => v==='v' ? 'つないだまま' : '切り離した'],
+      ['eFill', '誘電体', v => ({none:'なし', full:'全体', stack:'上下に積層', split:'左右に分割'})[v]],
+      ['eEr', '比誘電率 εr', v => f1(v,1), 1],
+      ['eD', '間隔 d', v => f1(v,1)+' mm', 1],
+      ['eV', '充電電圧', v => v+' V', 1],
+    ],
+    /* 電界は上の層・下の層（積層では下が誘電体）の2つで持つ。基準と今の両方で2つが等しければ
+       「電界 E」1行にまとめる（誘電体を入れても電界は「なくなる」わけではない）。
+       積層が絡むときは層ごとに比べる（基準の空気層とだけ比べると、下の層の増加が隠れる） */
+    outs: () => { const m = esModel(), st = state.eFill==='stack';
+      const Eu = st ? m.Ea : (m.Ea ?? m.Ed), El = st ? m.Ed : (m.Ea ?? m.Ed);
+      return [['C', '静電容量 C', m.C], ['Q', '電荷 Q', m.Q], ['V', '電圧 V', m.V],
+        ['Eu', st ? 'E（上の層・空気）' : 'E（上半分）', Eu, null, 'E'], ['El', st ? 'E（下の層・誘電体）' : 'E（下半分）', El, null, 'E'],
+        ['W', 'エネルギー W', m.W]]; },
+    note: '3D は誇張表示: 間隔 ∝ d、電気力線の本数 ∝ 電界 E（28 本まで）、極板の粒 ∝ 電荷 Q（40 粒まで）。実寸ではない',
+  },
+};
+const CAUSAL_INIT = {};
+for (const [id, c] of Object.entries(CAUSAL)) CAUSAL_INIT[id] = Object.fromEntries(c.inputs.map(([k]) => [k, state[k]]));
+let causalBase = null, causalHidden = false, causalEl = null;
+/* inputs の値で outs を計算する（state を一時的に差し替えて戻す）。切り離しの電荷は本文の前提（空気で充電）で計算する */
+function causalSnap(id, inputs){
+  const keep = {}, keepC = esCchg;
+  for (const k in inputs){ keep[k] = state[k]; state[k] = inputs[k]; }
+  esCchg = null;
+  const outs = CAUSAL[id].outs();
+  Object.assign(state, keep); esCchg = keepC;
+  return {inputs: {...inputs}, outs};
+}
+const causalLive = id => Object.fromEntries(CAUSAL[id].inputs.map(([k]) => [k, state[k]]));
+function causalReset(fromInit){
+  const id = state.current;
+  if (!CAUSAL[id]){ causalBase = null; return; }
+  causalBase = fromInit ? {id, ...causalSnap(id, CAUSAL_INIT[id])} : {id, inputs: causalLive(id), outs: CAUSAL[id].outs()};
+}
+/* 倍率を試験の言い方に寄せる: 2 倍・1/4 倍・そのまま。きれいな比でなければ小数 */
+function ratioText(r){
+  if (!isFinite(r)) return '—';
+  if (Math.abs(r - 1) < .005) return 'そのまま';
+  const near = (x, half) => { for (const k of [2,3,4,5,6,8,9,10,16,25]) if (Math.abs(x - k) < .01*k) return k; if (half) for (const k of [1.5,2.5]) if (Math.abs(x - k) < .005) return k; return null; };
+  if (r > 1){ const k = near(r, true); return (k ? k : f1(r, 2)) + ' 倍'; }
+  const k = near(1/r, false); return k ? '1/' + k + ' 倍' : f1(r, 2) + ' 倍';   // 1/2.5 のような分母は書かない
+}
+function renderCausal(){
+  const id = state.current;
+  if (!causalEl){
+    causalEl = document.createElement('div'); causalEl.className = 'causal'; causalEl.setAttribute('aria-live', 'polite');
+  }
+  if (causalEl.parentNode !== ctrlbar) ctrlbar.prepend(causalEl);   // buildCtrl が操作帯を作り直すたびに外れるので付け直す
+  const c = CAUSAL[id];
+  if (!c){ causalEl.hidden = true; return; }
+  causalEl.hidden = false;
+  if (!causalBase || causalBase.id !== id) causalReset();
+  if (causalHidden){
+    causalEl.innerHTML = '<button class="cz-show">比べる表示を出す</button>';
+    causalEl.querySelector('.cz-show').onclick = () => { causalHidden = false; renderCausal(); };
+    return;
+  }
+  const base = causalBase, nowIn = causalLive(id), now = c.outs();
+  const changed = c.inputs.filter(([k]) => nowIn[k] !== base.inputs[k]);
+  const cause = changed.map(([k, lab, fmt, num]) => {
+    const a = base.inputs[k], b = nowIn[k];
+    return `<b>${lab}</b> ${fmt(a)} → ${fmt(b)}` + (num && a ? `（${ratioText(b/a)}）` : '');
+  }).join('、');
+  const rows = [], same = [];
+  const baseOf = (k, alts) => { for (const key of [k, ...(alts || [])]){ const r = base.outs.find(x => x[0] === key); if (r) return r[2]; } return null; };
+  /* 5 番目が同じ行どうし（上の層・下の層の電界）は、基準でも今でも値が等しければ1行にまとめる */
+  const eqv = (a, b) => a == null ? b == null : b != null && Math.abs(a - b) <= 1e-9*Math.abs(a);
+  const merged = new Set();
+  for (const g of new Set(now.map(x => x[4]).filter(Boolean))){
+    const ns = now.filter(x => x[4] === g), bs = base.outs.filter(x => x[4] === g);
+    if (ns.length > 1 && ns.every(x => eqv(x[2], ns[0][2])) && bs.every(x => eqv(x[2], bs[0][2]))) merged.add(g);
+  }
+  const shown = [];
+  for (const x of now){
+    if (x[4] && merged.has(x[4])){ if (!shown.some(y => y[0] === x[4])) shown.push([x[4], '電界 E', x[2], [x[0]]]); }
+    else shown.push(x);
+  }
+  shown.forEach(([k, lab, v, alts]) => {
+    const b0 = baseOf(k, alts);
+    if (v == null && b0 == null) return;
+    if (b0 != null && v != null && Math.abs(v/b0 - 1) < .005){ same.push(lab); return; }
+    const mx = Math.max(Math.abs(b0 || 0), Math.abs(v || 0)) || 1;
+    const r = (b0 == null || v == null) ? null : v/b0, dir = r == null ? '' : r > 1 ? 'up' : 'down';
+    rows.push(`<div class="cz-row"><span class="cz-lab">${lab}</span>`
+      + `<span class="cz-bar"><i class="cz-was" style="width:${(Math.abs(b0 || 0)/mx*100).toFixed(1)}%"></i><i class="cz-now ${dir}" style="width:${(Math.abs(v || 0)/mx*100).toFixed(1)}%"></i></span>`
+      + `<span class="cz-r ${dir}">${r == null ? (v == null ? 'なくなる' : '新たに') : ratioText(r) + (dir === 'up' ? ' ↑' : ' ↓')}</span></div>`);
+  });
+  causalEl.innerHTML = `<div class="cz-head"><span>基準と比べる</span><button class="cz-reset" title="いまの状態を新しい基準にする">いまを基準に</button><button class="cz-hide" aria-label="比べる表示を隠す">×</button></div>`
+    + (changed.length
+      ? `<p class="cz-cause">${cause}</p><div class="cz-rows">${rows.join('')}</div>`
+        + (same.length ? `<p class="cz-same">変わらない: ${same.join('・')}</p>` : '')
+      : `<p class="cz-cause">つまみを動かすと、ここに「基準 → 今」で何が何倍になったかが並ぶ。</p>`)
+    + `<p class="cz-note"><span class="cz-key">灰の棒＝基準、色の棒＝今（橙は増、青は減）。</span>${c.note}</p>`;
+  causalEl.querySelector('.cz-reset').onclick = () => { causalReset(); renderCausal(); };
+  causalEl.querySelector('.cz-hide').onclick = () => { causalHidden = true; renderCausal(); };
+}
+/* ツアー・予想クイズ・実験台の選択で状態を当てたとき。切り離しの電荷は本文の前提（空気で充電）に戻す */
+function onSetApplied(set, fromInit){ if (set && 'eMode' in set) esCchg = null; causalReset(fromInit); }   // 別の実験台の状態を当てても、静電気の電荷は消さない
+
 /* 予想クイズが当てた読み値を数秒だけ光らせる。どの数字の話かを取り違えないため。 */
 let litTimer = null;
 function litReadout(key){
@@ -4801,7 +4960,7 @@ function bindQuiz(st){
         btns.forEach(b=>{ b.disabled=false; b.classList.remove('ok','ng','dim'); });
         li.classList.remove('done'); fb.hidden = true; fb.innerHTML='';
       };
-      if (item.set){ Object.assign(state, item.set); }
+      if (item.set){ Object.assign(state, item.set); onSetApplied(item.set, true); }   // クイズは初期状態からの変化として書いてあるので、初期状態を基準にする
       refreshCtrl(); openMoreFor(item.set, item.q);
       litReadout(item.hi);
     };
@@ -4828,7 +4987,7 @@ function renderTour(apply=true){
   if (apply) applyStep(stp);
 }
 function applyStep(stp){
-  Object.assign(state, stp.set || {});
+  Object.assign(state, stp.set || {}); onSetApplied(stp.set);   // ツアーの歩の出発状態を、比べる表示の基準にする
   rdState.tourText = [stp.op, stp.see, stp.so].join(' ');
   rdState.tourKeys = stp.hi || [];
   /* 先に操作帯と凡例を作り直してから指す。逆順だと、回路や見る対象を切り替える歩で
@@ -4841,7 +5000,7 @@ function applyStep(stp){
 const backBtn = document.getElementById('backbtn');
 backBtn.onclick = ()=>select(null);
 function select(id){
-  state.current = id;
+  state.current = id; causalReset();
   backBtn.classList.toggle('hidden', !id);
   if (reduced){ const v = VIEWS[id||'overview']; cam.target.set(...v.target); cam.dist=v.dist; cam.theta=v.theta; cam.phi=v.phi; cam.want=null; }
   else flyTo(VIEWS[id||'overview']);
