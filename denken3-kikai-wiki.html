@@ -6889,7 +6889,9 @@ const HomePage = ({
       e.preventDefault();
       onNav("study-log", "tracker");
     }
-  }, "E 学習記録「過去問の進捗」"), " で、 復習予定日が来たマスから解く。"), /*#__PURE__*/React.createElement("h2", null, /*#__PURE__*/React.createElement("span", {
+  }, "E 学習記録「過去問の進捗」"), " で、 復習予定日が来たマスから解く。"), typeof WikiReviewToday === "function" && /*#__PURE__*/React.createElement(WikiReviewToday, {
+    onNav: onNav
+  }), /*#__PURE__*/React.createElement("h2", null, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
   }, "1."), "はじめに"), /*#__PURE__*/React.createElement("p", null, "本Wikiは", /*#__PURE__*/React.createElement("strong", null, "理論科目の電気回路（交流・三相・ベクトル）を一通り学んだ人"), "を想定する。機械の各単元は初めて学ぶ前提で書き、各単元では ", /*#__PURE__*/React.createElement("strong", null, "要点を最短経路で押さえる"), " ことを優先する。説明は教科書調（である調）に統一し、図解・回路図・ベクトル図を充実させた。"), /*#__PURE__*/React.createElement("h3", {
     id: "what-is-tested"
@@ -8152,7 +8154,7 @@ const QuickReviewItem = ({
     }
     setNote(sameDay ? '同じ日の再回答なので △ で記録した（翌日以降に ◎ を付けられる）' : '');
     const now = new Date().toISOString();
-    const next = Object.assign({}, rec || {}, {
+    const next = Object.assign({}, rec || {}, kikaiScheduleFields(rec, status), {
       status,
       lastWeakOn: status === 'understood' ? rec && rec.lastWeakOn || '' : today,
       lastWrongOn: status === 'wrong' ? today : rec && rec.lastWrongOn || '',
@@ -8351,7 +8353,7 @@ const TrapTable = ({
         ...prev,
         [i]: 'sameday'
       }));
-      const rec = Object.assign({}, base, {
+      const rec = Object.assign({}, base, kikaiScheduleFields(base, status), {
         status,
         answeredOn: today,
         lastWrongOn: sawIt ? base.lastWrongOn || '' : today,
@@ -8391,7 +8393,7 @@ const TrapTable = ({
     try {
       const raw = localStorage.getItem(keyOf(t));
       const base = raw ? JSON.parse(raw) || {} : {};
-      const rec = Object.assign({}, base, {
+      const rec = Object.assign({}, base, kikaiScheduleFields(base, status), {
         status,
         mark: kikaiStatusMark(status),
         reasonSaid: said,
@@ -8618,7 +8620,7 @@ const ConceptQuizItem = ({
       const base = raw ? JSON.parse(raw) || {} : {};
       const now = new Date().toISOString();
       const today = kikaiLocalDate();
-      const rec = Object.assign({}, base, {
+      const rec = Object.assign({}, base, kikaiScheduleFields(base, status), {
         status: status,
         updatedAt: now,
         answeredOn: today,
@@ -8662,7 +8664,7 @@ const ConceptQuizItem = ({
       const raw = localStorage.getItem(key);
       const base = raw ? JSON.parse(raw) || {} : {};
       const memoBase = (base.memoBase || '') + (said ? '' : '・理由を言えない');
-      const rec = Object.assign({}, base, {
+      const rec = Object.assign({}, base, kikaiScheduleFields(base, status), {
         status,
         mark: kikaiStatusMark(status),
         reasonSaid: said,
@@ -9592,6 +9594,214 @@ const kakomonAddDays = (iso, n) => {
   const [y, m, d] = iso.split('-').map(Number);
   const x = new Date(y, m - 1, d + n);
   return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+};
+/* ---- Wiki 内の記録（確認問題・ひっかけ表・1分復習）の次回日 ----
+   以前は過去問グリッドだけが FSRS で次回日を持ち、Wiki 内の記録は「付けたら終わり」で二度と出てこなかった。
+   同じ FSRS-6 と締切（kakomonInterval の 1. 締切）で次回日 nextDue を持たせ、ホームの「今日やる」に出す。
+   - 評価は KIKAI_MARKS と同じ: ◎ understood=4、△ vague=2（旧 review も 2）、× wrong=1
+   - 同じ日に何度押しても、その日の最初の状態（fsrsBase）から計算し直す（同じ日の連打で間隔が伸びない）
+   - その日に一度でも × を付けたら、その日の評価は × として扱う（fsrsBase.w）。× の後に正しく答え直しても、
+     次回日は × のときと同じ近さに置く（答え直した正解は「覚えていた」ではなく「直前に見た」ので）
+   - 記録の数値が壊れていたら新規カードとして扱う（NaN を書かない）
+   - 1日の上限（KAKOMON_DAILY_CAP）は過去問グリッドだけに掛ける（こちらは件数だけ出し、超えた分は明日へ回してよい）
+   - 次回日を持たない旧記録は、△×（vague/review/wrong）なら期限到来とみなす（◎ は出さない） */
+const KIKAI_STATUS_RATING = {
+  understood: 4,
+  vague: 2,
+  review: 2,
+  wrong: 1
+};
+const kikaiScheduleFields = (base, status) => {
+  const rating = KIKAI_STATUS_RATING[status];
+  if (!rating) return {};
+  const today = kakomonToday();
+  const okS = x => typeof x === 'number' && isFinite(x) && x > 0;
+  const okD = x => typeof x === 'number' && isFinite(x) && x >= 1 && x <= 10;
+  let s0 = null,
+    d0 = null,
+    e0 = 0,
+    w0 = false;
+  const fb = base && base.fsrsBase;
+  if (base && base.fsrsOn === today && fb && typeof fb === 'object') {
+    if (okS(fb.s) && okD(fb.d)) {
+      s0 = fb.s;
+      d0 = fb.d;
+      e0 = typeof fb.e === 'number' && fb.e > 0 ? fb.e : 0;
+    }
+    w0 = fb.w === true;
+  } else if (base && okS(base.fsrsS) && okD(base.fsrsD) && base.fsrsOn) {
+    s0 = base.fsrsS;
+    d0 = base.fsrsD;
+    e0 = Math.max(0, kakomonDaysBetween(base.fsrsOn, today) || 0);
+  }
+  const w = w0 || rating === 1;
+  const r = fsrsReview(s0, d0, w ? 1 : rating, e0);
+  const i = kakomonInterval(r.s, today);
+  return {
+    fsrsS: r.s,
+    fsrsD: r.d,
+    fsrsOn: today,
+    fsrsBase: {
+      s: s0,
+      d: d0,
+      e: e0,
+      w
+    },
+    nextDue: kakomonAddDays(today, i)
+  };
+};
+const KIKAI_WIKI_KINDS = {
+  quiz: '確認問題',
+  trap: 'ひっかけ',
+  quickreview: '1分復習'
+};
+/* localStorage から Wiki 内の記録を集め、今日やるもの（nextDue ≦ 今日、または次回日の無い △×）を返す */
+const kikaiWikiDue = today => {
+  const t = today || kakomonToday();
+  const out = [];
+  let keys = [];
+  try {
+    keys = Object.keys(localStorage);
+  } catch (e) {
+    return out;
+  }
+  // 今の Wiki に無い単元 id（改名・手作りの取り込み）の記録は出さない（開けないので一覧から消せなくなる）
+  const known = {};
+  try {
+    (window.WIKI_DATA && window.WIKI_DATA.chapters || []).forEach(ch => ch.pages.forEach(p => {
+      known[p.id] = true;
+    }));
+  } catch (e) {}
+  const hasKnown = Object.keys(known).length > 0;
+  keys.forEach(k => {
+    const m = /^denken_check::kikai_([^:]+)::(quiz|trap|quickreview)::/.exec(k);
+    if (!m) return;
+    if (hasKnown && !known[m[1]]) return;
+    let rec = null;
+    try {
+      rec = JSON.parse(localStorage.getItem(k));
+    } catch (e) {
+      return;
+    }
+    if (!rec || typeof rec !== 'object' || !rec.status) return;
+    const weak = rec.status === 'wrong' || rec.status === 'vague' || rec.status === 'review';
+    // 次回日が無い・壊れている記録は、△× なら期限到来とみなす（安全側）
+    const validDue = typeof rec.nextDue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(rec.nextDue);
+    const due = validDue ? rec.nextDue <= t : weak;
+    if (!due) return;
+    out.push({
+      key: k,
+      pageId: m[1],
+      kind: m[2],
+      status: rec.status,
+      nextDue: rec.nextDue || '',
+      title: rec.itemTitle || '',
+      article: rec.articleTitle || ''
+    });
+  });
+  // 古い期限から。同じ日なら × → △ → ◎ の順
+  const rank = {
+    wrong: 0,
+    review: 1,
+    vague: 1,
+    understood: 2
+  };
+  out.sort((a, b) => (a.nextDue || '') < (b.nextDue || '') ? -1 : (a.nextDue || '') > (b.nextDue || '') ? 1 : rank[a.status] - rank[b.status]);
+  return out;
+};
+/* ホームの「今日やる（Wiki 内）」。単元ごとに件数を出し、押すとその単元へ飛ぶ */
+const WikiReviewToday = ({
+  onNav
+}) => {
+  const [, bump] = React.useState(0);
+  React.useEffect(() => {
+    const on = () => bump(n => n + 1);
+    window.addEventListener('section-check-changed', on);
+    window.addEventListener('storage', on);
+    return () => {
+      window.removeEventListener('section-check-changed', on);
+      window.removeEventListener('storage', on);
+    };
+  }, []);
+  const due = kikaiWikiDue();
+  const byPage = {};
+  due.forEach(r => {
+    (byPage[r.pageId] = byPage[r.pageId] || []).push(r);
+  });
+  const pages = Object.keys(byPage);
+  const pageTitle = id => {
+    try {
+      for (const ch of window.WIKI_DATA && window.WIKI_DATA.chapters || []) for (const p of ch.pages) if (p.id === id) return `${p.num} ${p.title}`;
+    } catch (e) {}
+    return id;
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "box",
+    style: {
+      margin: '10px 0 14px'
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: 0
+    }
+  }, /*#__PURE__*/React.createElement("strong", null, "今日やる（Wiki 内の確認問題・ひっかけ・1分復習）"), ' ', due.length ? /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: 'var(--danger)'
+    }
+  }, due.length, " 件") : /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--ink-soft)'
+    }
+  }, "0 件")), due.length === 0 && /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '4px 0 0',
+      fontSize: 13,
+      color: 'var(--ink-soft)'
+    }
+  }, "△・× を付けた問題は、忘れかけた頃にここへ戻ってくる（過去問グリッドと同じ忘却曲線）。"), pages.length > 0 && /*#__PURE__*/React.createElement("ul", {
+    style: {
+      margin: '6px 0 0',
+      paddingLeft: 20,
+      fontSize: 13.5
+    }
+  }, pages.map(id => {
+    const rs = byPage[id];
+    const kinds = Object.keys(KIKAI_WIKI_KINDS).map(k => [k, rs.filter(r => r.kind === k).length]).filter(([, n]) => n > 0).map(([k, n]) => `${KIKAI_WIKI_KINDS[k]} ${n}`).join('・');
+    return /*#__PURE__*/React.createElement("li", {
+      key: id,
+      style: {
+        margin: '2px 0'
+      }
+    }, /*#__PURE__*/React.createElement("a", {
+      href: "#",
+      onClick: e => {
+        e.preventDefault();
+        onNav(id);
+      }
+    }, pageTitle(id)), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: 'var(--ink-soft)'
+      }
+    }, "（", kinds, "）"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: 'block',
+        fontSize: 12,
+        color: 'var(--ink-mute)'
+      }
+    }, rs.slice(0, 3).map(r => (r.title || '').replace(/^【正誤】/, '')).join(' ／ '), rs.length > 3 ? ` ／ ほか ${rs.length - 3} 件` : ''));
+  })), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '6px 0 0',
+      fontSize: 12,
+      color: 'var(--ink-soft)'
+    }
+  }, "単元を開いて、同じ問題をもう一度解く。◎ が付けば次回は先へ延び、△・× なら近くに戻る。過去問の解き直しは", /*#__PURE__*/React.createElement("a", {
+    href: "#",
+    onClick: e => {
+      e.preventDefault();
+      onNav('study-log', 'tracker');
+    }
+  }, "E 学習記録「過去問の進捗」"), "。"));
 };
 const kakomonDaysSince = iso => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return null;
@@ -10992,6 +11202,11 @@ Object.assign(window, {
     interval: fsrsInterval,
     RATING: FSRS_RATING
   }
+});
+Object.assign(window, {
+  WikiReviewToday,
+  kikaiWikiDue,
+  kikaiScheduleFields
 });
 </script>
   <script>
@@ -49568,7 +49783,7 @@ const StudyLogPage = ({
   }
 }, "4段が重ならないよう「", /*#__PURE__*/React.createElement("strong", null, "正解したか"), "」「", /*#__PURE__*/React.createElement("strong", null, "迷ったか"), "」「", /*#__PURE__*/React.createElement("strong", null, "理由を言えるか"), "」「", /*#__PURE__*/React.createElement("strong", null, "時間内か"), "」で切ってある。", /*#__PURE__*/React.createElement("strong", null, "迷って正解したら ○ ではなく △"), "。迷った正解は、放っておくと半分以上落ちるので、間違いと同じく復習に回す。 同じ記号を、確認問題・ひっかけ表・1分復習・節末の自己評価でも同じ意味で使う （時間を測らない部品では ○ を使わない）。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "正解しても「なぜその式か」を1行で言えなければ △ に落とす。"), "受験直後に「答えを覚えていて何とか解けた問題があった」という実感が残っており、 覚えているだけの正解を ○ にすると、この記録が使えなくなる。"), /*#__PURE__*/React.createElement("h3", {
   id: "retry"
-}, "次に解き直す日はどう決まるか"), /*#__PURE__*/React.createElement("p", null, "間違えた直後に解き直すと、", /*#__PURE__*/React.createElement("strong", null, "覚えているから解けてしまう"), "。それは定着ではない。 少し忘れた頃に思い出して初めて記憶に残るので、", /*#__PURE__*/React.createElement("strong", null, "次回の日付は忘却曲線から算出"), "する。 固定日数ではなく、判定と過去の履歴で伸び縮みする。"), /*#__PURE__*/React.createElement("div", {
+}, "次に解き直す日はどう決まるか"), /*#__PURE__*/React.createElement("p", null, "間違えた直後に解き直すと、", /*#__PURE__*/React.createElement("strong", null, "覚えているから解けてしまう"), "。それは定着ではない。 少し忘れた頃に思い出して初めて記憶に残るので、", /*#__PURE__*/React.createElement("strong", null, "次回の日付は忘却曲線から算出"), "する。 固定日数ではなく、判定と過去の履歴で伸び縮みする。 各単元の", /*#__PURE__*/React.createElement("strong", null, "確認問題・ひっかけ表・1分復習"), "も同じ忘却曲線で次回日を持ち、期限が来たものはホームの「今日やる（Wiki 内）」に単元ごとに出る（1日の上限はこの過去問グリッドだけに掛ける）。"), /*#__PURE__*/React.createElement("div", {
   className: "table-wrap"
 }, /*#__PURE__*/React.createElement("table", {
   className: "data-table"
