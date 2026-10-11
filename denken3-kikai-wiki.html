@@ -6892,7 +6892,59 @@ Object.assign(window, {
    const は classic script のトップレベルでもスクリプト間で共有されるので、
    build-kikai-wiki.py が定める読み込み順（データ → コンポーネント）でそのまま参照できる。 */
 
-/* ---- SectionCheck: セクション末尾の4ボタン自己評価（◎○△×） ---- */
+/* ---- ◎○△× の定義（G23）。全部品がここから記号の意味・status・FSRS 評価を引く ----
+
+   以前は同じ記号が部品ごとに別の意味だった（節末の × は「未実施」、確認問題に ○ は無い、
+   過去問グリッドの ○ は「少し迷った」）。判定の軸を「正解したか × 迷ったか × 理由を1行で言えるか
+   ×（過去問だけ）目安時間内か」にそろえ、1回ごとに付ける（間隔は FSRS が持つので日付の軸は混ぜない）。
+   迷った正解は △（下期規範 L2 手順4。低確信の正解は放置すると落ちる）。
+   status は法規の間違いノートの共通語彙（understood / vague / review / wrong）に合わせる。 */
+const KIKAI_MARKS = {
+  '◎': {
+    status: 'understood',
+    fsrs: 4,
+    label: '再現できる',
+    color: 'var(--ok)',
+    def: '見ずに正解し、迷いがなく、理由を1行で言える（過去問は目安時間内）'
+  },
+  '○': {
+    status: 'understood',
+    fsrs: 3,
+    label: '時間超過',
+    color: 'var(--info)',
+    def: '◎ の条件のうち「目安時間内」だけが欠けた（過去問・通し演習でだけ使う）'
+  },
+  '△': {
+    status: 'vague',
+    fsrs: 2,
+    label: '不安定',
+    color: 'var(--warn)',
+    def: '正解したが、迷った／理由を言えない／同じ日の再回答だった'
+  },
+  '×': {
+    status: 'wrong',
+    fsrs: 1,
+    label: '誤り',
+    color: 'var(--danger)',
+    def: '不正解、または解説を読んで初めて筋道が分かった'
+  }
+};
+/* 記録の status から記号へ。旧形式の review（△ を review で保存していた）も △ に読む。 */
+const kikaiStatusMark = st => st === 'understood' ? '◎' : st === 'vague' || st === 'review' ? '△' : st === 'wrong' ? '×' : '';
+
+/* 節末の自己評価の保存値。新形式は '2:◎' のように版を前置する（旧形式の × は「未実施」の意味だったので、
+   同じ '×' のままでは新しい「言えない」と区別できない）。旧形式は読むときに解釈し直し、書き換えない:
+   旧 × → 未実施（空）、旧 ○ → '○旧'（OK として数える）、旧 ◎・△ → そのまま。 */
+const KIKAI_SECTION_V = '2:';
+const kikaiSectionMark = raw => {
+  const v = String(raw || '');
+  if (v.indexOf(KIKAI_SECTION_V) === 0) return v.slice(KIKAI_SECTION_V.length);
+  if (v === '×') return '';
+  if (v === '○') return '○旧';
+  return v;
+};
+
+/* ---- SectionCheck: セクション末尾の自己評価（◎△×）。「結論を隠して1行で言えるか」で付ける（下期規範 L1） ---- */
 const SectionCheck = ({
   pageId,
   sectionId,
@@ -6901,7 +6953,7 @@ const SectionCheck = ({
   const key = `denken_check::kikai_${pageId}::section::${sectionId}`;
   const [status, setStatus] = React.useState(() => {
     try {
-      return localStorage.getItem(key) || '';
+      return kikaiSectionMark(localStorage.getItem(key));
     } catch (e) {
       return '';
     }
@@ -6910,7 +6962,7 @@ const SectionCheck = ({
     const next = newStatus === status ? '' : newStatus;
     setStatus(next);
     try {
-      if (next) localStorage.setItem(key, next);else localStorage.removeItem(key);
+      if (next) localStorage.setItem(key, KIKAI_SECTION_V + next);else localStorage.removeItem(key);
       window.dispatchEvent(new CustomEvent('section-check-changed', {
         detail: {
           key,
@@ -6921,20 +6973,16 @@ const SectionCheck = ({
   };
   const buttons = [{
     mark: '◎',
-    label: '完璧',
-    color: 'var(--ok)'
-  }, {
-    mark: '○',
-    label: 'OK',
-    color: 'var(--info)'
+    label: '言えた',
+    color: KIKAI_MARKS['◎'].color
   }, {
     mark: '△',
-    label: '微妙',
-    color: 'var(--warn)'
+    label: 'あやしい',
+    color: KIKAI_MARKS['△'].color
   }, {
     mark: '×',
-    label: '未',
-    color: 'var(--danger)'
+    label: '言えない',
+    color: KIKAI_MARKS['×'].color
   }];
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -6954,10 +7002,10 @@ const SectionCheck = ({
       fontWeight: 600,
       color: 'var(--ink-soft)'
     }
-  }, "📊 このセクションの理解度:"), buttons.map(b => /*#__PURE__*/React.createElement("button", {
+  }, "📊 この節の結論を、本文を隠して1行で言えるか:"), buttons.map(b => /*#__PURE__*/React.createElement("button", {
     key: b.mark,
     onClick: () => update(b.mark),
-    "aria-label": `理解度 ${b.label}`,
+    "aria-label": `${b.mark} ${b.label}`,
     style: {
       padding: '4px 10px',
       minWidth: 36,
@@ -6970,7 +7018,12 @@ const SectionCheck = ({
       fontSize: 14,
       transition: 'all 0.1s'
     }
-  }, b.mark)), status && /*#__PURE__*/React.createElement("span", {
+  }, b.mark, " ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      fontWeight: 400
+    }
+  }, b.label))), status && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
       color: 'var(--ink-soft)'
@@ -6995,7 +7048,7 @@ const SectionCheckSummary = ({
       sections.forEach(s => {
         const k = `denken_check::kikai_${pageId}::section::${s.id}`;
         try {
-          result[s.id] = localStorage.getItem(k) || '';
+          result[s.id] = kikaiSectionMark(localStorage.getItem(k));
         } catch (e) {
           result[s.id] = '';
         }
@@ -7009,7 +7062,7 @@ const SectionCheckSummary = ({
   const total = sections.length;
   const counts = {
     '◎': 0,
-    '○': 0,
+    '○旧': 0,
     '△': 0,
     '×': 0,
     '未': 0
@@ -7046,11 +7099,11 @@ const SectionCheckSummary = ({
     style: {
       color: 'var(--ok)'
     }
-  }, "◎ ", counts['◎'])), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("strong", {
+  }, "◎ ", counts['◎'])), counts['○旧'] > 0 && /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("strong", {
     style: {
       color: 'var(--info)'
     }
-  }, "○ ", counts['○'])), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("strong", {
+  }, "○旧 ", counts['○旧'])), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("strong", {
     style: {
       color: 'var(--warn)'
     }
@@ -7101,7 +7154,7 @@ const SectionCheckSummary = ({
       color: 'var(--ok)',
       fontWeight: 600
     }
-  }, "✨ すべてのセクションが ◎ または ○ です。お疲れさまでした！"));
+  }, "✨ 弱点のセクションはありません（△・×・未 が 0）。"));
 };
 
 /* ---- QuickReview: 1分復習に記録を足す（柱5 リトリーバル練習） ----
@@ -7149,8 +7202,8 @@ const QuickReviewItem = ({
     }
   });
   const mark = status => {
-    if (rec && rec.status === status) {
-      // 同じボタンをもう一度＝記録を取り消す
+    // 同じボタンをもう一度＝記録を取り消す。旧形式の review は △（vague）として比べる（表示と同じ読み）
+    if (rec && (rec.status === 'review' ? 'vague' : rec.status) === status) {
       try {
         localStorage.removeItem(key);
       } catch (e) {}
@@ -7177,7 +7230,7 @@ const QuickReviewItem = ({
       articleTitle: '機械 1分復習 — ' + pageTitle,
       itemTitle: q.length > 44 ? q.slice(0, 44) + '…' : q,
       articleUrl: 'denken3-kikai-wiki.html#' + pageId,
-      memo: status === 'understood' ? '即答できた' : '要復習'
+      memo: status === 'understood' ? '◎ 即答できた' : status === 'wrong' ? '× 出てこない・違った' : '△ 詰まった'
     });
     try {
       localStorage.setItem(key, JSON.stringify(next));
@@ -7192,7 +7245,9 @@ const QuickReviewItem = ({
       }));
     } catch (e) {}
   };
-  const st = rec ? rec.status : null;
+
+  // 旧形式の review（「要復習」1択だった）は △ として表示する。新しく押すと vague か wrong で保存する
+  const st = rec ? rec.status === 'review' ? 'vague' : rec.status : null;
   return /*#__PURE__*/React.createElement("div", {
     className: "qr-item"
   }, children, /*#__PURE__*/React.createElement("div", {
@@ -7202,12 +7257,17 @@ const QuickReviewItem = ({
     className: `qr-btn ok${st === 'understood' ? ' on' : ''}`,
     "aria-pressed": st === 'understood',
     onClick: () => mark('understood')
-  }, "✓ 即答できた"), /*#__PURE__*/React.createElement("button", {
+  }, "◎ 即答できた"), /*#__PURE__*/React.createElement("button", {
     type: "button",
-    className: `qr-btn ng${st === 'review' ? ' on' : ''}`,
-    "aria-pressed": st === 'review',
-    onClick: () => mark('review')
-  }, "⚠ 要復習"), rec && rec.reviewCount > 0 && /*#__PURE__*/React.createElement("span", {
+    className: `qr-btn ng${st === 'vague' ? ' on' : ''}`,
+    "aria-pressed": st === 'vague',
+    onClick: () => mark('vague')
+  }, "△ 詰まった"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: `qr-btn ng${st === 'wrong' ? ' on' : ''}`,
+    "aria-pressed": st === 'wrong',
+    onClick: () => mark('wrong')
+  }, "× 出てこない・違った"), rec && rec.reviewCount > 0 && /*#__PURE__*/React.createElement("span", {
     className: "qr-meta"
   }, rec.reviewCount, " 回目", rec.lastSeen ? '・' + String(rec.lastSeen).slice(0, 10) : '')));
 };
@@ -7232,7 +7292,7 @@ const QuickReview = ({
     className: "qr-head"
   }, /*#__PURE__*/React.createElement("strong", null, "1分復習"), /*#__PURE__*/React.createElement("span", {
     className: "qr-meta"
-  }, "答えを開く前に、必ず自分で言ってみる。⚠ を押した問題は", /*#__PURE__*/React.createElement("strong", null, "間違いノート"), "に集まる。"), done > 0 && /*#__PURE__*/React.createElement("span", {
+  }, "答えを開く前に、必ず自分で言ってみる。△・× を押した問題は", /*#__PURE__*/React.createElement("strong", null, "間違いノート"), "に集まる。"), done > 0 && /*#__PURE__*/React.createElement("span", {
     className: "qr-meta"
   }, "（記録済み ", done, "/", items.length, "）")), items.map((el, i) => /*#__PURE__*/React.createElement(QuickReviewItem, {
     key: i,
@@ -7255,8 +7315,8 @@ const QuickReview = ({
 
    traps の各行は次の2形式を受け付ける（ev は根拠＝本文の節・確認問題ID。
    捏造防止のため、根拠を書けない行は足さない）:
-     - { wrong, correct, why?, ev? }        … 誤った記述。正答は「✕ 誤り」、判定後に correct を見せる
-     - { statement, isTrue: true, why?, ev? } … 正しい記述。正答は「○ 正しい」
+     - { wrong, correct, why?, ev? }        … 誤った記述。正答は「誤り」、判定後に correct を見せる
+     - { statement, isTrue: true, why?, ev? } … 正しい記述。正答は「正しい」
    全行が誤りだと「とりあえず ✕」で全問当たり、判定の練習にならない。正文行はそのための形式。
    記録キーは旧形式が wrong + '::' + correct、新形式が statement から作る（旧形式のキーは変えない＝学習履歴を保つ）。 */
 
@@ -7306,6 +7366,9 @@ const TrapTable = ({
   const prevRef = React.useRef(null);
   if (prevRef.current === null) prevRef.current = records;
   const [answered, setAnswered] = React.useState({});
+  /* 正しく判定した行は、理由を見せる前に「理由を1行で言えたか」を押させる（G23 の解説前ゲート）。
+     ○✕ は当てずっぽうでも半分当たるので、判定が合っただけでは ◎ にしない。押す前は △ で記録しておく。 */
+  const [reasoned, setReasoned] = React.useState({});
   const judge = (i, t, choice) => {
     setAnswered(prev => ({
       ...prev,
@@ -7313,13 +7376,24 @@ const TrapTable = ({
     }));
     const row = kikaiTrapRow(t);
     const sawIt = choice === (row.isTrue ? '正' : '誤'); // 正文行は「正」、誤文行（旧形式）は「誤」が正答
-    const status = sawIt ? 'understood' : 'wrong';
+    const status = sawIt ? 'vague' : 'wrong';
     try {
       const raw = localStorage.getItem(keyOf(t));
       const base = raw ? JSON.parse(raw) || {} : {};
       const now = new Date().toISOString();
+      const today = kikaiLocalDate();
+      // 同じ日に誤判定・△ があった行は、再読込して正しく判定しても ◎ にしない（ゲートを出さず △ で確定）
+      const weakToday = sawIt && kikaiQuizMissedToday(base, today);
+      if (weakToday) setReasoned(prev => ({
+        ...prev,
+        [i]: 'sameday'
+      }));
       const rec = Object.assign({}, base, {
         status,
+        answeredOn: today,
+        lastWrongOn: sawIt ? base.lastWrongOn || '' : today,
+        lastWeakOn: weakToday ? today : base.lastWeakOn || '',
+        reasonSaid: null,
         updatedAt: now,
         firstSeenAt: base.firstSeenAt || now,
         reviewCount: (base.reviewCount || 0) + 1,
@@ -7329,7 +7403,8 @@ const TrapTable = ({
         itemTitle: '【正誤】' + (row.text.length > 44 ? row.text.slice(0, 44) + '…' : row.text),
         articleUrl: 'denken3-kikai-wiki.html#' + pageId,
         memo: row.isTrue ? '正: この記述は正しい' + (t.why ? '\nなぜ: ' + t.why : '') : '正: ' + row.correct,
-        lastAnswerCorrect: sawIt
+        lastAnswerCorrect: sawIt,
+        mark: kikaiStatusMark(status)
       });
       localStorage.setItem(keyOf(t), JSON.stringify(rec));
       setRecords(prev => ({
@@ -7344,14 +7419,43 @@ const TrapTable = ({
       }));
     } catch (e) {/* localStorage 不可でもその場の判定は動く */}
   };
+  const confirmReason = (i, t, said) => {
+    setReasoned(prev => ({
+      ...prev,
+      [i]: said ? 'yes' : 'no'
+    }));
+    const status = said ? 'understood' : 'vague';
+    try {
+      const raw = localStorage.getItem(keyOf(t));
+      const base = raw ? JSON.parse(raw) || {} : {};
+      const rec = Object.assign({}, base, {
+        status,
+        mark: kikaiStatusMark(status),
+        reasonSaid: said,
+        updatedAt: new Date().toISOString(),
+        lastWeakOn: said ? base.lastWeakOn || '' : kikaiLocalDate()
+      });
+      localStorage.setItem(keyOf(t), JSON.stringify(rec));
+      setRecords(prev => ({
+        ...prev,
+        [i]: rec
+      }));
+      window.dispatchEvent(new CustomEvent('section-check-changed', {
+        detail: {
+          key: keyOf(t),
+          status
+        }
+      }));
+    } catch (e) {/* noop */}
+  };
   if (!traps || !traps.length) return null;
   return /*#__PURE__*/React.createElement("div", {
     className: "trap-wrap"
   }, /*#__PURE__*/React.createElement("h3", {
     className: "trap-title"
-  }, "⚠ よくあるひっかけ — まず○✕で判定する"), /*#__PURE__*/React.createElement("p", {
+  }, "⚠ よくあるひっかけ — まず正しいか誤りかを判定する"), /*#__PURE__*/React.createElement("p", {
     className: "trap-lead"
-  }, "記述ごとに、答えを見る前に", /*#__PURE__*/React.createElement("strong", null, "正しいか誤りか"), "を○✕で選ぶ。 判定を誤った行は", /*#__PURE__*/React.createElement("strong", null, "間違いノート"), "に集まる。"), /*#__PURE__*/React.createElement("table", {
+  }, "記述ごとに、答えを見る前に", /*#__PURE__*/React.createElement("strong", null, "正しいか誤りか"), "を選ぶ。 正しく判定できたら、理由を見る前に", /*#__PURE__*/React.createElement("strong", null, "なぜか1行で言えたか"), "を押す。 判定を誤った行（×）と、理由を言えなかった行（△）は", /*#__PURE__*/React.createElement("strong", null, "間違いノート"), "に集まる。"), /*#__PURE__*/React.createElement("table", {
     className: "trap-table"
   }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "記述 — 正しい？ 誤り？"), /*#__PURE__*/React.createElement("th", null, "判定 → 正しくは"))), /*#__PURE__*/React.createElement("tbody", null, traps.map((t, i) => {
     const ans = answered[i];
@@ -7365,19 +7469,37 @@ const TrapTable = ({
       className: "trap-q"
     }, row.text, prev && !revealed && /*#__PURE__*/React.createElement("div", {
       className: `trap-prev${prev.status === 'understood' ? ' ok' : ' ng'}`
-    }, "前回 ", prev.status === 'understood' ? '✓ 正しく判定' : '✗ 判定を誤った', prev.updatedAt ? '（' + String(prev.updatedAt).slice(0, 10) + '）' : '')), /*#__PURE__*/React.createElement("td", null, !revealed ? /*#__PURE__*/React.createElement("div", {
+    }, "前回 ", prev.status === 'understood' ? prev.reasonSaid === true ? '◎ 正しく判定・理由も言えた' : '◎ 正しく判定（旧記録）' : prev.lastAnswerCorrect === false || prev.status === 'wrong' ? '× 判定を誤った' : prev.reasonSaid === false ? '△ 判定は正しいが理由を言えなかった' : prev.status === 'vague' ? '△ 正しく判定（理由は未確認・同じ日の解き直し）' : '△ 要復習', prev.updatedAt ? '（' + String(prev.updatedAt).slice(0, 10) + '）' : '')), /*#__PURE__*/React.createElement("td", null, !revealed ? /*#__PURE__*/React.createElement("div", {
       className: "trap-btns"
     }, /*#__PURE__*/React.createElement("button", {
       type: "button",
       className: "trap-btn maru",
       onClick: () => judge(i, t, '正')
-    }, "○ 正しい"), /*#__PURE__*/React.createElement("button", {
+    }, "正しい"), /*#__PURE__*/React.createElement("button", {
       type: "button",
       className: "trap-btn batsu",
       onClick: () => judge(i, t, '誤')
-    }, "✕ 誤り")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    }, "誤り")) : sawIt && !reasoned[i] ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      className: "trap-verdict ok"
+    }, row.isTrue ? '✓ 正解（これは正しい記述）' : '✓ 見抜いた（これは誤り）'), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        margin: '6px 0 4px',
+        color: 'var(--ink-soft)'
+      }
+    }, "理由を見る前に、", /*#__PURE__*/React.createElement("strong", null, "なぜそう判定したか"), "を1行で言ってから押す。"), /*#__PURE__*/React.createElement("div", {
+      className: "trap-btns"
+    }, /*#__PURE__*/React.createElement("button", {
+      type: "button",
+      className: "trap-btn maru",
+      onClick: () => confirmReason(i, t, true)
+    }, "◎ 言えた"), /*#__PURE__*/React.createElement("button", {
+      type: "button",
+      className: "trap-btn batsu",
+      onClick: () => confirmReason(i, t, false)
+    }, "△ 言えない"))) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       className: `trap-verdict${sawIt ? ' ok' : ' ng'}`
-    }, row.isTrue ? sawIt ? '✓ 正解（これは正しい記述）' : '✗ 不正解：これは正しい記述' : sawIt ? '✓ 見抜いた（これは誤り）' : '✗ ひっかけ！ 正しくは↓'), !row.isTrue && row.correct && /*#__PURE__*/React.createElement("div", {
+    }, row.isTrue ? sawIt ? reasoned[i] === 'yes' ? '◎ 正解（これは正しい記述）' : reasoned[i] === 'sameday' ? '△ 正解・同じ日の解き直し（これは正しい記述）' : '△ 正解だが理由を言えない（これは正しい記述）' : '× 不正解：これは正しい記述' : sawIt ? reasoned[i] === 'yes' ? '◎ 見抜いた（これは誤り）' : reasoned[i] === 'sameday' ? '△ 見抜いた・同じ日の解き直し（これは誤り）' : '△ 見抜いたが理由を言えない（これは誤り）' : '× ひっかけ！ 正しくは↓'), !row.isTrue && row.correct && /*#__PURE__*/React.createElement("div", {
       className: "trap-correct"
     }, row.correct), t.why && /*#__PURE__*/React.createElement("div", {
       className: "trap-why"
@@ -7432,6 +7554,10 @@ const kikaiLocalDate = x => {
    lastWrongOn（本版から記録する）を優先し、旧記録は status=wrong と updatedAt の日付で判定する。 */
 const kikaiQuizMissedToday = (rec, today) => {
   if (!rec || typeof rec !== 'object') return false;
+  // △（迷った正解・理由を言えない正解・ゲートを押さずに離れた仮の △・旧形式の review）も、
+  // 同じ日の解き直しで ◎ にしない（G23。下期規範 L2）
+  if (typeof rec.lastWeakOn === 'string' && rec.lastWeakOn === today) return true;
+  if ((rec.status === 'vague' || rec.status === 'review') && rec.updatedAt && kikaiLocalDate(rec.updatedAt) === today) return true;
   if (typeof rec.lastWrongOn === 'string' && rec.lastWrongOn) return rec.lastWrongOn === today;
   if (rec.status === 'wrong' && rec.updatedAt) return kikaiLocalDate(rec.updatedAt) === today;
   return false;
@@ -7460,6 +7586,22 @@ const ConceptQuizItem = ({
   const [missed, setMissed] = React.useState(false); // 同一セッションで一度でも不正解したか（即時再正解を克服扱いしない）
   const [recallNote, setRecallNote] = React.useState(''); // 不正解時「正しい考えを自分の言葉で1行」＝再生(retrieval)で丸暗記を矯正
   const [errorTag, setErrorTag] = React.useState(null); // 不正解の原因タグ（公式忘れ/条件読み違い/計算ミス/概念不理解）=弱点類型の可視化
+  // 迷わず正解したときだけ、解説を開く前に「理由を1行で言えたか」を押させる（G23 の解説前ゲート）。
+  // null=未回答 / 'pending'=押す前（△ で仮記録済み）/ 'yes'=言えた（◎）/ 'no'=言えない（△）
+  const [reasonGate, setReasonGate] = React.useState(null);
+  // 表示用に、答えた時点の判定（同じ日の再回答か・迷った正解か）を固定しておく。
+  // missed は答えた後にも更新する（△ でも同じ日の解き直しを ◎ にしない）ので、表示には使わない。
+  const [answerCtx, setAnswerCtx] = React.useState({
+    rescued: false,
+    unsureHit: false,
+    cause: ''
+  });
+  // missed の理由。'wrong'＝今日いちど不正解 / 'weak'＝今日いちど △（迷った・理由を言えない）。文言と memo を分ける
+  const [missedCause, setMissedCause] = React.useState('');
+  const markMissed = cause => {
+    setMissed(true);
+    setMissedCause(c => c === 'wrong' ? 'wrong' : cause);
+  };
   React.useEffect(() => {
     try {
       const raw = localStorage.getItem(key);
@@ -7467,7 +7609,9 @@ const ConceptQuizItem = ({
         const p = JSON.parse(raw);
         setPrev(p);
         // 同じ日に誤答していたら、再読込の後の正解も「即時再正解」として扱う（克服にしない）
-        if (kikaiQuizMissedToday(p, kikaiLocalDate())) setMissed(true);
+        const today = kikaiLocalDate();
+        const wrongToday = p.lastWrongOn === today || !p.lastWrongOn && p.status === 'wrong' && p.updatedAt && kikaiLocalDate(p.updatedAt) === today;
+        if (kikaiQuizMissedToday(p, today)) markMissed(wrongToday ? 'wrong' : 'weak');
       }
     } catch (e) {}
   }, [key]);
@@ -7492,11 +7636,20 @@ const ConceptQuizItem = ({
     const isCorrect = k === correctKey;
     const rescued = isCorrect && missed; // 同じ日に不正解→再回答で正解＝丸暗記の疑い・克服にしない
     const unsureHit = isCorrect && !missed && confidence === 'unsure'; // 迷って正解＝誤答と同じく要復習（下期規範 L2 手順4）
-    if (!isCorrect) setMissed(true);
-    // 遅延再生の原則: 同じ日の再正解と迷った正解は understood にせず review 止まり。別の日に迷わず正解して初めて克服。
-    const status = isCorrect ? missed || unsureHit ? 'review' : 'understood' : 'wrong';
+    if (!isCorrect) markMissed('wrong');else if (unsureHit) markMissed('weak');
+    // 遅延再生の原則: 同じ日の再正解と迷った正解は understood にせず △（vague）止まり。
+    // 迷わず正解しても、理由を言えたと押すまでは △ で仮記録する（押さずに離れたら △ のまま＝安全側）。
+    const clean = isCorrect && !missed && !unsureHit;
+    setAnswerCtx({
+      rescued,
+      unsureHit,
+      cause: missedCause
+    });
+    const status = isCorrect ? 'vague' : 'wrong';
+    setReasonGate(clean ? 'pending' : null);
     const overconfident = confidence === 'sure' && !isCorrect; // 自信あり×不正解=過信
-    const memoBase = (required ? '必須' : '任意') + (overconfident ? '・⚠過信' : '') + (rescued ? '・⚠即時再正解(丸暗記疑い)' : '') + (unsureHit ? '・迷って正解' : '');
+    const rescuedTag = rescued ? missedCause === 'wrong' ? '・⚠即時再正解(丸暗記疑い)' : '・同じ日の解き直し' : '';
+    const memoBase = (required ? '必須' : '任意') + (overconfident ? '・⚠過信' : '') + rescuedTag + (unsureHit ? '・迷って正解' : '');
     try {
       const raw = localStorage.getItem(key);
       const base = raw ? JSON.parse(raw) || {} : {};
@@ -7507,6 +7660,7 @@ const ConceptQuizItem = ({
         updatedAt: now,
         answeredOn: today,
         lastWrongOn: isCorrect ? base.lastWrongOn || '' : today,
+        lastWeakOn: isCorrect && (missed || unsureHit) ? today : base.lastWeakOn || '',
         firstSeenAt: base.firstSeenAt || now,
         reviewCount: (base.reviewCount || 0) + 1,
         source: 'kikai-concept',
@@ -7520,12 +7674,40 @@ const ConceptQuizItem = ({
         memoBase: memoBase,
         recallNote: base.recallNote || '',
         error_tag: base.error_tag || null,
+        mark: kikaiStatusMark(status),
+        reasonSaid: null,
         memo: fmtMemo({
           memoBase: memoBase,
           recallNote: base.recallNote,
           error_tag: base.error_tag
         })
       });
+      localStorage.setItem(key, JSON.stringify(rec));
+      window.dispatchEvent(new CustomEvent('section-check-changed', {
+        detail: {
+          key,
+          status
+        }
+      }));
+    } catch (e) {}
+  };
+  const confirmReason = said => {
+    setReasonGate(said ? 'yes' : 'no');
+    if (!said) markMissed('weak'); // 同じ日に解き直して正解しても ◎ にしない
+    const status = said ? 'understood' : 'vague';
+    try {
+      const raw = localStorage.getItem(key);
+      const base = raw ? JSON.parse(raw) || {} : {};
+      const memoBase = (base.memoBase || '') + (said ? '' : '・理由を言えない');
+      const rec = Object.assign({}, base, {
+        status,
+        mark: kikaiStatusMark(status),
+        reasonSaid: said,
+        memoBase,
+        updatedAt: new Date().toISOString(),
+        lastWeakOn: said ? base.lastWeakOn || '' : kikaiLocalDate()
+      });
+      rec.memo = fmtMemo(rec);
       localStorage.setItem(key, JSON.stringify(rec));
       window.dispatchEvent(new CustomEvent('section-check-changed', {
         detail: {
@@ -7575,11 +7757,12 @@ const ConceptQuizItem = ({
   const retry = () => {
     setSelected(null);
     setRevealed(false);
+    setReasonGate(null);
   };
   const isCorrect = revealed && selected === correctKey;
-  // 表示用。choose で setMissed(true) するのは不正解のときだけなので、正解表示中の missed は「回答前から」の値
-  const rescuedView = isCorrect && missed; // 同じ日の再回答での正解＝克服ではない
-  const unsureView = isCorrect && !missed && confidence === 'unsure'; // 迷って正解＝要復習
+  // 表示用。答えた時点の判定（answerCtx）を使う。missed は答えた後に △ でも立つので、表示には使わない
+  const rescuedView = isCorrect && answerCtx.rescued; // 同じ日の再回答での正解＝克服ではない
+  const unsureView = isCorrect && answerCtx.unsureHit; // 迷って正解＝要復習
   return /*#__PURE__*/React.createElement("div", {
     style: {
       border: '1px solid var(--rule)',
@@ -7616,7 +7799,11 @@ const ConceptQuizItem = ({
       fontSize: 11,
       color: 'var(--ink-mute)'
     }
-  }, "· 前回: ", prev.status === 'understood' ? '◎正解' : prev.status === 'review' ? '△要復習' : '×不正解', prev.reviewCount > 1 ? `（${prev.reviewCount}回目）` : '')), /*#__PURE__*/React.createElement("p", {
+  }, "· 前回: ", {
+    '◎': '◎正解',
+    '△': '△要復習',
+    '×': '×不正解'
+  }[kikaiStatusMark(prev.status)] || '—', prev.reviewCount > 1 ? `（${prev.reviewCount}回目）` : '')), /*#__PURE__*/React.createElement("p", {
     style: {
       margin: '0 0 10px',
       lineHeight: 1.7
@@ -7686,7 +7873,7 @@ const ConceptQuizItem = ({
         fontWeight: 700
       }
     }, " ← 正解"));
-  })), revealed && /*#__PURE__*/React.createElement("div", {
+  })), revealed && reasonGate === 'pending' && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       padding: '10px 12px',
@@ -7697,18 +7884,70 @@ const ConceptQuizItem = ({
     }
   }, /*#__PURE__*/React.createElement("strong", {
     style: {
-      color: isCorrect ? rescuedView || unsureView ? 'var(--warn)' : 'var(--ok)' : 'var(--danger)'
+      color: 'var(--ok)'
     }
-  }, isCorrect ? rescuedView ? '△ 再回答で正解' : unsureView ? '△ 迷って正解' : '◎ 正解' : '× 不正解'), !isCorrect && /*#__PURE__*/React.createElement("span", {
+  }, "正解。"), /*#__PURE__*/React.createElement("span", null, " 解説を開く前に、", /*#__PURE__*/React.createElement("strong", null, "なぜその答えになるか"), "を1行で言ってから押す。"), /*#__PURE__*/React.createElement("div", {
     style: {
-      color: 'var(--ink-soft)'
+      display: 'flex',
+      gap: 8,
+      marginTop: 8,
+      flexWrap: 'wrap'
     }
-  }, " → 間違いノートに記録しました"), rescuedView && /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => confirmReason(true),
+    style: {
+      padding: '4px 12px',
+      borderRadius: 4,
+      cursor: 'pointer',
+      fontSize: 13,
+      background: 'transparent',
+      color: 'var(--ok)',
+      border: '1px solid var(--ok)'
+    }
+  }, "◎ 言えた"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => confirmReason(false),
+    style: {
+      padding: '4px 12px',
+      borderRadius: 4,
+      cursor: 'pointer',
+      fontSize: 13,
+      background: 'transparent',
+      color: 'var(--warn)',
+      border: '1px solid var(--warn)'
+    }
+  }, "△ 言えない"))), revealed && reasonGate !== 'pending' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 10,
+      padding: '10px 12px',
+      borderRadius: 6,
+      background: 'var(--bg-sunken)',
+      fontSize: 13,
+      lineHeight: 1.7
+    }
+  }, /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: isCorrect ? rescuedView || unsureView || reasonGate === 'no' ? 'var(--warn)' : 'var(--ok)' : 'var(--danger)'
+    }
+  }, isCorrect ? rescuedView ? '△ 再回答で正解' : unsureView ? '△ 迷って正解' : reasonGate === 'no' ? '△ 正解だが理由を言えない' : '◎ 正解（理由も言えた）' : '× 不正解'), reasonGate === 'no' && /*#__PURE__*/React.createElement("span", {
     style: {
       color: 'var(--warn)',
       fontWeight: 700
     }
-  }, " → 今日いちど不正解だったので「要復習」として記録し、間違いノートに集める（その場の正解＝丸暗記の可能性）"), confidence === 'sure' && !isCorrect && /*#__PURE__*/React.createElement("span", {
+  }, " → 覚えていただけの正解の可能性がある。「要復習」として記録し、間違いノートに集める"), !isCorrect && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--ink-soft)'
+    }
+  }, " → 間違いノートに記録しました"), rescuedView && answerCtx.cause === 'wrong' && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--warn)',
+      fontWeight: 700
+    }
+  }, " → 今日いちど不正解だったので「要復習」として記録し、間違いノートに集める（その場の正解＝丸暗記の可能性）"), rescuedView && answerCtx.cause !== 'wrong' && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--warn)',
+      fontWeight: 700
+    }
+  }, " → 今日いちど △（迷った・理由を言えない）だったので、同じ日の解き直しは △ として記録する。日を空けて、迷わず理由まで言えたら ◎"), confidence === 'sure' && !isCorrect && /*#__PURE__*/React.createElement("span", {
     style: {
       color: 'var(--danger)',
       fontWeight: 700
@@ -7832,7 +8071,8 @@ const ConceptQuizScore = ({
   Object.keys(recs).forEach(id => {
     const r = recs[id];
     if (!r || !r.status) return;
-    if (r.status === 'understood') ok++;else if (r.status === 'review') review++;else ng++;
+    const m = kikaiStatusMark(r.status);
+    if (m === '◎') ok++;else if (m === '△') review++;else ng++;
     if (r.overconfident) over++;
     if (r.updatedAt && r.updatedAt > latest) latest = r.updatedAt;
   });
@@ -7899,7 +8139,7 @@ const ConceptQuizScore = ({
       color: 'var(--ink-mute)',
       lineHeight: 1.6
     }
-  }, "◎＝迷わず一発で正解 ／ △＝同じ日に間違えた後の正解、または迷って正解（要復習として記録し、間違いノートに集める） ／ ×＝不正解。", latest && `　最終回答: ${fmtDate(latest)}。`, "記録はこの端末（ブラウザ）に保存され、別の端末・シークレットウィンドウには引き継がれない。"));
+  }, "◎＝迷わず正解し、解説を開く前に理由も言えた ／ △＝正解したが、迷った・理由を言えない・同じ日に間違えた後の正解（要復習として記録し、間違いノートに集める） ／ ×＝不正解。確認問題は時間を測らないので ○ は使わない。", latest && `　最終回答: ${fmtDate(latest)}。`, "記録はこの端末（ブラウザ）に保存され、別の端末・シークレットウィンドウには引き継がれない。"));
 };
 
 /* ---- ConceptQuiz: ページ冒頭の「まず腕試し」ブロック（テスト効果＝先に思い出す） ---- */
@@ -8010,12 +8250,7 @@ const FSRS_DECAY = -FSRS_W[20];
 const FSRS_FACTOR = Math.pow(0.9, 1 / FSRS_DECAY) - 1;
 const FSRS_RETENTION = 0.9;
 const FSRS_MAX_INTERVAL = 365;
-const FSRS_RATING = {
-  '×': 1,
-  '△': 2,
-  '○': 3,
-  '◎': 4
-};
+const FSRS_RATING = Object.fromEntries(Object.keys(KIKAI_MARKS).map(m => [m, KIKAI_MARKS[m].fsrs])); // { '◎':4, '○':3, '△':2, '×':1 }
 const fsrsClampD = d => Math.min(Math.max(d, 1.0), 10.0);
 const fsrsClampS = s => Math.max(s, 0.001);
 const fsrsInitS = rating => fsrsClampS(FSRS_W[rating - 1]);
@@ -8499,7 +8734,9 @@ const kakomonStep = (prev, next, today, load) => {
    ============================================================ */
 
 const KIKAI_STORE_PREFIX = 'denken_check::kikai_';
-const KIKAI_EXPORT_SCHEMA = 1;
+/* 2: 節末の保存値に版を前置（'2:◎'）し、確認問題・ひっかけ表に mark・reasonSaid・lastWeakOn を足した（G23）。
+   旧ページ（1）が新しい書き出しを黙って取り込み、'2:◎' を生のまま表示するのを防ぐ。新ページは 1 も読める。 */
+const KIKAI_EXPORT_SCHEMA = 2;
 const KIKAI_EXPORT_APP = 'denken3-kikai-wiki';
 const kikaiKeyKind = k => {
   if (/::kakomon::v1$/.test(k)) return 'kakomon';
@@ -8549,7 +8786,7 @@ function kikaiCountStore(data) {
         });
       } catch (e) {/* 壊れた値は数えない */}
     } else if (kind === 'section') {
-      if ((data[k] || '').trim()) c.section++;
+      if (kikaiSectionMark(data[k])) c.section++; // 旧形式の '×'（未実施）は記録として数えない
     } else {
       c[kind]++;
     }
@@ -8766,7 +9003,9 @@ function kikaiApplyImport(incoming, mode) {
         if (b && (!a || String(b.updatedAt || '') > String(a.updatedAt || ''))) localStorage.setItem(k, incoming[k]);
         return;
       }
-      // section: 日付を持たないので、既存があればそれを残す（マージで消さないことを優先）
+      // section: 日付を持たないので、既存があればそれを残す（マージで消さないことを優先）。
+      // ただし旧形式の '×'（未実施の意味）など、読むと空になる既存値は無いものとして取り込み側を採る
+      if (kind === 'section' && !kikaiSectionMark(cur) && kikaiSectionMark(incoming[k])) localStorage.setItem(k, incoming[k]);
     } catch (e) {/* 容量超過等。1件失っても他は続ける */}
   });
 }
@@ -9400,7 +9639,7 @@ const KakomonProgress = ({
       color: 'var(--ink-soft)',
       margin: '0 0 8px'
     }
-  }, "解いた問のマスをタップすると ", /*#__PURE__*/React.createElement("strong", null, "◎ → ○ → △ → × → 空"), " と変わり、", /*#__PURE__*/React.createElement("strong", null, "その日の日付も一緒に残る"), "。", /*#__PURE__*/React.createElement("strong", null, "判定を上げたいとき"), "（△ → ○ など）は空まで回して付け直す。途中で一度マスが消えるが、", /*#__PURE__*/React.createElement("strong", null, "その日のうちなら履歴は残る"), "ので間隔は振り出しに戻らない。 タップするとマスの下に", /*#__PURE__*/React.createElement("strong", null, "1行メモ"), "が出る。△× なら「なぜ落としたか」を、◎○ なら「なぜその式か」を書く。", /*#__PURE__*/React.createElement("strong", null, "正解しても「なぜその式か」を1行で言えなければ「言えない → △」で △"), " に落とす（覚えていただけの正解を弾くため）。", /*#__PURE__*/React.createElement("strong", null, "問15〜18 は B問題"), "なので (a)(b) を別マスにしてある。解いていない問は空のままでよい （年度により B問題の構成が違う。問17・18 は選択）。"), /*#__PURE__*/React.createElement("p", {
+  }, "解いた問のマスをタップすると ", /*#__PURE__*/React.createElement("strong", null, "◎ → ○ → △ → × → 空"), " と変わり、", /*#__PURE__*/React.createElement("strong", null, "その日の日付も一緒に残る"), "。", /*#__PURE__*/React.createElement("strong", null, "判定を上げたいとき"), "（△ → ○ など）は空まで回して付け直す。途中で一度マスが消えるが、", /*#__PURE__*/React.createElement("strong", null, "その日のうちなら履歴は残る"), "ので間隔は振り出しに戻らない。 タップするとマスの下に", /*#__PURE__*/React.createElement("strong", null, "1行メモ"), "が出る。△× なら「なぜ落としたか」を、◎○ なら「なぜその式か」を書く。", /*#__PURE__*/React.createElement("strong", null, "正解しても「なぜその式か」を1行で言えなければ「言えない → △」で △"), " に落とす（覚えていただけの正解を弾くため）。 記号の意味は ◎＝", KIKAI_MARKS['◎'].def, "／○＝", KIKAI_MARKS['○'].def, "／△＝", KIKAI_MARKS['△'].def, "／×＝", KIKAI_MARKS['×'].def, "。", /*#__PURE__*/React.createElement("strong", null, "迷って正解したら ○ ではなく △"), "（目安時間は A問題で1問3分）。", /*#__PURE__*/React.createElement("strong", null, "問15〜18 は B問題"), "なので (a)(b) を別マスにしてある。解いていない問は空のままでよい （年度により B問題の構成が違う。問17・18 は選択）。"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 12,
       color: 'var(--ink-soft)',
@@ -46022,13 +46261,13 @@ const StudyLogPage = ({
   scope: "col"
 }, "意味"), /*#__PURE__*/React.createElement("th", {
   scope: "col"
-}, "見分け方"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "◎")), /*#__PURE__*/React.createElement("td", null, "解説を見ずに正解し、", /*#__PURE__*/React.createElement("strong", null, "解法と理由を説明できる")), /*#__PURE__*/React.createElement("td", null, "人に教えられる")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "○")), /*#__PURE__*/React.createElement("td", null, "正解した。ただし", /*#__PURE__*/React.createElement("strong", null, "少し迷った")), /*#__PURE__*/React.createElement("td", null, "選択肢を絞る場面で手が止まった")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "△")), /*#__PURE__*/React.createElement("td", null, "正解したが", /*#__PURE__*/React.createElement("strong", null, "勘・公式の選び方・理解に不安がある")), /*#__PURE__*/React.createElement("td", null, "「なぜその式か」を1行で言えない／時間超過")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "×")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "不正解"), "、または正解でも", /*#__PURE__*/React.createElement("strong", null, "解法が分からない")), /*#__PURE__*/React.createElement("td", null, "解説を読んで初めて筋道が分かった"))))), /*#__PURE__*/React.createElement("p", {
+}, "見分け方"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "◎")), /*#__PURE__*/React.createElement("td", null, "解説を見ずに正解し、", /*#__PURE__*/React.createElement("strong", null, "迷いがなく、理由を1行で言える"), "。目安時間内"), /*#__PURE__*/React.createElement("td", null, "本番でそのまま取れる")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "○")), /*#__PURE__*/React.createElement("td", null, "◎ の条件のうち", /*#__PURE__*/React.createElement("strong", null, "目安時間内だけが欠けた")), /*#__PURE__*/React.createElement("td", null, "A問題で1問3分を超えた")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "△")), /*#__PURE__*/React.createElement("td", null, "正解したが、", /*#__PURE__*/React.createElement("strong", null, "迷った／理由を言えない／同じ日の解き直しだった")), /*#__PURE__*/React.createElement("td", null, "選択肢を絞る場面で手が止まった／「なぜその式か」を1行で言えない")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "×")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "不正解"), "、または正解でも", /*#__PURE__*/React.createElement("strong", null, "解法が分からない")), /*#__PURE__*/React.createElement("td", null, "解説を読んで初めて筋道が分かった"))))), /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
     margin: "8px 0 0"
   }
-}, "4段が重ならないよう「", /*#__PURE__*/React.createElement("strong", null, "正解したか"), "」と「", /*#__PURE__*/React.createElement("strong", null, "理由を言えるか"), "」の2軸で切ってある。 正解したかだけで付けると ◎ と ○ の区別が消え、記録が「解いた／解いていない」の2値に退化する。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "正解しても「なぜその式か」を1行で言えなければ △ に落とす。"), "受験直後に「答えを覚えていて何とか解けた問題があった」という実感が残っており、 覚えているだけの正解を ○ にすると、この記録が使えなくなる。"), /*#__PURE__*/React.createElement("h3", {
+}, "4段が重ならないよう「", /*#__PURE__*/React.createElement("strong", null, "正解したか"), "」「", /*#__PURE__*/React.createElement("strong", null, "迷ったか"), "」「", /*#__PURE__*/React.createElement("strong", null, "理由を言えるか"), "」「", /*#__PURE__*/React.createElement("strong", null, "時間内か"), "」で切ってある。", /*#__PURE__*/React.createElement("strong", null, "迷って正解したら ○ ではなく △"), "。迷った正解は、放っておくと半分以上落ちるので、間違いと同じく復習に回す。 同じ記号を、確認問題・ひっかけ表・1分復習・節末の自己評価でも同じ意味で使う （時間を測らない部品では ○ を使わない）。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "正解しても「なぜその式か」を1行で言えなければ △ に落とす。"), "受験直後に「答えを覚えていて何とか解けた問題があった」という実感が残っており、 覚えているだけの正解を ○ にすると、この記録が使えなくなる。"), /*#__PURE__*/React.createElement("h3", {
   id: "retry"
 }, "次に解き直す日はどう決まるか"), /*#__PURE__*/React.createElement("p", null, "間違えた直後に解き直すと、", /*#__PURE__*/React.createElement("strong", null, "覚えているから解けてしまう"), "。それは定着ではない。 少し忘れた頃に思い出して初めて記憶に残るので、", /*#__PURE__*/React.createElement("strong", null, "次回の日付は忘却曲線から算出"), "する。 固定日数ではなく、判定と過去の履歴で伸び縮みする。"), /*#__PURE__*/React.createElement("div", {
   className: "table-wrap"
@@ -46446,13 +46685,13 @@ const GuidePage = ({
     style: {
       margin: 0
     }
-  }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "学習"), " — 単元ページを読む。冒頭の確認問題で現在地を測り、各節の末尾で ◎○△× の自己評価を付ける"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "過去問"), " — その単元の過去問を 5〜10 問。", /*#__PURE__*/React.createElement("a", {
+  }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "学習"), " — 単元ページを読む。冒頭の確認問題で現在地を測り、各節の末尾で「結論を隠して1行で言えるか」を ◎△× で付ける"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "過去問"), " — その単元の過去問を 5〜10 問。", /*#__PURE__*/React.createElement("a", {
     href: "#",
     onClick: e => {
       e.preventDefault();
       onNav("study-log", "tracker");
     }
-  }, "過去問の進捗"), " に ◎○△× を残す"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "復習"), " — 間違えた問は正答とその理由を確かめ、", /*#__PURE__*/React.createElement("strong", null, "その日のうちに一度、何も見ずに解き直せるところまで戻す"), "。ただし当日の再正解は克服に数えず、記録は × のまま日を空けて解き直す。△× はチャットに貼って学習ログに残す"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "次の単元へ"), " — 前の単元の △× は、日を空けてから戻る"))), /*#__PURE__*/React.createElement("h2", {
+  }, "過去問の進捗"), " に ◎○△× を残す"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "復習"), " — 間違えた問は正答とその理由を確かめ、", /*#__PURE__*/React.createElement("strong", null, "その日のうちに一度、何も見ずに解き直せるところまで戻す"), "。ただし当日の再正解は克服に数えず、記録は △（同じ日の解き直し）にとどめて、日を空けて解き直す。△× はチャットに貼って学習ログに残す"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "次の単元へ"), " — 前の単元の △× は、日を空けてから戻る"))), /*#__PURE__*/React.createElement("h2", {
     id: "plan"
   }, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
