@@ -6864,6 +6864,363 @@ function freqLabel(freq) {
     low: "出題頻度: 低"
   }[freq] || "—";
 }
+
+/* ============================================================ 全体像（核＋3段）
+   「森・ミクロ・マクロで見る」ブロックの中身を、核の1行 → 原理（ミクロ）→ 法則（マクロ）→ 操作（実務）
+   の3段と橋でつなぐ型。誘導機（#1573）で作り、機械の各ページで共有する。
+   各段の出題数は本文に書かず、台帳（kakomonForTopic＝照合済みの回だけ）から描画のたびに数える。
+   段への振り分けは台帳の小分類（subtopic）をページごとの stageMap で割り当てる。
+   stageMap に無い小分類（空・新しい節 id）は「未分類」として数え、黙って消さない。 */
+const LAYER_CARD = {
+  background: "var(--bg-elev)",
+  border: "1px solid var(--rule)",
+  borderRadius: 10,
+  padding: "10px 14px 12px"
+};
+const LAYER_BRIDGE = {
+  margin: "0 0 0 20px",
+  borderLeft: "3px solid var(--accent)",
+  padding: "6px 12px",
+  fontSize: 13,
+  color: "var(--ink-soft)",
+  lineHeight: 1.7
+};
+const LAYER_CHIP = {
+  border: "1px solid var(--rule)",
+  background: "var(--bg)",
+  borderRadius: 6,
+  padding: "2px 8px",
+  fontSize: 13,
+  lineHeight: 1.5,
+  textAlign: "center"
+};
+const LAYER_CHIP_SUB = {
+  display: "block",
+  color: "var(--ink-mute)",
+  fontSize: 11.5
+};
+const LAYER_LABEL = {
+  fontSize: 12,
+  fontWeight: 700,
+  color: "var(--ink-soft)"
+};
+const LAYER_GRID = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))"
+};
+const LAYER_STAGE_NAME = {
+  principle: "原理",
+  law: "法則",
+  operate: "操作"
+};
+
+/* stageMap = { principle: [小分類…], law: [...], operate: [...] } */
+const layerStageCounts = (topicId, stageMap) => {
+  const rows = typeof kakomonForTopic === "function" ? kakomonForTopic(topicId) : [];
+  const n = subs => rows.filter(r => subs.includes(r.subtopic)).length;
+  const mapped = Object.values(stageMap).flat();
+  // 同じ小分類を2つの段に書くと二重に数えるので、重複を数えて注記に出す
+  const dup = mapped.filter((x, i) => mapped.indexOf(x) !== i);
+  const bySub = {};
+  rows.forEach(r => {
+    bySub[r.subtopic || ""] = (bySub[r.subtopic || ""] || 0) + 1;
+  });
+  return {
+    total: rows.length,
+    principle: n(stageMap.principle || []),
+    law: n(stageMap.law || []),
+    operate: n(stageMap.operate || []),
+    unmapped: rows.filter(r => !mapped.includes(r.subtopic)).length,
+    dup,
+    bySub
+  };
+};
+/* 小分類 sub が台帳上で最多（同数を含む）のときだけ true。「最多」の札を固定で書かないため */
+const layerIsTop = (c, sub) => (c.bySub[sub] || 0) > 0 && (c.bySub[sub] || 0) >= Math.max(...Object.values(c.bySub));
+/* 段の中に置く「台帳で最多の小分類」の1行。札を式の行に付けると、その式だけの数に読めるので小分類名で書く */
+const LayerTopNote = ({
+  c,
+  sub,
+  labels
+}) => layerIsTop(c, sub) ? /*#__PURE__*/React.createElement("div", {
+  style: {
+    fontSize: 12,
+    margin: "4px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  style: {
+    background: "var(--warn-soft)",
+    borderRadius: 4,
+    padding: "0 5px",
+    whiteSpace: "nowrap"
+  }
+}, "台帳で最多"), "\u3000", labels[sub] || sub, "（小問", c.bySub[sub], "）") : null;
+const LayerHead = ({
+  no,
+  name,
+  layer,
+  q,
+  count,
+  total,
+  jump
+}) => /*#__PURE__*/React.createElement("div", {
+  style: {
+    display: "flex",
+    alignItems: "center",
+    gap: "4px 8px",
+    flexWrap: "wrap",
+    marginBottom: 6
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  "aria-hidden": "true",
+  style: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 24,
+    height: 24,
+    borderRadius: "50%",
+    background: "var(--accent)",
+    color: "var(--bg)",
+    fontSize: 13,
+    fontWeight: 700
+  }
+}, no), /*#__PURE__*/React.createElement("strong", {
+  style: {
+    fontSize: 15.5
+  }
+}, name), /*#__PURE__*/React.createElement("span", {
+  style: {
+    fontSize: 12,
+    color: "var(--ink-mute)"
+  }
+}, "（", layer, "）"), /*#__PURE__*/React.createElement("span", {
+  style: {
+    fontSize: 13,
+    color: "var(--ink-soft)"
+  }
+}, q), total > 0 && /*#__PURE__*/React.createElement("span", {
+  style: {
+    fontSize: 11.5,
+    fontWeight: 700,
+    padding: "1px 8px",
+    borderRadius: 9,
+    background: "var(--accent-soft)",
+    color: "var(--accent-ink)",
+    whiteSpace: "nowrap"
+  }
+}, "出題 小問", count, "／", total), /*#__PURE__*/React.createElement("span", {
+  style: {
+    marginLeft: "auto",
+    fontSize: 12,
+    color: "var(--info)",
+    whiteSpace: "nowrap"
+  }
+}, jump));
+
+/* 段のカード。stage は principle / law / operate のどれか。見出しの名前・3層名・問いは段で決まる */
+const LAYER_STAGE_META = {
+  principle: {
+    no: "1",
+    name: "原理",
+    layer: "ミクロ",
+    q: "なぜ動く？"
+  },
+  law: {
+    no: "2",
+    name: "法則",
+    layer: "マクロ",
+    q: "何で決まる？"
+  },
+  operate: {
+    no: "3",
+    name: "操作",
+    layer: "実務",
+    q: "どう動かす？"
+  }
+};
+const LayerStage = ({
+  stage,
+  c,
+  jump,
+  q,
+  children
+}) => {
+  const m = LAYER_STAGE_META[stage];
+  return /*#__PURE__*/React.createElement("div", {
+    style: LAYER_CARD
+  }, /*#__PURE__*/React.createElement(LayerHead, {
+    no: m.no,
+    name: m.name,
+    layer: m.layer,
+    q: q || m.q,
+    count: c[stage],
+    total: c.total,
+    jump: jump
+  }), children);
+};
+
+/* 核の1行。children が本文、sub が添え書き */
+const LayerCore = ({
+  children,
+  sub
+}) => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  style: {
+    background: "var(--accent-soft)",
+    border: "1.5px solid var(--accent)",
+    borderRadius: 10,
+    padding: "12px 16px",
+    margin: "0 0 4px"
+  }
+}, /*#__PURE__*/React.createElement("div", {
+  style: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: "var(--accent-ink)",
+    letterSpacing: "0.04em"
+  }
+}, "核 — これを持てば残りがぶら下がる"), /*#__PURE__*/React.createElement("div", {
+  style: {
+    fontSize: 16.5,
+    fontWeight: 700,
+    color: "var(--ink)",
+    margin: "2px 0 4px",
+    lineHeight: 1.6
+  }
+}, children), sub && /*#__PURE__*/React.createElement("div", {
+  style: {
+    fontSize: 13,
+    color: "var(--ink-soft)"
+  }
+}, sub)), /*#__PURE__*/React.createElement("div", {
+  "aria-hidden": "true",
+  style: {
+    margin: "0 0 0 24px",
+    color: "var(--accent)",
+    lineHeight: 1.4
+  }
+}, "↓"));
+/* 核の中で強調する語（下線） */
+const LayerKey = ({
+  children
+}) => /*#__PURE__*/React.createElement("span", {
+  style: {
+    color: "var(--accent-ink)",
+    borderBottom: "2px solid var(--accent)"
+  }
+}, children);
+
+/* 原理の因果の鎖。steps = [[語, 添え書き], …]。矢印は次の語と一緒に折り返す */
+const LayerChain = ({
+  steps
+}) => /*#__PURE__*/React.createElement("div", {
+  style: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 4,
+    margin: "2px 0 6px"
+  }
+}, steps.map(([t, sub], i) => {
+  const chip = /*#__PURE__*/React.createElement("span", {
+    style: LAYER_CHIP
+  }, t, sub && /*#__PURE__*/React.createElement("span", {
+    style: LAYER_CHIP_SUB
+  }, sub));
+  return i === 0 ? /*#__PURE__*/React.createElement(React.Fragment, {
+    key: i
+  }, chip) : /*#__PURE__*/React.createElement("span", {
+    key: i,
+    style: {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    "aria-hidden": "true",
+    style: {
+      color: "var(--accent)",
+      fontWeight: 700
+    }
+  }, "→"), chip);
+}));
+const LayerBridge = ({
+  label,
+  children
+}) => /*#__PURE__*/React.createElement("div", {
+  style: LAYER_BRIDGE
+}, /*#__PURE__*/React.createElement("strong", {
+  style: {
+    color: "var(--accent-ink)"
+  }
+}, label), "\u3000", children);
+
+/* 段の中の小箱（操作の「始動」「速度制御」など） */
+const LayerSubBox = ({
+  title,
+  sub,
+  children
+}) => /*#__PURE__*/React.createElement("div", {
+  style: {
+    border: "1px solid var(--rule)",
+    borderRadius: 8,
+    padding: "6px 10px",
+    background: "var(--bg)"
+  }
+}, /*#__PURE__*/React.createElement("div", {
+  style: {
+    fontSize: 13,
+    fontWeight: 700
+  }
+}, title, " ", sub && /*#__PURE__*/React.createElement("span", {
+  style: {
+    fontWeight: 400,
+    color: "var(--ink-mute)",
+    fontSize: 12
+  }
+}, sub)), /*#__PURE__*/React.createElement("ul", {
+  style: {
+    margin: 0,
+    paddingLeft: 18,
+    fontSize: 13,
+    lineHeight: 1.75
+  }
+}, children));
+
+/* 段の下の出題数の注記。labels は小分類 → 表示名 */
+const LayerCountNote = ({
+  c,
+  stageMap,
+  labels
+}) => {
+  if (!c.total) return null;
+  const scope = typeof kakomonScope === "function" ? kakomonScope() : null;
+  const mapText = Object.entries(stageMap).map(([k, subs]) => `${LAYER_STAGE_NAME[k]}＝${subs.length ? subs.map(x => `「${labels[x] || x}」`).join("") : "なし"}`).join("／");
+  return /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      color: "var(--ink-mute)",
+      margin: "6px 0 4px",
+      lineHeight: 1.6
+    }
+  }, "出題＝", scope ? `${scope.first}〜${scope.last} の${scope.sessions}回` : "照合済みの回", "でこの単元から出た小問 ", c.total, "（5点きざみ・問題冊子で照合済み）。 段への振り分けは台帳の小分類による（", mapText, "）。", c.unmapped > 0 && `どの段にも当たらない小問 ${c.unmapped}（未分類）。`, c.dup && c.dup.length > 0 && `対応表で2つの段に重なっている小分類がある（${c.dup.join("・")}）。`);
+};
+Object.assign(window, {
+  LAYER_CARD,
+  LAYER_LABEL,
+  LAYER_GRID,
+  layerStageCounts,
+  layerIsTop,
+  LayerTopNote,
+  LayerHead,
+  LayerStage,
+  LayerCore,
+  LayerKey,
+  LayerChain,
+  LayerBridge,
+  LayerSubBox,
+  LayerCountNote
+});
 Object.assign(window, {
   Eq,
   PageHeader,
@@ -10012,19 +10369,12 @@ Object.assign(window, {
    Induction Machine page (featured / deepest unit)
    ============================================================ */
 
-/* 全体像（核＋3段）の各段に添える出題数。本文へ数字を書かず、台帳（kakomonForTopic＝照合済みの回だけ）から
-   描画のたびに数える。段への振り分けは台帳の小分類による: overview→原理／torque・circuit→法則／start・speed→操作。
-   どれにも当たらない小分類（空・新しい節 id）は「未分類」として数え、黙って消さない。
-   キャプションの対応表も IM_SUBTOPIC_LABEL から作る（対応を2か所に手書きしない）。 */
+/* 全体像（核＋3段）。部品は kikai-components.jsx の Layer*（機械の各ページで共有）。
+   段への振り分け: overview→原理／torque・circuit→法則／start・speed→操作。 */
 const IM_STAGE_SUBTOPICS = {
   principle: ["overview"],
   law: ["torque", "circuit"],
   operate: ["start", "speed"]
-};
-const IM_STAGE_NAME = {
-  principle: "原理",
-  law: "法則",
-  operate: "操作"
 };
 const IM_SUBTOPIC_LABEL = {
   overview: "構造・原理",
@@ -10033,123 +10383,8 @@ const IM_SUBTOPIC_LABEL = {
   start: "始動",
   speed: "速度制御"
 };
-const inductionStageCounts = () => {
-  const rows = typeof kakomonForTopic === "function" ? kakomonForTopic("induction-machine") : [];
-  const n = subs => rows.filter(r => subs.includes(r.subtopic)).length;
-  const mapped = Object.values(IM_STAGE_SUBTOPICS).flat();
-  // 小分類ごとの件数。「最多」はトルクが本当に最多のときだけ付ける
-  const bySub = {};
-  rows.forEach(r => {
-    bySub[r.subtopic || ""] = (bySub[r.subtopic || ""] || 0) + 1;
-  });
-  const torque = bySub.torque || 0;
-  return {
-    total: rows.length,
-    principle: n(IM_STAGE_SUBTOPICS.principle),
-    law: n(IM_STAGE_SUBTOPICS.law),
-    operate: n(IM_STAGE_SUBTOPICS.operate),
-    unmapped: rows.filter(r => !mapped.includes(r.subtopic)).length,
-    torque,
-    torqueIsTop: torque > 0 && torque >= Math.max(...Object.values(bySub))
-  };
-};
-const imStageMapText = () => Object.entries(IM_STAGE_SUBTOPICS).map(([k, subs]) => `${IM_STAGE_NAME[k]}＝${subs.map(x => IM_SUBTOPIC_LABEL[x] || x).join("・")}`).join("／");
-const IM_STAGE_CARD = {
-  background: "var(--bg-elev)",
-  border: "1px solid var(--rule)",
-  borderRadius: 10,
-  padding: "10px 14px 12px"
-};
-const IM_BRIDGE = {
-  margin: "0 0 0 20px",
-  borderLeft: "3px solid var(--accent)",
-  padding: "6px 12px",
-  fontSize: 13,
-  color: "var(--ink-soft)",
-  lineHeight: 1.7
-};
-const IM_CHIP = {
-  border: "1px solid var(--rule)",
-  background: "var(--bg)",
-  borderRadius: 6,
-  padding: "2px 8px",
-  fontSize: 13,
-  lineHeight: 1.5,
-  textAlign: "center"
-};
-const IM_CHIP_SUB = {
-  display: "block",
-  color: "var(--ink-mute)",
-  fontSize: 11.5
-};
-
-/* 段の見出し行。no＝段番号、name＝段の名前、layer＝3層の呼び名（見出し「森・ミクロ・マクロで見る」との対応）、
-   q＝学習者の問い、count＝出題数（台帳が無いときは出さない）、jump＝本文の行き先 */
-const InductionStageHead = ({
-  no,
-  name,
-  layer,
-  q,
-  count,
-  total,
-  jump
-}) => /*#__PURE__*/React.createElement("div", {
-  style: {
-    display: "flex",
-    alignItems: "center",
-    gap: "4px 8px",
-    flexWrap: "wrap",
-    marginBottom: 6
-  }
-}, /*#__PURE__*/React.createElement("span", {
-  "aria-hidden": "true",
-  style: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 24,
-    height: 24,
-    borderRadius: "50%",
-    background: "var(--accent)",
-    color: "var(--bg)",
-    fontSize: 13,
-    fontWeight: 700
-  }
-}, no), /*#__PURE__*/React.createElement("strong", {
-  style: {
-    fontSize: 15.5
-  }
-}, name), /*#__PURE__*/React.createElement("span", {
-  style: {
-    fontSize: 12,
-    color: "var(--ink-mute)"
-  }
-}, "（", layer, "）"), /*#__PURE__*/React.createElement("span", {
-  style: {
-    fontSize: 13,
-    color: "var(--ink-soft)"
-  }
-}, q), total > 0 && /*#__PURE__*/React.createElement("span", {
-  style: {
-    fontSize: 11.5,
-    fontWeight: 700,
-    padding: "1px 8px",
-    borderRadius: 9,
-    background: "var(--accent-soft)",
-    color: "var(--accent-ink)",
-    whiteSpace: "nowrap"
-  }
-}, "出題 小問", count, "／", total), /*#__PURE__*/React.createElement("span", {
-  style: {
-    marginLeft: "auto",
-    fontSize: 12,
-    color: "var(--info)",
-    whiteSpace: "nowrap"
-  }
-}, jump));
 const InductionMachineLayers = () => {
-  const c = inductionStageCounts();
-  const scope = typeof kakomonScope === "function" ? kakomonScope() : null;
+  const c = layerStageCounts("induction-machine", IM_STAGE_SUBTOPICS);
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
     id: "layers"
   }, /*#__PURE__*/React.createElement("span", {
@@ -10347,118 +10582,42 @@ const InductionMachineLayers = () => {
       marginTop: "6px",
       lineHeight: 1.6
     }
-  }, "森（俯瞰）：理論で学ぶ三相交流・電磁誘導を土台に、誘導機は回転磁界とすべり s で回る。ここから比例推移・始動法、V/f 速度制御、そして同期機・電動機応用へ枝分かれする。")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "var(--accent-soft)",
-      border: "1.5px solid var(--accent)",
-      borderRadius: 10,
-      padding: "12px 16px",
-      margin: "0 0 4px"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 700,
-      color: "var(--accent-ink)",
-      letterSpacing: "0.04em"
-    }
-  }, "核 — これを持てば残りがぶら下がる"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 16.5,
-      fontWeight: 700,
-      color: "var(--ink)",
-      margin: "2px 0 4px",
-      lineHeight: 1.6
-    }
-  }, "誘導機は回転磁界に", /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--accent-ink)",
-      borderBottom: "2px solid var(--accent)"
-    }
-  }, "遅れて"), "回る。 この遅れ ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--accent-ink)",
-      borderBottom: "2px solid var(--accent)"
-    }
-  }, "s"), " が、速度と電力の分かれ方を決め、トルクの式にも入る。"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "var(--ink-soft)"
-    }
-  }, /*#__PURE__*/React.createElement(Eq, {
-    tex: "s = \\dfrac{N_s - N}{N_s}",
-    inline: true
-  }), "\u3000電動機は ", /*#__PURE__*/React.createElement(Eq, {
-    tex: "0 < s < 1",
-    inline: true
-  }), "（定格で数%）。", /*#__PURE__*/React.createElement(Eq, {
-    tex: "s = 0",
-    inline: true
-  }), " ならトルク0、始動の瞬間は ", /*#__PURE__*/React.createElement(Eq, {
-    tex: "s = 1",
-    inline: true
-  }), "。")), /*#__PURE__*/React.createElement("div", {
-    "aria-hidden": "true",
-    style: {
-      margin: "0 0 0 24px",
-      color: "var(--accent)",
-      lineHeight: 1.4
-    }
-  }, "↓"), /*#__PURE__*/React.createElement("div", {
-    style: IM_STAGE_CARD
-  }, /*#__PURE__*/React.createElement(InductionStageHead, {
-    no: "1",
-    name: "原理",
-    layer: "ミクロ",
-    q: "なぜ動く？",
-    count: c.principle,
-    total: c.total,
+  }, "森（俯瞰）：理論で学ぶ三相交流・電磁誘導を土台に、誘導機は回転磁界とすべり s で回る。ここから比例推移・始動法、V/f 速度制御、そして同期機・電動機応用へ枝分かれする。")), /*#__PURE__*/React.createElement(LayerCore, {
+    sub: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "s = \\dfrac{N_s - N}{N_s}",
+      inline: true
+    }), "\u3000電動機は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "0 < s < 1",
+      inline: true
+    }), "（定格で数%）。", /*#__PURE__*/React.createElement(Eq, {
+      tex: "s = 0",
+      inline: true
+    }), " ならトルク0、始動の瞬間は ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "s = 1",
+      inline: true
+    }), "。")
+  }, "誘導機は回転磁界に", /*#__PURE__*/React.createElement(LayerKey, null, "遅れて"), "回る。 この遅れ ", /*#__PURE__*/React.createElement(LayerKey, null, "s"), " が、速度と電力の分かれ方を決め、トルクの式にも入る。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "principle",
+    c: c,
     jump: "↓図解・1節"
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexWrap: "wrap",
-      alignItems: "center",
-      gap: 4,
-      margin: "2px 0 6px"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: IM_CHIP
-  }, "回転磁界", /*#__PURE__*/React.createElement("span", {
-    style: IM_CHIP_SUB
-  }, /*#__PURE__*/React.createElement(Eq, {
-    tex: "N_s = 120f/p",
-    inline: true
-  }))), [["回転子が遅れる", /*#__PURE__*/React.createElement(React.Fragment, null, "s ＞ 0")], ["磁束を切る", /*#__PURE__*/React.createElement(Eq, {
-    tex: "e = Blv",
-    inline: true
-  })], ["二次電流", /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
-    tex: "I_2",
-    inline: true
-  }), "（", /*#__PURE__*/React.createElement(Eq, {
-    tex: "f_2 = s f_1",
-    inline: true
-  }), "）")], ["力・トルク", /*#__PURE__*/React.createElement(Eq, {
-    tex: "F = B I_2 L",
-    inline: true
-  })]].map(([t, sub]) => /*#__PURE__*/React.createElement("span", {
-    key: t,
-    style: {
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 4
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    "aria-hidden": "true",
-    style: {
-      color: "var(--accent)",
-      fontWeight: 700
-    }
-  }, "→"), /*#__PURE__*/React.createElement("span", {
-    style: IM_CHIP
-  }, t, /*#__PURE__*/React.createElement("span", {
-    style: IM_CHIP_SUB
-  }, sub))))), /*#__PURE__*/React.createElement("p", {
+  }, /*#__PURE__*/React.createElement(LayerChain, {
+    steps: [["回転磁界", /*#__PURE__*/React.createElement(Eq, {
+      tex: "N_s = 120f/p",
+      inline: true
+    })], ["回転子が遅れる", /*#__PURE__*/React.createElement(React.Fragment, null, "s ＞ 0")], ["磁束を切る", /*#__PURE__*/React.createElement(Eq, {
+      tex: "e = Blv",
+      inline: true
+    })], ["二次電流", /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "I_2",
+      inline: true
+    }), "（", /*#__PURE__*/React.createElement(Eq, {
+      tex: "f_2 = s f_1",
+      inline: true
+    }), "）")], ["力・トルク", /*#__PURE__*/React.createElement(Eq, {
+      tex: "F = B I_2 L",
+      inline: true
+    })]]
+  }), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--ink-soft)",
@@ -10730,45 +10889,26 @@ const InductionMachineLayers = () => {
     tex: "N < N_s"
   }), "（", /*#__PURE__*/React.createElement(Eq, {
     tex: "s > 0"
-  }), "）で回る。外力で Nₛ より速く回すと s＜0 の発電機、逆向きに回すと s＞1 の制動になる。"))), /*#__PURE__*/React.createElement("div", {
-    style: IM_BRIDGE
-  }, /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: "var(--accent-ink)"
-    }
-  }, "橋①"), "\u3000導体1本ずつは追わず、遅れを ", /*#__PURE__*/React.createElement("strong", null, "s"), " で数える。等価回路では二次側の抵抗が ", /*#__PURE__*/React.createElement("strong", null, "r₂/s ＝ r₂（二次銅損）＋ r₂(1−s)/s（機械的出力）"), "に分かれる。"), /*#__PURE__*/React.createElement("div", {
-    style: IM_STAGE_CARD
-  }, /*#__PURE__*/React.createElement(InductionStageHead, {
-    no: "2",
-    name: "法則",
-    layer: "マクロ",
-    q: "何で決まる？",
-    count: c.law,
-    total: c.total,
+  }), "）で回る。外力で Nₛ より速く回すと s＜0 の発電機、逆向きに回すと s＞1 の制動になる。"))), /*#__PURE__*/React.createElement(LayerBridge, {
+    label: "橋①"
+  }, "導体1本ずつは追わず、遅れを ", /*#__PURE__*/React.createElement("strong", null, "s"), " で数える。等価回路では二次側の抵抗が ", /*#__PURE__*/React.createElement("strong", null, "r₂/s ＝ r₂（二次銅損）＋ r₂(1−s)/s（機械的出力）"), "に分かれる。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "law",
+    c: c,
     jump: "↓2節・3節"
-  }), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))",
+      ...LAYER_GRID,
       gap: "2px 16px",
       fontSize: 13.5,
       lineHeight: 1.8
     }
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      fontWeight: 700,
-      color: "var(--ink-soft)"
-    }
+    style: LAYER_LABEL
   }, "速度"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
     tex: "N = (1-s)\\,N_s",
     inline: true
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      fontWeight: 700,
-      color: "var(--ink-soft)"
-    }
+    style: LAYER_LABEL
   }, "電力"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
     tex: "P_2 : P_{c2} : P_m = 1 : s : (1-s)",
     inline: true
@@ -10779,12 +10919,8 @@ const InductionMachineLayers = () => {
       marginTop: 2
     }
   }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      fontWeight: 700,
-      color: "var(--ink-soft)"
-    }
-  }, "トルク"), c.torqueIsTop && /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "トルク"), layerIsTop(c, "torque") && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11.5,
       background: "var(--warn-soft)",
@@ -10793,7 +10929,7 @@ const InductionMachineLayers = () => {
       margin: "0 6px",
       whiteSpace: "nowrap"
     }
-  }, "最多 小問", c.torque), "\u3000", /*#__PURE__*/React.createElement(Eq, {
+  }, "最多 小問", c.bySub.torque), "\u3000", /*#__PURE__*/React.createElement(Eq, {
     tex: "T = P_2/\\omega_s",
     inline: true
   }), "（", /*#__PURE__*/React.createElement(Eq, {
@@ -10817,53 +10953,20 @@ const InductionMachineLayers = () => {
       color: "var(--ink-soft)",
       margin: "6px 0 0"
     }
-  }, "図で見るなら、2節の ", /*#__PURE__*/React.createElement("strong", null, "T 形等価回路図"), "と3節の", /*#__PURE__*/React.createElement("strong", null, "トルク・滑り曲線"), "。")), /*#__PURE__*/React.createElement("div", {
-    style: IM_BRIDGE
-  }, /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: "var(--accent-ink)"
-    }
-  }, "橋②"), "\u3000外から動かせる変数（", /*#__PURE__*/React.createElement("strong", null, "V・r₂・f・p"), "）を変えると、法則を通って s・速度・トルクが変わる。"), /*#__PURE__*/React.createElement("div", {
-    style: IM_STAGE_CARD
-  }, /*#__PURE__*/React.createElement(InductionStageHead, {
-    no: "3",
-    name: "操作",
-    layer: "実務",
-    q: "どう動かす？",
-    count: c.operate,
-    total: c.total,
+  }, "図で見るなら、2節の ", /*#__PURE__*/React.createElement("strong", null, "T 形等価回路図"), "と3節の", /*#__PURE__*/React.createElement("strong", null, "トルク・滑り曲線"), "。")), /*#__PURE__*/React.createElement(LayerBridge, {
+    label: "橋②"
+  }, "外から動かせる変数（", /*#__PURE__*/React.createElement("strong", null, "V・r₂・f・p"), "）を変えると、法則を通って s・速度・トルクが変わる。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "operate",
+    c: c,
     jump: "↓4節・5節"
-  }), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))",
+      ...LAYER_GRID,
       gap: 8
     }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      border: "1px solid var(--rule)",
-      borderRadius: 8,
-      padding: "6px 10px",
-      background: "var(--bg)"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700
-    }
-  }, "始動 ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontWeight: 400,
-      color: "var(--ink-mute)",
-      fontSize: 12
-    }
-  }, "s＝1：回転子が止まり、二次の起電力も周波数も運転中より大きい → 電流は大きいが、二次力率が低くトルクは大きくない")), /*#__PURE__*/React.createElement("ul", {
-    style: {
-      margin: 0,
-      paddingLeft: 18,
-      fontSize: 13,
-      lineHeight: 1.75
-    }
+  }, /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "始動",
+    sub: "s＝1：回転子が止まり、二次の起電力も周波数も運転中より大きい → 電流は大きいが、二次力率が低くトルクは大きくない"
   }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "V"), " を下げる → Y-Δ（電源側の線電流・トルクとも ", /*#__PURE__*/React.createElement(Eq, {
     tex: "1/3",
     inline: true
@@ -10876,45 +10979,20 @@ const InductionMachineLayers = () => {
   }), "、電動機の電流 ", /*#__PURE__*/React.createElement(Eq, {
     tex: "a",
     inline: true
-  }), "）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "r₂"), " を上げる → 二次抵抗始動（", /*#__PURE__*/React.createElement("strong", null, "巻線形"), "・比例推移）。かご形は二重かご形・深溝形で、始動時だけ実効の r₂ を大きくする"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      border: "1px solid var(--rule)",
-      borderRadius: 8,
-      padding: "6px 10px",
-      background: "var(--bg)"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700
-    }
-  }, "速度制御 ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontWeight: 400,
-      color: "var(--ink-mute)",
-      fontSize: 12
-    }
-  }, /*#__PURE__*/React.createElement(Eq, {
-    tex: "N = (1-s)\\,120f/p",
-    inline: true
-  }))), /*#__PURE__*/React.createElement("ul", {
-    style: {
-      margin: 0,
-      paddingLeft: 18,
-      fontSize: 13,
-      lineHeight: 1.75
-    }
+  }), "）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "r₂"), " を上げる → 二次抵抗始動（", /*#__PURE__*/React.createElement("strong", null, "巻線形"), "・比例推移）。かご形は二重かご形・深溝形で、始動時だけ実効の r₂ を大きくする")), /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "速度制御",
+    sub: /*#__PURE__*/React.createElement(Eq, {
+      tex: "N = (1-s)\\,120f/p",
+      inline: true
+    })
   }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "f"), " → V/f 一定（", /*#__PURE__*/React.createElement(Eq, {
     tex: "\\varPhi \\propto V/f",
     inline: true
-  }), " なので、V/f を一定にして磁束を保つ。基底周波数まで。低周波はトルクブースト、基底周波数より上は V 一定で定出力）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "p"), " → 極数切換（段階的・かご形）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "r₂"), "（→ s）→ 二次抵抗制御（巻線形・効率が下がる）"))))), c.total > 0 && /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 12,
-      color: "var(--ink-mute)",
-      margin: "6px 0 4px",
-      lineHeight: 1.6
-    }
-  }, "出題＝", scope ? `${scope.first}〜${scope.last} の${scope.sessions}回` : "照合済みの回", "でこの単元から出た小問 ", c.total, "（5点きざみ・問題冊子で照合済み）。 段への振り分けは台帳の小分類による（", imStageMapText(), "）。", c.unmapped > 0 && `どの段にも当たらない小問 ${c.unmapped}（未分類）。`));
+  }), " なので、V/f を一定にして磁束を保つ。基底周波数まで。低周波はトルクブースト、基底周波数より上は V 一定で定出力）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "p"), " → 極数切換（段階的・かご形）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "r₂"), "（→ s）→ 二次抵抗制御（巻線形・効率が下がる）")))), /*#__PURE__*/React.createElement(LayerCountNote, {
+    c: c,
+    stageMap: IM_STAGE_SUBTOPICS,
+    labels: IM_SUBTOPIC_LABEL
+  }));
 };
 
 /* Y-Δ 始動：なぜ電流もトルクも 1/3 になるか（1/√3 との区別） */
@@ -12774,533 +12852,669 @@ Object.assign(window, {
    Lighting, Heat, etc.
    ============================================================ */
 
-const DCMachineLayers = () => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
-  id: "layers"
-}, /*#__PURE__*/React.createElement("span", {
-  className: "h-num"
-}, "0."), "このページ（直流機）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 13,
-    color: "var(--ink-soft)",
-    margin: "0 0 4px"
-  }
-}, "同じテーマを ", /*#__PURE__*/React.createElement("strong", null, "森（俯瞰）→ ミクロ（なぜ）→ マクロ（解く）"), " の3層で見る。まず森でこのページの位置を掴み、ミクロで機構を、マクロで解き方を押さえる。"), /*#__PURE__*/React.createElement("figure", {
-  style: {
-    margin: "10px 0 14px",
-    background: "var(--bg-elev)",
-    borderRadius: "8px",
-    padding: "12px 8px 8px"
-  }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 480 170",
-  role: "img",
-  "aria-label": "直流機の位置づけ：理論の電磁力F=BIlと電磁誘導から来て、直流機でE=KφNとT=K'φIaを押さえ、誘導機・同期機との比較、速度制御、電動機応用へつながる俯瞰図",
-  style: {
-    display: "block",
-    width: "100%",
-    height: "auto",
-    maxWidth: "480px",
-    margin: "0 auto"
-  }
-}, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
-  id: "kdc-mori-arr",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--ink-mute)"
-}))), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "前提（入口）"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "このページ"), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "つながる先（出口）"), /*#__PURE__*/React.createElement("rect", {
-  x: "16",
-  y: "40",
-  width: "108",
-  height: "86",
-  rx: "6",
-  fill: "var(--bg)",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "66",
-  textAnchor: "middle",
-  fontSize: "13",
-  fontWeight: "600",
-  fill: "var(--ink)"
-}, "理論（電磁気）"), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "88",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "電磁力 F=BIl"), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "107",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "電磁誘導 e=Blv"), /*#__PURE__*/React.createElement("line", {
-  x1: "126",
-  y1: "83",
-  x2: "159",
-  y2: "83",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "2",
-  markerEnd: "url(#kdc-mori-arr)"
-}), /*#__PURE__*/React.createElement("rect", {
-  x: "162",
-  y: "32",
-  width: "156",
-  height: "102",
-  rx: "8",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "2"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "55",
-  textAnchor: "middle",
-  fontSize: "14",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "直流機"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "77",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "E = KφN"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "95",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "T = K′φIₐ"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "113",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "V = E + IₐRₐ"), /*#__PURE__*/React.createElement("line", {
-  x1: "320",
-  y1: "83",
-  x2: "353",
-  y2: "83",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "2",
-  markerEnd: "url(#kdc-mori-arr)"
-}), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "40",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "57",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "誘導機・同期機"), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "70",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "87",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "速度制御"), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "100",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "117",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "電動機応用"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "154",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "電磁力・電磁誘導から来て、E と T の式で特性を掴み、他の回転機・応用へ枝分かれ")), /*#__PURE__*/React.createElement("figcaption", {
-  style: {
-    fontSize: "12px",
-    color: "var(--ink-mute)",
-    textAlign: "center",
-    marginTop: "6px",
-    lineHeight: 1.6
-  }
-}, "森（俯瞰）：理論で学ぶ電磁力 F=BIl と電磁誘導を土台に、直流機は E=KφN と T=K′φIₐ で速度・トルクが決まる回転機。ここから誘導機・同期機との比較、速度制御、電車・クレーンなどの電動機応用へ枝分かれする。")), /*#__PURE__*/React.createElement("div", {
-  className: "table-wrap"
-}, /*#__PURE__*/React.createElement("table", {
-  className: "data-table"
-}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "視点"), /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "何を見るか"), /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "代表する式・量"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "ミクロ"), /*#__PURE__*/React.createElement("br", null), "（なぜ）"), /*#__PURE__*/React.createElement("td", null, "界磁磁束の中で電機子導体が電磁力 F=BIl を受け、", /*#__PURE__*/React.createElement("strong", null, "整流子とブラシが半回転ごとに電流の向きを反転"), "させてトルクの向きを一定に保つ（↓図解）"), /*#__PURE__*/React.createElement("td", null, "F = BIl・整流子・ブラシ")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "マクロ"), /*#__PURE__*/React.createElement("br", null), "（解く）"), /*#__PURE__*/React.createElement("td", null, "導体1本ずつは追わず、", /*#__PURE__*/React.createElement("strong", null, "測れる量"), "（電圧・電流・回転速度）で扱う。"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
-  tex: "E = K\\phi N"
-}), "・", /*#__PURE__*/React.createElement(Eq, {
-  tex: "T = K'\\phi I_a"
-}), "・", /*#__PURE__*/React.createElement(Eq, {
-  tex: "V = E + I_a R_a"
-}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "励磁方式で用途が分かれる。直巻は始動トルク大で電車・クレーン（無負荷は過速度で禁止）、他励は圧延機の精密制御。定格以上の速度域は弱め界磁"), /*#__PURE__*/React.createElement("td", null, "励磁方式と用途・速度制御"))))), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 13,
-    fontWeight: 700,
-    color: "var(--accent-ink)",
-    margin: "16px 0 4px"
-  }
-}, "▼ ミクロを図で掘り下げる：なぜ直流電動機は一定方向に回り続けるか（整流子の役割）"), /*#__PURE__*/React.createElement("figure", {
-  style: {
-    margin: "6px 0 14px",
-    background: "var(--bg-elev)",
-    borderRadius: "8px",
-    padding: "12px 8px 8px"
-  }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 470 306",
-  role: "img",
-  "aria-label": "直流電動機の回転機構：①界磁がN極からS極へ磁束を作り、②電機子導体に電磁力F=BIlが働いて対の導体で回転力になり、③整流子とブラシが半回転ごとに電機子電流の向きを反転させるため、④トルクの向きが常に一定で連続回転する機構図",
-  style: {
-    display: "block",
-    width: "100%",
-    height: "auto",
-    maxWidth: "470px",
-    margin: "0 auto"
-  }
-}, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
-  id: "kdc-micro-flux",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--accent)"
-})), /*#__PURE__*/React.createElement("marker", {
-  id: "kdc-micro-force",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--ok)"
-})), /*#__PURE__*/React.createElement("marker", {
-  id: "kdc-micro-rot",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--ink-mute)"
-}))), /*#__PURE__*/React.createElement("text", {
-  x: "235",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "bold",
-  fill: "var(--accent-ink)"
-}, "① 界磁が磁束 φ を作る（N極 → S極）"), /*#__PURE__*/React.createElement("rect", {
-  x: "30",
-  y: "45",
-  width: "44",
-  height: "132",
-  rx: "4",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "1.4"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "52",
-  y: "117",
-  textAnchor: "middle",
-  fontSize: "16",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "N"), /*#__PURE__*/React.createElement("rect", {
-  x: "396",
-  y: "45",
-  width: "44",
-  height: "132",
-  rx: "4",
-  fill: "var(--bg)",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "1.4"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "418",
-  y: "117",
-  textAnchor: "middle",
-  fontSize: "16",
-  fontWeight: "700",
-  fill: "var(--ink)"
-}, "S"), /*#__PURE__*/React.createElement("line", {
-  x1: "80",
-  y1: "90",
-  x2: "388",
-  y2: "90",
-  stroke: "var(--accent)",
-  strokeWidth: "2",
-  strokeLinecap: "round",
-  markerEnd: "url(#kdc-micro-flux)"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "80",
-  y1: "130",
-  x2: "388",
-  y2: "130",
-  stroke: "var(--accent)",
-  strokeWidth: "2",
-  strokeLinecap: "round",
-  markerEnd: "url(#kdc-micro-flux)"
-}), /*#__PURE__*/React.createElement("path", {
-  d: "M 200 76 A 58 58 0 0 1 271 146",
-  fill: "none",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "1.8",
-  strokeDasharray: "6 4",
-  markerEnd: "url(#kdc-micro-rot)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "214",
-  y: "124",
-  textAnchor: "middle",
-  fontSize: "10",
-  fill: "var(--ink-mute)"
-}, "回転"), /*#__PURE__*/React.createElement("circle", {
-  cx: "170",
-  cy: "110",
-  r: "13",
-  fill: "var(--bg)",
-  stroke: "var(--ink)",
-  strokeWidth: "1.8"
-}), /*#__PURE__*/React.createElement("circle", {
-  cx: "170",
-  cy: "110",
-  r: "3.5",
-  fill: "var(--ink)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "170",
-  y: "152",
-  textAnchor: "middle",
-  fontSize: "10",
-  fill: "var(--ink-soft)"
-}, "電流：手前向き ⦿"), /*#__PURE__*/React.createElement("circle", {
-  cx: "300",
-  cy: "110",
-  r: "13",
-  fill: "var(--bg)",
-  stroke: "var(--ink)",
-  strokeWidth: "1.8"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "292",
-  y1: "102",
-  x2: "308",
-  y2: "118",
-  stroke: "var(--ink)",
-  strokeWidth: "1.8"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "308",
-  y1: "102",
-  x2: "292",
-  y2: "118",
-  stroke: "var(--ink)",
-  strokeWidth: "1.8"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "300",
-  y: "74",
-  textAnchor: "middle",
-  fontSize: "10",
-  fill: "var(--ink-soft)"
-}, "電流：奥向き ⊗"), /*#__PURE__*/React.createElement("line", {
-  x1: "170",
-  y1: "94",
-  x2: "170",
-  y2: "54",
-  stroke: "var(--ok)",
-  strokeWidth: "2.5",
-  strokeLinecap: "round",
-  markerEnd: "url(#kdc-micro-force)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "181",
-  y: "62",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--ok)"
-}, "F"), /*#__PURE__*/React.createElement("line", {
-  x1: "300",
-  y1: "126",
-  x2: "300",
-  y2: "166",
-  stroke: "var(--ok)",
-  strokeWidth: "2.5",
-  strokeLinecap: "round",
-  markerEnd: "url(#kdc-micro-force)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "308",
-  y: "160",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--ok)"
-}, "F"), /*#__PURE__*/React.createElement("text", {
-  x: "235",
-  y: "194",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "bold",
-  fill: "var(--ok)"
-}, "② 各導体に電磁力 F = BIl（フレミング左手）→ 対の力が回転力（トルク）"), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "209",
-  textAnchor: "middle",
-  fontSize: "9.5",
-  fill: "var(--ink-mute)"
-}, "整流子・ブラシ"), /*#__PURE__*/React.createElement("path", {
-  d: "M 68 215 A 15 15 0 0 0 68 245",
-  fill: "none",
-  stroke: "var(--accent)",
-  strokeWidth: "3"
-}), /*#__PURE__*/React.createElement("path", {
-  d: "M 72 215 A 15 15 0 0 1 72 245",
-  fill: "none",
-  stroke: "var(--accent)",
-  strokeWidth: "3"
-}), /*#__PURE__*/React.createElement("circle", {
-  cx: "70",
-  cy: "230",
-  r: "3",
-  fill: "var(--ink-mute)"
-}), /*#__PURE__*/React.createElement("rect", {
-  x: "44",
-  y: "224",
-  width: "9",
-  height: "12",
-  rx: "1.5",
-  fill: "var(--ink-mute)"
-}), /*#__PURE__*/React.createElement("rect", {
-  x: "87",
-  y: "224",
-  width: "9",
-  height: "12",
-  rx: "1.5",
-  fill: "var(--ink-mute)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "272",
-  y: "226",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "bold",
-  fill: "var(--warn)"
-}, "③ 整流子＋ブラシが半回転ごとに"), /*#__PURE__*/React.createElement("text", {
-  x: "272",
-  y: "242",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "bold",
-  fill: "var(--warn)"
-}, "電機子電流の向きを反転（力の向きは変わらない）"), /*#__PURE__*/React.createElement("rect", {
-  x: "34",
-  y: "256",
-  width: "402",
-  height: "44",
-  rx: "6",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "235",
-  y: "274",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  x: "235",
-  dy: "0"
-}, "④ 電流が反転してもトルクの向きは常に一定"), /*#__PURE__*/React.createElement("tspan", {
-  x: "235",
-  dy: "18"
-}, "→ 連続回転し E = KφN・T = K′φIₐ が成り立つ"))), /*#__PURE__*/React.createElement("figcaption", {
-  style: {
-    fontSize: "12px",
-    color: "var(--ink-mute)",
-    textAlign: "center",
-    marginTop: "6px",
-    lineHeight: 1.6
-  }
-}, "ミクロ（なぜ）：電動機として運転したとき、界磁磁束の中の電機子導体は F=BIl の電磁力を受けて回転する。半回転すると導体はN極側とS極側が入れ替わるが、整流子とブラシが電機子電流の向きも同時に反転させるので、力の向き＝トルクの向きは常に一定に保たれ、連続回転する。")), /*#__PURE__*/React.createElement("div", {
-  style: {
-    background: "var(--accent-soft)",
-    borderRadius: "6px",
-    padding: "12px 14px",
-    margin: "14px 0"
-  }
-}, /*#__PURE__*/React.createElement("div", {
-  style: {
-    fontSize: "12px",
-    fontWeight: 700,
-    color: "var(--accent-ink)",
-    marginBottom: 8,
-    letterSpacing: "0.04em"
-  }
-}, "🔬 ミクロの因果（なぜ一定方向に回り続けるか・電動機）"), /*#__PURE__*/React.createElement("ol", {
-  style: {
-    margin: 0,
-    paddingLeft: 24,
-    lineHeight: 1.9
-  }
-}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "界磁巻線が磁束 φ"), " を作る（固定子の N極 → S極）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "電機子導体に電流 Iₐ"), " が流れ、電磁力 ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "F = BIl"
-}), "（フレミング左手）が働く。対の導体で逆向きの力＝回転力（トルク）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "整流子とブラシが半回転ごとに電流の向きを反転"), "させるので、N極側・S極側が入れ替わっても力の向き＝トルクの向きは一定"), /*#__PURE__*/React.createElement("li", null, "結果、", /*#__PURE__*/React.createElement("strong", null, "連続回転"), "。回転すれば電磁誘導で逆起電力 ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "E = K\\phi N"
-}), " が生じ、", /*#__PURE__*/React.createElement(Eq, {
-  tex: "T = K'\\phi I_a"
-}), " とともに直流機の特性を決める"))), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 12,
-    color: "var(--ink-soft)",
-    margin: "0 0 4px"
-  }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下の「図1.1.2 直流電動機の速度-トルク特性（励磁方式の違い）」を参照。"));
+/* 全体像（核＋3段）。部品は kikai-components.jsx の Layer*。段への振り分けは台帳の小分類を問題の中身で割り当てた */
+const DC_STAGE_SUBTOPICS = {
+  principle: ["structure", "emf-blv", "reaction"],
+  law: ["emf", "excitation", "generator"],
+  operate: ["speed-control", "brushless-dc", "ac-commutator-motor"]
+};
+const DC_SUBTOPIC_LABEL = {
+  structure: "構造",
+  "emf-blv": "e=Blv",
+  reaction: "電機子反作用",
+  emf: "起電力・トルクの計算",
+  excitation: "励磁方式と特性",
+  generator: "発電機の特性",
+  "speed-control": "速度制御・始動・制動",
+  "brushless-dc": "ブラシレスDC",
+  "ac-commutator-motor": "交流整流子電動機"
+};
+const DCMachineLayers = () => {
+  const c = layerStageCounts("dc-machine", DC_STAGE_SUBTOPICS);
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
+    id: "layers"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "h-num"
+  }, "0."), "このページ（直流機）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--ink-soft)",
+      margin: "0 0 4px"
+    }
+  }, "まず", /*#__PURE__*/React.createElement("strong", null, "森"), "でこのページの位置を掴む。次に", /*#__PURE__*/React.createElement("strong", null, "核"), "（1行）を持ち、そこから", /*#__PURE__*/React.createElement("strong", null, "原理（ミクロ・なぜ動く）→ 法則（マクロ・何で決まる）→ 操作（実務・どう動かす）"), "の3段をつなげて読む。"), /*#__PURE__*/React.createElement("figure", {
+    style: {
+      margin: "10px 0 14px",
+      background: "var(--bg-elev)",
+      borderRadius: "8px",
+      padding: "12px 8px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 480 170",
+    role: "img",
+    "aria-label": "直流機の位置づけ：理論の電磁力F=BIlと電磁誘導から来て、直流機でE=KφNとT=K'φIaを押さえ、誘導機・同期機との比較、速度制御、電動機応用へつながる俯瞰図",
+    style: {
+      display: "block",
+      width: "100%",
+      height: "auto",
+      maxWidth: "480px",
+      margin: "0 auto"
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "kdc-mori-arr",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--ink-mute)"
+  }))), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "前提（入口）"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "このページ"), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "つながる先（出口）"), /*#__PURE__*/React.createElement("rect", {
+    x: "16",
+    y: "40",
+    width: "108",
+    height: "86",
+    rx: "6",
+    fill: "var(--bg)",
+    stroke: "var(--rule)",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "66",
+    textAnchor: "middle",
+    fontSize: "13",
+    fontWeight: "600",
+    fill: "var(--ink)"
+  }, "理論（電磁気）"), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "88",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "電磁力 F=BIl"), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "107",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "電磁誘導 e=Blv"), /*#__PURE__*/React.createElement("line", {
+    x1: "126",
+    y1: "83",
+    x2: "159",
+    y2: "83",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "2",
+    markerEnd: "url(#kdc-mori-arr)"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "162",
+    y: "32",
+    width: "156",
+    height: "102",
+    rx: "8",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "55",
+    textAnchor: "middle",
+    fontSize: "14",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "直流機"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "77",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "E = KφN"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "95",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "T = K′φIₐ"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "113",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "V = E + IₐRₐ"), /*#__PURE__*/React.createElement("line", {
+    x1: "320",
+    y1: "83",
+    x2: "353",
+    y2: "83",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "2",
+    markerEnd: "url(#kdc-mori-arr)"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "40",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "57",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "誘導機・同期機"), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "70",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "87",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "速度制御"), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "100",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "117",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "電動機応用"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "154",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "電磁力・電磁誘導から来て、E と T の式で特性を掴み、他の回転機・応用へ枝分かれ")), /*#__PURE__*/React.createElement("figcaption", {
+    style: {
+      fontSize: "12px",
+      color: "var(--ink-mute)",
+      textAlign: "center",
+      marginTop: "6px",
+      lineHeight: 1.6
+    }
+  }, "森（俯瞰）：理論で学ぶ電磁力 F=BIl と電磁誘導を土台に、直流機は E=KφN と T=K′φIₐ で速度・トルクが決まる回転機。ここから誘導機・同期機との比較、速度制御、電車・クレーンなどの電動機応用へ枝分かれする。")), /*#__PURE__*/React.createElement(LayerCore, {
+    sub: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "N = \\dfrac{V - I_a R_a}{K\\phi}",
+      inline: true
+    }), "・", /*#__PURE__*/React.createElement(Eq, {
+      tex: "T = K'\\phi I_a",
+      inline: true
+    }), "。始動の瞬間は回っていないので ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "E = 0",
+      inline: true
+    }), "、", /*#__PURE__*/React.createElement(Eq, {
+      tex: "I_a = V/R_a",
+      inline: true
+    }), " が大きい。")
+  }, "直流電動機は、回ると生じる", /*#__PURE__*/React.createElement(LayerKey, null, "逆起電力 E＝KφN"), "と電機子の電圧降下 IₐRₐ の和が、端子電圧 V につり合う速さで回る。 速度は V・", /*#__PURE__*/React.createElement(LayerKey, null, "磁束 φ"), "・電機子電流 Iₐ で、トルクは φ と Iₐ で決まる。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "principle",
+    c: c,
+    jump: "↓図解・1節・3節・9節"
+  }, /*#__PURE__*/React.createElement(LayerChain, {
+    steps: [["界磁が磁束 φ", null], ["電機子電流 Iₐ", null], ["電磁力", /*#__PURE__*/React.createElement(Eq, {
+      tex: "F = BIl",
+      inline: true
+    })], ["整流子が電流を反転", "磁極の境目を通るたび"], ["一方向のトルク", /*#__PURE__*/React.createElement(Eq, {
+      tex: "T = K'\\phi I_a",
+      inline: true
+    })]]
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--ink-soft)",
+      margin: "4px 0 0",
+      lineHeight: 1.7
+    }
+  }, "回れば導体が磁束を切り、逆起電力 ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "e = Blv",
+    inline: true
+  }), "（全導体をまとめると ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "E = K\\phi N",
+    inline: true
+  }), "）が生じる。電機子電流がつくる磁束は主磁束をゆがめ（電機子反作用）、中性軸がずれる → 補極（幾何学的中性軸上に置き、整流を助ける）と補償巻線（磁極片に埋め、反作用の磁束を打ち消す）で対策する。どちらも電機子と直列につなぐ。")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700,
+      color: "var(--accent-ink)",
+      margin: "16px 0 4px"
+    }
+  }, "▼ ミクロを図で掘り下げる：なぜ直流電動機は一定方向に回り続けるか（整流子の役割）"), /*#__PURE__*/React.createElement("figure", {
+    style: {
+      margin: "6px 0 14px",
+      background: "var(--bg-elev)",
+      borderRadius: "8px",
+      padding: "12px 8px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 470 306",
+    role: "img",
+    "aria-label": "直流電動機の回転機構：①界磁がN極からS極へ磁束を作り、②電機子導体に電磁力F=BIlが働いて対の導体で回転力になり、③整流子とブラシが半回転ごとに電機子電流の向きを反転させるため、④トルクの向きが常に一定で連続回転する機構図",
+    style: {
+      display: "block",
+      width: "100%",
+      height: "auto",
+      maxWidth: "470px",
+      margin: "0 auto"
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "kdc-micro-flux",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--accent)"
+  })), /*#__PURE__*/React.createElement("marker", {
+    id: "kdc-micro-force",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--ok)"
+  })), /*#__PURE__*/React.createElement("marker", {
+    id: "kdc-micro-rot",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--ink-mute)"
+  }))), /*#__PURE__*/React.createElement("text", {
+    x: "235",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "var(--accent-ink)"
+  }, "① 界磁が磁束 φ を作る（N極 → S極）"), /*#__PURE__*/React.createElement("rect", {
+    x: "30",
+    y: "45",
+    width: "44",
+    height: "132",
+    rx: "4",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)",
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "52",
+    y: "117",
+    textAnchor: "middle",
+    fontSize: "16",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "N"), /*#__PURE__*/React.createElement("rect", {
+    x: "396",
+    y: "45",
+    width: "44",
+    height: "132",
+    rx: "4",
+    fill: "var(--bg)",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "418",
+    y: "117",
+    textAnchor: "middle",
+    fontSize: "16",
+    fontWeight: "700",
+    fill: "var(--ink)"
+  }, "S"), /*#__PURE__*/React.createElement("line", {
+    x1: "80",
+    y1: "90",
+    x2: "388",
+    y2: "90",
+    stroke: "var(--accent)",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    markerEnd: "url(#kdc-micro-flux)"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "80",
+    y1: "130",
+    x2: "388",
+    y2: "130",
+    stroke: "var(--accent)",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    markerEnd: "url(#kdc-micro-flux)"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M 200 76 A 58 58 0 0 1 271 146",
+    fill: "none",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "1.8",
+    strokeDasharray: "6 4",
+    markerEnd: "url(#kdc-micro-rot)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "214",
+    y: "124",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--ink-mute)"
+  }, "回転"), /*#__PURE__*/React.createElement("circle", {
+    cx: "170",
+    cy: "110",
+    r: "13",
+    fill: "var(--bg)",
+    stroke: "var(--ink)",
+    strokeWidth: "1.8"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "170",
+    cy: "110",
+    r: "3.5",
+    fill: "var(--ink)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "170",
+    y: "152",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--ink-soft)"
+  }, "電流：手前向き ⦿"), /*#__PURE__*/React.createElement("circle", {
+    cx: "300",
+    cy: "110",
+    r: "13",
+    fill: "var(--bg)",
+    stroke: "var(--ink)",
+    strokeWidth: "1.8"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "292",
+    y1: "102",
+    x2: "308",
+    y2: "118",
+    stroke: "var(--ink)",
+    strokeWidth: "1.8"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "308",
+    y1: "102",
+    x2: "292",
+    y2: "118",
+    stroke: "var(--ink)",
+    strokeWidth: "1.8"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "300",
+    y: "74",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--ink-soft)"
+  }, "電流：奥向き ⊗"), /*#__PURE__*/React.createElement("line", {
+    x1: "170",
+    y1: "94",
+    x2: "170",
+    y2: "54",
+    stroke: "var(--ok)",
+    strokeWidth: "2.5",
+    strokeLinecap: "round",
+    markerEnd: "url(#kdc-micro-force)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "181",
+    y: "62",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--ok)"
+  }, "F"), /*#__PURE__*/React.createElement("line", {
+    x1: "300",
+    y1: "126",
+    x2: "300",
+    y2: "166",
+    stroke: "var(--ok)",
+    strokeWidth: "2.5",
+    strokeLinecap: "round",
+    markerEnd: "url(#kdc-micro-force)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "308",
+    y: "160",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--ok)"
+  }, "F"), /*#__PURE__*/React.createElement("text", {
+    x: "235",
+    y: "194",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "var(--ok)"
+  }, "② 各導体に電磁力 F = BIl（フレミング左手）→ 対の力が回転力（トルク）"), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "209",
+    textAnchor: "middle",
+    fontSize: "9.5",
+    fill: "var(--ink-mute)"
+  }, "整流子・ブラシ"), /*#__PURE__*/React.createElement("path", {
+    d: "M 68 215 A 15 15 0 0 0 68 245",
+    fill: "none",
+    stroke: "var(--accent)",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M 72 215 A 15 15 0 0 1 72 245",
+    fill: "none",
+    stroke: "var(--accent)",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "70",
+    cy: "230",
+    r: "3",
+    fill: "var(--ink-mute)"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "44",
+    y: "224",
+    width: "9",
+    height: "12",
+    rx: "1.5",
+    fill: "var(--ink-mute)"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "87",
+    y: "224",
+    width: "9",
+    height: "12",
+    rx: "1.5",
+    fill: "var(--ink-mute)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "272",
+    y: "226",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "var(--warn)"
+  }, "③ 整流子＋ブラシが半回転ごとに"), /*#__PURE__*/React.createElement("text", {
+    x: "272",
+    y: "242",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "var(--warn)"
+  }, "電機子電流の向きを反転（力の向きは変わらない）"), /*#__PURE__*/React.createElement("rect", {
+    x: "34",
+    y: "256",
+    width: "402",
+    height: "44",
+    rx: "6",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "235",
+    y: "274",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, /*#__PURE__*/React.createElement("tspan", {
+    x: "235",
+    dy: "0"
+  }, "④ 電流が反転してもトルクの向きは常に一定"), /*#__PURE__*/React.createElement("tspan", {
+    x: "235",
+    dy: "18"
+  }, "→ 連続回転し E = KφN・T = K′φIₐ が成り立つ"))), /*#__PURE__*/React.createElement("figcaption", {
+    style: {
+      fontSize: "12px",
+      color: "var(--ink-mute)",
+      textAlign: "center",
+      marginTop: "6px",
+      lineHeight: 1.6
+    }
+  }, "ミクロ（なぜ）：電動機として運転したとき、界磁磁束の中の電機子導体は F=BIl の電磁力を受けて回転する。半回転すると導体はN極側とS極側が入れ替わるが、整流子とブラシが電機子電流の向きも同時に反転させるので、力の向き＝トルクの向きは常に一定に保たれ、連続回転する。")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--accent-soft)",
+      borderRadius: "6px",
+      padding: "12px 14px",
+      margin: "14px 0"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "12px",
+      fontWeight: 700,
+      color: "var(--accent-ink)",
+      marginBottom: 8,
+      letterSpacing: "0.04em"
+    }
+  }, "🔬 ミクロの因果（なぜ一定方向に回り続けるか・電動機）"), /*#__PURE__*/React.createElement("ol", {
+    style: {
+      margin: 0,
+      paddingLeft: 24,
+      lineHeight: 1.9
+    }
+  }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "界磁巻線が磁束 φ"), " を作る（固定子の N極 → S極）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "電機子導体に電流 Iₐ"), " が流れ、電磁力 ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "F = BIl"
+  }), "（フレミング左手）が働く。対の導体で逆向きの力＝回転力（トルク）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "整流子とブラシが半回転ごとに電流の向きを反転"), "させるので、N極側・S極側が入れ替わっても力の向き＝トルクの向きは一定"), /*#__PURE__*/React.createElement("li", null, "結果、", /*#__PURE__*/React.createElement("strong", null, "連続回転"), "。回転すれば電磁誘導で逆起電力 ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "E = K\\phi N"
+  }), " が生じ、", /*#__PURE__*/React.createElement(Eq, {
+    tex: "T = K'\\phi I_a"
+  }), " とともに直流機の特性を決める"))), /*#__PURE__*/React.createElement(LayerBridge, {
+    label: "橋①"
+  }, "導体1本ずつは追わず、全導体をまとめる。", /*#__PURE__*/React.createElement(Eq, {
+    tex: "E = \\dfrac{pZ}{60a}\\phi N = K\\phi N",
+    inline: true
+  }), "（p 極数・Z 導体数・a 並列回路数・N の単位は min⁻¹）。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "law",
+    c: c,
+    jump: "↓2節・4節・5節・7節"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...LAYER_GRID,
+      gap: "2px 16px",
+      fontSize: 13.5,
+      lineHeight: 1.8
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "電圧"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
+    tex: "V = E + I_a R_a",
+    inline: true
+  }), "（電動機）・", /*#__PURE__*/React.createElement(Eq, {
+    tex: "V = E - I_a R_a",
+    inline: true
+  }), "（発電機）"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "速度・トルク"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
+    tex: "N = \\dfrac{V - I_a R_a}{K\\phi}",
+    inline: true
+  }), "・", /*#__PURE__*/React.createElement(Eq, {
+    tex: "T = K'\\phi I_a",
+    inline: true
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "出力"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
+    tex: "P = EI_a = \\omega T",
+    inline: true
+  }), "（", /*#__PURE__*/React.createElement(Eq, {
+    tex: "\\omega = 2\\pi N/60",
+    inline: true
+  }), "。", /*#__PURE__*/React.createElement(Eq, {
+    tex: "VI_a",
+    inline: true
+  }), " ではない）")), /*#__PURE__*/React.createElement(LayerTopNote, {
+    c: c,
+    sub: "emf",
+    labels: DC_SUBTOPIC_LABEL
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13.5,
+      lineHeight: 1.8,
+      marginTop: 2
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "励磁方式"), "\u3000分巻（他励）は φ がほぼ一定 → ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "T \\propto I_a",
+    inline: true
+  }), "、速度は負荷で少し下がる（運転中に界磁回路が切れると φ が残留磁束だけになり過速度）。直巻は φ ∝ Iₐ（磁気飽和の前）→ ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "T \\propto I_a^2",
+    inline: true
+  }), "、軽負荷ほど高速（無負荷運転は過速度で危険）。", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "発電機"), "\u3000分巻発電機は残留磁束を種に自己励磁で電圧を立ち上げる（界磁の接続が残留磁束を強める向きで、界磁回路の抵抗が臨界界磁抵抗より小さいとき）。"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12.5,
+      color: "var(--ink-soft)",
+      margin: "6px 0 0"
+    }
+  }, "図で見るなら、4節の", /*#__PURE__*/React.createElement("strong", null, "図1.1.2 直流電動機の速度-トルク特性"), "。")), /*#__PURE__*/React.createElement(LayerBridge, {
+    label: "橋②"
+  }, "外から動かせる変数（", /*#__PURE__*/React.createElement("strong", null, "V・φ（界磁電流）・電機子回路の抵抗"), "）を変えると、", /*#__PURE__*/React.createElement(Eq, {
+    tex: "N = (V - I_a R_a)/(K\\phi)",
+    inline: true
+  }), " を通って速度とトルクが変わる。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "operate",
+    c: c,
+    jump: "↓6節・8節・10節・11節",
+    q: "どう動かす・どう使う？"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...LAYER_GRID,
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "始動・制動",
+    sub: "止まっているとき E＝0 → Iₐ＝V/Rₐ が大きい"
+  }, /*#__PURE__*/React.createElement("li", null, "始動抵抗を電機子に直列に入れ、加速につれて外す"), /*#__PURE__*/React.createElement("li", null, "制動：発電制動（抵抗で熱に）・回生制動（E＞V にして電流を逆に流し、電源へ返す）・逆転制動（プラッギング）")), /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "速度制御",
+    sub: /*#__PURE__*/React.createElement(Eq, {
+      tex: "N = (V - I_a R_a)/(K\\phi)",
+      inline: true
+    })
+  }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "V"), " を変える → 電圧制御（静止レオナードなど。定格速度以下・定トルク）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "φ"), " を減らす → 界磁制御（弱め界磁。定格速度より上・定出力）"), /*#__PURE__*/React.createElement("li", null, "電機子回路に抵抗 → 抵抗制御（損失が大きい）")), /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "整流子の外し方・交流での使い方"
+  }, /*#__PURE__*/React.createElement("li", null, "ブラシレスDC：整流子とブラシの役目を、位置センサと半導体スイッチの切り替えが担う"), /*#__PURE__*/React.createElement("li", null, "交流整流子電動機：直巻を交流で回す。電流と磁束が同時に反転するのでトルクの向きは変わらない（ユニバーサルモータ）")))), /*#__PURE__*/React.createElement(LayerCountNote, {
+    c: c,
+    stageMap: DC_STAGE_SUBTOPICS,
+    labels: DC_SUBTOPIC_LABEL
+  }));
+};
 
 /* 電機子反作用：中性軸の移動と、補極・補償巻線の配置 */
 const ArmatureReactionFig = () => /*#__PURE__*/React.createElement("figure", {
@@ -15326,548 +15540,633 @@ const DCMachinePage = ({
   },
   onNav: onNav
 }));
-const SynchronousLayers = () => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
-  id: "layers"
-}, /*#__PURE__*/React.createElement("span", {
-  className: "h-num"
-}, "0."), "このページ（同期機）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 13,
-    color: "var(--ink-soft)",
-    margin: "0 0 4px"
-  }
-}, "同じテーマを ", /*#__PURE__*/React.createElement("strong", null, "森（俯瞰）→ ミクロ（なぜ）→ マクロ（解く）"), " の3層で見る。まず森でこのページの位置を掴み、ミクロで機構を、マクロで解き方を押さえる。"), /*#__PURE__*/React.createElement("figure", {
-  style: {
-    margin: "10px 0 14px",
-    background: "var(--bg-elev)",
-    borderRadius: "8px",
-    padding: "12px 8px 8px"
-  }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 480 170",
-  role: "img",
-  "aria-label": "同期機の位置づけ：三相交流が作る回転磁界（誘導機と共通の土台）から来て、同期機で同期速度Ns・起電力・出力を扱い、発電所の発電機・並列運転・Vカーブによる力率調整へつながる俯瞰図",
-  style: {
-    display: "block",
-    width: "100%",
-    height: "auto",
-    maxWidth: "480px",
-    margin: "0 auto"
-  }
-}, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
-  id: "ksy-mori-arr",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--ink-mute)"
-}))), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "前提（入口）"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "このページ"), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "つながる先（出口）"), /*#__PURE__*/React.createElement("rect", {
-  x: "16",
-  y: "40",
-  width: "108",
-  height: "86",
-  rx: "6",
-  fill: "var(--bg)",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "66",
-  textAnchor: "middle",
-  fontSize: "13",
-  fontWeight: "600",
-  fill: "var(--ink)"
-}, "回転磁界"), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "88",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink-soft)"
-}, "三相交流が作る"), /*#__PURE__*/React.createElement("text", {
-  x: "70",
-  y: "107",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink-soft)"
-}, "誘導機と共通"), /*#__PURE__*/React.createElement("line", {
-  x1: "126",
-  y1: "83",
-  x2: "159",
-  y2: "83",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "2",
-  markerEnd: "url(#ksy-mori-arr)"
-}), /*#__PURE__*/React.createElement("rect", {
-  x: "162",
-  y: "32",
-  width: "156",
-  height: "102",
-  rx: "8",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "2"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "55",
-  textAnchor: "middle",
-  fontSize: "14",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "同期機"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "77",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "Nₛ = 120f/p"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "95",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "E = V + I(rₐ + jxₛ)"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "113",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, "P = (EV/xₛ)sinδ"), /*#__PURE__*/React.createElement("line", {
-  x1: "320",
-  y1: "83",
-  x2: "353",
-  y2: "83",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "2",
-  markerEnd: "url(#ksy-mori-arr)"
-}), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "40",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "57",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "発電所の発電機"), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "70",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "87",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "並列運転の条件"), /*#__PURE__*/React.createElement("rect", {
-  x: "356",
-  y: "100",
-  width: "112",
-  height: "26",
-  rx: "5",
-  fill: "var(--bg)",
-  stroke: "var(--rule)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "412",
-  y: "117",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "Vカーブ・力率調整"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "154",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "回転磁界を土台に同期速度で回り、発電・系統並列・力率調整へ枝分かれ")), /*#__PURE__*/React.createElement("figcaption", {
-  style: {
-    fontSize: "12px",
-    color: "var(--ink-mute)",
-    textAlign: "center",
-    marginTop: "6px",
-    lineHeight: 1.6
-  }
-}, "森（俯瞰）：三相交流が作る回転磁界（誘導機と共通の土台）に、直流界磁の回転子が磁気的に結合して同期速度で回るのが同期機。ここから発電所の発電機・並列運転・Vカーブによる力率調整へ枝分かれする。")), /*#__PURE__*/React.createElement("div", {
-  className: "table-wrap"
-}, /*#__PURE__*/React.createElement("table", {
-  className: "data-table"
-}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "視点"), /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "何を見るか"), /*#__PURE__*/React.createElement("th", {
-  scope: "col"
-}, "代表する式・量"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "ミクロ"), /*#__PURE__*/React.createElement("br", null), "（なぜ）"), /*#__PURE__*/React.createElement("td", null, "回転磁界の磁極と直流界磁の磁極が", /*#__PURE__*/React.createElement("strong", null, "異極どうしで吸引・結合"), "し、回転子は滑りなく同期速度で回る。負荷は", /*#__PURE__*/React.createElement("strong", null, "負荷角 δ"), " のずれで伝わる（↓図解）"), /*#__PURE__*/React.createElement("td", null, "磁極の吸引・負荷角 δ・脱調")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "マクロ"), /*#__PURE__*/React.createElement("br", null), "（解く）"), /*#__PURE__*/React.createElement("td", null, "磁極1つずつは追わず、", /*#__PURE__*/React.createElement("strong", null, "測れる量"), "で扱う。"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
-  tex: "N_s = 120f/p",
-  inline: true
-}), "・", /*#__PURE__*/React.createElement(Eq, {
-  tex: "E = V + I(r_a + jx_s)",
-  inline: true
-}), "・", /*#__PURE__*/React.createElement(Eq, {
-  tex: "P = \\frac{EV}{x_s}\\sin\\delta",
-  inline: true
-}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "設備で何に化けるか。発電所の主機（同期発電機）の", /*#__PURE__*/React.createElement("strong", null, "系統への並列運転"), "、界磁電流の加減による", /*#__PURE__*/React.createElement("strong", null, "力率調整"), "（同期調相機）"), /*#__PURE__*/React.createElement("td", null, "並列運転・Vカーブ（位相特性）"))))), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 13,
-    fontWeight: 700,
-    color: "var(--accent-ink)",
-    margin: "16px 0 4px"
-  }
-}, "▼ ミクロを図で掘り下げる：なぜ同期機は滑りゼロで同期速度のまま回るのか（同期電動機で見る）"), /*#__PURE__*/React.createElement("figure", {
-  style: {
-    margin: "6px 0 14px",
-    background: "var(--bg-elev)",
-    borderRadius: "8px",
-    padding: "12px 8px 8px"
-  }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 470 290",
-  role: "img",
-  "aria-label": "同期機の磁気結合：①固定子の三相交流が回転磁界のN・S磁極を同期速度Nsで回し、②回転子の直流界磁もN・S磁極を作り、③異極どうしが吸引して磁気的に結合、負荷角δだけ遅れて引っ張られる。結果、回転子は滑りゼロで常に同期速度Ns=120f/pで回り、δがπ/2を超えると脱調する機構図",
-  style: {
-    display: "block",
-    width: "100%",
-    height: "auto",
-    maxWidth: "470px",
-    margin: "0 auto"
-  }
-}, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
-  id: "ksy-micro-rot",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--accent)"
-})), /*#__PURE__*/React.createElement("marker", {
-  id: "ksy-micro-pull",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.06",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--warn)"
-}))), /*#__PURE__*/React.createElement("circle", {
-  cx: "128",
-  cy: "152",
-  r: "74",
-  fill: "var(--bg)",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "2"
-}), /*#__PURE__*/React.createElement("circle", {
-  cx: "194",
-  cy: "152",
-  r: "3",
-  fill: "var(--ink-mute)"
-}), /*#__PURE__*/React.createElement("circle", {
-  cx: "161",
-  cy: "95",
-  r: "3",
-  fill: "var(--ink-mute)"
-}), /*#__PURE__*/React.createElement("circle", {
-  cx: "95",
-  cy: "95",
-  r: "3",
-  fill: "var(--ink-mute)"
-}), /*#__PURE__*/React.createElement("circle", {
-  cx: "62",
-  cy: "152",
-  r: "3",
-  fill: "var(--ink-mute)"
-}), /*#__PURE__*/React.createElement("circle", {
-  cx: "95",
-  cy: "209",
-  r: "3",
-  fill: "var(--ink-mute)"
-}), /*#__PURE__*/React.createElement("circle", {
-  cx: "161",
-  cy: "209",
-  r: "3",
-  fill: "var(--ink-mute)"
-}), /*#__PURE__*/React.createElement("circle", {
-  cx: "128",
-  cy: "152",
-  r: "42",
-  fill: "var(--bg-elev)",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "1.5"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "128",
-  y: "156",
-  textAnchor: "middle",
-  fontSize: "10",
-  fill: "var(--ink-mute)"
-}, "回転子"), /*#__PURE__*/React.createElement("line", {
-  x1: "128",
-  y1: "144",
-  x2: "128",
-  y2: "105",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "1",
-  strokeDasharray: "3 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "124",
-  y1: "145",
-  x2: "105",
-  y2: "112",
-  stroke: "var(--ink-mute)",
-  strokeWidth: "1",
-  strokeDasharray: "3 3"
-}), /*#__PURE__*/React.createElement("path", {
-  d: "M 67 91 A 86 86 0 0 1 189 91",
-  fill: "none",
-  stroke: "var(--accent)",
-  strokeWidth: "2.5",
-  strokeLinecap: "round",
-  markerEnd: "url(#ksy-micro-rot)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "128",
-  y: "52",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "回転磁界（同期速度 Nₛ）"), /*#__PURE__*/React.createElement("text", {
-  x: "200",
-  y: "80",
-  fontSize: "13",
-  fontWeight: "700",
-  fill: "var(--accent)"
-}, "①"), /*#__PURE__*/React.createElement("circle", {
-  cx: "128",
-  cy: "94",
-  r: "11",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "1.5"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "128",
-  y: "98",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "N"), /*#__PURE__*/React.createElement("circle", {
-  cx: "128",
-  cy: "210",
-  r: "11",
-  fill: "var(--ok-soft)",
-  stroke: "var(--ok)",
-  strokeWidth: "1.5"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "128",
-  y: "214",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--ok)"
-}, "S"), /*#__PURE__*/React.createElement("circle", {
-  cx: "114",
-  cy: "128",
-  r: "10",
-  fill: "var(--ok-soft)",
-  stroke: "var(--ok)",
-  strokeWidth: "1.4"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "114",
-  y: "132",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--ok)"
-}, "S"), /*#__PURE__*/React.createElement("circle", {
-  cx: "142",
-  cy: "176",
-  r: "10",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "1.4"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "142",
-  y: "180",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "N"), /*#__PURE__*/React.createElement("text", {
-  x: "166",
-  y: "180",
-  fontSize: "13",
-  fontWeight: "700",
-  fill: "var(--ink)"
-}, "②"), /*#__PURE__*/React.createElement("line", {
-  x1: "118",
-  y1: "118",
-  x2: "123",
-  y2: "105",
-  stroke: "var(--warn)",
-  strokeWidth: "2",
-  strokeDasharray: "5 3",
-  markerEnd: "url(#ksy-micro-pull)"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "138",
-  y1: "186",
-  x2: "133",
-  y2: "199",
-  stroke: "var(--warn)",
-  strokeWidth: "2",
-  strokeDasharray: "5 3",
-  markerEnd: "url(#ksy-micro-pull)"
-}), /*#__PURE__*/React.createElement("path", {
-  d: "M 128 106 A 46 46 0 0 0 105 112",
-  fill: "none",
-  stroke: "var(--warn)",
-  strokeWidth: "1.8"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "107",
-  y: "99",
-  fontSize: "12",
-  fontWeight: "700",
-  fontStyle: "italic",
-  fill: "var(--warn)"
-}, "δ"), /*#__PURE__*/React.createElement("text", {
-  x: "88",
-  y: "116",
-  fontSize: "13",
-  fontWeight: "700",
-  fill: "var(--warn)"
-}, "③"), /*#__PURE__*/React.createElement("text", {
-  x: "244",
-  y: "52",
-  fontSize: "11.5",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "① 三相交流が回転磁界を作る"), /*#__PURE__*/React.createElement("text", {
-  x: "244",
-  y: "68",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "（●＝固定子の三相巻線＝発生源）"), /*#__PURE__*/React.createElement("text", {
-  x: "244",
-  y: "98",
-  fontSize: "11.5",
-  fontWeight: "700",
-  fill: "var(--ink)"
-}, "② 直流界磁が回転子に磁極 N・S"), /*#__PURE__*/React.createElement("text", {
-  x: "244",
-  y: "114",
-  fontSize: "11",
-  fill: "var(--ink-soft)"
-}, "（回転磁界の異極と向き合う）"), /*#__PURE__*/React.createElement("text", {
-  x: "244",
-  y: "144",
-  fontSize: "11.5",
-  fontWeight: "700",
-  fill: "var(--warn)"
-}, "③ 異極どうしが吸引して結合し、"), /*#__PURE__*/React.createElement("text", {
-  x: "258",
-  y: "160",
-  fontSize: "11.5",
-  fontWeight: "700",
-  fill: "var(--warn)"
-}, "負荷角 δ だけ遅れて引っ張る"), /*#__PURE__*/React.createElement("text", {
-  x: "244",
-  y: "190",
-  fontSize: "11",
-  fill: "var(--ink-soft)"
-}, "→ 遅れても速さは落ちない＝滑りゼロ"), /*#__PURE__*/React.createElement("rect", {
-  x: "24",
-  y: "238",
-  width: "422",
-  height: "44",
-  rx: "6",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "235",
-  y: "255",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  x: "235",
-  dy: "0"
-}, "④ 回転子は常に同期速度 Nₛ = 120f/p で回る（滑りゼロ）"), /*#__PURE__*/React.createElement("tspan", {
-  x: "235",
-  dy: "18"
-}, "δ が π/2（90°）を超えると磁気結合を保てず脱調"))), /*#__PURE__*/React.createElement("figcaption", {
-  style: {
-    fontSize: "12px",
-    color: "var(--ink-mute)",
-    textAlign: "center",
-    marginTop: "6px",
-    lineHeight: 1.6
-  }
-}, "ミクロ（なぜ）：同期電動機として見ると、固定子の三相交流が作る回転磁界の磁極と回転子の直流界磁の磁極が異極どうしで吸引し合い、磁気的に結合する。負荷が増えると回転子は負荷角 δ だけ遅れて引っ張られるが、回る速さ自体は落ちない＝滑りゼロで常に同期速度。δ が π/2 を超えると結合が保てず脱調する（発電機では逆に回転子側が δ だけ先行して引っ張る）。")), /*#__PURE__*/React.createElement("div", {
-  style: {
-    background: "var(--accent-soft)",
-    borderRadius: "6px",
-    padding: "12px 14px",
-    margin: "14px 0"
-  }
-}, /*#__PURE__*/React.createElement("div", {
-  style: {
-    fontSize: "12px",
-    fontWeight: 700,
-    color: "var(--accent-ink)",
-    marginBottom: 8,
-    letterSpacing: "0.04em"
-  }
-}, "🔬 ミクロの因果（なぜ滑りゼロで同期速度のまま回るか）"), /*#__PURE__*/React.createElement("ol", {
-  style: {
-    margin: 0,
-    paddingLeft: 24,
-    lineHeight: 1.9
-  }
-}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "固定子の三相交流が回転磁界"), "を作る（回転の速さは ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "N_s = 120f/p",
-  inline: true
-}), " に固定）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "回転子の直流界磁の磁極"), "が回転磁界の異極と吸引し合い、磁気的に結合する"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "負荷が増えると負荷角 δ が開き"), "、遅れたまま引っ張られてトルクが増す（", /*#__PURE__*/React.createElement(Eq, {
-  tex: "P = \\frac{EV}{x_s}\\sin\\delta",
-  inline: true
-}), " は δ = π/2 で最大）"), /*#__PURE__*/React.createElement("li", null, "結果、", /*#__PURE__*/React.createElement("strong", null, "滑りゼロで常に同期速度"), "で回る。ただし δ が π/2 を超えると結合が外れて", /*#__PURE__*/React.createElement("strong", null, "脱調")))), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 12,
-    color: "var(--ink-soft)",
-    margin: "0 0 4px"
-  }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下の「V カーブと位相特性」にある ", /*#__PURE__*/React.createElement("strong", null, "図1.3.2 同期電動機の V カーブ"), "を参照。"));
+
+/* 全体像（核＋3段）。部品は kikai-components.jsx の Layer*。段への振り分けは台帳の小分類を問題の中身で割り当てた */
+const SY_STAGE_SUBTOPICS = {
+  principle: ["structure", "rotor-types"],
+  law: ["vcurve"],
+  operate: ["parallel", "start-hunting"]
+};
+const SY_SUBTOPIC_LABEL = {
+  structure: "構造・巻線・起電力",
+  "rotor-types": "回転子の形",
+  vcurve: "同期インピーダンス・短絡比・V曲線",
+  parallel: "並行運転",
+  "start-hunting": "始動・乱調"
+};
+const SynchronousLayers = () => {
+  const c = layerStageCounts("synchronous", SY_STAGE_SUBTOPICS);
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
+    id: "layers"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "h-num"
+  }, "0."), "このページ（同期機）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--ink-soft)",
+      margin: "0 0 4px"
+    }
+  }, "まず", /*#__PURE__*/React.createElement("strong", null, "森"), "でこのページの位置を掴む。次に", /*#__PURE__*/React.createElement("strong", null, "核"), "（1行）を持ち、そこから", /*#__PURE__*/React.createElement("strong", null, "原理（ミクロ・なぜ動く）→ 法則（マクロ・何で決まる）→ 操作（実務・どう動かす）"), "の3段をつなげて読む。"), /*#__PURE__*/React.createElement("figure", {
+    style: {
+      margin: "10px 0 14px",
+      background: "var(--bg-elev)",
+      borderRadius: "8px",
+      padding: "12px 8px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 480 170",
+    role: "img",
+    "aria-label": "同期機の位置づけ：三相交流が作る回転磁界（誘導機と共通の土台）から来て、同期機で同期速度Ns・起電力・出力を扱い、発電所の発電機・並列運転・Vカーブによる力率調整へつながる俯瞰図",
+    style: {
+      display: "block",
+      width: "100%",
+      height: "auto",
+      maxWidth: "480px",
+      margin: "0 auto"
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "ksy-mori-arr",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--ink-mute)"
+  }))), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "前提（入口）"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "このページ"), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "22",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "つながる先（出口）"), /*#__PURE__*/React.createElement("rect", {
+    x: "16",
+    y: "40",
+    width: "108",
+    height: "86",
+    rx: "6",
+    fill: "var(--bg)",
+    stroke: "var(--rule)",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "66",
+    textAnchor: "middle",
+    fontSize: "13",
+    fontWeight: "600",
+    fill: "var(--ink)"
+  }, "回転磁界"), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "88",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink-soft)"
+  }, "三相交流が作る"), /*#__PURE__*/React.createElement("text", {
+    x: "70",
+    y: "107",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink-soft)"
+  }, "誘導機と共通"), /*#__PURE__*/React.createElement("line", {
+    x1: "126",
+    y1: "83",
+    x2: "159",
+    y2: "83",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "2",
+    markerEnd: "url(#ksy-mori-arr)"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "162",
+    y: "32",
+    width: "156",
+    height: "102",
+    rx: "8",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "55",
+    textAnchor: "middle",
+    fontSize: "14",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "同期機"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "77",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "Nₛ = 120f/p"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "95",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "E = V + I(rₐ + jxₛ)"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "113",
+    textAnchor: "middle",
+    fontSize: "12",
+    fill: "var(--ink)"
+  }, "P = (EV/xₛ)sinδ"), /*#__PURE__*/React.createElement("line", {
+    x1: "320",
+    y1: "83",
+    x2: "353",
+    y2: "83",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "2",
+    markerEnd: "url(#ksy-mori-arr)"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "40",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "57",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "発電所の発電機"), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "70",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "87",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "並列運転の条件"), /*#__PURE__*/React.createElement("rect", {
+    x: "356",
+    y: "100",
+    width: "112",
+    height: "26",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "412",
+    y: "117",
+    textAnchor: "middle",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "Vカーブ・力率調整"), /*#__PURE__*/React.createElement("text", {
+    x: "240",
+    y: "154",
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "回転磁界を土台に同期速度で回り、発電・系統並列・力率調整へ枝分かれ")), /*#__PURE__*/React.createElement("figcaption", {
+    style: {
+      fontSize: "12px",
+      color: "var(--ink-mute)",
+      textAlign: "center",
+      marginTop: "6px",
+      lineHeight: 1.6
+    }
+  }, "森（俯瞰）：三相交流が作る回転磁界（誘導機と共通の土台）に、直流界磁の回転子が磁気的に結合して同期速度で回るのが同期機。ここから発電所の発電機・並列運転・Vカーブによる力率調整へ枝分かれする。")), /*#__PURE__*/React.createElement(LayerCore, {
+    sub: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
+      tex: "P = \\dfrac{EV}{x_s}\\sin\\delta",
+      inline: true
+    }), "（円筒形・電機子抵抗を無視。E・V が相電圧なら1相分で三相はその3倍、線間電圧なら式のままで三相分）。δ が π/2 を超えると脱調する。")
+  }, "同期機は回転磁界と同じ速さ ", /*#__PURE__*/React.createElement(LayerKey, null, "Nₛ＝120f/p"), "（p は極数）で回り、速度は周波数で決まる（滑りが無い）。 系統（電圧・周波数が一定）につないだとき、出力は", /*#__PURE__*/React.createElement(LayerKey, null, "負荷角 δ"), "に、力率は", /*#__PURE__*/React.createElement(LayerKey, null, "界磁電流"), "（起電力 E の大きさ）に表れる。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "principle",
+    c: c,
+    jump: "↓図解・1節・4節"
+  }, /*#__PURE__*/React.createElement(LayerChain, {
+    steps: [["同期電動機：固定子の三相電流", "回転磁界 Nₛ"], ["回転子の界磁", "直流の磁極"], ["異極どうしが引き合う", null], ["δ だけ遅れて同じ速さで回る", "滑りなし"], ["トルク", /*#__PURE__*/React.createElement(Eq, {
+      tex: "P \\propto \\sin\\delta",
+      inline: true
+    })]]
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--ink-soft)",
+      margin: "4px 0 0",
+      lineHeight: 1.7
+    }
+  }, "発電機では原動機が回転子を回し、電機子巻線が磁束を切って1相 ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "E = 4.44kfN\\Phi",
+    inline: true
+  }), "（k は巻線係数）が生じる。回転子の形：水車（低速）＝突極形・多極、タービン（高速）＝円筒形・2〜4極。同期速度以外では平均トルクが出ないので、自分では始動できない。")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700,
+      color: "var(--accent-ink)",
+      margin: "16px 0 4px"
+    }
+  }, "▼ ミクロを図で掘り下げる：なぜ同期機は滑りゼロで同期速度のまま回るのか（同期電動機で見る）"), /*#__PURE__*/React.createElement("figure", {
+    style: {
+      margin: "6px 0 14px",
+      background: "var(--bg-elev)",
+      borderRadius: "8px",
+      padding: "12px 8px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 470 290",
+    role: "img",
+    "aria-label": "同期機の磁気結合：①固定子の三相交流が回転磁界のN・S磁極を同期速度Nsで回し、②回転子の直流界磁もN・S磁極を作り、③異極どうしが吸引して磁気的に結合、負荷角δだけ遅れて引っ張られる。結果、回転子は滑りゼロで常に同期速度Ns=120f/pで回り、δがπ/2を超えると脱調する機構図",
+    style: {
+      display: "block",
+      width: "100%",
+      height: "auto",
+      maxWidth: "470px",
+      margin: "0 auto"
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "ksy-micro-rot",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--accent)"
+  })), /*#__PURE__*/React.createElement("marker", {
+    id: "ksy-micro-pull",
+    markerWidth: "5",
+    markerHeight: "4",
+    refX: "4.06",
+    refY: "2",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L5,2 L0,4 z",
+    fill: "var(--warn)"
+  }))), /*#__PURE__*/React.createElement("circle", {
+    cx: "128",
+    cy: "152",
+    r: "74",
+    fill: "var(--bg)",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "194",
+    cy: "152",
+    r: "3",
+    fill: "var(--ink-mute)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "161",
+    cy: "95",
+    r: "3",
+    fill: "var(--ink-mute)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "95",
+    cy: "95",
+    r: "3",
+    fill: "var(--ink-mute)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "62",
+    cy: "152",
+    r: "3",
+    fill: "var(--ink-mute)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "95",
+    cy: "209",
+    r: "3",
+    fill: "var(--ink-mute)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "161",
+    cy: "209",
+    r: "3",
+    fill: "var(--ink-mute)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "128",
+    cy: "152",
+    r: "42",
+    fill: "var(--bg-elev)",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "1.5"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "128",
+    y: "156",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--ink-mute)"
+  }, "回転子"), /*#__PURE__*/React.createElement("line", {
+    x1: "128",
+    y1: "144",
+    x2: "128",
+    y2: "105",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "1",
+    strokeDasharray: "3 3"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "124",
+    y1: "145",
+    x2: "105",
+    y2: "112",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "1",
+    strokeDasharray: "3 3"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M 67 91 A 86 86 0 0 1 189 91",
+    fill: "none",
+    stroke: "var(--accent)",
+    strokeWidth: "2.5",
+    strokeLinecap: "round",
+    markerEnd: "url(#ksy-micro-rot)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "128",
+    y: "52",
+    textAnchor: "middle",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "回転磁界（同期速度 Nₛ）"), /*#__PURE__*/React.createElement("text", {
+    x: "200",
+    y: "80",
+    fontSize: "13",
+    fontWeight: "700",
+    fill: "var(--accent)"
+  }, "①"), /*#__PURE__*/React.createElement("circle", {
+    cx: "128",
+    cy: "94",
+    r: "11",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)",
+    strokeWidth: "1.5"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "128",
+    y: "98",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "N"), /*#__PURE__*/React.createElement("circle", {
+    cx: "128",
+    cy: "210",
+    r: "11",
+    fill: "var(--ok-soft)",
+    stroke: "var(--ok)",
+    strokeWidth: "1.5"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "128",
+    y: "214",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--ok)"
+  }, "S"), /*#__PURE__*/React.createElement("circle", {
+    cx: "114",
+    cy: "128",
+    r: "10",
+    fill: "var(--ok-soft)",
+    stroke: "var(--ok)",
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "114",
+    y: "132",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--ok)"
+  }, "S"), /*#__PURE__*/React.createElement("circle", {
+    cx: "142",
+    cy: "176",
+    r: "10",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)",
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "142",
+    y: "180",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "N"), /*#__PURE__*/React.createElement("text", {
+    x: "166",
+    y: "180",
+    fontSize: "13",
+    fontWeight: "700",
+    fill: "var(--ink)"
+  }, "②"), /*#__PURE__*/React.createElement("line", {
+    x1: "118",
+    y1: "118",
+    x2: "123",
+    y2: "105",
+    stroke: "var(--warn)",
+    strokeWidth: "2",
+    strokeDasharray: "5 3",
+    markerEnd: "url(#ksy-micro-pull)"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "138",
+    y1: "186",
+    x2: "133",
+    y2: "199",
+    stroke: "var(--warn)",
+    strokeWidth: "2",
+    strokeDasharray: "5 3",
+    markerEnd: "url(#ksy-micro-pull)"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M 128 106 A 46 46 0 0 0 105 112",
+    fill: "none",
+    stroke: "var(--warn)",
+    strokeWidth: "1.8"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "107",
+    y: "99",
+    fontSize: "12",
+    fontWeight: "700",
+    fontStyle: "italic",
+    fill: "var(--warn)"
+  }, "δ"), /*#__PURE__*/React.createElement("text", {
+    x: "88",
+    y: "116",
+    fontSize: "13",
+    fontWeight: "700",
+    fill: "var(--warn)"
+  }, "③"), /*#__PURE__*/React.createElement("text", {
+    x: "244",
+    y: "52",
+    fontSize: "11.5",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "① 三相交流が回転磁界を作る"), /*#__PURE__*/React.createElement("text", {
+    x: "244",
+    y: "68",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "（●＝固定子の三相巻線＝発生源）"), /*#__PURE__*/React.createElement("text", {
+    x: "244",
+    y: "98",
+    fontSize: "11.5",
+    fontWeight: "700",
+    fill: "var(--ink)"
+  }, "② 直流界磁が回転子に磁極 N・S"), /*#__PURE__*/React.createElement("text", {
+    x: "244",
+    y: "114",
+    fontSize: "11",
+    fill: "var(--ink-soft)"
+  }, "（回転磁界の異極と向き合う）"), /*#__PURE__*/React.createElement("text", {
+    x: "244",
+    y: "144",
+    fontSize: "11.5",
+    fontWeight: "700",
+    fill: "var(--warn)"
+  }, "③ 異極どうしが吸引して結合し、"), /*#__PURE__*/React.createElement("text", {
+    x: "258",
+    y: "160",
+    fontSize: "11.5",
+    fontWeight: "700",
+    fill: "var(--warn)"
+  }, "負荷角 δ だけ遅れて引っ張る"), /*#__PURE__*/React.createElement("text", {
+    x: "244",
+    y: "190",
+    fontSize: "11",
+    fill: "var(--ink-soft)"
+  }, "→ 遅れても速さは落ちない＝滑りゼロ"), /*#__PURE__*/React.createElement("rect", {
+    x: "24",
+    y: "238",
+    width: "422",
+    height: "44",
+    rx: "6",
+    fill: "var(--accent-soft)",
+    stroke: "var(--accent)",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "235",
+    y: "255",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, /*#__PURE__*/React.createElement("tspan", {
+    x: "235",
+    dy: "0"
+  }, "④ 回転子は常に同期速度 Nₛ = 120f/p で回る（滑りゼロ）"), /*#__PURE__*/React.createElement("tspan", {
+    x: "235",
+    dy: "18"
+  }, "δ が π/2（90°）を超えると磁気結合を保てず脱調"))), /*#__PURE__*/React.createElement("figcaption", {
+    style: {
+      fontSize: "12px",
+      color: "var(--ink-mute)",
+      textAlign: "center",
+      marginTop: "6px",
+      lineHeight: 1.6
+    }
+  }, "ミクロ（なぜ）：同期電動機として見ると、固定子の三相交流が作る回転磁界の磁極と回転子の直流界磁の磁極が異極どうしで吸引し合い、磁気的に結合する。負荷が増えると回転子は負荷角 δ だけ遅れて引っ張られるが、回る速さ自体は落ちない＝滑りゼロで常に同期速度。δ が π/2 を超えると結合が保てず脱調する（発電機では逆に回転子側が δ だけ先行して引っ張る）。")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--accent-soft)",
+      borderRadius: "6px",
+      padding: "12px 14px",
+      margin: "14px 0"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "12px",
+      fontWeight: 700,
+      color: "var(--accent-ink)",
+      marginBottom: 8,
+      letterSpacing: "0.04em"
+    }
+  }, "🔬 ミクロの因果（なぜ滑りゼロで同期速度のまま回るか）"), /*#__PURE__*/React.createElement("ol", {
+    style: {
+      margin: 0,
+      paddingLeft: 24,
+      lineHeight: 1.9
+    }
+  }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "固定子の三相交流が回転磁界"), "を作る（回転の速さは ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "N_s = 120f/p",
+    inline: true
+  }), " に固定）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "回転子の直流界磁の磁極"), "が回転磁界の異極と吸引し合い、磁気的に結合する"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "負荷が増えると負荷角 δ が開き"), "、遅れたまま引っ張られてトルクが増す（", /*#__PURE__*/React.createElement(Eq, {
+    tex: "P = \\frac{EV}{x_s}\\sin\\delta",
+    inline: true
+  }), " は δ = π/2 で最大）"), /*#__PURE__*/React.createElement("li", null, "結果、", /*#__PURE__*/React.createElement("strong", null, "滑りゼロで常に同期速度"), "で回る。ただし δ が π/2 を超えると結合が外れて", /*#__PURE__*/React.createElement("strong", null, "脱調")))), /*#__PURE__*/React.createElement(LayerBridge, {
+    label: "橋①"
+  }, "磁極1つずつは追わず、1相を", /*#__PURE__*/React.createElement("strong", null, "起電力 E と同期リアクタンス xₛ の直列"), "に置き換える（電機子反作用は xₛ に含めて扱う）。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "law",
+    c: c,
+    jump: "↓2節・3節"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...LAYER_GRID,
+      gap: "2px 16px",
+      fontSize: 13.5,
+      lineHeight: 1.8
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "電圧"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
+    tex: "E = V + I(r_a + jx_s)",
+    inline: true
+  }), "（発電機・ベクトル）"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "出力"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
+    tex: "P = \\dfrac{EV}{x_s}\\sin\\delta",
+    inline: true
+  }), "（1相）")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13.5,
+      lineHeight: 1.8,
+      marginTop: 2
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "短絡比"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
+    tex: "K_s = I_{f1}/I_{f2}",
+    inline: true
+  }), "（無負荷で定格電圧を出す界磁電流 ÷ 三相短絡で定格電流を流す界磁電流）＝ 単位法の同期インピーダンスの逆数。大きいほど電圧変動率が小さく安定度が高いが、持続短絡電流（", /*#__PURE__*/React.createElement(Eq, {
+    tex: "I_s = K_s I_n",
+    inline: true
+  }), "）が大きく、機械は大きく重い。一般に水車発電機（突極形）は大きく、タービン発電機（円筒形）は小さい。", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+    style: LAYER_LABEL
+  }, "V曲線"), "\u3000同じ出力のまま、力率1の点より界磁電流が大きい（過励磁）と進み力率、小さい（不足励磁）と遅れ力率（電動機。発電機は逆）。電機子電流が最小になるのは力率1のとき。"), /*#__PURE__*/React.createElement(LayerTopNote, {
+    c: c,
+    sub: "vcurve",
+    labels: SY_SUBTOPIC_LABEL
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12.5,
+      color: "var(--ink-soft)",
+      margin: "6px 0 0"
+    }
+  }, "図で見るなら、3節の", /*#__PURE__*/React.createElement("strong", null, "図1.3.2 同期電動機の V カーブ"), "。")), /*#__PURE__*/React.createElement(LayerBridge, {
+    label: "橋②"
+  }, "外から動かせるのは", /*#__PURE__*/React.createElement("strong", null, "界磁電流（E の大きさ）・原動機や負荷のトルク（δ）・系統へつなぐタイミング"), "。"), /*#__PURE__*/React.createElement(LayerStage, {
+    stage: "operate",
+    c: c,
+    jump: "↓5節・6節・7節"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...LAYER_GRID,
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "並行運転",
+    sub: "起電力の大きさ・周波数・位相・波形（と相回転）をそろえ、同期検定器で確かめてつなぐ"
+  }, /*#__PURE__*/React.createElement("li", null, "大きさが違う → 無効横流（無効循環電流）"), /*#__PURE__*/React.createElement("li", null, "位相が違う → 有効横流（同期化電流）")), /*#__PURE__*/React.createElement(LayerSubBox, {
+    title: "始動・乱調・力率調整"
+  }, /*#__PURE__*/React.createElement("li", null, "自分では始動できない → 制動巻線を誘導機の二次のように使う自己始動法（始動中は界磁巻線を抵抗を通して短絡しておく）・始動電動機法"), /*#__PURE__*/React.createElement("li", null, "負荷の急変で δ が揺れる（乱調）→ 制動巻線が抑える"), /*#__PURE__*/React.createElement("li", null, "無負荷の同期電動機＝同期調相機：過励磁なら進相コンデンサと同じ（遅れ無効電力を供給して電圧を上げる）、不足励磁なら分路リアクトルと同じ")))), /*#__PURE__*/React.createElement(LayerCountNote, {
+    c: c,
+    stageMap: SY_STAGE_SUBTOPICS,
+    labels: SY_SUBTOPIC_LABEL
+  }));
+};
 
 /* 同期発電機の電機子反作用：力率による3ケースの起磁力の向き */
 const SyncReactionFig = () => /*#__PURE__*/React.createElement("figure", {
