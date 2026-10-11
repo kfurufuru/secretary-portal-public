@@ -11028,7 +11028,7 @@ const YDeltaStartFig = () => /*#__PURE__*/React.createElement("figure", {
   fontSize: "11",
   fontWeight: "700",
   fill: "var(--ink)"
-}, "Δ 結線（運転時＝直入れ相当）"), /*#__PURE__*/React.createElement("line", {
+}, "Δ 結線（直入れで始動）"), /*#__PURE__*/React.createElement("line", {
   x1: "110",
   y1: "105",
   x2: "110",
@@ -11142,7 +11142,7 @@ const YDeltaStartFig = () => /*#__PURE__*/React.createElement("figure", {
   textAnchor: "middle",
   fontSize: "9.5",
   fill: "var(--ink-mute)"
-}, "線間電圧を V、Δ 運転時の相電流を I とする（電源は共通）"), /*#__PURE__*/React.createElement("rect", {
+}, "線間電圧を V、Δ で直入れ始動したときの相電流を I とする（電源は共通）"), /*#__PURE__*/React.createElement("rect", {
   x: "40",
   y: "188",
   width: "400",
@@ -11171,7 +11171,7 @@ const YDeltaStartFig = () => /*#__PURE__*/React.createElement("figure", {
   fontSize: "10",
   fontWeight: "700",
   fill: "var(--ink-soft)"
-}, "Δ（運転）"), /*#__PURE__*/React.createElement("text", {
+}, "Δ（直入れ）"), /*#__PURE__*/React.createElement("text", {
   x: "400",
   y: "205",
   textAnchor: "middle",
@@ -11297,6 +11297,421 @@ const YDeltaStartFig = () => /*#__PURE__*/React.createElement("figure", {
     lineHeight: 1.6
   }
 }, "図1.2.4\u3000Y-Δ 始動で 1/3 になる理由。相電圧・相電流は 1/√3 だが、Δ では線電流が相電流の √3 倍あるため線電流の比は 1/3。トルクは相電圧の2乗に比例するので同じく 1/3。「1/√3」と答える誤りは、相電流と線電流を取り違えたときに起きる。"));
+
+/* 図1.2.5 Y-Δ 始動器（電磁接触器3個）の主回路を、3つの状態で並べる。
+   電流が流れる経路だけ色を付け、線電流と巻線電流をその場に書く。
+   数値は例（線間電圧 200 V、停止中の巻線1相のインピーダンス 10 Ω）。
+   ① 直入れ：巻線 200 V → 20 A、線電流 √3×20 ≒ 34.6 A
+   ② Y 始動：巻線 200/√3 ≒ 115 V → 11.5 A、線電流 ＝ 巻線電流 ＝ 11.5 A（① の 1/3）
+   ③ Δ 運転：回転して電流は定格まで下がる（① ② と比べる量ではない） */
+const YDeltaContactorCircuit = ({
+  m,
+  s,
+  d,
+  il,
+  vw,
+  iw,
+  label
+}) => {
+  const on = "var(--warn)";
+  const off = "var(--rule)";
+  const X = [60, 100, 140]; // L1/U, L2/V, L3/W
+  const C = [185, 212, 239]; // MC-D の3極
+  const sw = (x, y1, y2, closed, c) => closed ? /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("line", {
+    x1: x,
+    y1: y1,
+    x2: x,
+    y2: y2,
+    stroke: c,
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: x - 5,
+    y1: (y1 + y2) / 2 - 7,
+    x2: x + 5,
+    y2: (y1 + y2) / 2 - 7,
+    stroke: c,
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: x,
+    cy: (y1 + y2) / 2 + 7,
+    r: "2.2",
+    fill: c
+  })) : /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("line", {
+    x1: x,
+    y1: y1,
+    x2: x,
+    y2: (y1 + y2) / 2 - 7,
+    stroke: c,
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: x,
+    y1: (y1 + y2) / 2 + 7,
+    x2: x,
+    y2: y2,
+    stroke: c,
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: x,
+    y1: (y1 + y2) / 2 + 7,
+    x2: x - 9,
+    y2: (y1 + y2) / 2 - 9,
+    stroke: c,
+    strokeWidth: "1.6"
+  }));
+  const lc = m ? on : off; // 電源〜巻線
+  const dc = d ? on : off; // MC-D 側
+  const scl = s ? on : off; // MC-S 側
+  const w = c => c === on ? 3 : 1.6;
+  // MC-D の上側：列0←V1、列1←W1、列2←U1（U2→V1、V2→W1、W2→U1）
+  const top = [[X[1], 98, C[0]], [X[2], 88, C[1]], [X[0], 78, C[2]]];
+  // MC-D の下側：U2→列0、V2→列1、W2→列2
+  const bot = [[X[0], 188, C[0]], [X[1], 200, C[1]], [X[2], 212, C[2]]];
+  return /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 300 290",
+    role: "img",
+    "aria-label": label,
+    style: {
+      display: "block",
+      width: "100%",
+      height: "auto",
+      maxWidth: "320px",
+      margin: "0 auto"
+    }
+  }, ["L1", "L2", "L3"].map((n, i) => /*#__PURE__*/React.createElement("text", {
+    key: n,
+    x: X[i],
+    y: "13",
+    textAnchor: "middle",
+    fontSize: "11",
+    fontWeight: "700",
+    fill: "var(--ink)"
+  }, n)), X.map(x => /*#__PURE__*/React.createElement("g", {
+    key: "m" + x
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: x,
+    y1: "18",
+    x2: x,
+    y2: "32",
+    stroke: lc,
+    strokeWidth: w(lc)
+  }), sw(x, 32, 62, m, lc), /*#__PURE__*/React.createElement("line", {
+    x1: x,
+    y1: "62",
+    x2: x,
+    y2: "118",
+    stroke: lc,
+    strokeWidth: w(lc)
+  }))), /*#__PURE__*/React.createElement("rect", {
+    x: "44",
+    y: "27",
+    width: "112",
+    height: "40",
+    rx: "5",
+    fill: "none",
+    stroke: "var(--ok)",
+    strokeWidth: "1",
+    strokeDasharray: "4 3"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "162",
+    y: "51",
+    fontSize: "10",
+    fontWeight: "700",
+    fill: "var(--ok)"
+  }, "MC-M"), top.map(([x, y, cx]) => /*#__PURE__*/React.createElement("g", {
+    key: "t" + cx
+  }, /*#__PURE__*/React.createElement("polyline", {
+    points: `${x},${y} ${cx},${y} ${cx},128`,
+    fill: "none",
+    stroke: dc,
+    strokeWidth: w(dc)
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: x,
+    cy: y,
+    r: "3",
+    fill: dc
+  }))), C.map(cx => /*#__PURE__*/React.createElement("g", {
+    key: "d" + cx
+  }, sw(cx, 128, 158, d, dc))), /*#__PURE__*/React.createElement("rect", {
+    x: "172",
+    y: "123",
+    width: "80",
+    height: "40",
+    rx: "5",
+    fill: "none",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "1",
+    strokeDasharray: "4 3"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "257",
+    y: "147",
+    fontSize: "10",
+    fontWeight: "700",
+    fill: d ? "var(--warn)" : "var(--ink-mute)"
+  }, "MC-D"), X.map((x, i) => /*#__PURE__*/React.createElement("g", {
+    key: "w" + x
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: x,
+    y1: "118",
+    x2: x,
+    y2: "124",
+    stroke: lc,
+    strokeWidth: w(lc)
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: x - 8,
+    y: "124",
+    width: "16",
+    height: "42",
+    fill: "var(--warn-soft)",
+    stroke: lc,
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: x,
+    cy: "118",
+    r: "3",
+    fill: "var(--ink)"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: x,
+    y1: "166",
+    x2: x,
+    y2: "172",
+    stroke: lc,
+    strokeWidth: w(lc)
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: x,
+    cy: "172",
+    r: "3",
+    fill: "var(--ink)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: x + 11,
+    y: "149",
+    fontSize: "10",
+    fill: "var(--ink-soft)"
+  }, ["U", "V", "W"][i]))), bot.map(([x, y, cx]) => /*#__PURE__*/React.createElement("g", {
+    key: "b" + cx
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: x,
+    y1: "172",
+    x2: x,
+    y2: y,
+    stroke: d ? dc : s ? scl : off,
+    strokeWidth: w(d ? dc : s ? scl : off)
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: `${x},${y} ${cx},${y} ${cx},158`,
+    fill: "none",
+    stroke: dc,
+    strokeWidth: w(dc)
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: x,
+    cy: y,
+    r: "3",
+    fill: dc
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: x,
+    y1: y,
+    x2: x,
+    y2: "226",
+    stroke: scl,
+    strokeWidth: w(scl)
+  }))), X.map(x => /*#__PURE__*/React.createElement("g", {
+    key: "s" + x
+  }, sw(x, 226, 254, s, scl), /*#__PURE__*/React.createElement("line", {
+    x1: x,
+    y1: "254",
+    x2: x,
+    y2: "264",
+    stroke: scl,
+    strokeWidth: w(scl)
+  }))), /*#__PURE__*/React.createElement("line", {
+    x1: X[0],
+    y1: "264",
+    x2: X[2],
+    y2: "264",
+    stroke: scl,
+    strokeWidth: s ? 3.5 : 1.6
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "44",
+    y: "221",
+    width: "112",
+    height: "38",
+    rx: "5",
+    fill: "none",
+    stroke: "var(--accent)",
+    strokeWidth: "1",
+    strokeDasharray: "4 3"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "162",
+    y: "244",
+    fontSize: "10",
+    fontWeight: "700",
+    fill: s ? "var(--accent-ink)" : "var(--ink-mute)"
+  }, "MC-S"), /*#__PURE__*/React.createElement("text", {
+    x: "100",
+    y: "282",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--ink-mute)"
+  }, "3本を1点に（Y の中性点）"), /*#__PURE__*/React.createElement("rect", {
+    x: "0",
+    y: "28",
+    width: "42",
+    height: "38",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--warn)",
+    strokeWidth: "1.2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "42",
+    y1: "47",
+    x2: "57",
+    y2: "47",
+    stroke: "var(--warn)",
+    strokeWidth: "1.2"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "58",
+    cy: "47",
+    r: "1.8",
+    fill: "var(--warn)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "21",
+    y: "42",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--ink-soft)"
+  }, "線電流"), /*#__PURE__*/React.createElement("text", {
+    x: "21",
+    y: "58",
+    textAnchor: "middle",
+    fontSize: "10",
+    fontWeight: "700",
+    fill: "var(--warn)"
+  }, il), /*#__PURE__*/React.createElement("rect", {
+    x: "2",
+    y: "122",
+    width: "46",
+    height: "48",
+    rx: "5",
+    fill: "var(--bg)",
+    stroke: "var(--rule)",
+    strokeWidth: "1.2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "25",
+    y: "135",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--ink-soft)"
+  }, "巻線1本"), /*#__PURE__*/React.createElement("text", {
+    x: "25",
+    y: "150",
+    textAnchor: "middle",
+    fontSize: "10",
+    fontWeight: "700",
+    fill: "var(--ink)"
+  }, vw), /*#__PURE__*/React.createElement("text", {
+    x: "25",
+    y: "165",
+    textAnchor: "middle",
+    fontSize: "10",
+    fontWeight: "700",
+    fill: "var(--warn)"
+  }, iw));
+};
+const YDeltaContactorFig = () => {
+  const card = {
+    background: "var(--bg)",
+    border: "1px solid var(--rule)",
+    borderRadius: 8,
+    padding: "8px 6px 6px"
+  };
+  const head = (n, t, sub, subColor) => /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 4px 4px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13.5,
+      fontWeight: 700,
+      color: "var(--ink)"
+    }
+  }, n, "\u3000", t), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      color: subColor
+    }
+  }, sub));
+  return /*#__PURE__*/React.createElement("figure", {
+    style: {
+      margin: "10px 0 14px",
+      background: "var(--bg-elev)",
+      borderRadius: "8px",
+      padding: "12px 8px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: card
+  }, head("①", "直入れ（始動の瞬間）", "比較の基準：MC-M・MC-D 入", "var(--accent-ink)"), /*#__PURE__*/React.createElement(YDeltaContactorCircuit, {
+    m: true,
+    s: false,
+    d: true,
+    il: "34.6 A",
+    vw: "200 V",
+    iw: "20 A",
+    label: "直入れの状態。MC-MとMC-Dが入り、巻線は最初からデルタ結線で200ボルトがかかる。巻線1本に20アンペア、線電流はその√3倍の34.6アンペア。"
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...card,
+      borderColor: "var(--warn)"
+    }
+  }, head("②", "Y 始動（始動の瞬間）", "① と比べる：MC-M・MC-S 入", "var(--warn)"), /*#__PURE__*/React.createElement(YDeltaContactorCircuit, {
+    m: true,
+    s: true,
+    d: false,
+    il: "11.5 A",
+    vw: "115 V",
+    iw: "11.5 A",
+    label: "Y始動の状態。MC-MとMC-Sが入り、MC-Sが巻線の端を1点に短絡してY結線になる。巻線1本に115ボルト、11.5アンペア。Yでは線電流も11.5アンペアで、直入れの34.6アンペアの3分の1。"
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...card,
+      opacity: 0.8
+    }
+  }, head("③", "Δ 運転（回転中）", "比較の対象ではない：MC-M・MC-D 入", "var(--ink-mute)"), /*#__PURE__*/React.createElement(YDeltaContactorCircuit, {
+    m: true,
+    s: false,
+    d: true,
+    il: "負荷次第",
+    vw: "200 V",
+    iw: "線の1/√3",
+    label: "デルタ運転の状態。接触器の入り切りは直入れと同じだが、回転して滑りが小さくなったので電流は負荷で決まる値まで下がっている。巻線電流は線電流の√3分の1。Y-Δ始動の3分の1とは関係がない。"
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      margin: "10px 4px 4px",
+      padding: "8px 12px",
+      background: "var(--warn-soft)",
+      border: "1px solid var(--warn)",
+      borderRadius: 6,
+      fontSize: 13.5,
+      lineHeight: 1.75
+    }
+  }, /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: "var(--warn)"
+    }
+  }, "比べるのは ① と ② の線電流"), "（どちらも始動の瞬間）：11.5 A ÷ 34.6 A ≒ ", /*#__PURE__*/React.createElement("strong", null, "1/3"), "。 巻線電流どうし（11.5 A ÷ 20 A）で比べると ≒ 1/√3 になる。これが誤答 1/√3 の出どころ。 ③ は回転して滑りが小さくなったので電流が下がっただけで、② と比べる量ではない。"), /*#__PURE__*/React.createElement("figcaption", {
+    style: {
+      fontSize: "12px",
+      color: "var(--ink-mute)",
+      textAlign: "center",
+      marginTop: "6px",
+      lineHeight: 1.6
+    }
+  }, "図1.2.5\u3000Y-Δ 始動器（電磁接触器3個）の主回路。色の付いた線に電流が流れる。数値は例（線間電圧 200 V、停止中の巻線1相のインピーダンス 10 Ω）。① は同じ回路で最初から MC-D を入れて始動したと仮定した比較用の状態。"));
+};
 
 /* 3節「低滑り域の線形近似」冒頭の数え上げ。件数は台帳から描画時に数える（本文に数字を書かない）。
    下の「線形近似 4・比例推移だけ 1・滑り周波数だけ 1」は人が問題を読んで仕分けた結果なので、
@@ -12296,13 +12711,29 @@ const InductionMachinePage = ({
   tex: "1/\\sqrt{3}"
 }), " なので", /*#__PURE__*/React.createElement("strong", null, "相電流も ", /*#__PURE__*/React.createElement(Eq, {
   tex: "1/\\sqrt{3}"
-})), "、さらに Y は線電流＝相電流だが Δ 運転は線電流＝", /*#__PURE__*/React.createElement(Eq, {
+})), "、さらに Y は線電流＝相電流だが Δ（直入れ）は線電流＝", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\sqrt{3}"
 }), "×相電流なので、線電流の比は ", /*#__PURE__*/React.createElement(Eq, {
   tex: "(1/\\sqrt{3}) \\div \\sqrt{3} = 1/3"
 }), "。「相電流が ", /*#__PURE__*/React.createElement(Eq, {
   tex: "1/\\sqrt{3}"
-}), "」で止まると誤答になる。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}), "」で止まると誤答になる。")), /*#__PURE__*/React.createElement("details", {
+  style: {
+    margin: "10px 0 14px"
+  }
+}, /*#__PURE__*/React.createElement("summary", {
+  style: {
+    cursor: "pointer",
+    fontWeight: 700,
+    color: "var(--accent-ink)"
+  }
+}, "参考：Y-Δ 始動器の主回路（電磁接触器3個）と、状態ごとの電流"), /*#__PURE__*/React.createElement(YDeltaContactorFig, null), /*#__PURE__*/React.createElement("p", {
+  style: {
+    fontSize: 13.5,
+    lineHeight: 1.8,
+    margin: "6px 0"
+  }
+}, "動作の順序：MC-M と MC-S を入れて ", /*#__PURE__*/React.createElement("strong", null, "Y で始動"), " → 設定時間の後に MC-S を切り、MC-D を入れて ", /*#__PURE__*/React.createElement("strong", null, "Δ で運転"), "（切り替えの間も MC-M は入ったままで、巻線の片端が開くので電流が一瞬ゼロになる）→ 停止は MC-M を切る。 MC-S と MC-D が同時に入ると相間短絡になるので、", /*#__PURE__*/React.createElement("strong", null, "インターロック"), "で同時投入を防ぐ。")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "induction-machine",
   sectionId: "start"
 }), /*#__PURE__*/React.createElement("h2", {
