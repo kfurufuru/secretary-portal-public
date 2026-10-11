@@ -559,7 +559,7 @@ const STUDY = {
        see:'効率が 97.56 % → 96.97 % に下がる（損失は同じで出力が cosθ 倍に減るため）。電圧変動率は 2 % → 4 % に増える（p=2 %・q=4 % の例）。効率が最大になる負荷率は変わらない。',
        so:'電圧変動率の近似式 ε ≒ p·cosθ + q·sinθ。力率1なら q の項が消えて ε ≒ p。遅れ力率では q·sinθ が効いて大きくなる。p と q は短絡試験から求まる（%Z² = p² + q²）。',
        q:['R3/9','R7上/9','H23/15','H26/8']},
-      {t:'V結線は「3台のうち1台を外した姿」', sec:'vconn', focus:'3台目', set:{tfView:'bank', bankV:true, tfPf:1},
+      {t:'V結線は「3台のうち1台を外した姿」', sec:'vconn', focus:'残った2台', set:{tfView:'bank', bankV:true, tfPf:1},
        op:'「見る対象」を 三相結線 にし、Δ-Δ → V-V と切り替える。',
        see:'3台目が実際に消え、残り2台の渡り線だけで三相のまま送れている。',
        so:'出力は 3P → √3P なので Δ比 1/√3 ≒ 57.7%。よく混同する √3/2 ≒ 86.6% は「残った2台の定格合計 2P」に対する利用率で、分母が違う。',
@@ -1386,6 +1386,8 @@ function buildTransformer(g){
   ] : st.tfView === 'bank' ? [
     {obj:tanks[0], t:'単相変圧器 1台目', c:'#4A5B68'},
     {obj:tanks[2], t:'3台目（V結線では外す）', c:'#7E8C99'},
+    /* V結線では「外した3台目」は見えない。指すのは残った2台（同じ名前の行は1行にまとまり、線が2本出る） */
+    ...(st.bankV ? [tanks[0], tanks[1]].map(o=>({obj:o, t:'残った2台（V結線で三相を送る）', c:'#3572D6'})) : []),
     {obj:(st.bankV?wiresV:wiresD).children[0], t:'渡り線（変圧器どうしを結ぶ）', c:'#D9C7A0'},
     {obj:(st.bankV?wiresV:wiresD).children[st.bankV?1:5], t:'線路への引き出し（U相）', c:'#D24A43'},
   ] : st.tfView === 'auto' ? [
