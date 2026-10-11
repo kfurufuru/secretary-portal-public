@@ -9296,8 +9296,10 @@ const fsrsInterval = s => Math.min(Math.max(fsrsRoundHalfEven(s / FSRS_FACTOR * 
         1日ずつ前倒しして空いている日に置く（今日の翌日より前には置かない。全部埋まっていれば元の日）。
         前倒しは「早めに解き直す」側なので、忘却曲線上は安全側。
      3. 締切前の最終確認: 締切より前に付けた判定で、締切で抑えた次回日から翌日まで全部埋まっているときは、
-        その回を「締切前の最終確認」とみなし、締切の翌日〜試験日の間に同じ前倒しで置く
-        （そこも全部埋まっていれば試験日）。
+        その回を「締切前の最終確認」とみなし、締切の翌日〜試験の前日の間に同じ前倒しで置く。
+        そこも全部埋まっていれば、窓の中で最も空いている日に、上限を超えて置く（評価 D6(a)）。
+        試験日には送らない。試験日に送ると、最後の解き直しが締切よりずっと前のまま試験を迎えるマスが出る
+        （220マスの模擬で80マス・最も古いものは試験の35日前だった）。
         これが無いと、締切前の判定は必ず次回日が締切以下になるので、締切の当日に全マスが
         期限到来になる（220マスの模擬で締切日に全マスが集まった）。
    日付の出所: 試験センター「令和8年度電気主任技術者試験の実施日程等のご案内」
@@ -9344,12 +9346,23 @@ const kakomonInterval = (s, today, load) => {
   };
   const j = fit(i, 1);
   if (j !== null) return j;
-  // 締切で抑えたのに締切まで空きが無い＝この回を締切前の最終確認とし、締切の翌日〜試験日に置く
+  // 締切で抑えたのに締切まで空きが無い＝この回を締切前の最終確認とし、締切の翌日〜試験の前日に置く。
+  // そこも埋まっていれば、試験日へは送らず、窓の中で最も空いている日に上限を超えて置く
+  // （試験日に置くと、最後の解き直しが締切よりずっと前のまま試験を迎えるマスが出る。再評価 FB1-2-01・OC2-02）
   if (cap === KAKOMON_REVIEW_DEADLINE && natural > left) {
     const left2 = kakomonDaysBetween(t, KAKOMON_EXAM_DATE);
-    const i2 = Math.min(natural, left2);
-    const j2 = fit(i2, left + 1);
-    return j2 !== null ? j2 : i2;
+    const i2 = Math.min(natural, left2 - 1);
+    const j2 = i2 > left ? fit(i2, left + 1) : null;
+    if (j2 !== null) return j2;
+    // 窓が全部埋まっていれば、窓の中で最も空いている日に上限を超えて置く（同数なら遅い日）
+    const lo = left + 1,
+      hi = left2 - 1;
+    if (lo > hi) return left;
+    let best = hi;
+    for (let j = hi; j >= lo; j--) {
+      if ((load[kakomonAddDays(t, j)] || 0) < (load[kakomonAddDays(t, best)] || 0)) best = j;
+    }
+    return best;
   }
   return i; // 翌日まで全部埋まっていれば元の日のまま
 };
@@ -10628,7 +10641,7 @@ const KakomonProgress = ({
       color: 'var(--ink-soft)',
       margin: '0 0 8px'
     }
-  }, "次に解き直す日は", /*#__PURE__*/React.createElement("strong", null, "忘却曲線から算出"), "する（判定が良いほど長く空く）。 期限が来たマスは", /*#__PURE__*/React.createElement("strong", null, "枠が光って"), "「今日やる」に出る。", /*#__PURE__*/React.createElement("strong", null, "◎○ も対象"), "で、間隔が長いだけ——「○ だが半年触っていない」も期限が来れば出てくる。 間違えた直後に解き直しても、覚えているだけで解けてしまい定着しない。 ただし次回日は", /*#__PURE__*/React.createElement("strong", null, "試験の ", KAKOMON_REVIEW_LEAD_DAYS, " 日前（", KAKOMON_REVIEW_DEADLINE, "）まで"), "に収め （それ以降に付けた判定は試験日 ", KAKOMON_EXAM_DATE, " まで）、", /*#__PURE__*/React.createElement("strong", null, "1日 ", KAKOMON_DAILY_CAP, " マス"), "を超える日は前の日へ前倒しする。 締切まで空きが無いときは、その回を締切前の最終確認とみなし、締切の翌日から試験日までの間に置く。"), /*#__PURE__*/React.createElement("div", {
+  }, "次に解き直す日は", /*#__PURE__*/React.createElement("strong", null, "忘却曲線から算出"), "する（判定が良いほど長く空く）。 期限が来たマスは", /*#__PURE__*/React.createElement("strong", null, "枠が光って"), "「今日やる」に出る。", /*#__PURE__*/React.createElement("strong", null, "◎○ も対象"), "で、間隔が長いだけ——「○ だが半年触っていない」も期限が来れば出てくる。 間違えた直後に解き直しても、覚えているだけで解けてしまい定着しない。 ただし次回日は", /*#__PURE__*/React.createElement("strong", null, "試験の ", KAKOMON_REVIEW_LEAD_DAYS, " 日前（", KAKOMON_REVIEW_DEADLINE, "）まで"), "に収め （それ以降に付けた判定は試験日 ", KAKOMON_EXAM_DATE, " まで）、", /*#__PURE__*/React.createElement("strong", null, "1日 ", KAKOMON_DAILY_CAP, " マス"), "を超える日は前の日へ前倒しする。 締切まで空きが無いときは、その回を締切前の最終確認とみなし、締切の翌日から試験の前日までの間に置く。 そこも埋まっていれば、その間で最も空いている日に上限を超えて置く（試験日には送らない）。"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexWrap: 'wrap',
@@ -49537,7 +49550,7 @@ const StudyLogPage = ({
     fontSize: 13,
     color: "var(--ink-soft)"
   }
-}, "表の数値は", /*#__PURE__*/React.createElement("strong", null, "予定日ちょうどに解き直した場合"), "。早く解けば短く、遅れれば長くなる。 いずれも", /*#__PURE__*/React.createElement("strong", null, "締切で頭打ち"), "になるので、上の 365 日などは実際には出ない。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "ただし締切（", KAKOMON_REVIEW_DEADLINE, "＝試験日 ", KAKOMON_EXAM_DATE, " の ", KAKOMON_REVIEW_LEAD_DAYS, " 日前）を越えては寝かせない。"), "FSRS は「いつまでに」の制約が無い前提の設計なので、 ◎ を重ねると 365日後＝試験のはるか後ろへ送ってしまう。そこで", /*#__PURE__*/React.createElement("strong", null, "次回日は締切までに収める"), "（締切を過ぎた判定は試験日までに収める）。 さらに", /*#__PURE__*/React.createElement("strong", null, "1日に予定できるのは ", KAKOMON_DAILY_CAP, " マスまで"), "で、その日が埋まっていれば1日ずつ前倒しして空いた日に置く。 試験の直前に全マスがまとめて来るのを防ぐためで、締切までに埋まり切らない分は、締切から試験日までの間に同じ規則で並べる。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "◎○ も再挑戦の対象"), "にしてある。間隔が長いだけで、期限が来れば「今日やる」に出る。 試験前に「○ にはなっているが半年触っていない」を拾うためで、", /*#__PURE__*/React.createElement("strong", null, "鮮度の落ちた ○ は ○ のままとは限らない"), "。"), /*#__PURE__*/React.createElement("p", {
+}, "表の数値は", /*#__PURE__*/React.createElement("strong", null, "予定日ちょうどに解き直した場合"), "。早く解けば短く、遅れれば長くなる。 いずれも", /*#__PURE__*/React.createElement("strong", null, "締切で頭打ち"), "になるので、上の 365 日などは実際には出ない。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "ただし締切（", KAKOMON_REVIEW_DEADLINE, "＝試験日 ", KAKOMON_EXAM_DATE, " の ", KAKOMON_REVIEW_LEAD_DAYS, " 日前）を越えては寝かせない。"), "FSRS は「いつまでに」の制約が無い前提の設計なので、 ◎ を重ねると 365日後＝試験のはるか後ろへ送ってしまう。そこで", /*#__PURE__*/React.createElement("strong", null, "次回日は締切までに収める"), "（締切を過ぎた判定は試験日までに収める）。 さらに", /*#__PURE__*/React.createElement("strong", null, "1日に予定できるのは ", KAKOMON_DAILY_CAP, " マスまで"), "で、その日が埋まっていれば1日ずつ前倒しして空いた日に置く。 試験の直前に全マスがまとめて来るのを防ぐためで、締切までに埋まり切らない分は、締切から試験の前日までの間に同じ規則で並べる。そこにも入り切らない分は試験日へは送らず、その間で最も空いている日に上限を超えて置く（最後の2週間は1日の量が増えることがある）。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "◎○ も再挑戦の対象"), "にしてある。間隔が長いだけで、期限が来れば「今日やる」に出る。 試験前に「○ にはなっているが半年触っていない」を拾うためで、", /*#__PURE__*/React.createElement("strong", null, "鮮度の落ちた ○ は ○ のままとは限らない"), "。"), /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)"
