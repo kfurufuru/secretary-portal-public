@@ -271,6 +271,35 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
   .oneliner{font-size:14px}
 }
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* 比べる表示（操作帯の先頭。3D の下にあるので色は操作帯と同じ固定値） */
+.causal{flex-basis:100%;order:-1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:6px 10px 7px;color:#E6E9E4;font-size:12px;line-height:1.5}
+.causal[hidden]{display:none}
+.cz-head{display:flex;align-items:center;gap:6px;font-weight:700;color:#F0B57E}
+.cz-head span{flex:1}
+.cz-reset{background:none;border:1px solid rgba(255,255,255,.28);color:#E6E9E4;border-radius:4px;padding:2px 9px;font-size:11.5px;min-height:28px}
+.cz-hide{background:none;border:0;color:#AEB6BD;font-size:17px;min-width:28px;min-height:28px;padding:0}
+.cz-show{background:none;border:0;color:#AEB6BD;font-size:11.5px;min-height:28px;padding:0 4px}
+.cz-cause{margin:2px 0 4px;font-size:12.5px}
+.cz-cause b{color:#F0B57E;font-weight:700}
+.cz-rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));column-gap:22px}
+.cz-row{display:grid;grid-template-columns:7.5em 1fr 5.4em;align-items:center;gap:6px;margin:2px 0}
+.cz-lab{color:#C5CCD3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cz-bar{position:relative;height:14px;background:rgba(255,255,255,.05);border-radius:3px}
+.cz-bar i{position:absolute;left:0;border-radius:3px}
+.cz-bar .cz-was{top:0;height:14px;background:rgba(255,255,255,.24)}
+.cz-bar .cz-now{top:4px;height:6px}
+.cz-now.up{background:#F0B57E}
+.cz-now.down{background:#7FB3E6}
+.cz-r{font-weight:700;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cz-r.up{color:#F0B57E}
+.cz-r.down{color:#9CC6EE}
+.cz-same,.cz-note{margin:3px 0 0;color:#AEB6BD;font-size:11px}
+@media (max-width:600px){
+  /* スマホ: 棒を省き「量・倍率」を2列に詰める。3D と操作帯の両方を画面に残すため */
+  .cz-rows{grid-template-columns:1fr 1fr;column-gap:12px}
+  .cz-row{grid-template-columns:minmax(0,1fr) auto}
+  .cz-bar,.cz-key{display:none}
+}
 </style>
 
 <div class="app">
@@ -3587,6 +3616,8 @@ function dkPathAt(p, s){
   const a = p.pts[i-1], b = p.pts[i], f = (s - p.cum[i-1]) / Math.max(1e-6, p.cum[i] - p.cum[i-1]);
   return _dkp.copy(a).lerp(b, f);
 }
+/* 光点・粒の大きさを量に比例させる（初期状態の量で 1 倍、0.35〜3 倍に収める） */
+function dkScale(p, ratio){ const k = Math.max(.35, Math.min(3, ratio)); p.dots.forEach(d => d.scale.setScalar(k)); }
 function dkRun(p, T, on, dir=1){
   p.dots.forEach((d, i) => { d.visible = on; if (!on) return;
     d.position.copy(dkPathAt(p, dir*T + i/p.dots.length*p.total)); });
@@ -3641,6 +3672,7 @@ function animSuiryoku(g, t, st, dt){
   u.nozzle.visible = st.sType === 'pelton';
   const dir = st.sMode === 'pump' ? -1 : 1;
   u.runner.rotation.z -= (st.paused ? 0 : dir*dt*3);
+  dkScale(u.flow, st.sQ/50);                              // 水の粒の大きさ ∝ 流量 Q
   dkRun(u.flow, u.T*1.4, !st.paused, dir);
 }
 
@@ -3690,7 +3722,9 @@ function buildKaryoku(g){
 }
 function animKaryoku(g, t, st, dt){
   const u = g.userData; if (!st.paused) u.T += dt;
-  u.flame.scale.set(1, .85 + .15*Math.sin(t*9), 1);
+  /* 炎の大きさ ∝ 燃料消費量 B（初期 130 t/h で 1 倍）。円錐の底をボイラの床にそろえる */
+  const kb = Math.max(.3, Math.min(3, st.kB/130)), hb = kb*(.85 + .15*Math.sin(t*9));
+  u.flame.scale.set(1, hb, 1); u.flame.position.y = .5 + .5*hb;   // 高さ ∝ B（太さは変えない。太さも変えると体積が B² になる）
   dkRun(u.wf, u.T*1.6, st.kFlow==='water' && !st.paused);
   dkRun(u.gf, u.T*1.3, st.kFlow==='gas' && !st.paused);
   dkRun(u.af, u.T*1.0, st.kFlow==='gas' && !st.paused);
@@ -3824,7 +3858,7 @@ function animSouden(g, t, st, dt){
   if (u.sagKey === key) return;
   u.sagKey = key;
   while (u.lines.children.length){ const c = u.lines.children.pop(); c.geometry.dispose(); }
-  const vis = Math.min(1.6, d.Dt / st.tS * 3.2 * 10);     // 3D の径間 3.2 に縮め、10 倍に誇張
+  const vis = Math.min(1.6, d.Dt*.107);                    // 沈み ∝ 温度変化後のたるみ（初期 5.6 m で 0.6、15 m で頭打ち）。D/S にすると径間 2 倍でも 2 倍にしか見えない
   for (let span=0; span<2; span++){
     const x0 = TW_X[span], x1 = TW_X[span+1];
     for (const y of PH_Y) for (const s of [-1,1]){
@@ -3927,7 +3961,7 @@ function animChichuu(g, t, st, dt){
     u.hl.position.x = CC_LAY_X[st.cLay];
   } else {
     u.fault.position.x = u.MX0 + (u.MX1 - u.MX0)*mlModel().x/st.mL;
-    u.needle.rotation.z = -Math.max(-1.2, Math.min(1.2, mlModel().g*6));
+    u.needle.rotation.z = -Math.max(-1.2, Math.min(1.2, mlModel().g*1.2));   // 振れ ∝ g（g は −0.6〜1。初期 0.2 で張り付かない）
   }
 }
 
@@ -3988,8 +4022,9 @@ function animHaiden(g, t, st, dt){
   if (!st.paused) u.T += dt;
   if (three){
     const m = hd3();
-    u.cap.scale.setScalar(.5 + .5*Math.min(1, st.h3Qc/2000));   // 容量が大きいほど大きく描く（Qc = 0 でも置き場所は見せる）
-    dkRun(u.fl3, u.T*Math.min(4, m.I/80), !st.paused);       // 光点の速さで線電流の大小を見せる
+    u.cap.scale.setScalar(.4 + .6*st.h3Qc/1500);   // 大きさ ∝ Qc（Qc = 0 でも置き場所は見せる。3000 kvar で 1.6）
+    dkScale(u.fl3, m.I/218.7);                               // 光点の大きさ ∝ 線電流（初期 2000 kW・力率 0.8・6.6 kV で約 219 A）
+    dkRun(u.fl3, u.T*1.5, !st.paused);
     return;
   }
   dkRun(u.fl3, 0, false);
@@ -4363,6 +4398,7 @@ function refreshCtrl(){
     if (had){ buildCtrl(); rebuildLabels(); return; }
   }
   syncCtrl();
+  renderCausal();
   if (!readoutEl) return; const id=state.current; let rows=[], note='';
   if (id==='suiryoku'){
     const m = suModel();
@@ -4617,6 +4653,167 @@ function syncCards(){
   if (vn) vn.innerHTML = state.current==='chichuu-souden' ? ({cable:'いま見ているのは<b>ケーブル断面</b>（段むき）。光る点は充電電流の模式。', fusetsu:'いま見ているのは<b>布設方式</b>（土の断面）。枠で囲んだのが選んだ方式。', murray:'いま見ているのは<b>マーレーループ法</b>。比を動かして検流計の振れを 0 にする。'})[state.cView] : state.current==='haiden' ? (state.hView==='tp' ? 'いま見ているのは<b>三相3線式</b>（高圧配電線から工場へ）。' : 'いま見ているのは<b>単相3線式</b>（柱上変圧器から家へ）。') : state.current==='kakuu-souden' ? (state.tView==='sag' ? 'いま見ているのは<b>たるみ</b>。3D の電線が実際に垂れ下がる（10 倍に誇張）。' : 'いま見ているのは<b>電圧降下と損失</b>。3D はそのまま、読み値と図で比べる。') : '';
 }
 
+/* ---------- 比べる（原因 → 結果を、基準の値と並べて操作帯の先頭に出す） ----------
+   理論3D工場（denken3-riron-3d.html）と同じ仕組み。読み値の表だけでは「何が何倍になったか」が見えず、
+   動かすと前の値も消える。そこで基準（設備に入ったとき・ツアーの歩を当てたとき・「いまを基準にする」を押したとき）
+   を覚えておき、変えた原因と、変わった結果を「基準 → 今」の倍率で並べる。
+   予想クイズの答え合わせでは、答え合わせの状態を基準にする（クイズの前提は問ごとに違い、初期状態と比べると答えと違う比が出るため）。
+   ctx は、切り替えると比べる意味が無くなるキー（見る対象・運転の向き）。変わったら基準を取り直す */
+const CAUSAL = {
+  suiryoku: {
+    ctx: ['sMode'],
+    inputs: [['sType','水車', v => ({pelton:'ペルトン', francis:'フランシス', propeller:'プロペラ'})[v]], ['sHg','総落差 Hg', v => v+' m', 1], ['sQ','流量 Q', v => v+' m³/s', 1], ['sHl','損失落差 hl', v => v+' m', 1],
+             ['sEt','水車効率', v => f1(v,2), 1], ['sEg','発電機効率', v => f1(v,2), 1], ['sEp','ポンプ効率', v => f1(v,2), 1], ['sEm','電動機効率', v => f1(v,2), 1], ['sN','回転速度 N', v => v+' min⁻¹', 1]],
+    outs: () => { const m = suModel(); return state.sMode==='pump'
+      ? [['Hp', '全揚程', m.Hp], ['Pin', '揚水の所要電力', m.Pin], ['total', '揚水発電の総合効率', m.total]]
+      : [['H', '有効落差 H', m.H], ['Pth', '理論水力 9.8QH', m.Pth], ['P', '発電機出力 P', m.P], ['ns', '比速度 Ns', m.ns]]; },
+    note: () => '3D: 水の粒の大きさ ∝ 流量 Q（初期 50 m³/s で 1 倍、0.35〜3 倍で頭打ち）',
+  },
+  karyoku: {
+    inputs: [['kP','発電端出力 P', v => v+' MW', 1], ['kB','燃料消費量 B', v => v+' t/h', 1], ['kH','発熱量 H', v => f1(v,1)+' MJ/kg', 1], ['kL','所内率', v => f1(v,1)+' %', 1], ['kC','炭素含有率', v => f1(v*100,0)+' %', 1]],
+    outs: () => { const m = kaModel(), bad = m.eta > .6;   // 汽力の熱効率は 40 % 前後。60 % を超える組み合わせは現実に無い
+      return [['Pin', '燃料の熱入力', m.Pin], ['eta', bad ? '発電端熱効率（60 % 超＝現実的でない組み合わせ）' : '発電端熱効率', m.eta], ['etaS', '送電端熱効率', m.etaS], ['co2', 'CO₂ の排出量', m.co2]]; },
+    note: () => '3D: 炎の高さ ∝ 燃料消費量 B（初期 130 t/h で 1 倍、0.3〜3 倍で頭打ち）',
+  },
+  genshiryoku: {
+    ctx: ['gCalc'],
+    inputs: [['gDm','質量欠損 Δm', v => f1(v,1)+' g', 1], ['gU','ウラン235', v => f1(v,1)+' g', 1], ['gEta','熱効率', v => f1(v*100,0)+' %', 1], ['gHc','石炭の発熱量', v => f1(v,1)+' MJ/kg', 1],
+             ['gRod','制御棒の挿入', v => f1(v*100,0)+' %'], ['gType','炉型', v => v==='pwr' ? 'PWR' : 'BWR']],
+    outs: () => { const m = geModel(); return [['E', '発生する熱エネルギー', m.E], ['elec', '発電できる電力量', m.elec], ['coal', '同じ熱を出す石炭', m.coal]]; },
+    note: () => '3D: 制御棒の位置 ∝ 挿入率。熱エネルギーの計算は質量（またはウランの量）だけで決まり、制御棒・炉型は効かない',
+  },
+  'kaihei-hogo': {
+    inputs: [['bSt','変圧器の容量', v => v+' MVA', 1], ['bZt','変圧器の %Z', v => f1(v,1)+' %', 1], ['bZs','系統側の %Z', v => f1(v,1)+' %', 1], ['bV','二次電圧', v => v+' kV', 1],
+             ['bCTr','変流比', v => v+'/5', 1], ['bCTi','CT の二次電流', v => f1(v,1)+' A', 1], ['bDS','断路器', v => v ? '入' : '切'], ['bCB','遮断器', v => v ? '入' : '切']],
+    outs: () => { const m = hdModel(); return [['Zt', '変圧器の %Z（10 MVA 基準）', m.Zt], ['Z', '合計の %Z', m.Z], ['Ps', '短絡容量', m.Ps], ['Is', '短絡電流', m.Is], ['In', '変圧器の定格電流', m.In],
+      ['Ip', 'CT の一次電流', state.bCTi*state.bCTr/5]]; },
+    note: () => '3D は模式（短絡電流は 3D では表していない）。%Z は基準容量に比例して換算してから足す',
+  },
+  'kakuu-souden': {
+    ctx: ['tView'],
+    inputs: [['tS','径間 S', v => v+' m', 1], ['tT','水平張力 T', v => v+' kN', 1], ['tW','電線の重量 W', v => f1(v,1)+' N/m', 1], ['tDt','温度変化', v => (v>0?'+':'')+v+' ℃'], ['tAl','線膨張係数', v => v+'×10⁻⁶', 1],
+             ['tV','送電電圧 V', v => v+' kV', 1], ['tP','送電電力 P', v => v+' MW', 1], ['tPf','力率', v => f1(v,2), 1], ['tR','1線の R', v => f1(v,1)+' Ω', 1], ['tX','1線の X', v => f1(v,1)+' Ω', 1]],
+    outs: () => { if (state.tView==='elec'){ const m = tdElec(); return [['I', '線電流 I', m.I], ['dV', '電圧降下', m.dV], ['dVp', '電圧降下率', m.dVp], ['loss', '送電損失', m.loss], ['lossP', '損失率', m.lossP]]; }
+      const m = tdSag(); return [['D', 'たるみ D（温度変化前）', m.D], ['L', '電線の実長 L', m.L], ['Dt', 'たるみ（温度変化後）', m.Dt]]; },
+    note: () => state.tView==='elec' ? '3D は模式（電圧降下・損失は 3D では表していない）' : '3D: 電線の沈み ∝ 温度変化後のたるみ（初期 5.6 m の 2.7 倍で頭打ち）。温度が下がって実長が径間より短くなる場合（張力が増える）は、この式の射程外',
+  },
+  'chichuu-souden': {
+    ctx: ['cView'],
+    inputs: [['cType','ケーブル', v => v==='cv' ? 'CV' : 'OF'], ['cV','線間電圧 V', v => v+' kV', 1], ['cI','負荷電流 I', v => v+' A', 1], ['cC','静電容量 C', v => f1(v,2)+' μF/km', 1], ['cLen','線路長', v => v+' km', 1],
+             ['cF','周波数', v => v+' Hz', 1], ['cR','導体の抵抗', v => f1(v,2)+' Ω/km', 1], ['cd','導体径 d', v => v+' mm', 1], ['cDs','遮へいの内径 D', v => v+' mm', 1],
+             ['cLay','布設方式', v => ({direct:'直接埋設式', duct:'管路式', tunnel:'暗きょ式'})[v]], ['mR','比例辺の比', v => f1(v,2), 1], ['mL','ケーブル長 L', v => f1(v,1)+' km', 1], ['mX','故障点', v => f1(v,2)+' km', 1]],
+    outs: () => { if (state.cView==='murray'){ const m = mlModel(); return [['est', '推定した故障点 2L·P/(P+Q)', m.est], ['g', '検流計の振れ', m.g, null, null, 1e-9]]; }
+      if (state.cView==='fusetsu') return [];
+      const m = ccModel(); return [['Ic', '充電電流 Ic', m.Ic], ['Qc', '充電容量 Qc', m.Qc], ['Pd', '誘電体損 Pd', m.Pd], ['Pr', '抵抗損 3I²R', m.Pr], ['Emax', '導体表面の最大電界', state.cDs > state.cd ? m.Emax : null]]; },
+    note: () => state.cView==='cable' ? '3D: 導体まわりの電荷の揺れ ∝ 充電電流（30 A で頭打ち）。静電容量 C は寸法 d・D と別のつまみ（寸法を変えても C は動かさない模式。実際は C ∝ 1/ln(D/d)）' : state.cView==='murray' ? '3D: 検流計の針 ∝ 振れ（平衡で 0）' : '布設方式は比べる量が無い（方式ごとの長所・短所は下の読み値）',
+  },
+  haiden: {
+    ctx: ['hView'],
+    inputs: [['h3P','負荷の P', v => v+' kW', 1], ['h3Pf','負荷の力率', v => f1(v,2), 1], ['h3Qc','コンデンサ Qc', v => v+' kvar', 1], ['h3Vr','受電端電圧', v => v+' kV', 1], ['h3R','1線の R', v => f1(v,1)+' Ω', 1], ['h3X','1線の X', v => f1(v,1)+' Ω', 1],
+             ['hP1','負荷1', v => v+' W', 1], ['hP2','負荷2', v => v+' W', 1], ['hBreak','中性線', v => v ? '断線' : 'つながっている'], ['hBal','バランサ', v => v ? 'あり' : 'なし'], ['hR','外線の r', v => f1(v,2)+' Ω', 1], ['hRn','中性線の rn', v => f1(v,2)+' Ω', 1]],
+    outs: () => { if (state.hView==='tp'){ const m = hd3(); return [['Q', '無効電力 Q', m.Q], ['pf', '線路の力率（負＝進み・過補償）', m.Q < 0 ? -m.pf : m.pf], ['I', '線電流 I', m.I], ['v', '電圧降下', m.v], ['rate', '電圧降下率', m.rate], ['loss', '線路損失', m.loss]]; }
+      const r = hdSolve(); return [['V1', '負荷1の電圧', r.V[0]], ['V2', '負荷2の電圧', r.V[1]], ['In', '中性線の電流', r.In, null, null, 1e-6], ['loss', '線路損失', r.loss]]; },
+    note: () => state.hView==='tp' ? '3D: 光点の大きさ ∝ 線電流（初期の 0.35〜3 倍で頭打ち）、コンデンサの大きさ ∝ Qc（3000 kvar まで）' : '3D: 電球の明るさ ∝ 電圧の2乗（電力）',
+  },
+};
+const CAUSAL_INIT = {};
+for (const [id, c] of Object.entries(CAUSAL)) CAUSAL_INIT[id] = Object.fromEntries(c.inputs.map(([k]) => [k, state[k]]));
+let causalBase = null, causalHidden = false, causalEl = null;
+/* inputs の値で outs を計算する（state を一時的に差し替えて戻す） */
+function causalSnap(id, inputs){
+  const keep = {};
+  for (const k in inputs){ keep[k] = state[k]; state[k] = inputs[k]; }
+  const outs = CAUSAL[id].outs();
+  Object.assign(state, keep);
+  return {inputs: {...inputs}, outs};
+}
+const causalLive = id => Object.fromEntries(CAUSAL[id].inputs.map(([k]) => [k, state[k]]));
+function causalReset(fromInit){
+  const id = state.current;
+  if (!CAUSAL[id]){ causalBase = null; return; }
+  causalBase = fromInit ? {id, ...causalSnap(id, CAUSAL_INIT[id])} : {id, inputs: causalLive(id), outs: CAUSAL[id].outs()};
+  causalBase.ctx = (CAUSAL[id].ctx || []).map(k => state[k]).join('|');
+}
+/* 倍率を試験の言い方に寄せる: 2 倍・1/4 倍・そのまま。きれいな比でなければ小数 */
+function ratioText(r){
+  if (!isFinite(r)) return '—';
+  r *= 1 + 1e-12;   // 0.375 が 0.37499… になって行ごとに丸めが分かれないように
+  if (Math.abs(r - 1) < .001) return 'そのまま';
+  const near = (x, half) => { for (const k of [2,3,4,5,6,8,9,10,16,25]) if (Math.abs(x - k) < .002*k) return k; if (half) for (const k of [1.5,2.5]) if (Math.abs(x - k) < .002*k) return k; return null; };   // 0.2 % 以内だけを「きれいな比」と言う
+  const dg = Math.abs(r - 1) < .01 ? 3 : 2;   // 1 % 未満の変化は 3 桁で出す（「1.00 倍 ↓」では向きしか読めない）
+  if (r < .1 || r > 100) return Number(r.toPrecision(2)).toLocaleString('ja-JP', {maximumSignificantDigits:2}) + ' 倍';   // 「0.00 倍」にしない（有効数字 2 桁）
+  if (r > 1){ const k = near(r, true); return (k ? k : f1(r, dg)) + ' 倍'; }
+  const k = near(1/r, false); return k ? '1/' + k + ' 倍' : f1(r, dg) + ' 倍';   // 1/2.5 のような分母は書かない
+}
+function renderCausal(){
+  const id = state.current;
+  if (!causalEl){
+    causalEl = document.createElement('div'); causalEl.className = 'causal'; causalEl.setAttribute('aria-live', 'polite');
+  }
+  if (causalEl.parentNode !== ctrlbar) ctrlbar.prepend(causalEl);   // buildCtrl が操作帯を作り直すたびに外れるので付け直す
+  const c = CAUSAL[id];
+  if (!c){ causalEl.hidden = true; return; }
+  causalEl.hidden = false;
+  const ctxSig = () => (c.ctx || []).map(k => state[k]).join('|');
+  if (!causalBase || causalBase.id !== id || causalBase.ctx !== ctxSig()) causalReset();
+  if (causalHidden){
+    causalEl.innerHTML = '<button class="cz-show">比べる表示を出す</button>';
+    causalEl.querySelector('.cz-show').onclick = () => { causalHidden = false; renderCausal(); };
+    return;
+  }
+  const base = causalBase, nowIn = causalLive(id), now = c.outs();
+  /* 原因に数えるのは、今の操作帯に出ているつまみだけ（見る対象と関係の無いつまみを原因に挙げない） */
+  const live = new Set([...ctrlbar.querySelectorAll('[data-key]')].map(e => e.dataset.key));
+  const changed = c.inputs.filter(([k]) => live.has(k) && nowIn[k] !== base.inputs[k]);
+  const cause = changed.map(([k, lab, fmt, num]) => {
+    const a = base.inputs[k], b = nowIn[k];
+    return `<b>${lab}</b> ${fmt(a)} → ${fmt(b)}` + (num && a && b && Math.sign(a) === Math.sign(b) ? `（${ratioText(b/a)}）` : '');   // 0 や符号の変わる変化には倍率を付けない
+  }).join('、');
+  const rows = [], same = [];
+  const baseOf = (k, alts) => { for (const key of [k, ...(alts || [])]){ const r = base.outs.find(x => x[0] === key); if (r) return r[2]; } return null; };
+  /* 5 番目が同じ行どうし（上の層・下の層の電界）は、基準でも今でも値が等しければ1行にまとめる */
+  const eqv = (a, b) => a == null ? b == null : b != null && Math.abs(a - b) <= 1e-9*Math.abs(a);
+  const merged = new Set();
+  for (const g of new Set(now.map(x => x[4]).filter(Boolean))){
+    const ns = now.filter(x => x[4] === g), bs = base.outs.filter(x => x[4] === g);
+    if (ns.length > 1 && ns.every(x => eqv(x[2], ns[0][2])) && bs.every(x => eqv(x[2], bs[0][2]))) merged.add(g);
+  }
+  const shown = [];
+  for (const x of now){
+    if (x[4] && merged.has(x[4])){ if (!shown.some(y => y[0] === x[4])) shown.push([x[4], '電界 E', x[2], [x[0]]]); }
+    else shown.push(x);
+  }
+  shown.forEach(([k, lab, v, alts, , eps]) => {
+    const b0 = baseOf(k, alts);
+    if (v == null && b0 == null) return;
+    /* eps: 計算誤差で 0 にならない量（平衡の電流など）の絶対の許容。行の 6 番目に書く */
+    const fin = x => isFinite(x) ? Math.abs(x || 0) : 0;   // ∞ は棒の物差しに入れない（今の棒は全幅で描く）
+    const mx = Math.max(fin(b0), fin(v)) || 1, zero = x => Math.abs(x) <= Math.max(1e-9*mx, eps || 0);
+    let txt, dir;
+    if (b0 === Infinity || v === Infinity){ if (b0 === v){ same.push(lab); return; } txt = v === Infinity ? '∞ に ↑' : '∞ から ↓'; dir = v === Infinity ? 'up' : 'down'; }
+    else if (b0 == null || v == null){ if (v == null){ txt = 'なくなる'; dir = 'down'; } else { txt = '新たに'; dir = 'up'; } }
+    else if (zero(b0) && zero(v)){ same.push(lab); return; }
+    else if (zero(b0)){ txt = '0 から ↑'; dir = 'up'; }
+    else if (zero(v)){ txt = '0 になる ↓'; dir = 'down'; }
+    else if (Math.sign(v) !== Math.sign(b0)){ const r = Math.abs(v/b0); txt = '向きが逆' + (Math.abs(r - 1) < .001 ? '' : '・' + ratioText(r)); dir = r >= 1 ? 'up' : 'down'; }
+    /* 0.1 % 以内だけを「変わらない」と言う */
+    else { const r = v/b0; if (Math.abs(r - 1) < .001){ same.push(lab); return; } dir = r > 1 ? 'up' : 'down'; txt = ratioText(r) + (dir === 'up' ? ' ↑' : ' ↓'); }
+    rows.push(`<div class="cz-row"><span class="cz-lab">${lab}</span>`
+      + `<span class="cz-bar"><i class="cz-was" style="width:${b0 === Infinity ? 100 : (fin(b0)/mx*100).toFixed(1)}%"></i><i class="cz-now ${dir}" style="width:${v === Infinity ? 100 : (fin(v)/mx*100).toFixed(1)}%"></i></span>`
+      + `<span class="cz-r ${dir}">${txt}</span></div>`);
+  });
+  causalEl.innerHTML = `<div class="cz-head"><span>基準と比べる</span><button class="cz-reset" title="いまの状態を新しい基準にする">いまを基準に</button><button class="cz-hide" aria-label="比べる表示を隠す">×</button></div>`
+    + (changed.length
+      ? `<p class="cz-cause">${cause}</p><div class="cz-rows">${rows.join('')}</div>`
+        + (same.length ? `<p class="cz-same">変わらない: ${same.join('・')}</p>` : '')
+      : `<p class="cz-cause">つまみを動かすと、ここに「基準 → 今」で何が何倍になったかが並ぶ。</p>`)
+    + `<p class="cz-note"><span class="cz-key">灰の棒＝基準、色の棒＝今（橙は増、青は減）。</span>${typeof c.note === 'function' ? c.note() : c.note}</p>`;
+  causalEl.querySelector('.cz-reset').onclick = () => { causalReset(); renderCausal(); };
+  causalEl.querySelector('.cz-hide').onclick = () => { causalHidden = true; renderCausal(); };
+}
+/* ツアー・予想クイズで状態を当てたとき。クイズ（fromInit）は設備の初期状態を基準にする */
+function onSetApplied(set, fromInit){ if (typeof esCchg !== 'undefined' && set && 'eMode' in set) esCchg = null; causalReset(); }
+
 /* 予想クイズが当てた読み値を数秒だけ光らせる。どの数字の話かを取り違えないため。 */
 let litTimer = null;
 function litReadout(key){
@@ -4755,7 +4952,7 @@ function bindQuiz(st){
         btns.forEach(b=>{ b.disabled=false; b.classList.remove('ok','ng','dim'); });
         li.classList.remove('done'); fb.hidden = true; fb.innerHTML='';
       };
-      if (item.set){ Object.assign(state, item.set); }
+      if (item.set){ Object.assign(state, item.set); onSetApplied(item.set, true); }   // クイズは初期状態からの変化として書いてあるので、初期状態を基準にする
       refreshCtrl(); openMoreFor(item.set, item.q);
       litReadout(item.hi);
     };
@@ -4782,7 +4979,7 @@ function renderTour(apply=true){
   if (apply) applyStep(stp);
 }
 function applyStep(stp){
-  Object.assign(state, stp.set || {});
+  Object.assign(state, stp.set || {}); onSetApplied(stp.set);   // ツアーの歩の出発状態を、比べる表示の基準にする
   rdState.tourText = [stp.op, stp.see, stp.so].join(' ');
   rdState.tourKeys = stp.hi || [];
   /* 先に操作帯と凡例を作り直してから指す。逆順だと、回路や見る対象を切り替える歩で
@@ -4795,7 +4992,7 @@ function applyStep(stp){
 const backBtn = document.getElementById('backbtn');
 backBtn.onclick = ()=>select(null);
 function select(id){
-  state.current = id;
+  state.current = id; causalReset();
   backBtn.classList.toggle('hidden', !id);
   if (reduced){ const v = VIEWS[id||'overview']; cam.target.set(...v.target); cam.dist=v.dist; cam.theta=v.theta; cam.phi=v.phi; cam.want=null; }
   else flyTo(VIEWS[id||'overview']);

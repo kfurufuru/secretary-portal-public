@@ -271,6 +271,35 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
   .oneliner{font-size:14px}
 }
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* 比べる表示（操作帯の先頭。3D の下にあるので色は操作帯と同じ固定値） */
+.causal{flex-basis:100%;order:-1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:6px 10px 7px;color:#E6E9E4;font-size:12px;line-height:1.5}
+.causal[hidden]{display:none}
+.cz-head{display:flex;align-items:center;gap:6px;font-weight:700;color:#F0B57E}
+.cz-head span{flex:1}
+.cz-reset{background:none;border:1px solid rgba(255,255,255,.28);color:#E6E9E4;border-radius:4px;padding:2px 9px;font-size:11.5px;min-height:28px}
+.cz-hide{background:none;border:0;color:#AEB6BD;font-size:17px;min-width:28px;min-height:28px;padding:0}
+.cz-show{background:none;border:0;color:#AEB6BD;font-size:11.5px;min-height:28px;padding:0 4px}
+.cz-cause{margin:2px 0 4px;font-size:12.5px}
+.cz-cause b{color:#F0B57E;font-weight:700}
+.cz-rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));column-gap:22px}
+.cz-row{display:grid;grid-template-columns:7.5em 1fr 5.4em;align-items:center;gap:6px;margin:2px 0}
+.cz-lab{color:#C5CCD3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cz-bar{position:relative;height:14px;background:rgba(255,255,255,.05);border-radius:3px}
+.cz-bar i{position:absolute;left:0;border-radius:3px}
+.cz-bar .cz-was{top:0;height:14px;background:rgba(255,255,255,.24)}
+.cz-bar .cz-now{top:4px;height:6px}
+.cz-now.up{background:#F0B57E}
+.cz-now.down{background:#7FB3E6}
+.cz-r{font-weight:700;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cz-r.up{color:#F0B57E}
+.cz-r.down{color:#9CC6EE}
+.cz-same,.cz-note{margin:3px 0 0;color:#AEB6BD;font-size:11px}
+@media (max-width:600px){
+  /* スマホ: 棒を省き「量・倍率」を2列に詰める。3D と操作帯の両方を画面に残すため */
+  .cz-rows{grid-template-columns:1fr 1fr;column-gap:12px}
+  .cz-row{grid-template-columns:minmax(0,1fr) auto}
+  .cz-bar,.cz-key{display:none}
+}
 </style>
 
 <div class="app">
@@ -2474,7 +2503,7 @@ function buildCtrl(){
       state.im_v = +gv._input.value;
       const sn = imSolve(Tl, k, imVph());
       state.imClamp = false; state.imStall = sn === null;
-      state.slip = sn === null ? 1 : +sn.toFixed(3);
+      state.slip = sn === null ? 1 : sn;   // 丸めない（丸めると比例推移でトルクが 1〜2 % ずれる）
       refreshCtrl();
     };
     adv.appendChild(gv);
@@ -2484,7 +2513,7 @@ function buildCtrl(){
       /* 二次回路の抵抗を k 倍にする。負荷トルク一定のまま動かすので、滑りも同じ割合で動く（比例推移 r₂/s 一定）。
          s が 1 を超える組み合わせは s=1（停止）で止める */
       const g = range('二次回路の抵抗 (r₂+R)/r₂', 1, 5, .5, 'im_k', v=>'×'+v.toFixed(1));
-      g._input.oninput = ()=>{ const k0 = state.im_k, k1 = +g._input.value; state.im_k = k1; const sn = state.slip*k1/k0; state.imClamp = sn > 1; state.imStall = false; state.slip = Math.min(1, +sn.toFixed(3)); refreshCtrl(); };
+      g._input.oninput = ()=>{ const k0 = state.im_k, k1 = +g._input.value; state.im_k = k1; const sn = state.slip*k1/k0; state.imClamp = sn > 1; state.imStall = false; state.slip = Math.min(1, sn); refreshCtrl(); };
       ctrlbar.appendChild(g);
     }
     adv.appendChild(group('極数', seg([[2,'2'],[4,'4'],[6,'6']], 'im_p')));
@@ -2639,8 +2668,8 @@ function refreshCtrl(){
     _lastPeHw = state.peHw; rebuildLabels();
     if (rb){ buildCtrl(); return; }
   }
-  if (state.current==='drive-mech' && state.dmView !== _lastDmView){
-    _lastDmView = state.dmView; buildCtrl(); rebuildLabels(); return;
+  if (state.current==='drive-mech' && state.dmView+'/'+state.dmCw !== _lastDmView){   // おもりの有無でも m_c のつまみが出入りする
+    _lastDmView = state.dmView+'/'+state.dmCw; buildCtrl(); rebuildLabels(); return;
   }
   /* 試験中の負荷率は試験のほうが決める（開放＝0、短絡＝定格）。
      ツアーや予想クイズが state を書き換えたときも表示が食い違わないよう、ここで揃える */
@@ -2658,6 +2687,7 @@ function refreshCtrl(){
       return;                    // buildCtrl から refreshCtrl が呼び直される
     }
   }
+  renderCausal();
   if (!readoutEl) return; const id=state.current; let rows=[], note='';
   if (id==='induction-machine'){
     const Ns=120*state.im_f/state.im_p, N=Ns*(1-state.slip);
@@ -3091,7 +3121,7 @@ function bindQuiz(st){
         btns.forEach(b=>{ b.disabled=false; b.classList.remove('ok','ng','dim'); });
         li.classList.remove('done'); fb.hidden = true; fb.innerHTML='';
       };
-      if (item.set){ Object.assign(state, item.set); state.imClamp = state.imStall = state.syncLost = false; }
+      if (item.set){ Object.assign(state, item.set); state.imClamp = state.imStall = state.syncLost = false; onSetApplied(item.set, true); }   // クイズは初期状態からの変化として書いてあるので、初期状態を基準にする
       refreshCtrl(); openMoreFor(item.set, item.q);
       litReadout(item.hi);
     };
@@ -3430,7 +3460,7 @@ function renderTour(apply=true){
   if (apply) applyStep(stp);
 }
 function applyStep(stp){
-  Object.assign(state, stp.set || {}); state.imClamp = state.imStall = state.syncLost = false;
+  Object.assign(state, stp.set || {}); state.imClamp = state.imStall = state.syncLost = false; onSetApplied(stp.set);   // ツアーの歩の出発状態を、比べる表示の基準にする
   rdState.tourText = [stp.op, stp.see, stp.so].join(' ');
   rdState.tourKeys = stp.hi || [];
   /* 先に操作帯と凡例を作り直してから指す。逆順だと、回路や見る対象を切り替える歩で
@@ -4088,18 +4118,195 @@ function drawComm(){
 const backBtn = document.getElementById('backbtn');
 backBtn.onclick = ()=>select(null);
 function select(id){
-  state.current = id;
+  state.current = id; causalReset();
   backBtn.classList.toggle('hidden', !id);
   if (reduced){ const v = VIEWS[id||'overview']; cam.target.set(...v.target); cam.dist=v.dist; cam.theta=v.theta; cam.phi=v.phi; cam.want=null; }
   else flyTo(VIEWS[(id==='transformer') ? tfViewKey() : (id||'overview')]);
   _lastTfSig = (id==='transformer') ? tfSig() : null;
   _lastPeConv = (id==='power-elec') ? state.peConv : null;
-  _lastDmView = (id==='drive-mech') ? state.dmView : null;
+  _lastDmView = (id==='drive-mech') ? state.dmView+'/'+state.dmCw : null;
   _lastDcSig = (id==='dc-machine') ? state.dcMode+'/'+state.dcExc : null;
   renderChips(); buildCtrl(); renderPanel(); rebuildLabels();
   panel.scrollTop = 0;
   try { history.replaceState(null, '', id ? '#'+id : location.pathname); } catch (e) {}
 }
+
+/* ---------- 比べる（原因 → 結果を、基準の値と並べて操作帯の先頭に出す） ----------
+   理論・電力の3D工場と同じ仕組み。読み値の表だけでは「何が何倍になったか」が見えず、動かすと前の値も消える。
+   そこで基準（機器に入ったとき・ツアーの歩を当てたとき・「いまを基準にする」を押したとき）を覚えておき、
+   変えた原因と、変わった結果を「基準 → 今」の倍率で並べる。予想クイズの答え合わせでは、答え合わせの状態を基準にする（クイズの前提は問ごとに違い、初期状態と比べると答えと違う比が出るため）。
+   ctx は、切り替えると比べる意味が無くなるキー（見る対象・運転・回路）。変わったら基準を取り直す */
+const f1 = (x, d=1) => Number(x).toLocaleString('ja-JP', {minimumFractionDigits:d, maximumFractionDigits:d});
+const CAUSAL = {
+  'induction-machine': {
+    inputs: [['slip','滑り s', v => f1(v,3), 1], ['im_v','一次電圧 V', v => f1(v,2)+' pu', 1], ['im_start','結線', v => v==='y' ? 'Y（Y-Δ 始動中）' : 'Δ（直入れ）'],
+             ['wound','回転子', v => v ? '巻線形＋外部抵抗' : 'かご形'], ['im_k','二次回路の抵抗', v => '×'+f1(v,1), 1], ['im_p','極数', v => v, 1], ['im_f','周波数', v => v+' Hz', 1]],
+    outs: () => { const Ns = 120*state.im_f/state.im_p, s = state.slip;
+      return [['Ns', '同期速度 Ns', Ns], ['N', '回転速度 N', Ns*(1 - s)], ['f2', '二次周波数 s·f', s*state.im_f],
+        ['T', state.imStall ? 'トルク T（停動＝負荷を回せない）' : 'トルク T', state.imStall ? null : imTorque(s)/imTmax()], ['Tmax', '最大トルク（∝ V²）', imVph()**2],
+        ['Pc2', '二次銅損の割合 s', s], ['Po', '機械出力の割合 1−s', 1 - s]]; },
+    note: () => '3D: 回転磁界（矢印）に対する回転子の遅れが滑り s（3D の速さは極数・周波数では変えていない）。トルクは定格電圧・直入れの最大トルクを 1 とした値',
+  },
+  synchronous: {
+    inputs: [['delta','負荷角 δ', v => Math.round(v)+'°', 1], ['If','界磁電流 If', v => f1(v,2)+' pu', 1], ['syncKs','短絡比 Ks', v => f1(v,1), 1], ['syncP','負荷', v => ({0:'無負荷', .5:'半負荷', 1:'全負荷'})[v] ?? v],
+             ['rotor','回転子（極数）', v => v==='salient' ? '突極形（4 極）' : '円筒形（2 極）'], ['syncF','周波数', v => v+' Hz', 1], ['syncWind','電機子巻線', v => ({conc:'集中・全節', dist:'分布・全節', short:'分布・短節'})[v]],
+             ['parDE','起電力の差 ΔE', v => f1(v,2)+' pu', 1], ['parDth','位相差 Δθ', v => v+'°', 1]],
+    outs: () => { const I = syI(), Ia = Math.hypot(I.re, I.im), lost = state.syncLost, r = [['P', lost ? '出力 P（脱調＝同期を保てない）' : '出力 P', lost ? null : syP()], ['Ia', '電機子電流 Ia', lost ? null : Ia], ['E0', '無負荷起電力 E₀', state.If],
+        ['Is', '持続短絡電流 Ks·If', state.syncKs*state.If], ['Ns', '同期速度 Ns', 120*state.syncF/(state.rotor==='salient' ? 4 : 2)], ['kw', '巻線係数 kw', SY_WIND[state.syncWind].kw]];
+      if (state.syncPar){ const Zs = 1/state.syncKs; r.push(['pc', '無効横流', state.parDE/(2*Zs)], ['ps', '有効横流', Math.sin(state.parDth*Math.PI/360)/Zs]); }
+      return r; },
+    note: () => '3D は模式。P = E₀·V·sinδ/Xs（pu・V = 1・Xs = 1/Ks）。δ が 90° を超えると脱調',
+  },
+  'dc-machine': {
+    ctx: ['dcMode'],
+    inputs: [['load', '負荷（電流）', v => f1(v,2)+' pu', 1], ['dcExc','励磁方式', v => DC_EXC[v]], ['dcV','端子電圧 V', v => f1(v,2)+' pu', 1], ['dcKf','界磁の強さ', v => '×'+f1(v,2), 1],
+             ['dcRf','界磁抵抗 Rf', v => f1(v,2)+' pu', 1], ['dcComp','反作用の対策', v => ({none:'なし', inter:'補極', comp:'補償巻線＋補極'})[v]], ['dcWindT','巻き方', v => v==='lap' ? '重ね巻' : '波巻']],
+    outs: () => { if (state.dcMode==='gen'){ const g = dgModel(state.dcExc, state.load, state.dcRf);
+        return [['If', '界磁電流 If', g.over ? null : g.If], ['E', '誘導起電力 E', g.over ? null : g.E], ['V', '端子電圧 V', g.over ? null : g.V]]; }
+      const m = dcModel(state.dcExc, state.load);
+      return [['phi', '磁束 Φ', m.phi], ['T', 'トルク T ∝ ΦIa', m.T], ['E', '逆起電力 E', m.E], ['n', '回転数 n ∝ E/Φ（Φ = 0 なら ∞＝暴走）', m.n], ['eta', '電気的効率 E/V', m.E/state.dcV]]; },
+    note: () => '3D: 界磁巻線の明るさ ∝ 磁束 Φ、回転の速さ ∝ n（3 pu で頭打ち）。値は pu の模式',
+  },
+  'power-elec': {
+    ctx: ['peConv'],
+    inputs: [['peD','通流率 d', v => f1(v,2), 1], ['peAlpha','制御角 α', v => v+'°'], ['peHw','負荷', v => ({R:'抵抗', RL:'誘導性', FD:'誘導性＋環流ダイオード', SCR:'抵抗＋サイリスタ'})[v]],
+             ['peBr','負荷', v => v==='R' ? '抵抗' : '誘導性'], ['peLoad','負荷', v => v==='R' ? '抵抗' : '誘導性'], ['peDev','比べる素子', v => v]],
+    outs: () => { const d = state.peD, c = state.peConv;
+      if (c==='buck') return [['vo', '出力電圧 Vo/E = d', d]];
+      if (c==='boost') return [['vo', '出力電圧 Vo/E = 1/(1−d)', 1/(1 - d)]];
+      if (c==='bb') return [['vo', '出力電圧の大きさ |Vo|/E = d/(1−d)', d/(1 - d)]];
+      if (c==='half' && state.peHw==='SCR') return [['vd', '平均電圧 Vd/V', Math.SQRT2/(2*Math.PI)*(1 + Math.cos(hwA()))]];
+      return []; },
+    note: () => '3D: 波形と導通の模式。比べる量は出力電圧の式（連続導通・損失無視）',
+  },
+  'drive-mech': {
+    ctx: ['dmView'],
+    inputs: [['dmM','質量 m', v => v+' kg', 1], ['dmCw','釣合いおもり', v => v ? '有り' : '無し'], ['dmMc','おもり m_c', v => v+' kg', 1], ['dmV','速度 v', v => v+' m/min', 1], ['dmEta','効率 η', v => f1(v,2), 1],
+             ['dmI','減速比 i', v => v, 1], ['dmEg','減速機の効率', v => f1(v,2), 1], ['dmN','回転数 N₁', v => v+' min⁻¹', 1], ['dmN2','N₂', v => v+' min⁻¹', 1], ['dmGD2','GD²', v => v+' kg·m²', 1],
+             ['dmTs','放出時間 t', v => v+' s', 1], ['dmTq','加速トルク T', v => v+' N·m', 1], ['dmQ','揚水量 Q', v => f1(v,1)+' m³/min', 1], ['dmHa','実揚程 Ha', v => v+' m', 1], ['dmHl','損失水頭 Hl', v => f1(v,1)+' m', 1], ['dmEp','ポンプ効率', v => f1(v,2), 1]],
+    outs: () => { const G = 9.8, v = state.dmView;
+      if (v==='hoist'){ const sp = state.dmV/60, dm = state.dmCw ? state.dmM - state.dmMc : state.dmM, u = Math.abs(dm)*G*sp, P = dm < 0 ? u*state.dmEta : u/state.dmEta;
+        return [['m', '受け持つ質量', dm], ['u', '有効出力 m·g·v', u], ['P', '電力（＋ 所要入力・− 回生）', dm < 0 ? -P : P]]; }
+      if (v==='gear'){ const NL = 1500/state.dmI, TL = 20*state.dmI*state.dmEg; return [['NL', '負荷側の回転数', NL], ['TL', '負荷側のトルク', TL], ['PL', '負荷側の動力', 2*Math.PI*NL*TL/60]]; }
+      if (v==='pump'){ const H = state.dmHa + state.dmHl, Qs = state.dmQ/60; return [['H', '全揚程 H', H], ['Pw', '水に与える動力', 9.8*Qs*H], ['P', '電動機の出力', 9.8*Qs*H/state.dmEp]]; }
+      const J = state.dmGD2/4, w = 2*Math.PI*state.dmN/60, w2 = 2*Math.PI*state.dmN2/60, dW = .5*J*(w*w - w2*w2);
+      return [['J', '慣性モーメント J', J], ['W', '貯えるエネルギー ½Jω²', .5*J*w*w], ['dW', 'N₁→N₂ で出すエネルギー', dW], ['t', '回し上げる時間 Jω/T', J*w/state.dmTq]]; },
+    note: () => '3D の動きは模式（荷はゆっくり往復）。比べる量は読み値の式',
+  },
+  transformer: {
+    ctx: ['tfView', 'tfTest'],
+    inputs: [['tfLoad','負荷率 α', v => f1(v,2), 1], ['tfPf','負荷の力率', v => f1(v,2), 1], ['tfTemp','巻線温度', v => v+' ℃'], ['bankV','結線', v => v ? 'V-V（2台）' : 'Δ-Δ（3台）'],
+             ['parZa','A号器の %Z', v => f1(v,1)+' %', 1], ['parZb','B号器の %Z', v => f1(v,1)+' %', 1], ['parSb','B号器の容量', v => v+' kVA', 1], ['parLoad','負荷', v => v+' kVA', 1],
+             ['capP','負荷の P', v => v+' kW', 1], ['capPf1','改善前の力率', v => f1(v,2), 1], ['capPf2','改善後の力率', v => f1(v,2), 1], ['capL','直列リアクトル', v => v+' %'], ['autoA','電圧比 V₂/V₁', v => f1(v,2), 1]],
+    outs: () => { const v = state.tfView;
+      if (v==='bank') return [['out', '三相出力（1台の P に対して）', state.bankV ? Math.sqrt(3) : 3], ['use', '利用率', state.bankV ? Math.sqrt(3)/2 : 1]];
+      if (v==='par'){ const ka = 500/state.parZa, kb = state.parSb/state.parZb, L = state.parLoad;
+        return [['la', 'A号器の負荷', L*ka/(ka + kb)], ['lb', 'B号器の負荷', L*kb/(ka + kb)], ['max', '過負荷にならない最大の負荷', Math.min(500*(ka + kb)/ka, state.parSb*(ka + kb)/kb)]]; }
+      if (v==='cap'){ const Q = Math.max(0, state.capP*(Math.tan(Math.acos(state.capPf1)) - Math.tan(Math.acos(state.capPf2)))), L = state.capL/100;
+        return [['Q', 'コンデンサ容量 Q', Q], ['QL', '直列リアクトルの容量', Q*L], ['vc', 'コンデンサ端子の電圧', 1/(1 - L)]]; }
+      if (v==='auto') return [['self', '自己容量 ÷ 線路容量', (state.autoA - 1)/state.autoA]];
+      if (state.tfTest!=='run') return [];
+      const a = state.tfLoad; return [['cu', '銅損 α²Pc', a*a*TF_PC], ['eta', '効率 η', a > 0 ? eta(a) : 0], ['eps', '電圧変動率 ε', tfEps(a)]]; },
+    note: () => state.tfView==='core' ? '3D は模式。効率は「力率1の全負荷出力＝全負荷銅損の 50 倍」の例。鉄損は負荷によらず一定' : '3D は模式。比べる量は読み値の式',
+  },
+};
+const CAUSAL_INIT = {};
+for (const [id, c] of Object.entries(CAUSAL)) CAUSAL_INIT[id] = Object.fromEntries(c.inputs.map(([k]) => [k, state[k]]));
+let causalBase = null, causalHidden = false, causalEl = null;
+/* inputs の値で outs を計算する（state を一時的に差し替えて戻す） */
+function causalSnap(id, inputs){
+  const keep = {};
+  for (const k in inputs){ keep[k] = state[k]; state[k] = inputs[k]; }
+  const outs = CAUSAL[id].outs();
+  Object.assign(state, keep);
+  return {inputs: {...inputs}, outs};
+}
+const causalLive = id => Object.fromEntries(CAUSAL[id].inputs.map(([k]) => [k, state[k]]));
+function causalReset(fromInit){
+  const id = state.current;
+  if (!CAUSAL[id]){ causalBase = null; return; }
+  causalBase = fromInit ? {id, ...causalSnap(id, CAUSAL_INIT[id])} : {id, inputs: causalLive(id), outs: CAUSAL[id].outs()};
+  causalBase.ctx = (CAUSAL[id].ctx || []).map(k => state[k]).join('|');
+}
+/* 倍率を試験の言い方に寄せる: 2 倍・1/4 倍・そのまま。きれいな比でなければ小数 */
+function ratioText(r){
+  if (!isFinite(r)) return '—';
+  r *= 1 + 1e-12;   // 0.375 が 0.37499… になって行ごとに丸めが分かれないように
+  if (Math.abs(r - 1) < .001) return 'そのまま';
+  const near = (x, half) => { for (const k of [2,3,4,5,6,8,9,10,16,25]) if (Math.abs(x - k) < .002*k) return k; if (half) for (const k of [1.5,2.5]) if (Math.abs(x - k) < .002*k) return k; return null; };   // 0.2 % 以内だけを「きれいな比」と言う
+  const dg = Math.abs(r - 1) < .01 ? 3 : 2;   // 1 % 未満の変化は 3 桁で出す（「1.00 倍 ↓」では向きしか読めない）
+  if (r < .1 || r > 100) return Number(r.toPrecision(2)).toLocaleString('ja-JP', {maximumSignificantDigits:2}) + ' 倍';   // 「0.00 倍」にしない（有効数字 2 桁）
+  if (r > 1){ const k = near(r, true); return (k ? k : f1(r, dg)) + ' 倍'; }
+  const k = near(1/r, false); return k ? '1/' + k + ' 倍' : f1(r, dg) + ' 倍';   // 1/2.5 のような分母は書かない
+}
+function renderCausal(){
+  const id = state.current;
+  if (!causalEl){
+    causalEl = document.createElement('div'); causalEl.className = 'causal'; causalEl.setAttribute('aria-live', 'polite');
+  }
+  if (causalEl.parentNode !== ctrlbar) ctrlbar.prepend(causalEl);   // buildCtrl が操作帯を作り直すたびに外れるので付け直す
+  const c = CAUSAL[id];
+  if (!c){ causalEl.hidden = true; return; }
+  causalEl.hidden = false;
+  const ctxSig = () => (c.ctx || []).map(k => state[k]).join('|');
+  if (!causalBase || causalBase.id !== id || causalBase.ctx !== ctxSig()) causalReset();
+  if (causalHidden){
+    causalEl.innerHTML = '<button class="cz-show">比べる表示を出す</button>';
+    causalEl.querySelector('.cz-show').onclick = () => { causalHidden = false; renderCausal(); };
+    return;
+  }
+  const base = causalBase, nowIn = causalLive(id), now = c.outs();
+  /* 原因に数えるのは、今の操作帯に出ているつまみだけ（見る対象と関係の無いつまみを原因に挙げない） */
+  const live = new Set([...ctrlbar.querySelectorAll('[data-key]')].map(e => e.dataset.key));
+  const changed = c.inputs.filter(([k]) => live.has(k) && nowIn[k] !== base.inputs[k]);
+  const cause = changed.map(([k, lab, fmt, num]) => {
+    const a = base.inputs[k], b = nowIn[k];
+    return `<b>${lab}</b> ${fmt(a)} → ${fmt(b)}` + (num && a && b && Math.sign(a) === Math.sign(b) ? `（${ratioText(b/a)}）` : '');   // 0 や符号の変わる変化には倍率を付けない
+  }).join('、');
+  const rows = [], same = [];
+  const baseOf = (k, alts) => { for (const key of [k, ...(alts || [])]){ const r = base.outs.find(x => x[0] === key); if (r) return r[2]; } return null; };
+  /* 5 番目が同じ行どうし（上の層・下の層の電界）は、基準でも今でも値が等しければ1行にまとめる */
+  const eqv = (a, b) => a == null ? b == null : b != null && Math.abs(a - b) <= 1e-9*Math.abs(a);
+  const merged = new Set();
+  for (const g of new Set(now.map(x => x[4]).filter(Boolean))){
+    const ns = now.filter(x => x[4] === g), bs = base.outs.filter(x => x[4] === g);
+    if (ns.length > 1 && ns.every(x => eqv(x[2], ns[0][2])) && bs.every(x => eqv(x[2], bs[0][2]))) merged.add(g);
+  }
+  const shown = [];
+  for (const x of now){
+    if (x[4] && merged.has(x[4])){ if (!shown.some(y => y[0] === x[4])) shown.push([x[4], '電界 E', x[2], [x[0]]]); }
+    else shown.push(x);
+  }
+  shown.forEach(([k, lab, v, alts, , eps]) => {
+    const b0 = baseOf(k, alts);
+    if (v == null && b0 == null) return;
+    /* eps: 計算誤差で 0 にならない量（平衡の電流など）の絶対の許容。行の 6 番目に書く */
+    const fin = x => isFinite(x) ? Math.abs(x || 0) : 0;   // ∞ は棒の物差しに入れない（今の棒は全幅で描く）
+    const mx = Math.max(fin(b0), fin(v)) || 1, zero = x => Math.abs(x) <= Math.max(1e-9*mx, eps || 0);
+    let txt, dir;
+    if (b0 === Infinity || v === Infinity){ if (b0 === v){ same.push(lab); return; } txt = v === Infinity ? '∞ に ↑' : '∞ から ↓'; dir = v === Infinity ? 'up' : 'down'; }
+    else if (b0 == null || v == null){ if (v == null){ txt = 'なくなる'; dir = 'down'; } else { txt = '新たに'; dir = 'up'; } }
+    else if (zero(b0) && zero(v)){ same.push(lab); return; }
+    else if (zero(b0)){ txt = '0 から ↑'; dir = 'up'; }
+    else if (zero(v)){ txt = '0 になる ↓'; dir = 'down'; }
+    else if (Math.sign(v) !== Math.sign(b0)){ const r = Math.abs(v/b0); txt = '向きが逆' + (Math.abs(r - 1) < .001 ? '' : '・' + ratioText(r)); dir = r >= 1 ? 'up' : 'down'; }
+    /* 0.1 % 以内だけを「変わらない」と言う */
+    else { const r = v/b0; if (Math.abs(r - 1) < .001){ same.push(lab); return; } dir = r > 1 ? 'up' : 'down'; txt = ratioText(r) + (dir === 'up' ? ' ↑' : ' ↓'); }
+    rows.push(`<div class="cz-row"><span class="cz-lab">${lab}</span>`
+      + `<span class="cz-bar"><i class="cz-was" style="width:${b0 === Infinity ? 100 : (fin(b0)/mx*100).toFixed(1)}%"></i><i class="cz-now ${dir}" style="width:${v === Infinity ? 100 : (fin(v)/mx*100).toFixed(1)}%"></i></span>`
+      + `<span class="cz-r ${dir}">${txt}</span></div>`);
+  });
+  causalEl.innerHTML = `<div class="cz-head"><span>基準と比べる</span><button class="cz-reset" title="いまの状態を新しい基準にする">いまを基準に</button><button class="cz-hide" aria-label="比べる表示を隠す">×</button></div>`
+    + (changed.length
+      ? `<p class="cz-cause">${cause}</p><div class="cz-rows">${rows.join('')}</div>`
+        + (same.length ? `<p class="cz-same">変わらない: ${same.join('・')}</p>` : '')
+      : `<p class="cz-cause">つまみを動かすと、ここに「基準 → 今」で何が何倍になったかが並ぶ。</p>`)
+    + `<p class="cz-note"><span class="cz-key">灰の棒＝基準、色の棒＝今（橙は増、青は減）。</span>${typeof c.note === 'function' ? c.note() : c.note}</p>`;
+  causalEl.querySelector('.cz-reset').onclick = () => { causalReset(); renderCausal(); };
+  causalEl.querySelector('.cz-hide').onclick = () => { causalHidden = true; renderCausal(); };
+}
+/* ツアー・予想クイズで状態を当てたとき。クイズ（fromInit）は設備の初期状態を基準にする */
+function onSetApplied(set, fromInit){ if (typeof esCchg !== 'undefined' && set && 'eMode' in set) esCchg = null; causalReset(); }
 
 /* ---------- ループ ---------- */
 /* 描画する画素数に上限を置く。高DPIの大画面では w*h*dpr² が1千万画素を超え、

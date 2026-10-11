@@ -477,7 +477,7 @@ const MACHINES = {
   "x": -24,
   "page": "magnetic-circuit",
   "kicker": "磁気回路はオームの法則と同じ形。空隙が磁気抵抗を支配する",
-  "lead": "空隙のある環状鉄心にコイルを巻いた磁気回路と、電流を流した2本の平行導体。磁気回路では光点が磁束で、速さが磁束密度 B。平行導体では電流の向きで引き合うか反発するかが変わる。",
+  "lead": "空隙のある環状鉄心にコイルを巻いた磁気回路と、電流を流した2本の平行導体。磁気回路では光点が磁束で、光点の数が磁束密度 B に比例する。平行導体では電流の向きで引き合うか反発するかが変わる。",
   "parts": [
    [
     "#6B7580",
@@ -492,7 +492,7 @@ const MACHINES = {
    [
     "#F0B57E",
     "磁束（光点）",
-    "Φ = F/Rm。速さが B に比例"
+    "Φ = F/Rm。光点の数が B に比例"
    ],
    [
     "#C07A3A",
@@ -708,7 +708,7 @@ const MACHINES = {
   "x": -8,
   "page": "rlc-resonance",
   "kicker": "XL は f に比例、XC は f に反比例。等しくなる f0 が共振",
-  "lead": "交流電源に R・L・C をつないだ回路。直列と並列を切り替え、周波数を動かす。光点の往復の大きさが電流の大きさ。",
+  "lead": "交流電源に R・L・C をつないだ回路。直列と並列を切り替え、周波数を動かす。光点の大きさが電流の大きさ。",
   "parts": [
    [
     "#3B5A73",
@@ -1717,7 +1717,7 @@ const STUDY = {
      "B"
     ],
     "op": "空隙の長さを 0 mm から 1 mm にする。",
-    "see": "磁束密度が 1.68 T から 0.387 T へ約 1/4 に下がる。光点も遅くなる。空隙の磁気抵抗は鉄心（30 cm）の 3.3 倍。",
+    "see": "磁束密度が 1.68 T から 0.387 T へ約 1/4 に下がる。光点の数も減る。空隙の磁気抵抗は鉄心（30 cm）の 3.3 倍。",
     "so": "磁気抵抗 Rm = l/(μ0·μr·A)。空隙は μr = 1 なので、長さ 1 mm でも鉄心 300 mm（μr = 1000）の 3 倍を超える。※空隙 0 の値は鉄心の飽和を考えていない。",
     "q": [
      "H20/3",
@@ -3698,6 +3698,8 @@ function rrPath(parent, pts, n, mat, closed){
   return {pts, cum, total:cum[cum.length-1], dots};
 }
 const _rrp = new THREE.Vector3();
+/* 光点の大きさを量に比例させる（基準の量で 1 倍、0.35〜3 倍に収める）。比べる表示と同じ向きで 3D でも差が見えるように */
+function rrScale(p, ratio){ const k = Math.max(.35, Math.min(3, ratio)); p.dots.forEach(d => d.scale.setScalar(k)); }
 function rrRun(p, T, on){
   p.dots.forEach((d, i) => { d.visible = on; if (!on) return;
     let s = ((T + i/p.dots.length*p.total) % p.total + p.total) % p.total, k = 1;
@@ -3803,7 +3805,7 @@ function buildMagnet(g){
   ] : [
     {obj:ring, t:'環状鉄心（磁路長 30 cm・断面積 4 cm²）', c:'#6B7580'},
     {obj:coil, t:'コイル（巻数 N・電流 I）', c:'#C07A3A'},
-    {obj:flux, t:'磁束 Φ（光点の速さ ∝ B）', c:'#F0B57E'},
+    {obj:flux, t:'磁束 Φ（光点の数 ∝ B）', c:'#F0B57E'},
   ];
 }
 function animMagnet(g, t, st, dt){
@@ -3815,14 +3817,15 @@ function animMagnet(g, t, st, dt){
     if (u.ringKey !== gapA){ u.ringKey = gapA;
       if (u.torus){ u.ring.remove(u.torus); u.torus.geometry.dispose(); }
       u.torus = mesh(new THREE.TorusGeometry(1, .14, 14, 64, Math.PI*2 - gapA), RR.core, u.ring); u.torus.rotation.z = -Math.PI/2 + gapA/2; }
-    const sp = Math.min(3, m.B*1.5), gapA2 = u.ringKey;
-    u.fdots.forEach((d, i) => { const a = -Math.PI/2 + gapA2/2 + (((u.T*sp + i/16*(Math.PI*2)) % (Math.PI*2)) + Math.PI*2) % (Math.PI*2); d.position.set(Math.cos(a), Math.sin(a), .16); });
+    /* 光点の数 ∝ 磁束密度 B（初期状態の B ≈ 0.39 T で 4 個、16 個まで）。速さは一定にして、数で比べる */
+    const nB = m.B > 0 ? Math.max(1, Math.min(16, Math.round(4*m.B/.386))) : 0, gapA2 = u.ringKey;
+    u.fdots.forEach((d, i) => { d.visible = i < nB; const a = -Math.PI/2 + gapA2/2 + (((u.T*.8 + i/Math.max(1, nB)*(Math.PI*2)) % (Math.PI*2)) + Math.PI*2) % (Math.PI*2); d.position.set(Math.cos(a), Math.sin(a), .16); });
   } else {
     const s = st.fDir==='same' ? 1 : -1, gap = .3 + st.fR*4;
     u.rodA.position.x = -gap/2; u.rodB.position.x = gap/2;
     u.iA.position.set(-gap/2, 1.2, 1.45); u.iA.rotation.set(Math.PI/2, 0, 0);
     u.iB.position.set(gap/2, 1.2, s>0 ? 1.45 : -1.45); u.iB.rotation.set(s>0 ? Math.PI/2 : -Math.PI/2, 0, 0);
-    const k = Math.min(1.5, .4 + m.f*2000);                // 力の矢印の大きさ（模式）
+    const k = Math.max(.15, Math.min(2.4, m.f/2e-4*.8));    // 力の矢印の大きさ ∝ F（初期状態 2×10⁻⁴ N/m で 0.8）
     u.fA.position.set(-gap/2 + (s>0 ? .3 : -.3), 1.6, 0); u.fA.rotation.set(0, 0, s>0 ? -Math.PI/2 : Math.PI/2); u.fA.scale.setScalar(k);
     u.fB.position.set(gap/2 + (s>0 ? -.3 : .3), 1.6, 0); u.fB.rotation.set(0, 0, s>0 ? Math.PI/2 : -Math.PI/2); u.fB.scale.setScalar(k);
     u.rings.forEach((o, i) => { o.position.x = i < 2 ? -gap/2 : gap/2; });
@@ -3865,7 +3868,7 @@ function animDC(g, t, st, dt){
     const m = brModel(); u.gal.userData.needle.rotation.z = -Math.max(-1.2, Math.min(1.2, m.Ig*40));
     rrRun(u.fb, u.T*Math.sign(m.Ig)*Math.min(3, Math.abs(m.Ig)*80), Math.abs(m.Ig) > 1e-4 && !st.paused);
   } else {
-    const m = mpModel(); u.lamp.material.emissiveIntensity = .2 + 1.6*m.P/m.Pmax;
+    const m = mpModel(); u.lamp.material.emissiveIntensity = .2 + .8*Math.min(3, m.P/5);   // 明るさ ∝ P（初期状態の最大電力 5 W で 1、3 倍で頭打ち）。P/Pmax だと E を変えても変わらない
     rrRun(u.fm, u.T*Math.min(3, m.I), !st.paused);
   }
 }
@@ -3901,9 +3904,10 @@ function animAC(g, t, st, dt){
   const ser = st.aConn!=='parallel'; u.ser.visible = ser; u.par.visible = !ser;
   /* 交流なので光点は往復させる（振幅 ∝ 電流） */
   const sw = Math.sin(u.T*4);
-  if (ser) rrRun(u.fs, 1 + sw*Math.min(1.2, m.I/15), true);
+  /* 光点の大きさ ∝ 電流（初期状態の直列の電流 約 7 A で 1 倍） */
+  if (ser){ rrScale(u.fs, m.I/7); rrRun(u.fs, 1 + sw*Math.min(1.2, m.I/15), true); }
   else { const I3 = [m.IR, m.IL, m.IC], ph = [0, -Math.PI/2, Math.PI/2];   // R は電圧と同相、L は 90° 遅れ、C は 90° 進み（L と C は逆相）
-    u.fp.forEach((p, k) => rrRun(p, 1 + Math.sin(u.T*4 + ph[k])*Math.min(1.2, I3[k]/15), true)); rrRun(u.fs, 0, false); }
+    u.fp.forEach((p, k) => { rrScale(p, I3[k]/7); rrRun(p, 1 + Math.sin(u.T*4 + ph[k])*Math.min(1.2, I3[k]/15), true); }); rrRun(u.fs, 0, false); }
 }
 
 /* ---------- 5. 過渡現象 ---------- */
@@ -3973,8 +3977,9 @@ function animThree(g, t, st, dt){
   u.rotor.rotation.z = u.T*3;
   const Y = st.hConn==='Y'; u.Yg.visible = Y; u.Dg.visible = !Y;
   const sp = I => Math.min(3, I/10);
-  u.fL.forEach((p, k) => rrRun(p, 1 + Math.sin(u.T*4 - k*2*Math.PI/3)*sp(m.IL)*.6, !st.paused));
-  (Y ? u.fYp : u.fDp).forEach((p, k) => rrRun(p, 1 + Math.sin(u.T*4 - k*2*Math.PI/3)*sp(m.Ip)*.6, !st.paused));
+  /* 光点の大きさ ∝ 電流（初期状態の Y の 11.5 A で 1 倍）。Y→Δ で線電流が 3 倍になるのが見える */
+  u.fL.forEach((p, k) => { rrScale(p, m.IL/11.5); rrRun(p, 1 + Math.sin(u.T*4 - k*2*Math.PI/3)*sp(m.IL)*.6, !st.paused); });
+  (Y ? u.fYp : u.fDp).forEach((p, k) => { rrScale(p, m.Ip/11.5); rrRun(p, 1 + Math.sin(u.T*4 - k*2*Math.PI/3)*sp(m.Ip)*.6, !st.paused); });
   (Y ? u.fDp : u.fYp).forEach(p => rrRun(p, 0, false));
 }
 
@@ -4020,7 +4025,7 @@ function animElec(g, t, st, dt){
   u.diode2.visible = st.xRect==='full';                 // 半波はダイオード1個、全波（中間タップ式の模式）は2個
   let h, base = 0;
   if (st.xView==='diode') h = m.Vavg/(Math.SQRT2*200/Math.PI*2)*1.8;
-  else if (st.xView==='tr') h = m.Vce/Math.max(1, st.xVcc)*1.6;
+  else if (st.xView==='tr') h = Math.min(2.4, m.Vce/12*1.6);   // VCE そのものに比例（12 V で 1.6）。VCC との比にすると VCC を上げたとき逆に縮む
   else { h = m.Vo/VSAT*.9; base = 1.0; }
   u.outZero.visible = st.xView==='op';
   u.outBar.scale.y = Math.max(.001, Math.abs(h)); u.outBar.position.y = base + h/2;
@@ -4717,7 +4722,7 @@ function syncCards(){
    読み値の表だけでは「何が何倍になったか」が見えず、動かすと前の値も消える。
    そこで基準（実験台に入ったとき・ツアーの歩を当てたとき・「いまを基準にする」を押したとき）を覚えておき、
    変えた原因と、変わった結果を「基準 → 今」の棒と倍率で並べる。
-   予想クイズの答え合わせでは、実験台の初期状態を基準にする（クイズは初期状態からの変化として書いてある）。
+   予想クイズの答え合わせでは、答え合わせの状態を基準にする（クイズの前提は問ごとに違い、初期状態と比べると答えと違う比が出るため）。
    棒は行ごとに、基準と今の大きいほうを全幅にする（2本を同じ物差しで比べるため）。 */
 const CAUSAL = {
   statics: {
@@ -4738,6 +4743,71 @@ const CAUSAL = {
         ['W', 'エネルギー W', m.W]]; },
     note: '3D は誇張表示: 間隔 ∝ d、電気力線の本数 ∝ 電界 E（28 本まで）、極板の粒 ∝ 電荷 Q（40 粒まで）。実寸ではない',
   },
+  /* ctx: 切り替えると比べる意味が無くなるキー（見る対象・回路の種類）。変わったら基準を取り直す */
+  magnet: {
+    ctx: ['mView'],
+    inputs: [['mGap','空隙 lg', v => f1(v,1)+' mm', 1], ['mI','電流 I', v => f1(v,1)+' A', 1], ['mN','巻数 N', v => v+' 回', 1], ['mMu','比透磁率 μr', v => v, 1],
+             ['fI1','電流 I₁', v => v+' A', 1], ['fI2','電流 I₂', v => v+' A', 1], ['fR','間隔 r', v => f1(v*100,0)+' cm', 1], ['fDir','電流の向き', v => v==='same' ? '同じ向き' : '逆向き']],
+    outs: () => { const m = mgModel(); return state.mView==='force'
+      ? [['f', '1 m あたりの力 F', m.attract ? m.f : -m.f], ['H', '導体2の位置の磁界 H', state.fI1/(2*Math.PI*state.fR)]]
+      : [['F', '起磁力 NI', m.F], ['Rm', '磁気抵抗（合計）', m.Rm], ['Phi', '磁束 Φ', m.Phi], ['B', '磁束密度 B', m.B], ['L', 'インダクタンス L', m.L], ['W', 'エネルギー W', m.W]]; },
+    note: () => state.mView==='force' ? '3D: 力の矢印の長さ ∝ 力 F（初期状態の 3 倍で頭打ち。引き合う＝正、反発＝負として比べる）' : '3D: 鉄心を回る光点の数 ∝ 磁束密度 B（16 個まで）。空隙の幅は誇張',
+  },
+  dc: {
+    ctx: ['bView'],
+    inputs: [['bR1','R1', v => v+' Ω', 1], ['bR2','R2', v => v+' Ω', 1], ['bR3','R3', v => v+' Ω', 1], ['bR4','R4', v => v+' Ω', 1], ['bRg','検流計の抵抗 Rg', v => v+' Ω', 1], ['bE','電源 E', v => v+' V', 1],
+             ['pRL','負荷抵抗 RL', v => f1(v,1)+' Ω', 1], ['pr','内部抵抗 r', v => f1(v,1)+' Ω', 1], ['pE','起電力 E', v => v+' V', 1]],
+    outs: () => { if (state.bView==='maxp'){ const m = mpModel(); return [['I', '電流 I', m.I], ['P', '負荷の電力 P', m.P], ['eta', '効率 η', m.eta]]; }
+      const m = brModel(); return [['Ig', '検流計の電流 Ig', m.Ig, null, null, 1e-12], ['Vth', '開放電圧 Vth', m.Vth, null, null, 1e-12], ['Rth', '内部抵抗 Rth', m.Rth], ['I', '電源の電流 I', m.I]]; },
+    note: () => state.bView==='maxp' ? '3D: ランプの明るさ ∝ 負荷の電力 P（初期状態の 3 倍で頭打ち）' : '3D: 検流計の針の振れ ∝ Ig（向きも）',
+  },
+  ac: {
+    ctx: ['aConn'],
+    inputs: [['aF','周波数 f', v => v+' Hz', 1], ['aR','抵抗 R', v => v+' Ω', 1], ['aL','インダクタンス L', v => v+' mH', 1], ['aC','静電容量 C', v => v+' μF', 1], ['aV','電源電圧 V', v => v+' V', 1]],
+    outs: () => { const m = acModel(); return state.aConn==='parallel'
+      ? [['XL', 'XL = ωL', m.XL], ['XC', 'XC = 1/(ωC)', m.XC], ['Z', '合成 Z', m.Z], ['I', '電源の電流 I', m.I], ['IL', 'L の電流', m.IL], ['IC', 'C の電流', m.IC], ['P', '有効電力 P', m.P]]
+      : [['XL', 'XL = ωL', m.XL], ['XC', 'XC = 1/(ωC)', m.XC], ['Z', '合成 Z', m.Z], ['I', '電流 I', m.I], ['VL', 'L の電圧', m.VL], ['VC', 'C の電圧', m.VC], ['P', '有効電力 P', m.P]]; },
+    note: () => '3D: 電流の光点の大きさ ∝ 電流（' + (state.aConn==='parallel' ? '枝ごと' : '回路の電流') + '。初期状態の 0.35〜3 倍で頭打ち）。光点の往復は交流の向きの反転',
+  },
+  transient: {
+    ctx: ['tType', 'tPh'],
+    inputs: [['tK','経過時間 t/τ', v => f1(v,2)+' τ'], ['tR','抵抗 R', v => v+' Ω', 1], ['tC','静電容量 C', v => v+' μF', 1], ['tL','インダクタンス L', v => v+' mH', 1], ['tE','電源 E', v => v+' V', 1]],
+    outs: () => { const m = trModel(); return [['tau', '時定数 τ', m.tau], ['x', state.tType==='rc' ? 'C の電圧 vC' : 'L の電圧 vL', m.x], ['i', '電流 i', m.i]]; },
+    note: () => '3D: ' + (state.tType==='rc' ? 'C の満ち具合 ∝ vC/E（電源電圧に対する割合）' : 'コイルの満ち具合 ∝ i/I₀（最終値に対する割合）') + '。経過時間は τ を単位にしているので、τ を変えても同じ t/τ では同じ割合',
+  },
+  three: {
+    inputs: [['hConn','負荷の結線', v => v==='Y' ? 'Y 結線' : 'Δ 結線'], ['hZ','1相の Z', v => v+' Ω', 1], ['hPf','力率', v => f1(v,2), 1], ['hV','線間電圧 V', v => v+' V', 1]],
+    outs: () => { const m = thModel(); return [['Vp', '相電圧（負荷1相）', m.Vp], ['Ip', '相電流', m.Ip], ['IL', '線電流', m.IL], ['P', '三相の電力 P', m.P]]; },
+    note: () => '3D: 光点の大きさ ∝ 電流（線路は線電流、負荷は相電流。初期状態の 0.35〜3 倍で頭打ち）',
+  },
+  elec: {
+    ctx: ['xView'],
+    inputs: [['xRect','整流の方式', v => v==='half' ? '半波' : '全波'], ['xVin','交流電圧（実効値）', v => v+' V', 1],
+             ['xRb','RB', v => v+' kΩ', 1], ['xHfe','hFE', v => v, 1], ['xRc','RC', v => f1(v,1)+' kΩ', 1], ['xVcc','VCC', v => v+' V', 1], ['xHie','hie', v => f1(v,1)+' kΩ', 1],
+             ['xOp','回路', v => v==='inv' ? '反転増幅' : '非反転増幅'], ['xRf','Rf', v => v+' kΩ', 1], ['xRi','Ri', v => v+' kΩ', 1], ['xVi','入力 Vi', v => f1(v,2)+' V', 1]],
+    outs: () => { const m = elModel(); return state.xView==='tr'
+      ? [['Ib', 'ベース電流 IB', m.Ib], ['Ic', 'コレクタ電流 IC', m.Ic], ['Vce', 'VCE', m.Vce], ['Av', '電圧利得 Av（飽和では増幅しない）', m.sat ? 0 : m.Av]]
+      : state.xView==='op' ? [['G', '増幅度 G', m.G], ['Vo', '出力 Vo', m.Vo]]
+      : [['Vm', '最大値 Vm', m.Vm], ['Vavg', '出力の平均値', m.Vavg]]; },
+    note: () => '3D: 右端の棒の高さ ∝ ' + (state.xView==='tr' ? 'VCE' : state.xView==='op' ? '出力 Vo（中央の線が 0 V）' : '出力の平均値'),
+  },
+  electron: {
+    ctx: ['zMode'],
+    inputs: [['zVa','加速電圧 Va', v => v+' V', 1], ['zVd','偏向板の電圧 Vd', v => v+' V', 1], ['zB','磁束密度 B', v => f1(v,1)+' mT', 1]],
+    outs: () => { const m = emModel(); return state.zMode==='B'
+      ? [['v', '速さ v', m.v], ['r', '円運動の半径 r', m.r], ['T', '周期 T', m.T]]
+      : [['v', '速さ v', m.v], ['Ef', '偏向板の電界 E', m.Ef], ['yf', '板を出るときの変位 y', m.hit ? null : m.yf]]; },
+    note: () => state.zMode==='B' ? '3D: 軌道の半径 ∝ r（縮尺は模式）' : '3D: 軌道の曲がり ∝ 変位 y。板に当たると変位は「なくなる」と出る',
+  },
+  meter: {
+    ctx: ['kType'],
+    inputs: [['kN','倍率 n', v => v+' 倍', 1], ['kX', '測る量', v => v+(state.kType==='A' ? ' mA' : ' V'), 1],
+             ['kRa','Ra', v => f1(v,1)+' Ω', 1], ['kIfs','Ifs', v => v+' mA', 1], ['kRv','Rv', v => v+' kΩ', 1], ['kVfs','Vfs', v => v+' V', 1]],
+    outs: () => { const m = mtModel(); return state.kType==='A'
+      ? [['Rs', '分流器 Rs（n = 1 では不要＝∞）', m.Rs], ['range', '測れる最大電流', m.range], ['Im', '計器に流れる電流', m.Im]]
+      : [['Rm', '倍率器 Rm', m.Rm], ['range', '測れる最大電圧', m.range], ['Vm', '計器にかかる電圧', m.Vm]]; },
+    note: () => '3D: 針の振れ ∝ 計器に流れる電流（かかる電圧）÷ 最大目盛。目盛を変えると、同じ電流でも振れが変わる',
+  },
 };
 const CAUSAL_INIT = {};
 for (const [id, c] of Object.entries(CAUSAL)) CAUSAL_INIT[id] = Object.fromEntries(c.inputs.map(([k]) => [k, state[k]]));
@@ -4756,14 +4826,18 @@ function causalReset(fromInit){
   const id = state.current;
   if (!CAUSAL[id]){ causalBase = null; return; }
   causalBase = fromInit ? {id, ...causalSnap(id, CAUSAL_INIT[id])} : {id, inputs: causalLive(id), outs: CAUSAL[id].outs()};
+  causalBase.ctx = (CAUSAL[id].ctx || []).map(k => state[k]).join('|');
 }
 /* 倍率を試験の言い方に寄せる: 2 倍・1/4 倍・そのまま。きれいな比でなければ小数 */
 function ratioText(r){
   if (!isFinite(r)) return '—';
-  if (Math.abs(r - 1) < .005) return 'そのまま';
-  const near = (x, half) => { for (const k of [2,3,4,5,6,8,9,10,16,25]) if (Math.abs(x - k) < .01*k) return k; if (half) for (const k of [1.5,2.5]) if (Math.abs(x - k) < .005) return k; return null; };
-  if (r > 1){ const k = near(r, true); return (k ? k : f1(r, 2)) + ' 倍'; }
-  const k = near(1/r, false); return k ? '1/' + k + ' 倍' : f1(r, 2) + ' 倍';   // 1/2.5 のような分母は書かない
+  r *= 1 + 1e-12;   // 0.375 が 0.37499… になって行ごとに丸めが分かれないように
+  if (Math.abs(r - 1) < .001) return 'そのまま';
+  const near = (x, half) => { for (const k of [2,3,4,5,6,8,9,10,16,25]) if (Math.abs(x - k) < .002*k) return k; if (half) for (const k of [1.5,2.5]) if (Math.abs(x - k) < .002*k) return k; return null; };   // 0.2 % 以内だけを「きれいな比」と言う
+  const dg = Math.abs(r - 1) < .01 ? 3 : 2;   // 1 % 未満の変化は 3 桁で出す（「1.00 倍 ↓」では向きしか読めない）
+  if (r < .1 || r > 100) return Number(r.toPrecision(2)).toLocaleString('ja-JP', {maximumSignificantDigits:2}) + ' 倍';   // 「0.00 倍」にしない（有効数字 2 桁）
+  if (r > 1){ const k = near(r, true); return (k ? k : f1(r, dg)) + ' 倍'; }
+  const k = near(1/r, false); return k ? '1/' + k + ' 倍' : f1(r, dg) + ' 倍';   // 1/2.5 のような分母は書かない
 }
 function renderCausal(){
   const id = state.current;
@@ -4774,17 +4848,20 @@ function renderCausal(){
   const c = CAUSAL[id];
   if (!c){ causalEl.hidden = true; return; }
   causalEl.hidden = false;
-  if (!causalBase || causalBase.id !== id) causalReset();
+  const ctxSig = () => (c.ctx || []).map(k => state[k]).join('|');
+  if (!causalBase || causalBase.id !== id || causalBase.ctx !== ctxSig()) causalReset();
   if (causalHidden){
     causalEl.innerHTML = '<button class="cz-show">比べる表示を出す</button>';
     causalEl.querySelector('.cz-show').onclick = () => { causalHidden = false; renderCausal(); };
     return;
   }
   const base = causalBase, nowIn = causalLive(id), now = c.outs();
-  const changed = c.inputs.filter(([k]) => nowIn[k] !== base.inputs[k]);
+  /* 原因に数えるのは、今の操作帯に出ているつまみだけ（見る対象と関係の無いつまみを原因に挙げない） */
+  const live = new Set([...ctrlbar.querySelectorAll('[data-key]')].map(e => e.dataset.key));
+  const changed = c.inputs.filter(([k]) => live.has(k) && nowIn[k] !== base.inputs[k]);
   const cause = changed.map(([k, lab, fmt, num]) => {
     const a = base.inputs[k], b = nowIn[k];
-    return `<b>${lab}</b> ${fmt(a)} → ${fmt(b)}` + (num && a ? `（${ratioText(b/a)}）` : '');
+    return `<b>${lab}</b> ${fmt(a)} → ${fmt(b)}` + (num && a && b && Math.sign(a) === Math.sign(b) ? `（${ratioText(b/a)}）` : '');   // 0 や符号の変わる変化には倍率を付けない
   }).join('、');
   const rows = [], same = [];
   const baseOf = (k, alts) => { for (const key of [k, ...(alts || [])]){ const r = base.outs.find(x => x[0] === key); if (r) return r[2]; } return null; };
@@ -4800,27 +4877,36 @@ function renderCausal(){
     if (x[4] && merged.has(x[4])){ if (!shown.some(y => y[0] === x[4])) shown.push([x[4], '電界 E', x[2], [x[0]]]); }
     else shown.push(x);
   }
-  shown.forEach(([k, lab, v, alts]) => {
+  shown.forEach(([k, lab, v, alts, , eps]) => {
     const b0 = baseOf(k, alts);
     if (v == null && b0 == null) return;
-    if (b0 != null && v != null && Math.abs(v/b0 - 1) < .005){ same.push(lab); return; }
-    const mx = Math.max(Math.abs(b0 || 0), Math.abs(v || 0)) || 1;
-    const r = (b0 == null || v == null) ? null : v/b0, dir = r == null ? '' : r > 1 ? 'up' : 'down';
+    /* eps: 計算誤差で 0 にならない量（平衡の電流など）の絶対の許容。行の 6 番目に書く */
+    const fin = x => isFinite(x) ? Math.abs(x || 0) : 0;   // ∞ は棒の物差しに入れない（今の棒は全幅で描く）
+    const mx = Math.max(fin(b0), fin(v)) || 1, zero = x => Math.abs(x) <= Math.max(1e-9*mx, eps || 0);
+    let txt, dir;
+    if (b0 === Infinity || v === Infinity){ if (b0 === v){ same.push(lab); return; } txt = v === Infinity ? '∞ に ↑' : '∞ から ↓'; dir = v === Infinity ? 'up' : 'down'; }
+    else if (b0 == null || v == null){ if (v == null){ txt = 'なくなる'; dir = 'down'; } else { txt = '新たに'; dir = 'up'; } }
+    else if (zero(b0) && zero(v)){ same.push(lab); return; }
+    else if (zero(b0)){ txt = '0 から ↑'; dir = 'up'; }
+    else if (zero(v)){ txt = '0 になる ↓'; dir = 'down'; }
+    else if (Math.sign(v) !== Math.sign(b0)){ const r = Math.abs(v/b0); txt = '向きが逆' + (Math.abs(r - 1) < .001 ? '' : '・' + ratioText(r)); dir = r >= 1 ? 'up' : 'down'; }
+    /* 0.1 % 以内だけを「変わらない」と言う */
+    else { const r = v/b0; if (Math.abs(r - 1) < .001){ same.push(lab); return; } dir = r > 1 ? 'up' : 'down'; txt = ratioText(r) + (dir === 'up' ? ' ↑' : ' ↓'); }
     rows.push(`<div class="cz-row"><span class="cz-lab">${lab}</span>`
-      + `<span class="cz-bar"><i class="cz-was" style="width:${(Math.abs(b0 || 0)/mx*100).toFixed(1)}%"></i><i class="cz-now ${dir}" style="width:${(Math.abs(v || 0)/mx*100).toFixed(1)}%"></i></span>`
-      + `<span class="cz-r ${dir}">${r == null ? (v == null ? 'なくなる' : '新たに') : ratioText(r) + (dir === 'up' ? ' ↑' : ' ↓')}</span></div>`);
+      + `<span class="cz-bar"><i class="cz-was" style="width:${b0 === Infinity ? 100 : (fin(b0)/mx*100).toFixed(1)}%"></i><i class="cz-now ${dir}" style="width:${v === Infinity ? 100 : (fin(v)/mx*100).toFixed(1)}%"></i></span>`
+      + `<span class="cz-r ${dir}">${txt}</span></div>`);
   });
   causalEl.innerHTML = `<div class="cz-head"><span>基準と比べる</span><button class="cz-reset" title="いまの状態を新しい基準にする">いまを基準に</button><button class="cz-hide" aria-label="比べる表示を隠す">×</button></div>`
     + (changed.length
       ? `<p class="cz-cause">${cause}</p><div class="cz-rows">${rows.join('')}</div>`
         + (same.length ? `<p class="cz-same">変わらない: ${same.join('・')}</p>` : '')
       : `<p class="cz-cause">つまみを動かすと、ここに「基準 → 今」で何が何倍になったかが並ぶ。</p>`)
-    + `<p class="cz-note"><span class="cz-key">灰の棒＝基準、色の棒＝今（橙は増、青は減）。</span>${c.note}</p>`;
+    + `<p class="cz-note"><span class="cz-key">灰の棒＝基準、色の棒＝今（橙は増、青は減）。</span>${typeof c.note === 'function' ? c.note() : c.note}</p>`;
   causalEl.querySelector('.cz-reset').onclick = () => { causalReset(); renderCausal(); };
   causalEl.querySelector('.cz-hide').onclick = () => { causalHidden = true; renderCausal(); };
 }
 /* ツアー・予想クイズ・実験台の選択で状態を当てたとき。切り離しの電荷は本文の前提（空気で充電）に戻す */
-function onSetApplied(set, fromInit){ if (set && 'eMode' in set) esCchg = null; causalReset(fromInit); }   // 別の実験台の状態を当てても、静電気の電荷は消さない
+function onSetApplied(set, fromInit){ if (typeof esCchg !== 'undefined' && set && 'eMode' in set) esCchg = null; causalReset(); }
 
 /* 予想クイズが当てた読み値を数秒だけ光らせる。どの数字の話かを取り違えないため。 */
 let litTimer = null;
