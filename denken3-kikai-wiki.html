@@ -7779,8 +7779,11 @@ const SectionCheck = ({
       return '';
     }
   });
+  // 同じ記号をもう一度押しても記録は消さない（別の日に「やはり言えない」と × を押すと、記録が消えて
+  // 弱点一覧からも外れていた）。記録を消すのは「取消」ボタンだけにする。
   const update = newStatus => {
-    const next = newStatus === status ? '' : newStatus;
+    const next = newStatus;
+    if (next === status) return;
     setStatus(next);
     try {
       if (next) localStorage.setItem(key, KIKAI_SECTION_V + next);else localStorage.removeItem(key);
@@ -7853,7 +7856,21 @@ const SectionCheck = ({
     style: {
       color: 'var(--ink)'
     }
-  }, status)));
+  }, status), ' ', /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => update(''),
+    "aria-label": "この節の自己評価を取り消す",
+    style: {
+      marginLeft: 4,
+      padding: '1px 6px',
+      fontSize: 11,
+      background: 'transparent',
+      color: 'var(--ink-soft)',
+      border: '1px solid var(--rule)',
+      borderRadius: 4,
+      cursor: 'pointer'
+    }
+  }, "取消")));
 };
 
 /* ---- SectionCheckSummary: ページ末尾の理解度サマリ＝弱点セクションへの再読リンク（Act） ---- */
@@ -8022,26 +8039,43 @@ const QuickReviewItem = ({
       return null;
     }
   });
-  const mark = status => {
-    // 同じボタンをもう一度＝記録を取り消す。旧形式の review は △（vague）として比べる（表示と同じ読み）
-    if (rec && (rec.status === 'review' ? 'vague' : rec.status) === status) {
-      try {
-        localStorage.removeItem(key);
-      } catch (e) {}
-      setRec(null);
-      try {
-        window.dispatchEvent(new CustomEvent('section-check-changed', {
-          detail: {
-            key,
-            status: ''
-          }
-        }));
-      } catch (e) {}
+  const [note, setNote] = React.useState('');
+  const clear = () => {
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {}
+    setRec(null);
+    setNote('');
+    try {
+      window.dispatchEvent(new CustomEvent('section-check-changed', {
+        detail: {
+          key,
+          status: ''
+        }
+      }));
+    } catch (e) {}
+  };
+  const mark = pressed => {
+    const today = kikaiLocalDate();
+    const prev = rec ? rec.status === 'review' ? 'vague' : rec.status : null;
+    // 同じ日に同じ記号をもう一度押したときは何もしない（取消は「記録を消す」だけ）。
+    // 別の日なら、同じ記号でも新しい1回として記録する（以前は記録が消え、間違いノートからも外れていた）。
+    // 日付の無い旧記録（手作りの取り込みなど）は「今日」とみなさない（kikaiLocalDate(undefined) は今日を返すため）
+    const prevToday = !!(rec && rec.updatedAt && kikaiLocalDate(rec.updatedAt) === today);
+    if (rec && prev === pressed && prevToday) return;
+    // 同じ日に △・× を付けた問題は、その日のうちに ◎ にしない（KIKAI_MARKS の △「同じ日の再回答だった」。G23）
+    const sameDay = pressed === 'understood' && kikaiQuizMissedToday(rec, today);
+    const status = sameDay ? 'vague' : pressed;
+    if (rec && prev === status && prevToday) {
+      setNote(sameDay ? '同じ日の再回答なので ◎ にはしない（今日はすでに △ で記録済み。翌日以降に ◎ を付けられる）' : '');
       return;
     }
+    setNote(sameDay ? '同じ日の再回答なので △ で記録した（翌日以降に ◎ を付けられる）' : '');
     const now = new Date().toISOString();
     const next = Object.assign({}, rec || {}, {
       status,
+      lastWeakOn: status === 'understood' ? rec && rec.lastWeakOn || '' : today,
+      lastWrongOn: status === 'wrong' ? today : rec && rec.lastWrongOn || '',
       updatedAt: now,
       lastSeen: now,
       firstSeenAt: rec && rec.firstSeenAt || now,
@@ -8051,7 +8085,7 @@ const QuickReviewItem = ({
       articleTitle: '機械 1分復習 — ' + pageTitle,
       itemTitle: q.length > 44 ? q.slice(0, 44) + '…' : q,
       articleUrl: 'denken3-kikai-wiki.html#' + pageId,
-      memo: status === 'understood' ? '◎ 即答できた' : status === 'wrong' ? '× 出てこない・違った' : '△ 詰まった'
+      memo: status === 'understood' ? '◎ 即答できた' : status === 'wrong' ? '× 出てこない・違った' : sameDay ? '△ 同じ日の再回答' : '△ 詰まった'
     });
     try {
       localStorage.setItem(key, JSON.stringify(next));
@@ -8090,7 +8124,28 @@ const QuickReviewItem = ({
     onClick: () => mark('wrong')
   }, "× 出てこない・違った"), rec && rec.reviewCount > 0 && /*#__PURE__*/React.createElement("span", {
     className: "qr-meta"
-  }, rec.reviewCount, " 回目", rec.lastSeen ? '・' + String(rec.lastSeen).slice(0, 10) : '')));
+  }, rec.reviewCount, " 回目", rec.lastSeen ? '・' + (kikaiLocalDate(rec.lastSeen) || String(rec.lastSeen).slice(0, 10)) : '', ' ', /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: "qr-clear",
+    onClick: clear,
+    "aria-label": "この問題の記録を消す",
+    style: {
+      marginLeft: 4,
+      padding: '0 6px',
+      fontSize: 11,
+      background: 'transparent',
+      color: 'var(--ink-soft)',
+      border: '1px solid var(--rule)',
+      borderRadius: 4,
+      cursor: 'pointer'
+    }
+  }, "記録を消す"))), note && /*#__PURE__*/React.createElement("div", {
+    className: "qr-meta",
+    role: "status",
+    style: {
+      marginTop: 4
+    }
+  }, note));
 };
 
 /* 既存の <details> 群をそのまま包む。ページ側は要素を並べ替えずに済む。 */
@@ -8100,6 +8155,13 @@ const QuickReview = ({
   children
 }) => {
   const items = React.Children.toArray(children).filter(Boolean);
+  // 「記録済み n/m」は押す・消すたびに数え直す（以前は描画時に1回数えるだけで、再読込まで変わらなかった）
+  const [, bump] = React.useState(0);
+  React.useEffect(() => {
+    const on = () => bump(n => n + 1);
+    window.addEventListener('section-check-changed', on);
+    return () => window.removeEventListener('section-check-changed', on);
+  }, []);
   const done = items.filter(el => {
     try {
       return !!localStorage.getItem(`denken_check::kikai_${pageId}::quickreview::${kikaiTrapHash(qrSummaryText(el))}`);
@@ -48348,7 +48410,7 @@ const StudyLogPage = ({
   scope: "col"
 }, "判定を続けたとき"), /*#__PURE__*/React.createElement("th", {
   scope: "col"
-}, "次回までの間隔（日）"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "◎ を重ねる"), /*#__PURE__*/React.createElement("td", null, "8 → 66 → 365")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "○ を重ねる"), /*#__PURE__*/React.createElement("td", null, "2 → 11 → 46 → 163 → 365")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "△ → △ → ○ → ◎"), /*#__PURE__*/React.createElement("td", null, "1 → 3 → 9 → 36")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "× を付ける"), /*#__PURE__*/React.createElement("td", null, "1（振り出しに戻る）"))))), /*#__PURE__*/React.createElement("p", {
+}, "次回までの間隔（日）"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "◎ を重ねる"), /*#__PURE__*/React.createElement("td", null, "8 → 66 → 365")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "○ を重ねる"), /*#__PURE__*/React.createElement("td", null, "2 → 11 → 46 → 163 → 365")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "△ → △ → ○ → ◎"), /*#__PURE__*/React.createElement("td", null, "1 → 3 → 9 → 36")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "× を付ける"), /*#__PURE__*/React.createElement("td", null, "それまでの深さで変わる。新しい問題・△ の多い問題は 1、○ を2回なら 2、◎◎× なら 4、◎◎◎× なら 7（どれも振り出しより短く戻る）"))))), /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)"
@@ -48635,7 +48697,7 @@ const GuidePage = ({
     }
   }, "過去問トラッカーは", /*#__PURE__*/React.createElement("strong", null, "正解／不正解ではなく「言えるか」で判定する"), "運用にしてある。 答えが合っていても「なぜその式か」を1行で言えなければ", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "「言えない → △」で △ に落とす"), "。 覚えていただけの正解を ◎ にすると、忘却曲線がその問題を長く寝かせてしまい、 試験前に戻ってこない。", /*#__PURE__*/React.createElement("strong", null, "◎ は「導出まで戻れる」ときだけ付ける。"))), /*#__PURE__*/React.createElement("h2", {
+  }, "「言えない → △」で △ に落とす"), "。 覚えていただけの正解を ◎ にすると、忘却曲線がその問題を長く寝かせてしまい、 試験前に戻ってこない。", /*#__PURE__*/React.createElement("strong", null, "◎ は「見ずに正解し、迷いがなく、理由を1行で言えて、（時間を測る過去問では）目安時間内」のときだけ付ける"), "（学習記録ページの ◎○△× の定義と同じ。導出まで戻れることは「理由を1行で言える」の中身）。")), /*#__PURE__*/React.createElement("h2", {
     id: "formula-choice"
   }, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
