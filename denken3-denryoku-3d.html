@@ -1,0 +1,4179 @@
+<meta charset="utf-8">
+<title>電力科目 3D工場</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="電験三種 電力科目の6つの設備（水力・火力・原子力・変電所・架空送電・配電）を3Dに並べ、電力Wikiと過去20年の過去問台帳に結びつけて眺めるビューア">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#EEF0EC; --panel:#F8F9F6; --ink:#1E2328; --ink-2:#4B555E; --ink-3:#7C8790;
+  --line:#D6DAD3; --line-2:#E4E7E1;
+  --accent:#B5601F; --accent-ink:#8C4612; --accent-soft:#F4E5D7;
+  --steel:#3B5A73; --steel-soft:#DDE6EE;
+  --canvas:#1A2028;
+  --font-sans:"Noto Sans JP",system-ui,-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;
+  --font-serif:"Noto Serif JP","Hiragino Mincho ProN","Yu Mincho",serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15191E; --panel:#1C2127; --ink:#E6E9E4; --ink-2:#AEB6BD; --ink-3:#7B858E;
+    --line:#2E353C; --line-2:#262C33;
+    --accent:#D9853F; --accent-ink:#F0B57E; --accent-soft:#3A2A1B;
+    --steel:#8FB0CC; --steel-soft:#22313D;
+    --canvas:#0F1419;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15191E; --panel:#1C2127; --ink:#E6E9E4; --ink-2:#AEB6BD; --ink-3:#7B858E;
+  --line:#2E353C; --line-2:#262C33;
+  --accent:#D9853F; --accent-ink:#F0B57E; --accent-soft:#3A2A1B;
+  --steel:#8FB0CC; --steel-soft:#22313D;
+  --canvas:#0F1419;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-sans);font-size:14px;line-height:1.7;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--accent-ink)}
+.app{display:grid;grid-template-columns:1fr 400px;grid-template-rows:auto 1fr;height:100vh}
+header{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:8px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-family:var(--font-serif);font-size:17px;font-weight:700;margin:0;letter-spacing:.02em;white-space:nowrap}
+header h1 small{font-family:var(--font-sans);font-weight:400;color:var(--ink-3);font-size:12px;margin-left:8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:3px 12px;font-size:13px;color:var(--ink-2)}
+.chip:hover{border-color:var(--steel);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.chip .n{font-family:var(--font-mono);font-size:11px;color:inherit;opacity:.7;margin-right:4px}
+.wikilink{margin-left:auto;font-size:12px;color:var(--ink-2);text-decoration:none;white-space:nowrap}
+.wikilink:hover{color:var(--accent-ink)}
+.stage{display:flex;flex-direction:column;background:var(--canvas);min-height:0}
+.view{position:relative;flex:1;min-height:0}
+.view canvas{display:block;width:100%;height:100%}
+.ctrlbar{background:#141920;color:#E6E9E4;border-top:1px solid rgba(255,255,255,.08);padding:8px 14px;display:flex;gap:6px 22px;flex-wrap:wrap;align-items:flex-end;font-size:12.5px}
+.ctrlbar .title{font-size:11.5px;letter-spacing:.08em;color:#AEB6BD;align-self:center;white-space:nowrap}
+.ctrlbar details.more{flex-basis:100%;order:1;border-top:1px dashed rgba(255,255,255,.14);padding-top:4px}
+.ctrlbar details.more>summary{cursor:pointer;color:#C5CCD3;font-size:12px;letter-spacing:.04em;padding:4px 0;list-style-position:inside}
+.ctrlbar details.more[open]>summary{color:#F0B57E}
+.ctrlbar .moregrid{display:flex;gap:6px 22px;flex-wrap:wrap;align-items:flex-end;margin-top:6px}
+.cg{display:grid;gap:3px;min-width:150px}
+.cg>label{font-size:11.5px;color:#AEB6BD;white-space:nowrap;display:flex;justify-content:space-between;gap:8px}
+.cg .val{font-family:var(--font-mono);color:#F0B57E;font-variant-numeric:tabular-nums}
+.cg input[type=range]{width:100%;accent-color:#D9853F;margin:0}
+.seg{display:flex;gap:4px;flex-wrap:wrap}
+.seg button{background:transparent;border:1px solid rgba(255,255,255,.18);color:#E6E9E4;border-radius:4px;padding:2px 9px;font-size:12px}
+.seg button[aria-pressed="true"]{background:#D9853F;border-color:#D9853F;color:#1A2028}
+.readout{display:grid;grid-template-columns:auto auto;gap:0 10px;font-size:12px;margin:0 0 0 auto;align-self:center}
+.readout dt{color:#AEB6BD;margin:0;text-align:right}
+.readout dd{margin:0;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.readout.has-hot dt:not(.hot),.readout.has-hot dd:not(.hot){opacity:.7}   /* 薄くしても 4.5:1 以上（項目名 4.85・値 7.6）*/
+.readout dt.hot{color:#E6E9E4}
+.readout dd.hot{color:#F0B57E;font-weight:600}
+.readout dt,.readout dd{transition:opacity .2s}
+.labels svg{position:absolute;inset:0;width:100%;height:100%}
+.labels svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+/* 凡例。順序固定で動かない。行に触れた1件だけ引き出し線が出る */
+.legend{position:absolute;left:10px;top:10px;max-width:min(46%,300px);background:rgba(18,23,29,.82);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:4px;backdrop-filter:blur(3px);pointer-events:auto}
+.legend.hidden{display:none}
+.lgrow{display:grid;grid-template-columns:11px 1fr;gap:8px;align-items:start;width:100%;text-align:left;background:transparent;border:0;border-radius:4px;padding:4px 8px;color:#C5CCD3;font-size:12px;line-height:1.5}
+.lgrow i{width:11px;height:11px;border-radius:2px;margin-top:4px;display:block}
+.lgrow:hover,.lgrow.on{background:rgba(217,133,63,.92);color:#1A2028}
+.lgcap{font-size:10.5px;letter-spacing:.06em;color:#7B858E;padding:2px 8px 4px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.lgcap button{background:transparent;border:0;color:#7B858E;font-size:10.5px;padding:0 2px;text-decoration:underline}
+.lgcap button:hover{color:#D9853F}
+.lgshow{position:absolute;left:10px;top:10px;background:rgba(18,23,29,.82);border:1px solid rgba(255,255,255,.1);color:#AEB6BD;border-radius:6px;padding:4px 12px;font-size:11.5px}
+.lgshow.hidden{display:none}
+.points{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.points li{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:13px;align-items:start}
+.points .k{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-family:var(--font-mono);font-size:11px;display:grid;place-items:center;font-weight:600;margin-top:2px}
+.points b{font-weight:500}
+.points span{color:var(--ink-2)}
+.tour{border:1px solid var(--accent);border-radius:6px;padding:12px 14px;background:var(--accent-soft)}
+.tour .step{font-family:var(--font-mono);font-size:11.5px;color:var(--accent-ink);letter-spacing:.06em}
+.tour h4{margin:2px 0 4px;font-size:15px;font-weight:700;font-family:var(--font-serif)}
+.tour p{margin:0 0 10px;font-size:13px;color:var(--ink)}
+.tsteps{display:grid;gap:6px;margin:0 0 10px}
+.tsteps>div{display:grid;grid-template-columns:3.6em 1fr;gap:9px;align-items:baseline}
+.tsteps dt{margin:0;font-size:10.5px;letter-spacing:.08em;color:var(--accent-ink);border:1px solid var(--accent);border-radius:3px;padding:1px 0;text-align:center}
+.tsteps dd{margin:0;font-size:13px;line-height:1.6;color:var(--ink)}
+.tq{border-top:1px dashed var(--accent);padding-top:8px;margin:0 0 10px;display:grid;gap:5px}
+.tq .cap{font-size:10.5px;letter-spacing:.08em;color:var(--accent-ink)}
+.tq a{display:grid;grid-template-columns:5.6em 1fr;gap:8px;text-decoration:none;color:var(--ink);font-size:12.5px;line-height:1.5}
+.tq a:hover{color:var(--accent-ink);text-decoration:underline}
+.tq .id{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.tour .nav{display:flex;gap:6px;align-items:center}
+.tour .nav button{border:1px solid var(--accent);background:var(--panel);color:var(--accent-ink);border-radius:4px;padding:3px 12px;font-size:12.5px}
+.tour .nav button:disabled{opacity:.4;cursor:default}
+.tour .nav .dots{margin-left:auto;display:flex;gap:4px}
+.tour .nav .dots i{width:7px;height:7px;border-radius:50%;background:var(--line);display:block}
+.tour .nav .dots i.on{background:var(--accent)}
+.check{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.check details{border:1px solid var(--line-2);border-radius:4px;padding:8px 12px}
+.check summary{cursor:pointer;font-size:13px;font-weight:500}
+.check summary::marker{color:var(--accent)}
+.check p{margin:8px 0 0;font-size:12.5px;color:var(--ink-2)}
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;transform:translate(-50%,-100%);font-size:11.5px;color:#E9EDF0;background:rgba(16,20,26,.72);padding:2px 8px;border-radius:3px;white-space:nowrap;letter-spacing:.02em;border-left:2px solid var(--lc,#B5601F)}
+.lbl.big{font-size:13px;font-weight:500;padding:4px 10px;pointer-events:auto;cursor:pointer}
+.hint{position:absolute;right:12px;top:10px;font-size:11.5px;color:#8E98A2;text-align:right;line-height:1.5}
+.hint kbd{font-family:var(--font-mono);color:#C5CCD3}
+aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding:20px 22px 40px}
+aside h2{font-family:var(--font-serif);font-size:22px;margin:0 0 4px;line-height:1.35;text-wrap:balance}
+aside h2 .num{font-family:var(--font-mono);font-size:13px;color:var(--ink-3);font-weight:400;margin-right:8px}
+.kicker{font-size:11.5px;letter-spacing:.1em;color:var(--accent-ink);font-weight:500;margin-bottom:6px}
+.lead{color:var(--ink-2);margin:0 0 8px}
+.viewnote{font-size:12.5px;color:var(--ink-2);border-left:2px solid var(--steel);padding:2px 0 2px 10px;margin:0 0 14px}
+.viewnote:empty{display:none}
+aside h3{font-size:12.5px;letter-spacing:.08em;color:var(--ink-3);font-weight:500;margin:22px 0 8px;display:flex;align-items:center;gap:8px}
+aside h3::after{content:"";flex:1;height:1px;background:var(--line-2)}
+.parts{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.parts li{display:grid;grid-template-columns:12px 1fr;gap:10px;align-items:start;font-size:13px}
+.parts .sw{width:12px;height:12px;border-radius:2px;margin-top:7px;border:1px solid rgba(0,0,0,.15)}
+.parts b{font-weight:500}
+.parts span{color:var(--ink-2)}
+.secs{list-style:none;padding:0;margin:0;display:grid;gap:4px}
+.secs a{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:baseline;padding:7px 10px;border:1px solid var(--line-2);border-radius:4px;text-decoration:none;color:var(--ink);background:transparent}
+.secs a:hover{border-color:var(--accent);background:var(--accent-soft)}
+.secs .why{grid-column:1/-1;font-size:12px;color:var(--ink-2);line-height:1.55}
+.secs .cnt{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.kak{list-style:none;padding:0;margin:0;display:grid;gap:2px}
+.kak li{display:grid;grid-template-columns:5.6em 1fr;gap:8px;font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--line-2)}
+.kak .id{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.kak a{color:var(--ink);text-decoration:none}
+.kak a:hover{color:var(--accent-ink);text-decoration:underline}
+.kak .d{color:var(--accent);letter-spacing:-.1em;margin-left:4px;font-size:11px}
+.kak .k3d{border:1px solid var(--accent);background:transparent;color:var(--accent-ink);border-radius:3px;padding:0 6px;font-size:10.5px;line-height:1.5;margin-left:6px;vertical-align:1px}
+.kak .k3d:hover{background:var(--accent-soft)}
+.secgroup{font-size:12px;color:var(--ink-2);margin:10px 0 2px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.secgroup button{background:transparent;border:1px solid var(--accent);color:var(--accent-ink);border-radius:3px;padding:1px 9px;font-size:11.5px;white-space:nowrap}
+.secgroup button:hover{background:var(--accent-soft)}
+.cg.off{opacity:.35}
+.cg.off input,.cg.off button{pointer-events:none}
+.flow{display:grid;margin:0;padding:0;list-style:none;counter-reset:f}
+.flow li{position:relative;padding:8px 0 8px 34px;counter-increment:f;border-left:2px solid var(--line);margin-left:11px}
+.flow li::before{content:counter(f);position:absolute;left:-13px;top:9px;width:24px;height:24px;border-radius:50%;background:var(--panel);border:2px solid var(--steel);color:var(--steel);font-family:var(--font-mono);font-size:11px;display:grid;place-items:center;font-weight:600}
+.flow li.here{border-left-color:var(--accent)}
+.flow li.here::before{background:var(--accent);border-color:var(--accent);color:#fff}
+.flow b{display:block;font-weight:500}
+.flow span{color:var(--ink-2);font-size:12.5px}
+.flow a{text-decoration:none}
+.note{background:var(--steel-soft);border-radius:4px;padding:10px 12px;font-size:12.5px;color:var(--ink-2);margin-top:14px}
+.note b{color:var(--ink);font-weight:500}
+canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2);border-radius:4px;background:var(--panel)}
+.mini-cap{font-size:11.5px;color:var(--ink-3);margin:4px 0 0}
+.overview-grid{display:grid;gap:8px}
+.overview-grid button{text-align:left;border:1px solid var(--line-2);background:transparent;border-radius:4px;padding:10px 12px;display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:baseline}
+.overview-grid button:hover{border-color:var(--accent);background:var(--accent-soft)}
+.overview-grid .num{font-family:var(--font-mono);font-size:12px;color:var(--ink-3)}
+.overview-grid .t{font-weight:500}
+.overview-grid .c{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-3)}
+.overview-grid .s{grid-column:2/-1;font-size:12px;color:var(--ink-2)}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
+  .view{flex:none;height:46vh;min-height:260px}
+  /* チップが縦に折り返すとヘッダだけで画面を食う。横1列の横スクロールにする。
+     flex だと flex-basis:100% が本質サイズ計算で中身の幅に落ちてページごと横に伸びるため、
+     minmax(0,1fr) で潰せるグリッドにする。 */
+  header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 10px;padding:7px 10px;align-items:center}
+  header h1{grid-column:1;grid-row:1;font-size:15px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wikilink{grid-column:2;grid-row:1;margin-left:0}
+  .chips{grid-column:1/-1;grid-row:2;min-width:0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;white-space:nowrap;min-height:34px;display:flex;align-items:center}
+  .legend{max-width:calc(100% - 20px)}
+  .ctrlbar{gap:8px 16px}
+  aside{border-left:0;border-top:1px solid var(--line)}
+  .hint{display:none}
+  header h1 small{display:none}
+}
+
+/* ---- 30秒理解 ---- */
+.oneliner{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 5px 5px 0;font-size:14.5px;font-weight:600;line-height:1.6;color:var(--ink);margin:0 0 12px}
+.oneliner small{display:block;font-size:11px;font-weight:400;letter-spacing:.08em;color:var(--accent-ink);margin-bottom:3px}
+/* ---- 狙われるポイント ---- */
+.exam{list-style:none;padding:0;margin:0;display:grid;gap:7px}
+.exam li{border:1px solid var(--line-2);border-radius:5px;padding:8px 11px;display:grid;gap:3px}
+.exam .en{font-size:11.5px;letter-spacing:.04em;color:var(--ink-3)}
+.exam .ef{font-family:var(--font-mono);font-size:13.5px;font-weight:600;color:var(--accent-ink);word-break:break-word}
+.exam .ew{font-size:12px;color:var(--ink-2);line-height:1.55}
+/* ---- 予想クイズ ---- */
+.quiz{list-style:none;padding:0;margin:0;display:grid;gap:10px;counter-reset:q}
+.quiz>li{border:1px solid var(--line);border-radius:6px;padding:11px 13px;background:var(--panel);counter-increment:q}
+.quiz>li.done{border-color:var(--line-2)}
+.qq{font-size:13.5px;font-weight:500;line-height:1.6;margin-bottom:9px;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start}
+.qn{font-family:var(--font-mono);font-size:11px;background:var(--steel);color:var(--panel);border-radius:3px;padding:1px 6px;margin-top:3px}
+.qopts{display:grid;gap:5px}
+.qopts button{text-align:left;border:1px solid var(--line);background:transparent;border-radius:5px;padding:8px 12px;font-size:13px;min-height:38px;line-height:1.4;display:flex;align-items:center;gap:8px}
+.qopts button:hover:not(:disabled){border-color:var(--accent);background:var(--accent-soft)}
+.qopts button:disabled{cursor:default}
+.qopts button .mk{font-family:var(--font-mono);font-size:11px;color:var(--ink-3);flex:none}
+.qopts button.ok{border-color:var(--ok);background:var(--ok-soft);font-weight:600}
+.qopts button.ng{border-color:var(--danger);background:var(--danger-soft)}
+.qopts button.dim{opacity:.45}
+.qfb{margin-top:9px;font-size:12.5px;line-height:1.65;color:var(--ink-2);border-top:1px dashed var(--line);padding-top:8px}
+.qfb b{color:var(--ink)}
+.qfb .verdict{display:block;font-weight:700;margin-bottom:3px}
+.qfb .verdict.ok{color:var(--ok)}
+.qfb .verdict.ng{color:var(--danger)}
+.qfb .again{background:none;border:0;color:var(--accent-ink);font-size:12px;text-decoration:underline;padding:4px 0 0;min-height:32px}
+/* ---- もう一歩カード ---- */
+.cards{display:grid;gap:8px}
+.cards details{border:1px solid var(--line-2);border-radius:5px;overflow:hidden}
+.cards summary{cursor:pointer;font-size:13px;font-weight:500;padding:9px 12px;min-height:38px;display:flex;align-items:center}
+.cards summary::marker{color:var(--accent)}
+.cards .cbody{padding:2px 12px 12px;font-size:12.5px;line-height:1.7;color:var(--ink-2)}
+.cards .cbody b{color:var(--ink)}
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0}
+.tbl table{border-collapse:collapse;width:100%;min-width:min(100%,340px);font-size:12px}
+.tbl th,.tbl td{border:1px solid var(--line-2);padding:5px 8px;text-align:left;vertical-align:top}
+.tbl th{background:var(--bg-sunken,var(--accent-soft));font-weight:600;color:var(--ink);white-space:nowrap}
+.tbl td{color:var(--ink-2)}
+.chain{list-style:none;padding:0;margin:8px 0;display:grid;gap:0}
+.chain li{position:relative;padding:5px 0 5px 20px;font-size:12.5px;color:var(--ink-2)}
+.chain li::before{content:"↓";position:absolute;left:4px;top:4px;color:var(--accent);font-size:11px}
+.chain li:first-child::before{content:"●";font-size:8px;top:9px}
+.chain li b{color:var(--ink)}
+.meter{height:6px;border-radius:3px;background:var(--line-2);overflow:hidden;margin:6px 0 2px}
+.meter i{display:block;height:100%;background:var(--accent);transition:width .2s}
+.segsm{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 8px}
+.segsm button{border:1px solid var(--line);background:transparent;border-radius:4px;padding:5px 11px;font-size:12px;min-height:34px;color:var(--ink-2)}
+.segsm button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.convwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:6px 0;border:1px solid var(--line-2);border-radius:4px;background:var(--panel)}
+.convfig{display:block;width:100%;min-width:430px;height:auto}
+/* ---- 次にやること ---- */
+.steps{display:grid;gap:6px;margin:0}
+.steps a,.steps div{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;border:1px solid var(--line-2);border-radius:5px;padding:9px 12px;text-decoration:none;color:var(--ink);font-size:13px;min-height:40px}
+.steps a:hover{border-color:var(--accent);background:var(--accent-soft)}
+.steps .sn{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-mono);font-size:11px;font-weight:600;background:var(--line-2);color:var(--ink-3)}
+.steps .here{background:var(--accent-soft);border-color:var(--accent)}
+.steps .here .sn{background:var(--accent);color:#fff}
+.steps small{display:block;font-size:11.5px;color:var(--ink-3);grid-column:2}
+/* ---- 操作帯の読み値ハイライト ---- */
+.readout dt.lit,.readout dd.lit{background:var(--accent);color:#1A2028;border-radius:3px;padding:0 4px}
+.rnote{grid-column:1/-1;font-size:11px;color:#8E98A2;margin-top:2px;text-align:right}
+/* ---- 全景に戻る ---- */
+.backbtn{position:absolute;right:12px;bottom:10px;background:rgba(18,23,29,.86);border:1px solid rgba(255,255,255,.16);color:#E6E9E4;border-radius:5px;padding:7px 14px;font-size:12.5px;min-height:36px}
+.backbtn:hover{border-color:#D9853F;color:#F0B57E}
+.backbtn.hidden{display:none}
+@media (max-width:900px){
+  .qopts button{min-height:44px;font-size:13.5px}
+  .segsm button,.cards summary,.steps a,.steps div{min-height:44px}
+  .seg button{padding:6px 12px;min-height:36px}
+  .ctrlbar details.more>summary{min-height:44px;display:flex;align-items:center}
+}
+@media (max-width:600px){
+  /* スマホ: 読み値は隠さずに詰める（項目名の列を幅の 45 % に抑えて折り返す） */
+  .ctrlbar{padding:8px 10px;gap:6px 12px}
+  .cg{min-width:0}
+  .readout{margin:0;width:100%;font-size:11.5px;grid-template-columns:minmax(0,45%) minmax(0,1fr);gap:1px 8px}
+  .readout dt{white-space:normal;line-height:1.3}
+  .readout dd{word-break:break-word;line-height:1.3}
+  .rnote{text-align:left}
+  .oneliner{font-size:14px}
+}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="app">
+  <header>
+    <h1>電力科目 3D工場<small>過去問 → Wiki → ここでイメージ</small></h1>
+    <div class="chips" id="chips"></div>
+    <a class="wikilink" id="wikiTop" target="_blank" rel="noopener">電力Wikiを開く ↗</a>
+  </header>
+  <div class="stage" id="stage">
+    <div class="view" id="view">
+      <div class="labels" id="labels"><svg id="leaders"></svg></div>
+      <div class="legend" id="legend"></div>
+      <button class="lgshow hidden" id="lgshow">凡例を出す</button>
+      <button class="backbtn hidden" id="backbtn">← 工場全景へ</button>
+      <div class="hint">ドラッグで回転 <kbd>ホイール</kbd>で拡縮<br>凡例の行に触れると、その部品を指す</div>
+    </div>
+    <div class="ctrlbar" id="ctrlbar"></div>
+  </div>
+  <aside id="panel"></aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+/* ============================================================
+   データ。Wiki のページID・節ID は電力Wiki（denryoku-data.js / denryoku-page-stubs.jsx）と同じ文字列。
+   URL は #page:section 形式（電力Wikiは「:」区切り）。節のキーが「page:section」の形なら別ページの節を指す。
+   過去問台帳は電力Wikiの K2 分野別一覧（H18〜R08上・全25回）から、6つの設備に当たる分野を抜き出したもの。
+   題名は出典（電験王）の分類と題名をWikiが写した索引で、問題冊子との一次照合はしていない。
+   ここに試験の答えは書かない。予想クイズの数値は自作の練習用の算数で、過去問の解答ではない。
+   ============================================================ */
+const WIKI = 'https://kfurufuru.github.io/secretary-portal-public/denken3-denryoku-wiki.html';
+const wikiUrl = (p, s) => WIKI + '#' + p + (s ? ':' + s : '');
+/* 設備の節。別ページの節は 'page:section' と書く */
+const secUrl = (id, sec) => sec && sec.includes(':') ? WIKI + '#' + sec : wikiUrl(MACHINES[id].page, sec);
+const KAKOMON = [{"s": "R08上", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電所に用いられるダムの種別と特徴"}, {"s": "R08上", "c": "2", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "ある地域の想定される理論的包蔵水力"}, {"s": "R08上", "c": "15", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "揚水発電所の出力や入力及び効率等運用"}, {"s": "R07下", "c": "1", "p": "suiryoku", "sec": "intro", "k": "穴埋", "t": "水力発電所の落差分類"}, {"s": "R07下", "c": "2", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "単位体積当たりの水の運動エネルギー"}, {"s": "R07上", "c": "1", "p": "suiryoku", "sec": "formula", "k": "穴埋", "t": "水力発電所の理論出力と各単位"}, {"s": "R07上", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "調整池式水力発電所の使用水量と有効貯水容量"}, {"s": "R06下", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "水力発電の水車・発電機・主変圧器の特徴"}, {"s": "R06上", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "衝動水車を中心とした水力発電所"}, {"s": "R06上", "c": "2", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "揚水発電所の電動機入力と発電機出力"}, {"s": "R06上", "c": "15", "p": "suiryoku", "sec": "suisha", "k": "計算", "t": "水車の回転速度と比速度および水車の種類"}, {"s": "R05下", "c": "1", "p": "suiryoku", "sec": "formula", "k": "穴埋", "t": "水力発電所の落差と理論式"}, {"s": "R05下", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "水力発電所の発電電力量と汽力発電所の重油使用量"}, {"s": "R05上", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車の比速度の定義と特徴"}, {"s": "R04下", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電の特徴や現在の概況"}, {"s": "R04下", "c": "2", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水力発電で使用される水車の特徴"}, {"s": "R04上", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "水力発電所における水車の特徴及び監視制御方式"}, {"s": "R04上", "c": "15", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "揚水発電所の揚水運転時の必要電力量及び流量"}, {"s": "R03", "c": "1", "p": "suiryoku", "sec": "intro", "k": "穴埋", "t": "水力発電所の落差を得る方法や流量調整による分類"}, {"s": "R03", "c": "2", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "連続の定理及びベルヌーイの定理"}, {"s": "R02", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "ダム水路式発電所における水撃作用及びサージタンク"}, {"s": "R02", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "貯水池を有する水力発電所の発電計画"}, {"s": "R01", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "水力発電所の水車及び発電機"}, {"s": "R01", "c": "2", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車の構造と特徴"}, {"s": "H30", "c": "2", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車の比速度の定義と特徴"}, {"s": "H30", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "調整池式発電所の出力"}, {"s": "H29", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電所に用いられるダム"}, {"s": "H29", "c": "2", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車のキャビテーション"}, {"s": "H28", "c": "1", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "揚水発電所の出力や入力及び効率"}, {"s": "H28", "c": "2", "p": "suiryoku", "sec": "seigo", "k": "穴埋", "t": "同期発電機の比較"}, {"s": "H27", "c": "1", "p": "suiryoku", "sec": "formula", "k": "穴埋", "t": "水力の理論出力と各単位"}, {"s": "H27", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "速度調定率と出力の関係"}, {"s": "H26", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水車の調速機の機能と構造"}, {"s": "H26", "c": "15", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "ベルヌーイの定理を利用した計算"}, {"s": "H25", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水力発電に用いる水車"}, {"s": "H24", "c": "1", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "水力発電所の落差と理論式"}, {"s": "H23", "c": "1", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電所の不具合原因箇所特定"}, {"s": "H22", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水力発電所で使用される衝動水車の原理や特徴"}, {"s": "H21", "c": "1", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "部分負荷運転している水力発電所の流量"}, {"s": "H20", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "穴埋", "t": "水力発電所で使用される水車の種類と特徴"}, {"s": "H20", "c": "2", "p": "suiryoku", "sec": "seigo", "k": "論説", "t": "水力発電所の理論や特徴"}, {"s": "H19", "c": "1", "p": "suiryoku", "sec": "suisha", "k": "論説", "t": "水力発電の水車と発電機，主変圧器の特徴"}, {"s": "H19", "c": "15", "p": "suiryoku", "sec": "kaiho", "k": "計算", "t": "速度調定率を用いた負荷急変時の周波数と出力変化"}, {"s": "H18", "c": "12", "p": "suiryoku", "sec": "formula", "k": "計算", "t": "水管内を流れる流水の流速と圧力"}, {"s": "R08上", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "火力発電所の復水器"}, {"s": "R07下", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "汽力発電所で使用される保護装置"}, {"s": "R07下", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "重油専焼火力発電所の熱効率と二酸化炭素発生量"}, {"s": "R07上", "c": "2", "p": "karyoku", "sec": "formula", "k": "計算", "t": "タービン効率と使用蒸気量の関係"}, {"s": "R07上", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "水と蒸気及び燃焼ガスの通過する順序"}, {"s": "R06下", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電における熱効率向上対策"}, {"s": "R06下", "c": "3", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "衝動タービンと反動タービンの比較"}, {"s": "R06下", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "重油消費量と二酸化炭素排出量"}, {"s": "R06上", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電と汽力発電の比較"}, {"s": "R05下", "c": "2", "p": "karyoku", "sec": "suiryoku:kaiho", "k": "計算", "t": "速度調定率の異なる発電機の出力変化"}, {"s": "R05下", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "復水器の特徴"}, {"s": "R05上", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "熱回収コンバインドサイクル発電の特徴"}, {"s": "R05上", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "火力発電所の煙風道系統"}, {"s": "R05上", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "石炭火力発電所の熱効率と二酸化炭素排出量"}, {"s": "R04下", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電方式の特徴"}, {"s": "R04下", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所の復水器で失われる熱量"}, {"s": "R04上", "c": "2", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "火力発電所のタービン発電機"}, {"s": "R04上", "c": "3", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電設備のタービン効率"}, {"s": "R03", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "汽力発電におけるボイラ設備"}, {"s": "R03", "c": "4", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "電気集じん装置のメカニズム"}, {"s": "R03", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "火力発電所の送電端電力量及び発電端効率"}, {"s": "R02", "c": "2", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "汽力発電所の復水器の機能及び特徴，損失"}, {"s": "R02", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "火力発電所で使用される保護装置"}, {"s": "R01", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電所における熱効率向上方法"}, {"s": "R01", "c": "5", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電"}, {"s": "R01", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所のタービン出力及び海水温度"}, {"s": "H30", "c": "1", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "タービン発電機の水素冷却方式の特徴"}, {"s": "H30", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "汽力発電所の蒸気タービン設備"}, {"s": "H29", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "火力発電所の環境対策"}, {"s": "H29", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "火力発電所の燃料使用量，空気量"}, {"s": "H28", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "汽力発電所のボイラ及びその付属設備"}, {"s": "H28", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所のタービン効率及び発電機効率"}, {"s": "H27", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電所における再生サイクル及び再熱サイクル"}, {"s": "H27", "c": "3", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所のボイラ効率"}, {"s": "H26", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電所の熱サイクル"}, {"s": "H26", "c": "3", "p": "karyoku", "sec": "cycle", "k": "穴埋", "t": "コンバインドサイクルの高効率化"}, {"s": "H26", "c": "17", "p": "karyoku", "sec": "formula", "k": "計算", "t": "火力発電所の燃焼計算"}, {"s": "H25", "c": "2", "p": "karyoku", "sec": "cycle", "k": "計算", "t": "コンバインドサイクル発電の熱効率"}, {"s": "H25", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "汽力発電所の蒸気タービンの分類"}, {"s": "H25", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "火力発電所の効率計算"}, {"s": "H24", "c": "2", "p": "karyoku", "sec": "turbine", "k": "穴埋", "t": "汽力発電所のタービン発電機の特徴"}, {"s": "H24", "c": "3", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "汽力発電所の保護装置"}, {"s": "H24", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "石炭火力発電所の送電端電力量と発電端効率"}, {"s": "H23", "c": "2", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "火力発電所のボイラ設備の説明"}, {"s": "H23", "c": "3", "p": "karyoku", "sec": "setsubi", "k": "論説", "t": "汽力発電所の復水器に関する一般的説明"}, {"s": "H23", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所における必要燃料重量と理論空気量"}, {"s": "H22", "c": "2", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "火力発電所排ガス中の環境に悪影響を及ぼす物質とその対策"}, {"s": "H22", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電の特徴"}, {"s": "H22", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "石炭火力発電所の熱効率"}, {"s": "H21", "c": "2", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "タービン発電機の水素冷却方式"}, {"s": "H21", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "汽力発電所の熱効率向上対策"}, {"s": "H21", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "重油専焼火力発電所の熱効率と二酸化炭素発生量"}, {"s": "H20", "c": "3", "p": "karyoku", "sec": "cycle", "k": "穴埋", "t": "汽力発電所の基本的な熱サイクル"}, {"s": "H20", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所の発電電力量と送電端熱効率"}, {"s": "H19", "c": "2", "p": "karyoku", "sec": "cycle", "k": "計算", "t": "汽力発電の基本サイクルであるランキンサイクルの効率"}, {"s": "H19", "c": "3", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電方式と汽力発電方式の比較"}, {"s": "H19", "c": "5", "p": "karyoku", "sec": "turbine", "k": "論説", "t": "各発電所の二酸化炭素排出量の違い"}, {"s": "H18", "c": "1", "p": "karyoku", "sec": "setsubi", "k": "穴埋", "t": "汽力発電所で使用される復水器"}, {"s": "H18", "c": "2", "p": "karyoku", "sec": "cycle", "k": "論説", "t": "コンバインドサイクル発電における燃焼用空気の流れ"}, {"s": "H18", "c": "15", "p": "karyoku", "sec": "formula", "k": "計算", "t": "汽力発電所の復水器での損失とタービン室効率"}, {"s": "R08上", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "原子核の質量と原子力発電の原理"}, {"s": "R07下", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "将来に向けた新型炉の検討"}, {"s": "R07上", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "原子力発電における核燃料サイクル"}, {"s": "R06下", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "論説", "t": "原子力発電で使用される燃料と原理"}, {"s": "R06上", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウランの核分裂エネルギーと石炭の発熱量の比較"}, {"s": "R05下", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "論説", "t": "軽水炉で使用される原子燃料"}, {"s": "R05上", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウランの発生エネルギーと重油量の比較"}, {"s": "R04下", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "穴埋", "t": "日本で採用されている原子炉の型と特性"}, {"s": "R04上", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "沸騰水型原子炉（BWR）の特徴"}, {"s": "R03", "c": "5", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "日本で使用されている原子力発電の構造や特徴"}, {"s": "R02", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "ウラン235など原子燃料に使用される物質"}, {"s": "R01", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウランと石炭の燃料消費量の違い"}, {"s": "H30", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "穴埋", "t": "原子力発電所の蒸気タービンの特徴"}, {"s": "H29", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "原子力発電所の電力による揚水発電量"}, {"s": "H28", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "原子力発電における核燃料サイクル"}, {"s": "H27", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "穴埋", "t": "原子炉の加圧水型と沸騰水型の比較"}, {"s": "H26", "c": "4", "p": "genshiryoku", "sec": "intro", "k": "論説", "t": "原子力発電"}, {"s": "H25", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "原子力発電所の軽水炉"}, {"s": "H24", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウランと重油の燃料消費量の違い"}, {"s": "H23", "c": "4", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "ウラン235が核分裂により発生するエネルギー"}, {"s": "H22", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "論説", "t": "加圧水型原子炉(PWR)の構成及び特徴"}, {"s": "H21", "c": "4", "p": "genshiryoku", "sec": "yoso", "k": "穴埋", "t": "原子力発電の原理や原子燃料"}, {"s": "H20", "c": "4", "p": "genshiryoku", "sec": "rinkai", "k": "穴埋", "t": "軽水炉における出力調整の方法"}, {"s": "H19", "c": "4", "p": "genshiryoku", "sec": "rogata", "k": "穴埋", "t": "原子力発電所で採用されている原子炉の種類や特徴"}, {"s": "H18", "c": "13", "p": "genshiryoku", "sec": "keisan", "k": "計算", "t": "原子力発電のエネルギーが揚水発電所で揚水できる水量"}, {"s": "R08上", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "論説", "t": "変圧器のV結線方式"}, {"s": "R08上", "c": "12", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器故障発生時を想定した供給可能な総負荷の導出"}, {"s": "R07下", "c": "6", "p": "kaihei-hogo", "sec": "zetsuen-hakai:hiraiki", "k": "穴埋", "t": "避雷器に使用される素子とその特徴"}, {"s": "R07上", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "ガス絶縁開閉装置の特徴"}, {"s": "R06下", "c": "6", "p": "kaihei-hogo", "sec": "setsubi", "k": "穴埋", "t": "調相設備接続による無効電力の調整"}, {"s": "R06下", "c": "7", "p": "kaihei-hogo", "sec": "keiki-hensei:intro", "k": "穴埋", "t": "計器用変成器の取扱い上の注意点"}, {"s": "R06上", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "穴埋", "t": "ガス絶縁開閉装置（GIS）"}, {"s": "R06上", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "変圧器に設置する遮断器の定格遮断電流と負荷分担"}, {"s": "R05下", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "穴埋", "t": "変圧器のY-Y結線の特徴"}, {"s": "R05上", "c": "7", "p": "kaihei-hogo", "sec": "keiki-hensei:intro", "k": "穴埋", "t": "変電所の計器用変成器"}, {"s": "R05上", "c": "13", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器並行運転時の過負荷容量"}, {"s": "R05上", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相変圧器二次側の遮断器定格遮断電流"}, {"s": "R04下", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相変圧器の百分率リアクタンス導出"}, {"s": "R04下", "c": "7", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "穴埋", "t": "変圧器の結線方式の違いと特性"}, {"s": "R04上", "c": "7", "p": "kaihei-hogo", "sec": "hogo-keiden:tokusei", "k": "穴埋", "t": "過電流継電器の限時特性"}, {"s": "R04上", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "変圧器に設置する遮断器の定格遮断電流"}, {"s": "R03", "c": "7", "p": "kaihei-hogo", "sec": "keiki-hensei:intro", "k": "穴埋", "t": "変電所の計器用変成器"}, {"s": "R03", "c": "8", "p": "kaihei-hogo", "sec": "shadanki:intro", "k": "論説", "t": "変電所で使用される断路器"}, {"s": "R03", "c": "9", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器故障時の過負荷運転"}, {"s": "R02", "c": "7", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "真空遮断器の特徴及び動作メカニズム"}, {"s": "R02", "c": "9", "p": "kaihei-hogo", "sec": "zetsuen-hakai:hiraiki", "k": "穴埋", "t": "避雷器に使用される物質とその特徴"}, {"s": "R01", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "ガス絶縁開閉装置"}, {"s": "R01", "c": "7", "p": "kaihei-hogo", "sec": "setsubi", "k": "穴埋", "t": "変電所の主な役割と用途上の分類"}, {"s": "R01", "c": "8", "p": "kaihei-hogo", "sec": "hogo-keiden:tokusei", "k": "計算", "t": "保護継電器の動作時間"}, {"s": "H30", "c": "7", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "変圧器の保全・診断"}, {"s": "H30", "c": "12", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "論説", "t": "変圧器のV結線方式"}, {"s": "H29", "c": "7", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "穴埋", "t": "変圧器のY-Y結線方式の特徴"}, {"s": "H28", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器の容量"}, {"s": "H28", "c": "7", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "遮断器"}, {"s": "H28", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "事故時に流れる電流"}, {"s": "H27", "c": "7", "p": "kaihei-hogo", "sec": "zetsuen-hakai:hiraiki", "k": "穴埋", "t": "避雷器"}, {"s": "H26", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "配電用変電所の容量"}, {"s": "H25", "c": "6", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "論説", "t": "変圧器の結線方式として用いられるY－Y－Δ結線"}, {"s": "H24", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "穴埋", "t": "ガス絶縁開閉装置（ＧＩＳ）"}, {"s": "H24", "c": "8", "p": "kaihei-hogo", "sec": "setsubi", "k": "穴埋", "t": "調相設備による力率調整"}, {"s": "H24", "c": "17", "p": "kaihei-hogo", "sec": "henatsuki:heikou", "k": "計算", "t": "変圧器の過負荷運転防止"}, {"s": "H23", "c": "8", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "受変電設備や送配電設備に設置されるリアクトル"}, {"s": "H23", "c": "10", "p": "kaihei-hogo", "sec": "zetsuen-hakai:hiraiki", "k": "穴埋", "t": "発変電所で使用される避雷器の特性や特徴"}, {"s": "H22", "c": "6", "p": "kaihei-hogo", "sec": "setsubi", "k": "計算", "t": "三相コンデンサを設置することによる配電線の力率改善"}, {"s": "H22", "c": "7", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "穴埋", "t": "大容量発電所の主変圧器の結線方式とその理由"}, {"s": "H22", "c": "8", "p": "kaihei-hogo", "sec": "denryoku-keitou:chuseiten", "k": "論説", "t": "中性点接地方式の目的や使用される電圧の違い"}, {"s": "H22", "c": "9", "p": "kaihei-hogo", "sec": "keiki-hensei:intro", "k": "穴埋", "t": "変流器の特徴と取り扱い上の注意点"}, {"s": "H22", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "変圧器に設置する遮断器の定格遮断電流と変圧器の負荷分担"}, {"s": "H21", "c": "6", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "電力系統における変電所の役割と機能"}, {"s": "H20", "c": "6", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "変電所に設置される機器"}, {"s": "H20", "c": "8", "p": "kaihei-hogo", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相変圧器の百分率リアクタンス"}, {"s": "H19", "c": "6", "p": "kaihei-hogo", "sec": "shadanki:shurui", "k": "論説", "t": "ガス絶縁開閉装置の特徴"}, {"s": "H19", "c": "16", "p": "kaihei-hogo", "sec": "henatsuki:ketsusen", "k": "計算", "t": "異容量 V 結線方式のベクトル図と過負荷にならない容量"}, {"s": "H18", "c": "4", "p": "kaihei-hogo", "sec": "setsubi", "k": "論説", "t": "変電所に設置される機器"}, {"s": "H18", "c": "5", "p": "kaihei-hogo", "sec": "setsubi", "k": "穴埋", "t": "変電所等に設置する調相設備"}, {"s": "R08上", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路で用いられる電線の太さを決定する要因"}, {"s": "R08上", "c": "9", "p": "kakuu-souden", "sec": "denryoku-keitou:chuseiten", "k": "論説", "t": "非接地方式で1線地絡が発生した場合の現象"}, {"s": "R08上", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路の電力ケーブルで発生する損失の特徴"}, {"s": "R08上", "c": "16", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架空電線路の径間，電線の長さ及びたるみ"}, {"s": "R07下", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路の振動及び落雷に関連する設備"}, {"s": "R07下", "c": "9", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路の雷による過電圧とその対策"}, {"s": "R07下", "c": "11", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "直流送電の交流送電と比較した特徴"}, {"s": "R07上", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成部品"}, {"s": "R07上", "c": "9", "p": "kakuu-souden", "sec": "yudo-shougai:conclusion", "k": "穴埋", "t": "架空送電線路に発生する誘導障害"}, {"s": "R07上", "c": "12", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架空電線路の電線の実長"}, {"s": "R06下", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "がいしの塩害とその対策"}, {"s": "R06下", "c": "12", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "三相3線式送電線の電力損失率"}, {"s": "R06下", "c": "13", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "送電線のたるみの温度による変化"}, {"s": "R06下", "c": "16", "p": "kakuu-souden", "sec": "tokusei", "k": "計算", "t": "T形等価回路を用いた分布定数回路"}, {"s": "R06下", "c": "17", "p": "kakuu-souden", "sec": "tokusei", "k": "計算", "t": "送電線のフェランチ現象を模式化した演算"}, {"s": "R06上", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "送電線に発生する振動とその対策"}, {"s": "R06上", "c": "9", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "電力系統に現れる過電圧の種類と対策"}, {"s": "R06上", "c": "12", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架線の張力を変更することによる送電線のたるみの調整"}, {"s": "R06上", "c": "13", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "送電線の損失上限値を超えないための電線の最小断面積"}, {"s": "R05下", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成要素"}, {"s": "R05下", "c": "9", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "送電線路に施設する架空地線"}, {"s": "R05下", "c": "11", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "直流送電の特徴や注意点"}, {"s": "R05下", "c": "12", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架空送電線のたるみの導出"}, {"s": "R05上", "c": "9", "p": "kakuu-souden", "sec": "corona", "k": "穴埋", "t": "送電線に発生するコロナ損"}, {"s": "R04下", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成要素"}, {"s": "R04下", "c": "9", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "送電線で送電される三相有効電力"}, {"s": "R04下", "c": "16", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "受電端に接続可能な皮相電力及び必要調相設備の容量"}, {"s": "R04上", "c": "6", "p": "kakuu-souden", "sec": "kaiho", "k": "論説", "t": "電力系統の電圧調整及び力率調整"}, {"s": "R04上", "c": "8", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "送電線路での抵抗による全電力損失"}, {"s": "R04上", "c": "9", "p": "kakuu-souden", "sec": "tokusei", "k": "論説", "t": "送電線路のフェランチ効果発生原因とその対策"}, {"s": "R04上", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "送電線の各振動の発生原因と名称"}, {"s": "R04上", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路の故障点位置標定"}, {"s": "R03", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "架空送電線のがいしの塩害及びその対策"}, {"s": "R03", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路に使用される電力ケーブルの許容電流"}, {"s": "R03", "c": "16", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "電線の導体温度変化時の電線の実長及び水平張力"}, {"s": "R02", "c": "6", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路における振動及び落雷対策"}, {"s": "R02", "c": "10", "p": "kakuu-souden", "sec": "tokusei", "k": "穴埋", "t": "架空送電線路の線路定数とその考え方"}, {"s": "R02", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "架空送電線路と比較した地中送電線路の特徴"}, {"s": "R02", "c": "16", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "三相平衡負荷を流れる電流及び送電損失"}, {"s": "R01", "c": "9", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線の構成部品"}, {"s": "R01", "c": "10", "p": "kakuu-souden", "sec": "corona", "k": "穴埋", "t": "コロナ放電によるコロナ損"}, {"s": "R01", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "電力ケーブルの布設方式"}, {"s": "R01", "c": "13", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "支線に加わる送電線の張力"}, {"s": "R01", "c": "16", "p": "kakuu-souden", "sec": "tokusei", "k": "計算", "t": "送電線のフェランチ現象"}, {"s": "H30", "c": "6", "p": "kakuu-souden", "sec": "hogo-keiden:tokusei", "k": "穴埋", "t": "保護リレー"}, {"s": "H30", "c": "9", "p": "kakuu-souden", "sec": "setsubi", "k": "穴埋", "t": "架空送電線の多導体方式"}, {"s": "H30", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "送配電系統における過電圧の特徴"}, {"s": "H30", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路に使用される各種電力ケーブル"}, {"s": "H30", "c": "17", "p": "kakuu-souden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスと送電電力"}, {"s": "H29", "c": "6", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "電力系統で使用される直流送電系統の特徴"}, {"s": "H29", "c": "8", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "送電線のたるみからの水平張力の導出"}, {"s": "H29", "c": "9", "p": "kakuu-souden", "sec": "setsubi", "k": "穴埋", "t": "架空送電に関する知識"}, {"s": "H29", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路に使用される電力ケーブルで発生する損失"}, {"s": "H29", "c": "11", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "異なる配線方式の送電線の損失"}, {"s": "H29", "c": "16", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "計算", "t": "ケーブルの対地静電容量"}, {"s": "H28", "c": "8", "p": "kakuu-souden", "sec": "yudo-shougai:conclusion", "k": "穴埋", "t": "誘導障害"}, {"s": "H28", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路の故障点位置標定"}, {"s": "H27", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "架空送電線の振動"}, {"s": "H27", "c": "9", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "がいしの塩害現象及びその対策"}, {"s": "H27", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "計算", "t": "ケーブルの誘電体損"}, {"s": "H27", "c": "17", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "電力系統の送電電力"}, {"s": "H26", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路の雷害対策"}, {"s": "H26", "c": "9", "p": "kakuu-souden", "sec": "corona", "k": "論説", "t": "架空送電線路におけるコロナ放電及び障害"}, {"s": "H26", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "穴埋", "t": "地中送電線の布設方式"}, {"s": "H26", "c": "16", "p": "kakuu-souden", "sec": "denryoku-keitou:chuseiten", "k": "計算", "t": "送電線の１線地絡事故"}, {"s": "H25", "c": "8", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成要素"}, {"s": "H25", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中電線における各損失"}, {"s": "H25", "c": "16", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "架空送電線路の力率計算"}, {"s": "H25", "c": "17", "p": "kakuu-souden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスの諸計算"}, {"s": "H24", "c": "7", "p": "kakuu-souden", "sec": "kaiho", "k": "論説", "t": "送電線の送電容量"}, {"s": "H24", "c": "9", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "直流送電のメリットデメリット"}, {"s": "H24", "c": "10", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "送電線での送電損失"}, {"s": "H24", "c": "12", "p": "kakuu-souden", "sec": "tokusei", "k": "論説", "t": "送配電線路のフェランチ効果"}, {"s": "H24", "c": "13", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "送電線のたるみの温度による変化"}, {"s": "H24", "c": "16", "p": "kakuu-souden", "sec": "tokusei", "k": "計算", "t": "π形等価回路の回路計算"}, {"s": "H23", "c": "6", "p": "kakuu-souden", "sec": "yudo-shougai:conclusion", "k": "論説", "t": "架空送配電線路の誘導障害"}, {"s": "H23", "c": "7", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "送配電線路に発生する外部過電圧と内部過電圧"}, {"s": "H23", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "穴埋", "t": "マーレ―ループ法の原理と測定方法"}, {"s": "H22", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "穴埋", "t": "送電線に発生する振動の種類とその原因"}, {"s": "H22", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中電力ケーブルの送電容量増大対策"}, {"s": "H21", "c": "7", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "交流三相3線式送電線路の送電電力"}, {"s": "H21", "c": "9", "p": "kakuu-souden", "sec": "kakomon-by-field:kakuu-souden", "k": "論説", "t": "直流送電と交流送電の比較"}, {"s": "H21", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "計算", "t": "三相３線式地中電線路の誘電体損の導出"}, {"s": "H21", "c": "16", "p": "kakuu-souden", "sec": "henatsuki:tanraku", "k": "計算", "t": "系統の百分率インピーダンスと三相短絡電流"}, {"s": "H20", "c": "7", "p": "kakuu-souden", "sec": "corona", "k": "論説", "t": "送配電線路や変電機器等におけるコロナ障害"}, {"s": "H20", "c": "9", "p": "kakuu-souden", "sec": "setsubi", "k": "論説", "t": "架空送電線路の構成要素"}, {"s": "H20", "c": "10", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "がいしの塩害とその対策"}, {"s": "H20", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中電線路の絶縁劣化診断方法"}, {"s": "H20", "c": "16", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "三相3線式線路における電圧降下率"}, {"s": "H19", "c": "7", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "電力系統に現れる過電圧の種類と対策"}, {"s": "H19", "c": "8", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "架空送電線路の架空地線"}, {"s": "H19", "c": "9", "p": "kakuu-souden", "sec": "tokusei", "k": "穴埋", "t": "受電端電圧が送電端電圧より高くなる現象の名称や特徴"}, {"s": "H19", "c": "10", "p": "kakuu-souden", "sec": "kaiho", "k": "計算", "t": "三相3線式送電線の電力損失率"}, {"s": "H19", "c": "11", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "穴埋", "t": "CVTケーブルのCV-3Cケーブルと比較した特徴"}, {"s": "H18", "c": "6", "p": "kakuu-souden", "sec": "yudo-shougai:conclusion", "k": "穴埋", "t": "架空送電線路に発生する誘導障害"}, {"s": "H18", "c": "7", "p": "kakuu-souden", "sec": "shougai", "k": "論説", "t": "がいしの性能を表す要素"}, {"s": "H18", "c": "8", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中ケーブルの付設方法の違いと特徴"}, {"s": "H18", "c": "14", "p": "kakuu-souden", "sec": "tarumi", "k": "計算", "t": "架空送電線のたるみの導出"}, {"s": "R08上", "c": "7", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "論説", "t": "配電線の一般的な保護"}, {"s": "R08上", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "スポットネットワーク方式及び低圧ネットワーク方式"}, {"s": "R08上", "c": "13", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "単相3線式配電線路の各電圧や電流の導出"}, {"s": "R08上", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "バランサ接続前後の電流及び線路損失"}, {"s": "R07下", "c": "7", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "論説", "t": "6.6kV非接地方式配電線及び高圧受電設備の保護"}, {"s": "R07下", "c": "12", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相変圧器二次側遮断器の定格遮断電流"}, {"s": "R07下", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "増設可能な負荷の皮相電力"}, {"s": "R07下", "c": "16", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線の電圧降下と負荷電力の関係"}, {"s": "R07下", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "力率の異なる負荷接続時の線路電流と電圧降下"}, {"s": "R07上", "c": "7", "p": "haiden", "sec": "denryoku-keitou:renkei", "k": "論説", "t": "分散型電源の配電系統連系"}, {"s": "R07上", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "単相3線式配電方式の特徴"}, {"s": "R07上", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "力率変化に伴う配電線の負荷電力の変化"}, {"s": "R07上", "c": "16", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相短絡事故発生時の事故電流と電圧変化"}, {"s": "R07上", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "負荷追加した変圧器の過負荷運転防止"}, {"s": "R06下", "c": "9", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "高低圧配電系統における保護"}, {"s": "R06下", "c": "10", "p": "haiden", "sec": "chichuu-souden:formula", "k": "計算", "t": "三相3線式地中電線路の無負荷充電容量"}, {"s": "R06下", "c": "11", "p": "haiden", "sec": "seigo", "k": "論説", "t": "高圧受電設備を構成する機器"}, {"s": "R06上", "c": "7", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路の電圧維持対策"}, {"s": "R06上", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "交流三相方式の送配電方式"}, {"s": "R06上", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式ループ配電線路の電圧降下"}, {"s": "R05下", "c": "7", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路の電圧調整"}, {"s": "R05下", "c": "13", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "単相2線式及び単相3線式線路での電力損失"}, {"s": "R05下", "c": "16", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスと過電流遮断器の整定"}, {"s": "R05下", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "太陽光発電設備が接続された単相 3 線式配電線路"}, {"s": "R05上", "c": "6", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路に設置される開閉器類"}, {"s": "R05上", "c": "8", "p": "haiden", "sec": "seigo", "k": "選択", "t": "配電用機材と関連語句の選択"}, {"s": "R05上", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "22(33)kV配電系統と6.6kV配電系統の比較"}, {"s": "R05上", "c": "12", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式配電線路の電圧降下率"}, {"s": "R05上", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相 3 線式高圧配電線路の電圧降下"}, {"s": "R04下", "c": "12", "p": "haiden", "sec": "seigo", "k": "穴埋", "t": "配電線路の電圧を適正範囲に維持するための調整"}, {"s": "R04下", "c": "13", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "低圧ネットワーク方式の特徴"}, {"s": "R04下", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "不平衡負荷を接続した単相３線式配電線路"}, {"s": "R04上", "c": "12", "p": "haiden", "sec": "seigo", "k": "穴埋", "t": "柱上変圧器"}, {"s": "R04上", "c": "13", "p": "haiden", "sec": "seigo", "k": "選択", "t": "高圧配電線路構成機材の用語選択"}, {"s": "R04上", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線の送電電力及び力率変化後の送電電力の導出"}, {"s": "R03", "c": "12", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "単相3線式配電方式の特徴"}, {"s": "R03", "c": "13", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "高低圧配電系統における保護"}, {"s": "R03", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "単相2線式配電線路の電圧降下"}, {"s": "R02", "c": "8", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスを用いた三相短絡電流の導出"}, {"s": "R02", "c": "12", "p": "haiden", "sec": "seigo", "k": "論説", "t": "高圧架空配電線路の構成機材"}, {"s": "R02", "c": "13", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "スポットネットワーク方式"}, {"s": "R02", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式ループ配電線路の電圧降下"}, {"s": "R01", "c": "12", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "配電線路の電気方式"}, {"s": "R01", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線の電力損失及び電圧降下"}, {"s": "H30", "c": "8", "p": "haiden", "sec": "formula", "k": "計算", "t": "平衡三相負荷への供給電力"}, {"s": "H30", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "高圧配電線の力率の導出"}, {"s": "H30", "c": "16", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "太陽光発電所接続前後の負荷バランス"}, {"s": "H29", "c": "12", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "高低圧配電系統の保護"}, {"s": "H29", "c": "13", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路の電圧調整"}, {"s": "H29", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式送電線の力率改善"}, {"s": "H28", "c": "9", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式送電線路の電圧降下"}, {"s": "H28", "c": "11", "p": "haiden", "sec": "seigo", "k": "論説", "t": "地中配電線路に用いられる機器"}, {"s": "H28", "c": "12", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "低圧配電系統の構成"}, {"s": "H28", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "単相2線式の電圧降下"}, {"s": "H28", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "バランサを接続した単相3線式配電線路"}, {"s": "H27", "c": "5", "p": "haiden", "sec": "denryoku-keitou:renkei", "k": "論説", "t": "分散型電源の配電系統連系"}, {"s": "H27", "c": "6", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "論説", "t": "各種保護リレーの特徴"}, {"s": "H27", "c": "11", "p": "haiden", "sec": "seigo", "k": "穴埋", "t": "地中配電線路の得失"}, {"s": "H27", "c": "12", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "スポットネットワーク方式及び低圧ネットワーク方式の特徴"}, {"s": "H27", "c": "13", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "低圧配電方式の最大送電電力"}, {"s": "H27", "c": "16", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式の回路計算"}, {"s": "H26", "c": "7", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線路の電圧降下率"}, {"s": "H26", "c": "11", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "配電線路接地方式や一線地絡事故が発生した場合の現象"}, {"s": "H26", "c": "12", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相4線式低圧配電線の容量"}, {"s": "H26", "c": "13", "p": "haiden", "sec": "seigo", "k": "論説", "t": "高圧架空配電系統を構成する機材とその特徴"}, {"s": "H25", "c": "7", "p": "haiden", "sec": "shadanki:shurui", "k": "穴埋", "t": "真空遮断器の構造や特徴"}, {"s": "H25", "c": "9", "p": "haiden", "sec": "kakuu-souden:tarumi", "k": "計算", "t": "架線の張力と支線と追支線の関係"}, {"s": "H25", "c": "11", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "我が国の配電系統の特徴"}, {"s": "H25", "c": "12", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "穴埋", "t": "配電線の保護方式"}, {"s": "H25", "c": "13", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式配電線路線路の電圧降下"}, {"s": "H24", "c": "11", "p": "haiden", "sec": "chichuu-souden:formula", "k": "計算", "t": "地中配電ケーブルの充電容量"}, {"s": "H23", "c": "9", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "単相3線式配電線路における電圧及び電流の値"}, {"s": "H23", "c": "12", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "大都市で採用されるスポットネットワーク方式"}, {"s": "H23", "c": "13", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路の電圧調整の方法"}, {"s": "H23", "c": "16", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相短絡事故発生時の事故電流"}, {"s": "H23", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "昇圧器を含む単相2線式配電線路の電圧降下"}, {"s": "H22", "c": "12", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路に設置される開閉器等の機器"}, {"s": "H22", "c": "13", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電設備の記述の正誤の組み合わせ"}, {"s": "H22", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "単相２線式配電線路の電圧降下と負荷電流"}, {"s": "H21", "c": "8", "p": "haiden", "sec": "houshiki", "k": "論説", "t": "22(33)kV配電系統の6.6kV配電系統に対する比較"}, {"s": "H21", "c": "10", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相３線式高圧配電線路の電圧降下"}, {"s": "H21", "c": "12", "p": "haiden", "sec": "seigo", "k": "論説", "t": "配電線路に使用される変圧器"}, {"s": "H21", "c": "13", "p": "haiden", "sec": "jikayou-chiraku:intro", "k": "論説", "t": "配電設備や屋内設備における保護装置の特徴"}, {"s": "H21", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "電力用コンデンサを接続したときの無効電力と力率の変化"}, {"s": "H20", "c": "12", "p": "haiden", "sec": "seigo", "k": "論説", "t": "架空配電線路と比較したときの地中配電線路の一般的な特徴"}, {"s": "H20", "c": "13", "p": "haiden", "sec": "seigo", "k": "穴埋", "t": "配電線路の電圧調整"}, {"s": "H20", "c": "17", "p": "haiden", "sec": "formula", "k": "計算", "t": "三相3線式配電線路の電圧降下"}, {"s": "H19", "c": "12", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "三相短絡事故が発生した時の短絡電流"}, {"s": "H19", "c": "13", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "高低圧配電系統に採用されている配電方式"}, {"s": "H19", "c": "17", "p": "haiden", "sec": "houshiki", "k": "計算", "t": "太陽光発電設備が接続された単相 3 線式配電線路"}, {"s": "H18", "c": "9", "p": "haiden", "sec": "seigo", "k": "選択", "t": "配電用機材とそれに関係の深い語句の組合せ"}, {"s": "H18", "c": "10", "p": "haiden", "sec": "houshiki", "k": "穴埋", "t": "スポットネットワーク受電設備"}, {"s": "H18", "c": "16", "p": "haiden", "sec": "formula", "k": "計算", "t": "配電線の電圧降下と負荷電力の関係"}, {"s": "H18", "c": "17", "p": "haiden", "sec": "henatsuki:tanraku", "k": "計算", "t": "百分率インピーダンスと過電流遮断器の整定"}, {"s": "R07下", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中ケーブルの付設方法の違いと特徴"}, {"s": "R07上", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路に使用される各種電力ケーブル"}, {"s": "R06上", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "穴埋", "t": "マーレーループ法による故障点位置標定"}, {"s": "R05下", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路の特徴や布設方法"}, {"s": "R05上", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送電線路の線路定数"}, {"s": "R04下", "c": "10", "p": "kakuu-souden", "sec": "chichuu-souden:intro", "k": "論説", "t": "地中送配電線の各布設方式の特徴"}];
+const MACHINES = {
+ "suiryoku": {
+  "num": "1.1",
+  "title": "水力発電所",
+  "short": "水力",
+  "x": -25,
+  "page": "suiryoku",
+  "kicker": "落差と流量が出力を決める。揚水では向きが逆",
+  "lead": "ダムの貯水池から導水路・サージタンク・水圧管路を通って水車を回し、放水路へ出る。水の点が流れの向き。水車は形式を切り替えると形が変わり、揚水にすると流れが逆になる。",
+  "parts": [
+   [
+    "#3572D6",
+    "貯水池と放水路",
+    "2つの水面の高さの差が**総落差 Hg**"
+   ],
+   [
+    "#8E9AA6",
+    "サージタンク",
+    "水車の入口弁を急に閉めたときの圧力上昇（**水撃作用**）を、水位の上下で吸収する（3Dでは水位は動かしていない）"
+   ],
+   [
+    "#6B7580",
+    "水圧管路",
+    "摩擦などで失う高さが**損失落差 hl**。有効落差 H = Hg − hl"
+   ],
+   [
+    "#D9C7A0",
+    "水車",
+    "ペルトン（衝動）・フランシス（反動）・プロペラ（反動）を切り替える"
+   ],
+   [
+    "#3B5A73",
+    "発電機（発電電動機）",
+    "揚水では電動機になってポンプを回す"
+   ]
+  ],
+  "sections": [
+   [
+    "intro",
+    "1. 直感的理解 — P=9.8QHη",
+    "落差と流量が出力を決める。3Dの水の点がその流れ"
+   ],
+   [
+    "suisha",
+    "2. 水車の種類（衝動 vs 反動）",
+    "ペルトン・フランシス・プロペラを切り替えて形を比べる"
+   ],
+   [
+    "formula",
+    "3. 公式マップ（最重要）",
+    "有効落差・揚水・比速度・ベルヌーイの式"
+   ],
+   [
+    "kaiho",
+    "4. 解法パターン（例題つき）",
+    "調整池・発電計画・速度調定率の計算の型"
+   ],
+   [
+    "trap",
+    "5. 引っかけ・誤答ポイント",
+    "発電と揚水で「引く・足す」「掛ける・割る」が逆"
+   ],
+   [
+    "seigo",
+    "6. 正誤判定の急所",
+    "ダム・水撃作用・設備の特徴の論説"
+   ]
+  ]
+ },
+ "karyoku": {
+  "num": "1.2",
+  "title": "火力発電所（汽力）",
+  "short": "火力",
+  "x": -15,
+  "page": "karyoku",
+  "kicker": "水を蒸気にしてタービンを回し、復水器で水に戻す閉じた輪",
+  "lead": "ボイラで水を蒸気にし、過熱器でさらに熱してタービンを回す。タービンを出た蒸気は復水器で水に戻り、給水ポンプで節炭器からボイラへ戻る。燃焼ガスは過熱器・節炭器・空気予熱器に熱を渡して煙突へ出る。",
+  "parts": [
+   [
+    "#9FB3C4",
+    "ボイラ（火炉）",
+    "燃料を燃やし、水管の中の水を蒸気にする"
+   ],
+   [
+    "#D24A43",
+    "過熱器",
+    "飽和蒸気をさらに熱して過熱蒸気にする（タービンの効率が上がる）"
+   ],
+   [
+    "#3572D6",
+    "節炭器",
+    "煙突へ行く前の燃焼ガスで**給水**を予熱する"
+   ],
+   [
+    "#8E9AA6",
+    "空気予熱器",
+    "燃焼ガスの残りの熱で**燃焼用空気**を予熱する"
+   ],
+   [
+    "#4A5B68",
+    "復水器",
+    "タービンを出た蒸気を冷却水で水に戻す。**捨てる熱が汽力発電で最大の損失**"
+   ],
+   [
+    "#3B5A73",
+    "給水ポンプ・押込通風機",
+    "水をボイラへ押し込む／燃焼用空気を送る"
+   ]
+  ],
+  "sections": [
+   [
+    "intro",
+    "1. 直感的理解 — 熱効率とは",
+    "燃料の熱のうち電気になった割合"
+   ],
+   [
+    "setsubi",
+    "2. 設備（蒸気の流れ）",
+    "水・蒸気・燃焼ガスの通る順を3Dで追う"
+   ],
+   [
+    "cycle",
+    "3. 熱サイクルと発電方式",
+    "ランキン・再熱・再生・コンバインドサイクル"
+   ],
+   [
+    "formula",
+    "4. 公式マップ（最重要）",
+    "η = 3.6·P/(B·H)、送電端、CO₂"
+   ],
+   [
+    "kaiho",
+    "5. 解法パターン（例題つき）",
+    "熱効率・燃料消費量・CO₂ の計算の型"
+   ],
+   [
+    "turbine",
+    "6. タービンの種類と環境対策（論説の急所）",
+    "衝動・反動タービン、水素冷却、集じん・脱硫・脱硝"
+   ],
+   [
+    "trap",
+    "7. 勘違いTOP3・引っかけ",
+    "発電端と送電端、単位の 3.6"
+   ],
+   [
+    "suiryoku:kaiho",
+    "水力 4. 解法パターン",
+    "速度調定率の計算（火力の発電機でも同じ型）"
+   ]
+  ]
+ },
+ "genshiryoku": {
+  "num": "1.3",
+  "title": "原子力発電所",
+  "short": "原子力",
+  "x": -5,
+  "page": "genshiryoku",
+  "kicker": "火力との違いは熱源だけ。PWR と BWR の差が頻出",
+  "lead": "格納容器の中の原子炉で核分裂の熱をつくり、蒸気でタービンを回す。炉型を切り替えると、加圧水型（PWR）は蒸気発生器と加圧器が現れ、沸騰水型（BWR）は原子炉から直接タービンへ蒸気が行く。",
+  "parts": [
+   [
+    "#9FB3C4",
+    "原子炉圧力容器・格納容器",
+    "燃料を入れた炉心を収める"
+   ],
+   [
+    "#7FB069",
+    "燃料（低濃縮ウラン）",
+    "ウラン235 が核分裂して熱を出す"
+   ],
+   [
+    "#2B2B2B",
+    "制御棒",
+    "中性子を吸収して核分裂の数を減らす。**PWR は上から、BWR は下から**入れる"
+   ],
+   [
+    "#8E9AA6",
+    "蒸気発生器・加圧器（PWR のみ）",
+    "一次冷却材を加圧して沸騰させず、蒸気発生器で二次側に蒸気をつくる"
+   ],
+   [
+    "#3B5A73",
+    "再循環ポンプ（BWR のみ）",
+    "炉心を通る流量を変えて出力を調整する"
+   ]
+  ],
+  "sections": [
+   [
+    "intro",
+    "1. 直感的理解 — 火力との違いは熱源だけ",
+    "タービンから後ろは火力と同じ形"
+   ],
+   [
+    "yoso",
+    "2. 原子炉の4要素",
+    "燃料・減速材・冷却材・制御材"
+   ],
+   [
+    "rogata",
+    "3. 原子炉の種類（PWR / BWR が中心）",
+    "炉型を切り替えて違いを見る"
+   ],
+   [
+    "rinkai",
+    "4. 臨界と反応度",
+    "制御棒・ほう素・再循環流量で出力を調整する"
+   ],
+   [
+    "keisan",
+    "5. 核分裂エネルギーの計算",
+    "E = Δm·c² と 1 回 200 MeV の2つの型"
+   ],
+   [
+    "trap",
+    "6. 引っかけ・誤答ポイント",
+    "g と kg、MeV と J の換算"
+   ]
+  ]
+ },
+ "kaihei-hogo": {
+  "num": "2.6",
+  "title": "変電所",
+  "short": "変電所",
+  "x": 5,
+  "page": "kaihei-hogo",
+  "kicker": "測る・判断する・切る・電圧を変える",
+  "lead": "送電線を受ける鉄構から、避雷器・断路器・遮断器・変流器を通って主変圧器へ入り、二次側の母線から配電線へ出ていく。断路器と遮断器は操作でき、順序を間違えると止められる。",
+  "parts": [
+   [
+    "#E6D3A3",
+    "避雷器",
+    "雷の過電圧のときだけ大地へ電流を流し、終われば止める"
+   ],
+   [
+    "#D9C7A0",
+    "断路器 DS",
+    "**電流は切れない**。電流の無い回路を目で見て開くためのもの"
+   ],
+   [
+    "#4A5B68",
+    "遮断器 CB",
+    "負荷電流も**事故電流（短絡電流）**も切る"
+   ],
+   [
+    "#3B5A73",
+    "変流器 CT",
+    "大電流を測れる大きさに縮める。**二次側を開放してはいけない**"
+   ],
+   [
+    "#E6D3A3",
+    "計器用変圧器 VT",
+    "高電圧を測れる大きさに縮める。**二次側を短絡してはいけない**"
+   ],
+   [
+    "#4A5B68",
+    "主変圧器",
+    "電圧を変える。%Z が短絡電流の大きさを決める"
+   ]
+  ],
+  "sections": [
+   [
+    "intro",
+    "開閉装置・保護 1. 直感的理解 — センサー → 判断 → 切る",
+    "CT・VT が測り、継電器が判断し、遮断器が切る"
+   ],
+   [
+    "setsubi",
+    "開閉装置・保護 3. 機器の比較",
+    "変電所の機器の役割と調相設備"
+   ],
+   [
+    "shadanki:intro",
+    "遮断器・断路器 1. CBは「切れる」DSは「切れない」",
+    "止めるのは 遮断器 → 断路器、入れるのは逆"
+   ],
+   [
+    "shadanki:shurui",
+    "遮断器・断路器 4. 遮断器の種類（消弧媒体）",
+    "GIS・真空遮断器"
+   ],
+   [
+    "keiki-hensei:intro",
+    "計器用変成器 1. なぜ「縮小」するか",
+    "CT は二次開放禁止、VT は二次短絡禁止"
+   ],
+   [
+    "hogo-keiden:tokusei",
+    "保護継電器 4. 動作特性",
+    "反限時・定限時、動作時間の計算"
+   ],
+   [
+    "henatsuki:tanraku",
+    "変圧器 7. 短絡電流（%Z 使用）",
+    "%Z を基準容量にそろえて足し、短絡電流と遮断器を決める"
+   ],
+   [
+    "henatsuki:heikou",
+    "変圧器 5. 並行運転",
+    "負荷の分担は共通基準の %Z に逆比例"
+   ],
+   [
+    "henatsuki:ketsusen",
+    "変圧器 6. 三相結線とV結線",
+    "Y-Y-Δ・V結線"
+   ],
+   [
+    "zetsuen-hakai:hiraiki",
+    "絶縁破壊・絶縁協調 8. 避雷器",
+    "酸化亜鉛（ZnO）素子"
+   ],
+   [
+    "denryoku-keitou:chuseiten",
+    "電力系統 6. 中性点接地方式",
+    "地絡電流と異常電圧のトレードオフ"
+   ]
+  ]
+ },
+ "kakuu-souden": {
+  "num": "3.1",
+  "title": "架空送電線路",
+  "short": "送電",
+  "x": 15,
+  "page": "kakuu-souden",
+  "kicker": "高い電圧で送るのは損失を減らすため。たるみの計算が頻出",
+  "lead": "鉄塔3基・2径間に、3相2回線の電線と、頂部に架空地線を張った。見る対象を「たるみ」にすると張力・径間・温度で電線が実際に垂れ下がる（10倍に誇張）。「電圧降下・損失」では送電電圧を変えて損失を比べる。",
+  "parts": [
+   [
+    "#8E9AA6",
+    "鉄塔とがいし",
+    "がいし連で電線を吊り、大地から絶縁する"
+   ],
+   [
+    "#B9C2CA",
+    "電線（3相×2回線）",
+    "たるみ D = W·S²/(8T)。3Dでは10倍に誇張"
+   ],
+   [
+    "#B9C2CA",
+    "架空地線",
+    "電線より上に張り、雷を先に受けて大地へ流す"
+   ]
+  ],
+  "sections": [
+   [
+    "intro",
+    "1. 直感的理解 — なぜ超高圧で送るか",
+    "電圧を上げると電流が減り、損失は 1/V² で減る"
+   ],
+   [
+    "setsubi",
+    "2. 構成要素",
+    "鉄塔・がいし・電線・架空地線・多導体"
+   ],
+   [
+    "tokusei",
+    "3. 線路定数と短距離/長距離モデル",
+    "フェランチ効果・等価回路"
+   ],
+   [
+    "shougai",
+    "4. 障害と対策",
+    "雷・塩害・振動"
+   ],
+   [
+    "tarumi",
+    "5. たるみ（弛度）と実長（計算頻出）",
+    "張力・径間・温度でたるみを動かす"
+   ],
+   [
+    "corona",
+    "6. 円筒導体の電界とコロナ放電",
+    "コロナ損・多導体"
+   ],
+   [
+    "formula",
+    "7. 公式マップ（最重要）",
+    "電圧降下・損失・たるみの式"
+   ],
+   [
+    "kaiho",
+    "8. 解法パターン（三相電圧降下）",
+    "√3·I(R cosθ + X sinθ) の型"
+   ],
+   [
+    "chichuu-souden:intro",
+    "地中送電・電力ケーブル 1. 直感的理解",
+    "地中送電は3Dの対象外。Wikiの別ページで"
+   ],
+   [
+    "yudo-shougai:conclusion",
+    "誘導障害 1. まず結論",
+    "静電誘導は電圧由来、電磁誘導は電流由来"
+   ],
+   [
+    "denryoku-keitou:chuseiten",
+    "電力系統 6. 中性点接地方式",
+    "1線地絡時の現象"
+   ],
+   [
+    "hogo-keiden:tokusei",
+    "保護継電器 4. 動作特性",
+    "送電線の保護リレー"
+   ],
+   [
+    "henatsuki:tanraku",
+    "変圧器 7. 短絡電流（%Z 使用）",
+    "系統の %Z と三相短絡電流"
+   ],
+   [
+    "kakomon-by-field:kakuu-souden",
+    "直流送電（Wikiに解説の節が無い。分野別一覧の送電欄へ）",
+    "直流送電は3Dにも解説ページにも無い"
+   ]
+  ]
+ },
+ "haiden": {
+  "num": "4.1",
+  "title": "配電線路",
+  "short": "配電",
+  "x": 25,
+  "page": "haiden",
+  "kicker": "単相3線式は中性線、三相3線式は電圧降下率と力率改善",
+  "lead": "方式を切り替えて2つの配電を見る。単相3線式では、柱上変圧器で 6.6 kV を下げ、外線 a・中性線 n・外線 b の3本で2軒の負荷へ送る。中性線を断線させると電圧が偏り、バランサを付けると偏りが消える。三相3線式では、高圧配電線の3本から工場へ送り、力率改善用コンデンサで電流・電圧降下・損失がどう減るかを見る。",
+  "parts": [
+   [
+    "#4A5B68",
+    "柱上変圧器",
+    "6.6 kV を 100/200 V に下げる"
+   ],
+   [
+    "#D24A43",
+    "外線 a・外線 b",
+    "a–n と n–b に 100 V、a–b に 200 V"
+   ],
+   [
+    "#B9C2CA",
+    "中性線 n",
+    "2つの負荷の電流の**差**が流れる。切れると電圧が偏る"
+   ],
+   [
+    "#D9C7A0",
+    "負荷（家と電球）",
+    "電球の明るさが負荷の電圧の目安"
+   ],
+   [
+    "#3B5A73",
+    "バランサ",
+    "巻数比 1:1 の単巻変圧器。負荷端の2つの電圧をそろえる"
+   ],
+   [
+    "#D9C7A0",
+    "工場（三相負荷）",
+    "**三相3線式のとき**に出る。遅れ力率の負荷"
+   ],
+   [
+    "#B9C2CA",
+    "力率改善用コンデンサ",
+    "負荷と並列に入れ、遅れ無効電力を打ち消す。有効電力は変わらない"
+   ]
+  ],
+  "sections": [
+   [
+    "intro",
+    "1. 直感的理解 — 3つのロス対策",
+    "電圧を上げる・力率を上げる・電線を太くする"
+   ],
+   [
+    "houshiki",
+    "2. 配電方式の比較",
+    "単相3線式・ネットワーク方式"
+   ],
+   [
+    "shihyo",
+    "3. 負荷の指標（需要率・負荷率・不等率）",
+    "3Dでは扱わない"
+   ],
+   [
+    "formula",
+    "4. 公式マップ（最重要）",
+    "電圧降下・損失・力率改善"
+   ],
+   [
+    "kaiho",
+    "5. 解法パターン",
+    "単相3線式・三相3線式の計算の型"
+   ],
+   [
+    "trap",
+    "6. 引っかけ・誤答ポイント",
+    "中性線電流は差、断線では軽い負荷に高い電圧"
+   ],
+   [
+    "seigo",
+    "7. 正誤判定の急所",
+    "配電設備・電圧調整の論説"
+   ],
+   [
+    "henatsuki:tanraku",
+    "変圧器 7. 短絡電流（%Z 使用）",
+    "三相短絡電流と過電流遮断器の整定"
+   ],
+   [
+    "jikayou-chiraku:intro",
+    "自家用受電設備の地絡保護 1. 直感的理解",
+    "配電系統の保護"
+   ],
+   [
+    "denryoku-keitou:renkei",
+    "電力系統 7. 系統連系と単独運転防止",
+    "分散型電源の連系"
+   ],
+   [
+    "chichuu-souden:formula",
+    "地中送電 8. 公式マップ",
+    "ケーブルの充電容量"
+   ],
+   [
+    "kakuu-souden:tarumi",
+    "架空送電 5. たるみと実長",
+    "支線の張力"
+   ],
+   [
+    "shadanki:shurui",
+    "遮断器・断路器 4. 遮断器の種類",
+    "真空遮断器"
+   ]
+  ]
+ }
+};
+const ORDER = ["suiryoku", "karyoku", "genshiryoku", "kaihei-hogo", "kakuu-souden", "haiden"];
+const STUDY = {
+ "suiryoku": {
+  "oneLiner": "出力は 9.8 × 流量 × 有効落差 × 効率。揚水では落差に損失を足し、効率で割る。",
+  "exam": [
+   [
+    "発電機出力",
+    "P = 9.8·Q·H·ηt·ηg［kW］",
+    "Q は m³/s、H は**有効落差**（総落差 − 損失落差）m。9.8 は重力加速度 g"
+   ],
+   [
+    "揚水の所要電力",
+    "Pm = 9.8·Q·(Hg + hl)/(ηp·ηm)",
+    "発電とは逆に、損失落差は**足し**、効率で**割る**"
+   ],
+   [
+    "比速度",
+    "Ns = N·√P / H^(5/4)",
+    "P は水車出力 kW、H は m。**高落差ほど小さい**。ペルトン < フランシス < プロペラ"
+   ],
+   [
+    "ベルヌーイの定理",
+    "h + p/(ρg) + v²/(2g) = 一定",
+    "位置・圧力・速度の3つの水頭の和が保たれる。ペルトンの噴流は v = √(2gH)"
+   ],
+   [
+    "連続の定理",
+    "Q = A₁·v₁ = A₂·v₂",
+    "管が細くなると流速が上がる。流量は管のどこでも同じ"
+   ]
+  ],
+  "predict": [
+   {
+    "q": "総落差 100 m、損失落差 5 m、流量 50 m³/s、水車効率 0.90、発電機効率 0.97。発電機出力は？",
+    "opts": [
+     "約 40.6 MW",
+     "約 41.9 MW",
+     "約 42.8 MW",
+     "約 46.6 MW"
+    ],
+    "ans": 0,
+    "set": {
+     "sMode": "gen",
+     "sType": "francis",
+     "sHg": 100,
+     "sHl": 5,
+     "sQ": 50,
+     "sEt": 0.9,
+     "sEg": 0.97,
+     "sEp": 0.85,
+     "sEm": 0.97,
+     "sN": 300
+    },
+    "hi": "P",
+    "why": "有効落差は 100 − 5 = 95 m。P = 9.8 × 50 × 95 × 0.90 × 0.97 ≒ 40.6 MW。総落差 100 m のまま計算すると 42.8 MW、効率を掛け忘れると 46.6 MW になる。損失落差を引いてから効率を掛ける順を、右の棒の段差で確かめる。"
+   },
+   {
+    "q": "揚水運転。総落差 200 m、損失落差 10 m、揚水量 25 m³/s、ポンプ効率 0.85、電動機効率 0.97。電動機の入力は？",
+    "opts": [
+     "約 42.4 MW",
+     "約 51.5 MW",
+     "約 56.5 MW",
+     "約 62.4 MW"
+    ],
+    "ans": 3,
+    "set": {
+     "sMode": "pump",
+     "sType": "francis",
+     "sHg": 200,
+     "sHl": 10,
+     "sQ": 25,
+     "sEt": 0.9,
+     "sEg": 0.97,
+     "sEp": 0.85,
+     "sEm": 0.97,
+     "sN": 300
+    },
+    "hi": "Pin",
+    "why": "全揚程は 200 + 10 = 210 m（損失落差を**足す**）。入力 = 9.8 × 25 × 210 ÷ (0.85 × 0.97) ≒ 62.4 MW（効率で**割る**）。損失落差を引くと 56.5 MW、効率を掛けると 42.4 MW になる。ポンプは水に仕事をする側なので、入れる電力は水が受け取る分より大きい。"
+   },
+   {
+    "q": "ペルトン水車。有効落差 400 m のとき、ノズルから出る噴流の速度は（損失を無視）？",
+    "opts": [
+     "約 28 m/s",
+     "約 63 m/s",
+     "約 89 m/s",
+     "約 125 m/s"
+    ],
+    "ans": 2,
+    "set": {
+     "sMode": "gen",
+     "sType": "pelton",
+     "sHg": 405,
+     "sHl": 5,
+     "sQ": 50,
+     "sEt": 0.9,
+     "sEg": 0.97,
+     "sEp": 0.85,
+     "sEm": 0.97,
+     "sN": 300
+    },
+    "hi": "v",
+    "why": "位置エネルギー m·g·H がすべて運動エネルギー m·v²/2 になるとして、v = √(2gH) = √(2 × 9.8 × 400) ≒ 88.5 m/s。2 を忘れると 63 m/s、g を忘れると 28 m/s。"
+   }
+  ],
+  "points": [
+   [
+    "落差は高さ、流量は量",
+    "出力は「どれだけの高さから」×「毎秒どれだけ」落ちるかの積"
+   ],
+   [
+    "発電は引いて掛ける、揚水は足して割る",
+    "損失落差と効率の向きが逆になる。総合効率は両方の積"
+   ],
+   [
+    "比速度は水車の形の物差し",
+    "同じ出力・回転速度なら、落差が低いほど比速度は大きい"
+   ]
+  ],
+  "tour": [
+   {
+    "t": "落差が出力を決める",
+    "sec": "intro",
+    "focus": "貯水池",
+    "set": {
+     "sMode": "gen",
+     "sType": "francis",
+     "sHg": 100,
+     "sHl": 5,
+     "sQ": 50,
+     "sEt": 0.9,
+     "sEg": 0.97,
+     "sEp": 0.85,
+     "sEm": 0.97,
+     "sN": 300
+    },
+    "hi": [
+     "H",
+     "P"
+    ],
+    "op": "総落差 Hg を 100 m から 200 m に動かす。",
+    "see": "貯水池の水面と放水路の水面の差が総落差。読み値の有効落差 H と発電機出力 P がほぼ比例して増える。",
+    "so": "P = 9.8·Q·H·η。Q［m³/s］と H［m］の積がそのまま kW の元になる。1 m³ の水（1000 kg）が 1 m 落ちると 9.8 kJ。",
+    "q": [
+     "R08上/2",
+     "R07下/1",
+     "R07上/1",
+     "R05下/1",
+     "R03/1",
+     "H27/1",
+     "H24/1",
+     "H20/2"
+    ]
+   },
+   {
+    "t": "損失落差を引き、効率を掛ける",
+    "sec": "formula",
+    "focus": "水圧管路",
+    "set": {
+     "sMode": "gen",
+     "sType": "francis",
+     "sHg": 100,
+     "sHl": 5,
+     "sQ": 50,
+     "sEt": 0.9,
+     "sEg": 0.97,
+     "sEp": 0.85,
+     "sEm": 0.97,
+     "sN": 300
+    },
+    "hi": [
+     "H",
+     "Pth",
+     "P"
+    ],
+    "op": "詳しい操作の 損失落差 hl を 5 m から 20 m に動かす。",
+    "see": "右の棒が「総落差での理論値 → 有効落差での理論値 → 水車 → 発電機」と一段ずつ短くなる。hl を増やすと2本目から下がる。",
+    "so": "有効落差 H = Hg − hl。損失落差は水圧管路などの摩擦で失う高さ。そのあと水車効率と発電機効率を掛ける。この向きを固めておくと、揚水で逆になるところで迷わない。",
+    "q": [
+     "R07上/15",
+     "R05下/15",
+     "R02/15",
+     "H30/15",
+     "H21/1"
+    ]
+   },
+   {
+    "t": "水車の形を比べる",
+    "sec": "suisha",
+    "focus": "水車",
+    "set": {
+     "sMode": "gen",
+     "sType": "pelton",
+     "sHg": 100,
+     "sHl": 5,
+     "sQ": 50,
+     "sEt": 0.9,
+     "sEg": 0.97,
+     "sEp": 0.85,
+     "sEm": 0.97,
+     "sN": 300
+    },
+    "hi": [
+     "kind"
+    ],
+    "op": "水車を ペルトン → フランシス → プロペラ と切り替える。",
+    "see": "ペルトンはノズルの噴流をバケットに当てる羽根車。フランシスは輪の中に羽根が並び、プロペラは数枚の羽根だけ。読み値の「水車の向き不向き」が変わる。",
+    "so": "ペルトンは水の速度（運動エネルギー）だけで回す衝動水車で、高落差・小流量向き。フランシスとプロペラは圧力も使う反動水車で、プロペラほど低落差・大流量向き。",
+    "q": [
+     "R06下/1",
+     "R06上/1",
+     "R06上/15",
+     "R04下/2",
+     "R04上/1",
+     "R01/1",
+     "R01/2",
+     "H29/2",
+     "H26/1",
+     "H25/1",
+     "H22/1",
+     "H20/1",
+     "H19/1"
+    ]
+   },
+   {
+    "t": "比速度は落差で決まる",
+    "sec": "suisha",
+    "focus": "水車",
+    "set": {
+     "sMode": "gen",
+     "sType": "pelton",
+     "sHg": 400,
+     "sHl": 5,
+     "sQ": 10,
+     "sEt": 0.9,
+     "sEg": 0.97,
+     "sEp": 0.85,
+     "sEm": 0.97,
+     "sN": 200
+    },
+    "hi": [
+     "ns"
+    ],
+    "op": "ペルトンで総落差 400 m・流量 10 m³/s・回転速度 200 min⁻¹ の比速度を読む。次に水車を プロペラ、総落差を 30 m、流量を 150 m³/s、詳しい操作の回転速度 N を 150 min⁻¹ にして読み比べる。",
+    "see": "水車出力（右の棒の「水車」）は約 35 MW と 33 MW でほぼ同じなのに、比速度はペルトン側が約 21、プロペラ側が約 488 と 20 倍以上違う。回転速度はプロペラのほうが低いのに、それでも比速度は大きい。",
+    "so": "Ns = N·√P / H^(5/4)。P は水車出力（kW）。落差が低いほど分母の H^(5/4) が小さくなり、Ns は大きくなる。だから高落差はペルトン（Ns 小）、低落差はプロペラ（Ns 大）が向く。形式ごとの適用範囲（比速度の上限）はWikiで確かめる。単位は m·kW。",
+    "q": [
+     "R06上/15",
+     "R05上/1",
+     "H30/2"
+    ]
+   },
+   {
+    "t": "噴流の速度 v = √(2gH)",
+    "sec": "formula",
+    "focus": "ノズル",
+    "set": {
+     "sMode": "gen",
+     "sType": "pelton",
+     "sHg": 100,
+     "sHl": 5,
+     "sQ": 50,
+     "sEt": 0.9,
+     "sEg": 0.97,
+     "sEp": 0.85,
+     "sEm": 0.97,
+     "sN": 300
+    },
+    "hi": [
+     "v"
+    ],
+    "op": "ペルトンのまま、ノズルの先を見る。",
+    "see": "読み値に噴流速度が出る。有効落差 95 m なら約 43.2 m/s。",
+    "so": "位置エネルギー m·g·H がすべて運動エネルギー m·v²/2 になるとすると v = √(2gH)。ベルヌーイの定理（位置水頭＋圧力水頭＋速度水頭＝一定）で、ノズルの出口では圧力水頭が 0 になった形。",
+    "q": [
+     "R07下/2",
+     "R03/2",
+     "H26/15",
+     "H18/12"
+    ]
+   },
+   {
+    "t": "揚水は向きが逆",
+    "sec": "formula",
+    "focus": "発電電動機",
+    "set": {
+     "sMode": "pump",
+     "sType": "francis",
+     "sHg": 300,
+     "sHl": 10,
+     "sQ": 50,
+     "sEt": 0.9,
+     "sEg": 0.97,
+     "sEp": 0.85,
+     "sEm": 0.97,
+     "sN": 300
+    },
+    "hi": [
+     "Hp",
+     "Pin",
+     "tot"
+    ],
+    "op": "運転を 揚水 にする。",
+    "see": "水の点が逆向き（放水路 → 貯水池）に流れ、発電機が電動機に変わる。全揚程は 300 + 10 = 310 m。総合効率はこの設定で約 67 %。",
+    "so": "発電は「H = Hg − hl、効率を掛ける」、揚水は「Hp = Hg + hl、効率で割る」。総合効率 = ηt·ηg·ηp·ηm × (Hg − hl)/(Hg + hl)。上げるのに使った電力の 7 割前後しか戻らない。",
+    "q": [
+     "R08上/15",
+     "R06上/2",
+     "R04上/15",
+     "H28/1"
+    ]
+   },
+   {
+    "t": "水撃作用とサージタンク",
+    "sec": "seigo",
+    "focus": "サージタンク",
+    "set": {
+     "sMode": "gen",
+     "sType": "francis",
+     "sHg": 100,
+     "sHl": 5,
+     "sQ": 50,
+     "sEt": 0.9,
+     "sEg": 0.97,
+     "sEp": 0.85,
+     "sEm": 0.97,
+     "sN": 300
+    },
+    "op": "導水路と水圧管路のあいだに立つサージタンクを見る。",
+    "see": "サージタンクは導水路の終わり、水圧管路の始まりにある。3Dでは水位の上下までは動かしていない。位置だけを確かめる。",
+    "so": "水車の入口弁を急に閉めると、管の中の水の勢いが圧力の急上昇（水撃作用）になる。サージタンクは水位を上下させてそれを吸収し、導水路を守る。",
+    "q": [
+     "R02/1"
+    ]
+   }
+  ],
+  "check": [
+   [
+    "発電機出力の式を単位つきで",
+    "P = 9.8·Q·H·ηt·ηg［kW］。Q は m³/s、H は有効落差 m。"
+   ],
+   [
+    "有効落差と全揚程の違い",
+    "有効落差は 総落差 − 損失落差（発電）。全揚程は 総落差 + 損失落差（揚水）。"
+   ],
+   [
+    "揚水発電の総合効率",
+    "ηt·ηg·ηp·ηm × (Hg − hl)/(Hg + hl)。4つの効率と落差の比の積。"
+   ],
+   [
+    "比速度が大きいのはどんな水車か",
+    "低落差・大流量向きの水車（プロペラ水車など）。高落差のペルトン水車は小さい。"
+   ],
+   [
+    "衝動水車と反動水車の違い",
+    "衝動水車（ペルトン）は噴流の速度だけで回す。反動水車（フランシス・プロペラ）は圧力も使い、羽根車全体が水に満たされる。"
+   ],
+   [
+    "サージタンクの役目",
+    "水車の負荷が急に変わったときの水撃作用を、水位の上下で吸収する。"
+   ]
+  ],
+  "cards": []
+ },
+ "karyoku": {
+  "oneLiner": "燃料の熱で水を蒸気にし、タービンを回して、復水器で水に戻す。熱効率は 3.6·P/(B·H)。",
+  "exam": [
+   [
+    "発電端熱効率",
+    "η = 3.6·P/(B·H)",
+    "P［MW］、B［t/h］、H［MJ/kg］。3.6 は 1 kWh = 3.6 MJ から"
+   ],
+   [
+    "送電端熱効率",
+    "ηs = η·(1 − L)",
+    "L は所内率。発電所の中で使う電力を引いた残りが送電端"
+   ],
+   [
+    "CO₂ 発生量",
+    "B·c·44/12",
+    "炭素 12 g が燃えると CO₂ 44 g。c は燃料中の炭素の割合"
+   ],
+   [
+    "水・蒸気の順",
+    "給水ポンプ → 節炭器 → ボイラ → 過熱器 → タービン → 復水器",
+    "順番そのものが論説で問われる"
+   ],
+   [
+    "熱効率を上げる",
+    "蒸気を高温高圧に・復水器の真空度を上げる・排熱を回収",
+    "再熱・再生サイクルとコンバインドサイクルはWikiで"
+   ]
+  ],
+  "predict": [
+   {
+    "q": "発電端出力 600 MW、燃料消費量 130 t/h、燃料の発熱量 44 MJ/kg。発電端熱効率は？",
+    "opts": [
+     "約 10.5 %",
+     "約 35.9 %",
+     "約 37.8 %",
+     "約 42.0 %"
+    ],
+    "ans": 2,
+    "set": {
+     "kFlow": "water",
+     "kP": 600,
+     "kB": 130,
+     "kH": 44,
+     "kL": 5,
+     "kC": 0.85
+    },
+    "hi": "eta",
+    "why": "η = 3.6 × 600 ÷ (130 × 44) ≒ 37.8 %。3.6 を掛け忘れると 10.5 %。所内率を引いた 35.9 % は送電端熱効率で、問われている「発電端」とは別物。"
+   },
+   {
+    "q": "上の発電所で所内率が 5 % のとき、送電端熱効率は？",
+    "opts": [
+     "約 32.8 %",
+     "約 35.9 %",
+     "約 37.8 %",
+     "約 39.7 %"
+    ],
+    "ans": 1,
+    "set": {
+     "kFlow": "water",
+     "kP": 600,
+     "kB": 130,
+     "kH": 44,
+     "kL": 5,
+     "kC": 0.85
+    },
+    "hi": "etaS",
+    "why": "送電端 = 発電端 × (1 − 0.05) ≒ 35.9 %。5 ポイントを引くのではなく、0.95 倍する。0.95 で割ると 39.7 % になる。"
+   },
+   {
+    "q": "燃焼ガスは火炉を出たあと、過熱器（と再熱器）を通って、次にどこで熱を渡すか。",
+    "opts": [
+     "空気予熱器",
+     "節炭器",
+     "復水器",
+     "煙突"
+    ],
+    "ans": 1,
+    "set": {
+     "kFlow": "gas",
+     "kP": 600,
+     "kB": 130,
+     "kH": 44,
+     "kL": 5,
+     "kC": 0.85
+    },
+    "hi": "order",
+    "why": "過熱器 → 節炭器 → 空気予熱器 → 煙突。ガスは冷えながら進むので、高い温度が要るものから順に熱を渡す。節炭器は給水を、空気予熱器は燃焼用空気を温める。"
+   }
+  ],
+  "points": [
+   [
+    "水は閉じた輪を回る",
+    "ボイラ・タービン・復水器・ポンプの輪。燃焼ガスは別の道を一方向に抜ける"
+   ],
+   [
+    "最大の損失は復水器",
+    "燃料の熱の半分前後を冷却水が持ち去る（熱効率が 4 割前後にとどまる理由）"
+   ],
+   [
+    "発電端と送電端",
+    "所内で使う電力の分だけ送電端が小さい。掛け算で引く"
+   ]
+  ],
+  "tour": [
+   {
+    "t": "水と蒸気の一巡",
+    "sec": "setsubi",
+    "focus": "ボイラ",
+    "set": {
+     "kFlow": "water",
+     "kP": 600,
+     "kB": 130,
+     "kH": 44,
+     "kL": 5,
+     "kC": 0.85
+    },
+    "hi": [
+     "order"
+    ],
+    "op": "流れを見る を 水・蒸気 にして、光る点を目で追う。",
+    "see": "復水器 → 給水ポンプ → 節炭器 → ボイラ → 過熱器 → 高圧・低圧タービン → 復水器 と回って閉じる。読み値にも同じ順が出る。",
+    "so": "汽力発電は同じ水を何度も使い回す閉じた輪（ランキンサイクル）。この順番そのものが論説で問われる。実機ではこのほかに給水加熱器や再熱器が入る（汽力発電所ラボで扱う）。",
+    "q": [
+     "R07上/3",
+     "R03/3",
+     "H28/3",
+     "H23/2"
+    ]
+   },
+   {
+    "t": "燃焼ガスと空気の流れ",
+    "sec": "setsubi",
+    "focus": "空気予熱器",
+    "set": {
+     "kFlow": "gas",
+     "kP": 600,
+     "kB": 130,
+     "kH": 44,
+     "kL": 5,
+     "kC": 0.85
+    },
+    "hi": [
+     "order"
+    ],
+    "op": "流れを見る を 燃焼ガス・空気 にする。",
+    "see": "押込通風機の空気が空気予熱器で温められて火炉へ入る。燃焼ガスは 過熱器 → 節炭器 → 空気予熱器 → 煙突 と熱を渡しながら抜ける。",
+    "so": "排ガスの熱を節炭器（給水）と空気予熱器（燃焼用空気）で回収するほど、煙突から捨てる熱が減って効率が上がる。",
+    "q": [
+     "R07上/3",
+     "R05上/3",
+     "H18/2"
+    ]
+   },
+   {
+    "t": "復水器で捨てる熱",
+    "sec": "setsubi",
+    "focus": "復水器",
+    "set": {
+     "kFlow": "water",
+     "kP": 600,
+     "kB": 130,
+     "kH": 44,
+     "kL": 5,
+     "kC": 0.85
+    },
+    "hi": [
+     "Pin",
+     "eta"
+    ],
+    "op": "低圧タービンの下の復水器と、そこを通る冷却水（海水）を見る。",
+    "see": "タービンを出た蒸気がここで水に戻り、冷却水が熱を海へ運ぶ。右の棒では、燃料の入熱のうち電気になる分が 4 割に届かない。",
+    "so": "復水器を真空にするとタービン出口の圧力が下がり、蒸気がより多く仕事をする。代わりに捨てる熱は汽力発電で最大の損失になる。",
+    "q": [
+     "R08上/3",
+     "R05下/3",
+     "R04下/15",
+     "R02/2",
+     "R01/15",
+     "H23/3",
+     "H18/1",
+     "H18/15"
+    ]
+   },
+   {
+    "t": "熱効率 η = 3.6·P/(B·H)",
+    "sec": "formula",
+    "focus": "ボイラ",
+    "set": {
+     "kFlow": "water",
+     "kP": 600,
+     "kB": 130,
+     "kH": 44,
+     "kL": 5,
+     "kC": 0.85
+    },
+    "hi": [
+     "eta"
+    ],
+    "op": "燃料消費量 B を 130 t/h から 150 t/h に動かす。",
+    "see": "出力が同じなら、燃料を多く使うほど熱効率は下がる（37.8 % → 32.7 %）。",
+    "so": "B［t/h］·H［MJ/kg］は1時間に入れる熱（GJ/h）。P［MW］の1時間分は 3.6·P［GJ］。その比が熱効率。",
+    "q": [
+     "R07下/15",
+     "R07上/2",
+     "R06下/15",
+     "R05上/15",
+     "R04上/3",
+     "R03/15",
+     "R01/15",
+     "H29/15",
+     "H28/15",
+     "H27/3",
+     "H25/2",
+     "H25/15",
+     "H24/15",
+     "H23/15",
+     "H22/15",
+     "H21/15",
+     "H20/15"
+    ]
+   },
+   {
+    "t": "発電端と送電端",
+    "sec": "trap",
+    "set": {
+     "kFlow": "water",
+     "kP": 600,
+     "kB": 130,
+     "kH": 44,
+     "kL": 5,
+     "kC": 0.85
+    },
+    "hi": [
+     "eta",
+     "etaS"
+    ],
+    "op": "詳しい操作の 所内率 L を 5 % から 8 % に動かす。",
+    "see": "発電端熱効率は変わらず、送電端熱効率だけが下がる。",
+    "so": "所内率は、ポンプ・通風機など発電所の中で使う電力の割合。送電端 η = 発電端 η × (1 − L)。問題文が「発電端」か「送電端」かを先に確かめる。",
+    "q": [
+     "R03/15",
+     "H24/15",
+     "H20/15"
+    ]
+   },
+   {
+    "t": "CO₂ は炭素の量で決まる",
+    "sec": "kaiho",
+    "set": {
+     "kFlow": "water",
+     "kP": 600,
+     "kB": 130,
+     "kH": 44,
+     "kL": 5,
+     "kC": 0.85
+    },
+    "hi": [
+     "co2"
+    ],
+    "op": "詳しい操作の 燃料の炭素含有率 c を動かす。",
+    "see": "CO₂ 発生量が c に比例して変わる。熱効率は変わらない。",
+    "so": "C + O₂ → CO₂ で、炭素 12 g が CO₂ 44 g になる。燃料 B のうち炭素 B·c が全部燃えると、CO₂ は B·c·44/12。",
+    "q": [
+     "R07下/15",
+     "R06下/15",
+     "R05上/15",
+     "H29/15",
+     "H26/17",
+     "H23/15",
+     "H21/15",
+     "H19/5"
+    ]
+   },
+   {
+    "t": "熱効率を上げる工夫",
+    "sec": "cycle",
+    "focus": "過熱器",
+    "set": {
+     "kFlow": "gas",
+     "kP": 600,
+     "kB": 130,
+     "kH": 44,
+     "kL": 5,
+     "kC": 0.85
+    },
+    "op": "過熱器と節炭器の位置を見比べる。",
+    "see": "過熱器は火炉を出たばかりの熱いガスの側、節炭器は少し冷えたガスの側にある。",
+    "so": "蒸気を高温・高圧にする（過熱）、復水器の真空度を上げる、排ガスの熱を回収する、が熱効率向上の基本。再熱・再生サイクルとコンバインドサイクルは3Dに無いので、汽力発電所ラボとWikiで確かめる。",
+    "q": [
+     "R06下/2",
+     "R01/3",
+     "H27/2",
+     "H26/2",
+     "H21/3",
+     "H20/3",
+     "H19/2"
+    ]
+   }
+  ],
+  "check": [
+   [
+    "発電端熱効率の式と単位",
+    "η = 3.6·P/(B·H)。P［MW］、B［t/h］、H［MJ/kg］。"
+   ],
+   [
+    "送電端熱効率は発電端からどう出すか",
+    "η × (1 − 所内率)。引き算ではなく掛け算。"
+   ],
+   [
+    "汽力発電で最大の損失はどこか",
+    "復水器で冷却水に捨てる熱。"
+   ],
+   [
+    "節炭器と空気予熱器はそれぞれ何を温めるか",
+    "節炭器は給水、空気予熱器は燃焼用空気。どちらも排ガスの熱を使う。"
+   ],
+   [
+    "CO₂ の量を炭素から出す係数",
+    "44/12。炭素 12 に対して CO₂ 44。"
+   ],
+   [
+    "復水器の真空度を上げると何がよいか",
+    "タービン出口の圧力が下がり、蒸気がより多くの仕事をするので熱効率が上がる。"
+   ]
+  ],
+  "cards": []
+ },
+ "genshiryoku": {
+  "oneLiner": "核分裂の熱で蒸気をつくる。タービンから後ろは火力と同じ。PWR は加圧して沸騰させず、BWR は炉心で沸騰させる。",
+  "exam": [
+   [
+    "質量欠損のエネルギー",
+    "E = Δm·c²",
+    "Δm は **kg** に直す。c = 3×10⁸ m/s"
+   ],
+   [
+    "核分裂の数で数える",
+    "E = (m/235)·NA × 200 MeV",
+    "1 MeV = 1.602×10⁻¹³ J、NA = 6.022×10²³"
+   ],
+   [
+    "PWR と BWR",
+    "PWR: 蒸気発生器・加圧器あり／BWR: 炉心で沸騰",
+    "制御棒は PWR が上から、BWR が下から"
+   ],
+   [
+    "出力の調整",
+    "PWR: 制御棒・ほう素濃度／BWR: 制御棒・再循環流量",
+    "BWR は流量を増やすと泡が減り出力が上がる"
+   ],
+   [
+    "軽水炉の燃料",
+    "低濃縮ウラン（ウラン235 が数 %）",
+    "減速材と冷却材はどちらも軽水"
+   ]
+  ],
+  "predict": [
+   {
+    "q": "質量欠損 1 g が全部エネルギーになったとき、何 kWh か。",
+    "opts": [
+     "約 2.5×10⁴ kWh",
+     "約 2.5×10⁷ kWh",
+     "約 2.5×10¹⁰ kWh",
+     "約 9×10¹³ kWh"
+    ],
+    "ans": 1,
+    "set": {
+     "gCalc": "dm",
+     "gDm": 1
+    },
+    "hi": "E",
+    "why": "E = 1×10⁻³ kg × (3×10⁸)² = 9×10¹³ J。÷ 3.6×10⁶ で約 2.5×10⁷ kWh。1 g を kg に直さないと 1000 倍の 2.5×10¹⁰ kWh になる。9×10¹³ はジュールのままの値。"
+   },
+   {
+    "q": "沸騰水型原子炉（BWR）で、制御棒はどこから炉心に入れるか。",
+    "opts": [
+     "上から",
+     "下から",
+     "横から",
+     "入れない（再循環流量だけで調整する）"
+    ],
+    "ans": 1,
+    "set": {
+     "gType": "bwr"
+    },
+    "hi": "rod",
+    "why": "BWR は炉心の上に蒸気を分ける装置（気水分離器・蒸気乾燥器）があるので、制御棒は下から入れる。PWR は上から入れる。BWR でも制御棒は使い、再循環流量はそれと併用する出力調整。"
+   },
+   {
+    "q": "ウラン235 が 1 g 核分裂したときのエネルギーは（1 回 200 MeV）？",
+    "opts": [
+     "約 8.2×10⁷ J",
+     "約 8.2×10¹⁰ J",
+     "約 8.2×10¹³ J",
+     "約 9×10¹³ J"
+    ],
+    "ans": 1,
+    "set": {
+     "gCalc": "fis",
+     "gU": 1
+    },
+    "hi": "E",
+    "why": "原子の数 = 1/235 × 6.022×10²³ ≒ 2.56×10²¹ 個。× 200 × 1.602×10⁻¹³ J ≒ 8.2×10¹⁰ J。9×10¹³ J は 1 g が全部エネルギーになった場合で、核分裂ではそのうち約 1000 分の 1 しか質量が減らない。"
+   }
+  ],
+  "points": [
+   [
+    "熱源が違うだけ",
+    "蒸気でタービンを回し復水器で戻す形は火力と同じ。蒸気が低温低圧なので熱効率は 3 割台"
+   ],
+   [
+    "PWR は2つの輪、BWR は1つの輪",
+    "PWR は一次と二次が蒸気発生器で分かれる。BWR は炉心の蒸気がそのままタービンへ"
+   ],
+   [
+    "計算は単位の換算が勝負",
+    "g → kg、MeV → J、J → kWh"
+   ]
+  ],
+  "tour": [
+   {
+    "t": "火力との違いは熱源だけ",
+    "sec": "intro",
+    "focus": "原子炉圧力容器",
+    "set": {
+     "gType": "pwr"
+    },
+    "op": "原子炉からタービン・復水器までを見渡す。",
+    "see": "蒸気でタービンを回し、復水器で水に戻す後半は、隣の火力発電所と同じ形。ボイラの代わりに原子炉がある。",
+    "so": "熱源が燃焼から核分裂に変わっただけ。蒸気の温度・圧力が火力より低いので熱効率は 3 割台にとどまり、同じ出力でタービンが大きくなる。",
+    "q": [
+     "R03/5",
+     "H30/4",
+     "H26/4"
+    ]
+   },
+   {
+    "t": "加圧水型（PWR）",
+    "sec": "rogata",
+    "focus": "蒸気発生器",
+    "set": {
+     "gType": "pwr"
+    },
+    "hi": [
+     "type"
+    ],
+    "op": "炉型を 加圧水型 PWR にする。",
+    "see": "一次冷却材の点は原子炉と蒸気発生器のあいだだけを回り、別の点が蒸気発生器からタービンへ向かう。加圧器が一次系につながっている。",
+    "so": "一次系を加圧して沸騰させないのが PWR。タービンへ行く二次側の蒸気は、放射性物質を含む一次冷却材と分かれている。",
+    "q": [
+     "R05下/4",
+     "R04下/4",
+     "H27/4",
+     "H25/4",
+     "H22/4",
+     "H20/4",
+     "H19/4"
+    ]
+   },
+   {
+    "t": "沸騰水型（BWR）",
+    "sec": "rogata",
+    "focus": "再循環ポンプ",
+    "set": {
+     "gType": "bwr"
+    },
+    "hi": [
+     "type"
+    ],
+    "op": "炉型を 沸騰水型 BWR にする。",
+    "see": "蒸気発生器と加圧器が消え、原子炉から直接タービンへ蒸気が出る。制御棒は下から入る。",
+    "so": "BWR は炉心で直接沸騰させる。構造は簡単になるが、タービン側にも放射性物質を含む蒸気が行く。制御棒が下から入るのは、炉心の上に気水分離器などがあるため。",
+    "q": [
+     "R04下/4",
+     "R04上/4",
+     "H27/4",
+     "H19/4"
+    ]
+   },
+   {
+    "t": "制御棒と臨界",
+    "sec": "rinkai",
+    "focus": "制御棒",
+    "set": {
+     "gType": "pwr",
+     "gRod": 0.5
+    },
+    "hi": [
+     "rod"
+    ],
+    "op": "制御棒の挿入を 50 % から 80 % に動かす。",
+    "see": "制御棒が燃料のあいだに深く入り、右の図の点が「減る」側へ動く。",
+    "so": "制御棒は中性子を吸収する。核分裂で生まれる中性子と失われる中性子が釣り合う状態が臨界で、入れれば出力は下がる。図は向きを示す模式で、臨界の位置は実機の値ではない。",
+    "q": [
+     "H20/4"
+    ]
+   },
+   {
+    "t": "出力調整の違い",
+    "sec": "rinkai",
+    "set": {
+     "gType": "bwr"
+    },
+    "hi": [
+     "ctl"
+    ],
+    "op": "炉型を切り替えて「出力の調整」の行を比べる。",
+    "see": "PWR は 制御棒と一次冷却材中のほう素濃度、BWR は 制御棒と再循環ポンプの流量。",
+    "so": "BWR では再循環流量を増やすと炉心の泡（ボイド）が減って中性子の減速がよく効き、出力が上がる。PWR はほう素（中性子を吸収する）の濃度で調整する。",
+    "q": [
+     "R04上/4",
+     "H20/4"
+    ]
+   },
+   {
+    "t": "E = Δm·c²",
+    "sec": "keisan",
+    "set": {
+     "gCalc": "dm",
+     "gDm": 1
+    },
+    "hi": [
+     "E",
+     "coal"
+    ],
+    "op": "エネルギーの計算を 質量欠損 にし、Δm を 1 g にする。",
+    "see": "E = 1×10⁻³ kg × (3×10⁸)² = 9×10¹³ J ≒ 2.5×10⁷ kWh。同じ熱量の石炭は約 3,600 t（発熱量 25 MJ/kg）。",
+    "so": "質量は kg に直してから c² を掛ける。J → kWh は 3.6×10⁶ で割る。石炭や重油との比較は、同じ熱量を出すのに要る量で比べる。",
+    "q": [
+     "R08上/4",
+     "R06上/4",
+     "R05上/4",
+     "R01/4",
+     "H29/4",
+     "H24/4",
+     "H18/13"
+    ]
+   },
+   {
+    "t": "1 回 200 MeV で数える",
+    "sec": "keisan",
+    "set": {
+     "gCalc": "fis",
+     "gU": 1
+    },
+    "hi": [
+     "E"
+    ],
+    "op": "エネルギーの計算を 核分裂 200 MeV にし、ウラン235 を 1 g にする。",
+    "see": "1 g は 1/235 mol で約 2.56×10²¹ 個。1 個 200 MeV なので約 8.2×10¹⁰ J。",
+    "so": "原子の個数 = 質量［g］/質量数 × アボガドロ数。MeV は J に直す（1 eV = 1.602×10⁻¹⁹ J）。",
+    "q": [
+     "R06上/4",
+     "H23/4"
+    ]
+   }
+  ],
+  "check": [
+   [
+    "E = mc² で質量に入れる単位",
+    "kg。g のまま入れると 1000 倍ずれる。"
+   ],
+   [
+    "PWR と BWR で制御棒を入れる向き",
+    "PWR は上から、BWR は下から。"
+   ],
+   [
+    "PWR の加圧器の役目",
+    "一次冷却材の圧力を高く保ち、沸騰させない。"
+   ],
+   [
+    "BWR の出力を再循環流量で上げられるのはなぜか",
+    "流量を増やすと炉心の泡が減り、中性子の減速がよく効くから。"
+   ],
+   [
+    "軽水炉の減速材と冷却材",
+    "どちらも軽水（ふつうの水）。"
+   ],
+   [
+    "原子力発電の熱効率が火力より低い理由",
+    "蒸気の温度・圧力が低いから。"
+   ]
+  ],
+  "cards": []
+ },
+ "kaihei-hogo": {
+  "oneLiner": "断路器は電流を切れない。止めるのは 遮断器 → 断路器。短絡電流は基準をそろえた %Z で決まる。",
+  "exam": [
+   [
+    "操作の順序",
+    "止める: CB → DS ／ 入れる: DS → CB",
+    "断路器は電流を切れないので、電流の無いときだけ操作する"
+   ],
+   [
+    "基準容量への換算",
+    "%Z′ = %Z × 基準容量/自己容量",
+    "容量の違う機器の %Z は、そろえてから足す"
+   ],
+   [
+    "短絡容量と短絡電流",
+    "Ps = 100·Pb/%Z、Is = Ps/(√3·V)",
+    "遮断器はこれ以上の定格遮断電流のものを選ぶ"
+   ],
+   [
+    "CT と VT",
+    "CT: 二次開放禁止／VT: 二次短絡禁止",
+    "CT は電流源、VT は電圧源と考えると覚えやすい"
+   ],
+   [
+    "避雷器",
+    "酸化亜鉛（ZnO）素子・ギャップなし",
+    "過電圧のときだけ流し、続流を止める"
+   ]
+  ],
+  "predict": [
+   {
+    "q": "送電中の回路を止めるときの操作の順は？",
+    "opts": [
+     "断路器 → 遮断器",
+     "遮断器 → 断路器",
+     "両方を同時に切る",
+     "どちらが先でもよい"
+    ],
+    "ans": 1,
+    "set": {
+     "bDS": true,
+     "bCB": true,
+     "bWarn": "",
+     "bSt": 20,
+     "bZt": 10,
+     "bZs": 1,
+     "bV": 6.6
+    },
+    "hi": "seq",
+    "why": "断路器は電流を切れない。先に遮断器で電流を止め、電流が無くなってから断路器を開く。入れるときは逆に 断路器 → 遮断器。3Dで遮断器が入ったまま断路器を切ろうとすると止められる。"
+   },
+   {
+    "q": "容量 20 MVA、%Z 10 %（自己容量基準）の変圧器。10 MVA 基準に換算した %Z は？",
+    "opts": [
+     "5 %",
+     "10 %",
+     "20 %",
+     "2 %"
+    ],
+    "ans": 0,
+    "set": {
+     "bDS": true,
+     "bCB": true,
+     "bWarn": "",
+     "bSt": 20,
+     "bZt": 10,
+     "bZs": 1,
+     "bV": 6.6
+    },
+    "hi": "Zt",
+    "why": "%Z′ = 10 × 10/20 = 5 %。基準容量を小さくすると %Z も小さくなる（同じインピーダンスを、小さい定格電流で見るため）。逆数を掛けると 20 % になる。"
+   },
+   {
+    "q": "短絡点までの %Z が系統側 1 %、変圧器 5 %（どちらも 10 MVA 基準）。短絡容量は？",
+    "opts": [
+     "約 60 MVA",
+     "約 167 MVA",
+     "約 600 MVA",
+     "約 1667 MVA"
+    ],
+    "ans": 1,
+    "set": {
+     "bDS": true,
+     "bCB": true,
+     "bWarn": "",
+     "bSt": 20,
+     "bZt": 10,
+     "bZs": 1,
+     "bV": 6.6
+    },
+    "hi": "Ps",
+    "why": "合成 %Z = 1 + 5 = 6 %。Ps = 100 × 10 ÷ 6 ≒ 167 MVA。6.6 kV なら短絡電流は 14.6 kA で、遮断器はこれ以上の定格遮断電流のものを選ぶ。"
+   }
+  ],
+  "points": [
+   [
+    "切れるのは遮断器だけ",
+    "断路器は電流の無い回路を目で見て開くためのもの"
+   ],
+   [
+    "%Z は基準をそろえて足す",
+    "直列の %Z を足した合成 %Z が短絡容量を決める"
+   ],
+   [
+    "%Z の表と裏",
+    "%Z が小さいと電圧変動は小さいが、短絡電流は大きい"
+   ]
+  ],
+  "tour": [
+   {
+    "t": "変電所の並び",
+    "sec": "intro",
+    "focus": "受電用の鉄構",
+    "set": {
+     "bDS": true,
+     "bCB": true,
+     "bWarn": "",
+     "bSt": 20,
+     "bZt": 10,
+     "bZs": 1,
+     "bV": 6.6
+    },
+    "hi": [
+     "st"
+    ],
+    "op": "受電用の鉄構から主変圧器・母線までを、光る点に沿って目で追う。",
+    "see": "鉄構 → 避雷器 → 断路器 → 遮断器（上に変流器）→ 主変圧器 → 母線 と並び、母線のそばに計器用変圧器がある。",
+    "so": "変電所は「電圧を変える（変圧器）」「切る（遮断器・断路器）」「測る（CT・VT）」「守る（避雷器・継電器）」の集まり。論説ではこの役割分担が問われる。",
+    "q": [
+     "R01/7",
+     "H21/6",
+     "H20/6",
+     "H18/4"
+    ]
+   },
+   {
+    "t": "止める順序",
+    "sec": "shadanki:intro",
+    "focus": "遮断器",
+    "set": {
+     "bDS": true,
+     "bCB": true,
+     "bWarn": "",
+     "bSt": 20,
+     "bZt": 10,
+     "bZs": 1,
+     "bV": 6.6
+    },
+    "hi": [
+     "st",
+     "seq"
+    ],
+    "op": "遮断器 CB を 切 にし、次に断路器 DS を 切 にする。",
+    "see": "遮断器を切ると光る点（電流）が止まる。そのあと断路器の刃が持ち上がって開く。",
+    "so": "遮断器は負荷電流も事故電流も切れる。断路器は電流を切れず、電流の無い回路を目で見て開くためのもの。止めるのは 遮断器 → 断路器、入れるのは 断路器 → 遮断器。",
+    "q": [
+     "R03/8",
+     "R02/7",
+     "H28/7"
+    ]
+   },
+   {
+    "t": "インターロック",
+    "sec": "shadanki:intro",
+    "focus": "断路器",
+    "set": {
+     "bDS": true,
+     "bCB": true,
+     "bWarn": "",
+     "bSt": 20,
+     "bZt": 10,
+     "bZs": 1,
+     "bV": 6.6
+    },
+    "hi": [
+     "warn"
+    ],
+    "op": "遮断器が入ったまま、断路器 DS を 切 にしようとする。",
+    "see": "断路器は動かず、読み値に警告が出る。",
+    "so": "電流が流れたまま断路器を開くとアークが出て危険。実設備でも機械的・電気的なインターロックで、この順序違いを止める。",
+    "q": [
+     "R03/8"
+    ]
+   },
+   {
+    "t": "%Z を基準容量にそろえる",
+    "sec": "henatsuki:tanraku",
+    "focus": "主変圧器",
+    "set": {
+     "bDS": true,
+     "bCB": true,
+     "bWarn": "",
+     "bSt": 20,
+     "bZt": 10,
+     "bZs": 1,
+     "bV": 6.6
+    },
+    "hi": [
+     "Zt",
+     "Z",
+     "Ps"
+    ],
+    "op": "主変圧器の容量を 20 MVA から 10 MVA に動かす。",
+    "see": "10 MVA 基準に換算した変圧器の %Z が 5 % から 10 % になり、合成 %Z と短絡容量が変わる。右の棒の2本目が伸びる。",
+    "so": "%Z は自己容量基準の値。容量の違う機器を足すときは、まず共通の基準容量に換算する（%Z′ = %Z × 基準容量/自己容量）。",
+    "q": [
+     "R05上/13",
+     "R04下/6",
+     "H28/16",
+     "H20/8"
+    ]
+   },
+   {
+    "t": "短絡電流と遮断器の定格",
+    "sec": "henatsuki:tanraku",
+    "focus": "遮断器",
+    "set": {
+     "bDS": true,
+     "bCB": true,
+     "bWarn": "",
+     "bSt": 20,
+     "bZt": 10,
+     "bZs": 1,
+     "bV": 6.6
+    },
+    "hi": [
+     "Is",
+     "cb"
+    ],
+    "op": "主変圧器の %Z を 10 % から 7 % に動かす。",
+    "see": "合成 %Z が 6 % から 4.5 % に下がり、短絡電流が 14.6 kA から 19.4 kA に上がる。必要な遮断器の定格遮断電流も一段上がる。",
+    "so": "Is = Ps/(√3·V)。遮断器はこれ以上の定格遮断電流をもつものを選ぶ。%Z が小さい（電圧変動が小さく好ましい）ほど短絡電流は大きくなる、という表裏の関係。",
+    "q": [
+     "R06上/16",
+     "R05上/16",
+     "R04上/16",
+     "H22/16"
+    ]
+   },
+   {
+    "t": "CT と VT の禁止事項",
+    "sec": "keiki-hensei:intro",
+    "focus": "変流器",
+    "set": {
+     "bDS": true,
+     "bCB": true,
+     "bWarn": "",
+     "bSt": 20,
+     "bZt": 10,
+     "bZs": 1,
+     "bV": 6.6,
+     "bCTr": 200,
+     "bCTi": 3
+    },
+    "hi": [
+     "ct"
+    ],
+    "op": "詳しい操作の 変流比 と 変流器の二次電流 を動かす。",
+    "see": "一次電流 = 二次電流 × 変流比 の値が変わる。",
+    "so": "CT は一次の電流で決まる電流源のようにふるまうので、二次を開放すると二次に高い電圧が出る（開放禁止）。VT は電圧源なので、二次を短絡すると大電流が流れる（短絡禁止）。",
+    "q": [
+     "R06下/7",
+     "R05上/7",
+     "R03/7",
+     "H22/9"
+    ]
+   },
+   {
+    "t": "避雷器",
+    "sec": "zetsuen-hakai:hiraiki",
+    "focus": "避雷器",
+    "set": {
+     "bDS": true,
+     "bCB": true,
+     "bWarn": "",
+     "bSt": 20,
+     "bZt": 10,
+     "bZs": 1,
+     "bV": 6.6
+    },
+    "op": "鉄構のすぐ後ろの避雷器を見る。",
+    "see": "送電線が入ってくる入口側、断路器や変圧器より手前に置かれている。",
+    "so": "雷の過電圧が来たときだけ大地へ電流を流し、過電圧が去れば止める（続流を遮断する）。酸化亜鉛（ZnO）素子は電圧と電流の関係が強い非直線なので、ギャップなしで使える。",
+    "q": [
+     "R07下/6",
+     "R02/9",
+     "H27/7",
+     "H23/10"
+    ]
+   }
+  ],
+  "check": [
+   [
+    "断路器で負荷電流を切ってよいか",
+    "切ってはいけない。断路器は電流を切れない。先に遮断器で切る。"
+   ],
+   [
+    "送電を始めるときの操作順",
+    "断路器 → 遮断器。"
+   ],
+   [
+    "%Z を別の基準容量に換算する式",
+    "%Z′ = %Z × 基準容量/自己容量。"
+   ],
+   [
+    "短絡容量と短絡電流の式",
+    "Ps = 100·Pb/%Z、Is = Ps/(√3·V)。"
+   ],
+   [
+    "CT の二次側を開放してはいけない理由",
+    "一次電流がそのまま励磁になり、二次に高電圧が出て絶縁を壊すおそれがあるから。"
+   ],
+   [
+    "VT の二次側を短絡してはいけない理由",
+    "電圧源を短絡することになり、大電流が流れて焼損するから。"
+   ]
+  ],
+  "cards": []
+ },
+ "kakuu-souden": {
+  "oneLiner": "電圧を2倍にすると損失は1/4。たるみは径間の2乗に比例し、張力に反比例する。",
+  "exam": [
+   [
+    "線電流と損失",
+    "I = P/(√3·V·cosθ)、損失 = 3I²R",
+    "同じ電力なら損失は 1/V² に比例"
+   ],
+   [
+    "電圧降下（近似）",
+    "v ≒ √3·I(R cosθ + X sinθ)",
+    "三相の線間電圧の降下。送電線は X が大きい"
+   ],
+   [
+    "たるみ",
+    "D = W·S²/(8T)",
+    "W［N/m］、S［m］、T［N］。径間の2乗に比例・張力に反比例"
+   ],
+   [
+    "実長",
+    "L = S + 8D²/(3S)",
+    "温度で L が伸びたら、ここから D を解き直す"
+   ],
+   [
+    "架空地線",
+    "雷を先に受けて大地へ流す",
+    "鉄塔の接地抵抗が高いと逆フラッシオーバ"
+   ]
+  ],
+  "predict": [
+   {
+    "q": "径間 300 m、電線の重量 10 N/m、水平張力 20 kN。たるみは？",
+    "opts": [
+     "約 2.8 m",
+     "約 5.6 m",
+     "約 11.3 m",
+     "約 22.5 m"
+    ],
+    "ans": 1,
+    "set": {
+     "tS": 300,
+     "tT": 20,
+     "tW": 10,
+     "tDt": 0,
+     "tAl": 18,
+     "tV": 154,
+     "tP": 100,
+     "tPf": 0.9,
+     "tR": 5,
+     "tX": 15,
+     "tView": "sag"
+    },
+    "hi": "D",
+    "why": "D = 10 × 300² ÷ (8 × 20 000) = 5.625 m。張力を N に直さず kN のまま入れると 1000 倍になる。8 を 4 にすると 11.3 m。"
+   },
+   {
+    "q": "同じ電線で水平張力だけを 2 倍にした。たるみは何倍になるか。",
+    "opts": [
+     "2 倍",
+     "√2 倍",
+     "1/2",
+     "1/4"
+    ],
+    "ans": 2,
+    "set": {
+     "tS": 300,
+     "tT": 40,
+     "tW": 10,
+     "tDt": 0,
+     "tAl": 18,
+     "tV": 154,
+     "tP": 100,
+     "tPf": 0.9,
+     "tR": 5,
+     "tX": 15,
+     "tView": "sag"
+    },
+    "hi": "D",
+    "why": "D は張力 T に反比例するので 1/2（5.625 m → 2.813 m）。径間を 2 倍にすると 4 倍になる。"
+   },
+   {
+    "q": "同じ電力・力率・電線で、送電電圧を 2 倍にした。送電損失は何倍か。",
+    "opts": [
+     "2 倍",
+     "1/2",
+     "1/4",
+     "変わらない"
+    ],
+    "ans": 2,
+    "set": {
+     "tS": 300,
+     "tT": 20,
+     "tW": 10,
+     "tDt": 0,
+     "tAl": 18,
+     "tV": 308,
+     "tP": 100,
+     "tPf": 0.9,
+     "tR": 5,
+     "tX": 15,
+     "tView": "elec"
+    },
+    "hi": "loss",
+    "why": "電流は I = P/(√3·V·cosθ) で 1/2。損失は 3I²R なので (1/2)² = 1/4。高い電圧で送る理由がこれ。"
+   }
+  ],
+  "points": [
+   [
+    "損失は電流の2乗",
+    "電圧を上げて電流を減らすのが最も効く"
+   ],
+   [
+    "たるみは S² と 1/T",
+    "径間が長いほど急に増え、張力を上げると減る"
+   ],
+   [
+    "実長はわずかに長いだけ",
+    "径間との差は数十 cm。その小さな差がたるみでは m の差になる"
+   ]
+  ],
+  "tour": [
+   {
+    "t": "なぜ高い電圧で送るか",
+    "sec": "intro",
+    "set": {
+     "tS": 300,
+     "tT": 20,
+     "tW": 10,
+     "tDt": 0,
+     "tAl": 18,
+     "tV": 154,
+     "tP": 100,
+     "tPf": 0.9,
+     "tR": 5,
+     "tX": 15,
+     "tView": "elec"
+    },
+    "hi": [
+     "I",
+     "loss",
+     "x2"
+    ],
+    "op": "見る対象を 電圧降下・損失 にし、送電電圧を 154 kV から 308 kV に動かす。",
+    "see": "線電流が半分、送電損失が 1/4 になる。右の図の点が曲線を下る。",
+    "so": "同じ電力なら I = P/(√3·V·cosθ) で電流は電圧に反比例し、損失 3I²R は電圧の2乗に反比例する。",
+    "q": [
+     "R06下/12",
+     "R06上/13",
+     "R04上/8",
+     "R02/16",
+     "H29/11",
+     "H24/10",
+     "H19/10"
+    ]
+   },
+   {
+    "t": "電圧降下と力率",
+    "sec": "kaiho",
+    "set": {
+     "tS": 300,
+     "tT": 20,
+     "tW": 10,
+     "tDt": 0,
+     "tAl": 18,
+     "tV": 154,
+     "tP": 100,
+     "tPf": 0.9,
+     "tR": 5,
+     "tX": 15,
+     "tView": "elec"
+    },
+    "hi": [
+     "dV"
+    ],
+    "op": "詳しい操作の 力率 cosθ を 0.90 から 1.00 に動かす。",
+    "see": "電流はわずかに減り、電圧降下は大きく減る。",
+    "so": "電圧降下 ≒ √3·I(R cosθ + X sinθ)。送電線は X が R より大きいので、遅れの無効電力（sinθ の項）を減らすと電圧降下が大きく減る。調相設備で無効電力を加減するのはこのため。",
+    "q": [
+     "R04下/9",
+     "R04下/16",
+     "R04上/6",
+     "H30/17",
+     "H27/17",
+     "H25/16",
+     "H24/7",
+     "H22/11",
+     "H21/7",
+     "H20/16"
+    ]
+   },
+   {
+    "t": "たるみ D = W·S²/(8T)",
+    "sec": "tarumi",
+    "focus": "電線",
+    "set": {
+     "tS": 300,
+     "tT": 20,
+     "tW": 10,
+     "tDt": 0,
+     "tAl": 18,
+     "tV": 154,
+     "tP": 100,
+     "tPf": 0.9,
+     "tR": 5,
+     "tX": 15,
+     "tView": "sag"
+    },
+    "hi": [
+     "D"
+    ],
+    "op": "見る対象を たるみ にし、水平張力 T を 20 kN から 40 kN に動かす。",
+    "see": "たるみ D が 5.63 m から 2.81 m へ半分になる。3D の電線も持ち上がる（10 倍に誇張）。",
+    "so": "D = W·S²/(8T)。張力に反比例し、径間の2乗に比例する。張力を上げすぎると電線や鉄塔に無理がかかり、下げすぎると地上からの高さが足りなくなる。",
+    "q": [
+     "R08上/16",
+     "R06上/12",
+     "R05下/12",
+     "R03/16",
+     "R01/13",
+     "H29/8",
+     "H18/14"
+    ]
+   },
+   {
+    "t": "実長と温度",
+    "sec": "tarumi",
+    "focus": "電線",
+    "set": {
+     "tS": 300,
+     "tT": 20,
+     "tW": 10,
+     "tDt": 0,
+     "tAl": 18,
+     "tV": 154,
+     "tP": 100,
+     "tPf": 0.9,
+     "tR": 5,
+     "tX": 15,
+     "tView": "sag"
+    },
+    "hi": [
+     "L",
+     "Lt",
+     "Dt"
+    ],
+    "op": "詳しい操作の 温度変化 Δt を 0 ℃ から +30 ℃ に動かす。",
+    "see": "実長が 300.281 m から 300.443 m へ伸び、たるみが 5.63 m から約 7.06 m に増える。",
+    "so": "実長 L = S + 8D²/(3S)。径間との差は約 28 cm しかないが、温度でそこに 16 cm 足されると、たるみは 1.4 m 増える。L の変化から D を逆に解き直すのが温度問題の型。",
+    "q": [
+     "R07上/12",
+     "R06下/13",
+     "R03/16",
+     "H24/13"
+    ]
+   },
+   {
+    "t": "架空地線と雷",
+    "sec": "shougai",
+    "focus": "架空地線",
+    "set": {
+     "tS": 300,
+     "tT": 20,
+     "tW": 10,
+     "tDt": 0,
+     "tAl": 18,
+     "tV": 154,
+     "tP": 100,
+     "tPf": 0.9,
+     "tR": 5,
+     "tX": 15,
+     "tView": "sag"
+    },
+    "op": "鉄塔の頂部に張られた架空地線を見る。",
+    "see": "電線より上に、電流を送らない線が1本張ってある。",
+    "so": "雷を電線より先に受け止め、鉄塔から大地へ流す（遮へい）。鉄塔の接地抵抗が高いと、雷電流で鉄塔の電位が上がり電線側へ放電する（逆フラッシオーバ）ので、接地抵抗を下げ、アークホーンでがいしを守る。",
+    "q": [
+     "R07下/8",
+     "R07下/9",
+     "R06上/9",
+     "R05下/9",
+     "R02/6",
+     "H30/10",
+     "H26/8",
+     "H23/7",
+     "H19/7",
+     "H19/8"
+    ]
+   },
+   {
+    "t": "がいしと鉄塔",
+    "sec": "setsubi",
+    "focus": "鉄塔",
+    "set": {
+     "tS": 300,
+     "tT": 20,
+     "tW": 10,
+     "tDt": 0,
+     "tAl": 18,
+     "tV": 154,
+     "tP": 100,
+     "tPf": 0.9,
+     "tR": 5,
+     "tX": 15,
+     "tView": "sag"
+    },
+    "op": "鉄塔の腕から下がるがいし連を見る。",
+    "see": "円板形のがいしを何個も連ねて電線を吊っている。",
+    "so": "がいしの個数は電圧が高いほど多い。海に近い地域では表面の塩分で漏れ電流が増え、せん絡しやすくなるので、がいしの増結・洗浄・はっ水性物質の塗布などで対策する。",
+    "q": [
+     "R07上/8",
+     "R06下/8",
+     "R05下/8",
+     "R04下/8",
+     "R03/10",
+     "R01/9",
+     "H27/9",
+     "H25/8",
+     "H20/9",
+     "H20/10",
+     "H18/7"
+    ]
+   }
+  ],
+  "check": [
+   [
+    "送電電圧を2倍にすると損失は",
+    "1/4。電流が 1/2 になり、損失は電流の2乗に比例する。"
+   ],
+   [
+    "三相の電圧降下の近似式",
+    "√3·I(R cosθ + X sinθ)。"
+   ],
+   [
+    "たるみの式と、張力・径間への依存",
+    "D = W·S²/(8T)。張力に反比例、径間の2乗に比例。"
+   ],
+   [
+    "電線の実長の式",
+    "L = S + 8D²/(3S)。"
+   ],
+   [
+    "逆フラッシオーバとは",
+    "雷で鉄塔の電位が上がり、鉄塔側から電線側へ放電すること。接地抵抗を下げて防ぐ。"
+   ],
+   [
+    "フェランチ効果とは",
+    "軽負荷のとき、線路の静電容量の電流で受電端電圧が送電端より高くなること（3Dでは扱わない）。"
+   ]
+  ],
+  "cards": []
+ },
+ "haiden": {
+  "oneLiner": "単相3線式: 中性線には外線の電流の差が流れ、切れると軽い負荷に高い電圧。三相3線式: 電圧降下 ≒ (P·R + Q·X)/V、力率を上げると損失は cos² に反比例して減る。",
+  "exam": [
+   [
+    "単相3線式",
+    "a–n・n–b に 100 V、a–b に 200 V",
+    "同じ太さの線で単相2線式より多く送れる"
+   ],
+   [
+    "中性線電流",
+    "In = Ia − Ib",
+    "平衡なら 0。不平衡で重い側の電圧が下がる"
+   ],
+   [
+    "中性線の断線",
+    "負荷が 200 V に直列になる",
+    "抵抗の比で分けるので、軽い負荷（抵抗大）に高い電圧"
+   ],
+   [
+    "バランサ",
+    "巻数比 1:1 の単巻変圧器",
+    "負荷端の電圧をそろえ、中性線電流を 0 にする"
+   ],
+   [
+    "抵抗負荷の抵抗",
+    "R = V²/P",
+    "定格 100 V・1000 W なら 10 Ω"
+   ],
+   [
+    "三相3線式の電圧降下",
+    "v ≒ √3·I(R cosθ + X sinθ) = (P·R + Q·X)/V",
+    "電圧降下率は**受電端電圧**に対する割合"
+   ],
+   [
+    "力率改善",
+    "I ∝ 1/cosθ、損失 ∝ 1/cos²θ",
+    "コンデンサは無効電力だけを減らす（有効電力は変わらない）"
+   ]
+  ],
+  "predict": [
+   {
+    "q": "負荷1 が 500 W、負荷2 が 1000 W（どちらも 100 V 定格の抵抗負荷）。中性線が切れたとき、負荷1 にかかる電圧は（線路抵抗は無視）？",
+    "opts": [
+     "約 67 V",
+     "100 V",
+     "約 133 V",
+     "200 V"
+    ],
+    "ans": 2,
+    "set": {
+     "hView": "sp",
+     "hP1": 500,
+     "hP2": 1000,
+     "hBreak": true,
+     "hBal": false,
+     "hR": 0,
+     "hRn": 0.1
+    },
+    "hi": "V1",
+    "why": "抵抗は R = 100²/P で 20 Ω と 10 Ω。中性線が切れると 200 V を 20:10 で分けるので、負荷1 は 200 × 20/30 ≒ 133 V、負荷2 は 67 V。軽い負荷のほうが高い電圧を受けて、機器を壊すおそれがある。"
+   },
+   {
+    "q": "不平衡な単相3線式の負荷端にバランサを付けた。中性線の電流は？",
+    "opts": [
+     "外線の電流の差",
+     "0",
+     "外線の電流の和",
+     "負荷1 の電流と同じ"
+    ],
+    "ans": 1,
+    "set": {
+     "hView": "sp",
+     "hP1": 1500,
+     "hP2": 500,
+     "hBreak": false,
+     "hBal": true,
+     "hR": 0.1,
+     "hRn": 0.1
+    },
+    "hi": "In",
+    "why": "バランサは負荷端で a–n と n–b の電圧を等しくする。外線 a と b の電流がそろうので、中性線の電流は 0 になる。負荷の差の分はバランサの中を流れる。"
+   },
+   {
+    "q": "負荷1 が 1500 W、負荷2 が 500 W。中性線が健全なとき、電圧が低くなるのはどちらか。",
+    "opts": [
+     "負荷1（重い側）",
+     "負荷2（軽い側）",
+     "どちらも同じ",
+     "中性線の太さで決まる"
+    ],
+    "ans": 0,
+    "set": {
+     "hView": "sp",
+     "hP1": 1500,
+     "hP2": 500,
+     "hBreak": false,
+     "hBal": false,
+     "hR": 0.1,
+     "hRn": 0.1
+    },
+    "hi": "V1",
+    "why": "重い側の外線に大きな電流が流れて電圧降下が大きい。さらに中性線の電圧降下が重い側では引く向き、軽い側では足す向きに効くので、軽い側の電圧はかえって上がる。"
+   },
+   {
+    "q": "三相3線式。受電端電圧 6.6 kV、負荷 2000 kW・力率 0.8（遅れ）、1線の抵抗 0.5 Ω・リアクタンス 1 Ω。電圧降下率は（受電端基準）？",
+    "opts": [
+     "約 2.3 %",
+     "約 3.4 %",
+     "約 5.7 %",
+     "約 9.9 %"
+    ],
+    "ans": 2,
+    "set": {
+     "hView": "tp",
+     "h3Vr": 6.6,
+     "h3P": 2000,
+     "h3Pf": 0.8,
+     "h3R": 0.5,
+     "h3X": 1,
+     "h3Qc": 0
+    },
+    "hi": "rate",
+    "why": "無効電力 Q = 2000 × 0.75 = 1500 kvar。v = (P·R + Q·X)/Vr = (2000×10³ × 0.5 + 1500×10³ × 1)/6600 ≒ 378.8 V で、6600 V に対して 5.74 %。R だけだと 2.3 %、X だけだと 3.4 %。√3 を余計に掛けると 9.9 %。"
+   },
+   {
+    "q": "同じ負荷にコンデンサを入れ、力率を 0.8 から 1.0 にした（有効電力は同じ）。線路損失は何倍になるか。",
+    "opts": [
+     "0.8 倍",
+     "0.64 倍",
+     "1.25 倍",
+     "変わらない"
+    ],
+    "ans": 1,
+    "set": {
+     "hView": "tp",
+     "h3Vr": 6.6,
+     "h3P": 2000,
+     "h3Pf": 0.8,
+     "h3R": 0.5,
+     "h3X": 1,
+     "h3Qc": 1500
+    },
+    "hi": "loss",
+    "why": "電流は cosθ に反比例するので 0.8 倍、損失は電流の2乗で 0.8² = 0.64 倍（71.7 kW → 45.9 kW）。"
+   }
+  ],
+  "points": [
+   [
+    "中性線は差を運ぶ",
+    "平衡なら 0、不平衡なら差の分だけ流れる"
+   ],
+   [
+    "断線は危ない",
+    "2つの負荷が直列になり、軽い負荷に高い電圧がかかる"
+   ],
+   [
+    "バランサで差を吸収",
+    "負荷端の電圧をそろえ、中性線電流を 0 にする"
+   ]
+  ],
+  "tour": [
+   {
+    "t": "単相3線式の形",
+    "sec": "houshiki",
+    "focus": "柱上変圧器",
+    "set": {
+     "hView": "sp",
+     "hP1": 1000,
+     "hP2": 1000,
+     "hBreak": false,
+     "hBal": false,
+     "hR": 0.1,
+     "hRn": 0.1
+    },
+    "hi": [
+     "V1",
+     "V2"
+    ],
+    "op": "柱上変圧器から出る3本の低圧線を見る。",
+    "see": "外線 a・中性線 n・外線 b。負荷1 は a–n、負荷2 は n–b にかかり、どちらも 100 V 近く（a–b 間は 200 V）。",
+    "so": "同じ太さの電線で単相2線式より多く送れ、200 V の機器も使える。代わりに、中性線が切れたときの電圧の偏りに弱い。",
+    "q": [
+     "R07上/11",
+     "R03/12",
+     "R01/12",
+     "H28/12",
+     "H19/13"
+    ]
+   },
+   {
+    "t": "不平衡と中性線の電流",
+    "sec": "formula",
+    "focus": "中性線",
+    "set": {
+     "hView": "sp",
+     "hP1": 1500,
+     "hP2": 500,
+     "hBreak": false,
+     "hBal": false,
+     "hR": 0.1,
+     "hRn": 0.1
+    },
+    "hi": [
+     "In",
+     "V1",
+     "V2"
+    ],
+    "op": "負荷1 を 1500 W、負荷2 を 500 W にする。",
+    "see": "中性線に外線の電流の差が流れ、負荷1 の電圧が下がり、負荷2 の電圧が上がる。",
+    "so": "中性線電流 = 外線 a の電流 − 外線 b の電流。重い側の電圧が下がり、軽い側が上がる（中性線の電圧降下の向きのため）。",
+    "q": [
+     "R08上/13",
+     "R05下/17",
+     "R04下/17",
+     "H28/17",
+     "H23/9",
+     "H19/17"
+    ]
+   },
+   {
+    "t": "中性線の断線",
+    "sec": "trap",
+    "focus": "中性線",
+    "set": {
+     "hView": "sp",
+     "hP1": 500,
+     "hP2": 1000,
+     "hBreak": true,
+     "hBal": false,
+     "hR": 0,
+     "hRn": 0.1
+    },
+    "hi": [
+     "V1",
+     "V2"
+    ],
+    "op": "負荷1 を 500 W、負荷2 を 1000 W にして、中性線を 断線 にする。",
+    "see": "負荷1 に約 133 V、負荷2 に約 67 V がかかる。軽い負荷1 の電球が明るすぎ、重い負荷2 の電球が暗い。",
+    "so": "中性線が切れると2つの負荷が 200 V に直列になり、抵抗の比で分ける。R = V²/P なので軽い（W が小さい）負荷ほど抵抗が大きく、高い電圧を受ける。",
+    "q": [
+     "R08上/13"
+    ]
+   },
+   {
+    "t": "バランサ",
+    "sec": "houshiki",
+    "focus": "バランサ",
+    "set": {
+     "hView": "sp",
+     "hP1": 1500,
+     "hP2": 500,
+     "hBreak": false,
+     "hBal": true,
+     "hR": 0.1,
+     "hRn": 0.1
+    },
+    "hi": [
+     "In",
+     "V1",
+     "V2",
+     "loss"
+    ],
+    "op": "負荷を不平衡にしたまま、バランサを あり にする。",
+    "see": "2つの負荷の電圧がそろい、中性線の電流が 0 になる。線路損失も減る。",
+    "so": "バランサは巻数比 1:1 の単巻変圧器で、負荷端で a–n と n–b の電圧を等しくする。外線 a・b の電流がそろうので中性線電流は 0 になる。",
+    "q": [
+     "R08上/17",
+     "H28/17"
+    ]
+   },
+   {
+    "t": "三相3線式の電圧降下",
+    "sec": "formula",
+    "focus": "高圧配電線",
+    "set": {
+     "hView": "tp",
+     "h3Vr": 6.6,
+     "h3P": 2000,
+     "h3Pf": 0.8,
+     "h3R": 0.5,
+     "h3X": 1,
+     "h3Qc": 0
+    },
+    "hi": [
+     "I",
+     "v",
+     "rate",
+     "Vs"
+    ],
+    "op": "方式を 三相3線式 にする。",
+    "see": "高圧配電線の3本から工場へ送る形に変わる。2000 kW・力率 0.8 で、線電流 218.7 A、電圧降下 378.8 V、電圧降下率 5.74 %。",
+    "so": "電圧降下 v ≒ √3·I(R cosθ + X sinθ)。I = P/(√3·V·cosθ) を入れると v = (P·R + Q·X)/V になり、有効電力 P は R に、無効電力 Q は X に効く。電圧降下率は受電端電圧に対する割合で、送電端電圧ではない。",
+    "q": [
+     "R07下/16",
+     "R07上/13",
+     "R06上/17",
+     "R05上/12",
+     "R05上/17",
+     "R04上/17",
+     "R02/17",
+     "H29/17",
+     "H28/9",
+     "H27/16",
+     "H26/7",
+     "H25/13",
+     "H21/10",
+     "H20/17",
+     "H18/16"
+    ]
+   },
+   {
+    "t": "力率改善用コンデンサ",
+    "sec": "formula",
+    "focus": "工場",
+    "set": {
+     "hView": "tp",
+     "h3Vr": 6.6,
+     "h3P": 2000,
+     "h3Pf": 0.8,
+     "h3R": 0.5,
+     "h3X": 1,
+     "h3Qc": 0
+    },
+    "hi": [
+     "Q",
+     "pf",
+     "I",
+     "v",
+     "loss"
+    ],
+    "op": "力率改善用コンデンサ Qc を 0 から 1500 kvar に増やす。",
+    "see": "無効電力が 1500 → 0 kvar、力率が 0.80 → 1.00 になり、線電流 218.7 → 175.0 A、電圧降下 378.8 → 151.5 V、損失 71.7 → 45.9 kW と減る。光る点もゆっくりになる。",
+    "so": "コンデンサは遅れ無効電力を打ち消すだけで、有効電力は変わらない。電流は 1/cosθ、損失は 1/cos²θ に比例して減る。右の図のとおり、力率 1 を超えて入れすぎると進み力率になり、損失はまた増え、電圧は上がりすぎる。",
+    "q": [
+     "R07下/17",
+     "R07上/13",
+     "R04上/17",
+     "H30/13",
+     "H29/17",
+     "H21/17"
+    ]
+   },
+   {
+    "t": "電圧を上げると",
+    "sec": "houshiki",
+    "focus": "高圧配電線",
+    "set": {
+     "hView": "tp",
+     "h3Vr": 6.6,
+     "h3P": 2000,
+     "h3Pf": 0.8,
+     "h3R": 0.5,
+     "h3X": 1,
+     "h3Qc": 0
+    },
+    "hi": [
+     "I",
+     "loss",
+     "rate"
+    ],
+    "op": "詳しい操作の 受電端電圧 を 6.6 kV から 22 kV にする。",
+    "see": "同じ負荷で線電流が 218.7 → 65.6 A（6.6/22 = 0.3 倍）、損失は 71.7 → 6.46 kW（0.09 倍）になる。",
+    "so": "電流は電圧に反比例し、損失は電圧の2乗に反比例する。22(33) kV 配電は 6.6 kV より大きな負荷を少ない損失で送れる。代わりに機器の絶縁や受電設備が高価になる。",
+    "q": [
+     "R05上/11",
+     "H21/8"
+    ]
+   }
+  ],
+  "check": [
+   [
+    "単相3線式で 200 V がとれるのはどこか",
+    "外線 a と外線 b のあいだ。"
+   ],
+   [
+    "中性線の電流は何で決まるか",
+    "外線 a と外線 b の電流の差。"
+   ],
+   [
+    "中性線が切れると、どちらの負荷に高い電圧がかかるか",
+    "軽い負荷（抵抗が大きいほう）。"
+   ],
+   [
+    "バランサを付けると中性線の電流はどうなるか",
+    "0 になる。"
+   ],
+   [
+    "中性線にヒューズを入れないのはなぜか",
+    "溶断すると中性線の断線と同じになり、負荷に異常な電圧がかかるから。"
+   ],
+   [
+    "三相3線式の電圧降下を P と Q で書くと",
+    "v ≒ (P·R + Q·X)/V。P・Q は三相分、V は線間電圧。"
+   ],
+   [
+    "電圧降下率の分母は",
+    "受電端電圧。"
+   ],
+   [
+    "力率を 0.8 から 1 に改善すると線路損失は何倍か（有効電力は同じ）",
+    "0.8² = 0.64 倍。"
+   ]
+  ],
+  "cards": []
+ }
+};
+const CARDS = {};
+/* ツアーの各歩から過去問を名指しで引くための表。キーは「年度/問番号」 */
+const QID = new Map(KAKOMON.map(q => [q.s + '/' + q.c, q]));
+
+
+/* ============================================================ 3D */
+const stage = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.insertBefore(renderer.domElement, stage.firstChild);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a2028);
+scene.fog = new THREE.Fog(0x1a2028, 70, 170);
+const camera = new THREE.PerspectiveCamera(42, 1, .1, 260);
+
+scene.add(new THREE.HemisphereLight(0xdfe6ee, 0x2a2f36, .75));
+const sun = new THREE.DirectionalLight(0xfff2e0, .9);
+sun.position.set(12, 22, 10); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, {left:-38, right:38, top:22, bottom:-22, near:1, far:90});
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xbfd0e6, .35); fill.position.set(-15, 10, -12); scene.add(fill);
+
+const std = (o) => new THREE.MeshStandardMaterial(o);
+const M = {
+  steel: std({color:0x6b7580, metalness:.45, roughness:.55}),
+  steelDark: std({color:0x3b5a73, metalness:.35, roughness:.6}),
+  steelLight: std({color:0x8e9aa6, metalness:.5, roughness:.45}),
+  rotorIron: std({color:0x5c6b78, metalness:.4, roughness:.6}),
+  copper: std({color:0xc07a3a, metalness:.7, roughness:.35}),
+  copperDark: std({color:0xa05a25, metalness:.7, roughness:.4}),
+  copperCut: std({color:0xa05a25, metalness:.7, roughness:.4, side:THREE.DoubleSide}),
+  brass: std({color:0xd9c7a0, metalness:.6, roughness:.4}),
+  ceramic: std({color:0xe6d3a3, roughness:.7}),
+  black: std({color:0x2b2b2b, roughness:.8}),
+  floor: std({color:0x2a3038, roughness:.95}),
+  wall: std({color:0x232930, roughness:1}),
+  u: std({color:0xd24a43, roughness:.5}),
+  v: std({color:0xc9a227, roughness:.5}),
+  w: std({color:0x3572d6, roughness:.5}),
+  arrow: std({color:0xf0b57e, emissive:0x8a5020, emissiveIntensity:.5}),
+  flux: std({color:0xffd9a0, emissive:0xffb060, emissiveIntensity:1.2}),
+  north: std({color:0xc94a44, roughness:.6}),
+  south: std({color:0x3572d6, roughness:.6}),
+  ghost: std({color:0xd24a43, transparent:true, opacity:.3, side:THREE.DoubleSide}),
+  ghostGrey: std({color:0x9aa5b1, transparent:true, opacity:.18, side:THREE.DoubleSide}),
+  frame: std({color:0x3b5a73, metalness:.35, roughness:.6, side:THREE.DoubleSide}),
+  coreRing: std({color:0x7c8790, metalness:.5, roughness:.5, side:THREE.DoubleSide}),
+  window: std({color:0x7fa0bd, emissive:0x3c5a78, emissiveIntensity:.5}),
+  curr: std({color:0xffd2a8, emissive:0xff8a30, emissiveIntensity:1.3}),
+  meter: std({color:0xe9edf0, roughness:.5}),
+  domain: std({color:0xf0b57e, emissive:0x8a5020, emissiveIntensity:.8}),
+  markField: std({color:0xffc47a, emissive:0xff9a2e, emissiveIntensity:1.1}),
+  markRotor: std({color:0xf2f5f7, emissive:0xbcc6cf, emissiveIntensity:.55}),
+  tank: std({color:0x4a5b68, metalness:.4, roughness:.6}),
+  shunt: std({color:0xc07a3a, metalness:.7, roughness:.35}),
+  series: std({color:0x7fb069, metalness:.6, roughness:.4}),
+};
+/* 2点を結ぶ電線。結線図を3D上でそのまま描くために使う */
+const _wa = new THREE.Vector3(), _wb = new THREE.Vector3();
+function wire3(a, b, mat, parent, r){
+  const dir = _wb.copy(b).sub(a), len = dir.length();
+  const o = new THREE.Mesh(new THREE.CylinderGeometry(r || .045, r || .045, len, 8), mat);
+  o.position.copy(_wa.copy(a).add(b).multiplyScalar(.5));
+  o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.normalize());
+  o.castShadow = false; parent.add(o); return o;
+}
+/* 渦は鉄心の「中」を回る電流なので、鉄に隠れず透けて見えるように描く */
+const eddyMat = new THREE.LineBasicMaterial({color:0xffc27a, transparent:true, opacity:.9, depthTest:false});
+const mesh = (g, m, parent, x=0, y=0, z=0) => { const o = new THREE.Mesh(g, m); o.position.set(x,y,z); o.castShadow = o.receiveShadow = true; (parent||scene).add(o); return o; };
+
+/* ---------- 計算モデル（読み値・図・3D はすべてここを見る） ---------- */
+/* 水力。有効落差 H = 総落差 − 損失落差。出力 P = 9.8·Q·H·ηt·ηg［kW］。
+   揚水は全揚程 Hp = 総落差 + 損失落差、所要電力 = 9.8·Q·Hp/(ηp·ηm)。
+   比速度 Ns = N·√Pt / H^(5/4)（Pt は水車出力 kW、H は m） */
+function suModel(){
+  const st = state, H = Math.max(.1, st.sHg - st.sHl), Hp = st.sHg + st.sHl;
+  const Pth = 9.8*st.sQ*H, Pt = Pth*st.sEt, P = Pt*st.sEg, Pin = 9.8*st.sQ*Hp/(st.sEp*st.sEm);
+  return {H, Hp, Pth, Pt, P, Pin, ns: st.sN*Math.sqrt(Pt)/Math.pow(H, 1.25), v: Math.sqrt(2*9.8*H),
+    total: st.sEt*st.sEg*st.sEp*st.sEm*(st.sHg - st.sHl)/(st.sHg + st.sHl)};
+}
+/* 火力。発電端熱効率 η = 3600·P[kW] / (B[kg/h]·H[kJ/kg]) = 3.6·P[MW] / (B[t/h]·H[MJ/kg])。
+   送電端は所内率の分だけ減る。CO2 は燃料中の炭素 c が全部燃えるとして B·c·44/12 */
+function kaModel(){
+  const st = state, eta = 3.6*st.kP/(st.kB*st.kH);
+  return {eta, etaS: eta*(1 - st.kL/100), co2: st.kB*st.kC*44/12, Pin: st.kB*st.kH/3.6};
+}
+/* 原子力。質量欠損 Δm のエネルギー E = Δm·c²。核分裂は 1 回 200 MeV で数える */
+const C0 = 3e8, NA = 6.022e23, MEV = 1.602e-13;
+function geModel(){
+  const st = state;
+  const E = st.gCalc==='dm' ? st.gDm/1000*C0*C0 : st.gU/235*NA*200*MEV;      // J
+  return {E, kWh: E/3.6e6, coal: E/(st.gHc*1e6)/1000, elec: E*st.gEta/3.6e6};   // coal は t
+}
+/* 変電所。%Z は 10 MVA 基準にそろえてから足す（%Z' = %Z × 10/自己容量）。
+   短絡容量 Ps = 100·Pb/%Z、短絡電流 Is = Ps/(√3·V)。遮断器は Is 以上の定格から最小のもの */
+const CB_RATE = [8, 12.5, 16, 20, 25, 31.5, 40, 50, 63];
+function hdModel(){
+  const st = state, Zt = st.bZt*10/st.bSt, Z = st.bZs + Zt, Ps = 100*10/Z, Is = Ps/(Math.sqrt(3)*st.bV);
+  return {Zt, Z, Ps, Is, In: st.bSt/(Math.sqrt(3)*st.bV), cb: CB_RATE.find(r => r >= Is) || null};
+}
+/* 架空送電のたるみ。D = W·S²/(8T)、実長 L = S + 8D²/(3S)。温度が Δt 変わると L' = L(1 + αΔt)、
+   そこから D' = √(3S(L'−S)/8)（張力の変化は無視する標準の扱い） */
+function tdSag(){
+  const st = state, T = st.tT*1000, D = st.tW*st.tS*st.tS/(8*T), L = st.tS + 8*D*D/(3*st.tS);
+  const Lt = L*(1 + st.tAl*1e-6*st.tDt), Dt = Math.sqrt(Math.max(0, 3*st.tS*(Lt - st.tS)/8));
+  return {D, L, Lt, Dt};
+}
+/* 三相3線式の送電。I = P/(√3·V·cosθ)、電圧降下 ≒ √3·I(R cosθ + X sinθ)、損失 3I²R */
+function tdElec(V = state.tV){
+  const st = state, sn = Math.sqrt(1 - st.tPf*st.tPf), I = st.tP*1e6/(Math.sqrt(3)*V*1e3*st.tPf);
+  const dV = Math.sqrt(3)*I*(st.tR*st.tPf + st.tX*sn), loss = 3*I*I*st.tR;
+  return {I, dV, dVp: dV/(V*1e3)*100, loss, lossP: loss/(st.tP*1e6)*100};
+}
+/* 単相3線式（抵抗負荷）を節点方程式で解く。電源側 a=+100・n=0・b=−100 V。
+   負荷は定格 100 V で P[W] の抵抗 R = 100²/P。外線の抵抗 r、中性線の抵抗 rn。
+   中性線が切れたら rn を無限大に。バランサ（1:1 の単巻）は負荷端で V_an = V_nb にし、
+   a と b から同じ電流 x を吸い込んで n へ 2x を返す */
+function hdSolve(){
+  const st = state, R1 = 1e4/st.hP1, R2 = 1e4/st.hP2, r = Math.max(1e-3, st.hR), gn = st.hBreak ? 0 : 1/Math.max(1e-3, st.hRn);
+  const bal = !!st.hBal;
+  /* 未知数 [VA, VN, VB, x] */
+  const A = [
+    [1/r + 1/R1, -1/R1, 0, bal ? 1 : 0],
+    [-1/R1, gn + 1/R1 + 1/R2, -1/R2, bal ? -2 : 0],
+    [0, -1/R2, 1/r + 1/R2, bal ? 1 : 0],
+    bal ? [1, -2, 1, 0] : [0, 0, 0, 1],
+  ], b = [100/r, 0, -100/r, 0];
+  const n = 4;
+  for (let i=0;i<n;i++){                       // ガウスの消去法（部分ピボット）
+    let p = i; for (let k=i+1;k<n;k++) if (Math.abs(A[k][i]) > Math.abs(A[p][i])) p = k;
+    [A[i], A[p]] = [A[p], A[i]]; [b[i], b[p]] = [b[p], b[i]];
+    for (let k=i+1;k<n;k++){ const f = A[k][i]/A[i][i]; for (let j=i;j<n;j++) A[k][j] -= f*A[i][j]; b[k] -= f*b[i]; }
+  }
+  const x = Array(n).fill(0);
+  for (let i=n-1;i>=0;i--){ let t = b[i]; for (let j=i+1;j<n;j++) t -= A[i][j]*x[j]; x[i] = t/A[i][i]; }
+  const [VA, VN, VB] = x, Ia = (100 - VA)/r, Ib = (VB + 100)/r, In = VN*gn;
+  return {V:[VA - VN, VN - VB], Ia, Ib: -Ib, In, loss: Ia*Ia*r + Ib*Ib*r + (gn ? In*In/gn : 0)};
+}
+
+/* 三相3線式の高圧配電線。受電端電圧 Vr・負荷 P・遅れ力率から無効電力 Q を出し、コンデンサ Qc だけ減らす。
+   電圧降下 v ≒ √3·I(R cosθ + X sinθ) = (P·R + Q·X)/Vr、電圧降下率は受電端電圧 Vr に対する割合 */
+function hd3(){
+  const st = state, P = st.h3P*1e3, Q = P*Math.tan(Math.acos(st.h3Pf)) - st.h3Qc*1e3, S = Math.hypot(P, Q), V = st.h3Vr*1e3;
+  const I = S/(Math.sqrt(3)*V), v = (P*st.h3R + Q*st.h3X)/V, loss = 3*I*I*st.h3R;
+  return {P, Q, S, I, pf: P/S, v, rate: v/V*100, Vs: V + v, loss, lossP: loss/P*100};
+}
+
+const state = {
+  current:null, paused:false,
+  sMode:'gen', sType:'francis', sHg:100, sHl:5, sQ:50, sEt:.9, sEg:.97, sEp:.85, sEm:.97, sN:300,
+  kFlow:'water', kP:600, kB:130, kH:44, kL:5, kC:.85,
+  gType:'pwr', gRod:.5, gCalc:'dm', gDm:1, gU:1, gEta:.33, gHc:25,
+  bDS:true, bCB:true, bWarn:'', bSt:20, bZt:10, bZs:1, bV:6.6, bCTr:200, bCTi:3,
+  tView:'sag', tS:300, tT:20, tW:10, tDt:0, tAl:18, tV:154, tP:100, tPf:.9, tR:5, tX:15,
+  hView:'sp', hP1:1000, hP2:1000, hBreak:false, hBal:false, hR:.1, hRn:.1,
+  h3Vr:6.6, h3P:2000, h3Pf:.8, h3R:.5, h3X:1, h3Qc:0,
+};
+
+/* ---------- カメラ ---------- */
+const cam = { target:new THREE.Vector3(0,2,0), dist:60, theta:.35, phi:1.15, want:null };
+function applyCam(){
+  const p = new THREE.Vector3(Math.sin(cam.phi)*Math.sin(cam.theta), Math.cos(cam.phi), Math.sin(cam.phi)*Math.cos(cam.theta)).multiplyScalar(cam.dist).add(cam.target);
+  camera.position.copy(p); camera.lookAt(cam.target);
+}
+const VIEWS = {
+  overview:{target:[0,2,0], dist:60, theta:.35, phi:1.15},
+  suiryoku:{target:[-25,1.8,0], dist:10.5, theta:.45, phi:1.25},
+  karyoku:{target:[-15.3,2.2,0], dist:13, theta:.5, phi:1.2},
+  genshiryoku:{target:[-5,1.4,0], dist:9.5, theta:.45, phi:1.2},
+  'kaihei-hogo':{target:[5,1.3,0], dist:10, theta:.4, phi:1.2},
+  'kakuu-souden':{target:[15,2.2,0], dist:11, theta:.3, phi:1.3},
+  haiden:{target:[25,2.0,0], dist:10, theta:.45, phi:1.2},
+};
+
+/* --- 工場フロア（発電 → 変電 → 送電 → 配電 の順に左から並べる） --- */
+{
+  const W = 80, cx = 0;
+  const floor = mesh(new THREE.PlaneGeometry(W, 40), M.floor, scene, cx); floor.rotation.x = -Math.PI/2; floor.receiveShadow = true;
+  const grid = new THREE.GridHelper(W, 42, 0x3a424c, 0x2f363f); grid.position.set(cx, .01, 0); scene.add(grid);
+  mesh(new THREE.BoxGeometry(W, 9, .5), M.wall, scene, cx, 4.5, -14);
+  for (let i=-4;i<=4;i++){ mesh(new THREE.BoxGeometry(.5,9,.5), M.steel, scene, cx+i*10, 4.5, -13.6); if (i<4) mesh(new THREE.BoxGeometry(5,2.2,.1), M.window, scene, cx+i*10+5, 6.2, -13.7); }
+  for (const m of ORDER) mesh(new THREE.BoxGeometry(8, .3, 5.5), M.steelDark, scene, MACHINES[m].x, .15, 0);
+}
+
+/* ---------- 電力の設備で使う材質と共通の部品 ---------- */
+const DK = {
+  water: std({color:0x3572d6, transparent:true, opacity:.55, roughness:.25}),
+  concrete: std({color:0x9aa1a6, roughness:.9}),
+  glass: std({color:0x9fb3c4, transparent:true, opacity:.22, roughness:.2, side:THREE.DoubleSide}),
+  flame: std({color:0xffb060, emissive:0xff7a20, emissiveIntensity:1.4, transparent:true, opacity:.85}),
+  steam: std({color:0xe9edf0, emissive:0x8a99a6, emissiveIntensity:.4}),
+  hot: std({color:0xd24a43, metalness:.4, roughness:.5}),
+  cold: std({color:0x3572d6, metalness:.4, roughness:.5}),
+  gas: std({color:0x8a8175, roughness:.8}),
+  dotW: std({color:0x7fc4ff, emissive:0x2f7fd0, emissiveIntensity:1.2}),
+  dotS: std({color:0xffe0c8, emissive:0xff7a40, emissiveIntensity:1.2}),
+  dotG: std({color:0xd8cfc0, emissive:0x9a8a70, emissiveIntensity:1}),
+  fuel: std({color:0x7fb069, emissive:0x2f6a20, emissiveIntensity:.5}),
+  rod: std({color:0x2b2b2b, metalness:.5, roughness:.5}),
+  tower: std({color:0x8e9aa6, metalness:.5, roughness:.5}),
+  wireAl: std({color:0xb9c2ca, metalness:.7, roughness:.35}),
+  house: std({color:0xd9c7a0, roughness:.8}),
+  roof: std({color:0x7a3b2e, roughness:.8}),
+  bulb: std({color:0xfff2c0, emissive:0xffd060, emissiveIntensity:1}),
+  pole: std({color:0x9aa1a6, roughness:.85}),
+};
+/* 電流・水・蒸気の流れを光点で描く閉路（または開路）。pts の順が流れる向き */
+function dkPath(parent, pts, n, mat, closed){
+  if (closed) pts = pts.concat([pts[0]]);
+  const cum = [0]; for (let i=1;i<pts.length;i++) cum.push(cum[i-1] + pts[i].distanceTo(pts[i-1]));
+  const dots = []; for (let i=0;i<n;i++){ const d = mesh(new THREE.SphereGeometry(.07,10,10), mat, parent); d.castShadow = false; dots.push(d); }
+  return {pts, cum, total:cum[cum.length-1], dots};
+}
+const _dkp = new THREE.Vector3();
+function dkPathAt(p, s){
+  s = ((s % p.total) + p.total) % p.total;
+  let i = 1; while (i < p.cum.length-1 && p.cum[i] < s) i++;
+  const a = p.pts[i-1], b = p.pts[i], f = (s - p.cum[i-1]) / Math.max(1e-6, p.cum[i] - p.cum[i-1]);
+  return _dkp.copy(a).lerp(b, f);
+}
+function dkRun(p, T, on, dir=1){
+  p.dots.forEach((d, i) => { d.visible = on; if (!on) return;
+    d.position.copy(dkPathAt(p, dir*T + i/p.dots.length*p.total)); });
+}
+const V3 = (x,y,z=0) => new THREE.Vector3(x,y,z);
+const pipe = (a, b, mat, parent, r=.09) => wire3(a, b, mat, parent, r);
+
+/* ---------- 1.1 水力 ----------
+   貯水池 → 導水路 → サージタンク → 水圧管路 → 水車 → 放水路。揚水では流れが逆になる。
+   水車は形式（ペルトン／フランシス／プロペラ）で形が変わる */
+function buildSuiryoku(g){
+  const res = mesh(new THREE.BoxGeometry(1.6,2.2,3.0), DK.water, g, -2.6, 1.4, 0);
+  const dam = mesh(new THREE.BoxGeometry(.5,3.0,3.4), DK.concrete, g, -1.6, 1.6, 0);
+  const head = pipe(V3(-1.35,2.6), V3(0,2.6), M.steel, g, .14);
+  const surge = mesh(new THREE.CylinderGeometry(.3,.3,1.8,20), M.steelLight, g, 0, 3.0, 0);
+  const pen = pipe(V3(0,2.5), V3(1.7,.95), M.steel, g, .14);
+  const house = mesh(new THREE.BoxGeometry(1.6,1.0,1.8), DK.glass, g, 2.2, 1.0, 0);
+  const tail = mesh(new THREE.BoxGeometry(1.2,.35,2.2), DK.water, g, 3.3, .45, 0);
+  const runner = new THREE.Group(); g.add(runner); runner.position.set(2.0, .95, 0);
+  /* 形式ごとの水車。どれか1つだけ見せる */
+  const types = {};
+  { const t = new THREE.Group(); runner.add(t); types.pelton = t;
+    mesh(new THREE.CylinderGeometry(.42,.42,.06,28), M.steelLight, t).rotation.x = Math.PI/2;
+    for (let i=0;i<14;i++){ const a=i/14*Math.PI*2; const b = mesh(new THREE.BoxGeometry(.12,.1,.14), M.brass, t, Math.cos(a)*.47, Math.sin(a)*.47, 0); b.rotation.z = a; } }
+  { const t = new THREE.Group(); runner.add(t); types.francis = t;
+    const sc = mesh(new THREE.TorusGeometry(.5,.13,10,30), M.steelDark, t);
+    mesh(new THREE.CylinderGeometry(.32,.32,.22,24), M.steelLight, t).rotation.x = Math.PI/2;
+    for (let i=0;i<10;i++){ const a=i/10*Math.PI*2; const b = mesh(new THREE.BoxGeometry(.05,.26,.2), M.brass, t, Math.cos(a)*.26, Math.sin(a)*.26, 0); b.rotation.z = a + .5; } }
+  { const t = new THREE.Group(); runner.add(t); types.propeller = t;
+    mesh(new THREE.SphereGeometry(.14,14,14), M.steelLight, t);
+    for (let i=0;i<4;i++){ const a=i/4*Math.PI*2; const b = mesh(new THREE.BoxGeometry(.46,.1,.03), M.brass, t, Math.cos(a)*.27, Math.sin(a)*.27, 0); b.rotation.z = a; b.rotation.x = .5; } }
+  const nozzle = mesh(new THREE.ConeGeometry(.1,.35,12), M.steel, g, 1.55, 1.4, 0); nozzle.rotation.z = Math.PI*.75;
+  const gen = mesh(new THREE.CylinderGeometry(.45,.45,.6,24), M.steelDark, g, 2.0, 1.95, 0);
+  const shaftV = pipe(V3(2.0,1.0), V3(2.0,1.7), M.steelLight, g, .05);
+  const flow = dkPath(g, [V3(-2.6,2.6), V3(-1.35,2.6), V3(0,2.6), V3(0,2.5), V3(1.7,.95), V3(2.0,.95), V3(3.3,.6)], 18, DK.dotW);
+  Object.assign(g.userData, {runner, types, nozzle, flow, T:0});
+  g.userData.labels = (st) => [
+    {obj:res, t:'貯水池（総落差の上の水面）', c:'#3572D6'},
+    {obj:dam, t:'ダム', c:'#9AA1A6'},
+    {obj:head, t:'導水路', c:'#6B7580'},
+    {obj:surge, t:'サージタンク（水撃作用をやわらげる）', c:'#8E9AA6'},
+    {obj:pen, t:'水圧管路（ここで損失落差が出る）', c:'#6B7580'},
+    {obj:runner, t:({pelton:'ペルトン水車（衝動水車）', francis:'フランシス水車（反動水車）', propeller:'プロペラ水車（反動水車）'})[st.sType], c:'#D9C7A0'},
+    ...(st.sType==='pelton' ? [{obj:nozzle, t:'ノズル（水を噴流にしてバケットに当てる）', c:'#6B7580'}] : []),
+    {obj:gen, t: st.sMode==='pump' ? '発電電動機（いまは電動機）' : '発電機', c:'#3B5A73'},
+    {obj:tail, t:'放水路（総落差の下の水面）', c:'#3572D6'},
+  ];
+}
+function animSuiryoku(g, t, st, dt){
+  const u = g.userData; if (!st.paused) u.T += dt;
+  for (const k in u.types) u.types[k].visible = (k === st.sType);
+  u.nozzle.visible = st.sType === 'pelton';
+  const dir = st.sMode === 'pump' ? -1 : 1;
+  u.runner.rotation.z -= (st.paused ? 0 : dir*dt*3);
+  dkRun(u.flow, u.T*1.4, !st.paused, dir);
+}
+
+/* ---------- 1.2 火力（汽力） ----------
+   水・蒸気の環: 復水器 → 給水ポンプ → 節炭器 → ボイラ（蒸発管）→ 過熱器 → タービン → 復水器
+   燃焼ガスの道: 火炉 → 過熱器 → 節炭器 → 空気予熱器 → 煙突（空気は押込通風機 → 空気予熱器 → 火炉） */
+function buildKaryoku(g){
+  const boiler = mesh(new THREE.BoxGeometry(1.4,3.6,1.4), DK.glass, g, -2.4, 2.0, 0);
+  const flame = mesh(new THREE.ConeGeometry(.42,1.0,16), DK.flame, g, -2.4, 1.0, 0);
+  const wall = new THREE.Group(); g.add(wall);
+  for (let i=0;i<6;i++) mesh(new THREE.CylinderGeometry(.04,.04,2.6,6), DK.cold, wall, -2.95+i*.22, 1.9, -.55);
+  const sh = new THREE.Group(); g.add(sh); sh.position.set(-2.4, 3.45, 0);
+  for (let i=0;i<5;i++) mesh(new THREE.TorusGeometry(.3,.04,6,20), DK.hot, sh, 0, 0, -.4+i*.2);
+  const back = mesh(new THREE.BoxGeometry(.7,2.8,1.2), DK.glass, g, -1.3, 2.4, 0);
+  const eco = new THREE.Group(); g.add(eco); eco.position.set(-1.3, 2.3, 0);
+  for (let i=0;i<4;i++) mesh(new THREE.TorusGeometry(.22,.035,6,18), DK.cold, eco, 0, 0, -.3+i*.2);
+  const aph = mesh(new THREE.CylinderGeometry(.35,.35,.5,20), M.steelLight, g, -.55, .9, 0);
+  const stack = mesh(new THREE.CylinderGeometry(.18,.24,4.2,16), M.steel, g, 0, 2.4, -.2);
+  const fan = mesh(new THREE.CylinderGeometry(.22,.22,.3,16), M.steelDark, g, -.55, .35, -.9); fan.rotation.x = Math.PI/2;
+  const hp = mesh(new THREE.CylinderGeometry(.3,.42,.9,20), M.steelLight, g, .9, 1.25, .7); hp.rotation.z = Math.PI/2;
+  const lp = mesh(new THREE.CylinderGeometry(.42,.6,1.1,20), M.steelLight, g, 1.9, 1.25, .7); lp.rotation.z = Math.PI/2;
+  const gen = mesh(new THREE.CylinderGeometry(.42,.42,1.0,20), M.steelDark, g, 3.0, 1.25, .7); gen.rotation.z = Math.PI/2;
+  const cond = mesh(new THREE.BoxGeometry(1.2,.6,1.0), M.tank, g, 1.9, .4, .7);
+  const sea = new THREE.Group(); g.add(sea);
+  pipe(V3(2.5,.3,.45), V3(3.5,.3,.45), DK.cold, sea, .06); pipe(V3(2.5,.5,.95), V3(3.5,.5,.95), DK.water, sea, .06);
+  const pump = mesh(new THREE.CylinderGeometry(.18,.18,.3,14), M.steelDark, g, .3, .3, 1.1);
+  /* 水・蒸気の環（手前 z≈0.7〜1.1）と燃焼ガスの道（奥 z≈0） */
+  const wPts = [V3(1.9,.4,.9), V3(.3,.3,1.1), V3(-1.3,.3,1.1), V3(-1.3,2.3,.45), V3(-1.3,2.3,0), V3(-2.4,2.3,-.55), V3(-2.4,.9,-.55), V3(-2.4,3.45,0), V3(-2.4,3.9,.7), V3(.45,3.9,.7), V3(.45,1.25,.7), V3(1.4,1.25,.7), V3(1.9,.7,.7), V3(1.9,.4,.9)];
+  const gPts = [V3(-2.4,.7,0), V3(-2.4,3.45,.15), V3(-1.3,3.6,.15), V3(-1.3,2.3,.15), V3(-1.3,1.1,.15), V3(-.55,.9,.15), V3(0,.7,-.2), V3(0,4.5,-.2)];
+  const aPts = [V3(-.55,.35,-.9), V3(-.55,.9,-.3), V3(-2.4,.55,-.3)];
+  const wf = dkPath(g, wPts, 26, DK.dotS), gf = dkPath(g, gPts, 16, DK.dotG), af = dkPath(g, aPts, 6, DK.dotW);
+  Object.assign(g.userData, {flame, wf, gf, af, hp, lp, gen, T:0});
+  g.userData.labels = [
+    {obj:boiler, t:'ボイラ（火炉・水管で水を蒸気に）', c:'#9FB3C4'},
+    {obj:sh, t:'過熱器（飽和蒸気をさらに熱する）', c:'#D24A43'},
+    {obj:eco, t:'節炭器（排ガスで給水を予熱）', c:'#3572D6'},
+    {obj:aph, t:'空気予熱器（排ガスで燃焼用空気を予熱）', c:'#8E9AA6'},
+    {obj:fan, t:'押込通風機', c:'#3B5A73'},
+    {obj:stack, t:'煙突', c:'#6B7580'},
+    {obj:hp, t:'高圧タービン', c:'#8E9AA6'},
+    {obj:lp, t:'低圧タービン', c:'#8E9AA6'},
+    {obj:gen, t:'発電機', c:'#3B5A73'},
+    {obj:cond, t:'復水器（蒸気を水に戻す。最大の熱損失）', c:'#4A5B68'},
+    {obj:sea, t:'冷却水（海水）', c:'#3572D6'},
+    {obj:pump, t:'給水ポンプ', c:'#3B5A73'},
+  ];
+}
+function animKaryoku(g, t, st, dt){
+  const u = g.userData; if (!st.paused) u.T += dt;
+  u.flame.scale.set(1, .85 + .15*Math.sin(t*9), 1);
+  dkRun(u.wf, u.T*1.6, st.kFlow==='water' && !st.paused);
+  dkRun(u.gf, u.T*1.3, st.kFlow==='gas' && !st.paused);
+  dkRun(u.af, u.T*1.0, st.kFlow==='gas' && !st.paused);
+  for (const o of [u.hp, u.lp, u.gen]) o.rotation.x -= st.paused ? 0 : dt*4;
+}
+
+/* ---------- 1.3 原子力 ----------
+   PWR: 一次冷却材を加圧して沸騰させず、蒸気発生器で二次側の水を蒸気にする。
+   BWR: 炉心で直接沸騰させ、その蒸気でタービンを回す。制御棒は PWR は上から、BWR は下から入れる */
+function buildGenshiryoku(g){
+  const cv = mesh(new THREE.SphereGeometry(1.7,28,20,0,Math.PI*2,0,Math.PI/2), DK.glass, g, -1.1, .3, 0);
+  const cyl = mesh(new THREE.CylinderGeometry(1.7,1.7,1.4,28,1,true), DK.glass, g, -1.1, -.4+.3+.7, 0);
+  const rpv = mesh(new THREE.CylinderGeometry(.5,.5,2.0,24), DK.glass, g, -1.6, 1.4, 0);
+  const core = new THREE.Group(); g.add(core);
+  for (let i=0;i<9;i++){ const x=(i%3-1)*.2, z=(Math.floor(i/3)-1)*.2; mesh(new THREE.CylinderGeometry(.06,.06,1.0,8), DK.fuel, core, -1.6+x, 1.2, z); }
+  const rods = new THREE.Group(); g.add(rods);
+  for (let i=0;i<4;i++){ const x=(i%2-.5)*.2, z=(Math.floor(i/2)-.5)*.2; mesh(new THREE.CylinderGeometry(.04,.04,1.0,6), DK.rod, rods, x, 0, z); }
+  rods.position.set(-1.6, 1.2, 0);
+  const sg = mesh(new THREE.CylinderGeometry(.32,.32,1.8,18), M.steelLight, g, -.4, 1.4, 0);
+  const pzr = mesh(new THREE.CylinderGeometry(.16,.16,.8,14), M.steelLight, g, -1.0, 2.3, .6);
+  const recirc = mesh(new THREE.CylinderGeometry(.14,.14,.3,12), M.steelDark, g, -1.6, .35, .5);
+  const tb = mesh(new THREE.CylinderGeometry(.3,.45,1.1,18), M.steelLight, g, 1.4, 1.2, 0); tb.rotation.z = Math.PI/2;
+  const gen = mesh(new THREE.CylinderGeometry(.4,.4,.8,18), M.steelDark, g, 2.5, 1.2, 0); gen.rotation.z = Math.PI/2;
+  const cond = mesh(new THREE.BoxGeometry(1.0,.5,.9), M.tank, g, 1.4, .35, 0);
+  /* PWR の一次系（炉 ⇄ 蒸気発生器）と二次系（蒸気発生器 → タービン → 復水器 → 蒸気発生器） */
+  const prim = new THREE.Group(); g.add(prim);
+  pipe(V3(-1.1,2.1), V3(-.4,2.1), DK.hot, prim, .07); pipe(V3(-.4,.7), V3(-1.1,.7), DK.cold, prim, .07);
+  const sec2 = new THREE.Group(); g.add(sec2);
+  pipe(V3(-.4,2.3), V3(.85,2.3), DK.hot, sec2, .06); pipe(V3(.85,2.3), V3(.85,1.2), DK.hot, sec2, .06);
+  const bwrLine = new THREE.Group(); g.add(bwrLine);
+  pipe(V3(-1.6,2.4), V3(.85,2.4), DK.hot, bwrLine, .07); pipe(V3(.85,2.4), V3(.85,1.2), DK.hot, bwrLine, .07);
+  const fPwrP = dkPath(g, [V3(-1.6,1.9), V3(-1.1,2.1), V3(-.4,2.1), V3(-.4,.7), V3(-1.1,.7), V3(-1.6,.6)], 10, DK.dotS, true);
+  const fPwrS = dkPath(g, [V3(-.4,2.3), V3(.85,2.3), V3(.85,1.2), V3(1.4,1.2), V3(1.4,.4), V3(-.4,.4), V3(-.4,1.2)], 12, DK.dotW, true);
+  const fBwr = dkPath(g, [V3(-1.6,2.2), V3(-1.6,2.4), V3(.85,2.4), V3(.85,1.2), V3(1.4,1.2), V3(1.4,.4), V3(-1.6,.4), V3(-1.6,.8)], 16, DK.dotS, true);
+  Object.assign(g.userData, {rods, sg, pzr, recirc, prim, sec2, bwrLine, fPwrP, fPwrS, fBwr, tb, gen, core, T:0});
+  g.userData.labels = (st) => [
+    {obj:cv, t:'原子炉格納容器', c:'#9FB3C4'},
+    {obj:rpv, t:'原子炉圧力容器', c:'#9FB3C4'},
+    {obj:core, t:'燃料（低濃縮ウラン）', c:'#7FB069'},
+    {obj:rods, t: st.gType==='pwr' ? '制御棒（上から入れる）' : '制御棒（下から入れる）', c:'#2B2B2B'},
+    ...(st.gType==='pwr' ? [{obj:sg, t:'蒸気発生器（一次と二次の境）', c:'#8E9AA6'}, {obj:pzr, t:'加圧器（一次系を沸騰させない）', c:'#8E9AA6'}]
+                         : [{obj:recirc, t:'再循環ポンプ（流量で出力を調整）', c:'#3B5A73'}]),
+    {obj:tb, t:'蒸気タービン', c:'#8E9AA6'},
+    {obj:gen, t:'発電機', c:'#3B5A73'},
+    {obj:cond, t:'復水器', c:'#4A5B68'},
+  ];
+}
+function animGenshiryoku(g, t, st, dt){
+  const u = g.userData; if (!st.paused) u.T += dt;
+  const pwr = st.gType === 'pwr';
+  u.sg.visible = u.pzr.visible = u.prim.visible = u.sec2.visible = pwr;
+  u.recirc.visible = u.bwrLine.visible = !pwr;
+  /* 挿入率 0 で炉心の外、1 で炉心と重なる。PWR は上から、BWR は下から */
+  const ins = st.gRod;
+  u.rods.position.y = pwr ? 1.2 + (1 - ins)*1.05 : 1.2 - (1 - ins)*1.05;
+  dkRun(u.fPwrP, u.T*1.2, pwr && !st.paused);
+  dkRun(u.fPwrS, u.T*1.2, pwr && !st.paused);
+  dkRun(u.fBwr, u.T*1.2, !pwr && !st.paused);
+  for (const o of [u.tb, u.gen]) o.rotation.x -= st.paused ? 0 : dt*4;
+}
+
+/* ---------- 2. 変電所 ----------
+   受電線 → 避雷器 → 断路器 → 遮断器（＋変流器）→ 主変圧器 → 二次側の母線。
+   断路器は電流を切れないので、止めるときは「遮断器 → 断路器」、入れるときは「断路器 → 遮断器」 */
+function buildHenden(g){
+  const gantry = new THREE.Group(); g.add(gantry);
+  for (const s of [-1,1]) mesh(new THREE.BoxGeometry(.12,2.6,.12), DK.tower, gantry, -3.2, 1.3, s*.8);
+  mesh(new THREE.BoxGeometry(.12,.12,1.8), DK.tower, gantry, -3.2, 2.6, 0);
+  const la = new THREE.Group(); g.add(la); la.position.set(-2.4, 0, -.7);
+  for (let k=0;k<6;k++) mesh(new THREE.CylinderGeometry(.13,.13,.18,14), M.ceramic, la, 0, .5+k*.22, 0);
+  const ds = new THREE.Group(); g.add(ds); ds.position.set(-1.5, 0, 0);
+  for (const s of [-.35,.35]) mesh(new THREE.CylinderGeometry(.07,.07,1.3,10), M.ceramic, ds, s, .9, 0);
+  const blade = mesh(new THREE.BoxGeometry(.75,.05,.05), M.brass, ds, 0, 1.6, 0);
+  const cb = mesh(new THREE.BoxGeometry(.7,1.1,.7), M.tank, g, -.4, .75, 0);
+  const ct = mesh(new THREE.TorusGeometry(.14,.05,8,18), M.steelDark, g, -.4, 1.5, 0); ct.rotation.x = Math.PI/2;
+  for (const s of [-.15,.15]) mesh(new THREE.CylinderGeometry(.06,.06,.6,10), M.ceramic, g, -.4+s, 1.55, 0);
+  const tr = mesh(new THREE.BoxGeometry(1.2,1.2,1.0), M.tank, g, 1.0, .8, 0);
+  for (let i=0;i<5;i++) mesh(new THREE.BoxGeometry(.05,.9,.8), M.steel, g, 1.66, .8, -.4+i*.2);
+  for (const s of [-.3,0,.3]) mesh(new THREE.CylinderGeometry(.06,.07,.6,10), M.ceramic, g, 1.0+s, 1.7, -.2);
+  const vt = mesh(new THREE.CylinderGeometry(.12,.15,.6,12), M.ceramic, g, 2.3, .8, .7);
+  const bus = new THREE.Group(); g.add(bus);
+  pipe(V3(1.0,2.0,-.2), V3(3.2,2.0,-.2), M.brass, bus, .05);
+  for (const z of [-.6,.2]) pipe(V3(3.2,2.0,-.2), V3(3.2,.4,z), M.brass, bus, .04);
+  const line = new THREE.Group(); g.add(line);
+  pipe(V3(-3.2,2.5), V3(-2.4,1.85), M.brass, line, .035); pipe(V3(-2.4,1.85), V3(-1.85,1.6), M.brass, line, .035);
+  pipe(V3(-1.15,1.6), V3(-.55,1.85), M.brass, line, .035); pipe(V3(-.25,1.85), V3(1.0,1.95), M.brass, line, .035);
+  const fl = dkPath(g, [V3(-3.2,2.5), V3(-2.4,1.85), V3(-1.85,1.6), V3(-1.15,1.6), V3(-.55,1.85), V3(-.25,1.85), V3(1.0,1.95), V3(1.0,2.0,-.2), V3(3.2,2.0,-.2), V3(3.2,.4,-.6)], 16, M.curr);
+  Object.assign(g.userData, {blade, cb, fl, T:0});
+  g.userData.labels = [
+    {obj:gantry, t:'受電用の鉄構（ここへ送電線が入る）', c:'#8E9AA6'},
+    {obj:la, t:'避雷器（雷の過電圧を大地へ逃がす）', c:'#E6D3A3'},
+    {obj:ds, t:'断路器 DS（電流は切れない。回路を目で見て開くため）', c:'#D9C7A0'},
+    {obj:cb, t:'遮断器 CB（負荷電流も事故電流も切る）', c:'#4A5B68'},
+    {obj:ct, t:'変流器 CT（二次側を開放してはいけない）', c:'#3B5A73'},
+    {obj:tr, t:'主変圧器', c:'#4A5B68'},
+    {obj:vt, t:'計器用変圧器 VT（二次側を短絡してはいけない）', c:'#E6D3A3'},
+    {obj:bus, t:'二次側の母線と配電線の引出し', c:'#D9C7A0'},
+  ];
+}
+function animHenden(g, t, st, dt){
+  const u = g.userData; if (!st.paused) u.T += dt;
+  u.blade.rotation.z = st.bDS ? 0 : Math.PI/2.4;      // 開くと刃が持ち上がる
+  u.blade.position.x = st.bDS ? 0 : -.2;
+  dkRun(u.fl, u.T*1.6, st.bDS && st.bCB && !st.paused);
+}
+
+/* ---------- 3.1 架空送電 ----------
+   鉄塔3基・2径間。たるみは実寸の比 D/S が小さすぎて見えないので、図では 10 倍に誇張する */
+const TW_X = [-3.2, 0, 3.2], TW_H = 3.6, PH_Y = [3.3, 2.75, 2.2];
+function buildSouden(g){
+  for (const x of TW_X){
+    const tw = new THREE.Group(); g.add(tw); tw.position.x = x;
+    for (const [sx,sz] of [[-1,-1],[-1,1],[1,-1],[1,1]]) pipe(V3(sx*.35,0,sz*.35), V3(sx*.08,TW_H,sz*.08), DK.tower, tw, .03);
+    for (const y of PH_Y) pipe(V3(0,y,-.75), V3(0,y,.75), DK.tower, tw, .03);
+    for (const y of PH_Y) for (const s of [-1,1]){ for (let k=0;k<4;k++) mesh(new THREE.CylinderGeometry(.06,.06,.03,10), M.ceramic, tw, 0, y-.08-k*.07, s*.65); }
+  }
+  const towers = g.children.slice();
+  const lines = new THREE.Group(); g.add(lines);
+  const gw = new THREE.Group(); g.add(gw);
+  pipe(V3(TW_X[0],TW_H+.05), V3(TW_X[2],TW_H+.05), DK.wireAl, gw, .02);
+  Object.assign(g.userData, {lines, sagKey:null, towers});
+  g.userData.labels = [
+    {obj:towers[1], t:'鉄塔', c:'#8E9AA6'},
+    {obj:lines, t:'電線（3相×2回線。たるみは10倍に誇張）', c:'#B9C2CA'},
+    {obj:gw, t:'架空地線（雷から電線を守る）', c:'#B9C2CA'},
+  ];
+}
+function animSouden(g, t, st, dt){
+  const u = g.userData;
+  const d = tdSag(), key = d.Dt.toFixed(3);
+  if (u.sagKey === key) return;
+  u.sagKey = key;
+  while (u.lines.children.length){ const c = u.lines.children.pop(); c.geometry.dispose(); }
+  const vis = Math.min(1.6, d.Dt / st.tS * 3.2 * 10);     // 3D の径間 3.2 に縮め、10 倍に誇張
+  for (let span=0; span<2; span++){
+    const x0 = TW_X[span], x1 = TW_X[span+1];
+    for (const y of PH_Y) for (const s of [-1,1]){
+      const pts = []; for (let i=0;i<=16;i++){ const f=i/16, x=x0+(x1-x0)*f; pts.push(V3(x, y-.36 - 4*vis*f*(1-f), s*.65)); }
+      const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, .018, 6), DK.wireAl);
+      u.lines.add(tube);
+    }
+  }
+}
+
+/* ---------- 3.2 配電（単相3線式） ----------
+   柱上変圧器の低圧側は 外線a・中性線n・外線b の3本。a–n と n–b に 100 V、a–b に 200 V */
+function buildHaiden(g){
+  const pole = mesh(new THREE.CylinderGeometry(.09,.13,4.2,12), DK.pole, g, -2.4, 2.1, 0);
+  pipe(V3(-2.4,4.0,-.7), V3(-2.4,4.0,.7), M.steel, g, .04);
+  const hv = new THREE.Group(); g.add(hv);
+  for (const z of [-.6,0,.6]) pipe(V3(-3.4,4.05,z), V3(3.6,4.05,z), DK.wireAl, hv, .018);
+  /* 単相3線式（低圧）の部品。三相3線式を見るときは隠す */
+  const sp = new THREE.Group(); g.add(sp);
+  const ptr = mesh(new THREE.CylinderGeometry(.28,.28,.7,16), M.tank, sp, -2.05, 3.2, 0);
+  const lvA = pipe(V3(-2.05,2.9,-.3), V3(2.6,2.9,-.3), M.u, sp, .02);
+  const lvN = new THREE.Group(); sp.add(lvN);
+  pipe(V3(-2.05,2.7,0), V3(.15,2.7,0), DK.wireAl, lvN, .022);
+  pipe(V3(.45,2.7,0), V3(2.6,2.7,0), DK.wireAl, lvN, .022);
+  const gap = pipe(V3(.15,2.7,0), V3(.45,2.7,0), DK.wireAl, lvN, .022);
+  const lvB = pipe(V3(-2.05,2.5,.3), V3(2.6,2.5,.3), M.w, sp, .02);
+  const houses = [], bulbs = [];
+  for (const [i,x] of [[0,.6],[1,2.2]]){
+    const h = mesh(new THREE.BoxGeometry(1.0,.8,.9), DK.house, sp, x, .4, 1.2);
+    const r = mesh(new THREE.ConeGeometry(.78,.5,4), DK.roof, sp, x, 1.05, 1.2); r.rotation.y = Math.PI/4;
+    const b = mesh(new THREE.SphereGeometry(.13,14,14), DK.bulb.clone(), sp, x, .45, 1.7); b.castShadow = false;
+    houses.push(h); bulbs.push(b);
+    pipe(V3(x, i===0 ? 2.9 : 2.5, i===0 ? -.3 : .3), V3(x, .8, 1.2), i===0 ? M.u : M.w, sp, .015);
+    pipe(V3(x+.15, 2.7, 0), V3(x+.15, .8, 1.2), DK.wireAl, sp, .015);
+  }
+  const bal = mesh(new THREE.BoxGeometry(.4,.4,.4), M.steelDark, sp, 3.0, 2.7, 0);
+  /* 三相3線式（高圧）の部品。6.6 kV の3本から工場（三相負荷）へ引き込み、手前に力率改善用コンデンサ */
+  const tp = new THREE.Group(); g.add(tp);
+  const fac = mesh(new THREE.BoxGeometry(1.8,1.1,1.2), DK.house, tp, 1.6, .55, 1.0);
+  for (let i=0;i<3;i++){ const r = mesh(new THREE.BoxGeometry(.6,.3,1.2), DK.roof, tp, 1.0+i*.6, 1.25, 1.0); r.rotation.z = .5; }
+  for (const z of [-.6,0,.6]) pipe(V3(2.6,4.05,z), V3(2.2,1.2,.8+z*.3), DK.wireAl, tp, .015);
+  const cap = new THREE.Group(); tp.add(cap); cap.position.set(-.2, 0, 1.2);
+  for (let i=0;i<3;i++) mesh(new THREE.CylinderGeometry(.14,.14,.6,14), M.steelLight, cap, i*.34, .3, 0);
+  pipe(V3(.5,.55,1.2), V3(.7,.55,1.0), DK.wireAl, tp, .015);
+  const fl3 = dkPath(g, [V3(-3.4,4.05,0), V3(2.6,4.05,0), V3(2.2,1.2,.8)], 14, M.curr);
+  Object.assign(g.userData, {gap, bulbs, bal, sp, tp, cap, fl3, T:0});
+  g.userData.labels = (st) => st.hView==='tp' ? [
+    {obj:hv, t:'高圧配電線（三相3線式・6.6 kV など）', c:'#B9C2CA'},
+    {obj:fac, t:'工場（三相負荷・遅れ力率）', c:'#D9C7A0'},
+    {obj:cap, t:'力率改善用コンデンサ（Qc を入れると働く）', c:'#B9C2CA'},
+  ] : [
+    {obj:hv, t:'高圧配電線（6.6 kV）', c:'#B9C2CA'},
+    {obj:ptr, t:'柱上変圧器', c:'#4A5B68'},
+    {obj:lvA, t:'外線 a', c:'#D24A43'},
+    {obj:lvN, t:'中性線 n（切れると電圧が偏る）', c:'#B9C2CA'},
+    {obj:lvB, t:'外線 b', c:'#3572D6'},
+    {obj:houses[0], t:'負荷1（a–n 間・100 V 機器）', c:'#D9C7A0'},
+    {obj:houses[1], t:'負荷2（n–b 間・100 V 機器）', c:'#D9C7A0'},
+    {obj:bal, t:'バランサ（巻数比1:1の単巻変圧器）', c:'#3B5A73'},
+  ];
+}
+function animHaiden(g, t, st, dt){
+  const u = g.userData, three = st.hView==='tp';
+  u.sp.visible = !three; u.tp.visible = three;
+  if (!st.paused) u.T += dt;
+  if (three){
+    const m = hd3();
+    u.cap.scale.setScalar(.5 + .5*Math.min(1, st.h3Qc/2000));   // 容量が大きいほど大きく描く（Qc = 0 でも置き場所は見せる）
+    dkRun(u.fl3, u.T*Math.min(4, m.I/80), !st.paused);       // 光点の速さで線電流の大小を見せる
+    return;
+  }
+  dkRun(u.fl3, 0, false);
+  const r = hdSolve();
+  u.gap.visible = st.hBreak !== true;
+  u.bal.visible = !!st.hBal;
+  r.V.forEach((v, i) => { const k = Math.max(0, Math.min(2.2, (v/100)**2)); u.bulbs[i].material.emissiveIntensity = k*1.1; });
+}
+
+/* ---------- 組み立て ---------- */
+const groups = {};
+const builders = {suiryoku:buildSuiryoku, karyoku:buildKaryoku, genshiryoku:buildGenshiryoku, 'kaihei-hogo':buildHenden, 'kakuu-souden':buildSouden, haiden:buildHaiden};
+const animators = {suiryoku:animSuiryoku, karyoku:animKaryoku, genshiryoku:animGenshiryoku, 'kaihei-hogo':animHenden, 'kakuu-souden':animSouden, haiden:animHaiden};
+for (const id of ORDER){ const g = new THREE.Group(); g.position.set(MACHINES[id].x, .3, 0); builders[id](g); g.userData.id = id; scene.add(g); groups[id] = g; }
+
+function flyTo(v){ cam.want = {target:new THREE.Vector3(...v.target), dist:v.dist, theta:v.theta, phi:v.phi}; }
+/* 工場全景は「並んだ機器が全部入る距離」を実寸から計算する。
+   手で決めると機器を足すたびに外す——実測で、5台の時点ですでに幅の狭い画面では
+   パワエレが枠外に出ていた（気づかないまま公開していた）。
+   camera.aspect は resize() の直後だけ信用できるので、そこから呼ぶ。 */
+function fitOverview(){
+  if (!groups[ORDER[0]]) return;
+  const box = new THREE.Box3();
+  for (const id of ORDER) box.expandByObject(groups[id]);
+  const sz = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+  const half = Math.tan(camera.fov*Math.PI/360);
+  const a = Math.max(.4, camera.aspect || 1);
+  const d = Math.max(sz.y/(2*half), sz.x/(2*half*a)) * 1.18;   // 1.18 は周囲の余白
+  VIEWS.overview.target = [c.x, 2, 0];
+  VIEWS.overview.dist = Math.min(130, Math.max(22, d));
+}
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let drag=null;
+const cv = renderer.domElement;
+cv.addEventListener('pointerdown', e=>{ drag={x:e.clientX,y:e.clientY,moved:false}; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointermove', e=>{ if(!drag) return; const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if (Math.abs(dx)+Math.abs(dy)>3) drag.moved=true; cam.theta -= dx*.006; cam.phi = Math.min(1.5, Math.max(.25, cam.phi - dy*.006)); drag.x=e.clientX; drag.y=e.clientY; cam.want=null; });
+cv.addEventListener('pointerup', e=>{ if (drag && !drag.moved) pick(e); drag=null; });
+cv.addEventListener('wheel', e=>{ e.preventDefault(); cam.dist = Math.min(60, Math.max(4, cam.dist * (1 + Math.sign(e.deltaY)*.08))); cam.want=null; }, {passive:false});
+const ray = new THREE.Raycaster();
+function pick(e){
+  const r = cv.getBoundingClientRect(); const m = new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(m, camera);
+  const hits = ray.intersectObjects(Object.values(groups), true);
+  if (!hits.length) return;
+  let o = hits[0].object; while (o && !o.userData.id) o = o.parent;
+  if (o && o.userData.id !== state.current) select(o.userData.id);
+}
+
+/* ---------- 凡例と引き出し線 ----------
+   3D上に文字を常駐させない。凡例（左上・順序固定）の行に触れた1件だけ、
+   その部品へ線を引く。回しても凡例の並びは変わらないので、
+   「どれが何を指しているか」が分からなくなることがない。 */
+const labelsEl = document.getElementById('labels');
+const leaders = document.getElementById('leaders');
+const legendEl = document.getElementById('legend');
+const lgshow = document.getElementById('lgshow');
+const labelNodes = [];   // 全景の機器名ラベル
+let legendRows = [];     // {el, name, color, key, nodes[], lines[]}
+let hoverIdx = null;     // カーソルが乗っている行
+let pinIdx = null;       // クリック固定・ツアー指定の行
+
+lgshow.onclick = ()=>{ legendEl.classList.remove('hidden'); lgshow.classList.add('hidden'); };
+
+function rebuildLabels(){
+  for (const n of labelNodes) if (n.el) n.el.remove();
+  labelNodes.length = 0; legendRows = []; hoverIdx = pinIdx = null;
+  leaders.innerHTML = ''; legendEl.innerHTML = '';
+  legendEl.classList.add('hidden'); lgshow.classList.add('hidden');
+  if (!state.current){
+    const narrow = window.innerWidth < 600;   // 狭い画面では短い名前にし、高さを互い違いにして重なりを避ける
+    for (const [i, id] of ORDER.entries()){ const m = MACHINES[id];
+      const el = document.createElement('div'); el.className = 'lbl big';
+      el.style.setProperty('--lc', '#F0B57E');
+      el.textContent = m.num + ' ' + (narrow ? m.short : m.title); el.title = m.title; el.onclick = ()=>select(id);
+      labelsEl.appendChild(el);
+      labelNodes.push({el, pos:new THREE.Vector3(m.x, (m.ly || 5.6) + (narrow && i % 2 ? 6 : 0), 0), hw:el.offsetWidth/2});
+    }
+    return;
+  }
+  /* 同じ名前のアンカー（直流機の界磁磁極Nなど）は1行にまとめ、線を複数本出す */
+  const g = groups[state.current];
+  const byName = new Map();
+  const labs = (typeof g.userData.labels === 'function') ? g.userData.labels(state) : g.userData.labels;
+  for (const l of labs){
+    if (!l.obj) continue;
+    if (!byName.has(l.t)) byName.set(l.t, {name:l.t, color:l.c, nodes:[]});
+    byName.get(l.t).nodes.push({obj:l.obj});
+  }
+  /* 狭い画面では畳んで開く。3Dの上に凡例が覆いかぶさるのを避ける */
+  const narrow = window.innerWidth < 900;
+  legendEl.classList.toggle('hidden', narrow);
+  lgshow.classList.toggle('hidden', !narrow);
+  const cap = document.createElement('div'); cap.className = 'lgcap';
+  const capT = document.createElement('span'); capT.textContent = '部品（行に触れると指す）';
+  const hide = document.createElement('button'); hide.textContent = '隠す';
+  hide.onclick = ()=>{ legendEl.classList.add('hidden'); lgshow.classList.remove('hidden'); };
+  cap.append(capT, hide); legendEl.appendChild(cap);
+  for (const row of byName.values()){
+    const b = document.createElement('button'); b.className = 'lgrow';
+    const chip = document.createElement('i'); chip.style.background = row.color;
+    const tx = document.createElement('span'); tx.textContent = row.name;
+    b.append(chip, tx); legendEl.appendChild(b);
+    const i = legendRows.length; row.el = b; legendRows.push(row);
+    b.onmouseenter = ()=>{ hoverIdx = i; paintLegend(); };
+    b.onmouseleave = ()=>{ hoverIdx = null; paintLegend(); };
+    b.onfocus = ()=>{ hoverIdx = i; paintLegend(); };
+    b.onblur = ()=>{ hoverIdx = null; paintLegend(); };
+    b.onclick = ()=>{ pinIdx = (pinIdx === i ? null : i); paintLegend(); };
+    row.lines = row.nodes.map(()=>{
+      const ln = document.createElementNS('http://www.w3.org/2000/svg','line');
+      ln.setAttribute('stroke', row.color); ln.setAttribute('stroke-width','1.5');
+      leaders.appendChild(ln);
+      const dt = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dt.setAttribute('r','3.5'); dt.setAttribute('fill', row.color);
+      leaders.appendChild(dt);
+      return {ln, dt};
+    });
+  }
+  paintLegend();
+}
+const _wp = new THREE.Vector3();
+/* 指している部品の示し方。全部を □ で囲うと「何を指しているか」がぼやけるので、
+   ・単体の部品 → その部品の稜線を破線でなぞる（円筒なら円、板なら板の輪郭）
+   ・複数部品のまとまり → 外接箱の四隅だけを「かぎ括弧」で示す
+   どちらも明滅させ、部品自身の線と見分けがつくようにする。
+   手前の部品に隠れないよう depthTest は切る。 */
+const hlMat = new THREE.LineDashedMaterial({color:0xffffff, dashSize:.13, gapSize:.085,
+  transparent:true, opacity:.9, depthTest:false});
+const hl = new THREE.LineSegments(new THREE.BufferGeometry(), hlMat);
+hl.renderOrder = 999; hl.frustumCulled = false; hl.matrixAutoUpdate = false; hl.visible = false; scene.add(hl);
+const _edgeCache = new Map();
+const _box = new THREE.Box3();
+let hlKey = null, hlOwn = null, hlTarget = null;
+/* 外接箱の四隅から辺の方向へ短く伸ばした「かぎ」 */
+function cornerGeo(box){
+  const mn = box.min, mx = box.max, pts = [];
+  const L = [Math.min((mx.x-mn.x)*.3, .55), Math.min((mx.y-mn.y)*.3, .55), Math.min((mx.z-mn.z)*.3, .55)];
+  for (const ix of [0,1]) for (const iy of [0,1]) for (const iz of [0,1]){
+    const P = [ix?mx.x:mn.x, iy?mx.y:mn.y, iz?mx.z:mn.z], sg = [ix?-1:1, iy?-1:1, iz?-1:1];
+    for (let ax=0; ax<3; ax++){ const Q = P.slice(); Q[ax] += sg[ax]*L[ax]; pts.push(P[0],P[1],P[2], Q[0],Q[1],Q[2]); }
+  }
+  const gm = new THREE.BufferGeometry();
+  gm.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  return gm;
+}
+function setHighlight(obj){
+  if (!obj){ hl.visible = false; hlKey = null; return; }
+  const single = obj.isMesh && obj.geometry;
+  const key = obj.uuid + (single ? '|e' : '|c');
+  if (key !== hlKey){
+    hlKey = key;
+    if (hlOwn){ hlOwn.dispose(); hlOwn = null; }
+    if (single){
+      let e = _edgeCache.get(obj.geometry.uuid);
+      if (!e){ e = new THREE.EdgesGeometry(obj.geometry, 24); _edgeCache.set(obj.geometry.uuid, e); }
+      hl.geometry = e;
+    } else {
+      hl.geometry = hlOwn = cornerGeo(_box.setFromObject(obj));
+    }
+    hl.computeLineDistances();
+  } else if (!single){
+    /* まとまりは中身が動くので、箱だけ毎フレーム取り直す */
+    if (hlOwn) hlOwn.dispose();
+    hl.geometry = hlOwn = cornerGeo(_box.setFromObject(obj));
+    hl.computeLineDistances();
+  }
+  if (single) hl.matrix.copy(obj.matrixWorld); else hl.matrix.identity();
+  hl.visible = true;
+}
+/* 祖先まで visible をたどる。途中で false なら画面に出ていない */
+function visibleInScene(o){ for (let n=o; n; n=n.parent){ if (!n.visible) return false; } return true; }
+function activeRow(){ return hoverIdx !== null ? hoverIdx : pinIdx; }
+function paintLegend(){ const a = activeRow(); legendRows.forEach((r,i)=>r.el.classList.toggle('on', i===a)); }
+/* ツアーが「この部品を見て」と言ったら、その行を固定する */
+function focusByName(name){
+  pinIdx = null;
+  if (name){ const i = legendRows.findIndex(r=>r.name.includes(name)); if (i>=0) pinIdx = i; }
+  paintLegend();
+}
+
+function updateLabels(){
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (!state.current){
+    for (const n of labelNodes){
+      const v = n.pos.clone().project(camera);
+      const show = v.z <= 1;
+      n.el.style.display = show ? '' : 'none';
+      if (show){
+        /* 端の機器はラベルが枠外へはみ出して読めなくなる。中身の幅ぶんだけ内側に留める
+           （.lbl は translate(-50%) で中央合わせなので、左右に半分ずつ出る） */
+        const hw = n.hw || (n.hw = n.el.offsetWidth/2);
+        const x = Math.min(Math.max((v.x+1)/2*w, hw + 4), w - hw - 4);
+        n.el.style.left = x+'px'; n.el.style.top = ((1-v.y)/2*h - 6)+'px';
+      }
+    }
+    return;
+  }
+  const a = activeRow(), open = !legendEl.classList.contains('hidden');
+  const vb = cv.getBoundingClientRect();
+  hlTarget = null;
+  legendRows.forEach((row, i)=>{
+    /* 今そこに無い部品（かご形/巻線形・突極/円筒・反作用）は凡例からも消す。
+       state を見に行かず、オブジェクト自身が表示されているかで判定する。 */
+    const avail = row.nodes.some(n=>visibleInScene(n.obj));
+    row.el.style.display = avail ? '' : 'none';
+    const lit = avail && open && i === a;
+    let ex = 0, ey = 0;
+    if (lit){ const r = row.el.getBoundingClientRect(); ex = r.right - vb.left; ey = r.top - vb.top + r.height/2; }
+    row.nodes.forEach((n, k)=>{
+      const {ln, dt} = row.lines[k];
+      const v = (lit && visibleInScene(n.obj)) ? n.obj.getWorldPosition(_wp).project(camera) : null;
+      const on = !!v && v.z <= 1;
+      ln.style.display = on ? '' : 'none'; dt.style.display = on ? '' : 'none';
+      if (!on) return;
+      const ax = (v.x+1)/2*w, ay = (1-v.y)/2*h;
+      ln.setAttribute('x1', ex); ln.setAttribute('y1', ey);
+      ln.setAttribute('x2', ax); ln.setAttribute('y2', ay);
+      dt.setAttribute('cx', ax); dt.setAttribute('cy', ay);
+      if (!hlTarget) hlTarget = {obj:n.obj, color:row.color};
+    });
+  });
+  setHighlight(hlTarget && hlTarget.obj);
+}
+
+/* ---------- 操作帯（3Dの下。3Dに被せない） ---------- */
+const ctrlbar = document.getElementById('ctrlbar');
+function seg(opts, key, on){ const d=document.createElement('div'); d.className='seg'; for (const [v,l] of opts){ const b=document.createElement('button'); b.textContent=l; b.dataset.v=String(v); b.setAttribute('aria-pressed', String(v===state[key])); b.onclick=()=>{ state[key]=v; if(on) on(v); [...d.children].forEach(c=>c.setAttribute('aria-pressed', String(c===b))); refreshCtrl(); }; d.appendChild(b);} d.dataset.key=key; return d; }
+function range(label, min, max, step, key, fmt){ const g=document.createElement('div'); g.className='cg'; const l=document.createElement('label'); l.innerHTML=label+' <span class="val"></span>'; const i=document.createElement('input'); i.type='range'; i.min=min; i.max=max; i.step=step; i.value=state[key]; i.setAttribute('aria-label', label); i.oninput=()=>{ state[key]=+i.value; refreshCtrl(); }; g.append(l,i); g.dataset.key=key; g.dataset.fmt=''; g._fmt=fmt; g._input=i; return g; }
+function group(label, el){ const g=document.createElement('div'); g.className='cg'; const l=document.createElement('label'); l.textContent=label; g.append(l, el); return g; }
+let readoutEl=null;
+const rdState = {sig:null, vals:{}, hot:[], tourText:null, tourKeys:[]};   // 読み値の強調表示（refreshCtrl が使う）
+const moreOpen = {};
+const STATE0 = JSON.parse(JSON.stringify(state));   // 初期値。ツアーが既定値を明示しているだけかを見分ける
+/* ツアー・予想クイズが折りたたみ欄の中の操作を使うなら欄を開く。
+   使う＝set がその値を初期値から変える、または指示文に操作の名前が出てくる */
+function openMoreFor(set, text){
+  const el = ctrlbar.querySelector('details.more'); if (!el || el.open) return;
+  const hit = [...el.querySelectorAll('.moregrid [data-key]')].some(c => {
+    const k = c.dataset.key;
+    if (set && k in set && set[k] !== STATE0[k]) return true;
+    const lab = (c.closest('.cg') || c).querySelector('label');
+    const name = lab ? (lab.firstChild ? lab.firstChild.textContent : lab.textContent).split(/[（(]/)[0].trim() : '';
+    const tok = name.split(' '), last = tok[tok.length-1];
+    return !!text && !!name && (text.includes(name) || text.includes(tok[0]) || (tok.length > 1 && last.length >= 2 && text.includes(last)));
+  });
+  if (hit){ el.open = true; moreOpen[state.current] = true; }
+}
+function buildCtrl(){
+  ctrlbar.innerHTML=''; readoutEl=null;
+  const id = state.current;
+  const title=document.createElement('div'); title.className='title'; ctrlbar.appendChild(title);
+  if (!id){ title.textContent='全景'; const d=document.createElement('div'); d.style.cssText='font-size:12.5px;color:#C5CCD3;align-self:center'; d.textContent='左から 水力 → 火力 → 原子力 → 変電所 → 架空送電 → 配電。発電所でつくった電気が、変電所で電圧を変え、送電線と配電線を通って家に届く順に並べた。ラベルか設備をクリックすると寄る。'; ctrlbar.appendChild(d); return; }
+  title.textContent = MACHINES[id].title;
+  const moreEl = document.createElement('details'); moreEl.className = 'more';
+  const moreSum = document.createElement('summary'), moreGrid = document.createElement('div'); moreGrid.className = 'moregrid';
+  moreEl.append(moreSum, moreGrid); moreEl.open = !!moreOpen[id];
+  moreEl.ontoggle = () => { moreOpen[id] = moreEl.open; };
+  const adv = { appendChild: el => moreGrid.appendChild(el) };
+  ctrlbar.appendChild(group('動き', seg([[false,'▶ 動かす'],[true,'❚❚ 止める']], 'paused')));
+  if (id==='suiryoku'){
+    ctrlbar.appendChild(group('運転', seg([['gen','発電'],['pump','揚水']], 'sMode')));
+    ctrlbar.appendChild(group('水車', seg([['pelton','ペルトン'],['francis','フランシス'],['propeller','プロペラ']], 'sType')));
+    ctrlbar.appendChild(range('総落差 Hg', 20, 600, 5, 'sHg', v=>v+' m'));
+    ctrlbar.appendChild(range('流量 Q', 1, 200, 1, 'sQ', v=>v+' m³/s'));
+    adv.appendChild(range('損失落差 hl', 0, 40, 1, 'sHl', v=>v+' m'));
+    adv.appendChild(range('水車効率 ηt', .7, .95, .01, 'sEt', v=>v.toFixed(2)));
+    adv.appendChild(range('発電機効率 ηg', .9, .99, .01, 'sEg', v=>v.toFixed(2)));
+    adv.appendChild(range('ポンプ効率 ηp', .7, .95, .01, 'sEp', v=>v.toFixed(2)));
+    adv.appendChild(range('電動機効率 ηm', .9, .99, .01, 'sEm', v=>v.toFixed(2)));
+    adv.appendChild(range('回転速度 N', 100, 1000, 10, 'sN', v=>v+' min⁻¹'));
+  } else if (id==='karyoku'){
+    ctrlbar.appendChild(group('流れを見る', seg([['water','水・蒸気'],['gas','燃焼ガス・空気']], 'kFlow')));
+    ctrlbar.appendChild(range('発電端出力 P', 100, 1000, 10, 'kP', v=>v+' MW'));
+    ctrlbar.appendChild(range('燃料消費量 B', 20, 400, 1, 'kB', v=>v+' t/h'));
+    ctrlbar.appendChild(range('燃料の発熱量 H', 20, 50, .5, 'kH', v=>v.toFixed(1)+' MJ/kg'));
+    adv.appendChild(range('所内率 L', 0, 10, .5, 'kL', v=>v.toFixed(1)+' %'));
+    adv.appendChild(range('燃料の炭素含有率 c', .6, .9, .01, 'kC', v=>(v*100).toFixed(0)+' %'));
+  } else if (id==='genshiryoku'){
+    ctrlbar.appendChild(group('炉型', seg([['pwr','加圧水型 PWR'],['bwr','沸騰水型 BWR']], 'gType')));
+    ctrlbar.appendChild(range('制御棒の挿入', 0, 1, .05, 'gRod', v=>(v*100).toFixed(0)+' %'));
+    ctrlbar.appendChild(group('エネルギーの計算', seg([['dm','質量欠損 E=mc²'],['fis','核分裂 200 MeV']], 'gCalc')));
+    if (state.gCalc==='dm') ctrlbar.appendChild(range('質量欠損 Δm', .1, 10, .1, 'gDm', v=>v.toFixed(1)+' g'));
+    else ctrlbar.appendChild(range('核分裂するウラン235', .1, 10, .1, 'gU', v=>v.toFixed(1)+' g'));
+    adv.appendChild(range('発電所の熱効率', .25, .4, .01, 'gEta', v=>(v*100).toFixed(0)+' %'));
+    adv.appendChild(range('比べる石炭の発熱量', 20, 30, .5, 'gHc', v=>v.toFixed(1)+' MJ/kg'));
+  } else if (id==='kaihei-hogo'){
+    /* 断路器は電流を切れない。遮断器が入っているあいだに断路器を操作しようとしたら、戻して警告する */
+    ctrlbar.appendChild(group('断路器 DS', seg([[true,'入'],[false,'切']], 'bDS', v=>{
+      if (state.bCB){ state.bDS = !v; state.bWarn = '遮断器が入っているあいだは断路器を操作できない（インターロック）。先に遮断器を切る'; }
+      else state.bWarn = '';
+    })));
+    ctrlbar.appendChild(group('遮断器 CB', seg([[true,'入'],[false,'切']], 'bCB', v=>{
+      state.bWarn = (v && !state.bDS) ? '断路器が切れているので、遮断器を入れても電気は流れない（送電は 断路器 → 遮断器 の順）' : '';
+    })));
+    ctrlbar.appendChild(range('主変圧器の容量', 5, 60, 1, 'bSt', v=>v+' MVA'));
+    ctrlbar.appendChild(range('主変圧器の %Z（自己容量基準）', 5, 15, .5, 'bZt', v=>v.toFixed(1)+' %'));
+    ctrlbar.appendChild(range('系統側の %Z（10 MVA 基準）', .5, 5, .1, 'bZs', v=>v.toFixed(1)+' %'));
+    adv.appendChild(group('二次側の電圧', seg([[6.6,'6.6 kV'],[22,'22 kV'],[66,'66 kV']], 'bV')));
+    adv.appendChild(group('変流比（二次 5 A）', seg([[100,'100/5'],[200,'200/5'],[400,'400/5'],[600,'600/5']], 'bCTr')));
+    adv.appendChild(range('変流器の二次電流', 0, 5, .1, 'bCTi', v=>v.toFixed(1)+' A'));
+  } else if (id==='kakuu-souden'){
+    ctrlbar.appendChild(group('見る対象', seg([['sag','たるみ'],['elec','電圧降下・損失']], 'tView')));
+    if (state.tView==='sag'){
+      ctrlbar.appendChild(range('径間 S', 100, 600, 10, 'tS', v=>v+' m'));
+      ctrlbar.appendChild(range('水平張力 T', 10, 60, 1, 'tT', v=>v+' kN'));
+      ctrlbar.appendChild(range('電線の単位長さ重量 W', 5, 30, .5, 'tW', v=>v.toFixed(1)+' N/m'));
+      adv.appendChild(range('温度変化 Δt', -20, 40, 1, 'tDt', v=>(v>0?'+':'')+v+' ℃'));
+      adv.appendChild(range('線膨張係数 α', 10, 25, 1, 'tAl', v=>v+'×10⁻⁶ /℃'));
+    } else {
+      ctrlbar.appendChild(range('送電電圧 V（線間）', 66, 500, 1, 'tV', v=>v+' kV'));
+      ctrlbar.appendChild(range('送電電力 P', 10, 500, 5, 'tP', v=>v+' MW'));
+      adv.appendChild(range('力率 cosθ（遅れ）', .7, 1, .01, 'tPf', v=>v.toFixed(2)));
+      adv.appendChild(range('1線の抵抗 R', 1, 20, .5, 'tR', v=>v.toFixed(1)+' Ω'));
+      adv.appendChild(range('1線のリアクタンス X', 2, 40, .5, 'tX', v=>v.toFixed(1)+' Ω'));
+    }
+  } else if (id==='haiden' && state.hView==='tp'){
+    ctrlbar.appendChild(group('方式', seg([['sp','単相3線式'],['tp','三相3線式']], 'hView')));
+    ctrlbar.appendChild(range('負荷の有効電力 P', 200, 5000, 100, 'h3P', v=>v+' kW'));
+    ctrlbar.appendChild(range('負荷の力率 cosθ（遅れ）', .6, 1, .01, 'h3Pf', v=>v.toFixed(2)));
+    ctrlbar.appendChild(range('力率改善用コンデンサ Qc', 0, 3000, 50, 'h3Qc', v=>v+' kvar'));
+    adv.appendChild(group('受電端電圧（線間）', seg([[6.6,'6.6 kV'],[22,'22 kV']], 'h3Vr')));
+    adv.appendChild(range('1線の抵抗 R', .1, 3, .1, 'h3R', v=>v.toFixed(1)+' Ω'));
+    adv.appendChild(range('1線のリアクタンス X', .1, 3, .1, 'h3X', v=>v.toFixed(1)+' Ω'));
+  } else if (id==='haiden'){
+    ctrlbar.appendChild(group('方式', seg([['sp','単相3線式'],['tp','三相3線式']], 'hView')));
+    ctrlbar.appendChild(range('負荷1（a–n 間）', 100, 3000, 50, 'hP1', v=>v+' W'));
+    ctrlbar.appendChild(range('負荷2（n–b 間）', 100, 3000, 50, 'hP2', v=>v+' W'));
+    ctrlbar.appendChild(group('中性線', seg([[false,'つながっている'],[true,'断線']], 'hBreak')));
+    ctrlbar.appendChild(group('バランサ', seg([[false,'なし'],[true,'あり']], 'hBal')));
+    adv.appendChild(range('外線1線の抵抗 r', 0, .5, .01, 'hR', v=>v.toFixed(2)+' Ω'));
+    adv.appendChild(range('中性線の抵抗 rn', 0, .5, .01, 'hRn', v=>v.toFixed(2)+' Ω'));
+  }
+  if (moreGrid.childElementCount){ moreSum.textContent = '詳しい操作（'+moreGrid.childElementCount+'）'; ctrlbar.appendChild(moreEl); }
+  readoutEl=document.createElement('dl'); readoutEl.className='readout'; ctrlbar.appendChild(readoutEl);
+  refreshCtrl();
+}
+/* state → 操作帯の表示を同期（ツアーが state を書き換えたときにも使う） */
+function syncCtrl(){
+  ctrlbar.querySelectorAll('.cg[data-key]').forEach(g=>{ if(g._input){ g._input.value = state[g.dataset.key]; g.querySelector('.val').textContent = g._fmt(state[g.dataset.key]); } });
+  ctrlbar.querySelectorAll('.seg[data-key]').forEach(d=>{ [...d.children].forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===String(state[d.dataset.key])))); });
+}
+/* 操作帯の中身と凡例が変わる状態。変わったら作り直す */
+const ctrlSig = () => state.current + '|' + ({'kakuu-souden':state.tView, genshiryoku:state.gCalc+'/'+state.gType, suiryoku:state.sType+'/'+state.sMode, haiden:state.hView})[state.current];
+let _lastSig = null;
+const f1 = (x, d=1) => Number(x).toLocaleString('ja-JP', {minimumFractionDigits:d, maximumFractionDigits:d});
+const sci = (x) => { const e = Math.floor(Math.log10(x)), m = x/Math.pow(10, e); return m.toFixed(2)+'×10'+String(e).split('').map(c=>'⁰¹²³⁴⁵⁶⁷⁸⁹⁻'['0123456789-'.indexOf(c)]).join(''); };
+function refreshCtrl(){
+  if (state.current && ctrlSig() !== _lastSig){
+    const had = _lastSig !== null && _lastSig.split('|')[0] === state.current;
+    _lastSig = ctrlSig();
+    if (had){ buildCtrl(); rebuildLabels(); return; }
+  }
+  syncCtrl();
+  if (!readoutEl) return; const id=state.current; let rows=[], note='';
+  if (id==='suiryoku'){
+    const m = suModel();
+    if (state.sMode==='gen'){
+      rows=[['H','有効落差 H = Hg − hl', f1(m.H,0)+' m'],
+            ['Pth','理論水力 9.8·Q·H', f1(m.Pth/1000)+' MW'],
+            ['P','発電機出力 P = 9.8·Q·H·ηt·ηg', f1(m.P/1000)+' MW'],
+            ['ns','比速度 Ns = N·√Pt / H^(5/4)', f1(m.ns,0)+' m·kW（N = '+state.sN+' min⁻¹）'],
+            ['kind','水車の向き不向き', ({pelton:'衝動水車。高落差・小流量向き（比速度が小さい）', francis:'反動水車。中落差に広く使う', propeller:'反動水車。低落差・大流量向き（比速度が大きい）'})[state.sType]]];
+      if (state.sType==='pelton') rows.push(['v','ノズルの噴流速度 v = √(2gH)', f1(m.v)+' m/s（損失を無視した理論値）']);
+      note='※ Q は m³/s、H は m で 9.8·Q·H は kW。比速度は「同じ形の水車を 1 m の落差で 1 kW 出すときの回転速度」で、高落差の水車ほど小さい';
+    } else {
+      rows=[['Hp','全揚程 = Hg + hl', f1(m.Hp,0)+' m'],
+            ['Pin','揚水の所要電力 9.8·Q·Hp/(ηp·ηm)', f1(m.Pin/1000)+' MW'],
+            ['P','同じ流量で発電したときの出力', f1(m.P/1000)+' MW'],
+            ['tot','揚水発電の総合効率 ηt·ηg·ηp·ηm·(Hg−hl)/(Hg+hl)', f1(m.total*100)+' %（同じ流量・同じ時間で比べた値）']];
+      note='※ 揚水では損失落差を総落差に足し、効率では割る。発電では損失落差を引き、効率を掛ける。向きが逆になるのが急所';
+    }
+  }
+  if (id==='karyoku'){
+    const m = kaModel();
+    rows=[['Pin','燃料の入熱 B·H/3.6（GJ/h を MW に）', f1(m.Pin,0)+' MW'],
+          ['eta','発電端熱効率 3.6·P/(B·H)', f1(m.eta*100)+' %'],
+          ['etaS','送電端熱効率 η·(1 − L)', f1(m.etaS*100)+' %'],
+          ['co2','CO₂ 発生量 B·c·44/12', f1(m.co2,0)+' t/h'],
+          ['order', state.kFlow==='water' ? '水・蒸気の通る順' : '燃焼ガス・空気の通る順',
+            state.kFlow==='water' ? '復水器 → 給水ポンプ → 節炭器 → ボイラ（蒸発管）→ 過熱器 → 高圧・低圧タービン → 復水器'
+                                  : '空気: 押込通風機 → 空気予熱器 → 火炉 ／ 燃焼ガス: 火炉 → 過熱器 → 節炭器 → 空気予熱器 → 煙突']];
+    if (m.eta > .6) rows.splice(2, 0, ['warn','注意','熱効率が 60 % を超える組み合わせは汽力発電では現実的でない']);
+    note='※ P は MW、B は t/h、H は MJ/kg のとき η = 3.6·P/(B·H)（3600 kJ = 1 kWh から）。再熱器・給水加熱器・T-s 線図は「汽力発電所ラボ」で扱う';
+  }
+  if (id==='genshiryoku'){
+    const m = geModel(), pwr = state.gType==='pwr', k = state.gRod;
+    rows=[['type','炉型', pwr ? 'PWR：一次冷却材を加圧して沸騰させず、蒸気発生器で二次側に蒸気をつくる' : 'BWR：炉心で直接沸騰させ、その蒸気でタービンを回す'],
+          ['mod','減速材・冷却材', '軽水（ふつうの水）'],
+          ['ctl','出力の調整', pwr ? '制御棒と一次冷却材中のほう素濃度' : '制御棒と再循環ポンプの流量'],
+          ['rod','制御棒（模式）', (k*100).toFixed(0)+' % 挿入 → '+(k < .45 ? '中性子が増える側（出力上昇）' : k > .55 ? '中性子が減る側（出力低下）' : '増減なし（臨界の目安）')],
+          ['E', state.gCalc==='dm' ? 'E = Δm·c²' : 'E = 個数 × 200 MeV', sci(m.E)+' J = '+sci(m.kWh)+' kWh'],
+          ['coal','同じ熱量の石炭', f1(m.coal, m.coal < 10 ? 2 : 0)+' t'],
+          ['elec','熱効率をかけた電気', sci(m.elec)+' kWh']];
+    note='※ c = 3×10⁸ m/s、1 MeV = 1.602×10⁻¹³ J、アボガドロ数 6.022×10²³。制御棒の臨界の位置は模式で、実機では燃焼度などで変わる';
+  }
+  if (id==='kaihei-hogo'){
+    const m = hdModel(), on = state.bDS && state.bCB;
+    rows=[['st','いまの状態', on ? '送電中' : '停止中'],
+          ['seq','正しい順序', '止める: 遮断器 → 断路器 ／ 入れる: 断路器 → 遮断器'],
+          ...(state.bWarn ? [['warn','注意', state.bWarn]] : []),
+          ['Zt','変圧器の %Z（10 MVA 基準）', f1(state.bZt)+' × 10/'+state.bSt+' = '+f1(m.Zt,2)+' %'],
+          ['Z','短絡点までの合成 %Z', f1(m.Z,2)+' %'],
+          ['Ps','短絡容量 Ps = 100·Pb/%Z', f1(m.Ps)+' MVA'],
+          ['Is','短絡電流 Is = Ps/(√3·V)', f1(m.Is,2)+' kA（定格電流 '+f1(m.In*1000,0)+' A の '+f1(m.Is/m.In,1)+' 倍）'],
+          ['cb','必要な遮断器の定格遮断電流', m.cb ? m.cb+' kA 以上（'+CB_RATE.join('・')+' kA から選んだ例）' : '一覧を超える'],
+          ['ct','変流器の一次電流', f1(state.bCTi*state.bCTr/5)+' A（二次 '+f1(state.bCTi)+' A × '+state.bCTr+'/5）']];
+    note='※ 基準容量 Pb = 10 MVA。容量の違う %Z は基準をそろえてから足す（自己容量より大きい基準にすると %Z も大きくなる）。CT は二次開放禁止、VT は二次短絡禁止';
+  }
+  if (id==='kakuu-souden'){
+    if (state.tView==='sag'){
+      const m = tdSag();
+      rows=[['D','たるみ D = W·S²/(8T)', f1(m.D,2)+' m'],
+            ['L','電線の実長 L = S + 8D²/(3S)', f1(m.L,3)+' m（径間より '+f1((m.L - state.tS)*100,1)+' cm 長い）'],
+            ['Lt','温度変化後の実長 L(1 + αΔt)', f1(m.Lt,3)+' m'],
+            ['Dt','温度変化後のたるみ √(3S(L′−S)/8)', f1(m.Dt,2)+' m']];
+      note='※ 3D のたるみは見やすく 10 倍に誇張。張力を 2 倍にするとたるみは 1/2、径間を 2 倍にすると 4 倍。温度が上がると電線が伸びてたるみが増える（張力の変化は無視）';
+    } else {
+      const m = tdElec(), m2 = tdElec(state.tV*2);
+      rows=[['I','線電流 I = P/(√3·V·cosθ)', f1(m.I,0)+' A'],
+            ['dV','電圧降下 √3·I(R cosθ + X sinθ)', f1(m.dV/1000,2)+' kV（'+f1(m.dVp,2)+' %）'],
+            ['loss','送電損失 3I²R', f1(m.loss/1e6,2)+' MW（損失率 '+f1(m.lossP,2)+' %）'],
+            ['x2','電圧を 2 倍にすると', '損失 '+f1(m2.loss/1e6,2)+' MW（1/4）・電流 '+f1(m2.I,0)+' A（1/2）']];
+      note='※ 同じ電力・力率・抵抗なら、電流は 1/V、損失は 1/V² に比例。高い電圧で送る理由がこれ';
+    }
+  }
+  if (id==='haiden' && state.hView==='tp'){
+    const m = hd3();
+    rows=[['I','線電流 I = S/(√3·Vr)', f1(m.I,1)+' A'],
+          ['Q','無効電力 P·tanθ − Qc', f1(m.Q/1e3,0)+' kvar'+(m.Q < 0 ? '（進み。コンデンサの入れすぎ）' : '')],
+          ['pf','改善後の力率', f1(m.pf,3)+(m.Q < 0 ? '（進み）' : m.Q > 0 ? '（遅れ）' : '')],
+          ['v','電圧降下 √3·I(R cosθ + X sinθ)', f1(m.v,1)+' V'+(m.v < 0 ? '（負＝受電端のほうが高い）' : '')],
+          ['rate','電圧降下率 v/Vr（受電端基準）', f1(m.rate,2)+' %'],
+          ['Vs','送電端電圧 Vr + v', f1(m.Vs,0)+' V'],
+          ['loss','線路損失 3I²R', f1(m.loss/1e3,1)+' kW（負荷の '+f1(m.lossP,2)+' %）']];
+    note='※ v = (P·R + Q·X)/Vr と同じ式（P・Q は三相分）。コンデンサは無効電力だけを減らすので、有効電力が同じまま電流・電圧降下・損失が減る。損失は 1/cos²θ に比例';
+  } else if (id==='haiden'){
+    const m = hdSolve(), R1 = 1e4/state.hP1, R2 = 1e4/state.hP2;
+    rows=[['V1','負荷1 の電圧（a–n）', f1(m.V[0])+' V'],
+          ['V2','負荷2 の電圧（n–b）', f1(m.V[1])+' V'],
+          ['Ia','外線 a の電流', f1(Math.abs(m.Ia))+' A'],
+          ['Ib','外線 b の電流', f1(Math.abs(m.Ib))+' A'],
+          ['In','中性線の電流', state.hBreak ? '0 A（断線）' : f1(Math.abs(m.In))+' A（外線の電流の差）'],
+          ['loss','線路損失', f1(m.loss)+' W'],
+          ['R','負荷の抵抗（定格 100 V）', f1(R1,1)+' Ω ／ '+f1(R2,1)+' Ω']];
+    note='※ 負荷は抵抗とみなした。中性線が切れると 2 つの負荷が 200 V に直列になり、抵抗の比（＝容量の逆比）で電圧を分ける。軽い負荷のほうが高い電圧を受ける';
+  }
+  /* 強調表示。いま見るべき行を明るく、ほかを薄くする（機械の3D工場と同じ規則） */
+  const sig = id+'|'+rows.map(r=>r[0]).join(',');
+  if (rdState.tourText !== null){
+    const t = rdState.tourText;
+    rdState.hot = rows.filter(([k,l]) => { const name = String(l).replace(/<[^>]*>/g,'').split(/[（(]/)[0].trim();
+      const tok = name.split(/[\s=:：]+/).filter(x => x.length >= 2);
+      return name && (t.includes(name) || tok.some(x => t.includes(x))) || (rdState.tourKeys || []).includes(k); }).map(r=>r[0]);
+  } else if (rdState.sig !== sig){ rdState.hot = [];
+  } else {
+    const ch = rows.filter(([k,,v]) => rdState.vals[k] !== undefined && rdState.vals[k] !== String(v)).map(r=>r[0]);
+    if (ch.length) rdState.hot = ch;
+  }
+  rdState.sig = sig; rdState.tourText = null;
+  rdState.vals = Object.fromEntries(rows.map(([k,,v]) => [k, String(v)]));
+  const hot = new Set(rdState.hot);
+  readoutEl.classList.toggle('has-hot', hot.size > 0);
+  readoutEl.innerHTML = rows.map(([k,l,v])=>{ const c = hot.has(k) ? ' class="hot"' : ''; return '<dt data-k="'+k+'"'+c+'>'+l+'</dt><dd data-k="'+k+'"'+c+'>'+v+'</dd>'; }).join('')
+    + (note? '<div class="rnote">'+note+'</div>' : '');
+  drawMini(); syncCards();
+}
+
+/* ---------- 右パネルの小さな図 ---------- */
+function drawMini(){
+  const c = document.getElementById('mini'); if (!c) return;
+  const ctx = c.getContext('2d'), W = c.width, H = c.height; ctx.clearRect(0,0,W,H);
+  const css = getComputedStyle(document.documentElement);
+  const ink = css.getPropertyValue('--ink').trim(), ink3 = css.getPropertyValue('--ink-3').trim(), acc = css.getPropertyValue('--accent').trim(),
+        line = css.getPropertyValue('--line').trim(), steel = css.getPropertyValue('--steel').trim();
+  ctx.font = '21px "JetBrains Mono", monospace'; ctx.lineWidth = 2.5;
+  const L=60, R=W-20, T=24, B=H-44;
+  const cap = document.getElementById('miniCap');
+  const bars = (items, unit) => {        // 横に並べた棒。items: [ラベル, 値, 色]
+    const mx = Math.max(...items.map(x=>x[1]), 1e-9), bw = (R-L)/items.length*.6;
+    ctx.strokeStyle=line; ctx.beginPath(); ctx.moveTo(L,B); ctx.lineTo(R,B); ctx.stroke();
+    items.forEach(([lab, v, col], i) => { const x = L + (R-L)/items.length*(i+.2), h = v/mx*(B-T-24);
+      ctx.fillStyle = col; ctx.fillRect(x, B-h, bw, h);
+      ctx.fillStyle = ink; ctx.fillText(f1(v, v < 10 ? 1 : 0)+unit, x, B-h-8);
+      ctx.fillStyle = ink3; ctx.fillText(lab, x, B+28); });
+  };
+  const id = state.current;
+  if (id==='suiryoku'){
+    const m = suModel();
+    if (state.sMode==='gen'){
+      bars([['9.8QHg', 9.8*state.sQ*state.sHg/1000, steel], ['9.8QH', m.Pth/1000, steel], ['水車', m.Pt/1000, steel], ['発電機', m.P/1000, acc]], ' MW');
+      cap.textContent = '左から、総落差での理論値 → 損失落差を引いた有効落差での理論値 → 水車効率をかけた水車出力 → 発電機効率をかけた出力。一段ずつ減る。';
+    } else {
+      bars([['9.8QHg', 9.8*state.sQ*state.sHg/1000, steel], ['9.8Q(Hg+hl)', 9.8*state.sQ*m.Hp/1000, steel], ['所要電力', m.Pin/1000, acc]], ' MW');
+      cap.textContent = '揚水は逆向き。総落差に損失落差を足した全揚程で水を上げ、ポンプ効率と電動機効率で割った電力が要る。発電で取り出せるのはこれより小さい。';
+    }
+  } else if (id==='karyoku'){
+    const m = kaModel();
+    bars([['燃料の入熱', m.Pin, steel], ['発電端', state.kP, acc], ['送電端', state.kP*(1-state.kL/100), acc]], ' MW');
+    cap.textContent = '燃料の入熱のうち電気になるのは 4 割前後。残りの大半は復水器で冷却水に捨てる熱（汽力発電で最大の損失）。所内で使う分を引いたものが送電端。';
+  } else if (id==='genshiryoku'){
+    /* 制御棒の挿入と中性子の増減の向き（模式） */
+    ctx.strokeStyle=line; ctx.beginPath(); ctx.moveTo(L,(T+B)/2); ctx.lineTo(R,(T+B)/2); ctx.moveTo(L,T); ctx.lineTo(L,B); ctx.stroke();
+    ctx.strokeStyle=acc; ctx.beginPath(); for (let i=0;i<=100;i++){ const k=i/100, y=(T+B)/2 - (.5-k)*(B-T)*.8; i? ctx.lineTo(L+k*(R-L), y) : ctx.moveTo(L, y); } ctx.stroke();
+    const k = state.gRod; ctx.fillStyle=acc; ctx.beginPath(); ctx.arc(L+k*(R-L), (T+B)/2 - (.5-k)*(B-T)*.8, 8, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle=ink3; ctx.fillText('挿入 0 %', L, B+28); ctx.fillText('100 %', R-70, B+28); ctx.fillText('増える', L+8, T+18); ctx.fillText('減る', L+8, B-8);
+    cap.textContent = '縦軸は中性子が世代ごとに増えるか減るか（反応度の符号）の模式。制御棒は中性子を吸収するので、入れるほど減る側へ動く。0 の線が臨界。位置は模式で、実機の値ではない。';
+  } else if (id==='kaihei-hogo'){
+    const m = hdModel();
+    bars([['系統 %Zs', state.bZs, steel], ['変圧器 %Zt′', m.Zt, steel], ['合成 %Z', m.Z, acc]], ' %');
+    cap.textContent = '10 MVA 基準にそろえた %Z を直列に足す。合成 %Z が小さいほど短絡容量・短絡電流は大きく、強い遮断器が要る。';
+  } else if (id==='kakuu-souden'){
+    if (state.tView==='sag'){
+      const m = tdSag(), sc = (B-T)/Math.max(1, m.D*1.6, m.Dt*1.6);
+      ctx.strokeStyle=line; ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(R,T); ctx.stroke();
+      const curve = (D, col, dash) => { ctx.strokeStyle=col; ctx.setLineDash(dash); ctx.beginPath(); for (let i=0;i<=60;i++){ const f=i/60, y=T + 4*D*f*(1-f)*sc; i? ctx.lineTo(L+f*(R-L), y) : ctx.moveTo(L, y); } ctx.stroke(); ctx.setLineDash([]); };
+      curve(m.D, steel, [6,6]); curve(m.Dt, acc, []);
+      ctx.fillStyle=ink; ctx.fillText('D = '+f1(m.D,2)+' m', (L+R)/2-80, T+m.D*sc+28);
+      ctx.fillStyle=ink3; ctx.fillText('S = '+state.tS+' m', R-150, T-4);
+      cap.textContent = '破線が基準温度のたるみ、実線が温度変化後。縦は横より大きく描いてある（形を見るため）。D は S の 2 乗に比例し T に反比例する。';
+    } else {
+      const xs = []; for (let V=66; V<=500; V+=4) xs.push([V, tdElec(V).lossP]);
+      const mx = Math.max(...xs.map(p=>p[1])), xOf = V => L + (V-66)/(500-66)*(R-L), yOf = p => B - p/mx*(B-T);
+      ctx.strokeStyle=line; ctx.beginPath(); ctx.moveTo(L,B); ctx.lineTo(R,B); ctx.moveTo(L,T); ctx.lineTo(L,B); ctx.stroke();
+      ctx.strokeStyle=acc; ctx.beginPath(); xs.forEach(([V,p],i)=> i? ctx.lineTo(xOf(V),yOf(p)) : ctx.moveTo(xOf(V),yOf(p))); ctx.stroke();
+      const m = tdElec(); ctx.fillStyle=acc; ctx.beginPath(); ctx.arc(xOf(state.tV), yOf(m.lossP), 8, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle=ink3; ctx.fillText('66 kV', L, B+28); ctx.fillText('500 kV', R-80, B+28); ctx.fillText('損失率', L+8, T+16);
+      cap.textContent = '同じ電力を送るときの損失率と送電電圧。損失は 1/V² で減る。点がいまの電圧。';
+    }
+  } else if (id==='haiden' && state.hView==='tp'){
+    /* 線路損失とコンデンサ容量。遅れ無効電力をちょうど打ち消す点（力率 1）で最小になる */
+    const P = state.h3P*1e3, Q0 = P*Math.tan(Math.acos(state.h3Pf)), qmax = Math.max(3e6, Q0*1.6), R0 = state.h3R, V = state.h3Vr*1e3;
+    const lossAt = q => 3*R0*((P*P + (Q0-q)**2)/(3*V*V));
+    const pts = []; for (let i=0;i<=60;i++){ const q = qmax*i/60; pts.push([q, lossAt(q)]); }
+    const mx = Math.max(...pts.map(p=>p[1])), xOf = q => L + q/qmax*(R-L), yOf = l => B - l/mx*(B-T);
+    ctx.strokeStyle=line; ctx.beginPath(); ctx.moveTo(L,B); ctx.lineTo(R,B); ctx.moveTo(L,T); ctx.lineTo(L,B); ctx.stroke();
+    ctx.strokeStyle=acc; ctx.beginPath(); pts.forEach(([q,l],i)=> i? ctx.lineTo(xOf(q),yOf(l)) : ctx.moveTo(xOf(q),yOf(l))); ctx.stroke();
+    ctx.setLineDash([5,5]); ctx.strokeStyle=ink3; ctx.beginPath(); ctx.moveTo(xOf(Q0),T); ctx.lineTo(xOf(Q0),B); ctx.stroke(); ctx.setLineDash([]);
+    const q = state.h3Qc*1e3; ctx.fillStyle=acc; ctx.beginPath(); ctx.arc(xOf(q), yOf(lossAt(q)), 8, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle=ink3; ctx.fillText('Qc = 0', L, B+28); ctx.fillText('損失', L+8, T+16); ctx.fillText('力率 1', xOf(Q0)+6, T+16);
+    cap.textContent = '横軸がコンデンサの容量、縦軸が線路損失。破線（遅れ無効電力をちょうど打ち消す＝力率 1）で最小になり、それ以上入れると進み力率になって損失はまた増える。点がいまの状態。';
+  } else if (id==='haiden'){
+    const m = hdSolve();
+    bars([['負荷1', m.V[0], m.V[0] > 105 ? '#D24A43' : acc], ['負荷2', m.V[1], m.V[1] > 105 ? '#D24A43' : acc]], ' V');
+    ctx.setLineDash([5,5]); ctx.strokeStyle=ink3; const mx = Math.max(m.V[0], m.V[1]), y100 = B - 100/mx*(B-T-24);
+    ctx.beginPath(); ctx.moveTo(L, y100); ctx.lineTo(R, y100); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle=ink3; ctx.fillText('100 V', R-80, y100-6);
+    cap.textContent = '2 つの負荷にかかる電圧。破線が 100 V。中性線が切れると軽い負荷（抵抗の大きいほう）に高い電圧がかかり、赤になる（機器を壊すおそれ）。';
+  }
+}
+
+/* カードは電力の3D工場では使わない（機械の3D工場と同じ枠組みを保つための空の定義） */
+const CARD_BODY = {};
+function cardBody(k){ return CARD_BODY[k] || ''; }
+function bindCards(){ syncCards(); }
+const VIEWNOTE = {};
+function syncCards(){
+  const vn = document.getElementById('viewnote');
+  if (vn) vn.innerHTML = state.current==='haiden' ? (state.hView==='tp' ? 'いま見ているのは<b>三相3線式</b>（高圧配電線から工場へ）。' : 'いま見ているのは<b>単相3線式</b>（柱上変圧器から家へ）。') : state.current==='kakuu-souden' ? (state.tView==='sag' ? 'いま見ているのは<b>たるみ</b>。3D の電線が実際に垂れ下がる（10 倍に誇張）。' : 'いま見ているのは<b>電圧降下と損失</b>。3D はそのまま、読み値と図で比べる。') : '';
+}
+
+/* 予想クイズが当てた読み値を数秒だけ光らせる。どの数字の話かを取り違えないため。 */
+let litTimer = null;
+function litReadout(key){
+  if (!key || !readoutEl) return;
+  readoutEl.querySelectorAll('.lit').forEach(e=>e.classList.remove('lit'));
+  readoutEl.querySelectorAll('[data-k="'+key+'"]').forEach(e=>e.classList.add('lit'));
+  clearTimeout(litTimer);
+  litTimer = setTimeout(()=>readoutEl && readoutEl.querySelectorAll('.lit').forEach(e=>e.classList.remove('lit')), 4000);
+}
+
+/* ---------- 右パネル ---------- */
+const panel = document.getElementById('panel');
+const chips = document.getElementById('chips');
+document.getElementById('wikiTop').href = WIKI;
+function renderChips(){
+  chips.innerHTML='';
+  const all=[['','工場全景'],...ORDER.map(id=>[id, MACHINES[id].title, MACHINES[id].num])];
+  for (const [id,t,n] of all){ const b=document.createElement('button'); b.className='chip'; b.innerHTML=(n?'<span class="n">'+n+'</span>':'')+t; b.setAttribute('aria-pressed', String((state.current||'')===id)); b.onclick=()=>select(id||null); chips.appendChild(b); }
+}
+const esc = s => s.replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function renderPanel(){
+  const id = state.current;
+  if (!id){
+    const cnt = Object.fromEntries(ORDER.map(k=>[k, KAKOMON.filter(q=>q.p===k).length]));
+    panel.innerHTML = `
+      <div class="kicker">使い方</div>
+      <h2>丸暗記を、置き場所のある記憶に</h2>
+      <p class="lead">電気が生まれてから家に届くまでの6つの設備を、左から順に床に並べた。発電所で電気をつくり、変電所で電圧を変え、送電線と配電線で運ぶ。過去問で引っかかった論点をWikiで確かめ、ここで「どこの設備の、どの量の話か」を見て閉じる。</p>
+      <ol class="flow">
+        <li><b>過去問を解く</b><span>間違えた問題の分野（例: 3.1 架空送電線路 ▸ たるみ）を控える</span></li>
+        <li><b>Wikiで詳細を確認</b><span><a href="${WIKI}" target="_blank" rel="noopener">電力Wiki ↗</a> の該当節を読む。数値・式・過去問解説はWikiだけが持つ</span></li>
+        <li class="here"><b>ここでイメージを固める</b><span>設備を選ぶと <b>予想クイズ</b> が出る。答えを選ぶと3Dと数値が実際にその状態へ動くので、式の変数が「どこの動き」なのかを目で確かめられる</span></li>
+      </ol>
+      <h3>設備を選ぶ</h3>
+      <div class="overview-grid">${ORDER.map(k=>`<button data-id="${k}"><span class="num">${MACHINES[k].num}</span><span class="t">${MACHINES[k].title}</span><span class="c">過去問 ${cnt[k]}問</span><span class="s">${esc(MACHINES[k].kicker)}</span></button>`).join('')}</div>
+      <div class="note"><b>使い方は3つだけ。</b>ドラッグで回す、ホイールで寄る、凡例の行に触れると部品を指す。<br>
+      <b>過去問の答えはここに書かない。</b>この3Dは形と動きと式の向きを担当し、過去問の解答・解説は電力Wiki側だけが正本として持つ。予想クイズの数値は自作の練習用の算数で、過去問の解答ではない。過去問台帳（H18〜R08上の${KAKOMON.length}問）は電力Wikiの「分野別一覧」から6つの設備に当たる分を抜き出したもの。題名は出典（電験王）の題名の写しで、問題冊子との一次照合はしていない。地中送電・誘導障害など3Dに無い論点は、行のリンク先が別ページになる。</div>`;
+    panel.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>select(b.dataset.id));
+    return;
+  }
+  const m = MACHINES[id], st = STUDY[id];
+  const qs = KAKOMON.filter(q=>q.p===id && q.v!==0);
+  const older = KAKOMON.filter(q=>q.p===id && q.v===0).reverse();   // 新しい回から
+  const bySec = {}; for (const q of qs) (bySec[q.sec] ||= []).push(q);
+  const secOrder = m.sections.map(x=>x[0]);
+  const extraSecs = Object.keys(bySec).filter(x=>!secOrder.includes(x));
+  const secLabel = x => (m.sections.find(y=>y[0]===x)||[])[1] || x;
+  /* 節 → その論点を動かして見せるツアーの歩。過去問の側から3Dへ戻る道 */
+  const tourBySec = {}; st.tour.forEach((x,k)=>{ if (x.sec && !(x.sec in tourBySec)) tourBySec[x.sec] = k; });
+  /* 過去問1問 → その問題を名指ししているツアーの歩 */
+  const stepByQ = {}; st.tour.forEach((x,k)=>{ for (const qid of (x.q||[])) if (!(qid in stepByQ)) stepByQ[qid] = k; });
+  const charts = `<canvas class="mini" id="mini" width="700" height="300"></canvas><p class="mini-cap" id="miniCap"></p>`;
+  panel.innerHTML = `
+    <div class="kicker">${esc(m.kicker)}</div>
+    <h2><span class="num">${m.num}</span>${m.title}</h2>
+    <div class="oneliner"><small>30秒理解</small>${esc(st.oneLiner)}</div>
+    <p class="lead">${esc(m.lead)}</p>
+    <p class="viewnote" id="viewnote"></p>
+
+    <h3>電験で狙われるポイント</h3>
+    <ul class="exam">${st.exam.map(([n,f,w])=>`<li><span class="en">${esc(n)}</span><span class="ef">${esc(f)}</span><span class="ew">${mark(w)}</span></li>`).join('')}</ul>
+
+    <h3>予想してから動かす</h3>
+    <ol class="quiz" id="quiz">${st.predict.map((p,i)=>`
+      <li data-q="${i}">
+        <div class="qq"><span class="qn">Q${i+1}</span><span>${esc(p.q)}</span></div>
+        <div class="qopts">${p.opts.map((o,k)=>`<button data-o="${k}"><span class="mk">${'アイウエ'[k]}</span><span>${esc(o)}</span></button>`).join('')}</div>
+        <div class="qfb" hidden></div>
+      </li>`).join('')}</ol>
+
+    ${charts}
+
+    <h3>見どころツアー <span style="font-family:var(--font-mono);font-weight:400">${st.tour.length}歩</span></h3>
+    <div class="tour" id="tour"></div>
+
+    <h3>見えているもの</h3>
+    <ul class="parts">${m.parts.map(([c,n,d])=>`<li><span class="sw" style="background:${c}"></span><div><b>${esc(n)}</b>${d?`<br><span>${mark(d)}</span>`:''}</div></li>`).join('')}</ul>
+
+    <h3>もう一歩</h3>
+    <div class="cards" id="cards">${(st.cards||[]).map(k=>`<details data-card="${k}"><summary>${esc(CARDS[k].t)}</summary><div class="cbody">${cardBody(k)}</div></details>`).join('')}</div>
+
+    <h3>即答チェック</h3>
+    <ul class="check">${st.check.map(([q,a])=>`<li><details><summary>${esc(q)}</summary><p>${esc(a)}</p></details></li>`).join('')}</ul>
+
+    <h3>次にやること</h3>
+    <div class="steps">
+      <div class="here"><span class="sn">1</span><span>3Dで構造と動きを確かめる<small>いま見ているところ</small></span></div>
+      <a href="${wikiUrl(m.page)}" target="_blank" rel="noopener"><span class="sn">2</span><span>電力Wikiで式と例題を確認 ↗<small>数値・導出・解説はWikiが正本</small></span></a>
+      <a href="${wikiUrl('kakomon-by-field')}" target="_blank" rel="noopener"><span class="sn">3</span><span>分野別一覧で過去問を探す ↗<small>解けたら1へ戻る</small></span></a>
+    </div>
+
+    <h3>Wikiの節へ</h3>
+    <ul class="secs">${m.sections.map(([x,l,why])=>`<li><a href="${secUrl(id,x)}" target="_blank" rel="noopener"><span>${esc(l)}</span><span class="cnt">${bySec[x]? '過去問 '+bySec[x].length : ''}</span><span class="why">${mark(why)}</span></a></li>`).join('')}</ul>
+
+    <h3>この理解を使う過去問 <span style="font-family:var(--font-mono);font-weight:400">${qs.length}問</span></h3>
+    ${[...secOrder.filter(x=>bySec[x]), ...extraSecs].map(x=>`
+      <div class="secgroup"><span>${esc(secLabel(x))}</span>${tourBySec[x]!=null ? `<button data-step="${tourBySec[x]}">3Dで見る →</button>` : ''}</div>
+      <ul class="kak">${bySec[x].map(q=>`<li><span class="id">${q.s} 問${q.c}</span><span><a href="${secUrl(id,x)}" target="_blank" rel="noopener">${esc(q.t)}</a><span class="d" title="問題タイプ">${esc(q.k)}</span>${stepByQ[q.s+'/'+q.c]!=null ? `<button class="k3d" data-step="${stepByQ[q.s+'/'+q.c]}" title="この論点を3Dで見る">3D</button>` : ''}</span></li>`).join('')}</ul>`).join('')}
+    ${older.length ? `<details class="older"><summary>H18〜R2 の同じ機器（${older.length}問・題名索引のみ／一次照合未了）</summary>
+      <ul class="kak">${older.map(q=>`<li><span class="id">${q.s} 問${q.c}</span><span><a href="${secUrl(id,q.sec)}" target="_blank" rel="noopener">${esc(q.t)}</a>${stepByQ[q.s+'/'+q.c]!=null ? `<button class="k3d" data-step="${stepByQ[q.s+'/'+q.c]}" title="この論点を3Dで見る">3D</button>` : ''}</span></li>`).join('')}</ul>
+      <p class="note">解説サイトの題名を索引として写したもので、問題冊子では確かめていない。上の件数には入れていない。</p></details>` : ''}
+    <div class="note">過去問の行をクリックすると、その論点のWikiの節が開く。解説・答えはWiki側。ここは形と動きを見る場所。</div>`;
+  bindQuiz(st);
+  bindCards();
+  panel.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{
+    tourStep = +b.dataset.step; renderTour();
+    document.getElementById('tour').scrollIntoView({behavior: reduced?'auto':'smooth', block:'center'});
+  });
+  tourStep = 0; renderTour(false);
+  drawMini();
+}
+
+/* 見えているものの説明だけ **強調** を許す（本文の意味は変えず、条件語を目立たせるため） */
+function mark(t){ return esc(t).replace(/\*\*(.+?)\*\*/g, '<b style="color:var(--ink)">$1</b>'); }
+
+/* ---------- 予想 → 操作 → 確認 ----------
+   選ぶ前に答えを見せない。選んだ瞬間に 3D と操作帯を実際にその状態へ動かし、
+   どの読み値の話かを光らせる。式の暗記を「見た動き」に結び直すのが狙い。 */
+function bindQuiz(st){
+  const box = document.getElementById('quiz'); if (!box) return;
+  box.querySelectorAll('li[data-q]').forEach(li=>{
+    const qi = +li.dataset.q, item = st.predict[qi];
+    const fb = li.querySelector('.qfb');
+    const btns = [...li.querySelectorAll('.qopts button')];
+    const answer = (k)=>{
+      const ok = k === item.ans;
+      btns.forEach((b,bi)=>{ b.disabled = true;
+        if (bi === item.ans) b.classList.add('ok');
+        else if (bi === k) b.classList.add('ng');
+        else b.classList.add('dim'); });
+      li.classList.add('done');
+      fb.hidden = false;
+      fb.innerHTML = '<span class="verdict '+(ok?'ok':'ng')+'">'+(ok?'正解':'惜しい')+'</span>'+esc(item.why)
+        + '<br><button class="again">もう一度やる</button>';
+      fb.querySelector('.again').onclick = ()=>{
+        btns.forEach(b=>{ b.disabled=false; b.classList.remove('ok','ng','dim'); });
+        li.classList.remove('done'); fb.hidden = true; fb.innerHTML='';
+      };
+      if (item.set){ Object.assign(state, item.set); }
+      refreshCtrl(); openMoreFor(item.set, item.q);
+      litReadout(item.hi);
+    };
+    btns.forEach((b,k)=>b.onclick = ()=>answer(k));
+  });
+}
+
+let tourStep = 0;
+function renderTour(apply=true){
+  const box = document.getElementById('tour'); if (!box || !state.current) return;
+  const steps = STUDY[state.current].tour; const i = tourStep; const stp = steps[i];
+  const qs = (stp.q || []).map(k => QID.get(k)).filter(Boolean);
+  box.innerHTML = `<div class="step">${i+1} / ${steps.length}</div><h4>${esc(stp.t)}</h4>
+    <dl class="tsteps">
+      <div><dt>操作</dt><dd>${esc(stp.op)}</dd></div>
+      <div><dt>画面</dt><dd>${esc(stp.see)}</dd></div>
+      <div><dt>だから</dt><dd>${esc(stp.so)}</dd></div>
+    </dl>
+    ${qs.length ? `<div class="tq"><span class="cap">ここが問われた過去問</span>${qs.map(q=>`<a href="${secUrl(q.p,q.sec)}" target="_blank" rel="noopener"><span class="id">${q.s} 問${q.c}${q.v===0 ? '・未照合' : ''}</span><span>${esc(q.t)}</span></a>`).join('')}</div>` : ''}
+    <div class="nav"><button id="tPrev" ${i===0?'disabled':''}>← 前</button><button id="tNext" ${i===steps.length-1?'disabled':''}>次 →</button><button id="tApply">この状態にする</button><div class="dots">${steps.map((_,k)=>`<i class="${k===i?'on':''}"></i>`).join('')}</div></div>`;
+  box.querySelector('#tPrev').onclick=()=>{ tourStep=Math.max(0,tourStep-1); renderTour(); };
+  box.querySelector('#tNext').onclick=()=>{ tourStep=Math.min(steps.length-1,tourStep+1); renderTour(); };
+  box.querySelector('#tApply').onclick=()=>applyStep(stp);
+  if (apply) applyStep(stp);
+}
+function applyStep(stp){
+  Object.assign(state, stp.set || {});
+  rdState.tourText = [stp.op, stp.see, stp.so].join(' ');
+  rdState.tourKeys = stp.hi || [];
+  /* 先に操作帯と凡例を作り直してから指す。逆順だと、回路や見る対象を切り替える歩で
+     rebuildLabels が指した行を消してしまい、focus が黙って外れる */
+  refreshCtrl(); openMoreFor(stp.set, stp.op);
+  focusByName(stp.focus || null);
+}
+
+/* ---------- ミニ図（右パネルの曲線。形だけの模式図） ---------- */
+const backBtn = document.getElementById('backbtn');
+backBtn.onclick = ()=>select(null);
+function select(id){
+  state.current = id;
+  backBtn.classList.toggle('hidden', !id);
+  if (reduced){ const v = VIEWS[id||'overview']; cam.target.set(...v.target); cam.dist=v.dist; cam.theta=v.theta; cam.phi=v.phi; cam.want=null; }
+  else flyTo(VIEWS[id||'overview']);
+  _lastSig = id ? ctrlSig() : null;
+  renderChips(); buildCtrl(); renderPanel(); rebuildLabels();
+  panel.scrollTop = 0;
+  try { history.replaceState(null, '', id ? '#'+id : location.pathname); } catch (e) {}
+}
+
+/* ---------- ループ ---------- */
+/* 描画する画素数に上限を置く。高DPIの大画面では w*h*dpr² が1千万画素を超え、
+   操作に対する反応が目に見えて鈍る（実測: 2560x1300 で 2fps、負荷を落とすと 21fps）。
+   スマホのように面積が小さいときは上限に当たらないので画質はそのまま。 */
+const PIXEL_CAP = 2.6e6;
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
+  const pr = Math.max(0.75, Math.min(devicePixelRatio || 1, 2, Math.sqrt(PIXEL_CAP / (w * h))));
+  renderer.setPixelRatio(pr);
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  /* 画面の形が変われば入る距離も変わる。全景を見ているときだけ組み直す
+     （機器に寄っているときに引ったくらない） */
+  fitOverview();
+  if (!state.current) flyTo(VIEWS.overview);
+}
+/* resize は連続で飛んでくるので1フレームにまとめる */
+let rzPending=false;
+addEventListener('resize', ()=>{ if(rzPending) return; rzPending=true; requestAnimationFrame(()=>{ rzPending=false; resize(); }); });
+resize();
+let last = performance.now();
+function loop(now){
+  const dt = Math.min(.05, (now-last)/1000); last = now; const t = now/1000;
+  if (cam.want){ const k = 1 - Math.pow(.001, dt); cam.target.lerp(cam.want.target, k); cam.dist += (cam.want.dist-cam.dist)*k; cam.theta += (cam.want.theta-cam.theta)*k; cam.phi += (cam.want.phi-cam.phi)*k; if (cam.target.distanceTo(cam.want.target)<.01 && Math.abs(cam.dist-cam.want.dist)<.01) cam.want=null; }
+  applyCam();
+  /* 1つの設備に寄っているあいだ、ほかの設備は動かさない（見えないものを毎フレーム計算しない）。
+     カメラが移動中は全景が見えうるので全機動かす。 */
+  const only = (!cam.want && state.current) ? state.current : null;
+  for (const id of ORDER) if (!only || id === only) animators[id](groups[id], t, state, dt);
+  hlMat.opacity = .62 + .3*Math.sin(t*4.5);
+  renderer.render(scene, camera); updateLabels();
+  requestAnimationFrame(loop);
+}
+const initial = location.hash.replace('#','');
+select(MACHINES[initial] ? initial : null);
+requestAnimationFrame(loop);
+</script>
