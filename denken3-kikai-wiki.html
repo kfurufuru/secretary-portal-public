@@ -9740,6 +9740,60 @@ const kikaiWikiDue = today => {
   out.sort((a, b) => (a.nextDue || '') < (b.nextDue || '') ? -1 : (a.nextDue || '') > (b.nextDue || '') ? 1 : rank[a.status] - rank[b.status]);
   return out;
 };
+/* 「今日やる」の1件。ページから行が消えた・文が変わった記録（孤児）は、開いても解けないので一覧から消えない。
+   その逃げ道として、1件ずつ記録を消せるようにする。誤って消さないよう、2段階で押させる。 */
+const WikiDueItem = ({
+  r
+}) => {
+  const [arm, setArm] = React.useState(false);
+  const remove = () => {
+    try {
+      localStorage.removeItem(r.key);
+    } catch (e) {}
+    try {
+      window.dispatchEvent(new CustomEvent('section-check-changed', {
+        detail: {
+          key: r.key
+        }
+      }));
+    } catch (e) {}
+  };
+  const btn = {
+    padding: '1px 8px',
+    marginLeft: 6
+  };
+  return /*#__PURE__*/React.createElement("li", {
+    style: {
+      margin: '3px 0'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--ink-soft)'
+    }
+  }, "[", KIKAI_WIKI_KINDS[r.kind], "]"), " ", (r.title || '（題名なし）').replace(/^【正誤】/, ''), !arm && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: "trap-btn maru",
+    style: btn,
+    onClick: () => setArm(true)
+  }, "記録を消す"), arm && /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontSize: 12,
+      color: 'var(--ink-soft)'
+    }
+  }, "単元を開いても同じ問題が見つからないときだけ消す（見つかるなら、解き直せば次回日が延びる）。", /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: "trap-btn batsu",
+    style: btn,
+    onClick: remove
+  }, "本当に消す"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: "trap-btn maru",
+    style: btn,
+    onClick: () => setArm(false)
+  }, "やめる")));
+};
+
 /* ホームの「今日やる（Wiki 内）」。単元ごとに件数を出し、押すとその単元へ飛ぶ */
 const WikiReviewToday = ({
   onNav
@@ -9819,7 +9873,24 @@ const WikiReviewToday = ({
         fontSize: 12,
         color: 'var(--ink-mute)'
       }
-    }, rs.slice(0, 3).map(r => (r.title || '').replace(/^【正誤】/, '')).join(' ／ '), rs.length > 3 ? ` ／ ほか ${rs.length - 3} 件` : ''));
+    }, rs.slice(0, 3).map(r => (r.title || '').replace(/^【正誤】/, '')).join(' ／ '), rs.length > 3 ? ` ／ ほか ${rs.length - 3} 件` : ''), /*#__PURE__*/React.createElement("details", {
+      style: {
+        fontSize: 12.5
+      }
+    }, /*#__PURE__*/React.createElement("summary", {
+      style: {
+        cursor: 'pointer',
+        color: 'var(--ink-soft)'
+      }
+    }, "1件ずつ見る（見つからない問題の記録を消す）"), /*#__PURE__*/React.createElement("ul", {
+      style: {
+        margin: '2px 0 4px',
+        paddingLeft: 18
+      }
+    }, rs.map(r => /*#__PURE__*/React.createElement(WikiDueItem, {
+      key: r.key,
+      r: r
+    })))));
   })), /*#__PURE__*/React.createElement("p", {
     style: {
       margin: '6px 0 0',
