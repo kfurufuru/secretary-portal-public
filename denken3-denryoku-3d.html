@@ -3560,14 +3560,17 @@ function applyCam(){
   camera.position.copy(p); camera.lookAt(cam.target);
 }
 const VIEWS = {
+  /* wide: 寄らない視点。どの台も「設備がつながった系」が主題で、寄ると流れや順序が枠から出る
+     （2026-10-12 実描画で確認: 水力＝落差、火力＝ガスと蒸気の通る順、変電所＝CB と DS の順序、
+     地中送電＝マーレーループのケーブル、配電＝負荷と中性線）。全台 wide なので、効くのは比較の歩の画角固定と指し示しだけ */
   overview:{target:[0,2,0], dist:60, theta:.35, phi:1.15},
-  suiryoku:{target:[-30,1.8,0], dist:10.5, theta:.45, phi:1.25},
-  karyoku:{target:[-20.3,2.2,0], dist:13, theta:.5, phi:1.2},
-  genshiryoku:{target:[-10,1.4,0], dist:9.5, theta:.45, phi:1.2},
-  'kaihei-hogo':{target:[0,1.3,0], dist:10, theta:.4, phi:1.2},
-  'kakuu-souden':{target:[10,2.2,0], dist:11, theta:.3, phi:1.3},
-  'chichuu-souden':{target:[20,1.0,0], dist:9.5, theta:.35, phi:1.15},
-  haiden:{target:[30,2.0,0], dist:10, theta:.45, phi:1.2},
+  suiryoku:{target:[-30,1.8,0], dist:10.5, theta:.45, phi:1.25, wide:true},
+  karyoku:{target:[-20.3,2.2,0], dist:13, theta:.5, phi:1.2, wide:true},
+  genshiryoku:{target:[-10,1.4,0], dist:9.5, theta:.45, phi:1.2, wide:true},
+  'kaihei-hogo':{target:[0,1.3,0], dist:10, theta:.4, phi:1.2, wide:true},
+  'kakuu-souden':{target:[10,2.2,0], dist:11, theta:.3, phi:1.3, wide:true},
+  'chichuu-souden':{target:[20,1.0,0], dist:9.5, theta:.35, phi:1.15, wide:true},
+  haiden:{target:[30,2.0,0], dist:10, theta:.45, phi:1.2, wide:true},
 };
 
 /* --- 工場フロア（発電 → 変電 → 送電 → 配電 の順に左から並べる） --- */
@@ -4040,7 +4043,7 @@ const builders = {suiryoku:buildSuiryoku, karyoku:buildKaryoku, genshiryoku:buil
 const animators = {suiryoku:animSuiryoku, karyoku:animKaryoku, genshiryoku:animGenshiryoku, 'kaihei-hogo':animHenden, 'kakuu-souden':animSouden, 'chichuu-souden':animChichuu, haiden:animHaiden};
 for (const id of ORDER){ const g = new THREE.Group(); g.position.set(MACHINES[id].x, .3, 0); builders[id](g); g.userData.id = id; scene.add(g); groups[id] = g; }
 
-function flyTo(v){ cam.want = {target:new THREE.Vector3(...v.target), dist:v.dist, theta:v.theta, phi:v.phi}; }
+function flyTo(v){ cam.want = {target:new THREE.Vector3(...v.target), dist:v.dist, theta:v.theta, phi:v.phi}; camShot = null; }
 /* 工場全景は「並んだ機器が全部入る距離」を実寸から計算する。
    手で決めると機器を足すたびに外す——実測で、5台の時点ですでに幅の狭い画面では
    パワエレが枠外に出ていた（気づかないまま公開していた）。
@@ -4199,11 +4202,90 @@ function setHighlight(obj){
 function visibleInScene(o){ for (let n=o; n; n=n.parent){ if (!n.visible) return false; } return true; }
 function activeRow(){ return hoverIdx !== null ? hoverIdx : pinIdx; }
 function paintLegend(){ const a = activeRow(); legendRows.forEach((r,i)=>r.el.classList.toggle('on', i===a)); }
-/* ツアーが「この部品を見て」と言ったら、その行を固定する */
-function focusByName(name){
-  pinIdx = null;
-  if (name){ const i = legendRows.findIndex(r=>r.name.includes(name)); if (i>=0) pinIdx = i; }
+/* ツアーが「この部品を見て」と言ったら、その行を固定し、カメラをその部品に合わせる。
+   どちらも描画ループで animators の後に解決する。部品の表示/非表示は animators が
+   毎フレーム決めるので、applyStep の時点では1つ前の歩のまま——
+   そこで引くと「回転子」が非表示の突極形を掴み、円筒形の歩で指し示しが黙って外れる
+   （2026-10-11 実測: 同期機ツアー 5・7・8 歩目） */
+let focusReq;            // undefined = 要求なし／null = 固定を外す
+function focusByName(name){ focusReq = name || null; }
+/* 行の選び方: 名前そのもの、または「名前（…）」の行を先に探し、無ければ名前を含む行に落とす
+   （誘導機の「回転子」が先に並ぶ「回転子の目印（白）」を掴まないように）。
+   候補が複数あれば、いま見えている行を採る（回転子（突極形）／回転子（円筒形）） */
+function focusRow(name){
+  if (!name) return null;
+  let rows = legendRows.filter(r=>r.name === name || r.name.startsWith(name + '（'));
+  if (!rows.length) rows = legendRows.filter(r=>r.name.includes(name));
+  return rows.find(r=>r.nodes.some(n=>visibleInScene(n.obj))) || rows[0] || null;
+}
+function resolveFocus(){
+  const row = focusRow(focusReq); focusReq = undefined;
+  pinIdx = row ? legendRows.indexOf(row) : null;
   paintLegend();
+  const nodes = row ? row.nodes.filter(n=>visibleInScene(n.obj)) : [];
+  /* 同じ部品の歩が続くなら、動いているかを判定する前に画角を固定する。判定を先にすると、
+     一時停止の歩（直流機8歩目「始動の瞬間は E = 0」）で回る電機子が「静止」と出て、
+     比較の歩なのに寄ってしまう（2026-10-11 measure_3d_tour_camera.py で検出） */
+  const part = nodes.length ? viewKey() + '|' + row.name + '|' + nodes.map(n=>n.obj.uuid).join(',') : null;
+  if (part && part === camPart){ frameWait = null; return; }
+  camPart = part;
+  /* 動いているかは数フレーム後の姿勢と比べて決める（frameTick） */
+  frameWait = nodes.length ? {row, nodes, m0:nodes.map(n=>n.obj.matrixWorld.clone()), left:3} : null;
+  if (!nodes.length) shoot(null);       // 指すものが無い・見えない歩は機器の基本視点へ
+}
+/* カメラの寄り方（カメラワークの「ドリーイン」と「ジャンプカット」）
+   ・小さい部品ほど寄る（VIEWS の wide 視点を除く）。部品が画面の高さの FRAME_FILL を占める距離が目安で、
+     それより大きい部品では機器の基本視点のまま動かない。
+     寄っても基本視点の FRAME_MIN 倍の距離まで——それより近いと、電流の通り道や
+     周りの部品との位置関係が枠から外れる（パワエレの素子は画面の 0.2〜0.5 % しかない）。
+   ・動いている部品（回転磁界・回転子・はずみ車・昇降する荷）には寄らない。見せたいのは動きそのもので、
+     寄るとその瞬間の位置に合わせた画角から部品が出ていく（回転磁界は 120 フレーム中 47〜114 が枠外）。
+   ・同じ部品の歩が続くあいだは画角を変えない（分巻→直巻、R→RL 負荷のような比較の歩）。
+     カメラまで動くと、条件を変えた結果と視点の移動が混ざって見分けられない。
+     「同じ部品」は 3D の物体そのもので判定する。外接箱で判定すると、回る部品や
+     負荷で傾く電気的中性軸で箱が毎回変わり、比較の歩でもカメラが動く。
+     手で回した画角も、指す部品が変わるまでは奪わない。 */
+const FRAME_FILL = .35, FRAME_MIN = .6;
+let camShot = null;      // いまのカメラが合わせている画（視点キー＋行名＋物体）。null = 未定
+let frameWait = null;    // 動いているかの判定待ち
+let camPart = null;      // 直前の歩が指した部品（視点キー＋行名＋物体）。同じなら画角を変えない
+const viewKey = () => state.current;
+const _vb = new THREE.Box3();
+/* 見えているメッシュだけの外接箱（Box3.expandByObject は非表示の子も数える） */
+function visibleBox(nodes){
+  const box = new THREE.Box3();
+  for (const n of nodes) n.obj.traverseVisible(m=>{
+    if (!m.geometry) return;
+    if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+    box.union(_vb.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld));
+  });
+  return box;
+}
+function frameTick(){
+  if (!frameWait || --frameWait.left > 0) return;
+  const {row, nodes, m0} = frameWait; frameWait = null;
+  const moving = nodes.some((n,i)=>!n.obj.matrixWorld.equals(m0[i]));
+  shoot(moving ? null : {row, nodes});
+}
+/* part = null なら機器の基本視点、{row, nodes} ならその部品に合わせた画 */
+function shoot(part){
+  const key = viewKey() + '|' + (part ? part.row.name + '|' + part.nodes.map(n=>n.obj.uuid).join(',') : '');
+  if (key === camShot) return;
+  const base = VIEWS[viewKey()];
+  let v = base;
+  if (part && !base.wide){
+    const box = visibleBox(part.nodes);
+    if (box.isEmpty()) return;
+    const c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+    const half = Math.tan(camera.fov*Math.PI/360), a = Math.max(.4, camera.aspect || 1);
+    const need = Math.max(sz.y/(2*half), Math.max(sz.x, sz.z)/(2*half*a)) / FRAME_FILL;
+    const dist = Math.min(base.dist, Math.max(base.dist*FRAME_MIN, need));
+    const k = (base.dist - dist) / (base.dist*(1 - FRAME_MIN));   // 0 = 寄らない … 1 = 最大まで寄る
+    v = {target:new THREE.Vector3(...base.target).lerp(c, k).toArray(), dist, theta:base.theta, phi:base.phi};
+  }
+  if (reduced){ cam.target.set(...v.target); cam.dist=v.dist; cam.theta=v.theta; cam.phi=v.phi; cam.want=null; }
+  else flyTo(v);
+  camShot = key;
 }
 
 function updateLabels(){
@@ -4994,8 +5076,9 @@ backBtn.onclick = ()=>select(null);
 function select(id){
   state.current = id; causalReset();
   backBtn.classList.toggle('hidden', !id);
-  if (reduced){ const v = VIEWS[id||'overview']; cam.target.set(...v.target); cam.dist=v.dist; cam.theta=v.theta; cam.phi=v.phi; cam.want=null; }
+  if (reduced){ const v = VIEWS[id||'overview']; cam.target.set(...v.target); cam.dist=v.dist; cam.theta=v.theta; cam.phi=v.phi; cam.want=null; camShot = null; }
   else flyTo(VIEWS[id||'overview']);
+  focusReq = undefined; frameWait = null; camPart = null;
   _lastSig = id ? ctrlSig() : null;
   renderChips(); buildCtrl(); renderPanel(); rebuildLabels();
   panel.scrollTop = 0;
@@ -5024,12 +5107,14 @@ resize();
 let last = performance.now();
 function loop(now){
   const dt = Math.min(.05, (now-last)/1000); last = now; const t = now/1000;
-  if (cam.want){ const k = 1 - Math.pow(.001, dt); cam.target.lerp(cam.want.target, k); cam.dist += (cam.want.dist-cam.dist)*k; cam.theta += (cam.want.theta-cam.theta)*k; cam.phi += (cam.want.phi-cam.phi)*k; if (cam.target.distanceTo(cam.want.target)<.01 && Math.abs(cam.dist-cam.want.dist)<.01) cam.want=null; }
+  if (cam.want){ const k = 1 - Math.pow(.001, dt); cam.target.lerp(cam.want.target, k); cam.dist += (cam.want.dist-cam.dist)*k; cam.theta += (cam.want.theta-cam.theta)*k; cam.phi += (cam.want.phi-cam.phi)*k; if (cam.target.distanceTo(cam.want.target)<.01 && Math.abs(cam.dist-cam.want.dist)<.01 && Math.abs(cam.theta-cam.want.theta)<.01 && Math.abs(cam.phi-cam.want.phi)<.01) cam.want=null; }
   applyCam();
   /* 1つの設備に寄っているあいだ、ほかの設備は動かさない（見えないものを毎フレーム計算しない）。
      カメラが移動中は全景が見えうるので全機動かす。 */
   const only = (!cam.want && state.current) ? state.current : null;
   for (const id of ORDER) if (!only || id === only) animators[id](groups[id], t, state, dt);
+  if (focusReq !== undefined && state.current) resolveFocus();
+  else if (frameWait && state.current) frameTick();
   hlMat.opacity = .62 + .3*Math.sin(t*4.5);
   renderer.render(scene, camera); updateLabels();
   requestAnimationFrame(loop);
