@@ -2081,7 +2081,7 @@ window.WIKI_DATA = {
     { term: "励磁電流",        reading: "REIJI DENRYU",      letter: "ら",
       def: "変圧器の一次側に無負荷でも流れる電流。磁束を作る磁化電流と鉄損を供給する鉄損電流のベクトル和。鉄心の磁気飽和のため波形はひずみ、第3高調波を多く含む。" },
     { term: "Y-Δ始動",         reading: "Y-DELTA START",     letter: "わ",
-      def: "かご形誘導電動機の始動法。始動時に固定子巻線をY結線とし、加速後Δ結線に切り換える。全電圧（じか入れ）始動に比べ始動電流・始動トルクとも 1/3 倍。1/√3 倍としないのが定番の引っかけ。" },
+      def: "かご形誘導電動機の始動法。始動時に固定子巻線をY結線とし、加速後Δ結線に切り換える。全電圧（じか入れ）始動に比べ始動電流（電源側の線電流）・始動トルクとも 1/3 倍。1/√3 倍としないのが定番の引っかけ。" },
     { term: "顕熱",            reading: "KENNETSU",          letter: "か",
       def: "物質の温度を変えるのに使われる熱。Q = cmΔT（c:比熱, m:質量, ΔT:温度変化）。融解・蒸発の途中は温度が変わらないので、この式ではなく潜熱 Q = mL を使う。" },
     { term: "潜熱",            reading: "SENNETSU",          letter: "さ",
@@ -2421,7 +2421,7 @@ const KIKAI_DAILY_POOL = [
     evidence:['本ページ セクション2「重要な比率」・公式03'], verified:'high',
     wikiPageId:'induction-machine' },
   { id:'k04', topic:'誘導機', rank:'A',
-    q:'Y-Δ 始動では、始動電流と始動トルクは全電圧（直入れ）始動と比べてそれぞれ何倍になるか。',
+    q:'Y-Δ 始動では、始動電流（電源から流れ込む線電流）と始動トルクは全電圧（直入れ）始動と比べてそれぞれ何倍になるか。',
     choices:[{key:'A',label:'電流・トルクともに 1/3',correct:true},{key:'B',label:'電流 1/√3・トルク 1/3',correct:false},{key:'C',label:'電流・トルクとも 1/√3',correct:false},{key:'D',label:'電流 1/3・トルク 1/9',correct:false}],
     tags:['#ひっかけ注意','#頻出A'],
     explanation:'ともに 1/3。線間電圧 V・1相の巻線インピーダンス Z で比べる。①巻線電圧: Δ は V、Y は V/√3 → 1/√3。②巻線電流（相電流）も 1/√3。③線電流: Δ は巻線電流の √3 倍（√3V/Z）、Y は巻線電流そのもの（V/(√3Z)）→ 比は (1/√3)÷√3 = 1/3。始動電流は電源から見た線電流なので 1/3。④トルクは巻線電圧の2乗に比例 → (1/√3)² = 1/3。検算: 線間電圧も巻線インピーダンス（力率）も変わらないので、入力 √3·V·I·cosθ は線電流に比例し、トルク（同期ワット）も入力と同じ比で変わる → トルクの比＝線電流の比。B は②の巻線電流で止めた誤り（相電流と線電流の混同）。C は電流側が B と同じ混同で、さらにトルクを電圧の1乗で考えた誤り。D はトルクを線電流の2乗で考えた誤り（2乗で比例するのは巻線の電圧・電流で、線電流ではない。線電流 1/3 を2乗すると 1/9 になる）。始動補償器（a²・a²）・リアクトル始動（a・a²）との違いは本ページ セクション4 表1.2.2 で比べる。',
@@ -8286,7 +8286,7 @@ const QuickReview = ({
    記録キーは旧形式が wrong + '::' + correct、新形式が statement から作る（旧形式のキーは変えない＝学習履歴を保つ）。 */
 
 /* 行の識別子。並べ替えても記録が付いて回るよう、本文から作る（hoki の qrDjb2 と同型）。
-   文言を直すと旧記録は orphan するが、それは hoki/QuickReview と同じ既知の割り切り。 */
+   文言を直すと旧記録は orphan する。ひっかけ表は下の KIKAI_TRAP_RENAMES で新しい行へ引き継ぐ。 */
 const kikaiTrapHash = str => {
   let h = 5381;
   for (let i = 0; i < str.length; i++) h = (h << 5) + h + str.charCodeAt(i) | 0;
@@ -8307,6 +8307,37 @@ const kikaiTrapRow = t => {
   };
 };
 const kikaiTrapKey = (pageId, t) => `denken_check::kikai_${pageId}::trap::${kikaiTrapHash(t && typeof t.wrong === 'string' ? t.wrong + '::' + t.correct : kikaiTrapRow(t).text)}`;
+
+/* 文を直した行の記録を、新しい行へ引き継ぐ（[単元, 旧ハッシュ, 新ハッシュ, 新しい文]）。
+   ホームの「今日やる」は記録を全部走査するので、引き継がない旧記録は、直す前の文のまま毎日出続ける。
+   行の文を直したら、旧キーと新キーをここに足す（旧キーは git show origin/main: の文から kikaiTrapHash で出す）。 */
+const KIKAI_TRAP_RENAMES = [['transformer', 'dvy40t', '1qrihti', '鉄損 0.6 kW・全負荷銅損 1.5 kW の変圧器は、定格負荷で効率が最大になる'], ['induction-machine', '1n970k9', 'u3tbwk', 'Y-Δ 始動では、電源側の線電流が全電圧始動の 1/√3、始動トルクが 1/3 になる']];
+const kikaiMigrateTrapKeys = () => {
+  try {
+    KIKAI_TRAP_RENAMES.forEach(([pageId, from, to, text]) => {
+      const oldKey = `denken_check::kikai_${pageId}::trap::${from}`;
+      const newKey = `denken_check::kikai_${pageId}::trap::${to}`;
+      const raw = localStorage.getItem(oldKey);
+      if (raw === null) return;
+      if (localStorage.getItem(newKey) === null) {
+        let rec = null;
+        try {
+          rec = JSON.parse(raw);
+        } catch (e) {
+          rec = null;
+        }
+        if (rec && typeof rec === 'object') {
+          rec.itemTitle = '【正誤】' + (text.length > 44 ? text.slice(0, 44) + '…' : text);
+          localStorage.setItem(newKey, JSON.stringify(rec));
+        } else {
+          localStorage.setItem(newKey, raw);
+        }
+      }
+      localStorage.removeItem(oldKey);
+    });
+  } catch (e) {/* localStorage が使えない環境では何もしない */}
+};
+kikaiMigrateTrapKeys();
 const TrapTable = ({
   pageId,
   pageTitle,
@@ -12638,7 +12669,7 @@ const InductionMachinePage = ({
     d: /*#__PURE__*/React.createElement(React.Fragment, null, "二次抵抗を k 倍にすると同一トルクの滑りも k 倍。", /*#__PURE__*/React.createElement("strong", null, "最大トルクの大きさは変わらず"), "、それを出す滑りが動くだけ。", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "巻線形"), "だけ"), "で使える。")
   }, {
     t: "Y-Δ 始動",
-    d: /*#__PURE__*/React.createElement(React.Fragment, null, "始動電流・始動トルクとも ", /*#__PURE__*/React.createElement("strong", null, "1/3"), "（1/√3 ではない）。")
+    d: /*#__PURE__*/React.createElement(React.Fragment, null, "始動電流（電源から流れ込む線電流）・始動トルクとも ", /*#__PURE__*/React.createElement("strong", null, "1/3"), "（1/√3 ではない）。")
   }, {
     t: "V/f 一定",
     d: /*#__PURE__*/React.createElement(React.Fragment, null, "磁束 ", /*#__PURE__*/React.createElement(Eq, {
@@ -12665,9 +12696,9 @@ const InductionMachinePage = ({
     why: "比例推移では r₂/s が同じなら同じトルクになる。r₂ を k 倍にすると、同じトルクを出す滑りも k 倍に移るだけで、山の高さ（最大トルク）は変わらない。ただし最大トルクを出す滑りが 1 を超えるほど増やすと、始動トルクは逆に減る。",
     ev: "本ページ 3節「比例推移（巻線形のみ）」"
   }, {
-    wrong: "Y-Δ 始動では、始動電流が 1/√3、始動トルクが 1/3 になる",
-    correct: "電流・トルクとも 1/3。",
-    why: "Y では相電圧が 1/√3 になり、トルクは電圧の2乗に比例するので 1/3。電流を 1/√3 と答えるのは線電流と相電流の混同。",
+    wrong: "Y-Δ 始動では、電源側の線電流が全電圧始動の 1/√3、始動トルクが 1/3 になる",
+    correct: "線電流・トルクとも 1/3。1/√3 になるのは相電圧と相電流（巻線の電流）。",
+    why: "Y では相電圧が 1/√3 になり、トルクは電圧の2乗に比例するので 1/3。Δ では線電流＝√3×相電流なので、線電流の比は (1/√3)÷√3 = 1/3。電流を 1/√3 と答えるのは線電流と相電流の混同。",
     ev: "本ページ 4節「頻出の誤答」Box／確認問題 k04"
   }, {
     wrong: "電源電圧が 0.9 倍に下がると、トルクもおよそ 0.9 倍になる",
@@ -13507,7 +13538,7 @@ const InductionMachinePage = ({
 }, "適用"), /*#__PURE__*/React.createElement("th", {
   scope: "col",
   className: "num"
-}, "始動電流"), /*#__PURE__*/React.createElement("th", {
+}, "始動電流（線電流）"), /*#__PURE__*/React.createElement("th", {
   scope: "col",
   className: "num"
 }, "始動トルク"), /*#__PURE__*/React.createElement("th", {
@@ -14091,7 +14122,7 @@ const InductionMachinePage = ({
 }, /*#__PURE__*/React.createElement(QuickReview, {
   pageId: "induction-machine",
   pageTitle: "1.2 三相誘導電動機"
-}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期速度 N_s の式は？（4極・50Hz では？）"), "N_s = 120f/p（120×50/4 = ", /*#__PURE__*/React.createElement("strong", null, "1500 min⁻¹"), "）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "滑り s の定義は？"), "s = (N_s − N) / N_s（電動機域は 0 < s < 1）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "回転子（二次）周波数 f₂ は？"), "f₂ = s · f₁（", /*#__PURE__*/React.createElement(Term, null, "滑り"), "×一次周波数）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "二次入力 P₂ の電力配分比は？"), "P₂ : P_c2 : P_m = ", /*#__PURE__*/React.createElement("strong", null, "1 : s : (1−s)"), "（二次", /*#__PURE__*/React.createElement(Term, null, "銅損"), "は s 倍、機械出力は (1−s) 倍）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Y-Δ 始動で始動電流・トルクは全電圧始動の何倍？"), /*#__PURE__*/React.createElement("strong", null, "1/3"), "（始動電流・始動トルクともに 1/3）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "「二次抵抗を k 倍にすると同一トルクの滑りも k 倍」と「トルクは滑りに比例」— 厳密なのはどちら？"), /*#__PURE__*/React.createElement("strong", null, "前者（", /*#__PURE__*/React.createElement(Term, null, "比例推移"), "）だけが厳密"), "。厳密式は ", /*#__PURE__*/React.createElement(Eq, {
+}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期速度 N_s の式は？（4極・50Hz では？）"), "N_s = 120f/p（120×50/4 = ", /*#__PURE__*/React.createElement("strong", null, "1500 min⁻¹"), "）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "滑り s の定義は？"), "s = (N_s − N) / N_s（電動機域は 0 < s < 1）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "回転子（二次）周波数 f₂ は？"), "f₂ = s · f₁（", /*#__PURE__*/React.createElement(Term, null, "滑り"), "×一次周波数）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "二次入力 P₂ の電力配分比は？"), "P₂ : P_c2 : P_m = ", /*#__PURE__*/React.createElement("strong", null, "1 : s : (1−s)"), "（二次", /*#__PURE__*/React.createElement(Term, null, "銅損"), "は s 倍、機械出力は (1−s) 倍）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Y-Δ 始動で始動電流・トルクは全電圧始動の何倍？"), /*#__PURE__*/React.createElement("strong", null, "1/3"), "（電源側の線電流・始動トルクともに 1/3。巻線の電流なら 1/√3）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "「二次抵抗を k 倍にすると同一トルクの滑りも k 倍」と「トルクは滑りに比例」— 厳密なのはどちら？"), /*#__PURE__*/React.createElement("strong", null, "前者（", /*#__PURE__*/React.createElement(Term, null, "比例推移"), "）だけが厳密"), "。厳密式は ", /*#__PURE__*/React.createElement(Eq, {
   tex: "r_2'"
 }), " と ", /*#__PURE__*/React.createElement(Eq, {
   tex: "s"
@@ -32955,8 +32986,8 @@ const TransformerPage = ({
     why: "負荷によらずほぼ一定なのは鉄損のほう。「負荷半分なら損失も半分」は、鉄損と銅損のどちらの話かを決めずに読むと出る。",
     ev: "本ページ 7節 公式06（銅損は負荷率の2乗）／確認問題 k10"
   }, {
-    wrong: "変圧器の効率は定格負荷（負荷率 100%）のときに最大になる",
-    correct: "鉄損（無負荷損）＝銅損（負荷損）のときに最大。そのときの負荷率は x = √(Pi/PcN)。",
+    wrong: "鉄損 0.6 kW・全負荷銅損 1.5 kW の変圧器は、定格負荷で効率が最大になる",
+    correct: "効率が最大になるのは、鉄損がその負荷率での銅損 x²·PcN と等しいとき。x = √(0.6/1.5) ≈ 0.63 で最大になる（定格負荷では銅損 1.5 kW が鉄損を上回る）。",
     why: "最小になるのは損失そのものではなく「出力1kWあたりの損失」(Pi/x + x·PcN)。これが最小になるのが両者の交点で、一般に定格より低い負荷率に来る。全損失 Pi + x²PcN のほうは負荷が増えるほど増え続ける。",
     ev: "本ページ 7節・付録D 5節（最大効率の条件）／確認問題 k09"
   }, {
@@ -37828,7 +37859,7 @@ const YougoKonzaiPage = ({
 }, "5."), "変圧器の効率が最大になる条件"), /*#__PURE__*/React.createElement(Box, {
   kind: "mistake",
   label: "よくある誤り → 正しい理解"
-}, /*#__PURE__*/React.createElement("p", null, "✗「変圧器の効率は定格負荷で最大」", /*#__PURE__*/React.createElement("br", null), "○ ", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "鉄損"), "（無負荷損）＝", /*#__PURE__*/React.createElement(Term, null, "銅損"), "（負荷損）"), "のとき最大。一般に", /*#__PURE__*/React.createElement("strong", null, "定格より低い負荷率"), "で効率がピークになる。")), /*#__PURE__*/React.createElement(Eq, {
+}, /*#__PURE__*/React.createElement("p", null, "✗「変圧器の効率は定格負荷で最大」", /*#__PURE__*/React.createElement("br", null), "○ ", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "鉄損"), "（無負荷損）＝", /*#__PURE__*/React.createElement(Term, null, "銅損"), "（負荷損）"), "のとき最大。一般に", /*#__PURE__*/React.createElement("strong", null, "定格より低い負荷率"), "で効率がピークになる（定格負荷 x = 1 で最大になるのは、鉄損＝全負荷銅損のとき）。")), /*#__PURE__*/React.createElement(Eq, {
   display: true,
   tex: "\\alpha_{\\max} = \\sqrt{\\dfrac{P_i}{P_c}}"
 }), /*#__PURE__*/React.createElement("p", null, "鉄損 ", /*#__PURE__*/React.createElement(Eq, {
@@ -40457,7 +40488,7 @@ const AutoControlPage = ({
   className: "marker"
 }, "定常偏差を除去"), "できるが、位相が遅れて安定度は低下しがち"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "D（微分）動作"), " — 偏差の変化率で先回りし、", /*#__PURE__*/React.createElement("strong", null, "速応性・減衰性を改善"), "（単独では使わず P や PI に付加する）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "シーケンス制御")), " — ", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "あらかじめ定めた順序または条件に従って各段階を逐次進める制御"), "。時間で進むもののほか、センサ・接点の状態信号を条件に進むものも含む（「開ループ」と限定しない）。リレーの ", /*#__PURE__*/React.createElement(Term, {
+}, "あらかじめ定めた順序または条件に従って各段階を逐次進める制御"), "。時間で進むもののほか、センサ・接点の状態信号を条件に進むものも含む。リレーの ", /*#__PURE__*/React.createElement(Term, {
   k: "a接点・b接点"
 }, "a接点"), "（メーク）・b接点（ブレーク）・", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "自己保持回路")), "が頻出。", /*#__PURE__*/React.createElement(Term, null, "フィードバック制御"), "（目標値と比較して訂正し続ける制御）との対比で問われる")), /*#__PURE__*/React.createElement(Box, {
   kind: "formula",
@@ -40530,7 +40561,7 @@ const AutoControlPage = ({
   scope: "col"
 }, "シーケンス制御"), /*#__PURE__*/React.createElement("th", {
   scope: "col"
-}, "フィードバック制御"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "進め方"), /*#__PURE__*/React.createElement("td", null, "あらかじめ定めた", /*#__PURE__*/React.createElement("strong", null, "順序・条件"), "に従って次の段階へ進む"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Term, null, "制御量"), "を測って目標値と", /*#__PURE__*/React.createElement("strong", null, "比べ、偏差を打ち消す"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "制御量の検出"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "目標値と比べて戻すことはしない"), "（条件判定のためのセンサ・接点信号は使う。「開ループ」と限定しない）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "する"), "（閉ループ）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Term, null, "外乱"), "への強さ"), /*#__PURE__*/React.createElement("td", null, "弱い（ずれても気づかない）"), /*#__PURE__*/React.createElement("td", null, "強い（ずれを検出して直す）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "例"), /*#__PURE__*/React.createElement("td", null, "信号機・エレベーター・洗濯機の工程"), /*#__PURE__*/React.createElement("td", null, "電動機の速度制御・温度調節"))))), /*#__PURE__*/React.createElement(Box, {
+}, "フィードバック制御"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "進め方"), /*#__PURE__*/React.createElement("td", null, "あらかじめ定めた", /*#__PURE__*/React.createElement("strong", null, "順序・条件"), "に従って次の段階へ進む"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Term, null, "制御量"), "を測って目標値と", /*#__PURE__*/React.createElement("strong", null, "比べ、偏差を打ち消す"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "目標値との比較・訂正"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "目標値と比べて戻すことはしない"), "（条件判定のためのセンサ・接点信号は使う）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "する"), "（閉ループ）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Term, null, "外乱"), "への強さ"), /*#__PURE__*/React.createElement("td", null, "弱い（ずれても気づかない）"), /*#__PURE__*/React.createElement("td", null, "強い（ずれを検出して直す）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "例"), /*#__PURE__*/React.createElement("td", null, "信号機・エレベーター・洗濯機の工程"), /*#__PURE__*/React.createElement("td", null, "電動機の速度制御・温度調節"))))), /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
   label: "電磁リレー — シーケンス制御を組む部品"
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "電磁リレー"), "は、コイルに電流を流すと電磁石が接点を動かす部品である。役割は2つ。"), /*#__PURE__*/React.createElement("ul", {
@@ -40632,7 +40663,7 @@ const AutoControlPage = ({
 }, /*#__PURE__*/React.createElement(QuickReview, {
   pageId: "auto-control",
   pageTitle: "3.1 自動制御"
-}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れ系の伝達関数は？"), "G(s) = K / (1 + Ts)（T:時定数, K:ゲイン。", /*#__PURE__*/React.createElement(Term, null, "ステップ応答"), "は指数的に立ち上がる）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "二次系の減衰係数 ζ による応答の違いは？"), "ζ<1 振動的／ζ=1 臨界制動／ζ>1 過制動"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ステップ応答の4指標は？ それぞれ何 % を測る？"), /*#__PURE__*/React.createElement("strong", null, "遅れ時間"), "=50%到達／", /*#__PURE__*/React.createElement("strong", null, "立上り時間"), "=10%→90%／", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "整定時間")), "=±2%(±5%)に収まる／", /*#__PURE__*/React.createElement("strong", null, "行過ぎ量"), "=最終値を超えた最大分"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れ系で、時定数 T のとき最終値の何 % に達するか？"), /*#__PURE__*/React.createElement("strong", null, "63.2 %"), "（1−e⁻¹）。50 % は遅れ時間 0.69T のほうで別物。整定時間（±2%）は約 4T"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ステップ入力に対する定常偏差の式は？ ゼロにするには？"), "e(∞) = 1/(1+K_p)（K_p は一巡", /*#__PURE__*/React.createElement(Term, null, "伝達関数"), "の直流ゲイン）。", /*#__PURE__*/React.createElement("strong", null, "積分要素 1/s を入れれば 0"), "。ゲインを上げるだけでは 0 にならない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "PID の伝達関数は？ T_i を小さくすると積分は強くなるか弱くなるか？"), "G_c = K_c(1 + 1/(T_i s) + T_D s)。", /*#__PURE__*/React.createElement("strong", null, "T_i は分母なので、小さくするほど", /*#__PURE__*/React.createElement(Term, null, "積分動作"), "は強い")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "I 動作と D 動作は安定度をどちらへ動かすか？"), "I は位相遅れを加える（積分項単独で −90°、PI 全体では 0〜−90°）ので", /*#__PURE__*/React.createElement("strong", null, "下げる"), "／D は位相を進める（微分項単独で +90°）ので", /*#__PURE__*/React.createElement("strong", null, "上げる"), "。D は", /*#__PURE__*/React.createElement(Term, null, "偏差"), "の変化率を見るので", /*#__PURE__*/React.createElement(Term, null, "定常偏差"), "には効かない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "シーケンス制御とフィードバック制御の決定的な違いは？"), /*#__PURE__*/React.createElement(Term, null, "制御量"), "を", /*#__PURE__*/React.createElement("strong", null, "測って目標値と比べ、偏差を戻すかどうか"), "。シーケンスは順序・条件で段階を進めるだけで偏差を打ち消さないので", /*#__PURE__*/React.createElement(Term, null, "外乱"), "に弱い（条件判定の信号は検出するので「開ループ」と限定しない）。フィードバックは閉ループで偏差を打ち消す"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "自己保持回路とインタロックは、それぞれ何接点を使うか？"), /*#__PURE__*/React.createElement("strong", null, "自己保持"), "=自分の a 接点で保持（停止は b 接点を直列）／", /*#__PURE__*/React.createElement("strong", null, "インタロック"), "=相手の b 接点を入れて同時動作を防ぐ"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "フィードバック結合の閉ループ伝達関数は？一巡伝達関数との違いは？"), "閉ループは Y/R = G / (1 + GH)（単位フィードバックは H=1）。", /*#__PURE__*/React.createElement("strong", null, "負帰還なら分母は 1+GH・正帰還なら 1−GH"), " と", /*#__PURE__*/React.createElement(Term, null, "加え合わせ点"), "の符号と逆になる。", /*#__PURE__*/React.createElement("strong", null, "一巡伝達関数はループを1か所で切って一周した積 GH"), " で、閉ループの", /*#__PURE__*/React.createElement("strong", null, "分母に出てくるほう"), "。「一巡を求めよ」なら割り算はしない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直列・並列の合成は？ループが複数あるときの手順は？"), "直列＝", /*#__PURE__*/React.createElement("strong", null, "掛ける"), " G₁G₂／並列＝", /*#__PURE__*/React.createElement("strong", null, "足す"), " G₁±G₂。ループは", /*#__PURE__*/React.createElement("strong", null, "内側から1つずつ閉じて1ブロックに置き換える"), "。分母が「1 ＋ 各ループの一巡伝達関数の和」で止まるのは", /*#__PURE__*/React.createElement("strong", null, "どのループも互いに接触している"), "とき（入れ子・交差とも可）で、", /*#__PURE__*/React.createElement("span", {
+}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れ系の伝達関数は？"), "G(s) = K / (1 + Ts)（T:時定数, K:ゲイン。", /*#__PURE__*/React.createElement(Term, null, "ステップ応答"), "は指数的に立ち上がる）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "二次系の減衰係数 ζ による応答の違いは？"), "ζ<1 振動的／ζ=1 臨界制動／ζ>1 過制動"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ステップ応答の4指標は？ それぞれ何 % を測る？"), /*#__PURE__*/React.createElement("strong", null, "遅れ時間"), "=50%到達／", /*#__PURE__*/React.createElement("strong", null, "立上り時間"), "=10%→90%／", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "整定時間")), "=±2%(±5%)に収まる／", /*#__PURE__*/React.createElement("strong", null, "行過ぎ量"), "=最終値を超えた最大分"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "一次遅れ系で、時定数 T のとき最終値の何 % に達するか？"), /*#__PURE__*/React.createElement("strong", null, "63.2 %"), "（1−e⁻¹）。50 % は遅れ時間 0.69T のほうで別物。整定時間（±2%）は約 4T"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ステップ入力に対する定常偏差の式は？ ゼロにするには？"), "e(∞) = 1/(1+K_p)（K_p は一巡", /*#__PURE__*/React.createElement(Term, null, "伝達関数"), "の直流ゲイン）。", /*#__PURE__*/React.createElement("strong", null, "積分要素 1/s を入れれば 0"), "。ゲインを上げるだけでは 0 にならない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "PID の伝達関数は？ T_i を小さくすると積分は強くなるか弱くなるか？"), "G_c = K_c(1 + 1/(T_i s) + T_D s)。", /*#__PURE__*/React.createElement("strong", null, "T_i は分母なので、小さくするほど", /*#__PURE__*/React.createElement(Term, null, "積分動作"), "は強い")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "I 動作と D 動作は安定度をどちらへ動かすか？"), "I は位相遅れを加える（積分項単独で −90°、PI 全体では 0〜−90°）ので", /*#__PURE__*/React.createElement("strong", null, "下げる"), "／D は位相を進める（微分項単独で +90°）ので", /*#__PURE__*/React.createElement("strong", null, "上げる"), "。D は", /*#__PURE__*/React.createElement(Term, null, "偏差"), "の変化率を見るので", /*#__PURE__*/React.createElement(Term, null, "定常偏差"), "には効かない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "シーケンス制御とフィードバック制御の決定的な違いは？"), /*#__PURE__*/React.createElement(Term, null, "制御量"), "を", /*#__PURE__*/React.createElement("strong", null, "測って目標値と比べ、偏差を戻すかどうか"), "。シーケンスは順序・条件で段階を進めるだけで偏差を打ち消さないので", /*#__PURE__*/React.createElement(Term, null, "外乱"), "に弱い（条件判定のためのセンサ・接点信号は使うが、偏差を打ち消すためではない）。フィードバックは閉ループで偏差を打ち消す"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "自己保持回路とインタロックは、それぞれ何接点を使うか？"), /*#__PURE__*/React.createElement("strong", null, "自己保持"), "=自分の a 接点で保持（停止は b 接点を直列）／", /*#__PURE__*/React.createElement("strong", null, "インタロック"), "=相手の b 接点を入れて同時動作を防ぐ"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "フィードバック結合の閉ループ伝達関数は？一巡伝達関数との違いは？"), "閉ループは Y/R = G / (1 + GH)（単位フィードバックは H=1）。", /*#__PURE__*/React.createElement("strong", null, "負帰還なら分母は 1+GH・正帰還なら 1−GH"), " と", /*#__PURE__*/React.createElement(Term, null, "加え合わせ点"), "の符号と逆になる。", /*#__PURE__*/React.createElement("strong", null, "一巡伝達関数はループを1か所で切って一周した積 GH"), " で、閉ループの", /*#__PURE__*/React.createElement("strong", null, "分母に出てくるほう"), "。「一巡を求めよ」なら割り算はしない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "直列・並列の合成は？ループが複数あるときの手順は？"), "直列＝", /*#__PURE__*/React.createElement("strong", null, "掛ける"), " G₁G₂／並列＝", /*#__PURE__*/React.createElement("strong", null, "足す"), " G₁±G₂。ループは", /*#__PURE__*/React.createElement("strong", null, "内側から1つずつ閉じて1ブロックに置き換える"), "。分母が「1 ＋ 各ループの一巡伝達関数の和」で止まるのは", /*#__PURE__*/React.createElement("strong", null, "どのループも互いに接触している"), "とき（入れ子・交差とも可）で、", /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "離れたループが2つあると積の項が加わる"), "（G₁H₁·G₂H₂）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "引出点・加え合わせ点をブロック G の後ろへ移すと？"), /*#__PURE__*/React.createElement("strong", null, "引出点は枝に 1/G"), "（取り出す側は割る）／", /*#__PURE__*/React.createElement("strong", null, "加え合わせ点は枝に G"), "（足す側は掛ける）。", /*#__PURE__*/React.createElement("span", {
   className: "marker"
@@ -50398,7 +50429,7 @@ const GuidePage = ({
     tex: "1/\\sqrt3"
   }), " と考えるのは誤り。", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "始動電流も始動トルクもどちらも ", /*#__PURE__*/React.createElement(Eq, {
+  }, "始動電流（電源側の線電流）も始動トルクもどちらも ", /*#__PURE__*/React.createElement(Eq, {
     tex: "1/3"
   })))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "全日効率の負荷率"), /*#__PURE__*/React.createElement("td", null, "日負荷曲線から ", /*#__PURE__*/React.createElement(Eq, {
     tex: "\\mathrm{kVA}\\div"
