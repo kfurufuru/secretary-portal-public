@@ -8314,7 +8314,9 @@ const kikaiTrapKey = (pageId, t) => `denken_check::kikai_${pageId}::trap::${kika
    足し忘れ・ハッシュの誤りは同スクリプトが CI で止める）。 */
 const KIKAI_TRAP_RENAMES = [['transformer', 'dvy40t', '1qrihti', '鉄損 0.6 kW・全負荷銅損 1.5 kW の変圧器は、定格負荷で効率が最大になる'], ['induction-machine', '1n970k9', 'u3tbwk', 'Y-Δ 始動では、電源側の線電流が全電圧始動の 1/√3、始動トルクが 1/3 になる'],
 // 対応表を作る前に correct を直して孤児になっていた2行（ひっかけ表の導入時を基点に check_kikai_trap_keys.py --base で検出）
-['transformer', '48hk19', 'v64skw', '%Z が小さい変圧器ほど、短絡したときの短絡電流も小さい'], ['auto-control', 'jx0ltm', '3tyufq', '位相余裕は、位相が −180° となる周波数で測る']];
+['transformer', '48hk19', 'v64skw', '%Z が小さい変圧器ほど、短絡したときの短絡電流も小さい'], ['auto-control', 'jx0ltm', '3tyufq', '位相余裕は、位相が −180° となる周波数で測る'],
+// 一巡伝達関数の直流ゲインの記号を 5節の Kp にそろえた（#1633 の後の記号の統一）
+['auto-control', 'jt0zdf', '1r0vb4z', '積分要素を含まない系では、ステップ入力の定常偏差 1/(1 + Kp)（Kp は一巡伝達関数の直流ゲイン）は、Kp をいくら大きくしても 0 にはならない']];
 const kikaiMigrateTrapKeys = () => {
   try {
     KIKAI_TRAP_RENAMES.forEach(([pageId, from, to, text]) => {
@@ -22173,7 +22175,7 @@ const TransformerDailyEfficiencySimulator = () => {
     }
   }, /*#__PURE__*/React.createElement(TdeNum, {
     label: /*#__PURE__*/React.createElement(React.Fragment, null, "定格容量 ", /*#__PURE__*/React.createElement(Eq, {
-      tex: "S_N"
+      tex: "S_n"
     })),
     unit: "kV·A",
     value: tf.sn,
@@ -23768,7 +23770,7 @@ const TRANSFORMER_QUICK = [{
   q: '100 kV·A・%Z = 3.16 % の変圧器を 10 MV·A 基準で表すと何 % か？',
   a: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, "316 %"), "（3.16 × 10000/100）。%Z は", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "その機器自身の定格容量が基準"), "なので、容量の違う機器を比べたり合成したりする前に ", /*#__PURE__*/React.createElement("strong", null, "%Z_new = %Z × S_base/S_N"), " でそろえる。I_n ∝ S_N だから %Z は基準容量に", /*#__PURE__*/React.createElement("strong", null, "比例"), "する（反比例ではない）")
+  }, "その機器自身の定格容量が基準"), "なので、容量の違う機器を比べたり合成したりする前に ", /*#__PURE__*/React.createElement("strong", null, "%Z_new = %Z × S_base/S_n"), " でそろえる。I_n ∝ S_n だから %Z は基準容量に", /*#__PURE__*/React.createElement("strong", null, "比例"), "する（反比例ではない）")
 }, {
   s: 'pz',
   q: '一次換算と二次換算で Ω の値は a² 倍違うのに、%Z が同じになるのはなぜ？',
@@ -23826,7 +23828,7 @@ const TRANSFORMER_QUICK = [{
 }, {
   s: 'parallel',
   q: '負担配分の一般式は？',
-  a: /*#__PURE__*/React.createElement(React.Fragment, null, "S_A : S_B = ", /*#__PURE__*/React.createElement("strong", null, "S_NA/z_A : S_NB/z_B"), "（S_N＝各器の定格容量、z＝", /*#__PURE__*/React.createElement("strong", null, "自己容量基準"), "の %Z）。並列なので", /*#__PURE__*/React.createElement("strong", null, "電圧降下が共通"), "→ 電流は実インピーダンスの逆比、を %Z で書き直した形。", /*#__PURE__*/React.createElement("strong", null, "覚える式はこれ1つでよい"), "（各器のインピーダンス角が等しい前提。角度がずれると単純な足し算では配れない）")
+  a: /*#__PURE__*/React.createElement(React.Fragment, null, "S_A : S_B = ", /*#__PURE__*/React.createElement("strong", null, "S_nA/z_A : S_nB/z_B"), "（S_n＝各器の定格容量、z＝", /*#__PURE__*/React.createElement("strong", null, "自己容量基準"), "の %Z）。並列なので", /*#__PURE__*/React.createElement("strong", null, "電圧降下が共通"), "→ 電流は実インピーダンスの逆比、を %Z で書き直した形。", /*#__PURE__*/React.createElement("strong", null, "覚える式はこれ1つでよい"), "（各器のインピーダンス角が等しい前提。角度がずれると単純な足し算では配れない）")
 }, {
   s: 'parallel',
   q: '「%Z の逆比」で解いてよいのはどんなとき？',
@@ -23892,7 +23894,7 @@ const TRANSFORMER_QUICK = [{
 }, {
   s: 'traps',
   q: '%Z が小さい変圧器では、短絡電流と並行運転の分担はそれぞれどう動く？',
-  a: /*#__PURE__*/React.createElement(React.Fragment, null, "短絡電流は", /*#__PURE__*/React.createElement("strong", null, "大きくなる"), "（I_sc =(100/%Z)I_n・反比例）。並行運転の分担も", /*#__PURE__*/React.createElement("strong", null, "その器に寄る"), "が、寄り方を決めるのは %Z 単独ではなく S_N/z の比。", /*#__PURE__*/React.createElement("span", {
+  a: /*#__PURE__*/React.createElement(React.Fragment, null, "短絡電流は", /*#__PURE__*/React.createElement("strong", null, "大きくなる"), "（I_sc =(100/%Z)I_n・反比例）。並行運転の分担も", /*#__PURE__*/React.createElement("strong", null, "その器に寄る"), "が、寄り方を決めるのは %Z 単独ではなく S_n/z の比。", /*#__PURE__*/React.createElement("span", {
     className: "marker"
   }, "「%Z が小さい＝短絡電流も小さい」は定番の誤り"), "で、%Z は「定格電流を流すのに必要な電圧の割合」＝小さいほど電流が流れやすい、と読む")
 }];
@@ -25871,7 +25873,7 @@ const TransformerPage = ({
 }, "これは近似"), "）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "どれだけ小さいかは2乗で効く"), "。", /*#__PURE__*/React.createElement(Eq, {
   tex: "P_c = I^2 R"
 }), " なので、", /*#__PURE__*/React.createElement(Eq, {
-  tex: "I_0 = 0.05\\,I_N"
+  tex: "I_0 = 0.05\\,I_n"
 }), " と置けば銅損は ", /*#__PURE__*/React.createElement(Eq, {
   tex: "(0.05)^2 = 0.0025"
 }), " 倍。「無負荷だから電流が小さい」で止めず、", /*#__PURE__*/React.createElement("strong", null, "その電流が2乗で効くからさらに小さい"), "まで言えるようにする"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "何と比べた 0.25 % かをはっきりさせる"), "。無負荷時は", /*#__PURE__*/React.createElement(Term, null, "二次電流"), "が流れないので、出るのは", /*#__PURE__*/React.createElement("span", {
@@ -25879,10 +25881,10 @@ const TransformerPage = ({
 }, "一次巻線の銅損 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "I_0^2 r_1"
 }), " だけ"), "。全負荷銅損は ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "I_N^2 (r_1 + r_2')"
+  tex: "I_n^2 (r_1 + r_2')"
 }), " なので、比は")), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "\\frac{P_{c0}}{P_{cN}} = \\left(\\frac{I_0}{I_N}\\right)^{\\!2}\\cdot\\frac{r_1}{r_1 + r_2'}"
+  tex: "\\frac{P_{c0}}{P_{cN}} = \\left(\\frac{I_0}{I_n}\\right)^{\\!2}\\cdot\\frac{r_1}{r_1 + r_2'}"
 }), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "一次巻線だけで比べれば 0.25 %"), "、", /*#__PURE__*/React.createElement("strong", null, "変圧器全体の全負荷銅損と比べればそれ以下"), "になる。どちらにしても無視してよい大きさだが、", /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "比較の分母を曖昧にしない")), /*#__PURE__*/React.createElement("li", {
@@ -25931,7 +25933,7 @@ const TransformerPage = ({
 }, "同時に出るので分離できない"), "）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "無負荷試験")), /*#__PURE__*/React.createElement("td", null, "定格どおり（定格電圧を加える）"), /*#__PURE__*/React.createElement("td", null, "ほぼ 0（励磁分のみ）"), /*#__PURE__*/React.createElement("td", null, "実質", /*#__PURE__*/React.createElement("strong", null, "鉄損だけ"), "（銅損は ", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\propto I^2"
 }), "。", /*#__PURE__*/React.createElement(Eq, {
-  tex: "I_0 = 5\\,\\%\\,I_N"
+  tex: "I_0 = 5\\,\\%\\,I_n"
 }), " と仮定すれば 0.25 %）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "短絡試験"))), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "大幅に小さい"), "（励磁枝に掛かる電圧が小さい）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "定格電流"), "が流れる"), /*#__PURE__*/React.createElement("td", null, "実質", /*#__PURE__*/React.createElement("strong", null, "銅損だけ"), "（鉄損は定格時より非常に小さい）"))))), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "8px 0 0",
@@ -26289,7 +26291,7 @@ const TransformerPage = ({
   }
 }, "二次短絡のまま定格電圧を加えると、", /*#__PURE__*/React.createElement("strong", null, "電源側インピーダンスを無視した変圧器単体の近似"), "では、電流を主に制限するのは変圧器の等価漏れインピーダンスだけになる。"), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "\\frac{I_{sc}}{I_N} = \\frac{100}{\\%Z}"
+  tex: "\\frac{I_{sc}}{I_n} = \\frac{100}{\\%Z}"
 }), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "4px 0 0"
@@ -26317,7 +26319,7 @@ const TransformerPage = ({
     margin: "8px 0 0"
   }
 }, "必要な電圧は %Z がそのまま教えてくれる。", /*#__PURE__*/React.createElement(Eq, {
-  tex: "V_N = 6600\\;\\mathrm{V}"
+  tex: "V_n = 6600\\;\\mathrm{V}"
 }), "・", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\%Z = 5\\;\\%"
 }), " なら"), /*#__PURE__*/React.createElement(Eq, {
@@ -26850,7 +26852,7 @@ const TransformerPage = ({
   }
 }, /*#__PURE__*/React.createElement("strong", null, "① まず定格電流を出す"), "（短絡試験の電流が定格かを確認するため）"), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "I_n = \\frac{S_N}{V_n} = \\frac{10 \\times 10^3}{1000} = 10\\;[\\mathrm{A}]"
+  tex: "I_n = \\frac{S_n}{V_n} = \\frac{10 \\times 10^3}{1000} = 10\\;[\\mathrm{A}]"
 }), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "4px 0 0"
@@ -26891,7 +26893,7 @@ const TransformerPage = ({
 }, /*#__PURE__*/React.createElement(Eq, {
   tex: "p"
 }), " は全負荷銅損からも出る: ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "p = P_{cN}/S_N \\times 100 = 200/10000 \\times 100 = 2.0\\;[\\%]"
+  tex: "p = P_{cN}/S_n \\times 100 = 200/10000 \\times 100 = 2.0\\;[\\%]"
 }), " ✓（短絡試験は定格電流なので ", /*#__PURE__*/React.createElement(Eq, {
   tex: "P_s = P_{cN}"
 }), "）。"), /*#__PURE__*/React.createElement("p", {
@@ -27068,7 +27070,7 @@ const TransformerPage = ({
 }), " だけで、", /*#__PURE__*/React.createElement("strong", null, "定格電圧"), " ", /*#__PURE__*/React.createElement(Eq, {
   tex: "V_n"
 }), " も", /*#__PURE__*/React.createElement("strong", null, "定格容量"), " ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "S_N"
+  tex: "S_n"
 }), " も無い。", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\%Z = \\dfrac{V_s}{V_n}\\times100 = \\dfrac{I_n Z_e}{V_n}\\times100"
 }), " はどちらの形でも ", /*#__PURE__*/React.createElement(Eq, {
@@ -27153,7 +27155,7 @@ const TransformerPage = ({
     margin: "0 0 8px"
   }
 }, "ヒント：まず ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "V_s/V_N"
+  tex: "V_s/V_n"
 }), " を出す。この比1つで ②と③ の両方が説明できる。"), /*#__PURE__*/React.createElement(Fold, {
   label: "解答を開く",
   sub: "自分で言葉にしてから"
@@ -27163,7 +27165,7 @@ const TransformerPage = ({
   }
 }, /*#__PURE__*/React.createElement("strong", null, "まず %Z を出す"), "（②③ の共通の土台）"), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "\\%Z = \\frac{V_s}{V_N}\\times 100 = \\frac{330}{6600}\\times 100 = 5\\;[\\%]"
+  tex: "\\%Z = \\frac{V_s}{V_n}\\times 100 = \\frac{330}{6600}\\times 100 = 5\\;[\\%]"
 }), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "12px 0 2px"
@@ -27256,7 +27258,7 @@ const TransformerPage = ({
   tex: "Z_e = \\frac{V_s}{I_s} = \\frac{330}{100} = 3.3\\;[\\Omega]"
 }), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "I = \\frac{V_N}{Z_e} = \\frac{6600}{3.3} = 2000\\;[\\mathrm{A}] \\;=\\; \\frac{100}{\\%Z}I_N = \\frac{100}{5}\\times 100 = 2000\\;[\\mathrm{A}]"
+  tex: "I = \\frac{V_n}{Z_e} = \\frac{6600}{3.3} = 2000\\;[\\mathrm{A}] \\;=\\; \\frac{100}{\\%Z}I_n = \\frac{100}{5}\\times 100 = 2000\\;[\\mathrm{A}]"
 }), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "4px 0 0"
@@ -27471,7 +27473,7 @@ const TransformerPage = ({
   }
 }, "効率の定義に、上の分岐をそのまま書き入れる。"), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "\\eta = \\frac{x S_N \\cos\\theta}{x S_N \\cos\\theta + P_i + x^2 P_{cN}}"
+  tex: "\\eta = \\frac{x S_n \\cos\\theta}{x S_n \\cos\\theta + P_i + x^2 P_{cN}}"
 }), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "0 0 6px"
@@ -27480,7 +27482,7 @@ const TransformerPage = ({
   tex: "x"
 }), " の関数としての形が見える。"), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "\\frac{1}{\\eta} = 1 + \\frac{1}{S_N\\cos\\theta}\\left(\\frac{P_i}{x} + x P_{cN}\\right)"
+  tex: "\\frac{1}{\\eta} = 1 + \\frac{1}{S_n\\cos\\theta}\\left(\\frac{P_i}{x} + x P_{cN}\\right)"
 }), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: 0
@@ -27768,15 +27770,15 @@ const TransformerPage = ({
   tex: "I = S / (\\sqrt{3}V)"
 }), "）なので、"), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "\\frac{I}{I_N} = \\frac{S}{S_N} = x \\;\\Longrightarrow\\; P_c = \\left(\\frac{I}{I_N}\\right)^2 P_{cN} = x^2 P_{cN}"
+  tex: "\\frac{I}{I_n} = \\frac{S}{S_n} = x \\;\\Longrightarrow\\; P_c = \\left(\\frac{I}{I_n}\\right)^2 P_{cN} = x^2 P_{cN}"
 }), /*#__PURE__*/React.createElement(FormulaCard, {
   num: "06 / 18",
   name: "銅損は負荷率の2乗に比例",
-  eq: "P_c = x^2 P_{cN},\\qquad x = \\dfrac{S}{S_N}",
+  eq: "P_c = x^2 P_{cN},\\qquad x = \\dfrac{S}{S_n}",
   note: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
     tex: "P_{cN}"
   }), ": 全負荷銅損（定格電流時の銅損）、", /*#__PURE__*/React.createElement(Eq, {
-    tex: "S_N"
+    tex: "S_n"
   }), ": 定格容量 [kV·A]。", /*#__PURE__*/React.createElement("strong", null, "全負荷銅損と実際の銅損を混同しない"), "。")
 }), /*#__PURE__*/React.createElement("div", {
   className: "table-wrap"
@@ -27810,16 +27812,16 @@ const TransformerPage = ({
 }, /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "負荷が半分なら銅損も半分、ではない。50% 負荷では銅損は 25%"), "。軽負荷の時間帯の銅損は、感覚よりずっと小さくなる。")), /*#__PURE__*/React.createElement("h4", null, "負荷率は原則 kV·A 基準（力率を掛けない）"), /*#__PURE__*/React.createElement("p", null, "負荷率の", /*#__PURE__*/React.createElement("strong", null, "本質は電流比"), " ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "x = I/I_N"
+  tex: "x = I/I_n"
 }), "。定格電圧・平衡負荷という通常の条件では、電流は皮相電力に比例するので kV·A どうしの比で取れる。"), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "x = \\frac{I}{I_N} = \\frac{\\text{負荷の皮相電力}\\;[\\mathrm{kV\\cdot A}]}{\\text{定格容量}\\;[\\mathrm{kV\\cdot A}]} = \\frac{S}{S_N}"
+  tex: "x = \\frac{I}{I_n} = \\frac{\\text{負荷の皮相電力}\\;[\\mathrm{kV\\cdot A}]}{\\text{定格容量}\\;[\\mathrm{kV\\cdot A}]} = \\frac{S}{S_n}"
 }), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "4px 0 0"
   }
 }, /*#__PURE__*/React.createElement(Eq, {
-  tex: "x = \\tfrac{S\\cos\\theta}{S_N}"
+  tex: "x = \\tfrac{S\\cos\\theta}{S_n}"
 }), " と力率を掛けるのは", /*#__PURE__*/React.createElement("strong", null, "誤り"), "。"), /*#__PURE__*/React.createElement("p", null, "巻線の発熱を決めるのは", /*#__PURE__*/React.createElement("strong", null, "電流"), "であり、三相では ", /*#__PURE__*/React.createElement(Eq, {
   tex: "I = S/(\\sqrt{3}V)"
 }), "。電圧が一定なら電流は kV·A に比例するので、負荷率は kV·A どうしの比で取る。", /*#__PURE__*/React.createElement("strong", null, "kV·A で与えられた負荷"), "に力率を掛けてしまうと、同じ電流でも力率が低い時間帯の銅損を過小評価する。"), /*#__PURE__*/React.createElement(Box, {
@@ -27832,10 +27834,10 @@ const TransformerPage = ({
 }, "「力率を掛けない」は ", /*#__PURE__*/React.createElement("strong", null, "負荷が kV·A（皮相電力）で与えられている場合"), "の話。問題文が ", /*#__PURE__*/React.createElement("strong", null, "kW（有効電力）"), " で与えてきたら、まず ", /*#__PURE__*/React.createElement(Eq, {
   tex: "S = P/\\cos\\theta"
 }), " で皮相電力に換算してから ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "x = S/S_N"
+  tex: "x = S/S_n"
 }), " とする。"), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "x = \\frac{S}{S_N} = \\frac{P}{S_N \\cos\\theta}"
+  tex: "x = \\frac{S}{S_n} = \\frac{P}{S_n \\cos\\theta}"
 }), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "4px 0 0"
@@ -27873,7 +27875,7 @@ const TransformerPage = ({
   name: "通常効率（損失から算定する規約効率）",
   eq: "\\eta = \\dfrac{P_{\\mathrm{out}}}{P_{\\mathrm{out}} + P_i + x^2 P_{cN}} \\times 100\\;[\\%]",
   note: /*#__PURE__*/React.createElement(React.Fragment, null, "出力 ", /*#__PURE__*/React.createElement(Eq, {
-    tex: "P_{\\mathrm{out}} = x S_N \\cos\\theta\\;[\\mathrm{kW}]"
+    tex: "P_{\\mathrm{out}} = x S_n \\cos\\theta\\;[\\mathrm{kW}]"
   }), "。分母は「出力＋鉄損＋銅損」＝入力。", /*#__PURE__*/React.createElement("strong", null, "規約効率"), "とは入力と出力を直接実測する", /*#__PURE__*/React.createElement("strong", null, "実測効率"), "に対し、別に求めた損失からこの式で算出する効率のこと（", /*#__PURE__*/React.createElement("span", {
     className: "marker"
   }, "「ある負荷状態の効率」という意味ではなく、算出方法を指す用語"), "）。")
@@ -28010,7 +28012,7 @@ const TransformerPage = ({
     color: "var(--ink-soft)"
   }
 }, /*#__PURE__*/React.createElement(Eq, {
-  tex: "x_k = S_k / S_N"
+  tex: "x_k = S_k / S_n"
 }), "（力率は掛けない）。各時間帯ごとに2乗してから足す。"))), /*#__PURE__*/React.createElement("div", {
   style: {
     textAlign: "center",
@@ -28022,7 +28024,7 @@ const TransformerPage = ({
 }, "↓ 最後に全日効率へ代入"), /*#__PURE__*/React.createElement(FormulaCard, {
   num: "09 / 18",
   name: "全日効率（3つの箱を代入した展開式）",
-  eq: "\\eta_d = \\dfrac{\\sum_k S_k\\cos\\theta_k t_k}{\\sum_k S_k\\cos\\theta_k t_k + P_i T_{\\mathrm{on}} + P_{cN}\\sum_k \\left(\\frac{S_k}{S_N}\\right)^2 t_k} \\times 100",
+  eq: "\\eta_d = \\dfrac{\\sum_k S_k\\cos\\theta_k t_k}{\\sum_k S_k\\cos\\theta_k t_k + P_i T_{\\mathrm{on}} + P_{cN}\\sum_k \\left(\\frac{S_k}{S_n}\\right)^2 t_k} \\times 100",
   note: "この形を丸暗記する必要はない。3つの箱を別々に計算してから、上の 08 に入れれば同じこと。"
 }), /*#__PURE__*/React.createElement("h4", null, "24時間タイムライン — 出力・鉄損・銅損はいつ出ているか"), /*#__PURE__*/React.createElement("figure", {
   style: {
@@ -28401,7 +28403,7 @@ const TransformerPage = ({
     marginBottom: 6
   }
 }, /*#__PURE__*/React.createElement("strong", null, "銅損電力量"), " — ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "W_c = P_{cN}\\sum_k (S_k/S_N)^2 t_k"
+  tex: "W_c = P_{cN}\\sum_k (S_k/S_n)^2 t_k"
 }), "（負荷率は kV·A 基準・2乗してから足す）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "全日効率"), " — ", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\eta_d = W_{\\mathrm{out}} / (W_{\\mathrm{out}} + W_i + W_c) \\times 100"
 }), "（0〜100% に収まるか検算）")), /*#__PURE__*/React.createElement("h3", {
@@ -28431,7 +28433,7 @@ const TransformerPage = ({
   tex: "x_1 = 80/100 = 0.8"
 }), "、", /*#__PURE__*/React.createElement(Eq, {
   tex: "x_2 = 40/100 = 0.4"
-}), "。力率は掛けない）"), /*#__PURE__*/React.createElement(Eq, {
+}), "。添字の 1・2 は時間帯の番号で、一次・二次の意味ではない。力率は掛けない）"), /*#__PURE__*/React.createElement(Eq, {
   display: true,
   tex: "W_c = 1.5\\left[\\left(\\tfrac{80}{100}\\right)^2 \\times 8 + \\left(\\tfrac{40}{100}\\right)^2 \\times 8\\right] = 1.5\\,[\\,0.64 \\times 8 + 0.16 \\times 8\\,] = 1.5 \\times 6.4 = 9.6\\;[\\mathrm{kWh}]"
 }), /*#__PURE__*/React.createElement("p", {
@@ -29630,7 +29632,7 @@ const TransformerPage = ({
   tex: "p"
 }), " を直接出せる。"), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "p = \\frac{I_n R_e}{V_n}\\times 100 = \\frac{I_n^{\\,2} R_e}{V_n I_n}\\times 100 = \\frac{P_{cN}}{S_N}\\times 100\\;[\\%]"
+  tex: "p = \\frac{I_n R_e}{V_n}\\times 100 = \\frac{I_n^{\\,2} R_e}{V_n I_n}\\times 100 = \\frac{P_{cN}}{S_n}\\times 100\\;[\\%]"
 }), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(Eq, {
   tex: "p"
 }), " は電流と同相、", /*#__PURE__*/React.createElement(Eq, {
@@ -29685,7 +29687,7 @@ const TransformerPage = ({
   label: "基準容量の換算 — %Z は基準容量に比例する"
 }, /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "\\%Z_{\\mathrm{new}} = \\%Z \\times \\frac{S_{\\mathrm{base}}}{S_N}"
+  tex: "\\%Z_{\\mathrm{new}} = \\%Z \\times \\frac{S_{\\mathrm{base}}}{S_n}"
 }), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "0 0 6px"
@@ -29693,7 +29695,7 @@ const TransformerPage = ({
 }, "理由は定義から出る。", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\%Z = I_n Z_e / V_n \\times 100"
 }), " で、定格電圧が同じなら ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "I_n \\propto S_N"
+  tex: "I_n \\propto S_n"
 }), "。機器の実体である ", /*#__PURE__*/React.createElement(Eq, {
   tex: "Z_e"
 }), " は変わらないので、", /*#__PURE__*/React.createElement("strong", null, "%Z だけが基準容量に比例して動く"), "。"), /*#__PURE__*/React.createElement("p", {
@@ -29708,7 +29710,7 @@ const TransformerPage = ({
     margin: 0
   }
 }, "基準電圧まで変えるなら ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "\\%Z_{\\mathrm{new}} = \\%Z \\times \\dfrac{S_{\\mathrm{base}}}{S_N} \\times \\left(\\dfrac{V_N}{V_{\\mathrm{base}}}\\right)^{2}"
+  tex: "\\%Z_{\\mathrm{new}} = \\%Z \\times \\dfrac{S_{\\mathrm{base}}}{S_n} \\times \\left(\\dfrac{V_n}{V_{\\mathrm{base}}}\\right)^{2}"
 }), "（三種では容量換算だけで足りることが多い）。", /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "容量が違う2台の", /*#__PURE__*/React.createElement(Term, null, "並行運転"), "で「%Z の逆比」がそのまま使えないのは、基準がそろっていないから"), " — 詳しくは ", /*#__PURE__*/React.createElement("a", {
@@ -29748,11 +29750,11 @@ const TransformerPage = ({
     margin: "8px 0 0"
   }
 }, "三相の定格電流は ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "I_n = S_N/(\\sqrt3 V_n)"
+  tex: "I_n = S_n/(\\sqrt3 V_n)"
 }), "。", /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "単相の ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "S_N/V_n"
+  tex: "S_n/V_n"
 }), " と混同しない"), "。")), /*#__PURE__*/React.createElement("h3", {
   id: "pz-meaning"
 }, "%Z から何が分かるか — 3つに分けて覚える"), /*#__PURE__*/React.createElement("div", {
@@ -29767,7 +29769,7 @@ const TransformerPage = ({
 }), " より反比例。遮断器の遮断容量を決める。")], ["② 電圧変動率", "var(--warn)", /*#__PURE__*/React.createElement(React.Fragment, null, "%Z が小さいほど電圧降下は", /*#__PURE__*/React.createElement("strong", null, "小さくなりやすい"), "。ただし ", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\varepsilon"
 }), " は %Z の大きさだけでは決まらない（次の注意を参照）。")], ["③ 並行運転の負荷分担", "var(--accent)", /*#__PURE__*/React.createElement(React.Fragment, null, "%Z が小さい器ほど", /*#__PURE__*/React.createElement("strong", null, "多く負担しやすい"), "。ただし容量も効くので ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "S_N/\\%Z"
+  tex: "S_n/\\%Z"
 }), " の比で判断する。")]].map(([t, c, body], i) => /*#__PURE__*/React.createElement("div", {
   key: i,
   style: {
@@ -30176,10 +30178,10 @@ const TransformerPage = ({
   tex: "IR"
 }), " の計算に要る。容量は二次側の定格から"), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "S_N = V_2 I_2 = 100 \\times 1000 = 100{,}000\\;[\\mathrm{V\\cdot A}] = 100\\;[\\mathrm{kV\\cdot A}]"
+  tex: "S_n = V_2 I_2 = 100 \\times 1000 = 100{,}000\\;[\\mathrm{V\\cdot A}] = 100\\;[\\mathrm{kV\\cdot A}]"
 }), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "I_1 = \\frac{S_N}{V_1} = \\frac{100{,}000}{2000} = 50\\;[\\mathrm{A}]"
+  tex: "I_1 = \\frac{S_n}{V_1} = \\frac{100{,}000}{2000} = 50\\;[\\mathrm{A}]"
 }), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "12px 0 2px"
@@ -32993,7 +32995,7 @@ const TransformerPage = ({
 }), " が使えるのは", /*#__PURE__*/React.createElement("strong", null, "無負荷試験"), "。短絡試験は定格電流が流れており、端子電圧の大部分が直列インピーダンス降下に消えるので ", /*#__PURE__*/React.createElement(Eq, {
   tex: "E_1"
 }), " は端子電圧よりさらに小さい"), /*#__PURE__*/React.createElement("td", null, "6")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "短絡電流は変圧器のインピーダンスだけで決まる"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "電源側インピーダンスを無視した変圧器単体の近似"), "。", /*#__PURE__*/React.createElement(Eq, {
-  tex: "I_{sc}/I_N = 100/\\%Z"
+  tex: "I_{sc}/I_n = 100/\\%Z"
 }), " は三種の通常問題では十分だが、実系統の短絡電流はこの式では出ない（8節の実務補足）"), /*#__PURE__*/React.createElement("td", null, "6・8")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "無負荷試験は無負荷なので損失は 0"), /*#__PURE__*/React.createElement("td", null, "負荷電流はほぼ 0 だが、", /*#__PURE__*/React.createElement("strong", null, "鉄心は定格電圧で通常どおり磁化される"), "ので鉄損は発生する。だからこの試験で鉄損が測れる"), /*#__PURE__*/React.createElement("td", null, "5")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "全日効率を ", /*#__PURE__*/React.createElement("strong", null, "kW だけ"), "で計算する"), /*#__PURE__*/React.createElement("td", null, "全日効率は", /*#__PURE__*/React.createElement("strong", null, "すべて kWh"), " にそろえてから割る"), /*#__PURE__*/React.createElement("td", null, "7")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "銅損が", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, {
   k: "負荷率（変圧器）"
 }, "負荷率"), "に比例"), "する"), /*#__PURE__*/React.createElement("td", null, "銅損は", /*#__PURE__*/React.createElement("strong", null, "負荷率の2乗"), "に比例（50 % 負荷なら 25 %）"), /*#__PURE__*/React.createElement("td", null, "7")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "一次側と二次側の抵抗を", /*#__PURE__*/React.createElement("strong", null, "そのまま足す")), /*#__PURE__*/React.createElement("td", null, "基準が違うので足せない。", /*#__PURE__*/React.createElement(Eq, {
@@ -33039,7 +33041,7 @@ const TransformerPage = ({
 })), /*#__PURE__*/React.createElement("td", null, "9")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "進み力率でも ", /*#__PURE__*/React.createElement("strong", null, "+ 符号"), "を使う"), /*#__PURE__*/React.createElement("td", null, "進みは ", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\varepsilon \\approx p\\cos\\theta - q\\sin\\theta"
 }), "（", /*#__PURE__*/React.createElement("strong", null, "負にもなる"), "）"), /*#__PURE__*/React.createElement("td", null, "9")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "並行運転は ", /*#__PURE__*/React.createElement("strong", null, "%Z だけ"), "を見る"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "容量と %Z の両方"), "（", /*#__PURE__*/React.createElement(Eq, {
-  tex: "S_N/z"
+  tex: "S_n/z"
 }), " の比）。容量が違うと %Z 逆比は誤り"), /*#__PURE__*/React.createElement("td", null, "10")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "V結線の 57.7 % と 86.6 % を", /*#__PURE__*/React.createElement("strong", null, "同じ分母"), "で考える"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "分母が違う"), "（Δ3台の合計容量／使用中2台の定格合計）"), /*#__PURE__*/React.createElement("td", null, "12")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Eq, {
   tex: "X_e = Z_e - R_e"
 }), " とする"), /*#__PURE__*/React.createElement("td", null, "直角合成なので ", /*#__PURE__*/React.createElement(Eq, {
@@ -35453,7 +35455,13 @@ const PowerElecPage = ({
   }
 }, "電機子に掛かる", /*#__PURE__*/React.createElement("strong", null, "平均"), "電圧は通流率どおり ", /*#__PURE__*/React.createElement(Eq, {
   tex: "V_a = D E"
-}), "。そこから電機子抵抗の降下を引いたものが逆起電力になる。"), /*#__PURE__*/React.createElement(Eq, {
+}), "（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "E"
+}), " は直流電源の電圧で、公式の ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_i"
+}), " と同じもの。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "E_a"
+}), " は電動機の逆起電力）。そこから電機子抵抗の降下を引いたものが逆起電力になる。"), /*#__PURE__*/React.createElement(Eq, {
   display: true,
   tex: "V_a = D E,\\qquad E_a = V_a - R_a I_a = D E - R_a I_a"
 }), /*#__PURE__*/React.createElement("p", {
@@ -37395,7 +37403,17 @@ const KeikiYoHenseikiPage = ({
 }), " が時間変化すると、巻線に", /*#__PURE__*/React.createElement(Term, null, "誘導起電力"), "が発生する："), /*#__PURE__*/React.createElement(Eq, {
   display: true,
   tex: "V_2 \\;=\\; -N_2 \\dfrac{d\\Phi}{dt}"
-}), /*#__PURE__*/React.createElement("p", null, "ここで重要なのは、", /*#__PURE__*/React.createElement("strong", null, "二次電圧は「磁束そのもの」ではなく「磁束の変化率」に比例する"), "こと。", /*#__PURE__*/React.createElement(Eq, {
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    fontSize: 12.5,
+    color: "var(--ink-soft)",
+    margin: "0 0 8px"
+  }
+}, "負号は起電力の向き（レンツの法則）を表す。大きさは ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "N_2\\,|d\\Phi/dt|"
+}), " で、この節ではこの大きさを見る。2-1節の ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_2 = (N_2/N_1)V_1"
+}), " は、一次・二次の向きをそろえて（同相として）大きさを比べた式なので、負号が付かなくても食い違いではない。"), /*#__PURE__*/React.createElement("p", null, "ここで重要なのは、", /*#__PURE__*/React.createElement("strong", null, "二次電圧は「磁束そのもの」ではなく「磁束の変化率」に比例する"), "こと。", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\Phi"
 }), " が正弦波なら ", /*#__PURE__*/React.createElement(Eq, {
   tex: "d\\Phi/dt"
@@ -40824,9 +40842,9 @@ const AutoControlPage = ({
     why: "リミットスイッチ等の条件判定は使うが、制御量を目標値と連続比較して訂正する動作原理を持たない。それを持つのがフィードバック制御。",
     ev: "本ページ 6節 PID制御・シーケンス制御／確認問題 k43"
   }, {
-    statement: "積分要素を含まない系では、ステップ入力の定常偏差 1/(1 + K)（K は一巡伝達関数の直流ゲイン）は、K をいくら大きくしても 0 にはならない",
+    statement: "積分要素を含まない系では、ステップ入力の定常偏差 1/(1 + Kp)（Kp は一巡伝達関数の直流ゲイン）は、Kp をいくら大きくしても 0 にはならない",
     isTrue: true,
-    why: "K を大きくすると定常偏差は小さくなるが、K が有限である限り分母の 1 + K も有限で、偏差は残る。ここの K は一巡伝達関数の直流ゲインで、PID の比例ゲインとは別物。",
+    why: "Kp を大きくすると定常偏差は小さくなるが、Kp が有限である限り分母の 1 + Kp も有限で、偏差は残る。Kp は5節の位置偏差定数（一巡伝達関数の直流ゲイン）で、PID の比例ゲイン Kc とは別物。",
     ev: "本ページ 5節 定常偏差（最終値定理）"
   }]
 }), /*#__PURE__*/React.createElement(TopicHistorySection, {
