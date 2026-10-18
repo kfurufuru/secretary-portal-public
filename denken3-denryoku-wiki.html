@@ -7497,11 +7497,12 @@ const HeatFlowBars = ({
 };
 
 /* 2つの材料を同じ条件で比べる棒（流れではないので損失の段は無い）。HeatFlowBars と同じ見た目。
-   max は棒の100%にする値。電気材料（5.1）で使う。 */
+   max は棒の100%にする値。unit は値の後ろに付ける単位（既定は「倍」）。電気材料（5.1）と絶縁破壊（5.3）で使う。 */
 const CompareBars = ({
   rows,
   max,
-  decimals = 2
+  decimals = 2,
+  unit = '倍'
 }) => (rows.forEach(r => {
   if (r.v < 0 || r.v > max) console.error('CompareBars: 値が 0〜max の外（棒が切り詰められる）', r.name, r.v, max);
 }), /*#__PURE__*/React.createElement("ol", {
@@ -7524,7 +7525,7 @@ const CompareBars = ({
   }
 })), /*#__PURE__*/React.createElement("span", {
   className: "hf-v"
-}, r.v.toFixed(decimals), " 倍"))))));
+}, r.v.toFixed(decimals), " ", unit))))));
 const KaryokuPage = ({
   data,
   onNav
@@ -16593,7 +16594,51 @@ const ZetsuenHakaiPage = ({
 }), /*#__PURE__*/React.createElement(Box, {
   kind: "warn",
   label: "最頻出の罠 — 「分担電圧が大きい層＝先に壊れる層」とは限らない"
-}, /*#__PURE__*/React.createElement("p", null, "先に壊れるのは", /*#__PURE__*/React.createElement("strong", null, "「その層にかかる電界」が「その層の絶縁耐力」を超えた層"), "である。分担が大きくても絶縁耐力がさらに大きければ壊れない。", /*#__PURE__*/React.createElement("strong", null, "分担電界と絶縁耐力を層ごとに比べる"), "のが正しい判定手順で、計算問題はここを突いてくる。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, /*#__PURE__*/React.createElement("p", null, "先に壊れるのは", /*#__PURE__*/React.createElement("strong", null, "「その層にかかる電界」が「その層の絶縁耐力」を超えた層"), "である。分担が大きくても絶縁耐力がさらに大きければ壊れない。", /*#__PURE__*/React.createElement("strong", null, "分担電界と絶縁耐力を層ごとに比べる"), "のが正しい判定手順で、計算問題はここを突いてくる。")), /*#__PURE__*/React.createElement("h3", {
+  id: "bunpai-bou"
+}, "電圧と電界の分かれ方（棒の長さ＝電圧・電界）"), /*#__PURE__*/React.createElement("p", null, "平行平板電極の間に、固体絶縁と空気の層が電極と平行に重なっている場合。電束密度 D が共通なので、", /*#__PURE__*/React.createElement("strong", null, "電界の倍率は比誘電率の比だけで決まり、電圧の分担は厚さの比にもよる"), "。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    fontSize: "13px",
+    color: "var(--ink-mute)"
+  }
+}, "例: 電極間の電圧 10 kV、固体絶縁は厚さ 4 mm・比誘電率 4、空気は厚さ 1 mm・比誘電率 1。計算の流れを見るための例示値で、過去問の数値ではない。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "電圧の分担")), /*#__PURE__*/React.createElement(CompareBars, {
+  unit: "kV",
+  max: 10,
+  rows: [{
+    name: '電極間の電圧',
+    v: 10
+  }, {
+    name: '固体が受け持つ電圧（厚さ 4 mm）',
+    alias: '1.25 kV/mm × 4 mm',
+    v: 5
+  }, {
+    kind: 'm',
+    name: '空気が受け持つ電圧（厚さ 1 mm）',
+    alias: '5 kV/mm × 1 mm。厚さは固体の 1/4 なのに電圧は同じ',
+    v: 5
+  }]
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "各層の電界")), /*#__PURE__*/React.createElement(CompareBars, {
+  unit: "kV/mm",
+  max: 6,
+  rows: [{
+    name: '固体の電界 E₁',
+    alias: 'D が共通なので E₁ : E₂ = 1/4 : 1/1。10 kV = E₁ × 4 mm ＋ 4E₁ × 1 mm から E₁ = 1.25 kV/mm',
+    v: 1.25
+  }, {
+    kind: 'm',
+    name: '空気の電界 E₂',
+    alias: '固体の 4 倍（比誘電率の逆比、式01）',
+    v: 5
+  }]
+}), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "この例では"), "、厚さが固体の 1/4 の空気層が電圧の半分を受け持ち、電界は固体の4倍になる。「半分」は厚さの比と比誘電率の比がどちらも 4 : 1 だから起きることで、一般則ではない（比誘電率 2.3 の固体 4 mm なら、空気の分担は約 37%）。空気層が無く固体だけ 5 mm なら、電界は 10 kV ÷ 5 mm = 2 kV/mm で一様になる。空気層 1 mm に置き換わると、そこだけ 5 kV/mm に上がる。"), /*#__PURE__*/React.createElement("p", null, "4節のボイド放電の理由①（電界が集中する）も、同じ D 共通の考え方で説明できる。実際のボイドは薄いので受け持つ電圧は小さいが、電界は固体より強くなる。倍率が比誘電率の比に近づくのは、平たいボイドが電界と直角に並ぶときである（球形なら 3ε", /*#__PURE__*/React.createElement("sub", null, "r"), "/(2ε", /*#__PURE__*/React.createElement("sub", null, "r"), "+1) 倍で、比誘電率 4 なら約 1.33 倍）。"), /*#__PURE__*/React.createElement("p", null, "どちらが先に壊れるかは、この電界を各層の絶縁耐力と比べて決める（上の罠）。空気の絶縁耐力はギャップの長さと気圧で変わり（2節 パッシェンの法則）、固体も厚さや温度で変わる。そのため、ここでは数字を置かない。"), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "zetsuen-hakai",
   sectionId: "bunpai"
 }), /*#__PURE__*/React.createElement("h2", {
