@@ -980,6 +980,28 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 5px; border: 2px solid var(--bg); }
 ::-webkit-scrollbar-thumb:hover { background: var(--ink-mute); }
+    /* 火力 1節「熱の流れ」の棒の図（denryoku-page-stubs.jsx の HeatFlowBars）。
+       棒の原点をそろえる寸法: .hf-node は 左罫4+内余白10、.hf-loss は 外余白18+罫2+内余白14 なので、
+       .hf-loss .hf-wf を -20px 戻すと両方の棒が左から14pxで始まる。右の内余白はどちらも10px。
+       電気の段は --accent ではなく --info で塗る（--accent は Tweaks で利用者が変えられ、橙にすると損失の色と区別がつかない）。 */
+    .hf-flow { list-style: none; margin: 10px 0 14px; padding: 0; display: grid; }
+    .hf-node { border-left: 4px solid var(--ink-soft); background: var(--bg-sunken); padding: 7px 10px; border-radius: 0 4px 4px 0; display: grid; gap: 1px; }
+    .hf-node.m { border-color: var(--ok); background: var(--ok-soft); }
+    .hf-node.e { border-color: var(--info); background: var(--bg-sunken); }
+    .hf-nm { font-weight: 700; font-size: 14px; }
+    .hf-al { font-size: 12.5px; color: var(--ink-soft); }
+    .hf-loss { position: relative; margin-left: 18px; padding: 4px 10px 4px 14px; border-left: 2px dashed var(--rule); font-size: 13px; color: var(--warn); }
+    .hf-loss.big { font-weight: 700; }
+    .hf-loss::before { content: "−"; position: absolute; left: -9px; top: 4px; width: 16px; height: 16px; line-height: 15px; text-align: center; border-radius: 50%; background: var(--bg); border: 1px solid var(--warn); font-size: 12px; font-weight: 700; }
+    .hf-wf { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .hf-loss .hf-wf { margin-left: -20px; }
+    .hf-tr { flex: 1; position: relative; height: 9px; border-radius: 2px; }
+    .hf-node .hf-tr { background: var(--bg-elev); }
+    .hf-tr i { position: absolute; top: 0; bottom: 0; border-radius: 2px; background: var(--ink-soft); }
+    .hf-node.m .hf-tr i { background: var(--ok); }
+    .hf-node.e .hf-tr i { background: var(--info); }
+    .hf-loss .hf-tr i { background: var(--warn); }
+    .hf-v { width: 84px; text-align: right; font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body>
@@ -7280,6 +7302,59 @@ const KaryokuLayers = () => /*#__PURE__*/React.createElement(React.Fragment, nul
   tex: "B = \\dfrac{P_{\\text{gen}} H_r}{H_l}",
   inline: true
 }))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "汽力はベース、ガスタービンは数分で立ち上がる", /*#__PURE__*/React.createElement("strong", null, "ピーク・非常用"), "、GTCC はその中間。", /*#__PURE__*/React.createElement("strong", null, "起動時間の差がそのまま用途の差"), "になる"), /*#__PURE__*/React.createElement("td", null, "節炭器・過熱器・再熱器・給水加熱器・復水器"))))));
+
+/* 熱の流れを「棒の長さ＝熱量（電力）」で描く。node はその段の値、loss はその段で抜ける損失。
+   前の node − loss が次の node と合わないときは console.error を出す（例の数値の取り違え検出）。
+   機械Wiki の F 出力語マップ（OmFlow）と同じ見せ方。 */
+const HeatFlowBars = ({
+  steps,
+  unit
+}) => {
+  const max = steps[0].v;
+  let cur = null;
+  return /*#__PURE__*/React.createElement("ol", {
+    className: "hf-flow"
+  }, steps.map((st, i) => {
+    let left = 0,
+      width = 0,
+      label = '';
+    if (st.loss) {
+      cur -= st.v;
+      left = cur / max * 100;
+      width = st.v / max * 100;
+      label = '−' + st.v.toFixed(2);
+    } else {
+      if (cur !== null && Math.abs(cur - st.v) > 0.005) console.error('HeatFlowBars: 例の数値が合わない', st.name, cur, st.v);
+      cur = st.v;
+      width = st.v / max * 100;
+      label = st.v.toFixed(2) + ' ' + unit;
+    }
+    const bar = /*#__PURE__*/React.createElement("span", {
+      className: "hf-wf"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "hf-tr"
+    }, /*#__PURE__*/React.createElement("i", {
+      style: {
+        left: left + '%',
+        width: width + '%'
+      }
+    })), /*#__PURE__*/React.createElement("span", {
+      className: "hf-v"
+    }, label));
+    if (st.loss) return /*#__PURE__*/React.createElement("li", {
+      key: i,
+      className: 'hf-loss' + (st.big ? ' big' : '')
+    }, st.name, bar);
+    return /*#__PURE__*/React.createElement("li", {
+      key: i,
+      className: 'hf-node ' + (st.kind || '')
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "hf-nm"
+    }, st.name), st.alias && /*#__PURE__*/React.createElement("span", {
+      className: "hf-al"
+    }, st.alias), bar);
+  }));
+};
 const KaryokuPage = ({
   data,
   onNav
@@ -7314,7 +7389,73 @@ const KaryokuPage = ({
 }, "1."), "直感的理解 — 熱効率とは"), /*#__PURE__*/React.createElement("p", null, "変換チェーンは ", /*#__PURE__*/React.createElement("strong", null, "化学(燃料)→熱(ボイラー)→機械(タービン)→電気(発電機)"), " の3段階で、各段でロスが出る。熱効率は「入れた燃料エネルギーのうち何%が電気になったか」。"), /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
   label: "数値感（暗記）"
-}, /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, "汽力発電：熱効率 35〜42%"), /*#__PURE__*/React.createElement("li", null, "コンバインドサイクル(GTCC)：", /*#__PURE__*/React.createElement("strong", null, "55〜60%以上"), "（世界最高水準）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "1 kWh = 3,600 kJ"), "（必ず覚える換算定数）"))), /*#__PURE__*/React.createElement(SectionCheck, {
+}, /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, "汽力発電：熱効率 35〜42%"), /*#__PURE__*/React.createElement("li", null, "コンバインドサイクル(GTCC)：", /*#__PURE__*/React.createElement("strong", null, "55〜60%以上"), "（世界最高水準）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "1 kWh = 3,600 kJ"), "（必ず覚える換算定数）"))), /*#__PURE__*/React.createElement("h3", {
+  id: "netsu-nagare"
+}, "熱の流れ（棒の長さ＝熱量）"), /*#__PURE__*/React.createElement("p", null, "各段の損失を棒にすると、どこで一番エネルギーが逃げるかが見える。", /*#__PURE__*/React.createElement("strong", null, "最大の損失は復水器で捨てる熱"), "（入熱の約半分）で、ボイラや発電機の損失よりはるかに大きい。この熱は熱力学の第二法則により原理的にゼロにはできない（3節のカルノー効率）。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    fontSize: "13px",
+    color: "var(--ink-mute)"
+  }
+}, "例: 燃料の入熱 1000 MW、ボイラ効率 η", /*#__PURE__*/React.createElement("sub", null, "B"), " 0.88・熱サイクル効率 η", /*#__PURE__*/React.createElement("sub", null, "C"), " 0.46・タービン効率 η", /*#__PURE__*/React.createElement("sub", null, "T"), " 0.90・発電機効率 η", /*#__PURE__*/React.createElement("sub", null, "G"), " 0.98・所内率 0.05（", /*#__PURE__*/React.createElement("a", {
+  href: "denken3-denryoku-karyoku-lab.html"
+}, "汽力発電所ラボ"), "の初期値と同じ）。計算の流れを見るための例示値で、規格値・典型値ではない。試験では問題文の値を使う。"), /*#__PURE__*/React.createElement(HeatFlowBars, {
+  unit: "MW",
+  steps: [{
+    name: '燃料の入熱 B·H',
+    alias: '燃料消費量 B [kg/s] × 発熱量 H [kJ/kg]',
+    v: 1000
+  }, {
+    loss: true,
+    name: 'ボイラの損失（排ガス・放熱など）= 1000 × (1 − 0.88)',
+    v: 120
+  }, {
+    name: '蒸気が受け取った熱',
+    alias: 'ボイラ効率 ηB = 880 / 1000 = 0.88',
+    v: 880
+  }, {
+    loss: true,
+    big: true,
+    name: 'タービン室の損失（ほぼ全部が復水器で捨てる熱・最大）= 880 × (1 − 0.414)',
+    v: 515.68
+  }, {
+    kind: 'm',
+    name: 'タービン出力（＝発電機の軸入力）',
+    alias: 'タービン室効率 = ηC × ηT = 0.46 × 0.90 = 0.414（= 364.32 / 880）',
+    v: 364.32
+  }, {
+    loss: true,
+    name: '発電機の損失 = 364.32 × (1 − 0.98)',
+    v: 7.29
+  }, {
+    kind: 'e',
+    name: '発電端出力 PG',
+    alias: '発電端熱効率 = 357.03 / 1000 = 35.7%（= ηB × ηC × ηT × ηG）',
+    v: 357.03
+  }, {
+    loss: true,
+    name: '所内電力 = 357.03 × 0.05',
+    v: 17.85
+  }, {
+    kind: 'e',
+    name: '送電端出力',
+    alias: '送電端熱効率 = 339.18 / 1000 = 33.9%（= 発電端熱効率 × (1 − 所内率)）',
+    v: 339.18
+  }]
+}), /*#__PURE__*/React.createElement(Box, {
+  kind: "warn",
+  label: "タービン室効率とタービン効率"
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "タービン室効率"), "は、蒸気がボイラで受け取った熱に対するタービン出力の比で、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\eta_C \\times \\eta_T",
+  inline: true
+}), "。", /*#__PURE__*/React.createElement("strong", null, "熱サイクル効率"), " ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\eta_C",
+  inline: true
+}), " は理想的なサイクルで熱が仕事になる割合、", /*#__PURE__*/React.createElement("strong", null, "タービン効率"), " ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\eta_T",
+  inline: true
+}), " はその理想の仕事に対する実際のタービン出力の比。問題文に効率の定義が書かれていれば、それに従う。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "復水器で捨てる熱 ≒ 蒸気が受け取った熱 × (1 − タービン室効率)"), "。理想サイクルでも捨てる 880 × (1 − 0.46) = 475.2 MW に、タービン内部の損失（膨張が理想どおりにいかない分の 40.48 MW）が加わる。内部損失は熱として排気に残り、結局は復水器で冷却水に捨てられるからである（機械損のわずかな分は軸受の油などへ出る）。(1 − ηC) だけで復水器の熱を出すのは誤り。"), /*#__PURE__*/React.createElement("p", null, "タービン出力は発電機から見れば軸入力になる。同じ動力が機器の境界によって出力にも入力にもなるのは、機械の電動機応用と同じ考え方（", /*#__PURE__*/React.createElement("a", {
+  href: "denken3-kikai-wiki.html#output-map"
+}, "機械Wiki F 出力語マップ"), "）。")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "karyoku",
   sectionId: "intro"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -7927,6 +8068,11 @@ const KaryokuPage = ({
   name: "発熱量から直接（Hr が与えられない型）",
   eq: "B = \\dfrac{3600\\,W}{H_l\\,\\eta_{\\text{gen}}}\\,[\\text{kg}]",
   note: "W=発電電力量[kWh]、Hl=低発熱量[kJ/kg]、η_gen=発電端熱効率（W が送電端の電力量なら η_send を使う）。3600W が「電気として取り出した熱量[kJ]」。それを η_gen（W が送電端なら η_send）で割れば投入熱量、Hl で割れば燃料質量。設問に Hr が無く『発熱量と効率』だけ与えられたらこちら（R05下問15の重油使用量型）。"
+}), /*#__PURE__*/React.createElement(FormulaCard, {
+  num: "05",
+  name: "効率の掛け算（熱の流れ）",
+  eq: "\\eta_{\\text{gen}} = \\eta_B \\times \\eta_C \\times \\eta_T \\times \\eta_G",
+  note: "ηB=ボイラ効率、ηC=熱サイクル効率、ηT=タービン効率、ηG=発電機効率。タービン室効率は ηC×ηT。復水器で捨てる熱 ≒ 蒸気が受け取った熱 ×（1 − ηC×ηT）。各段の損失の大きさは1節の棒の図。"
 }), /*#__PURE__*/React.createElement(Box, {
   kind: "warn",
   label: "単位換算の急所 — 3600 は「掛ける」側（水力と向きが逆）"
