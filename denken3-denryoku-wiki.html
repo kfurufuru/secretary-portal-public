@@ -11278,7 +11278,7 @@ const ShinEnergyPage = ({
   num: "02",
   name: "風力エネルギー（必須）",
   eq: "P_w = \\dfrac{1}{2}\\,\\rho A v^3\\,[\\text{W}]",
-  note: "P_w=風がもつ仕事率、ρ=空気密度(約1.225kg/m³)、A=受風面積=πr²、v=風速。質量流量∝v と運動E∝v² の積で v³。実際に取り出せる軸出力はこれにパワー係数 Cp を掛けた P = Cp·P_w = ½ρAv³·Cp（理論上限はベッツ限界 Cp=16/27≒0.593・実機の最大Cpは0.4前後）。H30 問5 の計算はこの形。"
+  note: "P_w=風がもつ仕事率、ρ=空気密度(約1.225kg/m³)、A=受風面積=πr²、v=風速。質量流量∝v と運動E∝v² の積で v³。実際に取り出せる軸出力はこれにパワー係数 Cp を掛けた P = Cp·P_w = ½ρAv³·Cp（理論上限はベッツ限界 Cp=16/27≒0.593・実機の Cp は0.4〜0.5程度）。H30 問5 の計算はこの形。"
 }), /*#__PURE__*/React.createElement(Box, {
   kind: "warn",
   label: "風速の3乗に比例（2乗ではない）"
@@ -11330,7 +11330,56 @@ const ShinEnergyPage = ({
 }), "（式01）"), /*#__PURE__*/React.createElement("td", null, "3600 を掛ける（風力に秒→時間の換算は不要）"))))), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "3600 は出てこない"), "：", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\tfrac{1}{2}\\rho A v^3",
   inline: true
-}), " は最初から「毎秒」の量＝仕事率なので、年間量は ", /*#__PURE__*/React.createElement("strong", null, "運転時間[h] を掛けるだけ"), "（水力の総水量ルートのような秒→時間の換算は不要）。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}), " は最初から「毎秒」の量＝仕事率なので、年間量は ", /*#__PURE__*/React.createElement("strong", null, "運転時間[h] を掛けるだけ"), "（水力の総水量ルートのような秒→時間の換算は不要）。")), /*#__PURE__*/React.createElement("h3", {
+  id: "fuu-nagare"
+}, "出力の流れ（棒の長さ＝出力）"), /*#__PURE__*/React.createElement("p", null, "風がもつ仕事率のうち電気になるのは、この例では36%。", /*#__PURE__*/React.createElement("strong", null, "理想的な風車でも約59%（ベッツ限界 16/27）までしか取り出せない"), "。風を強く減速させるほど空気1kgあたりの取り分は増えるが、減速させすぎると風がロータを避けて周りへ逸れ、ロータを通る空気が減る（止めきれば流れ自体が止まる）。この兼ね合いの最大が 16/27 である。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    fontSize: "13px",
+    color: "var(--ink-mute)"
+  }
+}, "例: ロータ直径 80 m（A = π × 40²）、風速 10 m/s、空気密度 1.225 kg/m³、実機のパワー係数 Cp 0.40、増速機（ある場合）と発電機の効率 0.90。計算の流れを見るための例示値で、規格値・典型値ではない。試験では問題文の値を使う。"), /*#__PURE__*/React.createElement(HeatFlowBars, {
+  unit: "kW",
+  steps: [{
+    name: '風がもつ仕事率 Pw = ½ρAv³',
+    alias: '0.5 × 1.225 × π × 40² × 10³ ≒ 3,078,761 W。式は [W] で出るので 1000 で割って kW にする',
+    v: 3078.76
+  }, {
+    loss: true,
+    name: 'ベッツ限界で取り出せない分（減速しすぎると風がロータを避けるため、取り分に上限がある）= Pw × (1 − 16/27)',
+    v: 1254.31
+  }, {
+    name: '理論上限（ベッツ限界 Cp = 16/27 ≒ 0.593）',
+    alias: 'どんな理想的な風車でもここまで',
+    v: 1824.45
+  }, {
+    loss: true,
+    name: '翼の空気力学的な損失など（実機の Cp は 0.4〜0.5 程度。H30 問5 は 50%）',
+    v: 592.95
+  }, {
+    kind: 'm',
+    name: 'ロータの軸出力 P = Cp × Pw',
+    alias: 'Cp = 0.40。H30 問5（ロータ半径 30 m・Cp 50%）の計算はこの段まで',
+    v: 1231.50
+  }, {
+    loss: true,
+    name: '増速機（ある場合）と発電機の損失 = 1231.50 × (1 − 0.90)',
+    v: 123.15
+  }, {
+    kind: 'e',
+    name: '発電機出力',
+    alias: '風の仕事率に対して 1108.35 / 3078.76 = 36%',
+    v: 1108.35
+  }]
+}), /*#__PURE__*/React.createElement(Box, {
+  kind: "warn",
+  label: "風速が変わると、棒は全部まとめて3乗で変わる"
+}, /*#__PURE__*/React.createElement("p", null, "風速が 10 m/s から 5 m/s に半分になると、最上段の Pw は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "(1/2)^3 = 1/8",
+  inline: true
+}), " になり、下の棒もすべて 1/8 になる（Cp と効率が同じなら）。半分になるのは出力ではなく風速である。"), /*#__PURE__*/React.createElement("p", null, "問題文が「風車の出力」「パワー係数」をどの段で言っているかを先に決める。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P = C_p \\times \\tfrac{1}{2}\\rho A v^3",
+  inline: true
+}), " はロータの軸出力（5段目）までで、増速機や発電機の効率が与えられたら最後に掛ける。")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "shin-energy",
   sectionId: "furyoku"
 }), /*#__PURE__*/React.createElement("h2", {
