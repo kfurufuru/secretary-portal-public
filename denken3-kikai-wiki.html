@@ -2712,7 +2712,7 @@ const KIKAI_DAILY_POOL = [
     evidence:['本ページ セクション4 インバータと PWM・用語集「PWM」'], verified:'high',
     wikiPageId:'power-elec' },
 
-  // ─── 計器用変成器 keiki-yo-henseiki (5) ───
+  // ─── 計器用変成器 keiki-yo-henseiki (9) ───
   { id:'k34', topic:'計器用変成器', rank:'C',
     q:'計器用変成器の二次側で禁止されている操作の組合せとして正しいものはどれか。',
     choices:[{key:'A',label:'CT は二次開放が厳禁／VT は二次短絡が厳禁',correct:true},{key:'B',label:'CT は二次短絡が厳禁／VT は二次開放が厳禁',correct:false},{key:'C',label:'どちらも二次開放が厳禁',correct:false},{key:'D',label:'どちらも二次短絡が厳禁',correct:false}],
@@ -2745,7 +2745,7 @@ const KIKAI_DAILY_POOL = [
     q:'計器用変成器の「定格負担」の単位はどれか。',
     choices:[{key:'A',label:'V·A（皮相電力）',correct:true},{key:'B',label:'W（有効電力）',correct:false},{key:'C',label:'Ω（インピーダンス）',correct:false},{key:'D',label:'A（電流）',correct:false}],
     tags:['#公式','#論説'],
-    explanation:'定格負担は二次側に接続してよい負荷の大きさを皮相電力 [V·A] で表したもの。これを超えると変成比誤差・位相角誤差が規定の階級を外れる。CT では二次配線の抵抗も負担に加わるため、配線が長いほど負担が増える。',
+    explanation:'定格負担は二次側に接続してよい負荷の大きさを皮相電力 [V·A] で表したもの。これを超えると比誤差・位相角誤差が規定の階級を外れる。CT では二次配線の抵抗も負担に加わるため、配線が長いほど負担が増える。',
     evidence:['本ページ セクション5「巻数比の式は磁気平衡の系」の 5-5「誤差と負担」表2.3.1 の定格負担'], verified:'high',
     wikiPageId:'keiki-yo-henseiki' },
   { id:'k239', topic:'計器用変成器', rank:'B',
@@ -7644,6 +7644,13 @@ function kakomonSlotLabel(cell) {
   return (n >= 15 ? "B問" : "A問") + cell;
 }
 
+/* 照合済み台帳の範囲（例「H28〜R8上」）。本文に範囲を手で書くと、台帳を広げたときに古くなる
+   （#1691 で H28〜R2 を足した後も、本文に「R3〜R8上」が残った）。 */
+function kakomonRangeText() {
+  const s = typeof kakomonScope === "function" ? kakomonScope() : null;
+  return s && s.sessions ? `${s.first}〜${s.last}` : "照合済みの回";
+}
+
 /* PageHeader の meta 行を台帳から作る。
    zeroNote は「台帳に出題が無い単元」に添える説明（未検証なら honest-hold で書く）。 */
 function kakomonFreqMeta(topicId, zeroNote) {
@@ -8013,7 +8020,7 @@ const LayerCountNote = ({
   emptyNote
 }) => {
   const scope = typeof kakomonScope === "function" ? kakomonScope() : null;
-  const range = scope ? `${scope.first}〜${scope.last}` : "照合済みの回";
+  const range = kakomonRangeText();
   const noteStyle = {
     fontSize: 12,
     color: "var(--ink-mute)",
@@ -8068,6 +8075,7 @@ Object.assign(window, {
   PRIO_LABEL,
   kakomonFreqOf,
   kakomonFreqMeta,
+  kakomonRangeText,
   kakomonSlotLabel,
   isKakomonFeatured
 });
@@ -38837,7 +38845,7 @@ const KeikiYoHenseikiLayers = () => {
     c: c,
     stageMap: KY_STAGE_SUBTOPICS,
     labels: {},
-    emptyNote: range => `出題数: CT・VT を主題とする小問は ${range} の台帳に無い（法規では R5下 問10・H24 問5 が出ている。電力では R3 問7・R5上 問7・R6下 問7・H22 問9 が出ている。電力Wikiの出題表による・問題冊子では未照合）。`
+    emptyNote: range => `出題数: CT・VT を主題とする小問は ${range} の台帳に無い（法規では R5下 問10・H24 問5 が出ている。電力では R3 問7・R5上 問7・R6下 問7・H22 問9 が出ている。H24 問5 を除き試験センター公表の問題冊子で確認）。`
   }));
 };
 
@@ -39293,7 +39301,7 @@ const KeikiYoHenseikiPage = ({
   eyebrow: "2.3  INSTRUMENT TRANSFORMERS (CT / VT)",
   title: "計器用変成器（CT・VT）",
   deck: "高圧の電流・電圧を低圧側で安全に測定するための変成器。CT＝電流用・VT＝電圧用。二次禁則が真逆になる理由を「一次側から何を強制するか」の物理から導く。丸暗記すると毎回逆になる典型論点。",
-  meta: [...kakomonFreqMeta("keiki-yo-henseiki", "CT・VT を主題とする機械の小問は、この範囲の台帳に無い（範囲外では H28 問7「変圧器及び計器用変成器」があるが、問題冊子では未照合）。法規では R5下 問10 が変流器の扱い（二次側を開放しない・短絡してから計器を交換する など）を問い（法規Wikiの過去問プール q177）、H24 問5 が計器用変成器の二次側電路の接地点を「大地から絶縁しなくてよい例外」として問うている（同 q69）。電力では R3 問7・R5上 問7（題は「変電所の計器用変成器」）、R6下 問7（同「計器用変成器の取扱い上の注意点」）、H22 問9（同「変流器の特徴と取り扱い上の注意点」）が出ている（電力Wikiの出題表による。問題冊子では未照合）"), {
+  meta: [...kakomonFreqMeta("keiki-yo-henseiki", "CT・VT を主題とする機械の小問は、この範囲の台帳に無い。H28 問7（各種変圧器の記述から誤りを選ぶ。正答は (3) 磁気漏れ変圧器）の選択肢 (4)・(5) に、CT・VT が正しい記述として出ているだけである（試験センター公表の問題冊子で確認）。法規では R5下 問10 が変流器の記述から誤りを選ばせ（正答は (4)「二次側の抵抗値により変流比は変化する」。問題冊子で確認。法規Wikiの過去問プール q177）、H24 問5 が計器用変成器の二次側電路の接地点を「大地から絶縁しなくてよい例外」として問うている（同 q69 による。問題冊子では未照合）。電力では R3 問7・R5上 問7（同じ文章の穴埋め）と R6下 問7・H22 問9（同じ文章の穴埋め）が出ている（4問とも問題冊子で確認）。4問とも、CT の二次端子に常に「低インピーダンス」の負荷を接続しておくことを問う"), {
     label: "難易度",
     value: "★★★☆☆"
   }]
@@ -39306,11 +39314,11 @@ const KeikiYoHenseikiPage = ({
   style: {
     margin: 0
   }
-}, "機械の台帳（R3〜R8上）では ", /*#__PURE__*/React.createElement("strong", null, "0 小問"), "。機械の得点だけを考えるなら後回しでよい。"), /*#__PURE__*/React.createElement("p", {
+}, "機械の台帳（", kakomonRangeText(), "）で CT・VT を主題とする小問は ", /*#__PURE__*/React.createElement("strong", null, "0"), "。H28 問7 の選択肢に2つ出ただけである。機械の得点だけを考えるなら後回しでよい。"), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "6px 0 0"
   }
-}, "ただし", /*#__PURE__*/React.createElement("strong", null, "電力と法規では出ている"), "。回と問番号は、見出しの「出題頻度」の注記にある（電力は電力Wikiの出題表による・問題冊子では未照合）。 電力Wikiの出題表は、R3〜R6下 の3問が ", /*#__PURE__*/React.createElement("a", {
+}, "ただし", /*#__PURE__*/React.createElement("strong", null, "電力と法規では出ている"), "。回と問番号は、見出しの「出題頻度」の注記にある（電力の4問と法規 R5下 問10 は試験センター公表の問題冊子で確認）。 電力Wikiの出題表は、R3〜R6下 の3問が ", /*#__PURE__*/React.createElement("a", {
   href: "https://kfurufuru.github.io/secretary-portal-public/denken3-denryoku-wiki.html#keiki-hensei",
   target: "_blank",
   rel: "noopener"
@@ -39322,7 +39330,7 @@ const KeikiYoHenseikiPage = ({
   style: {
     margin: "6px 0 0"
   }
-}, "読むなら ", /*#__PURE__*/React.createElement("strong", null, "セクション1〜4（共通の物理と、", /*#__PURE__*/React.createElement(Term, null, "VT"), "・", /*#__PURE__*/React.createElement(Term, null, "CT"), " の二次禁則が逆になる理由）"), "から。電力Wiki 2.3 は「変流比・残留回路の計算も出る」と書いているので、", /*#__PURE__*/React.createElement("strong", null, "5-1（CT の変流比）"), "も読む。電力・法規の問題がどこまで問うかは、問題冊子では照合していない。接地の種別は法規の論点なので、法規Wiki と併せて読む。")), /*#__PURE__*/React.createElement(KeikiYoHenseikiLayers, null), /*#__PURE__*/React.createElement(ConceptQuiz, {
+}, "読むなら ", /*#__PURE__*/React.createElement("strong", null, "セクション1〜4（共通の物理と、", /*#__PURE__*/React.createElement(Term, null, "VT"), "・", /*#__PURE__*/React.createElement(Term, null, "CT"), " の二次禁則が逆になる理由）"), "から。電力の4問は計算を含まない穴埋めで、4問とも CT の二次端子に常に", /*#__PURE__*/React.createElement("strong", null, "低インピーダンス"), "の負荷を接続すること・一次端子を被測定線路に", /*#__PURE__*/React.createElement("strong", null, "直列"), "に接続することを問う（3-1・3-2）。 R6下 問7・H22 問9 はさらに、二次を", /*#__PURE__*/React.createElement("strong", null, "開放"), "してはならない・開放すると二次に", /*#__PURE__*/React.createElement("strong", null, "電圧"), "が出て", /*#__PURE__*/React.createElement("strong", null, "鉄損"), "が過大になる、を問う（3-3・3-4）。R3 問7・R5上 問7 は", /*#__PURE__*/React.createElement("strong", null, "計器用変圧器"), "・", /*#__PURE__*/React.createElement("strong", null, "保護継電器"), "の語を問う（2-1）。 電力Wiki 2.3 は「変流比・残留回路の計算も出る」と書いているので、", /*#__PURE__*/React.createElement("strong", null, "5-1（CT の変流比）"), "も読む（計算の出題は問題冊子では未照合）。接地の種別は法規の論点なので、法規Wiki と併せて読む。")), /*#__PURE__*/React.createElement(KeikiYoHenseikiLayers, null), /*#__PURE__*/React.createElement(ConceptQuiz, {
   pageId: "keiki-yo-henseiki",
   pageTitle: "計器用変成器（CT・VT）"
 }), /*#__PURE__*/React.createElement(BoxLegend, null), /*#__PURE__*/React.createElement(Box, {
@@ -39465,7 +39473,9 @@ const KeikiYoHenseikiPage = ({
   tex: "N_2 I_2"
 }), " は ", /*#__PURE__*/React.createElement("strong", null, "ほぼ完全に打ち消し合い"), "、正味の起磁力（＝", /*#__PURE__*/React.createElement(Term, null, "励磁"), "起磁力）はごくわずか。したがって磁束 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\Phi"
-}), " は B-H 直線域に収まり ", /*#__PURE__*/React.createElement("strong", null, "正常動作"), "。"), /*#__PURE__*/React.createElement(Box, {
+}), " は B-H 直線域に収まり ", /*#__PURE__*/React.createElement("strong", null, "正常動作"), "。"), /*#__PURE__*/React.createElement("p", null, "試験の文章では「変流器の二次端子は，常に", /*#__PURE__*/React.createElement("strong", null, "低インピーダンス"), "負荷を接続しておかねばならない」と書かれる（電力 R6下 問7・H22 問9。R3 問7・R5上 問7 も同じ趣旨で「低」を問う。4問とも問題冊子で確認）。電流計や継電器の電流コイルはインピーダンスが小さく、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "二次を短絡に近い状態にしておくのが CT の正常な使い方"), "だからである。選択肢には「高インピーダンス」が並ぶ。"), /*#__PURE__*/React.createElement(Box, {
   kind: "mistake",
   label: "よくある誤解：CTも短絡すれば「抵抗が小さい→大電流」で焼けるのでは？"
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "誤解の出どころ"), "：VTの焼損（セクション2-3）を ", /*#__PURE__*/React.createElement(Eq, {
@@ -39509,7 +39519,7 @@ const KeikiYoHenseikiPage = ({
   className: "marker"
 }, "ほぼ方形波"), " になり、", /*#__PURE__*/React.createElement("strong", null, "ゼロクロス付近で dΦ/dt が極端に大きい"), "。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(Eq, {
   tex: "V_2 = -N_2 (d\\Phi/dt)"
-}), " より、二次に ", /*#__PURE__*/React.createElement("strong", null, "数kVにも達するスパイク電圧"), "（大きさは CT の寸法・一次電流・二次巻数による）が瞬時に発生 → 巻線の絶縁設計を超えて ", /*#__PURE__*/React.createElement("strong", null, "絶縁破壊・感電事故"), "。これがCT二次開放禁止の物理的核心。"), /*#__PURE__*/React.createElement("h3", null, "3-5. 現場運用：二次は常に閉路、計器交換時は先に短絡端子を投入"), /*#__PURE__*/React.createElement("p", null, "点検でCT二次側の電流計を交換するとき、いきなり計器を外すと一瞬で二次が開放状態になり、上記の事故が発生する。これを防ぐため、CT二次端子台には ", /*#__PURE__*/React.createElement("strong", null, "短絡用ピース（短絡端子）"), " が標準装備されている。手順は："), /*#__PURE__*/React.createElement("ol", null, /*#__PURE__*/React.createElement("li", null, "短絡端子を投入（二次を短絡する）"), /*#__PURE__*/React.createElement("li", null, "古い電流計を外す"), /*#__PURE__*/React.createElement("li", null, "新しい電流計を取り付ける"), /*#__PURE__*/React.createElement("li", null, "短絡端子を解放")), /*#__PURE__*/React.createElement("p", null, "常に「閉路を保つ」設計で、物理的に開放させない仕組み。", /*#__PURE__*/React.createElement("strong", null, "短絡端子の存在理由がセクション3-3・3-4の物理から導かれる"), "のがこの設計の美しさ。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "CT二次回路にはヒューズを入れない"), "。VTは二次短絡が危険なので二次側をヒューズで保護する（セクション2-3）が、CTは逆に ", /*#__PURE__*/React.createElement("strong", null, "開放が危険"), "。ヒューズが溶断すれば、その瞬間に二次開放＝セクション3-3・3-4の事故そのものになる。", /*#__PURE__*/React.createElement("span", {
+}), " より、二次に ", /*#__PURE__*/React.createElement("strong", null, "数kVにも達するスパイク電圧"), "（大きさは CT の寸法・一次電流・二次巻数による）が瞬時に発生 → 巻線の絶縁設計を超えて ", /*#__PURE__*/React.createElement("strong", null, "絶縁破壊・感電事故"), "。これがCT二次開放禁止の物理的核心。"), /*#__PURE__*/React.createElement("h3", null, "3-5. 現場運用：二次は常に閉路、計器交換時は先に短絡端子を投入"), /*#__PURE__*/React.createElement("p", null, "点検でCT二次側の電流計を交換するとき、いきなり計器を外すと一瞬で二次が開放状態になり、上記の事故が発生する。これを防ぐため、CT二次端子台には ", /*#__PURE__*/React.createElement("strong", null, "短絡用ピース（短絡端子）"), " が標準装備されている。手順は："), /*#__PURE__*/React.createElement("ol", null, /*#__PURE__*/React.createElement("li", null, "短絡端子を投入（二次を短絡する）"), /*#__PURE__*/React.createElement("li", null, "古い電流計を外す"), /*#__PURE__*/React.createElement("li", null, "新しい電流計を取り付ける"), /*#__PURE__*/React.createElement("li", null, "短絡端子を解放")), /*#__PURE__*/React.createElement("p", null, "常に「閉路を保つ」設計で、物理的に開放させない仕組み。", /*#__PURE__*/React.createElement("strong", null, "短絡端子の存在理由がセクション3-3・3-4の物理から導かれる"), "のがこの設計の美しさ。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "CT二次回路にはヒューズも開閉器も入れない"), "（法規 R5下 問10 の選択肢 (2) が正しい記述として出している）。VTは二次短絡が危険なので二次側をヒューズで保護する（セクション2-3）が、CTは逆に ", /*#__PURE__*/React.createElement("strong", null, "開放が危険"), "。ヒューズが溶断すれば、その瞬間に二次開放＝セクション3-3・3-4の事故そのものになる。開閉器を開いた場合も同じである。", /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "「異常時は保護素子で切る」という常識が、CT二次回路にだけは通用しない"), "。禁則が逆だからで、これも物理から導ける。"), /*#__PURE__*/React.createElement("h3", null, "3-6. 二次側1端子を接地する理由"), /*#__PURE__*/React.createElement("p", null, "VTと同じく一次高圧と二次低圧の", /*#__PURE__*/React.createElement(Term, null, "混触"), "対策で二次側を接地する（", /*#__PURE__*/React.createElement("strong", null, "高圧はD種・特別高圧はA種"), "＝解釈第28条。セクション2-4参照）。役割は", /*#__PURE__*/React.createElement("strong", null, "混触時に二次回路の対地電位が高圧まで持ち上がるのを防ぐこと"), "に尽きる。"), /*#__PURE__*/React.createElement(Box, {
   kind: "mistake",
@@ -39571,7 +39581,7 @@ const KeikiYoHenseikiPage = ({
   }), " から", /*#__PURE__*/React.createElement(Term, null, "一次電流"), "は ", /*#__PURE__*/React.createElement(Eq, {
     tex: "I_1 = (1000/5) I_2 = 200 \\times I_2"
   }), " で機械的に求まる。")
-}), /*#__PURE__*/React.createElement("h3", null, "5-2. VT の変圧比"), /*#__PURE__*/React.createElement("p", null, "セクション1-3の ", /*#__PURE__*/React.createElement(Eq, {
+}), /*#__PURE__*/React.createElement("p", null, "二次側を小さな電流・電圧にそろえるので、大電流・高電圧も通常の計器で測れる。機械 H28 問7 の選択肢 (4) は「例えば最大目盛りが 5 A，150 V という通常の電流計又は電圧計を用いることができる」を正しい記述として出している（問題冊子で確認）。"), /*#__PURE__*/React.createElement("h3", null, "5-2. VT の変圧比"), /*#__PURE__*/React.createElement("p", null, "セクション1-3の ", /*#__PURE__*/React.createElement(Eq, {
   tex: "V = N (d\\Phi/dt)"
 }), " を一次・二次で書き、辺々割る："), /*#__PURE__*/React.createElement(FormulaCard, {
   num: "02 / 02",
@@ -39580,7 +39590,7 @@ const KeikiYoHenseikiPage = ({
   note: /*#__PURE__*/React.createElement(React.Fragment, null, "例：6600/110 V の ", /*#__PURE__*/React.createElement(Term, null, "VT"), " は", /*#__PURE__*/React.createElement(Term, null, "変成比"), " 60:1。三相回路では ", /*#__PURE__*/React.createElement(Eq, {
     tex: "6600/\\sqrt{3}\\ /\\ 110/\\sqrt{3}"
   }), " 表記（相電圧基準）も使われる。")
-}), /*#__PURE__*/React.createElement("h3", null, "5-3. 端子記号"), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "VT"), "：一次 U-V、二次 u-v（国内従来表記。IEC 整合表記では一次 A-B〈接地形は A-N〉・二次 a-b）。", /*#__PURE__*/React.createElement(Term, null, "減極性"), "が標準"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "CT"), "：一次 K-L（K=入口・L=出口）、二次 k-l（国内従来表記。IEC 整合表記では一次 P1-P2・二次 S1-S2）。減極性が標準"), /*#__PURE__*/React.createElement("li", null, "結線図では端子記号で判別できる：", /*#__PURE__*/React.createElement("strong", null, "K-L なら CT、U-V なら VT"), "（国内従来表記では大文字=一次・小文字=二次。IEC 整合の P1/S1 系は数字記号なので、図中の表記体系全体で判別する）")), /*#__PURE__*/React.createElement("h3", null, "5-4. 貫通形 CT — 一次導体を n 回通すと変流比が 1/n になる"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "貫通形"), "（窓形）CT は一次巻線を持たず、", /*#__PURE__*/React.createElement("span", {
+}), /*#__PURE__*/React.createElement("p", null, "受電設備で取引電力量を量る ", /*#__PURE__*/React.createElement("strong", null, "VCT"), " は、VT と CT を1つの容器に収めたものである。電力 R6下 問11 の選択肢 (4) は「需要家の受電電圧と使用電流を扱いやすい低電圧・小電流に変換する装置である。電力量計と組み合わせて，取引電力量を計量する」を正しい記述として出している（問題冊子で確認）。"), /*#__PURE__*/React.createElement("h3", null, "5-3. 端子記号"), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "VT"), "：一次 U-V、二次 u-v（国内従来表記。IEC 整合表記では一次 A-B〈接地形は A-N〉・二次 a-b）。", /*#__PURE__*/React.createElement(Term, null, "減極性"), "が標準"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "CT"), "：一次 K-L（K=入口・L=出口）、二次 k-l（国内従来表記。IEC 整合表記では一次 P1-P2・二次 S1-S2）。減極性が標準"), /*#__PURE__*/React.createElement("li", null, "結線図では端子記号で判別できる：", /*#__PURE__*/React.createElement("strong", null, "K-L なら CT、U-V なら VT"), "（国内従来表記では大文字=一次・小文字=二次。IEC 整合の P1/S1 系は数字記号なので、図中の表記体系全体で判別する）")), /*#__PURE__*/React.createElement("h3", null, "5-4. 貫通形 CT — 一次導体を n 回通すと変流比が 1/n になる"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "貫通形"), "（窓形）CT は一次巻線を持たず、", /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "ケーブルそのものを窓に通す"), "。 通す回数が一次の巻数 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "N_1"
@@ -39614,7 +39624,7 @@ const KeikiYoHenseikiPage = ({
     color: "var(--ink-soft)",
     margin: "0 0 6px"
   }
-}, "【参考】ここから先は", /*#__PURE__*/React.createElement("strong", null, "機械の台帳（R3〜R8上）では 0 小問"), "。機械の得点だけなら、用語として知っておく水準でよい。 電力の出題（回と問番号は見出しの注記）が誤差・負担まで問うかは、問題冊子では照合していない。"), /*#__PURE__*/React.createElement("p", null, "変成器は理想変圧器ではないので、変成比がわずかにずれる。そのずれが誤差になる。", /*#__PURE__*/React.createElement("strong", null, "CT"), " では", /*#__PURE__*/React.createElement(Term, null, "励磁電流"), "のぶんだけ ", /*#__PURE__*/React.createElement(Eq, {
+}, "【参考】ここから先は", /*#__PURE__*/React.createElement("strong", null, "機械の台帳（", kakomonRangeText(), "）では 0 小問"), "。機械の得点だけなら、用語として知っておく水準でよい。 電力の4問（回と問番号は見出しの注記）は、誤差・負担を問うていない（問題冊子で確認）。"), /*#__PURE__*/React.createElement("p", null, "変成器は理想変圧器ではないので、変成比がわずかにずれる。そのずれが誤差になる。", /*#__PURE__*/React.createElement("strong", null, "CT"), " では", /*#__PURE__*/React.createElement(Term, null, "励磁電流"), "のぶんだけ ", /*#__PURE__*/React.createElement(Eq, {
   tex: "N_1I_1 = N_2I_2"
 }), " が崩れ、", /*#__PURE__*/React.createElement("strong", null, "VT"), " では巻線のインピーダンスによる電圧降下のぶんだけ ", /*#__PURE__*/React.createElement(Eq, {
   tex: "V_1/V_2 = N_1/N_2"
@@ -39825,6 +39835,11 @@ const KeikiYoHenseikiPage = ({
   pageId: "keiki-yo-henseiki",
   pageTitle: "2.3 計器用変成器（CT・VT）",
   traps: [{
+    wrong: "CT の二次端子には、常に高インピーダンスの負荷を接続しておく",
+    correct: "低インピーダンス。二次を短絡に近い状態にしておくのが CT の正常な使い方。インピーダンスが高いほど二次電圧と励磁が増え、その極限が開放である。",
+    why: "VT の「二次開放が標準」の感覚を持ち込むと逆になる。電力の穴埋め4問（R3 問7・R5上 問7・R6下 問7・H22 問9）は、どれもこの語を問う。",
+    ev: "本ページ 3節 3-2"
+  }, {
     wrong: "CT の二次側は、VT と同じく短絡してはならない",
     correct: "CT は二次を短絡しても正常（磁気平衡が成り立つ）。CT で禁止なのは開放。",
     why: "CT の二次電流は I₂ ≈ (N₁/N₂)I₁ で一次電流が決め、二次のインピーダンスが式に入らない。「短絡＝危険」の言葉のイメージを持ち込むと、CT では逆になる。",
