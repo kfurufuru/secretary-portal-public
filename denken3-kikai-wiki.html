@@ -1919,7 +1919,7 @@ window.WIKI_DATA = {
       keywords: "チョッパ 降圧チョッパ 導通 オン期間 オフ期間 還流ダイオード 環流ダイオード フリーホイーリング 電流経路 リアクトル 通流率 デューティ比" },
     { page: "power-elec", pageTitle: "2.2 パワーエレクトロニクス", anchor: "chopper-calc",
       title: "通流率からチョッパの出力を求める（降圧・昇圧・昇降圧）", desc: "降圧 D·Vi、昇圧 Vi/(1−D)、昇降圧 D/(1−D)·Vi。3つともリアクトルの電圧時間積の平衡から出る",
-      keywords: "通流率 デューティ比 降圧チョッパ 昇圧チョッパ 昇降圧チョッパ 出力電圧 伏秒平衡 電流リプル" },
+      keywords: "通流率 デューティ比 降圧チョッパ 昇圧チョッパ 昇降圧チョッパ 出力電圧 電圧時間積の平衡 ボルト秒平衡 電流リプル" },
     { page: "power-elec", pageTitle: "2.2 パワーエレクトロニクス", anchor: "chopper-regen",
       title: "チョッパの回生（2象限チョッパ）", desc: "1石の降圧チョッパでは回生できない。逆並列のスイッチとダイオードを足し、S₂ の通流率で決める",
       keywords: "回生 回生制動 2象限チョッパ 二象限 昇圧動作 電力を返す 通流率 D2 逆並列 直流電動機 減速" },
@@ -2069,7 +2069,7 @@ window.WIKI_DATA = {
     { term: "COP",             reading: "SEISEKI KEISUU",    letter: "さ",
       def: "成績係数。ヒートポンプなどで、加熱・冷却能力 [kW] を消費電力 [kW] で割った値（熱量 [kJ] ÷ 消費電力量 [kJ] でも同じ）。外気から熱をくみ上げるため1を大きく超える（電熱器は最大1）。同一サイクルでは加熱COP = 冷却COP + 1。" },
     { term: "全波整流",        reading: "ZENPA SEIRYU",      letter: "さ",
-      def: "交流の正負両半波を利用する整流。単相全波（ブリッジ整流回路）のダイオード整流では直流平均電圧 Ed = 0.9E（E:実効値）、半波整流では 0.45E。サイリスタで制御角（点弧角）αをとると、誘導性負荷・電流連続で還流ダイオードが無いとき Ed = 0.9E·cosα。" },
+      def: "交流の正負両半波を利用する整流。単相全波（ブリッジ整流回路）のダイオード整流では直流平均電圧 Ed = 0.9E（E:実効値）、半波整流では 0.45E。サイリスタで制御角（点弧角）αをとると、全制御ブリッジ（素子がすべてサイリスタ）で誘導性負荷・電流連続・還流ダイオードが無いとき Ed = 0.9E·cosα（半制御ブリッジや抵抗負荷では 0.9E·(1+cosα)/2）。" },
     { term: "最大効率",        reading: "SAIDAI KOURITSU",   letter: "さ",
       def: "変圧器の効率が最大になる条件は鉄損＝銅損（無負荷損＝負荷損）。銅損は負荷率 x の2乗で変わるため、x = √(鉄損 / 全負荷銅損) の負荷率で最大となる。全日効率では電力量 [kWh] ベースで同じ条件を考える。" },
     { term: "他励",            reading: "TAREI",             letter: "た",
@@ -2661,7 +2661,7 @@ const KIKAI_DAILY_POOL = [
     evidence:['本ページ セクション11「ブラシレス DC モータ」対応表'], verified:'high',
     wikiPageId:'dc-machine' },
 
-  // ─── パワーエレクトロニクス power-elec (7) ───
+  // ─── パワーエレクトロニクス power-elec (16) ───
   { id:'k29', topic:'パワエレ', rank:'S',
     q:'三相ダイオード全波（ブリッジ）整流回路の直流平均電圧 Vd を表す式はどれか（V_L は線間電圧の実効値）。',
     choices:[{key:'A',label:'Vd = (3√2/π)·V_L ≈ 1.35 V_L',correct:true},{key:'B',label:'Vd = (2√2/π)·V_L ≈ 0.90 V_L',correct:false},{key:'C',label:'Vd = 0.45 V_L',correct:false},{key:'D',label:'Vd = √2·V_L',correct:false}],
@@ -3317,6 +3317,48 @@ const KIKAI_DAILY_POOL = [
     tags:['#考え方','#増減関係'],
     explanation:'状態: L があると、電源電圧が負になっても電流はすぐには止まれず、消弧角 β（> π）までダイオードが導通する。求める量: 平均電圧の大小。条件式: Vd = (√2V/2π)(1 − cosβ)。β > π なので cosβ > −1 となり、Vd は √2V/π ≒ 0.45V より小さい。還流ダイオードを付けると負の区間が 0 に切り取られ、0.45V に戻る。L の平均電圧が 0 なのは正しいが、それは Vd = R × Id を意味するだけで Vd = 0 ではない。',
     evidence:['本ページ セクション2「単相半波＋誘導性負荷」・図2.2.3・例題 2.2.3'], verified:'high',
+    wikiPageId:'power-elec' },
+  { id:'k233', topic:'パワエレ', rank:'A',
+    q:'三相ダイオード全波整流回路で、交流側のリアクタンスによる転流の重なりについて正しいものはどれか。',
+    choices:[{key:'A',label:'重なりの間は2相が同時に導通し、直流平均電圧は直流電流に比例して下がる。ただしリアクタンスは有効電力を消費しない',correct:true},{key:'B',label:'重なりによる電圧降下は、交流側リアクタンスでの抵抗損失として熱になる',correct:false},{key:'C',label:'重なりによる電圧降下は、直流電流の大きさによらず一定である',correct:false},{key:'D',label:'重なりがあると、直流平均電圧は理想値 1.35V_L より高くなる',correct:false}],
+    tags:['#論説','#ひっかけ注意'],
+    explanation:'転流の間は2相が同時に導通し、出力には2相の電圧の平均が出るので、平均値が下がる。降下は ΔVx = (3/π)·x·Id で直流電流に比例する（C は誤り）。電圧は下がるが、リアクタンスは有効電力を消費しないので損失ではない（B は誤り）。下がる向きなので D も誤り。',
+    evidence:['本ページ セクション2「理想式から引かれる2つの降下」（R7下 問16b）'], verified:'high',
+    wikiPageId:'power-elec' },
+  { id:'k234', topic:'パワエレ', rank:'A',
+    q:'降圧チョッパ（スイッチ S・還流ダイオード DF・リアクトル L・負荷 R）が電流連続で動作している。S がオフの期間について正しいものはどれか。',
+    choices:[{key:'A',label:'L と R には電流が流れ続け、帰り道は還流ダイオード DF になる。電源の電流は 0 になる',correct:true},{key:'B',label:'L と R の電流も 0 になり、次に S がオンになるまで休む',correct:false},{key:'C',label:'電源から還流ダイオード DF を通って負荷へ電流が流れる',correct:false},{key:'D',label:'負荷の電流が向きを変え、DF を通って電源へ戻る',correct:false}],
+    tags:['#考え方','#頻出A'],
+    explanation:'L は電流を流し続けようとするので、S がオフでも L と R の電流は途切れない。変わるのは帰り道で、オン期間は電源、オフ期間は還流ダイオードを通る。電源は切り離されて電流 0。B は電流連続という前提に反する。C・D はダイオードの向きと合わない。',
+    evidence:['本ページ セクション3「どの期間に何が導通するか」・図2.2.5（R5下 問16a・R6下 問16a）'], verified:'high',
+    wikiPageId:'power-elec' },
+  { id:'k235', topic:'パワエレ', rank:'A',
+    q:'降圧チョッパの入力電圧が 100 V、通流率が 0.4、スイッチング周波数が 10 kHz、リアクトルが 2 mH のとき、リアクトル電流のリプル（最大値と最小値の差）はおよそいくらか。電流は連続とし、出力電圧は一定とみなす。',
+    choices:[{key:'A',label:'1.2 A',correct:true},{key:'B',label:'3.0 A',correct:false},{key:'C',label:'2.0 A',correct:false},{key:'D',label:'1.8 A',correct:false}],
+    tags:['#数値計算','#ひっかけ注意'],
+    explanation:'出力電圧 Vo = D·Vi = 40 V。オン期間 t_on = D·T = 0.4 × 100 μs = 40 μs に L へ Vi − Vo = 60 V が掛かるので、ΔI = 60 × 40×10⁻⁶ / (2×10⁻³) = 1.2 A。B は t_on の代わりに周期 T を入れた誤り（1/D 倍）、C は Vi − Vo の代わりに Vi を使った誤り、D はオフ期間 60 μs を入れた誤り。',
+    evidence:['本ページ セクション3 公式07（降圧チョッパの電流リプル）・例題 2.2.4（R6下 問16b の型）'], verified:'high',
+    wikiPageId:'power-elec' },
+  { id:'k236', topic:'パワエレ', rank:'B',
+    q:'太陽光発電用パワーコンディショナの単独運転検出について正しいものはどれか。',
+    choices:[{key:'A',label:'発電と負荷がたまたま釣り合うと受動的方式では検出できない（不感帯）ので、能動的方式を併用する',correct:true},{key:'B',label:'系統の停電そのものを検出して警報を出す機能で、パワーコンディショナは運転を続ける',correct:false},{key:'C',label:'日射と温度で動く最大電力点に動作点を合わせる機能である',correct:false},{key:'D',label:'意図的に外乱を与えて応答を見るのが受動的方式である',correct:false}],
+    tags:['#論説','#ひっかけ注意'],
+    explanation:'検出したいのは「停電したのに自分が運転を続けている状態」で、検出したら停止する（B は誤り）。釣り合っていると電圧も周波数も動かないので、変化を見るだけの受動的方式には不感帯がある。C は MPPT（最大電力点追従）の説明。外乱を与えて応答を見るのは能動的方式（D は逆）。',
+    evidence:['本ページ セクション4「パワーコンディショナ」（R6下 問10・R7上 問8）'], verified:'high',
+    wikiPageId:'power-elec' },
+  { id:'k237', topic:'パワエレ', rank:'B',
+    q:'ダイオード整流回路の直流側に大容量の平滑コンデンサを付けた。交流側の入力電流はどのような波形になるか。',
+    choices:[{key:'A',label:'電源電圧の山の付近だけ、幅の狭いパルス状に流れる',correct:true},{key:'B',label:'電源電圧と同相の正弦波になる',correct:false},{key:'C',label:'180° 幅の方形波になる',correct:false},{key:'D',label:'正負それぞれ 120° 幅の方形波になる',correct:false}],
+    tags:['#考え方'],
+    explanation:'コンデンサの電圧が電源電圧の山の近くまで保たれるので、ダイオードが導通するのは電源電圧がコンデンサの電圧を上回る山の付近だけになる。B は PWM 整流器（PWM コンバータ）の入力電流、C は単相ブリッジで直流側が大きな L のとき、D は三相ブリッジで直流電流が一定のときの波形。',
+    evidence:['本ページ セクション2「波形から回路を見分ける」（R4下 問10・R8上 問10）'], verified:'high',
+    wikiPageId:'power-elec' },
+  { id:'k238', topic:'パワエレ', rank:'A',
+    q:'誘導性負荷をつないだ単相ブリッジ電圧形インバータ（方形波出力）の、直流電源側の電流について正しいものはどれか。',
+    choices:[{key:'A',label:'還流ダイオードが導通する区間では負になるが、平均値は正である',correct:true},{key:'B',label:'還流区間も含めて常に正である',correct:false},{key:'C',label:'正と負が打ち消し合い、平均値は 0 になる',correct:false},{key:'D',label:'還流区間では 0 になり、負にはならない',correct:false}],
+    tags:['#考え方','#ひっかけ注意'],
+    explanation:'還流区間では電力が負荷から電源へ戻るので、直流側の電流は負になる（B・D は誤り）。ただし負荷の抵抗が電力を消費している分だけ、電源は正味で電力を出しているので、平均値は正（C は誤り）。本ページの例題では平均 2.38 A。',
+    evidence:['本ページ セクション4「単相ブリッジ電圧形」の還流区間の例題 ④（R5上 問16b）'], verified:'high',
     wikiPageId:'power-elec' },
 ];
 </script>
@@ -35182,7 +35224,7 @@ const PowerElecLayers = () => {
     textAnchor: "middle",
     fontSize: "11.5",
     fill: "var(--ink)"
-  }, "位相制御 Vd＝Vd0·cosα"), /*#__PURE__*/React.createElement("line", {
+  }, "位相制御 Vd＝Vd0·cosα※"), /*#__PURE__*/React.createElement("line", {
     x1: "320",
     y1: "83",
     x2: "353",
@@ -35246,7 +35288,7 @@ const PowerElecLayers = () => {
       marginTop: "6px",
       lineHeight: 1.6
     }
-  }, "森（俯瞰）：理論で学ぶ半導体（PN接合の一方向性）を土台に、パワエレは半導体スイッチで整流（AC→DC）・チョッパ（DC→DC）・インバータ（DC→AC）を行う。出口は直流電源づくりと、インバータによる電動機の可変速駆動。")), /*#__PURE__*/React.createElement(LayerCore, {
+  }, "森（俯瞰）：理論で学ぶ半導体（PN接合の一方向性）を土台に、パワエレは半導体スイッチで整流（AC→DC）・チョッパ（DC→DC）・インバータ（DC→AC）を行う。出口は直流電源づくりと、インバータによる電動機の可変速駆動。※位相制御の式は全制御ブリッジ・誘導性負荷で電流が連続し、還流ダイオードが無いとき。単相の抵抗負荷・還流ダイオード付き・半制御ブリッジでは Vd0·(1+cosα)/2（下の「ミクロの因果」）。")), /*#__PURE__*/React.createElement(LayerCore, {
     sub: /*#__PURE__*/React.createElement(React.Fragment, null, "直流の平均値の基本形は、単相全波整流 ", /*#__PURE__*/React.createElement(Eq, {
       tex: "V_d \\approx 0.900V",
       inline: true
@@ -35445,7 +35487,7 @@ const PowerElecLayers = () => {
       marginTop: "6px",
       lineHeight: 1.6
     }
-  }, "ミクロ（なぜ）：サイリスタは点弧角 α まで OFF で電流ゼロ、α のゲートパルスで ON し半サイクルの終わり（電流ゼロ）まで通電する（抵抗負荷・正の半サイクルで代表）。通電区間（塗り）が α で決まるため平均電圧を連続制御できる。本文の Vd＝Vd0·cosα は、この位相制御を全波整流ブリッジに適用し、平滑リアクトルで電流が連続する（誘導性負荷）ときの式（還流ダイオードが無い場合）。図のような単相の抵抗負荷では Vd＝Vd0·(1+cosα)/2 になる。")), /*#__PURE__*/React.createElement("div", {
+  }, "ミクロ（なぜ）：サイリスタは点弧角 α まで OFF で電流ゼロ、α のゲートパルスで ON し半サイクルの終わり（電流ゼロ）まで通電する（抵抗負荷・正の半サイクルで代表）。通電区間（塗り）が α で決まるため平均電圧を連続制御できる。本文の Vd＝Vd0·cosα は、この位相制御を全制御ブリッジ（素子をすべてサイリスタで組んだブリッジ）に適用し、平滑リアクトルで電流が連続する（誘導性負荷）ときの式（還流ダイオードが無い場合）。図のような単相の抵抗負荷や、サイリスタ2個とダイオード2個の半制御ブリッジでは Vd＝Vd0·(1+cosα)/2 になる。")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "var(--accent-soft)",
       borderRadius: "6px",
@@ -35476,7 +35518,7 @@ const PowerElecLayers = () => {
     tex: "0.90V"
   }), "、三相全波なら ", /*#__PURE__*/React.createElement(Eq, {
     tex: "1.35V_L"
-  }), "）。新しい定数ではない。この式は、この位相制御を全波整流ブリッジに適用した式（", /*#__PURE__*/React.createElement("strong", null, "誘導性負荷で電流が連続し、還流ダイオードが無い場合"), "。", /*#__PURE__*/React.createElement("strong", null, "単相全波"), "で、抵抗負荷、または還流ダイオードで負電圧区間が切り取られる場合は ", /*#__PURE__*/React.createElement(Eq, {
+  }), "）。新しい定数ではない。この式は、この位相制御を", /*#__PURE__*/React.createElement("strong", null, "全制御ブリッジ"), "（素子をすべてサイリスタで組んだブリッジ）に適用した式（", /*#__PURE__*/React.createElement("strong", null, "誘導性負荷で電流が連続し、還流ダイオードが無い場合"), "。", /*#__PURE__*/React.createElement("strong", null, "単相全波"), "で、抵抗負荷、還流ダイオードで負電圧区間が切り取られる場合、または", /*#__PURE__*/React.createElement("strong", null, "半制御ブリッジ"), "（サイリスタ2個＋ダイオード2個。ブリッジ内のダイオードが還流の役をするので、外付けの還流ダイオードが無くても負の区間が出ない）の場合は ", /*#__PURE__*/React.createElement(Eq, {
     tex: "V_d = V_{d0}(1+\\cos\\alpha)/2"
   }), "。三相全波は別の式になり、抵抗負荷でも ", /*#__PURE__*/React.createElement(Eq, {
     tex: "\\alpha \\le 60^\\circ"
@@ -35515,10 +35557,13 @@ const PowerElecLayers = () => {
   }, "位相制御"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
     tex: "V_d = V_{d0}\\cos\\alpha",
     inline: true
-  }), "（誘導性負荷で電流が連続し、還流ダイオードが無いとき。", /*#__PURE__*/React.createElement(Eq, {
+  }), "（全制御ブリッジ・誘導性負荷で電流が連続し、還流ダイオードが無いとき。", /*#__PURE__*/React.createElement(Eq, {
     tex: "V_{d0}",
     inline: true
-  }), " は α = 0 の値）"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+  }), " は α = 0 の値。単相の半制御ブリッジは ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "V_{d0}(1+\\cos\\alpha)/2",
+    inline: true
+  }), "）"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
     style: LAYER_LABEL
   }, "降圧チョッパ"), "\u3000", /*#__PURE__*/React.createElement(Eq, {
     tex: "V_o = D V_i",
@@ -35556,7 +35601,7 @@ const PowerElecLayers = () => {
   }), " は線間電圧の実効値。", /*#__PURE__*/React.createElement(Eq, {
     tex: "\\cos\\alpha",
     inline: true
-  }), " で下がるのは、電流が連続すると素子が止まらずに通電を続け、出力に負の電圧の区間が混じるから。単相で抵抗負荷、または還流ダイオード付きの位相制御は、負の区間が無いので ", /*#__PURE__*/React.createElement(Eq, {
+  }), " で下がるのは、電流が連続すると素子が止まらずに通電を続け、出力に負の電圧の区間が混じるから。単相で、抵抗負荷・還流ダイオード付き・半制御ブリッジの位相制御は、負の区間が無いので ", /*#__PURE__*/React.createElement(Eq, {
     tex: "V_d = V_{d0}(1+\\cos\\alpha)/2",
     inline: true
   }), " になる。図で見るなら、3節の", /*#__PURE__*/React.createElement("strong", null, "図2.2.4（降圧チョッパの動作とデューティ比 D）"), "。")), /*#__PURE__*/React.createElement(LayerBridge, {
@@ -36185,7 +36230,7 @@ const PowerElecPage = ({
     t: "整流の平均電圧",
     d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "ダイオード"), "（", /*#__PURE__*/React.createElement(Term, null, "制御角"), " α = 0）"), "で 三相全波 ", /*#__PURE__*/React.createElement("strong", null, "1.35 × 線間電圧"), "／単相全波 0.90／単相半波 0.45（いずれも", /*#__PURE__*/React.createElement("strong", null, "実効値"), "に掛ける。単相半波は抵抗負荷か", /*#__PURE__*/React.createElement(Term, null, "還流ダイオード"), "付きのとき。R-L 負荷で還流ダイオードが無ければ 0.45 より小さい）。", /*#__PURE__*/React.createElement(Term, null, "サイリスタ"), "の", /*#__PURE__*/React.createElement(Term, null, "位相制御"), "なら ", /*#__PURE__*/React.createElement(Eq, {
       tex: "V_d = V_{d0}\\cos\\alpha"
-    }), "（", /*#__PURE__*/React.createElement(Term, null, "誘導性負荷"), "で電流が連続し、還流ダイオードが無いとき。単相の抵抗負荷・還流ダイオード付きなら ", /*#__PURE__*/React.createElement(Eq, {
+    }), "（全制御ブリッジ・", /*#__PURE__*/React.createElement(Term, null, "誘導性負荷"), "で電流が連続し、還流ダイオードが無いとき。単相の抵抗負荷・還流ダイオード付き・半制御ブリッジなら ", /*#__PURE__*/React.createElement(Eq, {
       tex: "V_{d0}(1+\\cos\\alpha)/2"
     }), "）。", /*#__PURE__*/React.createElement("strong", null, "掛ける相手がどの電圧か"), "を毎回確かめる。")
   }, {
@@ -36295,7 +36340,7 @@ const PowerElecPage = ({
     fontSize: "12.5px",
     color: "var(--ink-soft)"
   }
-}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "IGBT と MOSFET は逆阻止能力を持たない"), "。MOSFET は構造上、寄生（ボディ）ダイオードを持つため、逆方向に導通してしまう。"), /*#__PURE__*/React.createElement("li", null, "インバータで逆並列ダイオードを付けるのは、", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "誘導性負荷"), "の電流が逆向きに流れる間の帰り道（還流）"), "を作るためである（4節）。MOSFET ではボディダイオードがこの役を兼ねられる。"), /*#__PURE__*/React.createElement("li", null, "台帳の3問（R5上・R5下・R7下）は、いずれも駆動方式・自己消弧・特性比較を問うている。逆阻止を単独で問うたものは無いので、まずは上の表の比較を優先する。")), /*#__PURE__*/React.createElement(Box, {
+}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "一般的な IGBT と MOSFET は逆阻止能力を持たない"), "（逆阻止 IGBT という例外品はあるが、三種の範囲では一般形で考える）。MOSFET は構造上、寄生（ボディ）ダイオードを持つため、逆方向に導通してしまう。"), /*#__PURE__*/React.createElement("li", null, "インバータで逆並列ダイオードを付けるのは、", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "誘導性負荷"), "の電流が逆向きに流れる間の帰り道（還流）"), "を作るためである（4節）。MOSFET ではボディダイオードがこの役を兼ねられる。"), /*#__PURE__*/React.createElement("li", null, "台帳の3問（R5上・R5下・R7下）は、いずれも駆動方式・自己消弧・特性比較を問うている。逆阻止を単独で問うたものは無いので、まずは上の表の比較を優先する。")), /*#__PURE__*/React.createElement(Box, {
   kind: "mistake",
   label: "「誤りを選ぶ」で狙われる型（台帳では10回中3回・すべてこの形式）"
 }, /*#__PURE__*/React.createElement("p", {
@@ -36981,14 +37026,44 @@ const PowerElecPage = ({
   note: "D = 0.5 で入出力が等しく、それより大きければ昇圧・小さければ降圧。出力の極性が反転する構成が多い。"
 }), /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
-  label: "3つの式は覚えずに「伏秒平衡」から出す"
+  label: "昇降圧チョッパの定常動作 — L が「いったん預かって渡す」"
+}, /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "0 0 6px"
+  }
+}, "台帳の R3 問11 は昇降圧チョッパの定常動作を問うている（誤りを選ぶ形式。台帳の題名による）。降圧・昇圧と違い、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "電源と負荷が同時につながる期間が無い"), "のが要点である（出力の極性が反転する一般的な構成で説明する）。"), /*#__PURE__*/React.createElement("ul", {
+  style: {
+    margin: 0,
+    paddingLeft: 22
+  }
+}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "オン期間"), " — スイッチが導通し、電源の電圧がそのまま ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "L"
+}), " に掛かって ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "L"
+}), " にエネルギーが蓄えられる。ダイオードは逆電圧で遮断し、負荷へは出力側の", /*#__PURE__*/React.createElement(Term, null, "平滑コンデンサ"), "が電流を供給する"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "オフ期間"), " — ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "L"
+}), " が電流を流し続けようとして、ダイオードを通して負荷側へエネルギーを放出する。出力電圧の", /*#__PURE__*/React.createElement("strong", null, "極性は入力と逆"), "で、コンデンサが電圧を保つので、オン期間も同じ極性のままである"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "電流の形"), " — 電源の電流はオン期間だけ、ダイオードの電流はオフ期間だけ流れる。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "入力側も出力側もパルス状"), "で、平滑はコンデンサが受け持つ"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "大きさ"), " — 電圧時間積の平衡 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_i t_{on} = V_o t_{off}"
+}), " から ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_o = \\dfrac{D}{1-D}V_i"
+}), "。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "D < 0.5"
+}), " で降圧、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "D > 0.5"
+}), " で昇圧になる。損失を無視すれば入力電力と出力電力は等しい"))), /*#__PURE__*/React.createElement(Box, {
+  kind: "tip",
+  label: "3つの式は覚えずに「電圧時間積の平衡」から出す"
 }, /*#__PURE__*/React.createElement("p", {
   style: {
     margin: 0
   }
 }, /*#__PURE__*/React.createElement(Term, null, "定常状態"), "では", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, /*#__PURE__*/React.createElement(Term, null, "リアクトル"), "の電圧を1周期で平均するとゼロ"), "になる（そうでなければ電流が毎周期増え続けて定常にならない）。 これを", /*#__PURE__*/React.createElement("strong", null, "伏秒平衡"), "という。降圧チョッパならオン期間に ", /*#__PURE__*/React.createElement(Eq, {
+}, /*#__PURE__*/React.createElement(Term, null, "リアクトル"), "の電圧を1周期で平均するとゼロ"), "になる（そうでなければ電流が毎周期増え続けて定常にならない）。 これを", /*#__PURE__*/React.createElement("strong", null, "電圧時間積の平衡"), "（ボルト秒平衡）という。降圧チョッパならオン期間に ", /*#__PURE__*/React.createElement(Eq, {
   tex: "L"
 }), " へ掛かるのが ", /*#__PURE__*/React.createElement(Eq, {
   tex: "V_i - V_o"
@@ -37066,7 +37141,7 @@ const PowerElecPage = ({
   id: "chopper-calc"
 }, "通流率から出力を求める"), /*#__PURE__*/React.createElement(Box, {
   kind: "example",
-  label: "例題 — 降圧チョッパの出力電圧・平均電流・リプル"
+  label: "例題 2.2.4（降圧チョッパの出力電圧・平均電流・リプル）"
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 入力 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "V_i = 200\\;\\mathrm{V}"
 }), "、通流率 ", /*#__PURE__*/React.createElement(Eq, {
@@ -37130,7 +37205,7 @@ const PowerElecPage = ({
   }
 }, "⚠️ この一致は", /*#__PURE__*/React.createElement("strong", null, "独立した検証ではない"), "。", /*#__PURE__*/React.createElement(Eq, {
   tex: "V_o = D V_i"
-}), " 自体を伏秒平衡 ", /*#__PURE__*/React.createElement(Eq, {
+}), " 自体を電圧時間積の平衡 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "(V_i-V_o)t_{on} = V_o t_{off}"
 }), " から出しているので、", /*#__PURE__*/React.createElement("span", {
   className: "marker"
@@ -37509,7 +37584,7 @@ const PowerElecPage = ({
   className: "marker"
 }, "ダイオードが導通する区間は生じない"), "。", /*#__PURE__*/React.createElement("strong", null, "還流区間が出るのは負荷が誘導性のときだけ"), "である。")), /*#__PURE__*/React.createElement(Box, {
   kind: "example",
-  label: "例題 — 還流区間はどれだけ続くか"
+  label: "例題 2.2.5（還流区間はどれだけ続くか）"
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " ", /*#__PURE__*/React.createElement(Eq, {
   tex: "E = 100\\;\\mathrm{V}"
 }), "、負荷 ", /*#__PURE__*/React.createElement(Eq, {
@@ -37754,9 +37829,21 @@ const PowerElecPage = ({
   label: "計算上の注意"
 }, /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement(Term, null, "整流回路"), "では ", /*#__PURE__*/React.createElement("strong", null, "「平均値」「実効値」「最大値」"), " を必ず区別する"), /*#__PURE__*/React.createElement("li", null, "サイリスタ位相制御では ", /*#__PURE__*/React.createElement(Eq, {
   tex: "V_d = V_{d0}\\cos\\alpha"
-}), " で出力が", /*#__PURE__*/React.createElement(Term, null, "制御角"), " α の余弦に比例（", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "誘導性負荷"), "・電流連続で還流ダイオードが無いとき"), "。単相全波で、抵抗負荷・還流ダイオード付き・半制御ブリッジのいずれかなら ", /*#__PURE__*/React.createElement(Eq, {
+}), " で出力が", /*#__PURE__*/React.createElement(Term, null, "制御角"), " α の余弦に比例（", /*#__PURE__*/React.createElement("strong", null, "全制御ブリッジで、", /*#__PURE__*/React.createElement(Term, null, "誘導性負荷"), "・電流連続・還流ダイオードが無いとき"), "。単相全波で、抵抗負荷・還流ダイオード付き・半制御ブリッジのいずれかなら ", /*#__PURE__*/React.createElement(Eq, {
   tex: "V_d = V_{d0}(1+\\cos\\alpha)/2"
-}), "。三相全波は別の式になる）"), /*#__PURE__*/React.createElement("li", null, "チョッパは ", /*#__PURE__*/React.createElement("strong", null, "連続電流モード"), " と不連続モードで挙動が異なる"))), /*#__PURE__*/React.createElement(SectionCheck, {
+}), "。三相全波の全制御ブリッジは、誘導性負荷で電流連続なら ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_{d0}\\cos\\alpha"
+}), " のまま（三相でも半制御ブリッジは ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_{d0}(1+\\cos\\alpha)/2"
+}), "）。抵抗負荷では ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\alpha \\le 60^\\circ"
+}), " まで ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_{d0}\\cos\\alpha"
+}), "、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\alpha > 60^\\circ"
+}), " で ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "V_{d0}\\{1+\\cos(\\alpha+60^\\circ)\\}"
+}), " の形に変わる）"), /*#__PURE__*/React.createElement("li", null, "チョッパは ", /*#__PURE__*/React.createElement("strong", null, "連続電流モード"), " と不連続モードで挙動が異なる"))), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "power-elec",
   sectionId: "inverter"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -37765,7 +37852,7 @@ const PowerElecPage = ({
   className: "h-num"
 }, "5."), "例題"), /*#__PURE__*/React.createElement(Box, {
   kind: "example",
-  label: "例題 2.2.4（降圧チョッパで他励直流電動機を駆動する — R7上 問16 の型）"
+  label: "例題 2.2.6（降圧チョッパで他励直流電動機を駆動する — R7上 問16 の型）"
 }, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: "12.5px",
@@ -37793,14 +37880,14 @@ const PowerElecPage = ({
   className: "marker"
 }, "減速時に電流を逆向き（電動機から電源へ）に流す", /*#__PURE__*/React.createElement(Term, null, "回生"), "は、この1石の回路ではできない"), "（3節「回生」）。"))), /*#__PURE__*/React.createElement(Box, {
   kind: "example",
-  label: "例題 2.2.5（同じ電動機を回生制動する — 通流率 D₂ の向き。R7上 問16 の型）"
+  label: "例題 2.2.7（同じ電動機を回生制動する — 通流率 D₂ の向き。R7上 問16 の型）"
 }, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-soft)",
     margin: "0 0 6px"
   }
-}, "数値は本Wikiで作った練習用で、実際の出題の数値ではない。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 例題 2.2.4 の電動機（電機子回路の抵抗 0.5 Ω）を、2象限チョッパ（直流電圧 200 V）で減速させる。逆起電力が 130 V（この間は一定とみなす）のとき、電機子電流 20 A を電源へ戻すには、 スイッチ ", /*#__PURE__*/React.createElement(Eq, {
+}, "数値は本Wikiで作った練習用で、実際の出題の数値ではない。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 例題 2.2.6 の電動機（電機子回路の抵抗 0.5 Ω）を、2象限チョッパ（直流電圧 200 V）で減速させる。逆起電力が 120 V（この間は一定とみなす）のとき、電機子電流 20 A を電源へ戻すには、 スイッチ ", /*#__PURE__*/React.createElement(Eq, {
   tex: "S_2"
 }), " の通流率 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "D_2"
@@ -37819,18 +37906,18 @@ const PowerElecPage = ({
   tex: "E_a = (1 - D_2)E + R_a I_a"
 }), "。"), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "(1 - D_2) \\times 200 = E_a - R_a I_a = 130 - 0.5 \\times 20 = 120\\;[\\mathrm{V}]"
+  tex: "(1 - D_2) \\times 200 = E_a - R_a I_a = 120 - 0.5 \\times 20 = 110\\;[\\mathrm{V}]"
 }), /*#__PURE__*/React.createElement(Eq, {
   display: true,
-  tex: "D_2 = 1 - \\dfrac{120}{200} = 0.4"
+  tex: "D_2 = 1 - \\dfrac{110}{200} = 0.45"
 }), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "検算（電力）:"), " 電動機が発生する電力 ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "E_a I_a = 130 \\times 20 = 2600\\;\\mathrm{W}"
+  tex: "E_a I_a = 120 \\times 20 = 2400\\;\\mathrm{W}"
 }), "、電機子抵抗の損失 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "R_a I_a^2 = 200\\;\\mathrm{W}"
 }), "、 電源へ戻る電力 ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "(1 - D_2)E \\times I_a = 120 \\times 20 = 2400\\;\\mathrm{W}"
+  tex: "(1 - D_2)E \\times I_a = 110 \\times 20 = 2200\\;\\mathrm{W}"
 }), "。", /*#__PURE__*/React.createElement(Eq, {
-  tex: "2600 - 200 = 2400"
+  tex: "2400 - 200 = 2200"
 }), " で合う ✓。"), /*#__PURE__*/React.createElement(Box, {
   kind: "mistake",
   label: "ここが失点源"
@@ -37841,13 +37928,13 @@ const PowerElecPage = ({
 }, /*#__PURE__*/React.createElement("strong", null, "① 力行の式のまま ", /*#__PURE__*/React.createElement(Eq, {
   tex: "R_a I_a"
 }), " を足す"), "と ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "1 - 140/200 = 0.3"
-}), "。回生では電流の向きが逆なので、電機子の端子電圧は逆起電力より", /*#__PURE__*/React.createElement("strong", null, "低い"), "。", /*#__PURE__*/React.createElement("strong", null, "② 抵抗の降下を忘れる"), "と ", /*#__PURE__*/React.createElement(Eq, {
   tex: "1 - 130/200 = 0.35"
+}), "。回生では電流の向きが逆なので、電機子の端子電圧は逆起電力より", /*#__PURE__*/React.createElement("strong", null, "低い"), "。", /*#__PURE__*/React.createElement("strong", null, "② 抵抗の降下を忘れる"), "と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "1 - 120/200 = 0.4"
 }), "。", /*#__PURE__*/React.createElement("strong", null, "③ ", /*#__PURE__*/React.createElement(Eq, {
   tex: "D_2"
 }), " の向きを取り違える"), "と ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "0.6"
+  tex: "0.55"
 }), "（", /*#__PURE__*/React.createElement(Eq, {
   tex: "S_2"
 }), " が", /*#__PURE__*/React.createElement("strong", null, "オフ"), "の時間の比率を答えている）。設問がどちらの時間比を ", /*#__PURE__*/React.createElement(Eq, {
@@ -37856,7 +37943,7 @@ const PowerElecPage = ({
   tex: "S_1"
 }), " の通流率を問う設問なら、", /*#__PURE__*/React.createElement(Eq, {
   tex: "S_2"
-}), " と交互に動くので 0.6 が正解になる（ダイオード名の ", /*#__PURE__*/React.createElement(Eq, {
+}), " と交互に動くので 0.55 が正解になる（ダイオード名の ", /*#__PURE__*/React.createElement(Eq, {
   tex: "D_R"
 }), " と通流率の ", /*#__PURE__*/React.createElement(Eq, {
   tex: "D"
@@ -37902,7 +37989,7 @@ const PowerElecPage = ({
   className: "marker"
 }, "1石の降圧チョッパでは経路が無く", /*#__PURE__*/React.createElement(Term, null, "回生"), "できない"), "——", /*#__PURE__*/React.createElement(Eq, {
   tex: "D_F"
-}), " と逆並列のスイッチ、S と逆並列の", /*#__PURE__*/React.createElement(Term, null, "ダイオード"), "を足した", /*#__PURE__*/React.createElement("strong", null, "2象限チョッパ"), "が要る。電源が受け取れなければ", /*#__PURE__*/React.createElement("strong", null, "発電制動")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "サイリスタ位相制御の出力電圧は制御角 α とどう関係？"), "Vd = Vd0·cosα（", /*#__PURE__*/React.createElement(Term, null, "誘導性負荷"), "・電流連続で、還流ダイオードが無いとき。α の余弦に比例）。単相全波の抵抗負荷・還流ダイオード付きでは Vd0·(1+cosα)/2"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "単相ブリッジ電圧形で、どの素子が導通するかは何で決まる？"), /*#__PURE__*/React.createElement("span", {
+}), " と逆並列のスイッチ、S と逆並列の", /*#__PURE__*/React.createElement(Term, null, "ダイオード"), "を足した", /*#__PURE__*/React.createElement("strong", null, "2象限チョッパ"), "が要る。電源が受け取れなければ", /*#__PURE__*/React.createElement("strong", null, "発電制動")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "サイリスタ位相制御の出力電圧は制御角 α とどう関係？"), "Vd = Vd0·cosα（全制御ブリッジ・", /*#__PURE__*/React.createElement(Term, null, "誘導性負荷"), "・電流連続で、還流ダイオードが無いとき。α の余弦に比例）。単相全波の抵抗負荷・還流ダイオード付き・半制御ブリッジでは Vd0·(1+cosα)/2"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "単相ブリッジ電圧形で、どの素子が導通するかは何で決まる？"), /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "電流の符号だけ"), "。ゲートは「導通してよい」という", /*#__PURE__*/React.createElement("strong", null, "許可"), "にすぎず、電流が電圧と逆向きの間は", /*#__PURE__*/React.createElement("strong", null, "逆並列ダイオードが流す"), "。電圧の符号でも、ゲートが来ているかでもない。", /*#__PURE__*/React.createElement("strong", null, "抵抗だけの負荷なら還流区間は生じない")), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "誘導性負荷で還流区間が出るのはなぜ？そこで電力はどちらへ？"), "電圧は瞬時に反転するが", /*#__PURE__*/React.createElement("span", {
   className: "marker"
@@ -37967,10 +38054,15 @@ const PowerElecPage = ({
     why: "L は電流の波形をならすが、平均電圧を上げる働きは無い。平均電圧を下げるのは、ダイオードが負の電圧の間も導通し続けること。",
     ev: "本ページ 2節「単相半波＋誘導性負荷」・図2.2.3／確認問題 k106"
   }, {
+    wrong: "単相の半制御ブリッジ（サイリスタ2個＋ダイオード2個）で誘導性負荷・電流連続なら、還流ダイオードを付けていないので Vd = Vd0·cosα になる",
+    correct: "Vd = Vd0·(1+cosα)/2。ブリッジの中のダイオードが還流の役をするので、出力に負の電圧の区間が出ない。",
+    why: "cosα の形になるのは、素子をすべてサイリスタで組んだ全制御ブリッジで、電流が連続し還流の道が無いときだけ。「還流ダイオードが無い」を外付けの部品の有無だけで判断すると、半制御ブリッジで外す。",
+    ev: "本ページ 0節「ミクロの因果」・4節「計算上の注意」"
+  }, {
     statement: "降圧チョッパでリアクトルの電流が連続のとき、定常ではリアクトルにかかる電圧を1周期にわたって時間で積分すると 0 になる",
     isTrue: true,
-    why: "オン期間とオフ期間で、リアクトルにかかる電圧の時間積は大きさが等しく向きが逆（伏秒平衡）。定常では電流が1周期で元の値に戻るため。これが3つのチョッパの式の出どころ。",
-    ev: "本ページ 3節 チョッパ（伏秒平衡）"
+    why: "オン期間とオフ期間で、リアクトルにかかる電圧の時間積は大きさが等しく向きが逆（電圧時間積の平衡）。定常では電流が1周期で元の値に戻るため。これが3つのチョッパの式の出どころ。",
+    ev: "本ページ 3節 チョッパ（電圧時間積の平衡）"
   }]
 }), /*#__PURE__*/React.createElement(TopicHistorySection, {
   topicId: "power-elec",
@@ -43287,7 +43379,7 @@ const InverterModeFig = () => {
   const bands = [[0, TZ, "D1・D2", "var(--ok)"], [TZ, 10, "Q1・Q2", "var(--accent)"], [10, 10 + TZ, "D3・D4", "var(--ok)"], [10 + TZ, 20, "Q3・Q4", "var(--accent)"]];
   return /*#__PURE__*/React.createElement(FigBox, {
     viewBox: "0 0 480 250",
-    label: "単相ブリッジ電圧形インバータの波形図。上段は出力電圧で、前半の10ミリ秒が正、後半の10ミリ秒が負の方形波。中段は誘導性負荷に流れる出力電流で、電圧が正に切り替わった直後はまだ負の値から始まり、約2.8ミリ秒後にゼロを横切って正へ増える指数曲線を描く。下段の帯は各区間で導通する素子を示し、電圧が反転した直後の電流が逆向きの区間は還流ダイオードD1D2およびD3D4が、電流が電圧と同じ向きになったあとの区間はトランジスタQ1Q2およびQ3Q4が導通する",
+    label: "単相ブリッジ電圧形インバータの波形図。上段は出力電圧で、前半の10ミリ秒が正、後半の10ミリ秒が負の方形波。中段は誘導性負荷に流れる出力電流で、電圧が正に切り替わった直後はまだ負の値から始まり、時刻 tz でゼロを横切って正へ増える指数曲線を描く。下段の帯は各区間で導通する素子を示し、電圧が反転した直後の電流が逆向きの区間は還流ダイオードD1D2およびD3D4が、電流が電圧と同じ向きになったあとの区間はトランジスタQ1Q2およびQ3Q4が導通する",
     caption: "図2.2.8\u3000電圧は瞬時に反転するが、電流はリアクタンス分のせいで遅れて反転する。この「ずれている区間」だけ還流ダイオードが導通し、電力は負荷から電源へ戻る。設問が訊いてくるのはほぼこの1点。"
   }, bands.map(([a, b, lab, col], k) => /*#__PURE__*/React.createElement("g", {
     key: "b" + k
@@ -43329,7 +43421,7 @@ const InverterModeFig = () => {
     stroke: "var(--rule)",
     strokeWidth: "1",
     strokeDasharray: "3 3"
-  })), [[TZ, "2.83 ms"], [10, "10 ms"], [20, "20 ms"]].map(([t, lab], k) => /*#__PURE__*/React.createElement("text", {
+  })), [[TZ, "tz"], [10, "10 ms"], [20, "20 ms"]].map(([t, lab], k) => /*#__PURE__*/React.createElement("text", {
     key: "tk" + k,
     x: x(t),
     y: "232",
