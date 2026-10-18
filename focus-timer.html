@@ -162,6 +162,15 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .btn.ghost:hover{color:var(--ink2);background:var(--bg2)}
 .btn svg{width:15px;height:15px}
 .btn .lbl{font-weight:500}
+#toggleBtn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* 開始時の紙飛行機（Lucian UX/UI Prompt 005-paper-plane-send を移植・改変。MIT © 2026 Seokwoooo） */
+.pp-sky{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:50}
+.pp-trail{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round;stroke-dasharray:1.5 6;opacity:.7;transition:opacity .6s}
+.pp-plane{position:fixed;left:0;top:0;width:34px;height:30px;margin:0;pointer-events:none;z-index:51;
+  filter:drop-shadow(0 6px 6px oklch(from var(--accent) calc(l - .25) c h/.25))}
+.pp-plane svg{display:block;width:100%;height:100%}
+@media(prefers-reduced-motion:reduce){.pp-sky,.pp-plane{display:none}}
 
 /* Side */
 .side{display:flex;flex-direction:column;gap:var(--gap)}
@@ -303,7 +312,7 @@ header{position:relative}.portal-back{position:absolute;top:12px;right:16px;font
 
       <div class="controls">
         <button class="btn primary" id="toggleBtn">
-          <svg viewBox="0 0 24 24" fill="currentColor" id="toggleIcon"><path d="M8 5v14l11-7z"/></svg>
+          <svg viewBox="0 0 28 24" fill="currentColor" id="toggleIcon" aria-hidden="true"><path d="M1 3 27 12 10 13Z"/><path d="M10 13 27 12 6 22Z" opacity=".78"/><path d="M10 13 27 12 12.5 17Z" opacity=".55"/></svg>
           <span class="lbl" id="toggleLabel">開始</span>
         </button>
         <button class="btn" id="resetBtn">
@@ -557,11 +566,56 @@ header{position:relative}.portal-back{position:absolute;top:12px;right:16px;font
     const ic = $("toggleIcon");
     if (state.isRunning){
       lbl.textContent = "一時停止";
+      ic.setAttribute("viewBox", "0 0 24 24");
       ic.innerHTML = `<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>`;
     } else {
       lbl.textContent = state.remaining < currentPhaseSeconds() ? "再開" : "開始";
-      ic.innerHTML = `<path d="M8 5v14l11-7z"/>`;
+      ic.setAttribute("viewBox", "0 0 28 24");
+      ic.innerHTML = PLANE_ICON;
     }
+  }
+
+  // 開始ボタンのアイコン位置から紙飛行機が離陸し、一回転して画面右上へ抜ける。
+  // 要素を引数に取るだけで状態を持たないので、他ページ（Wiki の JSX 等）へそのまま移せる。
+  const PLANE_ICON = `<path d="M1 3 27 12 10 13Z"/><path d="M10 13 27 12 6 22Z" opacity=".78"/><path d="M10 13 27 12 12.5 17Z" opacity=".55"/>`;
+  const PLANE_FLY = `<svg viewBox="0 0 28 24" aria-hidden="true"><g stroke="var(--accent)" stroke-width=".8" stroke-linejoin="round"><path d="M1 3 27 12 10 13Z" fill="var(--surface)"/><path d="M10 13 27 12 6 22Z" fill="var(--accent-soft)"/><path d="M10 13 27 12 12.5 17Z" fill="var(--accent)"/></g></svg>`;
+  let planeSky = null, planeBusy = false;
+  function launchPlane(fromEl){
+    if (planeBusy || !fromEl) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const fp = document.createElement("div");
+    if (!fp.animate) return;
+    if (!planeSky){
+      const ns = "http://www.w3.org/2000/svg";
+      const mid = "pp-mask-" + Math.random().toString(36).slice(2, 8);
+      planeSky = document.createElementNS(ns, "svg");
+      planeSky.setAttribute("class", "pp-sky");
+      planeSky.setAttribute("aria-hidden", "true");
+      planeSky.innerHTML = `<defs><mask id="${mid}" maskUnits="userSpaceOnUse" x="-400" y="-400" width="9999" height="9999"><path class="pp-mk" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/></mask></defs><path class="pp-trail" mask="url(#${mid})"/>`;
+      document.body.appendChild(planeSky);
+    }
+    const tr = planeSky.querySelector(".pp-trail"), mk = planeSky.querySelector(".pp-mk");
+    const src = fromEl.querySelector("svg") || fromEl;
+    const b = src.getBoundingClientRect();
+    const x = b.left + b.width / 2, y = b.top + b.height / 2;
+    const d = `M${x} ${y} C${x - 30} ${y - 60} ${x - 150} ${y - 70} ${x - 150} ${y - 140}` +
+      ` C${x - 150} ${y - 205} ${x - 70} ${y - 215} ${x - 60} ${y - 165}` +
+      ` C${x - 50} ${y - 120} ${x - 125} ${y - 110} ${x - 120} ${y - 170}` +
+      ` C${x - 115} ${y - 235} ${x - 10} ${y - 280} ${x + 90} ${y - 330}`;
+    const dur = 1500, ease = "cubic-bezier(.45,0,.3,1)";
+    planeBusy = true;
+    tr.setAttribute("d", d); mk.setAttribute("d", d); tr.style.opacity = "";
+    fp.className = "pp-plane"; fp.innerHTML = PLANE_FLY;
+    document.body.appendChild(fp);
+    const canPath = window.CSS && CSS.supports && CSS.supports("offset-path", 'path("M0 0L1 1")');
+    if (canPath){
+      fp.style.offsetPath = `path("${d}")`; fp.style.offsetRotate = "auto";
+      fp.animate([{ offsetDistance: "0%", transform: "scale(.75)" }, { offsetDistance: "35%", transform: "scale(1.25)", offset: .35 }, { offsetDistance: "100%", transform: "scale(.7)" }], { duration: dur, easing: ease, fill: "forwards" });
+    } else {
+      fp.animate([{ transform: `translate(${x - 17}px,${y - 15}px)` }, { transform: `translate(${x + 73}px,${y - 345}px) rotate(-40deg)` }], { duration: dur, easing: ease, fill: "forwards" });
+    }
+    if (mk.animate) mk.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: dur, easing: ease, fill: "forwards" });
+    setTimeout(() => { fp.remove(); tr.style.opacity = "0"; planeBusy = false; }, dur + 80);
   }
 
   function renderSound(){
@@ -704,6 +758,7 @@ header{position:relative}.portal-back{position:absolute;top:12px;right:16px;font
       state.endAt = Date.now() + state.remaining * 1000;
       state.isRunning = true;
       startInterval();
+      launchPlane($("toggleBtn"));
     }
     render();
   }
