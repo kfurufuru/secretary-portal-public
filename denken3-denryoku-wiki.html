@@ -1000,7 +1000,7 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
     .hf-tr i { position: absolute; top: 0; bottom: 0; border-radius: 2px; background: var(--ink-soft); }
     .hf-node.m .hf-tr i { background: var(--ok); }
     .hf-node.e .hf-tr i { background: var(--info); }
-    .hf-loss .hf-tr i { background: var(--warn); }
+    .hf-loss .hf-tr i { background: var(--warn); min-width: 2px; } /* 損失が1%未満（送電・変圧器）でも棒が消えないように */
     .hf-v { width: 84px; text-align: right; font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
   </style>
 </head>
@@ -5112,7 +5112,62 @@ const KakuuSoudenPage = ({
   tex: "V_s = V_r + \\Delta V"
 }), " と表し、", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\Delta V"
-}), " は「抵抗成分（有効分）＋リアクタンス成分（無効分）」からなる。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}), " は「抵抗成分（有効分）＋リアクタンス成分（無効分）」からなる。")), /*#__PURE__*/React.createElement("h3", {
+  id: "souden-nagare"
+}, "電力の流れ（棒の長さ＝電力）"), /*#__PURE__*/React.createElement("p", null, "この例で送電線が失う電力は送電端の約 4.8%（250 ÷ 5250）で、発電所の熱の流れと違って棒はほとんど縮まない。見るべきは", /*#__PURE__*/React.createElement("strong", null, "電圧を上げると損失の棒がどれだけ細くなるか"), "である。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    fontSize: "13px",
+    color: "var(--ink-mute)"
+  }
+}, "例: R02 問16（試験センター公表の問題冊子で確認）。こう長 25 km の三相3線式2回線送電線路、受電端電圧 22 kV・遅れ力率 0.9・三相平衡負荷 5000 kW。送電損失が負荷の 5%（上限ちょうど）になる電線のとき。2つの棒は同じ縮尺（5250 kW＝100%）で描く。1% 未満の損失の棒は、見えるように最小 2px で描く。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "受電端電圧 22 kV（R02 問16 の条件）")), /*#__PURE__*/React.createElement(HeatFlowBars, {
+  unit: "kW",
+  decimals: 0,
+  max: 5250,
+  steps: [{
+    name: '送電端の電力',
+    alias: '受電端の電力 ＋ 線路損失',
+    v: 5250
+  }, {
+    loss: true,
+    big: true,
+    name: '線路損失 = 2回線 × 3線 × I²R = 6 × 72.9² × 7.84 Ω',
+    v: 250
+  }, {
+    kind: 'e',
+    name: '受電端の電力（負荷）',
+    alias: '1線の電流 I = 5000 kW ÷ (√3 × 22 kV × 0.9) ÷ 2回線 ≒ 72.9 A',
+    v: 5000
+  }]
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "同じ電線で受電端電圧を 66 kV にした場合（仮定。R02 問16 の設問ではない）")), /*#__PURE__*/React.createElement(HeatFlowBars, {
+  unit: "kW",
+  decimals: 1,
+  max: 5250,
+  steps: [{
+    name: '送電端の電力',
+    alias: '受電端の電力 ＋ 線路損失',
+    v: 5027.78
+  }, {
+    loss: true,
+    name: '線路損失 = 250 ÷ 3² ≒ 27.8（電流が 1/3 なので損失は 1/9）',
+    v: 27.78
+  }, {
+    kind: 'e',
+    name: '受電端の電力（負荷）',
+    alias: '1線の電流 I = 72.9 ÷ 3 ≒ 24.3 A',
+    v: 5000
+  }]
+}), /*#__PURE__*/React.createElement(Box, {
+  kind: "warn",
+  label: "損失率の分母と R02 問16 の解き方"
+}, /*#__PURE__*/React.createElement("p", null, "R02 問16 は「送電損失を", /*#__PURE__*/React.createElement("strong", null, "三相平衡負荷に対し"), " 5% 以下」と書いている。分母は受電端の 5000 kW なので、損失の上限は 250 kW。送電端の 5250 kW を分母にすると 250 ÷ 5250 ≒ 4.76% になり、同じ損失でも数字が変わる。問題文の基準に従う。"), /*#__PURE__*/React.createElement("p", null, "(a) 全体の電流は 5000 kW ÷ (√3 × 22 kV × 0.9) ≒ 145.8 A。2回線で分けるので 1線は ≒ 72.9 A（選択肢(3)）。(b) 損失は 2回線 × 3線 = 6本ぶんで 6I²R ≦ 250 kW、よって 1線の抵抗 R ≦ 7.84 Ω。R = (1/35) × 25000 m ÷ A から、最小断面積は A ≒ 91.1 mm²。最も近い選択肢は 92 mm²（選択肢(4)）。")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "kakuu-souden",
   sectionId: "intro"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -7305,23 +7360,27 @@ const KaryokuLayers = () => /*#__PURE__*/React.createElement(React.Fragment, nul
 
 /* 熱の流れを「棒の長さ＝熱量（電力）」で描く。node はその段の値、loss はその段で抜ける損失。
    前の node − loss が次の node と合わないときは console.error を出す（例の数値の取り違え検出）。
-   機械Wiki の F 出力語マップ（OmFlow）と同じ見せ方。火力（1.2）と水力（1.1）の1節で使う。 */
+   機械Wiki の F 出力語マップ（OmFlow）と同じ見せ方。発電4ページ・変圧器の損失（2.2）・架空送電（3.1）で使う。
+   max を渡すと棒の100%をその値にする（2つの条件を同じ縮尺で並べるとき）。省略時は最初の段の値。
+   損失の棒は右端を前の段の右端にそろえる。CSS の min-width（2px）は左へ伸び、前の段の棒からはみ出さない。 */
 const HeatFlowBars = ({
   steps,
   unit,
-  decimals = 2
+  decimals = 2,
+  max: maxIn
 }) => {
-  const max = steps[0].v;
+  const max = maxIn || steps[0].v;
+  if (max < steps[0].v) console.error('HeatFlowBars: max が最初の段より小さい（棒が100%を超える）', max, steps[0].v);
   let cur = null;
   return /*#__PURE__*/React.createElement("ol", {
     className: "hf-flow"
   }, steps.map((st, i) => {
-    let left = 0,
+    let right = null,
       width = 0,
       label = '';
     if (st.loss) {
       cur -= st.v;
-      left = cur / max * 100;
+      right = 100 - (cur + st.v) / max * 100;
       width = st.v / max * 100;
       label = '−' + st.v.toFixed(decimals);
     } else {
@@ -7335,8 +7394,11 @@ const HeatFlowBars = ({
     }, /*#__PURE__*/React.createElement("span", {
       className: "hf-tr"
     }, /*#__PURE__*/React.createElement("i", {
-      style: {
-        left: left + '%',
+      style: right === null ? {
+        left: 0,
+        width: width + '%'
+      } : {
+        right: right + '%',
         width: width + '%'
       }
     })), /*#__PURE__*/React.createElement("span", {
@@ -11567,7 +11629,66 @@ const HenatsukiLossPage = ({
   label: "瞬時効率最大の負荷率 ≠ 全日効率最大の負荷率"
 }, /*#__PURE__*/React.createElement("p", null, "瞬時効率は ", /*#__PURE__*/React.createElement(Eq, {
   tex: "P_i = \\alpha^2 P_{c,full}"
-}), " で最大化（鉄損＝銅損／基礎ハブの最大効率条件）。全日効率は24hの負荷パターンに依存するため、軽負荷時間が長い変圧器では", /*#__PURE__*/React.createElement("strong", null, "鉄損を小さくした機種"), "（アモルファスなど）が有利になる。この差異が出題の核心。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}), " で最大化（鉄損＝銅損／基礎ハブの最大効率条件）。全日効率は24hの負荷パターンに依存するため、軽負荷時間が長い変圧器では", /*#__PURE__*/React.createElement("strong", null, "鉄損を小さくした機種"), "（アモルファスなど）が有利になる。この差異が出題の核心。")), /*#__PURE__*/React.createElement("h3", {
+  id: "sonshitsu-nagare"
+}, "電力の流れ（棒の長さ＝電力）"), /*#__PURE__*/React.createElement("p", null, "この例の変圧器の損失は入力の約 2〜3%（0.56 ÷ 20.56 と 2 ÷ 102）で、棒はほとんど縮まない。見るべきは", /*#__PURE__*/React.createElement("strong", null, "損失の内訳が負荷率で入れ替わること"), "である。この例（定格銅損が鉄損の3倍）では、軽負荷で鉄損が、定格負荷で銅損が大きい。入れ替わる負荷率は √(鉄損 ÷ 定格銅損) で、鉄損と定格銅損が等しい変圧器なら定格負荷でちょうど等しくなる。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    fontSize: "13px",
+    color: "var(--ink-mute)"
+  }
+}, "例: 2節の計算例と同じ変圧器（定格容量 100 kV·A・力率 1.0・鉄損 500 W・定格銅損 1500 W）。2つの棒は同じ縮尺（定格負荷の入力 102 kW＝100%）で描くので、鉄損の棒はどちらも同じ長さになる。鉄損と銅損は同時に生じるので、並び順に意味はない。1% 未満の損失の棒は、見えるように最小 2px で描く。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "負荷率 0.2（軽負荷）")), /*#__PURE__*/React.createElement(HeatFlowBars, {
+  unit: "kW",
+  max: 102,
+  steps: [{
+    name: '入力',
+    alias: '出力 ＋ 鉄損 ＋ 銅損',
+    v: 20.56
+  }, {
+    loss: true,
+    big: true,
+    name: '鉄損 = 0.5（電圧・周波数が一定なら負荷率によらず一定）',
+    v: 0.5
+  }, {
+    loss: true,
+    name: '銅損 = 0.2² × 1.5 = 0.06（負荷率の2乗に比例）',
+    v: 0.06
+  }, {
+    kind: 'e',
+    name: '出力',
+    alias: '効率 = 20 ÷ 20.56 ≒ 97.3%',
+    v: 20
+  }]
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "負荷率 1.0（定格負荷）")), /*#__PURE__*/React.createElement(HeatFlowBars, {
+  unit: "kW",
+  max: 102,
+  steps: [{
+    name: '入力',
+    alias: '出力 ＋ 鉄損 ＋ 銅損',
+    v: 102
+  }, {
+    loss: true,
+    name: '鉄損 = 0.5（軽負荷のときと同じ）',
+    v: 0.5
+  }, {
+    loss: true,
+    big: true,
+    name: '銅損 = 1.0² × 1.5 = 1.5',
+    v: 1.5
+  }, {
+    kind: 'e',
+    name: '出力',
+    alias: '効率 = 100 ÷ 102 ≒ 98.0%',
+    v: 100
+  }]
+}), /*#__PURE__*/React.createElement("p", null, "鉄損と銅損が等しくなる負荷率 √(0.5 ÷ 1.5) ≒ 0.577 で、瞬時効率は最大の ≒ 98.3% になる（上の「瞬時効率最大の負荷率」）。"), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "henatsuki-loss",
   sectionId: "intro"
 }), /*#__PURE__*/React.createElement("h2", {
