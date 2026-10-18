@@ -1521,7 +1521,9 @@ window.WIKI_DATA = {
   },
 
   /* 優先度 prio は過去問台帳（kikai-kakomon-topics.js の KAKOMON_TOPICS のうち
-     KAKOMON_ANALYZED＝一次照合済み R3〜R8上の10回・220小問）の小問シェアで決める。
+     R3〜R8上の10回・220小問＝直近の出題傾向）の小問シェアで決める。
+     2026-10 に KAKOMON_ANALYZED が H28〜R8上 の15回に広がった（#1691）が、prio の基準は10回のまま据え置いた。
+     15回で数えると自動制御は 7.6%（A の線 8% を下回る）。基準を15回へ移すかは未決定。
      閾値（2026-09 に編集部集計から台帳へ一本化した際に決めた）:
 
        S … 10%以上   パワエレ14.1 / 誘導機12.3 / 同期機12.3 / 変圧器11.4 / 情報10.9
@@ -1556,9 +1558,9 @@ window.WIKI_DATA = {
       title: "静止器・電力変換",
       pages: [
         { id: "transformer",   num: "2.1", title: "変圧器",        prio: "S", freq: "max" },
-        // 小問シェア 14.1%（S）。B問16 が 10回とも この単元だが、B問の枠は prio に含めない（ホーム4節の箱で説明）
+        // 小問シェア 14.1%（S。10回基準）。B問16 は H28〜R8上 の15回とも この単元だが、B問の枠は prio に含めない（ホーム4節の箱で説明）
         { id: "power-elec",    num: "2.2", title: "パワーエレクトロニクス", prio: "S", freq: "max" },
-        // R3〜R8上 の10回では出題ゼロ（C）。範囲内なので残す
+        // H28〜R8上 の15回でも主題としての出題ゼロ（C）。範囲内なので残す
         { id: "keiki-yo-henseiki", num: "2.3", title: "計器用変成器（CT・VT）", prio: "C", freq: "low" },
       ],
     },
@@ -1568,7 +1570,7 @@ window.WIKI_DATA = {
       title: "制御・応用",
       pages: [
         { id: "auto-control",  num: "3.1", title: "自動制御",   prio: "A", freq: "high" },
-        // 小問シェア 10.9%（S）。B問18 に 7回だが、B問の枠は prio に含めない
+        // 小問シェア 10.9%（S。10回基準）。B問18 は H28〜R8上 の15回で 11回だが、B問の枠は prio に含めない
         { id: "info-elec",     num: "3.2", title: "情報・電子回路", prio: "S", freq: "high" },
       ],
     },
@@ -6906,7 +6908,7 @@ function examFormatLine(ef) {
    すでに window に載っているので参照できる。
    ============================================================ */
 
-/* 直近10回の出題状況を1行で見せる帯。●が出題あり、・が出題なし。 */
+/* 照合済みの回（KAKOMON_ANALYZED）の出題状況を1行で見せる帯。●が出題あり、・が出題なし。 */
 const TrendSparkline = ({
   seen
 }) => /*#__PURE__*/React.createElement("span", {
@@ -7160,7 +7162,7 @@ const HomePage = ({
     className: "stat"
   }, /*#__PURE__*/React.createElement("div", {
     className: "stat-label"
-  }, "小問数 上位3単元（直近10回）"), /*#__PURE__*/React.createElement("div", {
+  }, "小問数 上位3単元（", kakomonRangeText(), "）"), /*#__PURE__*/React.createElement("div", {
     className: "stat-value"
   }, top3.length ? top3.map(s => s.title).join("・") : "—"), /*#__PURE__*/React.createElement("div", {
     className: "stat-sub"
@@ -7418,21 +7420,21 @@ const HomePage = ({
     style: {
       margin: 0
     }
-  }, "優先度は直近10回の実データ（", /*#__PURE__*/React.createElement("a", {
+  }, "優先度は R3〜R8上 の10回（直近の出題傾向）の実データで、 その単元が全小問に占める割合から付けている（", /*#__PURE__*/React.createElement("a", {
     href: "#",
     onClick: e => {
       e.preventDefault();
       onNav("trends");
     }
-  }, "付録A"), "）で、 その単元が全小問に占める割合から付けている。", /*#__PURE__*/React.createElement("strong", null, "S は 10%以上・A は 8%以上・B は 5%以上・C は 5%未満"), "。 割合だけで決めているので、次の2点は表に出ない。"), /*#__PURE__*/React.createElement("ul", {
+  }, "付録A"), " の表はそれより前の回も含む）。", /*#__PURE__*/React.createElement("strong", null, "S は 10%以上・A は 8%以上・B は 5%以上・C は 5%未満"), "。 割合だけで決めているので、次の2点は表に出ない。"), /*#__PURE__*/React.createElement("ul", {
     style: {
       margin: "8px 0 0"
     }
   }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "B問題の枠"), " — ", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "B問16 は10回とも 2.2 パワーエレクトロニクス"), "、 B問18 は 3.2 情報・電子回路が7回。B問題1問は", f.bPoint, "点なので、同じ S でもこの2単元は落とせない"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "C は捨ててよいという意味ではない"), " — 2.3 計器用変成器は直近10回で", /*#__PURE__*/React.createElement("span", {
+  }, "B問16 は H28〜R8上 の15回とも 2.2 パワーエレクトロニクス"), "、 B問18 は 3.2 情報・電子回路が11回。B問題1問は", f.bPoint, "点なので、同じ S でもこの2単元は落とせない"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "C は捨ててよいという意味ではない"), " — 2.3 計器用変成器は H28〜R8上 の15回で", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "出題ゼロ"), "だが試験範囲に入っており、 CT開放厳禁・VT短絡厳禁は法規とも共通なので", /*#__PURE__*/React.createElement("strong", null, "捨てない")))), /*#__PURE__*/React.createElement(Box, {
+  }, "主題としての出題ゼロ"), "だが試験範囲に入っており、 CT開放厳禁・VT短絡厳禁は法規とも共通なので", /*#__PURE__*/React.createElement("strong", null, "捨てない")))), /*#__PURE__*/React.createElement(Box, {
     kind: "mistake",
     label: "STEP 1 だけで合格できる、とは考えない"
   }, /*#__PURE__*/React.createElement("p", {
@@ -7449,7 +7451,7 @@ const HomePage = ({
     }
   }, "C 学習ガイド"), " の1節にある。")), /*#__PURE__*/React.createElement("h2", null, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
-  }, "5."), "出題傾向（直近10回の実データ）"), /*#__PURE__*/React.createElement("p", null, "各回の問題冊子を1問ずつ確認して単元へ割り当てた実数である。", /*#__PURE__*/React.createElement("strong", null, "上位8単元"), "を出す （全単元と年度別の内訳は ", /*#__PURE__*/React.createElement("a", {
+  }, "5."), "出題傾向（", kakomonRangeText(), " の実データ）"), /*#__PURE__*/React.createElement("p", null, "各回の問題冊子を1問ずつ確認して単元へ割り当てた実数である。", /*#__PURE__*/React.createElement("strong", null, "上位8単元"), "を出す （全単元と年度別の内訳は ", /*#__PURE__*/React.createElement("a", {
     href: "#",
     onClick: e => {
       e.preventDefault();
@@ -7469,13 +7471,13 @@ const HomePage = ({
   }, "6."), "学習戦略"), /*#__PURE__*/React.createElement(Box, {
     kind: "tip",
     label: "推奨アプローチ"
-  }, /*#__PURE__*/React.createElement("ol", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "パワーエレクトロニクスから始める"), "。直近10回の小問数が最多で、", /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("ol", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "パワーエレクトロニクスから始める"), "。H28〜R8上 の15回で小問数が最多で、", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "B問16 は10回中10回ともこの分野"), "。 整流・チョッパ・インバータの3系統をひととおり通す。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "誘導機・同期機"), "で回転機の型を作る。件数は同じで並んで2位。 同期機は計算（短絡比・ベクトル図）と正誤選択（回転子の形・並行運転）の両方が出る。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "変圧器"), "は件数では4位だが、", /*#__PURE__*/React.createElement("span", {
+  }, "B問16 は15回とも この分野"), "。 整流・チョッパ・インバータの3系統をひととおり通す。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "誘導機・同期機"), "で回転機の型を作る。件数は同じで並んで2位。 同期機は計算（短絡比・ベクトル図）と正誤選択（回転子の形・並行運転）の両方が出る。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "変圧器"), "は件数では4位だが、", /*#__PURE__*/React.createElement("span", {
     className: "marker"
   }, "出題の型が損失・効率／単巻・V結線／短絡試験／等価回路と多い"), "ので2週取る。 %Z・電圧変動率・効率は", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "計算の道具が他単元へそのまま流用できる"), "。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "情報・電子回路を後回しにしない"), "。件数は5位で、B問18 に7回出ている。 進数・論理回路・フローチャートは", /*#__PURE__*/React.createElement("span", {
+  }, "計算の道具が他単元へそのまま流用できる"), "。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "情報・電子回路を後回しにしない"), "。件数は5位で、B問18 に11回出ている（H28〜R8上 の15回）。 進数・論理回路・フローチャートは", /*#__PURE__*/React.createElement("span", {
     className: "marker"
   }, "短時間で確実に得点に変わる"), "。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "直流機"), "は件数では6位だが", /*#__PURE__*/React.createElement("span", {
     className: "marker"
@@ -7483,9 +7485,9 @@ const HomePage = ({
     tex: "E = K\\phi N"
   }), " や ", /*#__PURE__*/React.createElement(Eq, {
     tex: "T = K'\\phi I_a"
-  }), " に詰まったら、 順番を待たずここへ戻る。"), /*#__PURE__*/React.createElement("li", null, "自動制御は伝達関数とブロック線図の合成を反復。A問13 が8回で、頻出パターンが限られている。"), /*#__PURE__*/React.createElement("li", null, "照明・電熱は公式数が少なく短期決戦が可能。", /*#__PURE__*/React.createElement("strong", null, "B問17 は直近10回すべてこの2分野のどちらか"), "（1回に出るのは片方）。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "電動機応用"), "は件数では10位だが、", /*#__PURE__*/React.createElement("span", {
+  }), " に詰まったら、 順番を待たずここへ戻る。"), /*#__PURE__*/React.createElement("li", null, "自動制御は伝達関数とブロック線図の合成を反復。A問13 が11回（H28〜R8上 の15回）で、頻出パターンが限られている。"), /*#__PURE__*/React.createElement("li", null, "照明・電熱は公式数が少なく短期決戦が可能。", /*#__PURE__*/React.createElement("strong", null, "B問17 は H28〜R8上 の15回のうち14回がこの2分野のどちらか"), "（1回に出るのは片方。R2 だけ自動制御）。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "電動機応用"), "は件数では9位（照明と同数）だが、", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "直近10回すべてで1問以上出ている"), "（主に A問11。巻上機・ポンプ・減速機の動力計算）。 型が少ないので、短い時間で得点源にしやすい。"))), /*#__PURE__*/React.createElement(Box, {
+  }, "H28〜R8上 の15回すべてで1問以上出ている"), "（主に A問11。巻上機・ポンプ・減速機の動力計算）。 型が少ないので、短い時間で得点源にしやすい。"))), /*#__PURE__*/React.createElement(Box, {
     kind: "warn",
     label: "この順番は出題件数の順。ただし件数の読み方に注意"
   }, /*#__PURE__*/React.createElement("p", {
@@ -7500,7 +7502,7 @@ const HomePage = ({
     }
   }, "付録A「出題傾向データ」"), " の実データを見ること。", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "件数は「5点きざみの小問が何個出たか」であって、得点の割合ではない"), "。 また", ef.session, "を含む10回ぶんという標本は", /*#__PURE__*/React.createElement("strong", null, "単元の有無を判定するには小さい"), "ので、 「10回出ていない＝次も出ない」とは読まないこと。"), /*#__PURE__*/React.createElement("p", {
+  }, "件数は「5点きざみの小問が何個出たか」であって、得点の割合ではない"), "。 また", ef.session, "を含む", typeof kakomonScope === "function" && kakomonScope().sessions || 10, "回ぶんという標本は", /*#__PURE__*/React.createElement("strong", null, "単元の有無を判定するには小さい"), "ので、 「出ていない＝次も出ない」とは読まないこと。"), /*#__PURE__*/React.createElement("p", {
     style: {
       margin: "8px 0 0"
     }
@@ -9782,7 +9784,7 @@ const kakomonPageMeta = id => {
        → 1件がちょうど 5点きざみの1単位になる
      - 問17・問18 は選択問題だが、両方とも「出題された論点」として数える
        → したがって1回あたりの件数は 14 + 8 = 22 件で、解答する 17問・100点とは一致しない
-     - 「出題回数」は件数ではなく、その単元が出た**試験回の数**（最大10）
+     - 「出題回数」は件数ではなく、その単元が出た**試験回の数**（最大は照合済みの回数）
    得点割合とは別物なので、この表では％表示はしない（%を出すと配点と混同される）。
    ページ見出しの meta（kakomonFreqMeta）だけは「小問シェア」と明記して％を出す。
    ============================================================ */
@@ -9820,9 +9822,9 @@ function kakomonStats() {
       num: meta ? meta.num : '',
       prio: meta ? meta.prio : null,
       units: e.units,
-      // 5点きざみの小問数（10回合計）
+      // 5点きざみの小問数（照合済みの回の合計）
       sessionCount: e.sessions.size,
-      // 直近10回中の出題回数
+      // 照合済みの回のうち出題された回数
       perSession: KAKOMON_ANALYZED.map(s => rows.filter(r => r.session === s && r.topic === e.topic).length),
       last: lastIdx >= 0 ? KAKOMON_ANALYZED[lastIdx] : '',
       streak,
@@ -9848,8 +9850,8 @@ function kakomonScope() {
 /* ============================================================
    問番号の「枠」ごとの出題分布。
 
-   機械のB問題は問番号ごとに出る分野がかなり決まっている（問16 は10回とも
-   パワエレ、問17 は照明か電熱、問18 は情報か制御）。この規則性は
+   機械のB問題は問番号ごとに出る分野がかなり決まっている（H28〜R8上 の15回で、問16 は15回とも
+   パワエレ、問17 は照明か電熱（R2 だけ自動制御）、問18 は情報か制御）。この規則性は
    単元別の総件数を見ているだけでは絶対に出てこないので、枠ごとに分けて出す。
    ============================================================ */
 function kakomonSlotStats() {
@@ -13032,7 +13034,7 @@ const InductionMachinePage = ({
 }), /*#__PURE__*/React.createElement(PageHeader, {
   eyebrow: "1.2  ROTATING MACHINES — INDUCTION MOTOR",
   title: "三相誘導電動機",
-  deck: "台帳で2位の単元（同期機と同数。1位はパワエレ）で、直近10回のすべてに出ている。回転磁界・滑り・等価回路・トルク特性が四本柱。計算問題・理論問題の両方で出るので、最優先で押さえる。",
+  deck: "台帳で2位の単元（同期機と同数。1位はパワエレ）で、H28〜R8上 の15回すべてに出ている。回転磁界・滑り・等価回路・トルク特性が四本柱。計算問題・理論問題の両方で出るので、最優先で押さえる。",
   meta: [...kakomonFreqMeta("induction-machine"), {
     label: "難易度",
     value: "★★★★☆"
@@ -13578,7 +13580,7 @@ const InductionMachinePage = ({
   tex: "I_0"
 }), " の先端から引いた水平線上」で円が確定する"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "一次抵抗測定"), "が、拘束点の縦線（銅損の全体）を一次銅損と二次銅損に分ける")), /*#__PURE__*/React.createElement("p", null, "できた図からは、任意の滑りでの", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "一次電流・力率・入力・出力・トルク（同期ワット）・効率・滑り・最大トルク・最大出力"), "が全部読める。 近年（台帳の R3〜R8上）は円線図そのものの出題が無く、出るとすれば「必要な試験3つ」「読める量」の論説である。作図手順まで覚える優先度は低く、3つの測定と円の意味だけを押さえる。"), /*#__PURE__*/React.createElement(Box, {
+}, "一次電流・力率・入力・出力・トルク（同期ワット）・効率・滑り・最大トルク・最大出力"), "が全部読める。 台帳（H28〜R8上 の15回）には円線図そのものの出題が無く、出るとすれば「必要な試験3つ」「読める量」の論説である。作図手順まで覚える優先度は低く、3つの測定と円の意味だけを押さえる。"), /*#__PURE__*/React.createElement(Box, {
   kind: "mistake",
   label: "円線図の正誤問題で落とされる2点"
 }, /*#__PURE__*/React.createElement("p", null, "① ", /*#__PURE__*/React.createElement("strong", null, "円線図は簡易等価回路の上に立つ"), "（励磁回路を電源端に寄せ、", /*#__PURE__*/React.createElement(Eq, {
@@ -14102,7 +14104,7 @@ const InductionMachinePage = ({
     fontSize: "12.5px",
     color: "var(--ink-soft)"
   }
-}, "参考: 結線の組み方で、定トルク（出力が速度に比例）・定出力（トルクが速度に反比例）・可変トルク（ファン・ポンプ向け。トルクが速度の2乗）の3種がある。台帳10回では、結線ごとの分類の出題は無い。")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二次抵抗制御"), " — 巻線形で外部抵抗を調整。効率は悪いが大容量機で実績あり。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二次励磁制御（クレーマ・セルビウス）"), " — 巻線形の二次から取り出した", /*#__PURE__*/React.createElement(Term, null, "滑り"), "電力 ", /*#__PURE__*/React.createElement(Eq, {
+}, "参考: 結線の組み方で、定トルク（出力が速度に比例）・定出力（トルクが速度に反比例）・可変トルク（ファン・ポンプ向け。トルクが速度の2乗）の3種がある。台帳（H28〜R8上 の15回）では、結線ごとの分類の出題は無い。")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二次抵抗制御"), " — 巻線形で外部抵抗を調整。効率は悪いが大容量機で実績あり。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二次励磁制御（クレーマ・セルビウス）"), " — 巻線形の二次から取り出した", /*#__PURE__*/React.createElement(Term, null, "滑り"), "電力 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "sP_2"
 }), " を、抵抗で熱にせず", /*#__PURE__*/React.createElement("strong", null, "整流して外へ返す"), "。二次抵抗制御と同じく「二次側で滑りを作る」が、滑り電力を熱にしないので効率が落ちにくい（失うのは変換器の損失だけ）。返し先で2方式に分かれる。", /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "セルビウス方式"), " — 滑り電力を", /*#__PURE__*/React.createElement(Term, null, "インバータ"), "で", /*#__PURE__*/React.createElement("strong", null, "電源へ回生"), "する。滑り電力は軸に戻らないので、機械的出力は ", /*#__PURE__*/React.createElement(Eq, {
   tex: "P_m = (1-s)P_2"
@@ -14911,7 +14913,7 @@ const InductionMachinePage = ({
   id: "trends"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "7."), "過去問の出題傾向"), /*#__PURE__*/React.createElement("p", null, "直近10回（R3〜R8上）で、この単元から実際に出た論点。", /*#__PURE__*/React.createElement("strong", null, "年度・問番号は一次資料（各回の問題冊子）で確認したもの"), "で、推測は含まない。"), /*#__PURE__*/React.createElement(TopicHistory, {
+}, "7."), "過去問の出題傾向"), /*#__PURE__*/React.createElement("p", null, "過去問台帳（", kakomonRangeText(), "）で、この単元から実際に出た論点。", /*#__PURE__*/React.createElement("strong", null, "年度・問番号は一次資料（各回の問題冊子）で確認したもの"), "で、推測は含まない。"), /*#__PURE__*/React.createElement(TopicHistory, {
   topicId: "induction-machine",
   limit: 12
 }), /*#__PURE__*/React.createElement(Box, {
@@ -17619,7 +17621,7 @@ const DCMachinePage = ({
   id: "dc-loss"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "7."), "損失と効率"), /*#__PURE__*/React.createElement("p", null, "効率そのものを問う出題は ", /*#__PURE__*/React.createElement("strong", null, "R5上 問2・R7上 問2 で2回"), "あり、いずれも「始動電流と定格電流」から入る形だった（セクション8の例題 1.1.3）。 まず損失の内訳を、", /*#__PURE__*/React.createElement("span", {
+}, "7."), "損失と効率"), /*#__PURE__*/React.createElement("p", null, "効率そのものを問う出題は台帳（H28〜R8上 の15回）で ", /*#__PURE__*/React.createElement("strong", null, "4回"), "ある。", /*#__PURE__*/React.createElement("strong", null, "H29 問1・R5上 問2・R7上 問2"), " の3回は「始動電流と定格電流」から入る形（セクション8の例題 1.1.3）で、R2 問2 は拘束時の電機子電流と開放時の誘導起電力から入る発電機の形だった。 まず損失の内訳を、", /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "負荷で変わるか変わらないか"), "で分けて押さえる。"), /*#__PURE__*/React.createElement("div", {
   className: "table-wrap"
@@ -20775,20 +20777,20 @@ const SynchronousPage = ({
   tex: "x_s"
 }), " が小さい＝", /*#__PURE__*/React.createElement(Term, null, "短絡比"), "が大きいほど最大出力が大きい"), "＝安定度が高い（短絡比の表の根拠）。", /*#__PURE__*/React.createElement("strong", null, "③ 三相と線間の扱い"), "は上の公式03 の注記のとおり（ここでは繰り返さない）。")), /*#__PURE__*/React.createElement("h3", {
   id: "vcurve-scr"
-}, "短絡比の4つの顔 — この節の 14 小問のうち 9 問がここに集まる"), /*#__PURE__*/React.createElement("p", null, "台帳（", /*#__PURE__*/React.createElement("a", {
+}, "短絡比の4つの顔 — この節の 21 小問のうち 10 問がここに集まる"), /*#__PURE__*/React.createElement("p", null, "台帳（", /*#__PURE__*/React.createElement("a", {
   href: "#",
   onClick: e => {
     e.preventDefault();
     onNav("trends");
   }
-}, "付録A 出題傾向データ"), "）で同期機は 27 小問、そのうち", /*#__PURE__*/React.createElement("strong", null, "この節の領域が 14 小問"), "で単元最大。 さらにその 14 問を分けると、", /*#__PURE__*/React.createElement("span", {
+}, "付録A 出題傾向データ"), "）で同期機は H28〜R8上 の15回で 39 小問、そのうち", /*#__PURE__*/React.createElement("strong", null, "この節の領域が 21 小問"), "で単元最大。 さらにその 21 問を分けると、", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "短絡比・", /*#__PURE__*/React.createElement(Term, null, "同期インピーダンス"), "関連が 9 問"), "（R3問6・R4上問5・R4下問5・R5上問5・R6下問6・", /*#__PURE__*/React.createElement("strong", null, "R6下問15(a)(b) の2小問"), "・R7上問6・R7下問6。", /*#__PURE__*/React.createElement("span", {
+}, "短絡比・", /*#__PURE__*/React.createElement(Term, null, "同期インピーダンス"), "関連が 10 問"), "（H29問5・R3問6・R4上問5・R4下問5・R5上問5・R6下問6・", /*#__PURE__*/React.createElement("strong", null, "R6下問15(a)(b) の2小問"), "・R7上問6・R7下問6。", /*#__PURE__*/React.createElement("span", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-soft)"
   }
-}, "うち R5上問5 は計算ではなく「短絡比の大小と外形寸法・安定度・電圧変動率」の論説"), "）、 ベクトル図と V カーブの読みが 5 問である。ここでは前者を扱う。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "9 問が難しいのではなく、短絡比が 4 通りの顔で出てくるのが難しい。"), "問題文が「界磁電流」で来るか「短絡電流」で来るか「%インピーダンス」で来るかで見た目が変わるだけで、", /*#__PURE__*/React.createElement("span", {
+}, "うち R5上問5 は計算ではなく「短絡比の大小と外形寸法・安定度・電圧変動率」の論説"), "）、 ベクトル図・出力と負荷角・V カーブの読みが 11 問である。ここでは前者を扱う。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "10 問が難しいのではなく、短絡比が 4 通りの顔で出てくるのが難しい。"), "問題文が「界磁電流」で来るか「短絡電流」で来るか「%インピーダンス」で来るかで見た目が変わるだけで、", /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "中身は 1 つ"), "である。まず絵で押さえる。"), /*#__PURE__*/React.createElement(SyncSCRFig, null), /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
@@ -22042,7 +22044,7 @@ const SynchronousPage = ({
     fontSize: "12.5px",
     color: "var(--ink-soft)"
   }
-}, "【参考。台帳10回では単独の出題なし】"), "この原理だけで回る", /*#__PURE__*/React.createElement("strong", null, "同期リラクタンスモータ"), "（磁石を使わない）もあり、 レアアースを避けたい用途で使われる。「磁石が無いのにトルクが出るのはおかしい」という選択肢は誤り。")), /*#__PURE__*/React.createElement(Box, {
+}, "【参考。台帳（H28〜R8上 の15回）では単独の出題なし】"), "この原理だけで回る", /*#__PURE__*/React.createElement("strong", null, "同期リラクタンスモータ"), "（磁石を使わない）もあり、 レアアースを避けたい用途で使われる。「磁石が無いのにトルクが出るのはおかしい」という選択肢は誤り。")), /*#__PURE__*/React.createElement(Box, {
   kind: "formula",
   label: "同期電動機の長所と短所（用途がここから決まる）"
 }, /*#__PURE__*/React.createElement("p", {
@@ -26231,7 +26233,7 @@ const TransformerPage = ({
   label: "60点狙いで読む順（節の並びとは違う）"
 }, /*#__PURE__*/React.createElement("p", null, "このページの節は", /*#__PURE__*/React.createElement("strong", null, "知識のつながり順"), "に並べてある。 一方、", /*#__PURE__*/React.createElement("strong", null, "得点に近い順"), "に読むなら下の順路がよい。並びは", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "台帳（R3〜R8上）で小問の多い順"), "で、 損失・効率の計算が最も多く、", /*#__PURE__*/React.createElement(Term, null, "単巻変圧器"), "、", /*#__PURE__*/React.createElement(Term, null, "短絡試験"), "、", /*#__PURE__*/React.createElement(Term, null, "V結線"), "が続く。"), /*#__PURE__*/React.createElement("p", {
+}, "台帳（H28〜R8上 の15回）で小問の多い順"), "で、 損失・効率の計算が最も多く、", /*#__PURE__*/React.createElement(Term, null, "単巻変圧器"), "、", /*#__PURE__*/React.createElement(Term, null, "短絡試験"), "、", /*#__PURE__*/React.createElement(Term, null, "V結線"), "が続く。"), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "8px 0 0",
     lineHeight: 2
@@ -26313,13 +26315,13 @@ const TransformerPage = ({
     e.preventDefault();
     onNav("transformer", "loss-daily");
   }
-}, "全日効率"), " ・ ", /*#__PURE__*/React.createElement("a", {
+}, "全日効率"), "。", /*#__PURE__*/React.createElement("a", {
   href: "#",
   onClick: e => {
     e.preventDefault();
     onNav("transformer", "three-winding");
   }
-}, "三巻線変圧器"), "。", /*#__PURE__*/React.createElement("a", {
+}, "三巻線変圧器"), "は R2 問9 の1小問だけなので、これも後回しでよい。", /*#__PURE__*/React.createElement("a", {
   href: "#",
   onClick: e => {
     e.preventDefault();
@@ -29760,7 +29762,7 @@ const TransformerPage = ({
     color: "var(--ink-soft)",
     margin: "0 0 6px"
   }
-}, "【後回し可】台帳（R3〜R8上）では ", /*#__PURE__*/React.createElement("strong", null, "0 小問"), "。60点狙いでは、先に損失・効率の逆算（", /*#__PURE__*/React.createElement("a", {
+}, "【後回し可】台帳（H28〜R8上 の15回）では ", /*#__PURE__*/React.createElement("strong", null, "0 小問"), "。60点狙いでは、先に損失・効率の逆算（", /*#__PURE__*/React.createElement("a", {
   href: "#",
   onClick: e => {
     e.preventDefault();
@@ -31099,7 +31101,7 @@ const TransformerPage = ({
     fontSize: "12.5px",
     color: "var(--ink-soft)"
   }
-}, "出典: 令和8年度上期 第三種電気主任技術者試験「機械」問8（結線図と鉄損・銅損の供給方法を選ぶ形で出題）。台帳では R1 問9 も「変圧器の温度上昇試験の実施方法」を問うている（題名による。問題文は未照合）。")), /*#__PURE__*/React.createElement(Box, {
+}, "出典: 令和8年度上期 第三種電気主任技術者試験「機械」問8（結線図と鉄損・銅損の供給方法を選ぶ形で出題）。台帳では R1 問9 も同じ型で、返還負荷法による温度上昇試験の結線と鉄損・銅損の供給方法を結線図から選ばせている（試験センター公表の問題冊子で確認）。")), /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
   label: "この節の1分復習"
 }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "返還負荷法は何を測る試験か？"), /*#__PURE__*/React.createElement("strong", null, "温度上昇試験"), "。実負荷と同じ損失を発生させて温度の落ち着き先を見る（効率測定ではない）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "なぜ同一仕様の変圧器を2台使うのか？"), "一方の出力を他方へ返して", /*#__PURE__*/React.createElement("strong", null, "有効電力を循環"), "させるため。仕様が違うと意図しない循環電流が流れる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "鉄損を供給するのはどの電源か？電圧は？"), "一次側に", /*#__PURE__*/React.createElement("strong", null, "並列"), "につないだ主電源 E。", /*#__PURE__*/React.createElement("strong", null, "定格電圧"), "（鉄損は電圧で決まるため）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "銅損を供給するのはどれか？つなぎ方は？"), /*#__PURE__*/React.createElement("strong", null, "補助変圧器 T₃"), "を二次側の閉回路に", /*#__PURE__*/React.createElement("strong", null, "直列"), "。小さい電圧で定格電流を循環させる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "外部電源の容量が小さくて済む理由は？"), "有効電力は2台の間を循環するだけで外へ出ない。外部が補うのは", /*#__PURE__*/React.createElement("strong", null, "損失（鉄損＋銅損）だけ"))), /*#__PURE__*/React.createElement("h3", {
@@ -33141,9 +33143,9 @@ const TransformerPage = ({
   className: "marker"
 }, "自己容量（等価容量）＝ 負荷容量 × (V_h − V_l)/V_h"), " で、変圧比が1に近いほど小さな自己容量で大きな負荷容量を扱える（小型・高効率。ただし一次二次が絶縁されない）。")), /*#__PURE__*/React.createElement("h3", {
   id: "autotrans"
-}, "単巻変圧器 — 分路巻線・直列巻線・自己容量"), /*#__PURE__*/React.createElement("p", null, "台帳ではこの節の 6 小問のうち ", /*#__PURE__*/React.createElement("span", {
+}, "単巻変圧器 — 分路巻線・直列巻線・自己容量"), /*#__PURE__*/React.createElement("p", null, "台帳（H28〜R8上 の15回）ではこの節の 7 小問のうち ", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "単巻変圧器が 4 小問"), "で、内訳は", /*#__PURE__*/React.createElement("strong", null, "計算 3 小問"), "（R5上問15(a)(b)・R6下問8。", /*#__PURE__*/React.createElement("span", {
+}, "単巻変圧器が 5 小問"), "で、内訳は", /*#__PURE__*/React.createElement("strong", null, "計算 4 小問"), "（H30問9・R5上問15(a)(b)・R6下問8。", /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "問15 は B問題 1 問の (a)(b)"), "）と", /*#__PURE__*/React.createElement("strong", null, "複合論説 1 問"), "（R4上問9。単巻・V結線・スコット結線をまとめて誤りを選ばせる形）である。 一方 V結線は、計算に必要な部品（巻線電流＝線電流・", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\sqrt3 S_n"
@@ -33404,7 +33406,7 @@ const TransformerPage = ({
     fontSize: "12.5px",
     color: "var(--ink-soft)"
   }
-}, "本 Wiki はここまでを射程とする。二相側の電圧・電流の詳細や不平衡率の計算は、直近10回の台帳では出題実績が無い。")), /*#__PURE__*/React.createElement(TransformerQuick, {
+}, "本 Wiki はここまでを射程とする。二相側の電圧・電流の詳細や不平衡率の計算は、台帳（H28〜R8上 の15回）では出題実績が無い。")), /*#__PURE__*/React.createElement(TransformerQuick, {
   s: "vconn"
 }), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "transformer",
@@ -34060,7 +34062,7 @@ const TransformerPage = ({
     color: "var(--ink-soft)",
     margin: "0 0 6px"
   }
-}, "【後回し可】台帳（R3〜R8上）では ", /*#__PURE__*/React.createElement("strong", null, "0 小問"), "。ただし直近10回より前の ", /*#__PURE__*/React.createElement("strong", null, "R2 問9"), " に、二次に誘導性負荷・三次にコンデンサを接続した三相三巻線変圧器の一次電流を求める計算問題がある（試験センター公表の問題冊子で確認）。60点狙いでは後回しでよい。"), /*#__PURE__*/React.createElement(Box, {
+}, "【後回し可】台帳（H28〜R8上 の15回）では ", /*#__PURE__*/React.createElement("strong", null, "R2 問9 の1小問"), "。二次に誘導性負荷・三次にコンデンサを接続した三相三巻線変圧器の一次電流を求める計算問題である（試験センター公表の問題冊子で確認）。R3〜R8上 の10回には出ていないので、60点狙いでは後回しでよい。"), /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
   label: "まず覚える結論（3つ）"
 }, /*#__PURE__*/React.createElement("ul", {
@@ -36303,7 +36305,7 @@ const PowerElecPage = ({
     t: "還流ダイオード",
     d: /*#__PURE__*/React.createElement(React.Fragment, null, "理由はどちらも「", /*#__PURE__*/React.createElement("strong", null, "L の電流は急に止まれない"), "」。", /*#__PURE__*/React.createElement("strong", null, "チョッパ"), ": スイッチ OFF の間、負荷電流はダイオードを通って流れ続ける（帰り道が電源からダイオードに替わる）。", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "インバータ")), ": 電圧はすぐ反転しても電流は遅れて反転する。電流が逆向きの間は、逆並列ダイオードを通って直流電源へ戻る。")
   }],
-  note: "台帳で最も小問の多い単元。B問16は10回とも この単元から出ている。"
+  note: "台帳で最も小問の多い単元。B問16は H28〜R8上 の15回とも この単元から出ている。"
 }), /*#__PURE__*/React.createElement("h2", {
   id: "devices"
 }, /*#__PURE__*/React.createElement("span", {
@@ -36390,14 +36392,14 @@ const PowerElecPage = ({
     fontSize: "12.5px",
     color: "var(--ink-soft)"
   }
-}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "一般的な IGBT と MOSFET は逆阻止能力を持たない"), "（逆阻止 IGBT という例外品はあるが、三種の範囲では一般形で考える）。MOSFET は構造上、寄生（ボディ）ダイオードを持つため、逆方向に導通してしまう。"), /*#__PURE__*/React.createElement("li", null, "インバータで逆並列ダイオードを付けるのは、", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "誘導性負荷"), "の電流が逆向きに流れる間の帰り道（還流）"), "を作るためである（4節）。MOSFET ではボディダイオードがこの役を兼ねられる。"), /*#__PURE__*/React.createElement("li", null, "台帳の3問（R5上・R5下・R7下）は、いずれも駆動方式・自己消弧・特性比較を問うている。逆阻止を単独で問うたものは無いので、まずは上の表の比較を優先する。")), /*#__PURE__*/React.createElement(Box, {
+}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "一般的な IGBT と MOSFET は逆阻止能力を持たない"), "（逆阻止 IGBT という例外品はあるが、三種の範囲では一般形で考える）。MOSFET は構造上、寄生（ボディ）ダイオードを持つため、逆方向に導通してしまう。"), /*#__PURE__*/React.createElement("li", null, "インバータで逆並列ダイオードを付けるのは、", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "誘導性負荷"), "の電流が逆向きに流れる間の帰り道（還流）"), "を作るためである（4節）。MOSFET ではボディダイオードがこの役を兼ねられる。"), /*#__PURE__*/React.createElement("li", null, "台帳の5問（H29・R2・R5上・R5下・R7下 の問10）は、いずれも駆動方式・自己消弧・定常的な導通条件・特性比較を問うている。逆阻止を単独で問うたものは無いので、まずは上の表の比較を優先する。")), /*#__PURE__*/React.createElement(Box, {
   kind: "mistake",
-  label: "「誤りを選ぶ」で狙われる型（台帳では10回中3回・すべてこの形式）"
+  label: "「誤りを選ぶ」で狙われる型（台帳では15回中5回・すべてこの形式）"
 }, /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "0 0 8px"
   }
-}, "R5上 問10・R5下 問10・R7下 問10 はいずれも", /*#__PURE__*/React.createElement("strong", null, "正しい記述の中から誤りを1つ選ぶ"), "形式だった。狙われるのは次の取り違えである。"), /*#__PURE__*/React.createElement("ul", {
+}, "H29 問10・R2 問10・R5上 問10・R5下 問10・R7下 問10 はいずれも", /*#__PURE__*/React.createElement("strong", null, "正しい記述の中から誤りを1つ選ぶ"), "形式だった。狙われるのは次の取り違えである。"), /*#__PURE__*/React.createElement("ul", {
   style: {
     margin: 0,
     paddingLeft: 22
@@ -37138,7 +37140,7 @@ const PowerElecPage = ({
   id: "chopper-path"
 }, "どの期間に何が導通するか — 変わるのは帰り道だけ"), /*#__PURE__*/React.createElement("p", null, "この型は", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "過去問台帳（R3〜R8上）で", /*#__PURE__*/React.createElement("strong", null, "2回"), "出ている"), "（R5下 問16a・R6下 問16a）。", /*#__PURE__*/React.createElement("strong", null, "デバイスの配置"), "を問う R4上 問10 も同じ図で答えられる。 図の2枚を見比べて", /*#__PURE__*/React.createElement("strong", null, "「L と R はどちらの期間も流れていて、変わるのは帰り道が電源か", /*#__PURE__*/React.createElement("span", {
+}, "過去問台帳（H28〜R8上 の15回）で", /*#__PURE__*/React.createElement("strong", null, "3回"), "出ている"), "（H30 問16a・R5下 問16a・R6下 問16a）。", /*#__PURE__*/React.createElement("strong", null, "デバイスの配置"), "を問う R4上 問10 も同じ図で答えられる。 図の2枚を見比べて", /*#__PURE__*/React.createElement("strong", null, "「L と R はどちらの期間も流れていて、変わるのは帰り道が電源か", /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, /*#__PURE__*/React.createElement(Term, null, "還流ダイオード")), "か」"), "だけ押さえればよい。"), /*#__PURE__*/React.createElement(ChopperPathFig, null), /*#__PURE__*/React.createElement("div", {
   className: "table-wrap"
@@ -37529,9 +37531,9 @@ const PowerElecPage = ({
     fontSize: "12.5px",
     color: "var(--ink-soft)"
   }
-}, "台帳（R3〜R8上）では", /*#__PURE__*/React.createElement("strong", null, "単相ブリッジ電圧形が8小問"), "（R4上16a/16b・R4下16a/16b・R5上16a/16b・R6上16a/16b）で、", /*#__PURE__*/React.createElement("span", {
+}, "台帳（H28〜R8上 の15回）では", /*#__PURE__*/React.createElement("strong", null, "単相ブリッジインバータのB問題が10小問"), "（R2・R4上・R4下・R5上・R6上 の各16a/16b）で、", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "すべて難易度3のB問題"), "。パワーコンディショナが2小問（R6下10・R7上8）。"), /*#__PURE__*/React.createElement(InverterBridgeFig, null), /*#__PURE__*/React.createElement(InverterModeFig, null), /*#__PURE__*/React.createElement("p", {
+}, "R2 問16a（難易度2）のほかはすべて難易度3"), "。A問題でも H30 問11 が単相フルブリッジの構成を問う。太陽光発電のパワーコンディショナ・MPPT が4小問（H28 10・R1 12・R6下 10・R7上 8）。"), /*#__PURE__*/React.createElement(InverterBridgeFig, null), /*#__PURE__*/React.createElement(InverterModeFig, null), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "8px 0 0"
   }
@@ -37798,13 +37800,13 @@ const PowerElecPage = ({
   className: "marker"
 }, "直流側の電流は正負に振れる"), "（R5上 問16b はここを訊いている）。 直流電流の", /*#__PURE__*/React.createElement("strong", null, "平均値"), "は正（電源が正味で電力を出している）だが、瞬時値は負になる区間がある。")), /*#__PURE__*/React.createElement("h3", {
   id: "inv-vsi-csi"
-}, "電圧形と電流形 — 直流側に何を置くかで決まる"), /*#__PURE__*/React.createElement("p", null, "本Wikiが扱う「電圧形」という呼び名は", /*#__PURE__*/React.createElement("strong", null, "直流側の作り"), "から来ている。 台帳の8小問はすべて電圧形だが、", /*#__PURE__*/React.createElement("span", {
+}, "電圧形と電流形 — 直流側に何を置くかで決まる"), /*#__PURE__*/React.createElement("p", null, "本Wikiが扱う「電圧形」という呼び名は", /*#__PURE__*/React.createElement("strong", null, "直流側の作り"), "から来ている。 台帳の単相ブリッジのB問題10小問はすべて電圧形だが、", /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "用語を定義せずに使うと「なぜ電圧形と呼ぶのか」が宙に浮く"), "ので、対になる電流形と並べておく。"), /*#__PURE__*/React.createElement("div", {
   className: "table-wrap"
 }, /*#__PURE__*/React.createElement("table", {
   className: "data"
-}, /*#__PURE__*/React.createElement("caption", null, "表2.2.1  ", /*#__PURE__*/React.createElement(Term, null, "電圧形インバータ"), "と電流形インバータ（電流形は台帳10回で出題なし・対比のための参考）"), /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+}, /*#__PURE__*/React.createElement("caption", null, "表2.2.1  ", /*#__PURE__*/React.createElement(Term, null, "電圧形インバータ"), "と電流形インバータ（電流形は台帳 H28〜R8上 の15回で出題なし・対比のための参考）"), /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
   scope: "col"
 }), /*#__PURE__*/React.createElement("th", {
   scope: "col"
@@ -37849,7 +37851,7 @@ const PowerElecPage = ({
   id: "inv-pcs"
 }, "パワーコンディショナ — 系統につなぐための機能"), /*#__PURE__*/React.createElement("p", null, "太陽光発電の直流を交流にして系統へ送る装置。", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "インバータ本体に「系統とつなぐための機能」が足されている"), "のが要点で、 台帳では R6下 問10・R7上 問8 の2小問（いずれも誤りを選ぶ形式）。"), /*#__PURE__*/React.createElement("div", {
+}, "インバータ本体に「系統とつなぐための機能」が足されている"), "のが要点で、 台帳（H28〜R8上 の15回）では H28 問10・R1 問12・R6下 問10・R7上 問8 の4小問（R6下・R7上 は誤りを選ぶ形式）。"), /*#__PURE__*/React.createElement("div", {
   className: "table-wrap"
 }, /*#__PURE__*/React.createElement("table", {
   className: "data"
@@ -41316,7 +41318,7 @@ const AutoControlPage = ({
 }), /*#__PURE__*/React.createElement(PageHeader, {
   eyebrow: "3.1  AUTOMATIC CONTROL",
   title: "自動制御",
-  deck: "伝達関数・ブロック線図・周波数応答（ボード線図とベクトル軌跡）・安定判別・PID。出題の中心は s を jω に置き換えた周波数伝達関数と折れ点角周波数で、A問13 の常連（過去10回で8回）。B問（15・18）でも同じ道具を使う。",
+  deck: "伝達関数・ブロック線図・周波数応答（ボード線図とベクトル軌跡）・安定判別・PID。出題の中心は s を jω に置き換えた周波数伝達関数と折れ点角周波数で、A問13 の常連（H28〜R8上 の15回で11回）。B問（15・17・18）でも同じ道具を使う。",
   meta: [...kakomonFreqMeta("auto-control"), {
     label: "難易度",
     value: "★★★★☆"
@@ -41364,7 +41366,7 @@ const AutoControlPage = ({
       }
     }, "4.6 メカトロニクス"), "）／温度・流量＝", /*#__PURE__*/React.createElement("strong", null, "プロセス制御"), "。")
   }],
-  note: "A問に加えB問（問15・問18）にも5回出ている。式より「どの周波数で何を測るか」と「どの動作が何を直すか」で落とす。"
+  note: "A問に加えB問（問15・問17・問18）にも7回出ている（H28〜R8上 の15回）。式より「どの周波数で何を測るか」と「どの動作が何を直すか」で落とす。"
 }), /*#__PURE__*/React.createElement("h2", {
   id: "tf"
 }, /*#__PURE__*/React.createElement("span", {
@@ -41417,7 +41419,7 @@ const AutoControlPage = ({
     color: "var(--ink-soft)",
     margin: "0 0 8px"
   }
-}, "過去問台帳では自動制御18小問のうち", /*#__PURE__*/React.createElement(Term, null, "伝達関数"), "が5問あり、うち4問がB問題。", /*#__PURE__*/React.createElement("strong", null, "数値は本Wikiの自作例"), "で、試験問題そのものではない。B問題は「(a) で回路の伝達関数を作り、(b) でそれを", /*#__PURE__*/React.createElement(Term, null, "ブロック線図"), "に入れて全体の伝達関数・", /*#__PURE__*/React.createElement(Term, null, "定常特性"), "を出す」形が定番である。だから、ここで作った ", /*#__PURE__*/React.createElement(Eq, {
+}, "過去問台帳（H28〜R8上 の15回）では自動制御25小問のうち", /*#__PURE__*/React.createElement(Term, null, "伝達関数"), "が6問あり、うち4問がB問題。", /*#__PURE__*/React.createElement("strong", null, "数値は本Wikiの自作例"), "で、試験問題そのものではない。B問題は「(a) で回路の伝達関数を作り、(b) でそれを", /*#__PURE__*/React.createElement(Term, null, "ブロック線図"), "に入れて全体の伝達関数・", /*#__PURE__*/React.createElement(Term, null, "定常特性"), "を出す」形が定番である。だから、ここで作った ", /*#__PURE__*/React.createElement(Eq, {
   tex: "G(s)"
 }), " をセクション2 の ", /*#__PURE__*/React.createElement(Eq, {
   tex: "G/(1+GH)"
@@ -45428,7 +45430,7 @@ const InfoElecPage = ({
       t: "進数",
       d: /*#__PURE__*/React.createElement(React.Fragment, null, "16進1桁＝2進4桁でそのまま対応。基数が違う数は", /*#__PURE__*/React.createElement("strong", null, "10進へそろえてから"), "比べる。")
     }],
-    note: "B問18に7回出ており、論理回路と進数で確実に取りに行く単元。"
+    note: "B問18に11回（H28〜R8上 の15回）出ており、論理回路と進数で確実に取りに行く単元。"
   },
   traps: [{
     wrong: "和積形式（POS）を作るときは、出力が 0 の行で、値が 0 の変数に否定を付ける",
@@ -48922,7 +48924,7 @@ const LightingPage = ({
         fontSize: "12.5px",
         color: "var(--ink-soft)"
       }
-    }, "※ 台帳（R3〜R8上）にこの平均照度の出題は無い。出ているのは点光源・直線光源の計算（セクション2・3）なので、 まずそちらを固める。この式は語句の意味を押さえておけば足りる。")), /*#__PURE__*/React.createElement(IlluminanceGeometryFig, null), /*#__PURE__*/React.createElement(Box, {
+    }, "※ 台帳（H28〜R8上 の15回）では、この平均照度を使う計算が ", /*#__PURE__*/React.createElement("strong", null, "H29 問17b・R2 問12"), " の2小問ある（光束・照明率・保守率から平均照度や灯数を求める）。 R3〜R8上 の10回には無く、多いのは点光源・直線光源の計算（セクション2・3）なので、まずそちらを固め、次に公式03 で計算できるようにする。")), /*#__PURE__*/React.createElement(IlluminanceGeometryFig, null), /*#__PURE__*/React.createElement(Box, {
       kind: "example",
       label: "例題 — 点光源の直下照度と斜め点の水平面照度"
     }, /*#__PURE__*/React.createElement("p", null, "光度 ", /*#__PURE__*/React.createElement(Eq, {
@@ -49163,7 +49165,7 @@ const LightingPage = ({
         fontSize: "12.5px",
         color: "var(--ink-soft)"
       }
-    }, "出題実績（本Wikiの過去問台帳・照明 12 件）: 主戦場は", /*#__PURE__*/React.createElement("strong", null, "逆二乗と余弦の法則"), "（8 件）で、 このセクションが直接効くのは ", /*#__PURE__*/React.createElement("strong", null, "2 件"), "（R6上 問17b 球形光源の輝度・R7下 問17a 直線光源の光束発散度）。", /*#__PURE__*/React.createElement("span", {
+    }, "出題実績（本Wikiの過去問台帳・R3〜R8上 の10回で照明 12 件）: 主戦場は", /*#__PURE__*/React.createElement("strong", null, "逆二乗と余弦の法則"), "（8 件）で、 このセクションが直接効くのは ", /*#__PURE__*/React.createElement("strong", null, "2 件"), "（R6上 問17b 球形光源の輝度・R7下 問17a 直線光源の光束発散度）。それより前の H29 問17a（円板光源の輝度）も同じ型である。", /*#__PURE__*/React.createElement("span", {
       className: "marker"
     }, "セクション2 を仕上げてからここへ来る"), "順番が得点効率がよい。"), /*#__PURE__*/React.createElement(FormulaCard, {
       num: "05",
@@ -50200,7 +50202,7 @@ const ChemPage = ({
   id: "chemistry",
   title: "電気化学",
   eyebrow: "4.3  ELECTROCHEMISTRY",
-  deck: "ファラデーの法則・電池（鉛蓄電池・NAS電池・EDLC）・電気分解。出題は少ないが、台帳では3回とも問12 で出ている。確実に取りたい。",
+  deck: "ファラデーの法則・電池（鉛蓄電池・NAS電池・EDLC）・電気分解。出題は少ないが、台帳（H28〜R8上 の15回）では5回とも問12 で出ている。確実に取りたい。",
   conclusion: {
     items: [{
       t: "析出量",
@@ -50219,7 +50221,7 @@ const ChemPage = ({
       t: "EDLC",
       d: /*#__PURE__*/React.createElement(React.Fragment, null, "化学反応ではなく電荷の物理吸着。", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "出力密度"), "大・寿命長"), "、弱点は", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "エネルギー密度"), "小・", /*#__PURE__*/React.createElement(Term, null, "自己放電"), "が速い"), "。")
     }],
-    note: "台帳では3回とも問12 で出ており、R8上 は誤りを選ぶ形。正誤を問われたら、上の4行の向き（上がる／下がる、正極／負極、固体／水溶液、長い／短い）を確かめる。"
+    note: "台帳では5回とも問12 で出ており、H28・R8上 は誤りを選ぶ形。正誤を問われたら、上の4行の向き（上がる／下がる、正極／負極、固体／水溶液、長い／短い）を確かめる。"
   },
   traps: [{
     wrong: "鉛蓄電池は、放電すると電解液の比重が上がる",
@@ -51183,7 +51185,7 @@ const TrendsPage = ({
   const stats = typeof kakomonStats === "function" ? kakomonStats() : [];
   const scope = typeof kakomonScope === "function" ? kakomonScope() : null;
   const covered = new Set(stats.map(s => s.topic));
-  // 直近10回で1件も出ていない単元。「出ないから捨てる」ではなく「範囲には入っている」の意味
+  // 照合済みの回（KAKOMON_ANALYZED）で1件も出ていない単元。「出ないから捨てる」ではなく「範囲には入っている」の意味
   const zero = (data.chapters || []).filter(c => c.id !== "ref").flatMap(c => c.pages).filter(p => !covered.has(p.id));
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Crumbs, {
     items: [{
@@ -51198,7 +51200,7 @@ const TrendsPage = ({
   }), /*#__PURE__*/React.createElement(PageHeader, {
     eyebrow: "APPENDIX A  EXAM TREND DATA",
     title: "出題傾向データ",
-    deck: "直近10回の問題冊子を1問ずつ確認して単元へ割り当てた実データ。概算値・推測値は含まない。",
+    deck: `${kakomonRangeText()} の問題冊子を1問ずつ確認して単元へ割り当てた実データ。概算値・推測値は含まない。`,
     meta: scope ? [{
       label: "対象",
       value: `${scope.first}〜${scope.last}（${scope.sessions}回）`
@@ -51234,7 +51236,7 @@ const TrendsPage = ({
   }, "3."), "ここから読み取れること"), /*#__PURE__*/React.createElement(Box, {
     kind: "warn",
     label: "「三大単元」という括り方は実データと合わない"
-  }, /*#__PURE__*/React.createElement("p", null, "本Wikiは以前「誘導機・変圧器・直流機の三大単元」を前面に出していたが、", scope ? `${scope.first}〜${scope.last}` : "直近10回", "の実データではその順位にならない。"), /*#__PURE__*/React.createElement("ul", null, stats.slice(0, 6).map((s, i) => /*#__PURE__*/React.createElement("li", {
+  }, /*#__PURE__*/React.createElement("p", null, "本Wikiは以前「誘導機・変圧器・直流機の三大単元」を前面に出していたが、", kakomonRangeText(), "の実データではその順位にならない。"), /*#__PURE__*/React.createElement("ul", null, stats.slice(0, 6).map((s, i) => /*#__PURE__*/React.createElement("li", {
     key: s.topic
   }, /*#__PURE__*/React.createElement("strong", null, i + 1, "位 ", s.title), "— 小問 ", s.units, "件／", s.sessionCount, "回で出題"))), /*#__PURE__*/React.createElement("p", {
     style: {
@@ -51255,7 +51257,7 @@ const TrendsPage = ({
     id: "zero"
   }, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
-  }, "4."), "直近", scope ? scope.sessions : 10, "回で出題が無かった単元"), zero.length ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, "次の単元は", scope ? `${scope.first}〜${scope.last}` : "直近10回", "で", /*#__PURE__*/React.createElement("strong", null, "1件も出題されていない"), "。 ただし", /*#__PURE__*/React.createElement("span", {
+  }, "4."), "直近", scope ? scope.sessions : 10, "回で出題が無かった単元"), zero.length ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", null, "次の単元は", kakomonRangeText(), "で", /*#__PURE__*/React.createElement("strong", null, "1件も出題されていない"), "。 ただし", /*#__PURE__*/React.createElement("span", {
     className: "marker"
   }, "公式の試験範囲には含まれている"), "ので、出れば配点は同じ5点である。"), /*#__PURE__*/React.createElement("div", {
     className: "table-wrap"
@@ -51277,12 +51279,12 @@ const TrendsPage = ({
     }
   }, p.num, " ", p.title)), /*#__PURE__*/React.createElement("td", null, p.prio || "—"), /*#__PURE__*/React.createElement("td", null, "深追いはしない。", /*#__PURE__*/React.createElement("strong", null, "選択肢を切れる程度"), "まで読んでおく")))))), /*#__PURE__*/React.createElement(Box, {
     kind: "warn",
-    label: "「10回出ていない＝次も出ない」ではない"
+    label: `「${scope ? scope.sessions : 10}回出ていない＝次も出ない」ではない`
   }, /*#__PURE__*/React.createElement("p", {
     style: {
       margin: 0
     }
-  }, scope ? scope.sessions : 10, "回という標本は", /*#__PURE__*/React.createElement("strong", null, "単元の有無を判定するには小さい"), "。 数回に一度しか出ない単元は、たまたま10回とも外れることがある。", /*#__PURE__*/React.createElement("span", {
+  }, scope ? scope.sessions : 10, "回という標本は", /*#__PURE__*/React.createElement("strong", null, "単元の有無を判定するには小さい"), "。 数回に一度しか出ない単元は、たまたま", scope ? scope.sessions : 10, "回とも外れることがある。", /*#__PURE__*/React.createElement("span", {
     className: "marker"
   }, "捨てる判断ではなく、時間配分を後ろに回す判断"), "として使うこと。"))) : /*#__PURE__*/React.createElement("p", null, "直近", scope ? scope.sessions : 10, "回では、すべての単元から出題があった。"), /*#__PURE__*/React.createElement("h2", {
     id: "repeat"
@@ -52734,7 +52736,7 @@ const GuidePage = ({
     style: {
       margin: 0
     }
-  }, "ここに載せたのは、直近10回で実際に取り違えが問われた式のうち代表的なものである。", /*#__PURE__*/React.createElement("span", {
+  }, "ここに載せたのは、R3〜R8上 の10回で実際に取り違えが問われた式のうち代表的なものである。", /*#__PURE__*/React.createElement("span", {
     className: "marker"
   }, "載っていない式なら安全、という意味ではない"), "。 新しい式を覚えるときは、その場で「呼ぶ合図」と「使ってはいけない場面」を自分で1つずつ書き足すこと。", /*#__PURE__*/React.createElement("strong", null, "使ってはいけない場面を言えない式は、まだ覚えたことになっていない。"))), /*#__PURE__*/React.createElement("h2", {
     id: "cycle"
@@ -52757,7 +52759,7 @@ const GuidePage = ({
     id: "plan"
   }, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
-  }, "5."), "3 ヶ月モデル（13週・復習中心）"), /*#__PURE__*/React.createElement("p", null, "並び順は", /*#__PURE__*/React.createElement("strong", null, "過去問台帳（一次照合済み10回・220小問）の出題数が多い順"), "。 ホームの「学習戦略」と同じ順にそろえてある。得意・不得意に応じて入れ替えてよい。"), /*#__PURE__*/React.createElement(Box, {
+  }, "5."), "3 ヶ月モデル（13週・復習中心）"), /*#__PURE__*/React.createElement("p", null, "並び順は", /*#__PURE__*/React.createElement("strong", null, "過去問台帳（一次照合済みの H28〜R8上 の15回・330小問）の出題数が多い順"), "。 ホームの「学習戦略」と同じ順にそろえてある。得意・不得意に応じて入れ替えてよい。"), /*#__PURE__*/React.createElement(Box, {
     kind: "warn",
     label: "台帳の順に組んである。「道具が次で効く順」とは別物"
   }, /*#__PURE__*/React.createElement("p", {
@@ -52770,7 +52772,7 @@ const GuidePage = ({
     }
   }, "そのぶん、", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "台帳順は「前の単元で使った計算の道具が次で効く順」ではない"), "。 いちばん効くのは ", /*#__PURE__*/React.createElement("strong", null, "1.1 直流機が9週目に来る"), "こと（台帳6位・20小問）。 直流機は回転機の土台なので、", /*#__PURE__*/React.createElement("strong", null, "誘導機（3〜4週）や同期機（5週）で ", /*#__PURE__*/React.createElement(Eq, {
+  }, "台帳順は「前の単元で使った計算の道具が次で効く順」ではない"), "。 いちばん効くのは ", /*#__PURE__*/React.createElement("strong", null, "1.1 直流機が9週目に来る"), "こと（台帳6位・32小問）。 直流機は回転機の土台なので、", /*#__PURE__*/React.createElement("strong", null, "誘導機（3〜4週）や同期機（5週）で ", /*#__PURE__*/React.createElement(Eq, {
     tex: "E = K\\phi N"
   }), " や", /*#__PURE__*/React.createElement(Eq, {
     tex: "T = K'\\phi I_a"
@@ -52790,13 +52792,13 @@ const GuidePage = ({
     scope: "col"
   }, "サイクルで解く過去問"), /*#__PURE__*/React.createElement("th", {
     scope: "col"
-  }, "到達目標"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "1〜2週"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "2.2 パワエレ")), /*#__PURE__*/React.createElement("td", null, "パワエレ 8〜10問（B問題を含む）"), /*#__PURE__*/React.createElement("td", null, "台帳", /*#__PURE__*/React.createElement("strong", null, "1位"), "（31小問・14.1%）。", /*#__PURE__*/React.createElement("strong", null, "B問16 は10回中10回ともこの分野"), "。整流の平均値・脈動率、チョッパ、インバータの3系統を通す")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "3〜4週"), /*#__PURE__*/React.createElement("td", null, "1.2 三相誘導電動機"), /*#__PURE__*/React.createElement("td", null, "誘導機 5〜10問"), /*#__PURE__*/React.createElement("td", null, "台帳2位（27小問）。1:s:(1-s) 比、等価回路、トルク特性、始動方式の完全理解")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "5週"), /*#__PURE__*/React.createElement("td", null, "1.3 同期機"), /*#__PURE__*/React.createElement("td", null, "同期機 5問"), /*#__PURE__*/React.createElement("td", null, "台帳2位（27小問）。V カーブ・短絡比・並列運転条件")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "6〜7週"), /*#__PURE__*/React.createElement("td", null, "2.1 変圧器"), /*#__PURE__*/React.createElement("td", null, "変圧器 5〜10問"), /*#__PURE__*/React.createElement("td", null, "台帳4位（25小問）。巻数比・%Z・電圧変動率・効率計算の反復。", /*#__PURE__*/React.createElement("span", {
+  }, "到達目標"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "1〜2週"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "2.2 パワエレ")), /*#__PURE__*/React.createElement("td", null, "パワエレ 8〜10問（B問題を含む）"), /*#__PURE__*/React.createElement("td", null, "台帳", /*#__PURE__*/React.createElement("strong", null, "1位"), "（H28〜R8上 の15回で49小問・14.8%）。", /*#__PURE__*/React.createElement("strong", null, "B問16 は15回とも この分野"), "。整流の平均値・脈動率、チョッパ、インバータの3系統を通す")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "3〜4週"), /*#__PURE__*/React.createElement("td", null, "1.2 三相誘導電動機"), /*#__PURE__*/React.createElement("td", null, "誘導機 5〜10問"), /*#__PURE__*/React.createElement("td", null, "台帳2位（39小問）。1:s:(1-s) 比、等価回路、トルク特性、始動方式の完全理解")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "5週"), /*#__PURE__*/React.createElement("td", null, "1.3 同期機"), /*#__PURE__*/React.createElement("td", null, "同期機 5問"), /*#__PURE__*/React.createElement("td", null, "台帳2位（39小問）。V カーブ・短絡比・並列運転条件")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "6〜7週"), /*#__PURE__*/React.createElement("td", null, "2.1 変圧器"), /*#__PURE__*/React.createElement("td", null, "変圧器 5〜10問"), /*#__PURE__*/React.createElement("td", null, "台帳4位（38小問）。巻数比・%Z・電圧変動率・効率計算の反復。", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "出題の型が損失・効率／単巻・V結線／短絡試験／等価回路／電圧変動率／並行運転と多いので2週取る"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "8週"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "3.2 情報・電子回路")), /*#__PURE__*/React.createElement("td", null, "情報 5問"), /*#__PURE__*/React.createElement("td", null, "台帳", /*#__PURE__*/React.createElement("strong", null, "5位"), "（24小問・10.9%）。", /*#__PURE__*/React.createElement("strong", null, "B問18 が7回"), "。論理回路・進数・フローチャート。公式が少なく短時間で得点に変わる")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "9週"), /*#__PURE__*/React.createElement("td", null, "1.1 直流機"), /*#__PURE__*/React.createElement("td", null, "直流機 5〜10問"), /*#__PURE__*/React.createElement("td", null, "台帳6位（20小問）。誘導起電力・トルク式の運用、励磁方式。", /*#__PURE__*/React.createElement("span", {
+  }, "出題の型が損失・効率／単巻・V結線／短絡試験／等価回路／電圧変動率／並行運転と多いので2週取る"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "8週"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "3.2 情報・電子回路")), /*#__PURE__*/React.createElement("td", null, "情報 5問"), /*#__PURE__*/React.createElement("td", null, "台帳", /*#__PURE__*/React.createElement("strong", null, "5位"), "（37小問・11.2%）。", /*#__PURE__*/React.createElement("strong", null, "B問18 が11回"), "。論理回路・進数・フローチャート。公式が少なく短時間で得点に変わる")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "9週"), /*#__PURE__*/React.createElement("td", null, "1.1 直流機"), /*#__PURE__*/React.createElement("td", null, "直流機 5〜10問"), /*#__PURE__*/React.createElement("td", null, "台帳6位（32小問）。誘導起電力・トルク式の運用、励磁方式。", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "回転機の土台なので、3〜5週で詰まったらここへ前倒しする"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "10週"), /*#__PURE__*/React.createElement("td", null, "3.1 自動制御"), /*#__PURE__*/React.createElement("td", null, "制御 5問"), /*#__PURE__*/React.createElement("td", null, "台帳7位（18小問）。", /*#__PURE__*/React.createElement("strong", null, "A問13 が8回・B問（問15・問18）に計5回"), "。伝達関数・フィードバック合成・安定判別")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "11週"), /*#__PURE__*/React.createElement("td", null, "4.2 電熱／4.1 照明"), /*#__PURE__*/React.createElement("td", null, "電熱・照明 各3問"), /*#__PURE__*/React.createElement("td", null, "台帳8位・9位（15＋12小問）。", /*#__PURE__*/React.createElement("strong", null, "B問17 は台帳の10回ともこの2分野のどちらか"), "（1回に出るのは片方）。どちらが出ても問18 と比べて選べるよう、両方の基礎を持つ")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "12週"), /*#__PURE__*/React.createElement("td", null, "4.4 電動機応用／2.3 計器用変成器・1.4 単相誘導電動機・4.6 メカトロニクス・4.3 電気化学・4.5 電気加工"), /*#__PURE__*/React.createElement("td", null, "応用 5問＋残りは各 2〜3問"), /*#__PURE__*/React.createElement("td", null, "電動機応用は台帳10位（11小問）。残りは台帳 2.3% 以下で、", /*#__PURE__*/React.createElement("span", {
+  }, "回転機の土台なので、3〜5週で詰まったらここへ前倒しする"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "10週"), /*#__PURE__*/React.createElement("td", null, "3.1 自動制御"), /*#__PURE__*/React.createElement("td", null, "制御 5問"), /*#__PURE__*/React.createElement("td", null, "台帳7位（25小問）。", /*#__PURE__*/React.createElement("strong", null, "A問13 が11回・B問（問15・問17・問18）に計7回"), "。伝達関数・フィードバック合成・安定判別")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "11週"), /*#__PURE__*/React.createElement("td", null, "4.2 電熱／4.1 照明"), /*#__PURE__*/React.createElement("td", null, "電熱・照明 各3問"), /*#__PURE__*/React.createElement("td", null, "台帳8位・9位（21＋17小問）。", /*#__PURE__*/React.createElement("strong", null, "B問17 は15回のうち14回がこの2分野のどちらか"), "（1回に出るのは片方。R2 だけ自動制御）。どちらが出ても問18 と比べて選べるよう、両方の基礎を持つ")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "12週"), /*#__PURE__*/React.createElement("td", null, "4.4 電動機応用／2.3 計器用変成器・1.4 単相誘導電動機・4.6 メカトロニクス・4.3 電気化学・4.5 電気加工"), /*#__PURE__*/React.createElement("td", null, "応用 5問＋残りは各 2〜3問"), /*#__PURE__*/React.createElement("td", null, "電動機応用は台帳9位（17小問。照明と同数）。残りは台帳 1.8% 以下で、", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "計器用変成器・単相誘導電動機・電気加工は10回で0小問"), "。深追いせず選択肢を切れる状態まで")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "13週"), /*#__PURE__*/React.createElement("td", null, "総仕上げ"), /*#__PURE__*/React.createElement("td", null, "直近の複数回分を通しで"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "90分の本番形式"), "で時間配分を確かめる。仕上げに「D 用語混同まとめ」で横断ひっかけを総ざらい"))))), /*#__PURE__*/React.createElement(Box, {
+  }, "計器用変成器・単相誘導電動機・電気加工は15回で0小問"), "。深追いせず選択肢を切れる状態まで")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "13週"), /*#__PURE__*/React.createElement("td", null, "総仕上げ"), /*#__PURE__*/React.createElement("td", null, "直近の複数回分を通しで"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "90分の本番形式"), "で時間配分を確かめる。仕上げに「D 用語混同まとめ」で横断ひっかけを総ざらい"))))), /*#__PURE__*/React.createElement(Box, {
     kind: "warn",
     label: "最終週にまとめて過去問、にしない"
   }, /*#__PURE__*/React.createElement("p", {
