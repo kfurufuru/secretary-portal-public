@@ -62,7 +62,7 @@ Q. 瞬時値が v＝141 sin(100πt ＋ π/6) [V] と表される交流がある�
 | 度→ラジアン | $\theta_\text{rad} = \theta_\text{deg} \times \pi/180$ | 問題文が度で書かれた時の変換 |
 | ラジアン→度 | $\theta_\text{deg} = \theta_\text{rad} \times 180/\pi$ | 結果を直感的に確認する時 |
 | 角速度 | $\omega = 2\pi f = 2\pi/T$ | 交流回路全般 |
-| 瞬時値 | $v(t) = V_m \sin(\omega t + \phi)$ | 正弦波の時間関数表現 |
+| 瞬時値 | $v(t) = V_m \sin(\omega t + \phi)$ | 正弦波の時間関数表現（V_m＝最大値、φ＝初位相 [rad]） |
 
 ## 3主要角の対応表📊 このセクションの理解度:◎○△×
 
