@@ -8164,6 +8164,45 @@ const kikaiSectionMark = raw => {
   return v;
 };
 
+/* noteFlyOff: 復習に回る記録（△・×・うる覚え・要確認・間違えた）を付けた瞬間、押したボタンから小さな紙飛行機が
+   右上へ飛んで消える。「押した＝復習に送った」を見える化する（柱5 PDCA）。理解した・◎○・記録解除では飛ばない。
+   色は --bg-elev／--ink-soft のみ（Wiki 色ポリシー）。prefers-reduced-motion では何もしない。
+   法規 hoki-components.jsx の noteFlyOff（#1719）と同じ処理。科目をまたぐ共有ソースが無いので4科目がそれぞれ持つ。
+   元: Lucian UX/UI Prompt 005-paper-plane-send（MIT © 2026 Seokwoooo）。 */
+function noteFlyOff(fromEl) {
+  try {
+    if (!fromEl || typeof document === 'undefined') return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const fp = document.createElement('div');
+    if (!fp.animate) return;
+    const b = fromEl.getBoundingClientRect();
+    const x = b.left + b.width / 2 - 9,
+      y = b.top + b.height / 2 - 8;
+    fp.setAttribute('aria-hidden', 'true');
+    fp.style.cssText = 'position:fixed;left:0;top:0;width:18px;height:16px;pointer-events:none;z-index:9999';
+    fp.innerHTML = '<svg viewBox="0 0 28 24" width="18" height="16"><g stroke="var(--ink-soft)" stroke-width="1.2" stroke-linejoin="round"><path d="M1 3 27 12 10 13Z" fill="var(--bg-elev)"/><path d="M10 13 27 12 6 22Z" fill="var(--bg-elev)"/></g></svg>';
+    document.body.appendChild(fp);
+    const anim = fp.animate([{
+      transform: `translate(${x}px,${y}px) rotate(-10deg) scale(.8)`,
+      opacity: 0
+    }, {
+      transform: `translate(${x + 30}px,${y - 34}px) rotate(-24deg) scale(1)`,
+      opacity: 1,
+      offset: 0.3
+    }, {
+      transform: `translate(${x + 120}px,${y - 110}px) rotate(-34deg) scale(.7)`,
+      opacity: 0
+    }], {
+      duration: 800,
+      easing: 'cubic-bezier(.3,0,.3,1)',
+      fill: 'forwards'
+    });
+    const done = () => fp.remove();
+    anim.onfinish = done;
+    setTimeout(done, 1200);
+  } catch (e) {}
+}
+
 /* ---- SectionCheck: セクション末尾の自己評価（◎△×）。「結論を隠して1行で言えるか」で付ける（下期規範 L1） ---- */
 const SectionCheck = ({
   pageId,
@@ -8227,7 +8266,10 @@ const SectionCheck = ({
     }
   }, "📊 この節の結論を、本文を隠して1行で言えるか:"), buttons.map(b => /*#__PURE__*/React.createElement("button", {
     key: b.mark,
-    onClick: () => update(b.mark),
+    onClick: e => {
+      if (b.mark !== status && (b.mark === '△' || b.mark === '×')) noteFlyOff(e.currentTarget);
+      update(b.mark);
+    },
     "aria-label": `${b.mark} ${b.label}`,
     style: {
       padding: '4px 10px',
@@ -8454,7 +8496,7 @@ const QuickReviewItem = ({
       }));
     } catch (e) {}
   };
-  const mark = pressed => {
+  const mark = (pressed, el) => {
     const today = kikaiLocalDate();
     const prev = rec ? rec.status === 'review' ? 'vague' : rec.status : null;
     // 同じ日に同じ記号をもう一度押したときは何もしない（取消は「記録を消す」だけ）。
@@ -8490,6 +8532,7 @@ const QuickReviewItem = ({
       localStorage.setItem(key, JSON.stringify(next));
     } catch (e) {}
     setRec(next);
+    if (status !== 'understood') noteFlyOff(el);
     try {
       window.dispatchEvent(new CustomEvent('section-check-changed', {
         detail: {
@@ -8510,17 +8553,17 @@ const QuickReviewItem = ({
     type: "button",
     className: `qr-btn ok${st === 'understood' ? ' on' : ''}`,
     "aria-pressed": st === 'understood',
-    onClick: () => mark('understood')
+    onClick: e => mark('understood', e.currentTarget)
   }, "◎ 即答できた"), /*#__PURE__*/React.createElement("button", {
     type: "button",
     className: `qr-btn ng${st === 'vague' ? ' on' : ''}`,
     "aria-pressed": st === 'vague',
-    onClick: () => mark('vague')
+    onClick: e => mark('vague', e.currentTarget)
   }, "△ 詰まった"), /*#__PURE__*/React.createElement("button", {
     type: "button",
     className: `qr-btn ng${st === 'wrong' ? ' on' : ''}`,
     "aria-pressed": st === 'wrong',
-    onClick: () => mark('wrong')
+    onClick: e => mark('wrong', e.currentTarget)
   }, "× 出てこない・違った"), rec && rec.reviewCount > 0 && /*#__PURE__*/React.createElement("span", {
     className: "qr-meta"
   }, rec.reviewCount, " 回目", rec.lastSeen ? '・' + (kikaiLocalDate(rec.lastSeen) || String(rec.lastSeen).slice(0, 10)) : '', ' ', /*#__PURE__*/React.createElement("button", {

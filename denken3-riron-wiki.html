@@ -3268,6 +3268,45 @@ function useCheckRecord(storageKey, buildMeta) {
   return [record, setStatus, setMemo];
 }
 
+/* noteFlyOff: 復習に回る記録（△・×・うる覚え・要確認・間違えた）を付けた瞬間、押したボタンから小さな紙飛行機が
+   右上へ飛んで消える。「押した＝復習に送った」を見える化する（柱5 PDCA）。理解した・◎○・記録解除では飛ばない。
+   色は --bg-elev／--ink-soft のみ（Wiki 色ポリシー）。prefers-reduced-motion では何もしない。
+   法規 hoki-components.jsx の noteFlyOff（#1719）と同じ処理。科目をまたぐ共有ソースが無いので4科目がそれぞれ持つ。
+   元: Lucian UX/UI Prompt 005-paper-plane-send（MIT © 2026 Seokwoooo）。 */
+function noteFlyOff(fromEl) {
+  try {
+    if (!fromEl || typeof document === 'undefined') return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const fp = document.createElement('div');
+    if (!fp.animate) return;
+    const b = fromEl.getBoundingClientRect();
+    const x = b.left + b.width / 2 - 9,
+      y = b.top + b.height / 2 - 8;
+    fp.setAttribute('aria-hidden', 'true');
+    fp.style.cssText = 'position:fixed;left:0;top:0;width:18px;height:16px;pointer-events:none;z-index:9999';
+    fp.innerHTML = '<svg viewBox="0 0 28 24" width="18" height="16"><g stroke="var(--ink-soft)" stroke-width="1.2" stroke-linejoin="round"><path d="M1 3 27 12 10 13Z" fill="var(--bg-elev)"/><path d="M10 13 27 12 6 22Z" fill="var(--bg-elev)"/></g></svg>';
+    document.body.appendChild(fp);
+    const anim = fp.animate([{
+      transform: `translate(${x}px,${y}px) rotate(-10deg) scale(.8)`,
+      opacity: 0
+    }, {
+      transform: `translate(${x + 30}px,${y - 34}px) rotate(-24deg) scale(1)`,
+      opacity: 1,
+      offset: 0.3
+    }, {
+      transform: `translate(${x + 120}px,${y - 110}px) rotate(-34deg) scale(.7)`,
+      opacity: 0
+    }], {
+      duration: 800,
+      easing: 'cubic-bezier(.3,0,.3,1)',
+      fill: 'forwards'
+    });
+    const done = () => fp.remove();
+    anim.onfinish = done;
+    setTimeout(done, 1200);
+  } catch (e) {}
+}
+
 // 4状態ピル + 任意で reviewCount badge
 const CheckPills = ({
   record,
@@ -3300,7 +3339,10 @@ const CheckPills = ({
       type: "button",
       "aria-pressed": active,
       "aria-label": `理解度: ${def.label}${active ? "（選択中）" : ""}`,
-      onClick: () => onSetStatus(active ? null : key),
+      onClick: e => {
+        if (!active && key !== "understood") noteFlyOff(e.currentTarget);
+        onSetStatus(active ? null : key);
+      },
       style: {
         padding: "4px 11px",
         borderRadius: "999px",
@@ -51055,7 +51097,10 @@ const SectionCheck = ({
     }
   }, "📊 このセクションの理解度:"), buttons.map(b => /*#__PURE__*/React.createElement("button", {
     key: b.mark,
-    onClick: () => update(b.mark),
+    onClick: e => {
+      if (b.mark !== status && (b.mark === '△' || b.mark === '×')) noteFlyOff(e.currentTarget);
+      update(b.mark);
+    },
     "aria-label": `理解度 ${b.label}`,
     style: {
       padding: '4px 10px',
