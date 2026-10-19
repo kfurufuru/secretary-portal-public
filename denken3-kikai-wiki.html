@@ -1285,6 +1285,10 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
 
 .qr-meta { font-size: 11px; color: var(--ink-mute); }
 
+/* △・× の問の下に出る「解説を読む → 節」（kikai-tracker.jsx の QrSeeLink） */
+.qr-see { margin: 4px 0 0 2px; font-size: 12px; }
+.qr-see a { color: var(--accent-ink); text-decoration: underline; font-weight: 600; margin-right: 6px; }
+
 /* 本文中の用語（Term）。点線の下線で「意味が出る」ことを示す。 */
 .term {
   border-bottom: 1.5px dotted var(--accent);
@@ -8513,6 +8517,291 @@ const qrSummaryText = el => {
   const sum = kids.find(k => k && k.type === 'summary');
   return (sum ? qrText(sum) : qrText(el)).trim();
 };
+
+/* ---- 1分復習 → 本文の解説へ（柱5 の Act。△・× を押した問から、その答えを説明している節へ戻る） ----
+
+   1分復習の答えは結論の1行だけで、「なぜそうなるか」は本文の節にある。以前は × を押しても
+   どの節を読み直せばよいかが出ず、ページの中を探すしかなかった。
+
+   表は ページid → { 問い文: 見出しid }。問い文は記録キー（QuickReviewItem の q）と同じ文字列なので、
+   ページ側の <details> には手を入れない（記録キーを守る理由と同じく、問は書き換えない前提の値）。
+   値 null は「このページに答えを説明している節が無い」の明示（リンクの代わりにそう表示する）。
+   問・見出しid と表のずれは scripts/check_kikai_qr_see.js が CI で止める（問を足したらここに行を足す）。 */
+const KIKAI_QR_SEE = {
+  'induction-machine': {
+    "同期速度 N_s の式は？（4極・50Hz では？）": 'overview',
+    "滑り s の定義は？": 'overview',
+    "回転子（二次）周波数 f₂ は？": 'circuit',
+    "二次入力 P₂ の電力配分比は？": 'circuit',
+    "Y-Δ 始動で始動電流・トルクは全電圧始動の何倍？": 'start',
+    "「二次抵抗を k 倍にすると同一トルクの滑りも k 倍」と「トルクは滑りに比例」— 厳密なのはどちら？": 'torque-lowslip',
+    "トルク一定の負荷で電源電圧が 0.9 倍になると、滑りは何倍になるか？": 'solver-map',
+    "停動滑り s_m の式は？停動トルクに入らない量は？": 'torque',
+    "等価回路の定数を決める3つの測定と、それぞれ何が分かるか？": 'tests',
+    "制動法3種と、それぞれ滑りはどの領域？": 'braking'
+  },
+  'denki-kakou': {
+    "放電加工の加工液は導電性？絶縁性？": 'edm',
+    "電解加工で工作物は陽極・陰極のどちらにする？": 'ecm',
+    "工具電極がほとんど消耗しないのは放電加工と電解加工のどちら？": 'ecm',
+    "真空を必要とする加工方式は？": 'beam-eb',
+    "ガラス・セラミックスなど絶縁性の硬脆材料に適する加工方式は？": 'ultrasonic',
+    "導電性材料に限られる除去加工は？": 'compare',
+    "抵抗溶接とアーク溶接の熱源はそれぞれ何？": 'welding',
+    "アーク溶接の電源に垂下特性が求められる理由は？": 'welding-arc'
+  },
+  'mechatronics': {
+    "メカトロニクスシステムの信号の流れは？": 'overview',
+    "エンコーダとレゾルバの出力の違いは？": 'sensors',
+    "タコジェネレータは何を検出する？": 'sensors',
+    "熱電対と測温抵抗体の原理の違いは？": 'sensors',
+    "アクチュエータ3方式の使い分けは？": 'actuators',
+    "サーボ機構の定義は？": 'servo',
+    "ステッピングモータの回転角と回転速度は何で決まる？": 'stepping',
+    "ステッピングモータが開ループで位置決めできる理由と、その弱点は？": 'stepping',
+    "ステッピングモータの PM形・VR形・HB形で、無通電でも位置を保てるのはどれ？": 'stepping-types',
+    "SRM の回転子の構造と、主な弱点は？": 'srm',
+    "減速比 i の減速機を介すと速度・トルク・負荷慣性はどうなる？（損失無視）": 'mech-elec'
+  },
+  'dc-machine': {
+    "直流機の誘導起電力 E とトルク T の式は？": 'emf',
+    "直流電動機の端子電圧 V と E の関係は？": 'emf',
+    "直巻電動機を無負荷運転してはいけない理由は？": 'excitation',
+    "直巻式の特徴と代表用途は？": 'excitation',
+    "定格以上の高速度域で使う速度制御は？": 'speed-control',
+    "回転速度 N の式は？ 電圧を上げる・磁束を弱める、それぞれ速度はどうなる？": 'emf',
+    "E·I_a は何を表すか？ トルクとの関係は？": 'emf',
+    "弱め界磁にした直後と最終の定常状態で、電機子電流とトルクはどうなるか？（負荷トルク一定）": 'speed-control',
+    "最大効率の条件 I_a²·R_a = P₀ をそのまま使えないのはどんなときか？": 'dc-loss',
+    "電磁トルクと軸トルクの違いは？": 'dc-loss',
+    "始動時に大電流が流れる理由は？ 対策は？": 'dc-start-resistor',
+    "電気制動3種と、電力の行き先は？": 'dc-braking',
+    "直流電動機を逆転させるには何を逆にするか？": 'dc-braking',
+    "分巻と直巻でトルク特性はどう違うか？": 'excitation',
+    "補極と補償巻線の役割の違いは？": 'reaction',
+    "導体1本の起電力と、1巻きコイルの起電力は？": 'emf-blv',
+    "分巻発電機が自力で電圧を立ち上げる仕組みは？": 'generator-selfex',
+    "直巻発電機の電圧が安定するのはどちらの領域か？": 'generator-series',
+    "交流整流子電動機が交流でも同じ向きに回るのはなぜか？": 'ac-com-why',
+    "交流整流子電動機で界磁鉄心を積層にする理由と、回転速度は？": 'ac-commutator-motor',
+    "ブラシレス DC モータは何を半導体で置き換えたか？": 'brushless-dc'
+  },
+  'synchronous': {
+    "同期機の同期速度と滑りは？": 'structure',
+    "電機子反作用（同期発電機）：遅れ／進み力率の作用は？": 'reaction',
+    "V カーブの底点は何力率？": 'vcurve-phasor',
+    "巻線係数は何の積か？ 分布巻・短節巻で起電力は増えるか減るか？": 'sy-winding',
+    "同期発電機の電圧変動率の定義は？ 負になることはあるか？": 'vcurve-vreg',
+    "同期調相機を過励磁にすると何と同じ働きか？": 'vcurve-generator',
+    "同期電動機に始動トルクが無いのはなぜか？": 'start-hunting',
+    "乱調の原因を4つ挙げよ。対策は？": 'start-hunting',
+    "脱出トルクとは？ 大きくするには？": 'start-hunting',
+    "SPM と IPM の違いは？ リラクタンストルクが使えるのはどちら？": 'sy-pm',
+    "短絡比 K_s は？大きいと何が良い？": 'vcurve-scr',
+    "円筒形同期機が最大出力となる内部相差角 δ は？": 'vcurve',
+    "同期電動機の始動法は？なぜ自力始動できない？": 'start-hunting',
+    "乱調とは？その対策は？": 'start-hunting',
+    "E = 4.44fNΦ の 4.44 の出どころは？": 'structure',
+    "水車発電機とタービン発電機の回転子の形は？": 'rotor-types',
+    "並行運転で起電力の大きさに差があると何が流れるか？": 'parallel-cross',
+    "並行運転で、位相と周波数の一致は何で確かめる？": 'parallel',
+    "50 Hz で 6 極機と 4 極機を並行運転すると、回転速度は？": 'parallel',
+    "短絡比から x_s[Ω] を求める式は？": 'parallel-sc'
+  },
+  'single-phase-im': {
+    "単相誘導電動機が自力で始動できない理由は？": 'layers',
+    // 0節の「ミクロの因果」が二重回転磁界と s＝1 の打ち消しを書く
+    "始動トルクの大小順は？": 'start',
+    "コンデンサ始動で位相差が作れる理由は？": 'start',
+    "運転中もコンデンサを残す形式は？": 'start',
+    "単相誘導電動機を逆転させるには？": 'sp-run-reverse'
+  },
+  'power-elec': {
+    "4変換（整流・チョッパ・インバータ・サイクロコンバータ）の入出力は？": 'layers',
+    // 0節の橋②が4つの向き（AC→DC・DC→DC・DC→AC・AC→AC）を並べる
+    "単相全波・三相全波整流の直流平均値は？": 'rectifier',
+    "降圧・昇圧チョッパの出力電圧は？（D=通流率）": 'chopper',
+    "降圧チョッパでオフ期間に導通するのは？電源はどうなる？": 'chopper-path',
+    "昇降圧チョッパの式は？昇圧とどう見分ける？": 'chopper',
+    "電流リプルの式と、最大になる通流率は？": 'chopper-calc',
+    "直流機を降圧チョッパで駆動中に回生するとき、回路は？": 'chopper-regen',
+    "サイリスタ位相制御の出力電圧は制御角 α とどう関係？": 'layers',
+    // 0節の「ミクロの因果」が α で通電区間が決まる理由を書く
+    "単相ブリッジ電圧形で、どの素子が導通するかは何で決まる？": 'inv-bridge',
+    "誘導性負荷で還流区間が出るのはなぜ？そこで電力はどちらへ？": 'inv-bridge',
+    "方形波出力の実効値と基本波は？残りはどれくらい？": 'inv-bridge',
+    "単独運転検出は何を検出する？受動的方式の弱点は？": 'inv-pcs',
+    "三相インバータの基本構成は？": 'inverter'
+  },
+  'keiki-yo-henseiki': {
+    "CT と VT は、一次側からそれぞれ何を強制される？": 'derived',
+    "CT の二次で禁止されている操作と、その理由は？": 'ct',
+    "VT の二次で禁止されている操作と、その理由は？": 'vt',
+    "CT の二次回路にヒューズを入れないのはなぜ？": 'ct',
+    "CT 二次側の接地は開放スパイクの対策になる？": 'ct',
+    "計器用変成器の二次側電路の接地の種類は？": 'vt',
+    "1000/5 A の貫通形 CT に一次導体を 2 回通すと？": 'ratio',
+    "CT の負担は、二次側のインピーダンス Z_B が大きいほど増える？小さいほど増える？": 'ratio',
+    "零相変流器（ZCT）は何を検出する？": 'ct'
+  },
+  'auto-control': {
+    "一次遅れ系の伝達関数は？": 'tf',
+    "二次系の減衰係数 ζ による応答の違いは？": 'tf',
+    "ステップ応答の4指標は？ それぞれ何 % を測る？": 'ac-step-index',
+    "一次遅れ系で、時定数 T のとき最終値の何 % に達するか？": 'ac-step-index',
+    "ステップ入力に対する定常偏差の式は？ ゼロにするには？": 'ac-steady',
+    "PID の伝達関数は？ T_i を小さくすると積分は強くなるか弱くなるか？": 'pid',
+    "I 動作と D 動作は安定度をどちらへ動かすか？": 'pid',
+    "シーケンス制御とフィードバック制御の決定的な違いは？": 'ac-seq-relay',
+    "自己保持回路とインタロックは、それぞれ何接点を使うか？": 'ac-seq-relay',
+    "フィードバック結合の閉ループ伝達関数は？一巡伝達関数との違いは？": 'block',
+    "直列・並列の合成は？ループが複数あるときの手順は？": 'combine',
+    // 直列・並列は combine の表。次の節が multi-loop
+    "引出点・加え合わせ点をブロック G の後ろへ移すと？": 'move-points',
+    "周波数伝達関数はどう作る？ゲインの dB は？": 'freq-response',
+    "一次遅れの折れ点角周波数・そこでのゲインと位相は？": 'freq-response',
+    "RC・RL 回路の時定数は？": 'vector-locus',
+    "負帰還をかけると直流ゲインと折れ点はどうなる？": 'fb-freq',
+    "RLC 直列（出力＝C）の共振角周波数と共振時のゲインは？": 'resonance',
+    "一次遅れ・積分要素のベクトル軌跡は？": 'vector-locus',
+    "3つの安定判別法は？": 'stability',
+    "安定度の実用的な目安は？": 'stability',
+    "P・I・D 各動作の特徴は？": 'pid',
+    "フィードバック制御とシーケンス制御の違いは？": 'ac-seq-relay'
+  },
+  'info-elec': {
+    "ド・モルガンの定理は？": 'logic',
+    "RS-FF の禁止入力は？JK-FF の J=K=1 は？": 'ff-table',
+    "4種の FF は何が違う？T-FF は？": 'ff-table',
+    "FF を含む回路の出力はどう追う？": 'ff-trace',
+    "n 段つなぐと 1/2ⁿ 分周になる条件は？": 'ff-trace',
+    "クロック端子の三角と丸は？": 'ff-trace',
+    "n ビット A/D 変換の量子化段階数は？": 'adda',
+    "(1010)₂ は10進でいくつ？": 'radix',
+    "真理値表から積和形式・和積形式を作る手順は？": 'sop-pos',
+    "簡単化でよく使う恒等式は？": 'sop-pos',
+    "半加算器と全加算器の式は？": 'adder',
+    "r 進法の値はどう出す？10進から r 進へ戻すには？": 'r-adic',
+    "FDM と TDM は何で分ける？": 'multiplex',
+    "PCM の3段の順番と標本化定理は？": 'pcm',
+    "アナログ中継とディジタル中継の違いは？": 'analog-digital',
+    "FM が AM より雑音に強い理由は？": 'modulation',
+    "流れ図の穴埋めはどう解く？": 'flow-blank',
+    "合計から平均を出すとき、何で割る？": 'flow-blank',
+    "最大値の初期化を M←0 にすると？": 'flow-blank',
+    "回路図から真理値表を起こす手順は？": 'circuit-to-table',
+    "表から作った式と、回路から畳んだ式の形が違ったら？": 'circuit-to-table',
+    "タイムチャート・多段接続の解き方は？": 'timing-chart',
+    "ビットパターンの論理演算のコツは？": 'bitwise',
+    "サイクルタイムと1命令の平均実行時間は？": 'cpi',
+    "r 進 n 桁で表せる範囲は？必要な桁数は？": 'digit-count'
+  },
+  'lighting': {
+    "光束・光度・照度・輝度・光束発散度の単位は？": 'units',
+    "点光源・距離 r の面の照度（逆二乗の法則）は？": 'laws',
+    "屋内照明の平均照度の式は？": 'laws',
+    "均等放射の点光源の全光束は？平均光度は？": 'laws',
+    "光源が複数あるときの照度は？": 'superposition',
+    "輝度の式は？球形光源では何で割る？": 'luminance',
+    "完全拡散面の M と L の関係は？反射面では？": 'luminance',
+    "直管（円筒）光源の実面積と投影面積は？": 'linear-source',
+    "直下から外れた点の照度が最大になる高さは？": 'laws',
+    "立体角の単位と、全立体角は？": 'units',
+    "照明率 U と保守率 M は何の割合か？": 'laws',
+    "記号 M が2つ出てくるのは？": 'units',
+    "光束発散度 M の式と、照度 E との違いは？": 'luminance'
+  },
+  'heat': {
+    "ジュール熱の式は？": 'joule',
+    "温度上昇の式は？": 'joule',
+    "IH調理器・焼入れの加熱方式は？電子レンジは？塗装の乾燥は？": 'methods',
+    "ヒートポンプの COP はなぜ 1 を超える？": 'heatpump',
+    "顕熱と潜熱の式は？潜熱の値は？": 'sensible-latent',
+    "含水物体の乾燥に要る熱の3項は？": 'drying-steps',
+    "熱と電気の対応は？熱抵抗の式は？": 'thermal-circuit',
+    "「単位面積当たりの熱損失」と言われたら？": 'thermal-circuit',
+    "放射で熱流を求める式は？": 'radiation',
+    "誘導加熱と誘電加熱、周波数を上げると何が起きる？": 'freq-dependence',
+    "熱量 [kJ] を電力量 [kWh] に直すには？COP は掛けるか割るか？": 'heatpump'
+  },
+  'chemistry': {
+    "ファラデーの法則（析出量）の式は？": 'faraday',
+    "式の I·t は理論の何と同じ？": 'faraday',
+    "鉛蓄電池の起電力と放電時の変化は？": 'lead-acid',
+    "電気二重層キャパシタと二次電池の原理の違いと、そこから出る特徴は？": 'edlc-compare'
+  },
+  'drive-mech': {
+    "ポンプの所要動力の式は？": 'power',
+    "ポンプ・送風機の負荷特性は？": 'load-types',
+    "はずみ車が貯えるエネルギーは？": 'flywheel-accel',
+    "はずみ車を静止から回し上げる時間は？": 'flywheel-accel',
+    "はずみ車効果 GD² から慣性モーメント J を出すには？": 'flywheel',
+    "釣合いおもり付きエレベータの所要出力は？": 'elevator',
+    "減速比 i の減速機を通すと速度・トルク・動力は？": 'gear',
+    "ポンプの H は何を指す？流量の単位は？": 'power',
+    "トルク曲線の交点はいつ安定運転できる？": 'load-types'
+  }
+};
+
+/* 見出しの文字列（「4.始動方式」の番号と本文の間に空白を入れる）。描画済みの DOM から読む。 */
+const qrHeadingLabel = id => {
+  try {
+    const h = document.getElementById(id);
+    if (!h) return '';
+    const num = h.querySelector('.h-num');
+    const all = (h.textContent || '').trim();
+    if (num && all.indexOf(num.textContent) === 0) return num.textContent.trim() + ' ' + all.slice(num.textContent.length).trim();
+    return all;
+  } catch (e) {
+    return '';
+  }
+};
+
+/* 解説の節へ移る。戻るボタンで1分復習へ戻れるよう、今の履歴を「#page/quick-review」に置き換えてから進む。 */
+const qrGoSection = (pageId, sec) => {
+  try {
+    if (document.getElementById('quick-review') && history.replaceState) {
+      history.replaceState(null, '', '#' + pageId + '/quick-review');
+    }
+  } catch (e) {}
+  location.hash = pageId + '/' + encodeURIComponent(sec);
+  // 同じ節を続けて押すと hashchange が出ないので、ここでも直接移る
+  try {
+    const el = document.getElementById(sec);
+    if (el) el.scrollIntoView({
+      block: 'start',
+      behavior: 'auto'
+    });
+  } catch (e) {}
+};
+
+/* △・× の問にだけ出す「解説を読む」行。見出しが見つからないときは何も出さない（fail-open）。 */
+const QrSeeLink = ({
+  pageId,
+  sec
+}) => {
+  const [label, setLabel] = React.useState('');
+  React.useEffect(() => {
+    if (sec) setLabel(qrHeadingLabel(sec));
+  }, [sec]);
+  if (sec === null) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "qr-meta qr-see"
+    }, "このページには、この答えを説明している節がまだ無い（答えの行と教科書で確認する）。");
+  }
+  if (!sec || !label) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "qr-see"
+  }, /*#__PURE__*/React.createElement("a", {
+    href: '#' + pageId + '/' + sec,
+    onClick: e => {
+      e.preventDefault();
+      qrGoSection(pageId, sec);
+    }
+  }, "解説を読む → ", label), /*#__PURE__*/React.createElement("span", {
+    className: "qr-meta"
+  }, "（読んだら、戻るボタンでここへ戻れる）"));
+};
 const QuickReviewItem = ({
   pageId,
   pageTitle,
@@ -8520,6 +8809,8 @@ const QuickReviewItem = ({
   children
 }) => {
   const key = `denken_check::kikai_${pageId}::quickreview::${kikaiTrapHash(q)}`;
+  const seeMap = KIKAI_QR_SEE[pageId] || {};
+  const sec = Object.prototype.hasOwnProperty.call(seeMap, q) ? seeMap[q] : undefined;
   const [rec, setRec] = React.useState(() => {
     try {
       const v = localStorage.getItem(key);
@@ -8573,7 +8864,8 @@ const QuickReviewItem = ({
       itemType: 'quick-review',
       articleTitle: '機械 1分復習 — ' + pageTitle,
       itemTitle: q.length > 44 ? q.slice(0, 44) + '…' : q,
-      articleUrl: 'denken3-kikai-wiki.html#' + pageId,
+      // 間違いノートの「記事を開く」も、解説の節へ直接着地させる
+      articleUrl: 'denken3-kikai-wiki.html#' + pageId + (sec ? '/' + encodeURIComponent(sec) : ''),
       memo: status === 'understood' ? '◎ 即答できた' : status === 'wrong' ? '× 出てこない・違った' : sameDay ? '△ 同じ日の再回答' : '△ 詰まった'
     });
     try {
@@ -8635,7 +8927,10 @@ const QuickReviewItem = ({
     style: {
       marginTop: 4
     }
-  }, note));
+  }, note), (st === 'vague' || st === 'wrong') && /*#__PURE__*/React.createElement(QrSeeLink, {
+    pageId: pageId,
+    sec: sec
+  }));
 };
 
 /* 既存の <details> 群をそのまま包む。ページ側は要素を並べ替えずに済む。 */
