@@ -994,25 +994,30 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 5px; border: 2px solid var(--bg); }
 ::-webkit-scrollbar-thumb:hover { background: var(--ink-mute); }
-    /* 電力の流れの棒（HeatFlowBars）。電力Wiki（denryoku-head-template.html）と同じ見た目 */
-    .hf-flow { list-style: none; margin: 10px 0 14px; padding: 0; display: grid; }
-    .hf-node { border-left: 4px solid var(--ink-soft); background: var(--bg-sunken); padding: 7px 10px; border-radius: 0 4px 4px 0; display: grid; gap: 1px; }
-    .hf-node.m { border-color: var(--ok); background: var(--ok-soft); }
-    .hf-node.e { border-color: var(--info); background: var(--bg-sunken); }
-    .hf-nm { font-weight: 700; font-size: 14px; }
-    .hf-al { font-size: 12.5px; color: var(--ink-soft); }
-    .hf-loss { position: relative; margin-left: 18px; padding: 4px 10px 4px 14px; border-left: 2px dashed var(--rule); font-size: 13px; color: var(--warn); }
-    .hf-loss.big { font-weight: 700; }
-    .hf-loss::before { content: "−"; position: absolute; left: -9px; top: 4px; width: 16px; height: 16px; line-height: 15px; text-align: center; border-radius: 50%; background: var(--bg); border: 1px solid var(--warn); font-size: 12px; font-weight: 700; }
-    .hf-wf { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-    .hf-loss .hf-wf { margin-left: -20px; }
-    .hf-tr { flex: 1; position: relative; height: 9px; border-radius: 2px; }
-    .hf-node .hf-tr { background: var(--bg-elev); }
-    .hf-tr i { position: absolute; top: 0; bottom: 0; border-radius: 2px; background: var(--ink-soft); }
-    .hf-node.m .hf-tr i { background: var(--ok); }
-    .hf-node.e .hf-tr i { background: var(--info); }
-    .hf-loss .hf-tr i { background: var(--warn); min-width: 2px; } /* 損失が1%未満（送電・変圧器）でも棒が消えないように */
-    .hf-v { width: 84px; text-align: right; font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+    /* 電力の分かれ方の積み上げ棒（PowerSplitBars）。損失＝--warn、負荷＝--info */
+    .psb { margin: 14px 0 18px; padding: 16px 18px 12px; background: var(--bg-elev); border: 1px solid var(--rule); border-radius: 10px; }
+    .psb-legend { display: flex; gap: 18px; font-size: 12.5px; color: var(--ink-soft); margin-bottom: 10px; }
+    .psb-legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .psb-sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+    .psb-sw.loss, .psb-seg.loss { background: var(--warn); }
+    .psb-sw.load, .psb-seg.load { background: var(--info); }
+    .psb-row { padding: 10px 0 12px; border-top: 1px solid var(--rule); }
+    .psb-row:first-of-type { border-top: 0; }
+    .psb-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+    .psb-label { font-weight: 700; font-size: 14.5px; }
+    .psb-eta { font-size: 12.5px; color: var(--ink-soft); white-space: nowrap; }
+    .psb-eta b { font-size: 17px; color: var(--ink); font-variant-numeric: tabular-nums; margin-left: 2px; }
+    .psb-track { display: flex; height: 20px; background-color: var(--bg-sunken); border-radius: 5px; overflow: hidden; }
+    .psb-seg { height: 100%; }
+    .psb-seg.loss + .psb-seg.load { box-shadow: inset 2px 0 0 var(--bg-elev); }
+    .psb-vals { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 6px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+    .psb-vals .loss { color: var(--warn); font-weight: 600; }
+    .psb-vals .load { color: var(--info); font-weight: 600; }
+    .psb-vals .tot { color: var(--ink-mute); margin-left: auto; }
+    .psb-axis { position: relative; height: 18px; margin-top: 4px; border-top: 1px solid var(--rule); font-size: 11px; color: var(--ink-mute); font-variant-numeric: tabular-nums; }
+    .psb-axis span { position: absolute; top: 3px; transform: translateX(-50%); white-space: nowrap; }
+    .psb-axis span:first-child { transform: none; }
+    .psb-axis span:last-child { transform: translateX(-100%); }
   </style>
 </head>
 <body>
@@ -4841,67 +4846,77 @@ const FlemingHandsFigure = ({
    Export to window
    ============================================================ */
 
-/* 電力の流れを「棒の長さ＝電力」で描く。node はその段の値、loss はその段で抜ける損失。
-   前の node − loss が次の node と合わないときは console.error を出す（例の数値の取り違え検出）。
-   電力Wiki（denryoku-page-stubs.jsx）の HeatFlowBars と同じもの。max を渡すと2つの図を同じ縮尺で描ける。 */
-const HeatFlowBars = ({
-  steps,
-  unit,
-  decimals = 2,
-  max: maxIn
+/* 電源が出す電力が「損失」と「負荷」にどう分かれるかを、1条件＝1本の積み上げ棒で描く。
+   rows: [{ label(ReactNode), aria(文字列), loss, load, eta(表示文字列) }]。legend は凡例の名前、short は棒の下の数値に付ける短い名前。全行を同じ縮尺（max）で並べ、
+   ticks の位置に目盛りの線を引く。loss＋load が max を超えたら console.error（例の数値の取り違え検出）。 */
+const PowerSplitBars = ({
+  rows,
+  max,
+  unit = "W",
+  ticks = [],
+  legend = ["損失", "負荷"],
+  short = ["損失", "負荷"]
 }) => {
-  const max = maxIn || steps[0].v;
-  if (max < steps[0].v) console.error('HeatFlowBars: max が最初の段より小さい（棒が100%を超える）', max, steps[0].v);
-  let cur = null;
-  return /*#__PURE__*/React.createElement("ol", {
-    className: "hf-flow"
-  }, steps.map((st, i) => {
-    let right = null,
-      width = 0,
-      label = '';
-    if (st.loss) {
-      cur -= st.v;
-      right = 100 - (cur + st.v) / max * 100;
-      width = st.v / max * 100;
-      label = '−' + st.v.toFixed(decimals);
-    } else {
-      if (cur !== null && Math.abs(cur - st.v) > 0.005) console.error('HeatFlowBars: 例の数値が合わない', st.name, cur, st.v);
-      cur = st.v;
-      width = st.v / max * 100;
-      label = st.v.toFixed(decimals) + ' ' + unit;
+  const fmt = v => String(Math.round(v * 100) / 100);
+  rows.forEach(r => {
+    if (r.loss + r.load > max + 1e-9) console.error("PowerSplitBars: max を超える行", r.aria, r.loss + r.load, max);
+  });
+  const grid = ticks.filter(t => t > 0 && t < max).map(t => "linear-gradient(to right, transparent calc(" + t / max * 100 + "% - 0.5px), var(--rule) calc(" + t / max * 100 + "% - 0.5px), var(--rule) calc(" + t / max * 100 + "% + 0.5px), transparent calc(" + t / max * 100 + "% + 0.5px))").join(", ");
+  return /*#__PURE__*/React.createElement("div", {
+    className: "psb"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "psb-legend"
+  }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("i", {
+    className: "psb-sw loss"
+  }), legend[0]), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("i", {
+    className: "psb-sw load"
+  }), legend[1])), rows.map((r, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "psb-row"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "psb-head"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "psb-label"
+  }, r.label), /*#__PURE__*/React.createElement("span", {
+    className: "psb-eta"
+  }, "効率 ", /*#__PURE__*/React.createElement("b", null, r.eta))), /*#__PURE__*/React.createElement("div", {
+    className: "psb-track",
+    role: "img",
+    "aria-label": r.aria + "：損失 " + fmt(r.loss) + " " + unit + "、負荷 " + fmt(r.load) + " " + unit,
+    style: grid ? {
+      backgroundImage: grid
+    } : undefined
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "psb-seg loss",
+    style: {
+      width: r.loss / max * 100 + "%"
     }
-    const bar = /*#__PURE__*/React.createElement("span", {
-      className: "hf-wf"
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "hf-tr"
-    }, /*#__PURE__*/React.createElement("i", {
-      style: right === null ? {
-        left: 0,
-        width: width + '%'
-      } : {
-        right: right + '%',
-        width: width + '%'
-      }
-    })), /*#__PURE__*/React.createElement("span", {
-      className: "hf-v"
-    }, label));
-    if (st.loss) return /*#__PURE__*/React.createElement("li", {
-      key: i,
-      className: 'hf-loss' + (st.big ? ' big' : '')
-    }, st.name, bar);
-    return /*#__PURE__*/React.createElement("li", {
-      key: i,
-      className: 'hf-node ' + (st.kind || '')
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "hf-nm"
-    }, st.name), st.alias && /*#__PURE__*/React.createElement("span", {
-      className: "hf-al"
-    }, st.alias), bar);
-  }));
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "psb-seg load",
+    style: {
+      width: r.load / max * 100 + "%"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "psb-vals"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "loss"
+  }, short[0], " ", fmt(r.loss), " ", unit), /*#__PURE__*/React.createElement("span", {
+    className: "load"
+  }, short[1], " ", fmt(r.load), " ", unit), /*#__PURE__*/React.createElement("span", {
+    className: "tot"
+  }, "電源 ", fmt(r.loss + r.load), " ", unit)))), ticks.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "psb-axis",
+    "aria-hidden": "true"
+  }, ticks.map(t => /*#__PURE__*/React.createElement("span", {
+    key: t,
+    style: {
+      left: t / max * 100 + "%"
+    }
+  }, t === max ? t + " " + unit : t))));
 };
 Object.assign(window, {
   Callout,
-  HeatFlowBars,
+  PowerSplitBars,
   DetailLink,
   FlemingHandsFigure,
   FormulaTable,
@@ -45979,69 +45994,46 @@ const DcCircuitLearnTab = ({
   }
 }, "※ 効率 η は「負荷消費電力 / 等価電源 V", /*#__PURE__*/React.createElement("sub", null, "th"), " が出す電力 V", /*#__PURE__*/React.createElement("sub", null, "th"), "I」。η = R", /*#__PURE__*/React.createElement("sub", null, "L"), "/(R", /*#__PURE__*/React.createElement("sub", null, "th"), "+R", /*#__PURE__*/React.createElement("sub", null, "L"), ") は分圧と同じ形。")), /*#__PURE__*/React.createElement("h3", {
   id: "z-3conditions-bou"
-}, "電力の流れ（棒の長さ＝電力）"), /*#__PURE__*/React.createElement("p", null, "電源が出す電力は、", /*#__PURE__*/React.createElement("strong", null, "内部抵抗の損失 I²R", /*#__PURE__*/React.createElement("sub", null, "th"), " と負荷電力 I²R", /*#__PURE__*/React.createElement("sub", null, "L"), " に分かれる"), "。同じ電流が流れるので、分かれる比は R", /*#__PURE__*/React.createElement("sub", null, "th"), " : R", /*#__PURE__*/React.createElement("sub", null, "L"), " で、効率 η = R", /*#__PURE__*/React.createElement("sub", null, "L"), "/(R", /*#__PURE__*/React.createElement("sub", null, "th"), "+R", /*#__PURE__*/React.createElement("sub", null, "L"), ") はこの比から出る。上の3条件を同じ縮尺（24 W＝100%）で並べる。"), /*#__PURE__*/React.createElement("p", {
-  style: {
-    margin: "8px 0 0"
-  }
-}, /*#__PURE__*/React.createElement("strong", null, "① R", /*#__PURE__*/React.createElement("sub", null, "L"), " = 4 Ω（最大電力）")), /*#__PURE__*/React.createElement(HeatFlowBars, {
-  unit: "W",
+}, "電力の分かれ方（棒の長さ＝電力）"), /*#__PURE__*/React.createElement("p", null, "電源が出す電力は、", /*#__PURE__*/React.createElement("strong", null, "内部抵抗の損失 I²R", /*#__PURE__*/React.createElement("sub", null, "th")), " と ", /*#__PURE__*/React.createElement("strong", null, "負荷電力 I²R", /*#__PURE__*/React.createElement("sub", null, "L")), " に分かれる。同じ電流が流れるので分かれる比は R", /*#__PURE__*/React.createElement("sub", null, "th"), " : R", /*#__PURE__*/React.createElement("sub", null, "L"), " で、効率 η = R", /*#__PURE__*/React.createElement("sub", null, "L"), "/(R", /*#__PURE__*/React.createElement("sub", null, "th"), "+R", /*#__PURE__*/React.createElement("sub", null, "L"), ") はこの比で決まる。上の3条件を同じ縮尺で並べる（棒全体＝電源が出す電力 V", /*#__PURE__*/React.createElement("sub", null, "th"), "I）。"), /*#__PURE__*/React.createElement(PowerSplitBars, {
   max: 24,
-  steps: [{
-    name: "電源が出す電力 Vₜₕ × I",
-    alias: "12 V × 1.5 A",
-    v: 18
+  ticks: [0, 6, 12, 18, 24],
+  legend: ["内部抵抗の損失", "負荷電力"],
+  rows: [{
+    label: /*#__PURE__*/React.createElement(React.Fragment, null, "① R", /*#__PURE__*/React.createElement("sub", null, "L"), " = 4 Ω", /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 400,
+        color: "var(--ink-mute)",
+        marginLeft: 8
+      }
+    }, "最大電力")),
+    aria: "① RL 4 Ω",
+    loss: 9,
+    load: 9,
+    eta: "50%"
   }, {
-    loss: true,
-    name: "内部抵抗の損失 I² × Rₜₕ = 1.5² × 4",
-    v: 9
+    label: /*#__PURE__*/React.createElement(React.Fragment, null, "② R", /*#__PURE__*/React.createElement("sub", null, "L"), " = 2 Ω", /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 400,
+        color: "var(--ink-mute)",
+        marginLeft: 8
+      }
+    }, "R", /*#__PURE__*/React.createElement("sub", null, "th"), " より小さい")),
+    aria: "② RL 2 Ω",
+    loss: 16,
+    load: 8,
+    eta: "33.3%"
   }, {
-    kind: "e",
-    name: "負荷電力 I² × Rₗ = 1.5² × 4",
-    alias: "効率 9 ÷ 18 = 50%",
-    v: 9
-  }]
-}), /*#__PURE__*/React.createElement("p", {
-  style: {
-    margin: "8px 0 0"
-  }
-}, /*#__PURE__*/React.createElement("strong", null, "② R", /*#__PURE__*/React.createElement("sub", null, "L"), " = 2 Ω（R", /*#__PURE__*/React.createElement("sub", null, "th"), " より小さい）")), /*#__PURE__*/React.createElement(HeatFlowBars, {
-  unit: "W",
-  max: 24,
-  steps: [{
-    name: "電源が出す電力 Vₜₕ × I",
-    alias: "12 V × 2 A。3条件で最も大きい",
-    v: 24
-  }, {
-    loss: true,
-    big: true,
-    name: "内部抵抗の損失 I² × Rₜₕ = 2² × 4",
-    v: 16
-  }, {
-    kind: "e",
-    name: "負荷電力 I² × Rₗ = 2² × 2",
-    alias: "効率 8 ÷ 24 ≒ 33.3%",
-    v: 8
-  }]
-}), /*#__PURE__*/React.createElement("p", {
-  style: {
-    margin: "8px 0 0"
-  }
-}, /*#__PURE__*/React.createElement("strong", null, "③ R", /*#__PURE__*/React.createElement("sub", null, "L"), " = 12 Ω（R", /*#__PURE__*/React.createElement("sub", null, "th"), " より大きい）")), /*#__PURE__*/React.createElement(HeatFlowBars, {
-  unit: "W",
-  max: 24,
-  steps: [{
-    name: "電源が出す電力 Vₜₕ × I",
-    alias: "12 V × 0.75 A",
-    v: 9
-  }, {
-    loss: true,
-    name: "内部抵抗の損失 I² × Rₜₕ = 0.75² × 4",
-    v: 2.25
-  }, {
-    kind: "e",
-    name: "負荷電力 I² × Rₗ = 0.75² × 12",
-    alias: "効率 6.75 ÷ 9 = 75%",
-    v: 6.75
+    label: /*#__PURE__*/React.createElement(React.Fragment, null, "③ R", /*#__PURE__*/React.createElement("sub", null, "L"), " = 12 Ω", /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 400,
+        color: "var(--ink-mute)",
+        marginLeft: 8
+      }
+    }, "R", /*#__PURE__*/React.createElement("sub", null, "th"), " より大きい")),
+    aria: "③ RL 12 Ω",
+    loss: 2.25,
+    load: 6.75,
+    eta: "75%"
   }]
 }), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "この3条件では"), "、② は電源から最も多く引き出すのに、その 2/3 を内部抵抗で失う。③ は損失が最も小さいが、電流が絞られて電源の出す電力そのものが小さい。負荷電力が最大になる ① では、電源の出す電力のちょうど半分が負荷に届く。"), /*#__PURE__*/React.createElement("p", {
   style: {
