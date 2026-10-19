@@ -11567,6 +11567,40 @@ function MinShortcutCard({
     }
   }, "💡 ", hint));
 }
+const NOTE_STATUSES = ['vague', 'review', 'wrong'];
+function noteFlyOff(fromEl) {
+  try {
+    if (!fromEl || typeof document === 'undefined') return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const fp = document.createElement('div');
+    if (!fp.animate) return;
+    const b = fromEl.getBoundingClientRect();
+    const x = b.left + b.width / 2 - 9,
+      y = b.top + b.height / 2 - 8;
+    fp.setAttribute('aria-hidden', 'true');
+    fp.style.cssText = 'position:fixed;left:0;top:0;width:18px;height:16px;pointer-events:none;z-index:9999';
+    fp.innerHTML = '<svg viewBox="0 0 28 24" width="18" height="16"><g stroke="var(--ink-2)" stroke-width="1.2" stroke-linejoin="round"><path d="M1 3 27 12 10 13Z" fill="var(--bg-elev)"/><path d="M10 13 27 12 6 22Z" fill="var(--bg-elev)"/></g></svg>';
+    document.body.appendChild(fp);
+    const anim = fp.animate([{
+      transform: `translate(${x}px,${y}px) rotate(-10deg) scale(.8)`,
+      opacity: 0
+    }, {
+      transform: `translate(${x + 30}px,${y - 34}px) rotate(-24deg) scale(1)`,
+      opacity: 1,
+      offset: 0.3
+    }, {
+      transform: `translate(${x + 120}px,${y - 110}px) rotate(-34deg) scale(.7)`,
+      opacity: 0
+    }], {
+      duration: 800,
+      easing: 'cubic-bezier(.3,0,.3,1)',
+      fill: 'forwards'
+    });
+    const done = () => fp.remove();
+    anim.onfinish = done;
+    setTimeout(done, 1200);
+  } catch (e) {}
+}
 function SectionCheck({
   pageId,
   sectionId,
@@ -11678,7 +11712,10 @@ function SectionCheck({
     }
   }, "📊 このセクションの理解度:"), buttons.map(b => React.createElement("button", {
     key: b.mark,
-    onClick: () => update(b.mark),
+    onClick: e => {
+      if (b.mark !== status && NOTE_STATUSES.includes(MARK_TO_STATUS[b.mark])) noteFlyOff(e.currentTarget);
+      update(b.mark);
+    },
     "aria-label": `理解度 ${b.label}`,
     style: {
       padding: '4px 10px',
@@ -12248,7 +12285,10 @@ function TrapTable({
       return React.createElement("button", {
         key: b.status,
         type: "button",
-        onClick: () => setRecord(i, trap, b.status),
+        onClick: e => {
+          if (!active && NOTE_STATUSES.includes(b.status)) noteFlyOff(e.currentTarget);
+          setRecord(i, trap, b.status);
+        },
         title: active ? 'もう一度押すと記録解除' : b.label + 'として記録（間違いノートへ）',
         "aria-label": b.label,
         style: {
@@ -12638,7 +12678,10 @@ function QuickReview({
       return React.createElement("button", {
         key: s.key,
         type: "button",
-        onClick: () => setRecord(i, s.key),
+        onClick: e => {
+          if (!active && NOTE_STATUSES.includes(s.key)) noteFlyOff(e.currentTarget);
+          setRecord(i, s.key);
+        },
         style: {
           display: 'inline-flex',
           alignItems: 'center',
