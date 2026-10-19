@@ -3157,7 +3157,7 @@ const KIKAI_DAILY_POOL = [
     q:'三相誘導電動機の二次入力が 20 kW、滑りが 0.05、機械損が 0.4 kW である。軸出力はいくらか。',
     choices:[{key:'A',label:'18.6 kW',correct:true},{key:'B',label:'19.0 kW',correct:false},{key:'C',label:'19.6 kW',correct:false},{key:'D',label:'17.6 kW',correct:false}],
     tags:['#数値計算','#頻出S','#B問題頻出'],
-    explanation:'状態: 二次入力から二次銅損と機械損が順に引かれる。求める量: 軸出力 Pout。条件式: Pm = (1−s)P₂、Pout = Pm − 機械損。計算: Pm = 0.95×20 = 19.0 kW、Pout = 19.0 − 0.4 = 18.6 kW。単位確認: kW のまま。19.0 kW は内部機械出力 Pm を軸出力と取り違えた値、19.6 kW は二次銅損を引き忘れた値。',
+    explanation:'状態: 二次入力から二次銅損と機械損が順に引かれる。求める量: 軸出力 Pout。条件式: Pm = (1−s)P₂、Pout = Pm − 機械損。計算: Pm = 0.95×20 = 19.0 kW、Pout = 19.0 − 0.4 = 18.6 kW。単位確認: kW のまま。19.0 kW は内部機械出力 Pm を軸出力と取り違えた値、19.6 kW は二次銅損を引き忘れた値、17.6 kW は二次銅損 1.0 kW を二重に引いた値（20 − 1.0 − 1.0 − 0.4）。',
     evidence:['本ページ セクション2「電力の流れ」・例題（機械損を引いて軸出力を出す）'], verified:'high',
     wikiPageId:'induction-machine' },
   { id:'k151', topic:'誘導機', rank:'A',
@@ -4388,7 +4388,7 @@ const KAKOMON_TOPICS = [
     source: '令和5年度下期 第三種電気主任技術者試験 機械科目' },
   { session: 'R5下', cell: '15a', topic: 'induction-machine', subtopic: 'torque', difficulty: 2, title: '定格回転速度から滑り周波数を求める',
     source: '令和5年度下期 第三種電気主任技術者試験 機械科目' },
-  { session: 'R5下', cell: '15b', topic: 'induction-machine', subtopic: 'torque', difficulty: 3, title: 'トルク一定負荷で電圧を下げたときの回転速度',
+  { session: 'R5下', cell: '15b', topic: 'induction-machine', subtopic: 'torque', difficulty: 3, title: 'インバータで一次周波数を40 Hzにしたときの回転速度（滑り周波数一定）',
     source: '令和5年度下期 第三種電気主任技術者試験 機械科目' },
   { session: 'R5下', cell: '16a', topic: 'power-elec', subtopic: 'chopper', difficulty: 3, title: '降圧チョッパの各期間に電流が流れる経路',
     source: '令和5年度下期 第三種電気主任技術者試験 機械科目' },
@@ -4523,7 +4523,7 @@ const KAKOMON_TOPICS = [
     source: '令和7年度上期 第三種電気主任技術者試験 機械科目' },
   { session: 'R7上', cell: '15a', topic: 'induction-machine', subtopic: 'torque', difficulty: 3, title: 'r2/s が十分大きいときのトルクの近似式',
     source: '令和7年度上期 第三種電気主任技術者試験 機械科目' },
-  { session: 'R7上', cell: '15b', topic: 'induction-machine', subtopic: 'torque', difficulty: 3, title: '電圧・周波数を変えたときのトルクの変化',
+  { session: 'R7上', cell: '15b', topic: 'induction-machine', subtopic: 'torque', difficulty: 3, title: 'トルク一定で電源電圧を下げたときの回転速度',
     source: '令和7年度上期 第三種電気主任技術者試験 機械科目' },
   { session: 'R7上', cell: '16a', topic: 'power-elec', subtopic: 'chopper', difficulty: 3, title: '他励直流機を降圧チョッパで駆動するときの電機子電圧',
     source: '令和7年度上期 第三種電気主任技術者試験 機械科目' },
@@ -13099,7 +13099,7 @@ const YDeltaContactorFig = () => {
 };
 
 /* 3節「低滑り域の線形近似」冒頭の数え上げ。件数は台帳から描画時に数える（本文に数字を書かない）。
-   下の「線形近似 4・比例推移だけ 1・滑り周波数だけ 1」は人が問題を読んで仕分けた結果なので、
+   下の「線形近似 3・比例推移だけ 1・滑り周波数 2」は人が問題を読んで仕分けた結果なので、
    仕分けた小問を IM_LOWSLIP_SORTED に持ち、台帳に増えた B問題のうち未仕分けのものを名指しで出す。 */
 const IM_LOWSLIP_SORTED = ["R5下 15a", "R5下 15b", "R6上 15a", "R6上 15b", "R7上 15a", "R7上 15b"];
 const InductionTorqueTally = () => {
@@ -13139,7 +13139,7 @@ const InductionMachinePage = ({
 }), /*#__PURE__*/React.createElement(PageHeader, {
   eyebrow: "1.2  ROTATING MACHINES — INDUCTION MOTOR",
   title: "三相誘導電動機",
-  deck: "台帳で2位の単元（同期機と同数。1位はパワエレ）で、H28〜R8上 の15回すべてに出ている。回転磁界・滑り・等価回路・トルク特性が四本柱。計算問題・理論問題の両方で出るので、最優先で押さえる。",
+  deck: "台帳（H28〜R8上 の15回）で2位の単元（同期機と同数。1位はパワエレ）で、15回すべてに出ている。回転磁界・滑り・等価回路・トルク特性が四本柱。計算問題・理論問題の両方で出るので、最優先で押さえる。",
   meta: [...kakomonFreqMeta("induction-machine"), {
     label: "難易度",
     value: "★★★★☆"
@@ -13229,7 +13229,12 @@ const InductionMachinePage = ({
   scope: "col"
 }, "誘導発電機"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "運転のしかた"), /*#__PURE__*/React.createElement("td", null, "外力で", /*#__PURE__*/React.createElement("strong", null, "同期速度より速く"), "回す（", /*#__PURE__*/React.createElement(Eq, {
   tex: "s \\lt 0"
-}), "）。電力の向きが逆になり、電源側へ有効電力を送る")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Term, null, "励磁")), /*#__PURE__*/React.createElement("td", null, "直流で磁束をつくる", /*#__PURE__*/React.createElement(Term, null, "界磁"), "巻線が無いので、磁束は固定子の", /*#__PURE__*/React.createElement(Term, null, "励磁電流"), "（遅れの無効電流）でつくるしかない。だから発電中も", /*#__PURE__*/React.createElement("strong", null, "励磁用の無効電力を系統から取る"), "。単独で電圧を立てるには、端子にコンデンサをつないで無効電力を供給し、自己励磁させる")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "系統への並列"), /*#__PURE__*/React.createElement("td", null, "同期発電機のような同期化（位相・周波数を合わせる操作）が要らない。周波数は系統で決まる。ただし突入電流を抑えるため、同期速度の近くまで回してから並列する")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "主な用途"), /*#__PURE__*/React.createElement("td", null, "小水力・風力など、小容量で回転速度が変わりやすい発電"))))), /*#__PURE__*/React.createElement(Box, {
+}), "）。電力の向きが逆になり、電源側へ有効電力を送る")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Term, null, "励磁")), /*#__PURE__*/React.createElement("td", null, "直流で磁束をつくる", /*#__PURE__*/React.createElement(Term, null, "界磁"), "巻線が無いので、磁束は固定子の", /*#__PURE__*/React.createElement(Term, null, "励磁電流"), "（遅れの無効電流）でつくるしかない。だから発電中も", /*#__PURE__*/React.createElement("strong", null, "励磁用の無効電力を系統から取る"), "。単独で電圧を立てるには、端子にコンデンサをつないで無効電力を供給し、自己励磁させる")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "系統への並列"), /*#__PURE__*/React.createElement("td", null, "同期発電機のような同期化（位相・周波数を合わせる操作）が要らない。周波数は系統で決まる。ただし突入電流を抑えるため、同期速度の近くまで回してから並列する")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "主な用途"), /*#__PURE__*/React.createElement("td", null, "小水力・風力など、小容量で回転速度が変わりやすい発電"))))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    fontSize: "12.5px",
+    color: "var(--ink-soft)"
+  }
+}, "R7上 問3 の誤りの選択肢は (4)「大容量の電動機にはアルミダイカスト回転子が広く用いられている」。誤りとされたのは、アルミダイカスト回転子（導体と端絡環をアルミで一体に鋳込んだもの）が大容量に広く用いられている、という点（どの容量域で使うかの線引きは、本 Wiki では一次資料と照合していない）。ほかの4肢（巻線形より構造が簡単で安価・水力や風力の発電機にも使う・発電運転中の滑りは負・棒状の導体のかご形は過酷な使用に耐える）は正しい記述（問題文は試験センター公表の問題冊子で確認。誤りの選択肢は本 Wiki で再導出）。"), /*#__PURE__*/React.createElement(Box, {
   kind: "example",
   label: "理解を深める — トルク発生を理論（電磁誘導＋電磁力）に還元する"
 }, /*#__PURE__*/React.createElement("p", null, "誘導機のトルクは、理論の二つの原理が連鎖して生まれる。まず ", /*#__PURE__*/React.createElement("strong", null, "電磁誘導"), "：同期速度で回る回転磁界が、それより遅い回転子の導体を相対的に切る。導体1本が鎖交する磁束 ", /*#__PURE__*/React.createElement(Eq, {
@@ -13386,9 +13391,7 @@ const InductionMachinePage = ({
   className: "om-no"
 }, "4"), "二次銅損 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "sP_2"
-}), " を引く）→ ", /*#__PURE__*/React.createElement("span", {
-  className: "om-no"
-}, "4"), /*#__PURE__*/React.createElement(Eq, {
+}), " を引く）→ ", /*#__PURE__*/React.createElement(Eq, {
   tex: "P_m = (1-s)P_2"
 }), " →（", /*#__PURE__*/React.createElement("span", {
   className: "om-no"
@@ -13425,7 +13428,13 @@ const InductionMachinePage = ({
   tex: "P_m"
 }), " から機械損（軸受の摩擦・風損）を引いた残り。", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "定格出力・「出力」と書かれたら普通はこれ"))), /*#__PURE__*/React.createElement("p", {
+}, "定格出力・「出力」と書かれたら普通はこれ")), /*#__PURE__*/React.createElement("li", null, "軸出力から一次電流を出すときは、逆向きにたどって ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_1 = P_{out}/\\eta"
+}), "、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I = P_1/(\\sqrt3\\,V\\cos\\theta)"
+}), "。H29 問15(a) は 15 kW・400 V・効率と力率がともに 0.9 で、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "I = 15000/(\\sqrt3 \\times 400 \\times 0.9 \\times 0.9) \\fallingdotseq 26.7"
+}), " A（選択肢の 27 A。問題文は試験センター公表の問題冊子で確認し、答えは本 Wiki で再導出）")), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "6px 0 0"
   }
@@ -13712,8 +13721,8 @@ const InductionMachinePage = ({
   note: /*#__PURE__*/React.createElement(React.Fragment, null, "電圧の二乗に比例することに注意。", /*#__PURE__*/React.createElement("strong", null, "同じ滑りで比べると"), "、電源電圧が 0.9 倍に低下したときトルクは 0.81 倍となる（始動トルク・最大トルクも同じく 0.81 倍）。負荷トルク一定で運転を続ける場合は、発生トルクは負荷と等しいまま滑りが増えて釣り合う（例題 1.2.3）。")
 }), /*#__PURE__*/React.createElement(FormulaCard, {
   num: "06 / 10",
-  name: "停動滑り・停動トルク・始動トルク（厳密式から出る3つ）",
-  eq: "s_m = \\dfrac{r_2'}{\\sqrt{r_1^{2} + (x_1 + x_2')^{2}}},\\qquad T_{max} = \\dfrac{3V_1^{2}}{2\\omega_s\\left(r_1 + \\sqrt{r_1^{2} + (x_1 + x_2')^{2}}\\right)},\\qquad T_s = \\dfrac{3V_1^{2}\\, r_2'}{\\omega_s\\left\\{(r_1 + r_2')^{2} + (x_1 + x_2')^{2}\\right\\}}",
+  name: "停動滑り・停動トルク・始動トルク（トルク式の等式形から出る3つ）",
+  eq: "\\begin{gathered} s_m = \\dfrac{r_2'}{\\sqrt{r_1^{2} + (x_1 + x_2')^{2}}} \\\\ T_{max} = \\dfrac{3V_1^{2}}{2\\omega_s\\left(r_1 + \\sqrt{r_1^{2} + (x_1 + x_2')^{2}}\\right)} \\\\ T_s = \\dfrac{3V_1^{2}\\, r_2'}{\\omega_s\\left\\{(r_1 + r_2')^{2} + (x_1 + x_2')^{2}\\right\\}} \\end{gathered}",
   note: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Eq, {
     tex: "T_{max}"
   }), " に ", /*#__PURE__*/React.createElement(Eq, {
@@ -13724,9 +13733,11 @@ const InductionMachinePage = ({
     tex: "r_2'"
   }), " に比例する（", /*#__PURE__*/React.createElement(Term, null, "比例推移"), "そのもの）。", /*#__PURE__*/React.createElement(Eq, {
     tex: "T_s"
-  }), " は厳密式に ", /*#__PURE__*/React.createElement(Eq, {
+  }), " は公式05 を係数 ", /*#__PURE__*/React.createElement(Eq, {
+    tex: "3/\\omega_s"
+  }), " つきの等式で書き、", /*#__PURE__*/React.createElement(Eq, {
     tex: "s = 1"
-  }), " を入れただけ。 三相ぶんの 3 と ", /*#__PURE__*/React.createElement(Eq, {
+  }), " を入れたもの。 三相ぶんの 3 と ", /*#__PURE__*/React.createElement(Eq, {
     tex: "V_1"
   }), " が", /*#__PURE__*/React.createElement("strong", null, "相電圧"), "である点は下の公式07 と同じ。", /*#__PURE__*/React.createElement(Eq, {
     tex: "\\omega_s = 4\\pi f_1/p"
@@ -13818,11 +13829,11 @@ const InductionMachinePage = ({
   style: {
     margin: "6px 0 0"
   }
-}, "どちらも", /*#__PURE__*/React.createElement("strong", null, "普通かご形より始動トルクが大きく始動電流が小さい"), "が、漏れリアクタンスが大きい分だけ", /*#__PURE__*/React.createElement("strong", null, "力率と停動トルクは普通かご形より低い"), "。ここが正誤問題の切り口（R3 問3）。")), /*#__PURE__*/React.createElement("h3", {
+}, "どちらも", /*#__PURE__*/React.createElement("strong", null, "普通かご形より始動トルクが大きく始動電流が小さい"), "が、漏れリアクタンスが大きい分だけ", /*#__PURE__*/React.createElement("strong", null, "力率と停動トルクは普通かご形より低い"), "。ここが正誤問題の切り口。R3 問3 では、二重かご形・深溝形が大きな始動トルクと定格負荷時の高効率の両方を実現できる、という正しい記述として出た。誤りの記述は (2)「巻線形誘導電動機では，トルクの比例推移により，二次抵抗の値を大きくすると，最大トルク(停動トルク)を発生する滑りが小さくなり，始動特性が良くなる。」で、比例推移では滑りは大きくなる（問題文は試験センター公表の問題冊子で確認。誤りの選択肢は本 Wiki で再導出）。")), /*#__PURE__*/React.createElement("h3", {
   id: "torque-lowslip"
-}, "低滑り域の線形近似 — B問題（問15）の計算はここから出る"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(InductionTorqueTally, null), "その内訳は", /*#__PURE__*/React.createElement("strong", null, "この節の線形近似で解くもの 4 問"), "（R5下(b)・R6上(a)・R7上(a)(b)）、", /*#__PURE__*/React.createElement("strong", null, "比例推移だけで解けて近似が要らないもの 1 問"), "（R6上(b)）、", /*#__PURE__*/React.createElement("strong", null, "滑り周波数 ", /*#__PURE__*/React.createElement(Eq, {
+}, "低滑り域の線形近似 — B問題（問15）の計算はここから出る"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(InductionTorqueTally, null), "その内訳は", /*#__PURE__*/React.createElement("strong", null, "この節の線形近似で解くもの 3 問"), "（R6上(a)・R7上(a)(b)）、", /*#__PURE__*/React.createElement("strong", null, "比例推移だけで解けて近似が要らないもの 1 問"), "（R6上(b)）、", /*#__PURE__*/React.createElement("strong", null, "滑り周波数 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "f_2 = s f_1"
-}), " だけで済むもの 1 問"), "（R5下(a)）である。", /*#__PURE__*/React.createElement("span", {
+}), " で解くもの 2 問"), "（R5下(a)(b)。(b) はインバータで 40 Hz にし、滑り周波数一定が条件として与えられる）である（試験センター公表の問題冊子で確認）。", /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "「どれが近似で、どれが近似なしに解けるか」を分けられることが得点条件"), "で、この節はその仕分けを扱う。"), /*#__PURE__*/React.createElement("p", null, "まず近似そのものを作る。", /*#__PURE__*/React.createElement("strong", null, "定格付近では滑り s が小さく ", /*#__PURE__*/React.createElement(Eq, {
   tex: "r_2'/s"
@@ -14209,7 +14220,7 @@ const InductionMachinePage = ({
     fontSize: "12.5px",
     color: "var(--ink-soft)"
   }
-}, "参考: 結線の組み方で、定トルク（出力が速度に比例）・定出力（トルクが速度に反比例）・可変トルク（ファン・ポンプ向け。トルクが速度の2乗）の3種がある。台帳（H28〜R8上 の15回）では、結線ごとの分類の出題は無い。")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二次抵抗制御"), " — 巻線形で外部抵抗を調整。効率は悪いが大容量機で実績あり。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二次励磁制御（クレーマ・セルビウス）"), " — 巻線形の二次から取り出した", /*#__PURE__*/React.createElement(Term, null, "滑り"), "電力 ", /*#__PURE__*/React.createElement(Eq, {
+}, "参考: 結線の組み方で、定トルク（出力が速度に比例）・定出力（トルクが速度に反比例）・可変トルク（ファン・ポンプ向け。トルクが速度の2乗）の3種がある。台帳（H28〜R8上 の15回）では、結線ごとの分類の出題は無い。")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "一次電圧制御"), " — かご形で一次電圧の大きさを変える。速度の安定な制御範囲を広くするために", /*#__PURE__*/React.createElement("strong", null, "二次抵抗を大きく"), "とるので、", /*#__PURE__*/React.createElement("strong", null, "銅損が大きい"), "。極数切換は効率はよいが速度が段階的になる、との対比で出る（R1 問4・R5下 問3。問題文は試験センター公表の問題冊子で確認し、空欄の答え VVVF・極数・一次電圧・二次抵抗は本 Wiki で再導出）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二次抵抗制御"), " — 巻線形で外部抵抗を調整。効率は悪いが大容量機で実績あり。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二次励磁制御（クレーマ・セルビウス）"), " — 巻線形の二次から取り出した", /*#__PURE__*/React.createElement(Term, null, "滑り"), "電力 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "sP_2"
 }), " を、抵抗で熱にせず", /*#__PURE__*/React.createElement("strong", null, "整流して外へ返す"), "。二次抵抗制御と同じく「二次側で滑りを作る」が、滑り電力を熱にしないので効率が落ちにくい（失うのは変換器の損失だけ）。返し先で2方式に分かれる。", /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "セルビウス方式"), " — 滑り電力を", /*#__PURE__*/React.createElement(Term, null, "インバータ"), "で", /*#__PURE__*/React.createElement("strong", null, "電源へ回生"), "する。滑り電力は軸に戻らないので、機械的出力は ", /*#__PURE__*/React.createElement(Eq, {
   tex: "P_m = (1-s)P_2"
@@ -14448,7 +14459,7 @@ const InductionMachinePage = ({
     fontSize: "12.5px",
     color: "var(--ink-soft)"
   }
-}, "周波数を下げる向き（60 Hz 用を 50 Hz で使う）では逆に磁束が 1.2 倍になり、鉄心が飽和して励磁電流が大きく増える（比例では済まない）。台帳では H18 問8 がこの型（題名は台帳の要約）。電圧と周波数を両方変えたときのトルクは R7上 問15(b) で出ており、公式08 で扱う（問題文は未照合）。"), /*#__PURE__*/React.createElement(SectionCheck, {
+}, "周波数を下げる向き（60 Hz 用を 50 Hz で使う）では逆に磁束が 1.2 倍になり、鉄心が飽和して励磁電流が大きく増える（比例では済まない）。向きを逆にした R4上 問7 の (ｴ)「かご形誘導電動機の電源周波数を高くすると励磁電流は増加する」は、誤りの記述として出ている（周波数を上げると磁束が減り、励磁電流は減る）。電圧と周波数を両方変える型は R7上 問4（例題 1.2.9 の失点源の後の注）で、公式08 で扱う。R7上 問15(b) は周波数を変えず電圧だけを下げる型（例題 1.2.3 と同じ）。問題文はいずれも試験センター公表の問題冊子で確認（正誤は本 Wiki で再導出）。"), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "induction-machine",
   sectionId: "speed"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -14602,7 +14613,11 @@ const InductionMachinePage = ({
 }))), /*#__PURE__*/React.createElement(Box, {
   kind: "example",
   label: "例題 1.2.2（電力比）"
-}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " ある三相誘導電動機の", /*#__PURE__*/React.createElement(Term, null, "二次入力"), "が 22.0 kW、滑りが 4.0% であるとき、二次", /*#__PURE__*/React.createElement(Term, null, "銅損"), " P_c2 と機械的出力 P_m を求めよ。"), /*#__PURE__*/React.createElement(Fold, {
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " ある三相誘導電動機の", /*#__PURE__*/React.createElement(Term, null, "二次入力"), "が 22.0 kW、滑りが 4.0% であるとき、二次", /*#__PURE__*/React.createElement(Term, null, "銅損"), " ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_{c2}"
+}), " と機械的出力 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_m"
+}), " を求めよ。"), /*#__PURE__*/React.createElement(Fold, {
   label: "解答を開く",
   sub: "自分で解いてから"
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "解:"), " 比 ", /*#__PURE__*/React.createElement(Eq, {
@@ -14861,7 +14876,7 @@ const InductionMachinePage = ({
 }), " 倍にして 1.39 倍と答える（電流の 1/√3 と混同）。 ③ 定格トルクを同期速度 1500 min⁻¹ で出す。定格出力は", /*#__PURE__*/React.createElement("strong", null, "定格回転速度"), "で出ている出力なので、割るのは実際の角速度。"))), /*#__PURE__*/React.createElement(Box, {
   kind: "example",
   label: "例題 1.2.7（V/f 一定のインバータで周波数を下げたときの回転速度）"
-}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 4 極・60 Hz の三相誘導電動機が、定格の電圧・周波数で 1746 min⁻¹ で回っている。負荷トルクを変えずに、V/f 一定の", /*#__PURE__*/React.createElement(Term, null, "インバータ"), "で周波数を 40 Hz に下げた。回転速度はいくらか（数値は本 Wiki で作った類題。R6上 問4 と同じ型）。"), /*#__PURE__*/React.createElement(Fold, {
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 4 極・60 Hz の三相誘導電動機が、定格の電圧・周波数で 1746 min⁻¹ で回っている。負荷トルクを変えずに、V/f 一定の", /*#__PURE__*/React.createElement(Term, null, "インバータ"), "で周波数を 40 Hz に下げた。回転速度はいくらか（数値は R5下 問15(b) と同じ。試験センター公表の問題冊子で確認。(a) は滑り周波数を 1.80 Hz と求める小問）。"), /*#__PURE__*/React.createElement(Fold, {
   label: "解答を開く",
   sub: "自分で解いてから"
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "状態:"), " トルク一定・V/f 一定。", /*#__PURE__*/React.createElement("strong", null, "条件式:"), " 公式08 から、V/f が同じでトルクが同じなら", /*#__PURE__*/React.createElement("span", {
@@ -14980,7 +14995,7 @@ const InductionMachinePage = ({
   label: "例題 1.2.9（電圧一定で負荷が変わったときの電流 — 低滑り近似）"
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 4 極・50 Hz の三相誘導電動機が、定格電圧・定格負荷で 1455 min⁻¹ で回っている。電圧と周波数は変えずに負荷を軽くしたら、1470 min⁻¹ になった。励磁回路と一次側のインピーダンスを無視し、", /*#__PURE__*/React.createElement(Eq, {
   tex: "r_2'/s"
-}), " が二次のリアクタンスより十分大きいとして、二次電流は定格時の何倍になるか（数値は本 Wiki で作った類題。R7上 問4 と同じ近似を使う型。型の判断は台帳の題名による）。"), /*#__PURE__*/React.createElement(Fold, {
+}), " が二次のリアクタンスより十分大きいとして、二次電流は定格時の何倍になるか（数値は本 Wiki で作った類題）。"), /*#__PURE__*/React.createElement(Fold, {
   label: "解答を開く",
   sub: "自分で解いてから"
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "状態:"), " 電圧一定・低滑り域（表1.2.7 の3行目）。", /*#__PURE__*/React.createElement("strong", null, "条件式:"), " 二次側は ", /*#__PURE__*/React.createElement(Eq, {
@@ -15021,7 +15036,78 @@ const InductionMachinePage = ({
   className: "marker"
 }, "2乗の関係が使えるのは ", /*#__PURE__*/React.createElement(Eq, {
   tex: "r_2'/s"
-}), " が一定のときだけ")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "回転速度の比 1470/1455 ≒ 1.01 倍とする"), " — 電流を決めるのは速度ではなく、回転磁界との速度差（滑り）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "「無負荷に近づけば一次電流も 0 に近づく」と考える"), " — 0 に近づくのは二次電流だけ。一次電流には励磁電流が残る（この問題は励磁回路を無視しているので見えない）")))), /*#__PURE__*/React.createElement(SectionCheck, {
+}), " が一定のときだけ")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "回転速度の比 1470/1455 ≒ 1.01 倍とする"), " — 電流を決めるのは速度ではなく、回転磁界との速度差（滑り）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "「無負荷に近づけば一次電流も 0 に近づく」と考える"), " — 0 に近づくのは二次電流だけ。一次電流には励磁電流が残る（この問題は励磁回路を無視しているので見えない）")))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    fontSize: "12.5px",
+    color: "var(--ink-soft)"
+  }
+}, "同じ近似を使う R7上 問4 は、トルク一定のまま", /*#__PURE__*/React.createElement("strong", null, "電圧と周波数を共に 5 % 下げる"), "問題だった（試験センター公表の問題冊子で確認）。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "V/f が変わらないので磁束が変わらず、トルクが同じなら二次電流も変わらない"), "（公式08・表1.2.7）。電流は 80 A のまま（選択肢 (3)。答えは本 Wiki で再導出）。滑りが 1/0.95 倍になることに引きずられて電流を滑りに比例させると 84 A、電圧（周波数）に比例させると 76 A を選ぶ。"), /*#__PURE__*/React.createElement(Box, {
+  kind: "example",
+  label: "例題 1.2.10（損失の関係から立式して効率を出す — R1 問3）"
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "問:"), " 4 極の三相誘導電動機が 60 Hz の電源に接続され、出力 5.75 kW、回転速度 1656 min⁻¹ で運転されている。このとき、一次銅損・二次銅損・鉄損の三つの損失の値が等しかった。効率はいくらか。その他の損失は無視できる（R1 問3 の数値。試験センター公表の問題冊子で確認）。"), /*#__PURE__*/React.createElement(Fold, {
+  label: "解答を開く",
+  sub: "自分で解いてから"
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "状態:"), " 機械損を無視するので ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_{out} = P_m"
+}), "。", /*#__PURE__*/React.createElement("strong", null, "条件式:"), " 比 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_{c2} : P_m = s : (1-s)"
+}), " を逆に使い、出力から二次銅損を出す。"), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "N_s = \\dfrac{120 \\times 60}{4} = 1800\\;[\\mathrm{min^{-1}}],\\qquad s = \\dfrac{1800 - 1656}{1800} = 0.08"
+}), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "P_{c2} = \\dfrac{s}{1-s}\\,P_m = \\dfrac{0.08}{0.92} \\times 5.75 = 0.500\\;[\\mathrm{kW}]"
+}), /*#__PURE__*/React.createElement(Eq, {
+  display: true,
+  tex: "P_1 = P_{out} + 3 \\times 0.500 = 5.75 + 1.50 = 7.25\\;[\\mathrm{kW}],\\qquad \\eta = \\dfrac{5.75}{7.25} \\fallingdotseq 0.793 = 79.3\\;[\\%]"
+}), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "検算（比から）:"), " ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_2 = P_m + P_{c2} = 6.25"
+}), " kW で、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_{c2}/P_2 = 0.500/6.25 = 0.08 = s"
+}), " に合う。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "6px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "同じ型（R6下 問4）:"), " 損失の関係が「鉄損 ＝ 一次銅損 ＝ 二次銅損の 1/2」で、一次入力から出発する形。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_2 = P_1 - (P_i + P_{c1}) = P_1 - P_{c2}"
+}), " と ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_{c2} = sP_2"
+}), " から ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_{c2} = sP_1/(1+s)"
+}), "。400 V・25.8 A・力率 0.8・s = 4 % なら ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_1 = \\sqrt3 \\times 400 \\times 25.8 \\times 0.8 \\fallingdotseq 14.30"
+}), " kW、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_{c2} = 0.04 \\times 14.30/1.04 \\fallingdotseq 0.550"
+}), " kW（選択肢 (3) の 550 W。問題文は試験センター公表の問題冊子で確認し、答えは本 Wiki で再導出）。"))), /*#__PURE__*/React.createElement(Box, {
+  kind: "mistake",
+  label: "例題 1.2.10 の失点源（解いてから読む）"
+}, /*#__PURE__*/React.createElement(Fold, {
+  label: "失点源を開く",
+  sub: "解いてから（答えの値が書いてある）"
+}, /*#__PURE__*/React.createElement("ul", {
+  style: {
+    margin: 0,
+    paddingLeft: 22
+  }
+}, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "二次銅損を ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s \\times P_m"
+}), " で出す"), " — ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "0.08 \\times 5.75 = 0.46"
+}), " kW になり、効率は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "5.75/(5.75 + 1.38) \\fallingdotseq 80.6"
+}), " % と出る（選択肢 (4)）。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "s を掛けるのは二次入力 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_2"
+}), " で、出力から逆に出すときは ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "s/(1-s)"
+}), " を掛ける")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "R6下 問4 で ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "P_{c2} = sP_1"
+}), " とする"), " — ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "0.04 \\times 14.30 \\fallingdotseq 0.572"
+}), " kW になり、選択肢の 571 W を選ぶ。一次入力からは一次銅損と鉄損を引いてから s を掛ける")))), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "induction-machine",
   sectionId: "example"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -15075,7 +15161,7 @@ const InductionMachinePage = ({
 }, /*#__PURE__*/React.createElement(QuickReview, {
   pageId: "induction-machine",
   pageTitle: "1.2 三相誘導電動機"
-}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期速度 N_s の式は？（4極・50Hz では？）"), "N_s = 120f/p（120×50/4 = ", /*#__PURE__*/React.createElement("strong", null, "1500 min⁻¹"), "）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "滑り s の定義は？"), "s = (N_s − N) / N_s（電動機域は 0 < s < 1）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "回転子（二次）周波数 f₂ は？"), "f₂ = s · f₁（", /*#__PURE__*/React.createElement(Term, null, "滑り"), "×一次周波数）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "二次入力 P₂ の電力配分比は？"), "P₂ : P_c2 : P_m = ", /*#__PURE__*/React.createElement("strong", null, "1 : s : (1−s)"), "（二次", /*#__PURE__*/React.createElement(Term, null, "銅損"), "は s 倍、機械出力は (1−s) 倍）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Y-Δ 始動で始動電流・トルクは全電圧始動の何倍？"), /*#__PURE__*/React.createElement("strong", null, "1/3"), "（電源側の線電流・始動トルクともに 1/3。巻線の電流なら 1/√3）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "「二次抵抗を k 倍にすると同一トルクの滑りも k 倍」と「トルクは滑りに比例」— 厳密なのはどちら？"), /*#__PURE__*/React.createElement("strong", null, "前者（", /*#__PURE__*/React.createElement(Term, null, "比例推移"), "）だけが厳密"), "。厳密式は ", /*#__PURE__*/React.createElement(Eq, {
+}, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "同期速度 N_s の式は？（4極・50Hz では？）"), "N", /*#__PURE__*/React.createElement("sub", null, "s"), " = 120f/p（120×50/4 = ", /*#__PURE__*/React.createElement("strong", null, "1500 min⁻¹"), "）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "滑り s の定義は？"), "s = (N_s − N) / N_s（電動機域は 0 < s < 1）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "回転子（二次）周波数 f₂ は？"), "f₂ = s · f₁（", /*#__PURE__*/React.createElement(Term, null, "滑り"), "×一次周波数）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "二次入力 P₂ の電力配分比は？"), "P₂ : P", /*#__PURE__*/React.createElement("sub", null, "c2"), " : P", /*#__PURE__*/React.createElement("sub", null, "m"), " = ", /*#__PURE__*/React.createElement("strong", null, "1 : s : (1−s)"), "（二次", /*#__PURE__*/React.createElement(Term, null, "銅損"), "は s 倍、機械出力は (1−s) 倍）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "Y-Δ 始動で始動電流・トルクは全電圧始動の何倍？"), /*#__PURE__*/React.createElement("strong", null, "1/3"), "（電源側の線電流・始動トルクともに 1/3。巻線の電流なら 1/√3）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "「二次抵抗を k 倍にすると同一トルクの滑りも k 倍」と「トルクは滑りに比例」— 厳密なのはどちら？"), /*#__PURE__*/React.createElement("strong", null, "前者（", /*#__PURE__*/React.createElement(Term, null, "比例推移"), "）だけが厳密"), "。厳密式は ", /*#__PURE__*/React.createElement(Eq, {
   tex: "r_2'"
 }), " と ", /*#__PURE__*/React.createElement(Eq, {
   tex: "s"
