@@ -994,6 +994,25 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 5px; border: 2px solid var(--bg); }
 ::-webkit-scrollbar-thumb:hover { background: var(--ink-mute); }
+    /* 電力の流れの棒（HeatFlowBars）。電力Wiki（denryoku-head-template.html）と同じ見た目 */
+    .hf-flow { list-style: none; margin: 10px 0 14px; padding: 0; display: grid; }
+    .hf-node { border-left: 4px solid var(--ink-soft); background: var(--bg-sunken); padding: 7px 10px; border-radius: 0 4px 4px 0; display: grid; gap: 1px; }
+    .hf-node.m { border-color: var(--ok); background: var(--ok-soft); }
+    .hf-node.e { border-color: var(--info); background: var(--bg-sunken); }
+    .hf-nm { font-weight: 700; font-size: 14px; }
+    .hf-al { font-size: 12.5px; color: var(--ink-soft); }
+    .hf-loss { position: relative; margin-left: 18px; padding: 4px 10px 4px 14px; border-left: 2px dashed var(--rule); font-size: 13px; color: var(--warn); }
+    .hf-loss.big { font-weight: 700; }
+    .hf-loss::before { content: "−"; position: absolute; left: -9px; top: 4px; width: 16px; height: 16px; line-height: 15px; text-align: center; border-radius: 50%; background: var(--bg); border: 1px solid var(--warn); font-size: 12px; font-weight: 700; }
+    .hf-wf { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .hf-loss .hf-wf { margin-left: -20px; }
+    .hf-tr { flex: 1; position: relative; height: 9px; border-radius: 2px; }
+    .hf-node .hf-tr { background: var(--bg-elev); }
+    .hf-tr i { position: absolute; top: 0; bottom: 0; border-radius: 2px; background: var(--ink-soft); }
+    .hf-node.m .hf-tr i { background: var(--ok); }
+    .hf-node.e .hf-tr i { background: var(--info); }
+    .hf-loss .hf-tr i { background: var(--warn); min-width: 2px; } /* 損失が1%未満（送電・変圧器）でも棒が消えないように */
+    .hf-v { width: 84px; text-align: right; font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body>
@@ -4822,8 +4841,67 @@ const FlemingHandsFigure = ({
    Export to window
    ============================================================ */
 
+/* 電力の流れを「棒の長さ＝電力」で描く。node はその段の値、loss はその段で抜ける損失。
+   前の node − loss が次の node と合わないときは console.error を出す（例の数値の取り違え検出）。
+   電力Wiki（denryoku-page-stubs.jsx）の HeatFlowBars と同じもの。max を渡すと2つの図を同じ縮尺で描ける。 */
+const HeatFlowBars = ({
+  steps,
+  unit,
+  decimals = 2,
+  max: maxIn
+}) => {
+  const max = maxIn || steps[0].v;
+  if (max < steps[0].v) console.error('HeatFlowBars: max が最初の段より小さい（棒が100%を超える）', max, steps[0].v);
+  let cur = null;
+  return /*#__PURE__*/React.createElement("ol", {
+    className: "hf-flow"
+  }, steps.map((st, i) => {
+    let right = null,
+      width = 0,
+      label = '';
+    if (st.loss) {
+      cur -= st.v;
+      right = 100 - (cur + st.v) / max * 100;
+      width = st.v / max * 100;
+      label = '−' + st.v.toFixed(decimals);
+    } else {
+      if (cur !== null && Math.abs(cur - st.v) > 0.005) console.error('HeatFlowBars: 例の数値が合わない', st.name, cur, st.v);
+      cur = st.v;
+      width = st.v / max * 100;
+      label = st.v.toFixed(decimals) + ' ' + unit;
+    }
+    const bar = /*#__PURE__*/React.createElement("span", {
+      className: "hf-wf"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "hf-tr"
+    }, /*#__PURE__*/React.createElement("i", {
+      style: right === null ? {
+        left: 0,
+        width: width + '%'
+      } : {
+        right: right + '%',
+        width: width + '%'
+      }
+    })), /*#__PURE__*/React.createElement("span", {
+      className: "hf-v"
+    }, label));
+    if (st.loss) return /*#__PURE__*/React.createElement("li", {
+      key: i,
+      className: 'hf-loss' + (st.big ? ' big' : '')
+    }, st.name, bar);
+    return /*#__PURE__*/React.createElement("li", {
+      key: i,
+      className: 'hf-node ' + (st.kind || '')
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "hf-nm"
+    }, st.name), st.alias && /*#__PURE__*/React.createElement("span", {
+      className: "hf-al"
+    }, st.alias), bar);
+  }));
+};
 Object.assign(window, {
   Callout,
+  HeatFlowBars,
   DetailLink,
   FlemingHandsFigure,
   FormulaTable,
@@ -45899,7 +45977,78 @@ const DcCircuitLearnTab = ({
     fontSize: 12,
     color: "var(--ink-soft)"
   }
-}, "※ 効率 η は「負荷消費電力 / 全電源供給電力」。η = R", /*#__PURE__*/React.createElement("sub", null, "L"), "/(R", /*#__PURE__*/React.createElement("sub", null, "th"), "+R", /*#__PURE__*/React.createElement("sub", null, "L"), ") は分圧と同じ形。")), /*#__PURE__*/React.createElement("figure", {
+}, "※ 効率 η は「負荷消費電力 / 等価電源 V", /*#__PURE__*/React.createElement("sub", null, "th"), " が出す電力 V", /*#__PURE__*/React.createElement("sub", null, "th"), "I」。η = R", /*#__PURE__*/React.createElement("sub", null, "L"), "/(R", /*#__PURE__*/React.createElement("sub", null, "th"), "+R", /*#__PURE__*/React.createElement("sub", null, "L"), ") は分圧と同じ形。")), /*#__PURE__*/React.createElement("h3", {
+  id: "z-3conditions-bou"
+}, "電力の流れ（棒の長さ＝電力）"), /*#__PURE__*/React.createElement("p", null, "電源が出す電力は、", /*#__PURE__*/React.createElement("strong", null, "内部抵抗の損失 I²R", /*#__PURE__*/React.createElement("sub", null, "th"), " と負荷電力 I²R", /*#__PURE__*/React.createElement("sub", null, "L"), " に分かれる"), "。同じ電流が流れるので、分かれる比は R", /*#__PURE__*/React.createElement("sub", null, "th"), " : R", /*#__PURE__*/React.createElement("sub", null, "L"), " で、効率 η = R", /*#__PURE__*/React.createElement("sub", null, "L"), "/(R", /*#__PURE__*/React.createElement("sub", null, "th"), "+R", /*#__PURE__*/React.createElement("sub", null, "L"), ") はこの比から出る。上の3条件を同じ縮尺（24 W＝100%）で並べる。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "① R", /*#__PURE__*/React.createElement("sub", null, "L"), " = 4 Ω（最大電力）")), /*#__PURE__*/React.createElement(HeatFlowBars, {
+  unit: "W",
+  max: 24,
+  steps: [{
+    name: "電源が出す電力 Vₜₕ × I",
+    alias: "12 V × 1.5 A",
+    v: 18
+  }, {
+    loss: true,
+    name: "内部抵抗の損失 I² × Rₜₕ = 1.5² × 4",
+    v: 9
+  }, {
+    kind: "e",
+    name: "負荷電力 I² × Rₗ = 1.5² × 4",
+    alias: "効率 9 ÷ 18 = 50%",
+    v: 9
+  }]
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "② R", /*#__PURE__*/React.createElement("sub", null, "L"), " = 2 Ω（R", /*#__PURE__*/React.createElement("sub", null, "th"), " より小さい）")), /*#__PURE__*/React.createElement(HeatFlowBars, {
+  unit: "W",
+  max: 24,
+  steps: [{
+    name: "電源が出す電力 Vₜₕ × I",
+    alias: "12 V × 2 A。3条件で最も大きい",
+    v: 24
+  }, {
+    loss: true,
+    big: true,
+    name: "内部抵抗の損失 I² × Rₜₕ = 2² × 4",
+    v: 16
+  }, {
+    kind: "e",
+    name: "負荷電力 I² × Rₗ = 2² × 2",
+    alias: "効率 8 ÷ 24 ≒ 33.3%",
+    v: 8
+  }]
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "8px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "③ R", /*#__PURE__*/React.createElement("sub", null, "L"), " = 12 Ω（R", /*#__PURE__*/React.createElement("sub", null, "th"), " より大きい）")), /*#__PURE__*/React.createElement(HeatFlowBars, {
+  unit: "W",
+  max: 24,
+  steps: [{
+    name: "電源が出す電力 Vₜₕ × I",
+    alias: "12 V × 0.75 A",
+    v: 9
+  }, {
+    loss: true,
+    name: "内部抵抗の損失 I² × Rₜₕ = 0.75² × 4",
+    v: 2.25
+  }, {
+    kind: "e",
+    name: "負荷電力 I² × Rₗ = 0.75² × 12",
+    alias: "効率 6.75 ÷ 9 = 75%",
+    v: 6.75
+  }]
+}), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "この3条件では"), "、② は電源から最も多く引き出すのに、その 2/3 を内部抵抗で失う。③ は損失が最も小さいが、電流が絞られて電源の出す電力そのものが小さい。負荷電力が最大になる ① では、電源の出す電力のちょうど半分が負荷に届く。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    fontSize: 13,
+    color: "var(--ink-soft)"
+  }
+}, "この棒は、電圧 V", /*#__PURE__*/React.createElement("sub", null, "th"), " の電源と内部抵抗 R", /*#__PURE__*/React.createElement("sub", null, "th"), " だけでできた回路の中の流れである。電池の内部抵抗のように回路が実際にこの形なら、そのまま実際の電力の流れになる。テブナンの定理で置き換えた等価回路の場合、等価なのは端子から見た電圧・電流だけで、元の回路の内部で消費される電力は一般にこの値と一致しない。このページの効率 η（50%・33.3%・75%）も等価回路の中の値で、元の回路の電源から見た効率とは一般に異なる。"), /*#__PURE__*/React.createElement("figure", {
   style: {
     margin: "16px 0",
     background: "var(--bg-elev)",
