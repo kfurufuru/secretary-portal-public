@@ -21868,6 +21868,7 @@ Object.assign(window, {
 </script>
   <script>
 /* built from riron-pages-batch2.jsx — 直接編集しない。正(SoT)は riron-pages-batch2.jsx。編集後に build-riron-wiki.py を実行する */
+function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
 /* riron-pages-batch2.jsx */
 /* riron-pages-batch2.jsx — 9単元ページ
    Generated: 2026-04-26
@@ -46074,43 +46075,34 @@ const DcCircuitLearnTab = ({
     padding: "12px 8px 8px"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 700 320",
+  viewBox: "0 0 520 410",
   role: "img",
-  "aria-label": "負荷抵抗を横軸にとった負荷電力と効率の曲線。負荷電力はRL=Rthで山の頂点となり最大9Wになるが、効率はそこで50パーセントに過ぎず、RLを大きくするほど単調に上がり続ける。電力最大の点と効率最大の点は一致しない",
+  "aria-label": "負荷抵抗を横軸にとり、上の段に負荷電力、下の段に効率を別々の縦軸で描いた図。負荷電力はRL=Rth=4オームで山の頂点9ワットとなり、左右どちらにずらしても下がる。効率はRLを大きくするほど上がり続け、4オームではまだ50パーセント。電力最大の点と効率が高くなる向きは一致しない",
   style: {
     display: "block",
     width: "100%",
     height: "auto",
-    maxWidth: "700px",
+    maxWidth: "620px",
     margin: "0 auto"
   }
-}, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
-  id: "mpArr",
-  markerWidth: "5",
-  markerHeight: "4",
-  refX: "4.44",
-  refY: "2",
-  orient: "auto"
-}, /*#__PURE__*/React.createElement("path", {
-  d: "M0,0 L5,2 L0,4 z",
-  fill: "var(--ink-soft)"
-}))), (() => {
+}, (() => {
   const Vth = 12,
     Rth = 4,
     Rmax = 24;
-  const x0 = 70,
-    x1 = 620,
-    yBot = 250,
-    yTop = 50;
-  const Pmax = Vth * Vth / (4 * Rth); // = 9 W
+  const x0 = 56,
+    x1 = 496;
+  const aTop = 44,
+    aBot = 174,
+    bTop = 232,
+    bBot = 362; // 上段＝P_L、下段＝η
   const X = R => x0 + R / Rmax * (x1 - x0);
-  const YP = P => yBot - P / Pmax * (yBot - yTop);
-  const YE = e => yBot - e * (yBot - yTop); // η は 0〜1
+  const YP = P => aBot - P / 10 * (aBot - aTop); // 0〜10 W
+  const YE = e => bBot - e * (bBot - bTop); // η は 0〜1
   const N = 120;
   let pP = "",
     pE = "";
   for (let k = 0; k <= N; k++) {
-    const R = 0.05 + (Rmax - 0.05) * k / N;
+    const R = Rmax * k / N;
     const P = Vth * Vth * R / Math.pow(R + Rth, 2);
     const e = R / (R + Rth);
     pP += (k === 0 ? "M" : "L") + X(R).toFixed(1) + " " + YP(P).toFixed(1) + " ";
@@ -46120,200 +46112,147 @@ const DcCircuitLearnTab = ({
     R: 2,
     P: 8,
     e: 1 / 3,
-    lab: "②"
+    lab: "②",
+    eTxt: "33.3%"
   }, {
     R: 4,
     P: 9,
     e: 0.5,
-    lab: "①"
+    lab: "①",
+    eTxt: "50%"
   }, {
     R: 12,
     P: 6.75,
     e: 0.75,
-    lab: "③"
+    lab: "③",
+    eTxt: "75%"
   }];
-  return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("line", {
-    x1: x0,
-    y1: yBot,
-    x2: x1 + 20,
-    y2: yBot,
-    stroke: "var(--ink-soft)",
-    strokeWidth: "1.4",
-    markerEnd: "url(#mpArr)"
-  }), /*#__PURE__*/React.createElement("line", {
-    x1: x0,
-    y1: yBot + 8,
-    x2: x0,
-    y2: yTop - 18,
-    stroke: "var(--ink-soft)",
-    strokeWidth: "1.4",
-    markerEnd: "url(#mpArr)"
-  }), /*#__PURE__*/React.createElement("text", {
-    x: x1 + 26,
-    y: yBot + 5,
-    fontSize: "12",
-    fill: "var(--ink-soft)"
-  }, "R", /*#__PURE__*/React.createElement("tspan", {
+  const halo = {
+    stroke: "var(--bg-elev)",
+    strokeWidth: 4,
+    strokeLinejoin: "round",
+    paintOrder: "stroke"
+  }; // 点線・曲線の上でも読めるように縁取る
+  const sub = (b, s) => /*#__PURE__*/React.createElement(React.Fragment, null, b, /*#__PURE__*/React.createElement("tspan", {
     dy: "0.2em",
     fontSize: "0.72em"
-  }, "L"), /*#__PURE__*/React.createElement("tspan", {
+  }, s), /*#__PURE__*/React.createElement("tspan", {
     dy: "-0.144em"
-  }, "​"), " [Ω]"), /*#__PURE__*/React.createElement("text", {
-    x: x0 - 8,
-    y: yTop - 22,
-    textAnchor: "middle",
-    fontSize: "11.5",
-    fill: "var(--ink-soft)"
-  }, "P", /*#__PURE__*/React.createElement("tspan", {
-    dy: "0.2em",
-    fontSize: "0.72em"
-  }, "L"), /*#__PURE__*/React.createElement("tspan", {
-    dy: "-0.144em"
-  }, "​"), ", η"), [0, 4, 8, 12, 16, 20, 24].map(r => /*#__PURE__*/React.createElement("g", {
-    key: r
+  }, "​"));
+  const grid = (ys, f) => ys.map(v => /*#__PURE__*/React.createElement("g", {
+    key: v
   }, /*#__PURE__*/React.createElement("line", {
-    x1: X(r),
-    y1: yBot,
-    x2: X(r),
-    y2: yBot + 5,
-    stroke: "var(--ink-soft)",
+    x1: x0,
+    y1: f(v),
+    x2: x1,
+    y2: f(v),
+    stroke: "var(--rule)",
     strokeWidth: "1"
   }), /*#__PURE__*/React.createElement("text", {
-    x: X(r),
-    y: yBot + 19,
-    fontSize: "10.5",
-    fill: "var(--ink-soft)",
-    textAnchor: "middle"
-  }, r))), /*#__PURE__*/React.createElement("line", {
-    x1: X(Rth),
-    y1: yTop - 6,
-    x2: X(Rth),
-    y2: yBot,
-    stroke: "var(--rule)",
-    strokeWidth: "1.2",
-    strokeDasharray: "4 4"
-  }), /*#__PURE__*/React.createElement("text", {
-    x: X(Rth) - 8,
-    y: yTop - 12,
+    x: x0 - 8,
+    y: f(v) + 4,
     textAnchor: "end",
-    fontSize: "11.5",
+    fontSize: "12",
+    fill: "var(--ink-mute)"
+  }, v)));
+  return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("text", {
+    x: x0 - 40,
+    y: aTop - 18,
+    fontSize: "13.5",
     fontWeight: "700",
-    fill: "var(--accent-ink)"
-  }, "R", /*#__PURE__*/React.createElement("tspan", {
-    dy: "0.2em",
-    fontSize: "0.72em"
-  }, "L"), /*#__PURE__*/React.createElement("tspan", {
-    dy: "-0.144em"
-  }, "​"), " = Rₜₕ"), /*#__PURE__*/React.createElement("line", {
-    x1: x0,
-    y1: YE(0.5),
-    x2: x1,
-    y2: YE(0.5),
-    stroke: "var(--rule)",
-    strokeWidth: "1",
-    strokeDasharray: "3 3"
-  }), /*#__PURE__*/React.createElement("text", {
-    x: x0 + 8,
-    y: YE(0.5) - 6,
-    fontSize: "10.5",
+    fill: "var(--info)"
+  }, "負荷電力 ", sub("P", "L"), " [W]"), /*#__PURE__*/React.createElement("text", {
+    x: x0 - 40,
+    y: bTop - 18,
+    fontSize: "13.5",
+    fontWeight: "700",
+    fill: "var(--ok)"
+  }, "効率 η [%]"), grid([0, 3, 6, 9], YP), grid([0, 25, 50, 75, 100], v => YE(v / 100)), /*#__PURE__*/React.createElement("line", {
+    x1: X(Rth),
+    y1: aTop - 6,
+    x2: X(Rth),
+    y2: bBot,
+    stroke: "var(--ink)",
+    strokeOpacity: "0.55",
+    strokeWidth: "1.5",
+    strokeDasharray: "5 4"
+  }), [0, 4, 8, 12, 16, 20, 24].map(r => /*#__PURE__*/React.createElement("text", {
+    key: r,
+    x: X(r),
+    y: bBot + 18,
+    fontSize: "12",
+    textAnchor: "middle",
+    fill: r === Rth ? "var(--ink)" : "var(--ink-mute)",
+    fontWeight: r === Rth ? 700 : 400
+  }, r)), /*#__PURE__*/React.createElement("text", {
+    x: X(Rth) + 9,
+    y: bBot + 18,
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--ink)"
+  }, "= ", sub("R", "th")), /*#__PURE__*/React.createElement("text", {
+    x: (x0 + x1) / 2,
+    y: bBot + 40,
+    fontSize: "12.5",
+    textAnchor: "middle",
     fill: "var(--ink-soft)"
-  }, "η = 50%"), /*#__PURE__*/React.createElement("path", {
+  }, "負荷抵抗 ", sub("R", "L"), " [Ω]"), /*#__PURE__*/React.createElement("path", {
     d: pP,
     fill: "none",
-    stroke: "var(--danger)",
+    stroke: "var(--info)",
     strokeWidth: "3"
   }), /*#__PURE__*/React.createElement("path", {
     d: pE,
     fill: "none",
     stroke: "var(--ok)",
-    strokeWidth: "2.6",
-    strokeDasharray: "7 4"
-  }), marks.map(m => /*#__PURE__*/React.createElement("g", {
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: x1,
+    y: bTop - 18,
+    textAnchor: "end",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, "100% に近づくが届かない"), marks.map(m => /*#__PURE__*/React.createElement("g", {
     key: m.lab
   }, /*#__PURE__*/React.createElement("circle", {
     cx: X(m.R),
     cy: YP(m.P),
-    r: "4.2",
-    fill: "var(--danger)"
+    r: "5",
+    fill: "var(--info)",
+    stroke: "var(--bg-elev)",
+    strokeWidth: "1.5"
   }), /*#__PURE__*/React.createElement("circle", {
     cx: X(m.R),
     cy: YE(m.e),
-    r: "3.6",
-    fill: "var(--ok)"
-  }), /*#__PURE__*/React.createElement("text", {
+    r: "5",
+    fill: "var(--ok)",
+    stroke: "var(--bg-elev)",
+    strokeWidth: "1.5"
+  }), /*#__PURE__*/React.createElement("text", _extends({
     x: X(m.R) + 9,
-    y: YP(m.P) - 8,
-    textAnchor: "start",
-    fontSize: "11.5",
+    y: m.R === 2 ? YP(m.P) + 20 : YP(m.P) - 8,
+    fontSize: "12.5",
     fontWeight: "700",
-    fill: "var(--danger)"
-  }, m.lab, " ", m.P, "W"), /*#__PURE__*/React.createElement("text", {
+    fill: "var(--info)"
+  }, halo), m.lab, " ", m.P, " W", m.R === Rth ? "（最大）" : ""), /*#__PURE__*/React.createElement("text", _extends({
     x: X(m.R) + 9,
-    y: YE(m.e) + 15,
-    fontSize: "10.5",
-    fontWeight: "600",
-    fill: "var(--ok)"
-  }, Math.round(m.e * 1000) / 10, "%"))), /*#__PURE__*/React.createElement("line", {
-    x1: x0 + 250,
-    y1: yTop - 4,
-    x2: x0 + 282,
-    y2: yTop - 4,
-    stroke: "var(--danger)",
-    strokeWidth: "3"
-  }), /*#__PURE__*/React.createElement("text", {
-    x: x0 + 288,
-    y: yTop,
-    fontSize: "12",
-    fontWeight: "700",
-    fill: "var(--danger)"
-  }, "P", /*#__PURE__*/React.createElement("tspan", {
-    dy: "0.2em",
-    fontSize: "0.72em"
-  }, "L"), /*#__PURE__*/React.createElement("tspan", {
-    dy: "-0.144em"
-  }, "​"), "（山形・R", /*#__PURE__*/React.createElement("tspan", {
-    dy: "0.2em",
-    fontSize: "0.72em"
-  }, "L"), /*#__PURE__*/React.createElement("tspan", {
-    dy: "-0.144em"
-  }, "​"), "=Rₜₕ で最大 9W）"), /*#__PURE__*/React.createElement("line", {
-    x1: x0 + 250,
-    y1: yTop + 16,
-    x2: x0 + 282,
-    y2: yTop + 16,
-    stroke: "var(--ok)",
-    strokeWidth: "2.6",
-    strokeDasharray: "7 4"
-  }), /*#__PURE__*/React.createElement("text", {
-    x: x0 + 288,
-    y: yTop + 20,
-    fontSize: "12",
+    y: YE(m.e) + 17,
+    fontSize: "12.5",
     fontWeight: "700",
     fill: "var(--ok)"
-  }, "η（単調増加・ピークなし・100%に漸近）"), /*#__PURE__*/React.createElement("text", {
+  }, halo), m.lab, " ", m.eTxt))), /*#__PURE__*/React.createElement("text", {
     x: x1,
-    y: yTop + 60,
+    y: aBot - 14,
     textAnchor: "end",
-    fontSize: "11",
+    fontSize: "11.5",
     fill: "var(--ink-soft)"
-  }, "R", /*#__PURE__*/React.createElement("tspan", {
-    dy: "0.2em",
-    fontSize: "0.72em"
-  }, "L"), /*#__PURE__*/React.createElement("tspan", {
-    dy: "-0.144em"
-  }, "​"), " 大 ＝ 効率は上がるが P", /*#__PURE__*/React.createElement("tspan", {
-    dy: "0.2em",
-    fontSize: "0.72em"
-  }, "L"), /*#__PURE__*/React.createElement("tspan", {
-    dy: "-0.144em"
-  }, "​"), " は落ちる"), /*#__PURE__*/React.createElement("text", {
-    x: 350,
-    y: 306,
-    textAnchor: "middle",
-    fontSize: "12",
-    fontWeight: "700",
-    fill: "var(--accent-ink)"
-  }, "2本のピークは重ならない ＝「最大電力 ≠ 最大効率」"));
+  }, sub("R", "L"), " > ", sub("R", "th"), " では下がる"), /*#__PURE__*/React.createElement("text", {
+    x: x1,
+    y: bBot - 14,
+    textAnchor: "end",
+    fontSize: "11.5",
+    fill: "var(--ink-soft)"
+  }, sub("R", "L"), " を大きくするほど上がる"));
 })()), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
@@ -46321,7 +46260,7 @@ const DcCircuitLearnTab = ({
     marginTop: 8,
     lineHeight: 1.6
   }
-}, "図：上の表の①②③をそのまま曲線に乗せたもの（V", /*#__PURE__*/React.createElement("sub", null, "th"), "=12V・R", /*#__PURE__*/React.createElement("sub", null, "th"), "=4Ω）。", /*#__PURE__*/React.createElement("strong", null, "負荷電力 P", /*#__PURE__*/React.createElement("sub", null, "L"), " は R", /*#__PURE__*/React.createElement("sub", null, "L"), "=R", /*#__PURE__*/React.createElement("sub", null, "th"), " を頂点とする山形"), "で、そこから左右どちらにずらしても下がる（③ 12Ω で 6.75W と ① より小さい）。一方", /*#__PURE__*/React.createElement("strong", null, "効率 η = R", /*#__PURE__*/React.createElement("sub", null, "L"), "/(R", /*#__PURE__*/React.createElement("sub", null, "th"), "+R", /*#__PURE__*/React.createElement("sub", null, "L"), ") は単調増加"), "で、最大電力点ではまだ ", /*#__PURE__*/React.createElement("strong", null, "50%"), "にすぎない。", /*#__PURE__*/React.createElement("strong", null, "2本の曲線の「おいしい点」がずれている"), "のが、電力最大と効率最大を混同する誤答（典型誤答①）の正体。", /*#__PURE__*/React.createElement("br", null), "左端（R", /*#__PURE__*/React.createElement("sub", null, "L"), " 小）は電流こそ大きいが、その電力の大半が内部抵抗 R", /*#__PURE__*/React.createElement("sub", null, "th"), " で消費されるので効率が低い。右端（R", /*#__PURE__*/React.createElement("sub", null, "L"), " 大）は効率こそ上がるが、電流が絞られて P", /*#__PURE__*/React.createElement("sub", null, "L"), " 自体が落ちる。試験では「", /*#__PURE__*/React.createElement("strong", null, "最大電力を取り出したい"), "」のか「", /*#__PURE__*/React.createElement("strong", null, "効率よく送りたい"), "」のかを問題文で読み分ける。")), /*#__PURE__*/React.createElement(Callout, {
+}, "図：上の表の①②③を曲線に乗せたもの（V", /*#__PURE__*/React.createElement("sub", null, "th"), "=12V・R", /*#__PURE__*/React.createElement("sub", null, "th"), "=4Ω）。単位の違う電力 [W] と効率 [%] は、縦軸を上下の段に分けて描いた（1本の軸に重ねると、曲線の交点に意味があるように見えてしまう）。", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "負荷電力 P", /*#__PURE__*/React.createElement("sub", null, "L"), " = V", /*#__PURE__*/React.createElement("sub", null, "th"), "²R", /*#__PURE__*/React.createElement("sub", null, "L"), "/(R", /*#__PURE__*/React.createElement("sub", null, "th"), "+R", /*#__PURE__*/React.createElement("sub", null, "L"), ")² は R", /*#__PURE__*/React.createElement("sub", null, "L"), "=R", /*#__PURE__*/React.createElement("sub", null, "th"), " を頂点とする山形"), "で、そこから左右どちらにずらしても下がる（③ 12Ω で 6.75W と ① より小さい）。一方", /*#__PURE__*/React.createElement("strong", null, "効率 η = R", /*#__PURE__*/React.createElement("sub", null, "L"), "/(R", /*#__PURE__*/React.createElement("sub", null, "th"), "+R", /*#__PURE__*/React.createElement("sub", null, "L"), ") は単調増加"), "で、最大電力点ではまだ ", /*#__PURE__*/React.createElement("strong", null, "50%"), "にすぎない。", /*#__PURE__*/React.createElement("strong", null, "P", /*#__PURE__*/React.createElement("sub", null, "L"), " が最大になる点（点線）と、η が高くなる向き（右）がずれている"), "のが、「電力が最大の点では効率も最大」と思い込む誤答（典型誤答①）の正体。", /*#__PURE__*/React.createElement("br", null), "左端（R", /*#__PURE__*/React.createElement("sub", null, "L"), " 小）は電流こそ大きいが、その電力の大半が等価回路の内部抵抗 R", /*#__PURE__*/React.createElement("sub", null, "th"), " で消費されるので効率が低い（等価回路の中の値。元の回路の損失とは一般に一致しない）。右端（R", /*#__PURE__*/React.createElement("sub", null, "L"), " 大）は効率こそ上がるが、電流が絞られて P", /*#__PURE__*/React.createElement("sub", null, "L"), " 自体が落ちる。試験では「", /*#__PURE__*/React.createElement("strong", null, "最大電力を取り出したい"), "」のか「", /*#__PURE__*/React.createElement("strong", null, "効率よく送りたい"), "」のかを問題文で読み分ける。")), /*#__PURE__*/React.createElement(Callout, {
   variant: "warn",
   title: "典型誤答3択（自己採点用）"
 }, /*#__PURE__*/React.createElement("ol", {
