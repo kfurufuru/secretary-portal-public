@@ -2041,6 +2041,289 @@ window.WIKI_DATA = {
     },
   ],
 };
+
+/* ─── 誤答カード（ホーム最上部「自分の誤答カード」・riron-components.jsx の RironMissCards） ───
+   出典は Notion「📚 電験三種 過去問管理（全科目）」の理論の記録のうち、1〜3回目のどれかが × か △、
+   または「間違えた」に印があるもの 123 件（RIRON_MISS_CARDS_ASOF の時点）。
+   記録の「論点」欄は問題冊子と食い違うものがあったので、束へは試験センター公表の問題冊子で確かめた中身で入れた。
+   - tab            : 節があるタブ（formulas / explain / learn）。タブの無いページは持たない
+   - problems[].id  : 記録の問題番号。「R04」とだけある記録のうち、論点が R04下 の冊子とだけ一致した3件は R04下 と読み替えた
+   - problems[].m   : 1回目→2回目→3回目の判定。同じ問題の記録が2件あれば「 / 」で並べる
+   - problems[].c   : 記録の誤答原因（あるものだけ）
+   - problems[].rec : 記録の論点が冊子の中身と違う問題だけ、記録に書かれていた論点
+   - history        : x = × の延べ回数・t = △ の延べ回数・n = 記録の件数
+   - H29-問14（有効数字と単位の扱い）は、この論点を扱う本文が理論 Wiki に無いのでカードにしていない
+   記録に「どう考えて間違えたか」は残っていないので、a は本文の要点で書いた（根拠は各節）。前の自分の答えは持たない。 */
+const RIRON_MISS_CARDS_ASOF = '2026-10-20';   // Notion 過去問管理の最終確認日（この日までの記録を数えた）
+const RIRON_MISS_CARDS = [
+  { id:"cap-dielectric", page:"capacitor", anchor:"dielectric-2types", tab:"formulas",
+    q:"誘電率の違う層を厚さ方向に積み重ねたコンデンサで、電界 E が強くなるのはどの層か。なぜか。",
+    a:["誘電体を上下に積み重ねる（縦入れ）配置は直列等価で、各層の電荷 Q は等しい。",
+       "極板の電荷が同じなら、電束密度 D はどの区間でも一定である。",
+       "E = D/ε なので、誘電率の小さい層ほど電界 E が強い（E₁ : E₂ = ε₂ : ε₁）。空気層があれば、空気層の E が最も強い。",
+       "等電位線の間隔は E に反比例し、誘電体の中は疎、空気層は密になる。"],
+    problems:[{"id": "H18-問2", "m": "×"}, {"id": "R06上-問1", "m": "×→△", "c": "勘違い"}, {"id": "R06下-問1", "m": "×→×", "c": "勘違い"}],
+    history:{"x": 4, "t": 1, "n": 3} },
+  { id:"cap-plate", page:"capacitor", anchor:"constv-vs-constq", tab:"explain",
+    q:"平行平板コンデンサの間隔や誘電体を変えるとき、電源につないだままと切り離した後で、一定に保たれる量はそれぞれ何か。",
+    a:["電源につないだままでは V が一定である。極板間を一様に満たす誘電体なら、E = V/d も誘電体を入れて変わらない。",
+       "V 一定で極板間を一様に満たす誘電体を入れると、Q = CV と W = CV²/2 が ε_r 倍になる。",
+       "電源を切り離した後は電荷の出入りがなく Q が一定で、V = Q/C で V が動く。",
+       "C = ε₀ε_r·S/d なので、間隔 d を大きくすると C は小さくなる。"],
+    problems:[{"id": "R04上-問1", "m": "×"}, {"id": "R05下-問1", "m": "△"}, {"id": "R06下-問17(b)", "m": "×", "c": "計算ミス"}],
+    history:{"x": 2, "t": 1, "n": 3} },
+  { id:"cap-network", page:"capacitor", anchor:"comparison", tab:"formulas",
+    q:"コンデンサを直列につないだときと並列につないだときで、素子どうしで等しくなる量はそれぞれ何か。",
+    a:["直列接続では（最初に電荷が無ければ）各コンデンサの電荷 Q が等しく、電圧は V_i = Q/C_i で分担する。",
+       "並列接続では各素子の電圧が等しく、電荷は Q_i = C_i V で分かれる。",
+       "合成容量は抵抗と逆で、直列は逆数の和で小さく、並列は足し算で大きくなる。",
+       "電源から切り離した後に並列につなぐと、全電荷は保存され、電圧が揃うまで電荷が移動する。",
+       "各コンデンサの極板間の電界は E = V/d で、分担した電圧と間隔で決まる。"],
+    problems:[{"id": "R04下-問6", "m": "×→〇"}, {"id": "H26-問5", "m": "×"}, {"id": "H24-問15(b)", "m": "×", "rec": "直並列したコンデンサの電荷の動き（(a) の内容）"}],
+    history:{"x": 3, "t": 0, "n": 3} },
+  { id:"cap-sphere", page:"capacitor", anchor:"concentric-sphere", tab:"formulas",
+    q:"孤立した導体球の静電容量は、何を対電極とみなすコンデンサで、半径とどういう関係になるか。",
+    a:["孤立導体球（半径 a）の静電容量は C = 4πε₀a で、無限遠を対電極と見なす。",
+       "同心球の C = 4πε₀·ab/(b−a) で b→∞ とすると、C → 4πε₀a に一致する。",
+       "球の電界は一様でなく E ∝ 1/r² なので、平行平板の C = ε₀ε_r·S/d は使えない。"],
+    problems:[{"id": "R06下-問2", "m": "×→×", "c": "立式"}],
+    history:{"x": 2, "t": 0, "n": 1} },
+  { id:"coulomb", page:"coulomb-field", anchor:"image-charge", tab:"explain",
+    q:"クーロン力の式の分母に入れる距離は、どこからどこまでの距離か。",
+    a:["真空中の点電荷の力 F = Q₁Q₂/(4πε₀r²) で、r は中心間距離である。",
+       "糸で吊るした帯電球でも、入れるのは中心間距離 d で、糸の長さ l や d/2 ではない。",
+       "接地導体面のそばの点電荷は対称位置の −Q に置き換え、距離は h でなく 2h になる。",
+       "力が高さで変わるので、引き上げる仕事は F×(z−h) でなく積分し 1/h − 1/z の形になる。"],
+    problems:[{"id": "H19-問3", "m": "×"}, {"id": "R04下-問17(b)", "m": "△"}, {"id": "R05下-問2", "m": "×"}, {"id": "R01-問15(b)", "m": "×"}],
+    history:{"x": 3, "t": 1, "n": 4} },
+  { id:"mag-field", page:"electromagnetic-force", anchor:"parallel-conductors", tab:"explain",
+    q:"無限長直線電流がつくる磁界と平行導体間の力は、距離の1乗と2乗のどちらに反比例するか。同じ向きの電流どうしは引き合うか、反発するか。",
+    a:["無限長直線電流が距離 r の点につくる磁界は H = I/(2πr) で、r に反比例する。",
+       "平行導体間の力 F/l = μ₀I_{A}I_{B}/(2πd) は距離に反比例し、距離の2乗ではない。",
+       "同じ向きの電流が流れる平行導体は引き合い、逆向きなら反発する。",
+       "逆方向電流の合成磁界ゼロ点は外側にあり、電流の小さい方の外側に決まる。",
+       "方形ループのうち直線導体に平行な2辺は電流が逆向きで、合力は近い辺と遠い辺の力の差になる（直角な2辺の力は打ち消し合う）。"],
+    problems:[{"id": "R05上-問4", "m": "×→〇", "c": "考え方"}, {"id": "R06上-問4", "m": "×→〇", "c": "考え方"}, {"id": "R05下-問4", "m": "×"}, {"id": "R06下-問4", "m": "×→×", "c": "勘違い", "rec": "磁気回路に関する計算問題"}],
+    history:{"x": 5, "t": 0, "n": 4} },
+  { id:"mag-circuit", page:"magnetic-circuit", anchor:"unit-symbol", tab:"formulas",
+    q:"磁界の強さ H と磁束密度 B は何が違い、それぞれどの単位で表すか。Wb を V と s で表すとどうなるか。",
+    a:["B は単位面積あたりの磁束、H は単位長さあたりの起磁力（環状コイルなら H = NI/l）で、B = μH（μ = μ₀μr）で結びつく。",
+       "単位は H が [A/m]、B が [T]＝[Wb/m²]、Φ が [Wb]、μ が [H/m] である。",
+       "起磁力 F = NI は [A]、磁気抵抗 Rm = l/(μA) は [H⁻¹]＝[A/Wb] である。",
+       "強磁性体は μr ≫1 で、磁界と同方向に強く磁化して磁束を集中させる。",
+       "ヒステリシス損はループの面積に比例し、1サイクルごとに熱になる。",
+       "SI 組立単位で表すと Wb = V·s で、V/s ではない。"],
+    problems:[{"id": "R01-問3", "m": "×"}, {"id": "R05下-問3", "m": "△"}, {"id": "R06上-問3", "m": "△"}, {"id": "R05下-問14", "m": "△"}, {"id": "R06下-問14", "m": "×", "rec": "電気計器の特性に関する論説問題"}],
+    history:{"x": 2, "t": 3, "n": 5} },
+  { id:"induction", page:"inductance", anchor:"lambda-bridge", tab:"explain",
+    q:"コイルの誘導起電力は、磁束や電流の大きさと変化の速さのどちらで決まるか。",
+    a:["誘導起電力は e = −N dΦ/dt（ファラデーの形）と e = −L di/dt（自己誘導の形）で表す。",
+       "2つは別の法則ではなく、ファラデーの法則を磁束の言葉か電流の言葉で書いた違いである。",
+       "直流定常では di/dt = 0 なので、理想コイルは短絡（電圧降下ゼロ）として振る舞う。",
+       "コイルに蓄えられるエネルギーは W = LI²/2 で、電流の2乗に比例する。"],
+    problems:[{"id": "R06下-問3", "m": "△→×"}, {"id": "R05上-問10", "m": "×→×"}],
+    history:{"x": 3, "t": 1, "n": 2} },
+  { id:"dc-network", page:"dc-circuit", anchor:"superposition", tab:"explain",
+    q:"直流回路で、電源が1つなら何から解くか。電源が複数あるとき、各電源の寄与を足すか引くかは何で決まるか。",
+    a:["電源が1つなら、合成抵抗を出し、直列の素子は電圧を分け合う（分圧）・並列の素子は同じ電圧で電流を分け合う、で解く。",
+       "重ね合わせは線形回路で使い、着目する電源以外をゼロにする（電圧源→短絡・電流源→開放）。",
+       "各電源の寄与は向きを確かめて合成し、同じ素子で逆向きなら引き算・同じ向きなら足し算になる。",
+       "ミルマンの定理では、極性が逆の電源の枝は分子に −E/R として入る。",
+       "電流が負で出たら「仮定と逆向きに流れている」意味で、やり直さず符号ごと次の式へ代入する。"],
+    problems:[{"id": "H23-問7", "m": "△"}, {"id": "H27-問15(a)", "m": "×"}, {"id": "H27-問4", "m": "×"}, {"id": "R05上-問6", "m": "〇→△→〇"}, {"id": "R05下-問6", "m": "△→×", "c": "計算ミス"}, {"id": "R06上-問6", "m": "△→×"}, {"id": "R06下-問6", "m": "×→〇"}, {"id": "R07上-問6", "m": "△"}, {"id": "R07上-問7", "m": "×"}, {"id": "R05上-問5", "m": "〇→×", "c": "計算ミス", "rec": "相互誘導に関する計算問題"}],
+    history:{"x": 7, "t": 5, "n": 10} },
+  { id:"dc-temp", page:"dc-circuit", anchor:"resistor-material", tab:"formulas",
+    q:"温度で抵抗値が変わったとき、電圧一定の電流は抵抗の増加率と同じ割合で減るか。",
+    a:["温度 T での抵抗は R_T = R₀{1 + α(T − T₀)} で求める（T₀ は基準温度・R₀ は T₀ での抵抗）。",
+       "α は基準温度を何度にするかで値が変わるので、0°C 基準か 20°C 基準かを必ず確認する。",
+       "電圧一定なら I = V/R なので、電流は抵抗に反比例する。",
+       "抵抗の増加率をそのまま電流の減少率にするのは誤りで、抵抗の倍率の逆数をとる。"],
+    problems:[{"id": "R04下-問7", "m": "×"}, {"id": "R05上-問7", "m": "×→×"}],
+    history:{"x": 3, "t": 0, "n": 2} },
+  { id:"dc-maxpower", page:"dc-circuit", anchor:"z-3conditions", tab:"learn",
+    q:"可変抵抗で発生するジュール熱が最大になるのは、その抵抗が何と等しいときか。",
+    a:["負荷電力は R_L = R_th のとき最大になり、P_max = V_th²/(4R_th) である。",
+       "R_th は電源をゼロにしてから、端子間の合成抵抗として求める。",
+       "実問は R_th を自分で作る工程があり、電池 n 個直列なら nr、R06上問7 の型では r∥R₁ になる。",
+       "内部抵抗を直列に持つ電源では、R_L = R_th のとき効率は 50% で、電力最大と効率最大は別の点である。"],
+    problems:[{"id": "R06上-問7", "m": "×→×", "c": "考え方"}, {"id": "R03-問7", "m": "×", "rec": "RLC の直列及び並列共振回路の特徴に関する論説問題"}],
+    history:{"x": 3, "t": 0, "n": 2} },
+  { id:"ac-impedance", page:"ac-basics", anchor:"impedance", tab:"explain",
+    q:"交流回路で電圧・電流・インピーダンスを合成するとき、大きさをそのまま足してよいのはどんな場合か。",
+    a:["直列のインピーダンスは Z = R + jX（X = X_L − X_C）で、大きさは |Z| = √(R² + X²) になる。",
+       "この形は直列の式で、並列はアドミタンス Y = G + jB を合成し、必要なら Z = 1/Y とする。",
+       "同一周波数の2電圧の合成は √(V₁² + V₂² + 2V₁V₂cosΔφ) で、単純加算になるのは Δφ = 0 のときだけである。",
+       "直流と交流が重なった電流の実効値は I = √(I_DC² + I_AC²) で、I_DC + I_AC ではない。"],
+    problems:[{"id": "H23-問8", "m": "×"}, {"id": "R01-問8", "m": "×"}, {"id": "R02-問8", "m": "×"}, {"id": "R06下-問8", "m": "×→〇"}, {"id": "R07上-問9", "m": "×"}],
+    history:{"x": 5, "t": 0, "n": 5} },
+  { id:"ac-phase", page:"phase-difference", anchor:"formulas",
+    q:"正弦波電圧を加えたとき、電流が電圧より 90° 進むのはコイルとコンデンサのどちらか。「進み・遅れ」は何が何に対しての話か。",
+    a:["コイル L では電流が電圧より π/2 遅れ、コンデンサ C では π/2 進む。",
+       "v = V_m sin ωt のとき、C の電流は i = ωCV_m sin(ωt + π/2)、L の電流は i = (V_m/ωL) sin(ωt − π/2) になる。",
+       "「進み・遅れ」の主語はふつう電流で、電圧に対して電流がどうかを先に決める。",
+       "RL 直列では、電流は電圧より φ = arctan(ωL/R) だけ遅れる。",
+       "−cos ωt = sin(ωt − π/2) は π/2 遅れ、cos ωt = sin(ωt + π/2) は π/2 進みである。式が cos で与えられたら sin に直して比べる。"],
+    problems:[{"id": "R06上-問15(a)", "m": "×"}, {"id": "R06上-問15(b)", "m": "×"}, {"id": "H30-問8", "m": "△"}, {"id": "R03-問8", "m": "〇"}],
+    history:{"x": 2, "t": 1, "n": 4} },
+  { id:"ac-formfactor", page:"ac-basics", anchor:"waveform-ratio", tab:"formulas",
+    q:"波形率と波高率のうち、実効値が分母に来るのはどちらか。",
+    a:["波形率は 実効値 / 整流平均値、波高率は 最大値 / 実効値 である。",
+       "波形率の分母は全波整流した波形の平均値で、正弦波をそのまま1周期平均すると 0 になる。",
+       "最大値 V_m の対称波形で比べると、どちらの指標も 三角波 ＞ 正弦波 ＞ 方形波 になる。",
+       "方形波は実効値・整流平均値・最大値がすべて等しく、波形率・波高率とも 1 になる。"],
+    problems:[{"id": "R04下-問8", "m": "× / ×"}],
+    history:{"x": 2, "t": 0, "n": 2} },
+  { id:"ac-power", page:"ac-power", anchor:"power-factor-views", tab:"explain",
+    q:"力率 cosφ は何の比で決まり、コンデンサの入れすぎやひずみ波ではどう扱いが変わるか。",
+    a:["cosφ は電流のうち電圧と同位相な成分の割合で、P/S でも直列の R/Z でも同じ値になる。",
+       "直列RLの力率は cosφ = R/√(R² + X_L²) で、比 R/X_L とは別物である。",
+       "Q_C が Q₁ を超えると Q₂ < 0 となり、力率は進相側に振れる（過補償）。",
+       "ひずみ波の有効電力は次数ごとに P = ΣV_n I_n cosφ_n で計算して合算し、基本波だけの P = VI cosφ は使えない。"],
+    problems:[{"id": "H22-問8", "m": "×", "c": "時間（捨て問/時間切れ）"}, {"id": "H24-問8", "m": "△"}, {"id": "R05上-問9", "m": "×→〇"}, {"id": "R05下-問9", "m": "印なし"}],
+    history:{"x": 2, "t": 1, "n": 4} },
+  { id:"rlc-resonance", page:"rlc-resonance", anchor:"series-vs-parallel", tab:"explain",
+    q:"共振のとき、直列と並列でインピーダンスと電源電流は最大・最小のどちらになるか。",
+    a:["直列RLC と理想並列RLC の共振周波数は f₀ = 1/(2π√LC) で、L と C だけで決まり R は影響しない。",
+       "直列共振では虚部が消えて Z = R（最小）となり、電流は最大の I = V_s/R になる。",
+       "理想並列の共振では Z 最大・電源電流最小だが、L・C の枝には電源電流の Q 倍の電流が循環する。",
+       "直列共振時の V_L・V_C は消えずに大きさ QV_s で、V_L/V_R = Q になる。"],
+    problems:[{"id": "H25-問10", "m": "×"}, {"id": "R01-問9", "m": "×"}, {"id": "R04上-問9", "m": "×"}, {"id": "R02-問9", "m": "印なし"}, {"id": "R03-問9", "m": "×", "rec": "RL 直列回路の抵抗の大きさが変化したときの現象"}],
+    history:{"x": 4, "t": 0, "n": 5} },
+  { id:"rlc-equiv", page:"rlc-resonance", anchor:"parallel-equivalent", tab:"explain",
+    q:"巻線抵抗 r が直列に入ったコイルと C の並列回路と、理想並列 R∥L∥C とで、共振時インピーダンスの式はどう違うか。",
+    a:["コイルに巻線抵抗 r が直列に入った (r + jωL) ∥ C の共振時インピーダンスは L/(Cr) になる。",
+       "この回路では r が小さいほど Z が大きく、電源電流が最小になる。",
+       "理想並列 R∥L∥C の共振時インピーダンスは Z = R で、L/(Cr) の回路とは抵抗の入る位置が違う。"],
+    problems:[{"id": "H22-問13", "m": "×", "c": "考え方"}, {"id": "R06上-問13", "m": "×", "c": "考え方"}, {"id": "H26-問8", "m": "△"}],
+    history:{"x": 2, "t": 1, "n": 3} },
+  { id:"ac-bridge", page:"bridge-circuit", anchor:"ac-bridge", tab:"explain",
+    q:"交流ブリッジの平衡条件は、直流ブリッジの平衡条件とどこが違うか。",
+    a:["平衡条件は、向かい合う対辺のインピーダンスの積が等しいこと（Z₁Z₄ = Z₂Z₃）である。",
+       "直流ブリッジの抵抗をインピーダンスに置き換えた形で、構造は同じである。",
+       "インピーダンスは複素数なので、実部と虚部の両方が一致して初めて平衡になる。大きさだけを合わせても平衡にはならない。"],
+    problems:[{"id": "H29-問15(b)", "m": "×", "rec": "平行平板コンデンサに関する計算問題"}],
+    history:{"x": 1, "t": 0, "n": 1} },
+  { id:"three-phase", page:"three-phase", anchor:"comparison", tab:"formulas",
+    q:"Y結線とΔ結線で、線間と相で値が違うのは電圧と電流のどちらか。それは三相電力の式の係数にどう効くか。",
+    a:["Y結線は V_L = √3 V_P ∠+30°・I_L = I_P で、√3 は電圧側に付く。",
+       "Δ結線は V_L = V_P・I_L = √3 I_P ∠−30° で、√3 は電流側に付く。",
+       "三相電力は線間で書けば係数 √3、相で書けば係数 3 になる。",
+       "P = √3 V_L I_L cosφ は平衡三相専用で、不平衡には使えない。",
+       "二電力計法では、2 台の指示の代数和 P = W₁ + W₂ が三相の有効電力になる。力率 0.5 未満で片方が逆振れしたら、その指示は負として足す（P = W₁ − |W₂|）。"],
+    problems:[{"id": "H23-問15(b)", "m": "×"}, {"id": "H24-問16(a)", "m": "×"}, {"id": "H25-問15(b)", "m": "×", "rec": "三相交流回路の消費電力（(a) の内容）"}, {"id": "H26-問14", "m": "×"}, {"id": "H29-問16(a)", "m": "×"}, {"id": "H30-問15(a)", "m": "×"}, {"id": "R03-問15(a)", "m": "×"}, {"id": "R04-問15(a)", "m": "×"}, {"id": "R05上-問15(a)", "m": "×", "c": "立式"}, {"id": "R05上-問14", "m": "×→△→△"}, {"id": "R04下-問15(a)", "m": "〇→×", "rec": "電圧計の倍率器に関する計算問題"}, {"id": "R04下-問15(b)", "m": "〇→×", "rec": "電圧計の倍率器に関する計算問題"}],
+    history:{"x": 12, "t": 2, "n": 12} },
+  { id:"tr-rc", page:"transient", anchor:"initial-final", tab:"explain",
+    q:"RC回路でスイッチを操作した直後と十分時間が経った後で、コンデンサはそれぞれ何と見なすか。それはなぜか。",
+    a:["v_C は急変できず、スイッチ直前の値を引き継ぐ。",
+       "初期電荷ゼロなら t=0⁺ の C は短絡と等価で、電流は最大で流れ始める。",
+       "直流定常（t→∞）では充電完了で、C は開放と等価になり電流はゼロになる。",
+       "初期電荷があれば、t=0⁺ の C はその電圧 V₀ を保つ電圧源として扱う。"],
+    problems:[{"id": "H22-問10", "m": "×"}, {"id": "H23-問10", "m": "×"}, {"id": "H26-問11", "m": "△"}, {"id": "R05下-問10", "m": "×", "c": "考え方"}, {"id": "R02-問10", "m": "×"}],
+    history:{"x": 4, "t": 1, "n": 5} },
+  { id:"tr-rl", page:"transient", anchor:"initial-final", tab:"explain",
+    q:"コイルを含む回路で、スイッチを閉じた直後と、定常からスイッチを開いた直後とで、コイルはそれぞれ何として扱うか。",
+    a:["i_L は急変できず、スイッチ直前の値を引き継ぐ。",
+       "初期電流ゼロで投入した直後の L は開放、直流定常の L は短絡と等価になる。",
+       "定常から開いた直後の L は、直前の電流 I₀ を流し続ける電流源として扱う。",
+       "端子電圧は v = −I₀ × R_{残} で向きが反転し、電源電圧を超えることがある。"],
+    problems:[{"id": "H24-問9", "m": "×"}, {"id": "H25-問12", "m": "×"}],
+    history:{"x": 2, "t": 0, "n": 2} },
+  { id:"tr-concept", page:"transient", anchor:"comparison", tab:"formulas",
+    q:"スイッチ直後と十分時間後で C と L の扱いはどう入れ替わり、その間にエネルギーを熱に変えるのはどの素子か。",
+    a:["v_C と i_L は急変できず、直前の値を引き継ぐ。直前が定常なら、C 開放・L 短絡で求めた値が初期値になる。",
+       "初期値ゼロの t=0⁺ では、C は短絡・L は開放と等価になる。",
+       "直流定常の t→∞ では、C は開放・L は短絡と等価になる。",
+       "RLC直列で R を短絡すると LC回路になり、損失がゼロなら減衰しない振動になる。",
+       "初期電荷ゼロの RC 直列を充電完了させると、供給エネルギーの半分が R で熱になる（R の値によらない）。",
+       "充電済みのコンデンサを抵抗で放電しきると、R で消費される全エネルギーは初めに蓄えた ½CV² に等しい。"],
+    problems:[{"id": "H27-問10", "m": "×"}, {"id": "H28-問10", "m": "×"}, {"id": "R04下-問10", "m": "× / ×", "c": "考え方"}, {"id": "R06下-問5", "m": "×→×", "c": "勘違い", "rec": "電磁誘導に関する計算問題"}, {"id": "H19-問7", "m": "×→△"}],
+    history:{"x": 7, "t": 1, "n": 6} },
+  { id:"electron", page:"electron-motion", anchor:"principle", tab:"explain",
+    q:"電子を電界中に置いたときと磁界中に置いたときで、速さを変えるのはどちらか。なぜか。",
+    a:["電界の力 F=eE は運動方向の成分を持てるので、電子の速さが変わる。",
+       "磁界の力は常に速度と直角なので仕事をせず、速さは変わらず向きだけが変わる。",
+       "磁界の力 F=evB sinθ は、静止（v=0）や磁界と平行（θ=0）のときは 0 になる。",
+       "E ⊥ B の直交配置で静止から出発すると、軌跡はサイクロイドになる。"],
+    problems:[{"id": "R05下-問12", "m": "△"}, {"id": "R06上-問12", "m": "×", "c": "考え方"}, {"id": "R06下-問12", "m": "×→△", "c": "考え方"}, {"id": "R04下-問12", "m": "△", "c": "考え方"}],
+    history:{"x": 2, "t": 3, "n": 4} },
+  { id:"semi-diode", page:"semiconductor", anchor:"devices", tab:"explain",
+    q:"可変容量ダイオードとツェナーダイオードは、順・逆どちらのバイアスで使うか。ホール電圧の向きと極性は何で決まるか。",
+    a:["バラクタ（可変容量）ダイオードは逆バイアスで使い、逆電圧を上げるほど空乏層が広がり容量が小さくなる。",
+       "ツェナーダイオードも逆バイアスで使い、ツェナー電圧 V_Z を超えると降伏して定電圧を維持する。",
+       "両者は逆バイアスで使う点が共通で、定電圧か容量可変かという目的で区別する。",
+       "発光ダイオード（LED）は順バイアスで使う。",
+       "ホール効果では、電流と磁界の両方に直交する向きにホール電圧が生じる。",
+       "同じ電流・同じ磁界でも、キャリアの符号が違うとホール電圧の極性は逆になる（p 形と n 形で反対）。"],
+    problems:[{"id": "R04下-問11", "m": "×"}, {"id": "R05上-問11", "m": "×"}],
+    history:{"x": 2, "t": 0, "n": 2} },
+  { id:"transistor", page:"transistor", anchor:"bjt-fet", tab:"formulas",
+    q:"BJT と FET は、それぞれ何で出力電流を制御するか。入力インピーダンスが高いのはどちらか。",
+    a:["BJT はベース電流 I_B で制御する電流制御素子である。",
+       "FET はゲート電圧 V_GS で制御する電圧制御素子で、入力電流はほぼゼロである。",
+       "入力インピーダンスは BJT が低く、FET は非常に高い（MOSFET は絶縁ゲートで≈∞）。",
+       "FET は温度上昇でドレイン電流が減り、BJT は温度上昇で I_C が増える（熱暴走リスク）。",
+       "エンハンスメント形 MOSFET は、ゲート電圧がしきい値 V_th を超えて初めてチャネルができる。接合形 FET は逆に、ゲートの逆バイアスを強めるとチャネルが狭まる。"],
+    problems:[{"id": "R06下-問11", "m": "△"}, {"id": "R06上-問11", "m": "△"}, {"id": "R05下-問11", "m": "×", "c": "考え方", "rec": "各ダイオードに加える電圧の方向に関する空欄穴埋問題"}],
+    history:{"x": 1, "t": 2, "n": 3} },
+  { id:"amp-bias", page:"transistor", anchor:"grounding", tab:"formulas",
+    q:"エミッタ接地とコレクタ接地（エミッタフォロワ）で、電圧利得と位相はどう違うか。電流帰還バイアスが温度に強いのはなぜか。",
+    a:["エミッタ接地は電圧利得・電流利得とも大きく、出力は入力と逆位相（180°）になる。",
+       "コレクタ接地（エミッタフォロワ）は電圧利得が約1で位相は反転せず、入力インピーダンスが高く出力インピーダンスが低い。",
+       "電流帰還バイアスは、I_C が増えると V_E が上がってベースを抑える負帰還なので、温度や h_FE のばらつきに強い。",
+       "発振が続く条件は、帰還を一巡した利得が Aβ = 1 で位相が 0°（正帰還）であること。発振が立ち上がるには Aβ が 1 以上要る。",
+       "増幅器を縦続に接続すると、全体の利得は各段の利得の積（dB 表示なら和）になる。"],
+    problems:[{"id": "R05上-問13", "m": "△"}, {"id": "R07上-問13", "m": "×"}, {"id": "R05下-問13", "m": "×"}, {"id": "R04下-問13", "m": "△", "c": "考え方", "rec": "論理回路に関する論説問題"}, {"id": "R04下-問18(a)", "m": "△", "rec": "ディジタル計測に関する論説問題"}, {"id": "R04下-問18(b)", "m": "×", "rec": "ディジタル計測に関する論説問題"}, {"id": "R06下-問13", "m": "×", "rec": "ディジタル回路に関する論説問題"}],
+    history:{"x": 4, "t": 3, "n": 7} },
+  { id:"opamp", page:"op-amp", anchor:"principle", tab:"explain",
+    q:"理想オペアンプで V⁺≒V⁻（イマジナリショート）が成り立つのはなぜか。どんなときに使えないか。",
+    a:["理想オペアンプは入力インピーダンスが∞で、入力端子に電流は流れ込まない。",
+       "開ループ利得が巨大なので、有限の出力を出すには入力の差が限りなく 0 になる。",
+       "V⁺≒V⁻ は負帰還が働く線形動作のときだけ使え、コンパレータや出力飽和時には使えない。",
+       "帰還が＋入力に戻る正帰還では、出力は飽和し、＋入力の分圧と vin の大小比較で解く。"],
+    problems:[{"id": "H22-問18", "m": "△→〇"}, {"id": "H27-問18", "m": "△→×", "rec": "ダイオードを用いた整流回路に関する問題"}, {"id": "R06下-問18(a)", "m": "×→〇", "rec": "オシロスコープに関する論説問題"}, {"id": "R06下-問18(b)", "m": "×→〇", "rec": "オシロスコープに関する論説問題"}],
+    history:{"x": 3, "t": 2, "n": 4} },
+  { id:"modulation", page:"transistor", anchor:"am-modulation", tab:"formulas",
+    q:"AM 波の変調度 m は、包絡線のどの値から求めるか。その式はどの範囲で成り立つか。",
+    a:["AM は搬送波の振幅を信号波で上下させる変調で、包絡線が信号波の形になる。",
+       "変調度は、包絡線の最大振幅 A と最小振幅 B から m=(A−B)/(A+B) で求める。",
+       "この式は 0<m≦1 で使い、m>1 の過変調では包絡線が信号波の形にならない。"],
+    problems:[{"id": "H28-問18", "m": "×"}, {"id": "R05上-問18", "m": "×→×"}, {"id": "R06上-問18", "m": "×"}],
+    history:{"x": 4, "t": 0, "n": 3} },
+  { id:"meter-shunt", page:"measurement", anchor:"internal-r", tab:"explain",
+    q:"電圧計と電流計の内部抵抗は、それぞれ高低どちらが望ましいか。電流計を並列にすると電流は何で分かれるか。",
+    a:["電圧計は並列に入るので内部抵抗が高いほど良く、電流計は直列に入るので低いほど良い。",
+       "内部抵抗の異なる電流計を並列にすると、電流は内部抵抗に反比例して分かれる。",
+       "測定できる最大電流は、先に定格に達する計器の側から逆算する。",
+       "誤差率は ε=(M−T)/T×100 で、分母は測定値 M ではなく真値 T である。"],
+    problems:[{"id": "R03-問16(a)", "m": "〇→×→〇", "c": "時間かかりすぎ", "rec": "電流計の分流器に関する計算問題"}, {"id": "R05上-問16(a)", "m": "×→〇"}, {"id": "R05上-問16(b)", "m": "×→〇"}, {"id": "R06上-問16(a)", "m": "〇→△"}, {"id": "R05下-問16(a)", "m": "×→〇"}],
+    history:{"x": 4, "t": 1, "n": 5} },
+  { id:"meter-kind", page:"measurement", anchor:"principle", tab:"explain",
+    q:"可動コイル形が直流専用になるのはなぜか。交流でも使える計器との分かれ目は何か。",
+    a:["可動コイル形は力の向きが電流の向きで反転するので、交流では平均ゼロで振れず直流専用になる。",
+       "可動鉄片形や電流力計形は、電流が反転しても力の向きが変わらないので交流でも動く。",
+       "ただし可動鉄片形は、ヒステリシス誤差のため分類上は交流用である。",
+       "整流形は平均値に正弦波の波形率 1.11 を掛けて表示するので、正弦波以外では誤差が出る。",
+       "熱電形は発熱（電流の2乗）で動くので、波形によらず真の実効値を示す。整流形は平均値 × 1.11 なので正弦波でしか正しくない。"],
+    problems:[{"id": "H24-問14", "m": "△"}, {"id": "R01-問14", "m": "△"}, {"id": "R06上-問14", "m": "×→△→〇"}],
+    history:{"x": 1, "t": 3, "n": 3} },
+  { id:"meter-ad", page:"measurement", anchor:"waveform", tab:"explain",
+    q:"二重積分形 A-D 変換で、R・C の誤差が結果に出ないのはなぜか。代わりに何が劣るか。",
+    a:["Vx を決めた時間 T₁ 積分し、逆極性の基準電圧 Vr で 0 に戻るまでの時間 T₂ を数える。",
+       "上がった量と下がった量が等しいので、Vx=(T₂/T₁)Vr となる。",
+       "同じ積分器を往復で使うので k=1/RC が消え、R・C の誤差が結果に出ない。",
+       "積分は平均をとる操作なので雑音に強いが、変換は遅い。",
+       "A-D 変換の量子化誤差は、ビット数を増やしても 0 にはできない。"],
+    problems:[{"id": "R01-問18", "m": "×→×", "c": "読解"}, {"id": "R04下-問14", "m": "×"}],
+    history:{"x": 3, "t": 0, "n": 2} },
+  { id:"sensor", page:"measurement", anchor:"waveform", tab:"explain",
+    q:"熱電対・ホール素子・ひずみゲージ・測温抵抗体は、それぞれ何を使って何を電気信号に変えるか。",
+    a:["熱電対はゼーベック効果で、温度差を起電力に変える。",
+       "ホール素子はホール効果で、磁界と電流から電圧を生じ、磁束密度の測定に使う。",
+       "ひずみゲージは変形を抵抗変化に変え、ブリッジと組み合わせて使う。",
+       "測温抵抗体（Pt100）は白金の抵抗温度係数を使い、精密・中低温向きである。"],
+    problems:[{"id": "R02-問14", "m": "×→△"}],
+    history:{"x": 1, "t": 1, "n": 1} },
+];
 </script>
   <script>
 /* built from riron-tweaks-panel.jsx — 直接編集しない。正(SoT)は riron-tweaks-panel.jsx。編集後に build-riron-wiki.py を実行する */
@@ -3449,7 +3732,7 @@ const MemoField = ({
   record,
   onSetMemo
 }) => {
-  const stored = record && record.memo || "";
+  const stored = record && typeof record.memo === "string" ? record.memo : "";
   const [open, setOpen] = useState(!!stored);
   const [draft, setDraft] = useState(stored);
 
@@ -3675,6 +3958,251 @@ const TrapCheckPills = ({
     record: record,
     onSetMemo: setMemo
   }));
+};
+
+/* ---- 誤答カード（ホーム最上部）。RIRON_MISS_CARDS（riron-data.js）を「問い → 自分で答える → 答えを開く → 理解度」で回す。
+   答えは開くまで隠す（先に思い出すことで定着する。並べて読むだけでは分かった気になる）。
+   記録の形と復習の間隔は引っかけパターン集と同じ（useCheckRecord・CheckPills・RIRON_SRS_THRESHOLD_DAYS）。
+   キーは denken_check::riron_<page>::misscard::<id>。
+   元の記録（Notion の過去問管理）には「どう考えて間違えたか」が残っていないので、カードは前の答えを持たない（機械の誤答カードとの違い）。
+   代わりにメモ欄で、自分の考え違いを1行残せるようにする。 */
+const RIRON_MISS_SHOW = 5;
+const rironMissKey = c => `denken_check::riron_${c.page}::misscard::${c.id}`;
+const rironMissRead = c => {
+  try {
+    const v = localStorage.getItem(rironMissKey(c));
+    const r = v ? JSON.parse(v) : null;
+    return r && typeof r === "object" ? r : null;
+  } catch (e) {
+    return null;
+  }
+};
+// 期限が来たか。カードはホームでしか答え直せないので、読めない記録は出す側に倒す（隠れたまま戻れなくなるより安全）
+const rironMissKnown = st => typeof st === "string" && Object.prototype.hasOwnProperty.call(RIRON_SRS_THRESHOLD_DAYS, st);
+const rironMissIsDue = rec => {
+  if (!rec || !rironMissKnown(rec.status)) return true; // "toString" のような名前も「知らない状態」として出す
+  const d = rironDaysSince(rec.updatedAt);
+  if (d === null || d < 0) return true; // 日付が読めない・未来（端末の時計違いなど）も出す
+  return isRironReviewDue(rec);
+};
+const rironMissDaysLeft = rec => {
+  const t = rironMissKnown(rec.status) ? RIRON_SRS_THRESHOLD_DAYS[rec.status] : null;
+  const d = rironDaysSince(rec.updatedAt);
+  return t && d !== null ? Math.max(1, t - d) : null;
+};
+// データは「V_L」「h_FE」「R_{残}」の形で書いてあるので、表示のときだけ「_」の後ろを下付きにする（文字列そのものは変えない）
+const rironSubText = str => String(str).split(/([A-Za-zα-ωΑ-Ωµ])_(\{[^{}]*\}|[A-Za-z0-9α-ω]+)/).map((part, i) => i % 3 === 2 ? /*#__PURE__*/React.createElement("sub", {
+  key: i
+}, part.replace(/^\{|\}$/g, "")) : part);
+// 本文の節への行き先。タブのあるページは #ページ:タブ:節 でないとタブが切り替わらず、節へも着地しない（PageTabs）
+const rironMissHash = c => c.page + (c.anchor ? (c.tab ? ":" + c.tab : "") + ":" + c.anchor : "");
+const rironPageLabel = id => {
+  try {
+    for (const ch of window.WIKI_DATA && window.WIKI_DATA.chapters || []) for (const p of ch.pages) if (p.id === id) return `${p.num} ${p.title}`;
+  } catch (e) {}
+  return id;
+};
+// 「R06下 問4 ×→×（勘違い）」の形。記録の論点が冊子の中身と違う問題は、記録に書いた論点を添える（思い出す手がかりにする）
+const rironProblemLabel = p => `${String(p.id).replace("-", " ")}${p.m ? " " + p.m : ""}${p.c ? "（" + p.c + "）" : ""}${p.rec ? " ※記録の論点は「" + p.rec + "」" : ""}`;
+const RironMissCard = ({
+  c,
+  onNav
+}) => {
+  const [open, setOpen] = useState(false);
+  const buildMeta = useMemo(() => () => ({
+    articleUrl: "https://kfurufuru.github.io/secretary-portal-public/denken3-riron-wiki.html#" + rironMissHash(c),
+    articleTitle: "理論 誤答カード — " + rironPageLabel(c.page),
+    itemTitle: c.q.length > 44 ? c.q.slice(0, 44) + "…" : c.q,
+    itemType: "riron-misscard"
+  }), [c.id]);
+  const [record, setStatus, setMemo] = useCheckRecord(rironMissKey(c), buildMeta);
+  const h = c.history || {};
+  return /*#__PURE__*/React.createElement("li", {
+    style: {
+      listStyle: "none",
+      margin: "0 0 10px",
+      padding: "10px 12px",
+      border: "1px solid var(--rule)",
+      borderRadius: "6px",
+      background: "var(--bg-elev)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "12px",
+      color: "var(--ink-soft)"
+    }
+  }, rironPageLabel(c.page), " ・ ", "落とした過去問 ", (c.problems || []).length, " 問", h.x || h.t ? `（× 延べ ${h.x || 0}・△ 延べ ${h.t || 0}）` : ""), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: "4px 0 0",
+      fontWeight: 600
+    }
+  }, rironSubText(c.q)), /*#__PURE__*/React.createElement("details", {
+    onToggle: e => setOpen(e.currentTarget.open),
+    style: {
+      marginTop: "6px"
+    }
+  }, /*#__PURE__*/React.createElement("summary", {
+    style: {
+      cursor: "pointer",
+      color: "var(--ink-soft)",
+      fontSize: "13px"
+    }
+  }, "自分の答えを1行言ってから、答えを開く"), /*#__PURE__*/React.createElement("ul", {
+    style: {
+      margin: "6px 0 0",
+      paddingLeft: "20px",
+      fontSize: "14px"
+    }
+  }, (c.a || []).map((s, i) => /*#__PURE__*/React.createElement("li", {
+    key: i,
+    style: {
+      margin: "2px 0"
+    }
+  }, rironSubText(s)))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: "6px 0 0",
+      fontSize: "12.5px",
+      color: "var(--ink-soft)"
+    }
+  }, "この論点で落とした過去問: ", (c.problems || []).map(rironProblemLabel).join("、")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: "6px 0 0",
+      fontSize: "13px"
+    }
+  }, /*#__PURE__*/React.createElement("a", {
+    href: "#" + rironMissHash(c),
+    onClick: e => {
+      if (!c.tab) {
+        e.preventDefault();
+        onNav(c.page, c.anchor);
+      }
+    }
+  }, "本文で確かめる（", rironPageLabel(c.page), "）")), open && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: "8px"
+    }
+  }, /*#__PURE__*/React.createElement(CheckPills, {
+    record: record,
+    onSetStatus: setStatus
+  }), /*#__PURE__*/React.createElement(ReviewSignal, {
+    record: record
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: "6px 0 0",
+      fontSize: "12px",
+      color: "var(--ink-mute)"
+    }
+  }, "言えなかったら、どう考えて間違えたかをメモに1行残す（次にこのカードを開いたとき、自分の考え違いとして読み返せる）。"), /*#__PURE__*/React.createElement(MemoField, {
+    record: record,
+    onSetMemo: setMemo
+  }))));
+};
+const RironMissCards = ({
+  onNav
+}) => {
+  const cards = typeof RIRON_MISS_CARDS !== "undefined" && Array.isArray(RIRON_MISS_CARDS) ? RIRON_MISS_CARDS : [];
+  // 並びと「今日の分」は開いた時点で決める。理解度を押したカードがその場で消えると、何が起きたか分からないため
+  const [snap] = useState(() => {
+    const rows = cards.map((c, i) => ({
+      c,
+      i,
+      rec: rironMissRead(c)
+    }));
+    const due = rows.filter(r => rironMissIsDue(r.rec)).sort((p, q) => ((q.c.history || {}).x || 0) - ((p.c.history || {}).x || 0) || ((q.c.history || {}).t || 0) - ((p.c.history || {}).t || 0) || p.i - q.i);
+    const waiting = rows.filter(r => !rironMissIsDue(r.rec)).sort((p, q) => (rironMissDaysLeft(p.rec) || 0) - (rironMissDaysLeft(q.rec) || 0));
+    return {
+      due,
+      waiting
+    };
+  });
+  const [limit, setLimit] = useState(RIRON_MISS_SHOW);
+  if (!cards.length) return null;
+  const {
+    due,
+    waiting
+  } = snap;
+  const tot = cards.reduce((n, c) => n + (c.problems || []).length, 0);
+  const recN = cards.reduce((n, c) => n + ((c.history || {}).n || 0), 0);
+  return /*#__PURE__*/React.createElement("section", {
+    style: {
+      margin: "4px 0 18px"
+    },
+    "aria-labelledby": "miss-cards"
+  }, /*#__PURE__*/React.createElement("h2", {
+    id: "miss-cards",
+    style: {
+      marginTop: 0
+    }
+  }, "自分の誤答カード"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: "0 0 4px"
+    }
+  }, /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: due.length ? "var(--danger)" : "var(--ink-soft)"
+    }
+  }, "今日 ", due.length, " 枚"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--ink-soft)"
+    }
+  }, "（全 ", cards.length, " 枚）")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: "0 0 8px",
+      fontSize: "13px",
+      color: "var(--ink-soft)"
+    }
+  }, "Notion の過去問管理で × か △ を付けた、または「間違えた」に印がある ", tot, " 問（記録 ", recN, " 件）を、問題冊子で中身を確かめて論点ごとに ", cards.length, " 枚にまとめた（", RIRON_MISS_CARDS_ASOF, " 時点）。 記録には「どう間違えたか」が残っていないので、答えは本文の要点にしてある。問いに", /*#__PURE__*/React.createElement("strong", null, "自分で答えてから"), "開き、理解度を押す。 間違えた・要確認・うる覚えは数日〜2週間で、理解したは1か月で戻ってくる。"), due.length === 0 && /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: "0 0 8px",
+      fontSize: "13px"
+    }
+  }, "今日の分は終わり。次に戻ってくるカードは下の一覧にある。"), /*#__PURE__*/React.createElement("ul", {
+    style: {
+      margin: 0,
+      padding: 0
+    }
+  }, due.slice(0, limit).map(r => /*#__PURE__*/React.createElement(RironMissCard, {
+    key: r.c.id,
+    c: r.c,
+    onNav: onNav
+  }))), due.length > limit && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => setLimit(limit + RIRON_MISS_SHOW),
+    style: {
+      padding: "4px 12px",
+      fontSize: "13px",
+      fontFamily: "inherit",
+      cursor: "pointer",
+      border: "1px solid var(--rule)",
+      borderRadius: "6px",
+      background: "var(--bg-sunken)",
+      color: "var(--ink)"
+    }
+  }, "次の ", Math.min(RIRON_MISS_SHOW, due.length - limit), " 枚を出す（残り ", due.length - limit, " 枚）"), waiting.length > 0 && /*#__PURE__*/React.createElement("details", {
+    style: {
+      marginTop: "8px",
+      fontSize: "13px"
+    }
+  }, /*#__PURE__*/React.createElement("summary", {
+    style: {
+      cursor: "pointer",
+      color: "var(--ink-soft)"
+    }
+  }, "次の復習を待っているカード ", waiting.length, " 枚"), /*#__PURE__*/React.createElement("ul", {
+    style: {
+      margin: "4px 0 0",
+      paddingLeft: "20px"
+    }
+  }, waiting.map(r => /*#__PURE__*/React.createElement("li", {
+    key: r.c.id,
+    style: {
+      margin: "2px 0"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--ink-soft)"
+    }
+  }, "あと ", rironMissDaysLeft(r.rec), " 日", rironMissKnown(r.rec.status) && RIRON_STATUS_DEFS[r.rec.status] ? ` ・前回 ${RIRON_STATUS_DEFS[r.rec.status].label}` : ""), " ", r.c.q.length > 44 ? r.c.q.slice(0, 44) + "…" : r.c.q)))));
 };
 const TrapCard = ({
   num,
@@ -5110,7 +5638,8 @@ Object.assign(window, {
   TrapBlock,
   MetaStrip,
   LearningMap,
-  TrapPatternsPage
+  TrapPatternsPage,
+  RironMissCards
 });
 </script>
   <script>
@@ -5146,7 +5675,9 @@ const HomePage = ({
     }]
   }), /*#__PURE__*/React.createElement("div", {
     className: "content"
-  }, /*#__PURE__*/React.createElement(SR1Card, {
+  }, typeof RironMissCards === "function" && /*#__PURE__*/React.createElement(RironMissCards, {
+    onNav: onNav
+  }), /*#__PURE__*/React.createElement(SR1Card, {
     onNav: onNav
   }), /*#__PURE__*/React.createElement(RironDailyQuestion, {
     onNav: onNav
@@ -80095,7 +80626,7 @@ const App = () => {
   useEffect(() => {
     const onHash = () => {
       const h = location.hash.replace(/^#/, '').split(':')[0];
-      if (h && pageIds().includes(h)) setPage(h);
+      if (h && pageIds().includes(h)) setPage(h);else if (!h) setPage('home'); // 戻るで # の無い URL（最初に開いた状態）へ戻ったときは、起動時と同じくホームを出す
       // 本文の用語（Term）から #glossary:<用語> で来たとき、前回の対象用語（検索で選んだ語など）が
       // gloTarget に残っていると、用語集はそちらへ飛んでしまう。hash の用語で上書きする
       const t = glossaryHashTerm();

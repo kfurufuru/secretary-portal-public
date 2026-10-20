@@ -2144,6 +2144,668 @@ const DiffBadge = ({
   }, labels[level]);
 };
 
+/* ============================================================ 誤答カード（自分で書いて残す）
+   機械・理論の誤答カードは Notion の記録から作ったが、電力は誤答の記録が 0 件だった。
+   そこで電力は、解いた直後にここで「どう考えて間違えたか」と「正しい考え」を自分で書き、それをそのままカードにする。
+   - キー: denken_check::denryoku_kakomon::miss::<回>-問<番号>[(a|b)]（同じ問題を書き直すと上書きし、判定の履歴は残す）
+   - 復習の間隔は判定で決める（× 3日・△ 7日・○ 14日・◎ 30日。理論の引っかけパターン集と同じ日数）
+   - 端末の中だけに残るので、「チャットに貼る文をコピー」で Notion の SR 復習ログへも渡す（sr-record.py は電力に対応済み） */
+const DENRYOKU_MISS_PREFIX = 'denken_check::denryoku_kakomon::miss::';
+const DENRYOKU_MISS_DAYS = {
+  '×': 3,
+  '△': 7,
+  '○': 14,
+  '◎': 30
+};
+const DENRYOKU_MISS_SHOW = 5;
+// 法規の間違いノートが読む status（4ボタン自己評価の語）へ写す
+const denryokuMarkStatus = m => m === '×' ? 'wrong' : m === '△' ? 'vague' : 'understood';
+const DENRYOKU_EXAMS = (() => {
+  const a = [];
+  for (let h = 18; h <= 30; h++) a.push('H' + h);
+  ['R01', 'R02', 'R03'].forEach(r => a.push(r));
+  for (let r = 4; r <= 8; r++) {
+    a.push('R0' + r + '上');
+    if (r < 8) a.push('R0' + r + '下');
+  }
+  return a.reverse(); // 新しい回から並べる
+})();
+const denryokuLocalDate = d => {
+  const x = d || new Date();
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+};
+const denryokuDaysSince = iso => {
+  const t = Date.parse(iso || '');
+  if (isNaN(t)) return null;
+  const a = new Date(t),
+    n = new Date();
+  return Math.round((new Date(n.getFullYear(), n.getMonth(), n.getDate()) - new Date(a.getFullYear(), a.getMonth(), a.getDate())) / 86400000);
+};
+const denryokuMissLoad = () => {
+  const out = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || k.indexOf(DENRYOKU_MISS_PREFIX) !== 0) continue;
+      let r = null;
+      try {
+        r = JSON.parse(localStorage.getItem(k));
+      } catch (e) {
+        r = null;
+      }
+      // 中身が読めない記録も一覧には出す（消せるようにするため）。画面に出す欄が文字列でない記録も
+      // 読めない側へ回す（オブジェクトをそのまま描画すると React が落ち、ホームごと白くなる）
+      const ok = r && typeof r === 'object' && !Array.isArray(r) && ['wrong', 'right', 'exam', 'q'].every(f => typeof r[f] === 'string') && ['sub', 'mark', 'page'].every(f => r[f] === undefined || typeof r[f] === 'string');
+      out.push({
+        key: k,
+        rec: ok ? r : null
+      });
+    }
+  } catch (e) {/* localStorage が使えない端末 */}
+  return out;
+};
+// 法規の「間違いノート」は同じ記録の status と updatedAt だけを書き換える（mark は古いまま残る）。
+// 最後の判定の時刻と updatedAt が違えば外で付け直されたとみなし、status の間隔（理論・法規と同じ日数）を使う
+const DENRYOKU_STATUS_DAYS = {
+  wrong: 3,
+  review: 7,
+  vague: 14,
+  understood: 30
+};
+const denryokuOwn = (o, k) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k);
+const denryokuMissOutside = rec => {
+  const h = Array.isArray(rec.history) && rec.history.length ? rec.history[rec.history.length - 1] : null;
+  return !!(h && h.at !== rec.updatedAt && denryokuOwn(DENRYOKU_STATUS_DAYS, rec.status));
+};
+const denryokuMissDays = rec => {
+  if (!rec) return null;
+  const outside = denryokuMissOutside(rec);
+  if (outside) return DENRYOKU_STATUS_DAYS[rec.status];
+  return denryokuOwn(DENRYOKU_MISS_DAYS, rec.mark) ? DENRYOKU_MISS_DAYS[rec.mark] : null;
+};
+// 「前回」に出す判定。間違いノートで付け直されていればそちらの語を出す（間隔と食い違わないように）
+const DENRYOKU_STATUS_LABEL = {
+  wrong: '間違えた',
+  review: '要確認',
+  vague: 'うる覚え',
+  understood: '理解した'
+};
+const denryokuMissLast = rec => {
+  if (denryokuMissOutside(rec)) return DENRYOKU_STATUS_LABEL[rec.status] + '（間違いノート）';
+  return rec.mark || '?';
+};
+// 期限が来たか。読めない記録・日付が壊れている／未来・判定が不明なものは出す（隠れたまま戻れなくなるより安全）
+const denryokuMissIsDue = rec => {
+  const t = denryokuMissDays(rec);
+  if (t === null) return true;
+  const d = denryokuDaysSince(rec.updatedAt);
+  if (d === null || d < 0) return true;
+  return d >= t;
+};
+const denryokuMissLabel = rec => rec ? `${rec.exam || '?'} 問${rec.q || '?'}${rec.sub ? '(' + rec.sub + ')' : ''}` : '読めない記録';
+const denryokuPageLabel = id => {
+  try {
+    for (const ch of window.WIKI_DATA && window.WIKI_DATA.chapters || []) for (const p of ch.pages) if (p.id === id) return `${p.num} ${p.title}`;
+  } catch (e) {}
+  return '';
+};
+const denryokuMissText = rows => ['電力の誤答（SR復習ログに記録したい）'].concat(rows.filter(r => r.rec).map(r => {
+  const c = r.rec;
+  return `- ${denryokuMissLabel(c)} ${c.mark || ''}` + (c.page ? ` | 単元: ${denryokuPageLabel(c.page) || c.page}` : '') + ` | 間違えた考え: ${c.wrong || ''} | 正しい考え: ${c.right || ''} | 記録日: ${isNaN(Date.parse(c.createdAt || '')) ? '不明' : denryokuLocalDate(new Date(c.createdAt))}`;
+})).join('\n');
+const DenryokuMissCard = ({
+  row,
+  onNav,
+  onChange
+}) => {
+  const c = row.rec;
+  const [armDel, setArmDel] = useState(false);
+  const [done, setDone] = useState('');
+  const grade = (mark, el) => {
+    if (mark === '△' || mark === '×') noteFlyOff(el);
+    try {
+      const now = new Date().toISOString();
+      const hist = Array.isArray(c.history) ? c.history : [];
+      const next = Object.assign({}, c, {
+        mark,
+        status: denryokuMarkStatus(mark),
+        updatedAt: now,
+        reviewCount: (c.reviewCount || 0) + 1,
+        history: hist.concat([{
+          mark,
+          at: now
+        }]).slice(-10)
+      });
+      localStorage.setItem(row.key, JSON.stringify(next));
+    } catch (e) {/* 保存できなくてもその場の表示は変える */}
+    setDone(mark);
+  };
+  const remove = () => {
+    try {
+      localStorage.removeItem(row.key);
+    } catch (e) {}
+    onChange();
+  };
+  const btn = {
+    padding: '4px 10px',
+    minWidth: 36,
+    background: 'transparent',
+    color: 'var(--ink)',
+    border: '1px solid var(--rule)',
+    borderRadius: 4,
+    cursor: 'pointer',
+    fontWeight: 700,
+    fontSize: 14
+  };
+  if (!c) {
+    return /*#__PURE__*/React.createElement("li", {
+      style: {
+        listStyle: 'none',
+        margin: '0 0 10px',
+        padding: '10px 12px',
+        border: '1px solid var(--rule)',
+        borderRadius: 6,
+        background: 'var(--bg-elev)',
+        fontSize: 13
+      }
+    }, "読めない記録が1件ある（", row.key.slice(DENRYOKU_MISS_PREFIX.length), "）。", /*#__PURE__*/React.createElement("button", {
+      type: "button",
+      style: Object.assign({}, btn, {
+        marginLeft: 6,
+        fontSize: 12
+      }),
+      onClick: remove
+    }, "この記録を消す"));
+  }
+  return /*#__PURE__*/React.createElement("li", {
+    style: {
+      listStyle: 'none',
+      margin: '0 0 10px',
+      padding: '10px 12px',
+      border: '1px solid var(--rule)',
+      borderRadius: 6,
+      background: 'var(--bg-elev)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: 'var(--ink-soft)'
+    }
+  }, denryokuMissLabel(c), c.page && denryokuPageLabel(c.page) ? ` ・ ${denryokuPageLabel(c.page)}` : '', ` ・ 前回 ${denryokuMissLast(c)}`), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '4px 0 0'
+    }
+  }, /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: 'var(--danger)'
+    }
+  }, "前に間違えた考え:"), " ", c.wrong), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '4px 0 0',
+      fontWeight: 600
+    }
+  }, "どこが違うか。正しい考えを1行で言えるか。"), done ? /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '6px 0 0',
+      fontSize: 13,
+      color: 'var(--ink-soft)'
+    }
+  }, "記録した: ", /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: 'var(--ink)'
+    }
+  }, done), ` → ${DENRYOKU_MISS_DAYS[done]} 日後にまた出る`) : /*#__PURE__*/React.createElement("details", {
+    style: {
+      marginTop: 6
+    }
+  }, /*#__PURE__*/React.createElement("summary", {
+    style: {
+      cursor: 'pointer',
+      color: 'var(--ink-soft)',
+      fontSize: 13
+    }
+  }, "自分の答えを1行言ってから、正しい考えを開く"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '6px 0 0'
+    }
+  }, /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: 'var(--ok)'
+    }
+  }, "正しい考え:"), " ", c.right), c.page && denryokuPageLabel(c.page) && /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '6px 0 0',
+      fontSize: 13
+    }
+  }, /*#__PURE__*/React.createElement("a", {
+    href: "#",
+    onClick: e => {
+      e.preventDefault();
+      onNav(c.page);
+    }
+  }, "本文で確かめる（", denryokuPageLabel(c.page), "）")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 8,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: 'var(--ink-soft)'
+    }
+  }, "開く前に言えたか:"), [['◎', '言えた'], ['○', 'ほぼ'], ['△', 'あやしい'], ['×', '言えない']].map(([m, l]) => /*#__PURE__*/React.createElement("button", {
+    key: m,
+    type: "button",
+    style: btn,
+    "aria-label": `${m} ${l}`,
+    onClick: e => grade(m, e.currentTarget)
+  }, m, " ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      fontWeight: 400
+    }
+  }, l)))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '8px 0 0',
+      fontSize: 12
+    }
+  }, !armDel && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    style: Object.assign({}, btn, {
+      fontSize: 12,
+      fontWeight: 400
+    }),
+    onClick: () => setArmDel(true)
+  }, "この記録を消す"), armDel && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--ink-soft)'
+    }
+  }, "消すと元に戻せない。", /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    style: Object.assign({}, btn, {
+      fontSize: 12,
+      marginLeft: 6,
+      borderColor: 'var(--danger)',
+      color: 'var(--danger)'
+    }),
+    onClick: remove
+  }, "本当に消す"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    style: Object.assign({}, btn, {
+      fontSize: 12,
+      marginLeft: 6,
+      fontWeight: 400
+    }),
+    onClick: () => setArmDel(false)
+  }, "やめる")))));
+};
+const DenryokuMissForm = ({
+  data,
+  onSaved
+}) => {
+  const [exam, setExam] = useState(DENRYOKU_EXAMS[0]);
+  const [q, setQ] = useState('1');
+  const [sub, setSub] = useState('');
+  const [mark, setMark] = useState('×');
+  const [page, setPage] = useState('');
+  const [wrong, setWrong] = useState('');
+  const [right, setRight] = useState('');
+  const [msg, setMsg] = useState('');
+  const isB = Number(q) >= 15;
+  const save = () => {
+    const w = wrong.replace(/\s+/g, ' ').trim(),
+      r = right.replace(/\s+/g, ' ').trim();
+    if (!w || !r) {
+      setMsg('「どう考えて間違えたか」と「正しい考え」の両方を1行ずつ書く（片方だけではカードにならない）');
+      return;
+    }
+    const s = isB ? sub : '';
+    const key = DENRYOKU_MISS_PREFIX + exam + '-問' + q + (s ? '(' + s + ')' : '');
+    try {
+      let base = null;
+      try {
+        base = JSON.parse(localStorage.getItem(key));
+      } catch (e) {
+        base = null;
+      }
+      if (!base || typeof base !== 'object' || Array.isArray(base)) base = {};
+      const now = new Date().toISOString();
+      const hist = Array.isArray(base.history) ? base.history : [];
+      const rec = Object.assign({}, base, {
+        exam,
+        q,
+        sub: s,
+        mark,
+        page,
+        wrong: w.slice(0, 200),
+        right: r.slice(0, 200),
+        createdAt: base.createdAt || now,
+        updatedAt: now,
+        reviewCount: base.reviewCount || 0,
+        history: hist.concat([{
+          mark,
+          at: now
+        }]).slice(-10),
+        subject: '電力',
+        itemType: 'denryoku-misscard',
+        itemTitle: `電力 ${exam} 問${q}${s ? '(' + s + ')' : ''}`,
+        articleTitle: '電力 誤答カード',
+        articleUrl: 'https://kfurufuru.github.io/secretary-portal-public/denken3-denryoku-wiki.html' + (page ? '#' + page : ''),
+        status: denryokuMarkStatus(mark),
+        memo: '間違えた考え: ' + w.slice(0, 200) + '\n正しい考え: ' + r.slice(0, 200)
+      });
+      localStorage.setItem(key, JSON.stringify(rec));
+      // 直後に解き直すと覚えているから解けてしまうので、間隔を空けてからカードに出す
+      setMsg((base.createdAt ? '同じ問題の記録を書き直した。' : '記録した。') + `${DENRYOKU_MISS_DAYS[mark]} 日後にカードとして出る（下の「次の復習を待っているカード」にある）`);
+      setWrong('');
+      setRight('');
+      onSaved();
+    } catch (e) {
+      setMsg('この端末には保存できなかった（プライベートブラウズなど）。チャットに直接書いて残す');
+    }
+  };
+  const field = {
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: '6px 8px',
+    fontFamily: 'inherit',
+    fontSize: 14,
+    border: '1px solid var(--rule)',
+    borderRadius: 4,
+    background: 'var(--bg)',
+    color: 'var(--ink)'
+  };
+  const sel = {
+    padding: '4px 6px',
+    fontFamily: 'inherit',
+    fontSize: 14,
+    border: '1px solid var(--rule)',
+    borderRadius: 4,
+    background: 'var(--bg)',
+    color: 'var(--ink)'
+  };
+  const pages = (data && data.chapters ? data.chapters : []).flatMap(ch => ch.pages || []);
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '10px 12px',
+      border: '1px solid var(--rule)',
+      borderRadius: 6,
+      background: 'var(--bg-elev)',
+      fontSize: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 8,
+      alignItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("label", null, "回 ", /*#__PURE__*/React.createElement("select", {
+    style: sel,
+    value: exam,
+    onChange: e => setExam(e.target.value)
+  }, DENRYOKU_EXAMS.map(x => /*#__PURE__*/React.createElement("option", {
+    key: x,
+    value: x
+  }, x)))), /*#__PURE__*/React.createElement("label", null, "問 ", /*#__PURE__*/React.createElement("select", {
+    style: sel,
+    value: q,
+    onChange: e => setQ(e.target.value)
+  }, Array.from({
+    length: 17
+  }, (_, i) => String(i + 1)).map(x => /*#__PURE__*/React.createElement("option", {
+    key: x,
+    value: x
+  }, x)))), isB && /*#__PURE__*/React.createElement("label", null, "小問 ", /*#__PURE__*/React.createElement("select", {
+    style: sel,
+    value: sub,
+    onChange: e => setSub(e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "なし"), /*#__PURE__*/React.createElement("option", {
+    value: "a"
+  }, "(a)"), /*#__PURE__*/React.createElement("option", {
+    value: "b"
+  }, "(b)"))), /*#__PURE__*/React.createElement("label", null, "判定 ", /*#__PURE__*/React.createElement("select", {
+    style: sel,
+    value: mark,
+    onChange: e => setMark(e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "×"
+  }, "× 不正解"), /*#__PURE__*/React.createElement("option", {
+    value: "△"
+  }, "△ 正解したが迷った")))), /*#__PURE__*/React.createElement("label", {
+    style: {
+      display: 'block',
+      marginTop: 8
+    }
+  }, "単元（任意）", ' ', /*#__PURE__*/React.createElement("select", {
+    style: sel,
+    value: page,
+    onChange: e => setPage(e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "選ばない"), pages.map(p => /*#__PURE__*/React.createElement("option", {
+    key: p.id,
+    value: p.id
+  }, p.num, " ", p.title)))), /*#__PURE__*/React.createElement("label", {
+    style: {
+      display: 'block',
+      marginTop: 8
+    }
+  }, "どう考えて間違えたか（1行）", /*#__PURE__*/React.createElement("textarea", {
+    style: field,
+    rows: 2,
+    maxLength: 200,
+    value: wrong,
+    onChange: e => setWrong(e.target.value),
+    placeholder: "例: 揚水発電の効率に、ポンプと水車の効率を足していた"
+  })), /*#__PURE__*/React.createElement("label", {
+    style: {
+      display: 'block',
+      marginTop: 8
+    }
+  }, "正しい考え（解説を読んで1行）", /*#__PURE__*/React.createElement("textarea", {
+    style: field,
+    rows: 2,
+    maxLength: 200,
+    value: right,
+    onChange: e => setRight(e.target.value),
+    placeholder: "例: 効率は掛け算。ポンプ・水車・発電機・電動機の効率をすべて掛ける"
+  })), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: save,
+    style: {
+      marginTop: 8,
+      padding: '6px 14px',
+      fontFamily: 'inherit',
+      fontSize: 14,
+      fontWeight: 700,
+      cursor: 'pointer',
+      border: '1px solid var(--accent)',
+      borderRadius: 6,
+      background: 'transparent',
+      color: 'var(--accent-ink, var(--ink))'
+    }
+  }, "記録する"), msg && /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '6px 0 0',
+      fontSize: 13,
+      color: 'var(--ink-soft)'
+    }
+  }, msg));
+};
+const DenryokuMissCards = ({
+  data,
+  onNav
+}) => {
+  const [tick, setTick] = useState(0);
+  const [limit, setLimit] = useState(DENRYOKU_MISS_SHOW);
+  const [copied, setCopied] = useState('');
+  const [formOpen] = useState(() => denryokuMissLoad().length === 0); // 記録した直後に閉じて確認の文が隠れないよう、開いた状態は最初に決める
+  const rows = denryokuMissLoad();
+  void tick;
+  const due = rows.filter(r => denryokuMissIsDue(r.rec));
+  const waiting = rows.filter(r => !denryokuMissIsDue(r.rec)).map(r => ({
+    r,
+    left: denryokuMissDays(r.rec) - denryokuDaysSince(r.rec.updatedAt)
+  })).sort((x, y) => x.left - y.left);
+  const refresh = () => setTick(n => n + 1);
+  const copy = () => {
+    const text = denryokuMissText(rows);
+    const ok = () => setCopied('コピーした。チャットに貼れば SR 復習ログに残せる');
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(ok, () => setCopied(text));
+        return;
+      }
+    } catch (e) {}
+    setCopied(text); // コピーできない端末では、文をそのまま見せて手で写せるようにする
+  };
+  return /*#__PURE__*/React.createElement("section", {
+    style: {
+      margin: '4px 0 18px'
+    },
+    "aria-labelledby": "miss-cards"
+  }, /*#__PURE__*/React.createElement("h2", {
+    id: "miss-cards",
+    style: {
+      marginTop: 0
+    }
+  }, "自分の誤答カード"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '0 0 4px'
+    }
+  }, /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: due.length ? 'var(--danger)' : 'var(--ink-soft)'
+    }
+  }, "今日 ", due.length, " 枚"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--ink-soft)'
+    }
+  }, "（全 ", rows.length, " 枚）")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '0 0 8px',
+      fontSize: 13,
+      color: 'var(--ink-soft)'
+    }
+  }, "電力の誤答は、ここに自分で書いて残す。過去問を解いた直後に、", /*#__PURE__*/React.createElement("strong", null, "どう考えて間違えたか"), "と", /*#__PURE__*/React.createElement("strong", null, "正しい考え"), "を1行ずつ書くと、それがカードになる。 × は3日・△ は7日・○ は14日・◎ は30日で戻ってくる。記録はこの端末の中だけにあるので、「チャットに貼る文をコピー」で SR 復習ログにも残す。"), /*#__PURE__*/React.createElement("details", {
+    open: formOpen,
+    style: {
+      margin: '0 0 10px'
+    }
+  }, /*#__PURE__*/React.createElement("summary", {
+    style: {
+      cursor: 'pointer',
+      fontWeight: 600
+    }
+  }, "誤答を記録する"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 6
+    }
+  }, /*#__PURE__*/React.createElement(DenryokuMissForm, {
+    data: data,
+    onSaved: refresh
+  }))), rows.length > 0 && due.length === 0 && /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '0 0 8px',
+      fontSize: 13
+    }
+  }, "今日の分は終わり。次に戻ってくるカードは下の一覧にある。"), /*#__PURE__*/React.createElement("ul", {
+    style: {
+      margin: 0,
+      padding: 0
+    }
+  }, due.slice(0, limit).map(r => /*#__PURE__*/React.createElement(DenryokuMissCard, {
+    key: r.key,
+    row: r,
+    onNav: onNav,
+    onChange: refresh
+  }))), due.length > limit && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => setLimit(limit + DENRYOKU_MISS_SHOW),
+    style: {
+      padding: '4px 12px',
+      fontSize: 13,
+      fontFamily: 'inherit',
+      cursor: 'pointer',
+      border: '1px solid var(--rule)',
+      borderRadius: 6,
+      background: 'transparent',
+      color: 'var(--ink)'
+    }
+  }, "次の ", Math.min(DENRYOKU_MISS_SHOW, due.length - limit), " 枚を出す（残り ", due.length - limit, " 枚）"), waiting.length > 0 && /*#__PURE__*/React.createElement("details", {
+    style: {
+      marginTop: 8,
+      fontSize: 13
+    }
+  }, /*#__PURE__*/React.createElement("summary", {
+    style: {
+      cursor: 'pointer',
+      color: 'var(--ink-soft)'
+    }
+  }, "次の復習を待っているカード ", waiting.length, " 枚"), /*#__PURE__*/React.createElement("ul", {
+    style: {
+      margin: '4px 0 0',
+      paddingLeft: 20
+    }
+  }, waiting.map(({
+    r,
+    left
+  }) => /*#__PURE__*/React.createElement("li", {
+    key: r.key,
+    style: {
+      margin: '2px 0'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--ink-soft)'
+    }
+  }, "あと ", left, " 日 ・前回 ", denryokuMissLast(r.rec)), " ", denryokuMissLabel(r.rec))))), rows.some(r => r.rec) && /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '8px 0 0'
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: copy,
+    style: {
+      padding: '4px 12px',
+      fontSize: 13,
+      fontFamily: 'inherit',
+      cursor: 'pointer',
+      border: '1px solid var(--rule)',
+      borderRadius: 6,
+      background: 'transparent',
+      color: 'var(--ink)'
+    }
+  }, "チャットに貼る文をコピー（", rows.filter(r => r.rec).length, " 件）"), copied && (copied.indexOf('\n') >= 0 ? /*#__PURE__*/React.createElement("textarea", {
+    readOnly: true,
+    value: copied,
+    rows: 4,
+    style: {
+      display: 'block',
+      width: '100%',
+      boxSizing: 'border-box',
+      marginTop: 6,
+      fontSize: 12,
+      background: 'var(--bg)',
+      color: 'var(--ink)',
+      border: '1px solid var(--rule)'
+    }
+  }) : /*#__PURE__*/React.createElement("span", {
+    style: {
+      marginLeft: 8,
+      fontSize: 12,
+      color: 'var(--ink-soft)'
+    }
+  }, copied))));
+};
+
 /* ============================================================ HOME */
 
 const HomePage = ({
@@ -2173,7 +2835,10 @@ const HomePage = ({
     }]
   }), /*#__PURE__*/React.createElement("div", {
     className: "content"
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(DenryokuMissCards, {
+    data: data,
+    onNav: onNav
+  }), /*#__PURE__*/React.createElement("div", {
     className: "stat-strip"
   }, /*#__PURE__*/React.createElement("div", {
     className: "stat"
@@ -2580,7 +3245,8 @@ Object.assign(window, {
   pageDeckSummary,
   freqLabel,
   SectionCheck,
-  SectionCheckSummary
+  SectionCheckSummary,
+  DenryokuMissCards
 });
 </script>
   <script>
