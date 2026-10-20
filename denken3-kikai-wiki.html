@@ -3457,6 +3457,152 @@ const KIKAI_DAILY_POOL = [
     evidence:['本ページ セクション4「単相ブリッジ電圧形」の還流区間の例題 ④（R5上 問16b）'], verified:'high',
     wikiPageId:'power-elec' },
 ];
+
+/* ─── 誤答カード（ホーム最上部「自分の誤答カード」） ───
+   出典は Notion「🔁 電験3種 SR復習ログ」の機械の記録のうち result が ng（×）・risky（△）のもの。
+   KIKAI_MISS_CARDS_ASOF の時点の55件を、同じ考え違いごとに20枚へ束ねた（history の ng＋risky の合計が55）。
+   - q   : 思い出す問い。問題文は転載せず、数値を持たない形に書き直した（書籍の問題文は著作物）
+   - a   : 正しい考え。各単元の本文（page / anchor の節）と同じ内容で、条件と例外を省かない
+   - was : 前の自分の答え。記録に残っている「本人の回答・申告」だけを書く（AI の推測した原因は書かない）。
+           記録に本人の回答が無いカードは was を持たない
+   - history は誤答の履歴（件数と最初・最後の日）。KIKAI_MISS_CARDS_ASOF の時点の値で、Notion を読み直して数え直すまで変わらない
+   記録は denken_check::kikai_<page>::misscard::<id> に、確認問題と同じ FSRS で次回日を持つ。 */
+const KIKAI_MISS_CARDS_ASOF = '2026-10-19';   // Notion 復習ログの最終確認日（この日までの記録を数えた）
+const KIKAI_MISS_CARDS = [
+  // ─── 直流機 dc-machine ───
+  { id:'dc-ia-const', page:'dc-machine', anchor:'dc-state',
+    q:'他励（または永久磁石形）の直流電動機。磁束一定・負荷トルク一定のまま端子電圧を下げた。十分に時間が経った新しい定常状態で、電機子電流 Iₐ と回転速度はどうなるか。',
+    a:['Iₐ は元の値のまま。機械損を無視する（試験の前提）ので定常では発生トルク T = 負荷トルク。T = K′ΦIₐ で T も Φ も一定だから Iₐ も一定になる（式を使う前に「一定なのは T と Φ → だから Iₐ 一定」と1行書く）。',
+       '電圧の低下は逆起電力 E = V − IₐRₐ が下がる形で吸収される。Φ 一定なら N ∝ E なので、回転速度が下がる。',
+       'Iₐ を I = V/R で出さない。それは逆起電力 E を無視した式である（正しくは Iₐ = (V − E)/Rₐ）。'],
+    was:'「負荷トルクが一定で端子電圧が下がっている。抵抗は一定なので、電流は下がる」と答えた。別の日には「元の電流より小さくなる」を選んだ。',
+    history:{ ng:4, risky:2, first:'2026-09-21', last:'2026-10-18' } },
+  { id:'dc-just-after', page:'dc-machine', anchor:'dc-state',
+    q:'回転中の直流電動機で、端子電圧または直列抵抗を瞬時に切り替えた。その直後の逆起電力 E はどうなるか。停止からの始動直後とは何が違うか。',
+    a:['切り替えた直後は、慣性で回転速度 N がまだ変わらない。他励で Φ も一定なので、E = KΦN は切り替える前と同じ値のまま。',
+       'だから Iₐ = (V − E)/(Rₐ + 直列抵抗) が急に変わり、発生トルク T = K′ΦIₐ も同じ倍率で変わる。定トルク負荷の負荷トルクは変わらないので、その差で加速・減速する。',
+       'E = 0 になるのは N = 0 のとき（停止から始動した直後と、回らないまま通電が続く拘束）。回っているかぎり E は 0 にならない。始動抵抗は V/始動電流 − Rₐ で決まる。'],
+    was:'始動時に E = 0 になることを忘れて、始動抵抗を求められなかった。別の日には「逆起電力が一定ならトルクも一定」と考えた。',
+    history:{ ng:3, risky:3, first:'2026-09-20', last:'2026-09-23' } },
+  { id:'dc-e-vs-v', page:'dc-machine', anchor:'emf',
+    q:'直流機の逆起電力（誘導起電力）E と端子電圧 V はどう違うか。回転速度の比を取るときは、どちらの比を使うか。',
+    a:['E = KΦN は磁束と回転だけで決まる。電流が流れていなくても、界磁があって回っていれば E は出る（電力 EIₐ と発生トルクは電流が無ければ 0）。',
+       '端子電圧との関係は、電動機が V = E + IₐRₐ、発電機が V = E − IₐRₐ（発電機の E = V + IₐRₐ）。',
+       'Φ 一定なら N ∝ E。速度の比は、前後それぞれで E を出してから E の比で取る。V の比で取らない。',
+       '無負荷でも回転損を賄う小さな電流が流れる。その IₐRₐ が小さいので、無負荷では E ≈ V と近似する。'],
+    was:'変更後の端子電圧 80 V をそのまま逆起電力として速度の比を取った。別の日には、無負荷の発生電圧を負荷時の端子電圧にも使った。',
+    history:{ ng:1, risky:4, first:'2026-09-21', last:'2026-09-22' } },
+  { id:'dc-eff-loss', page:'dc-machine', anchor:'dc-loss',
+    q:'直流発電機の出力と効率が分かっている。効率から直接求まる損失は何か。鉄損と機械損の和（固定損）を問われたらどうするか。',
+    a:['効率から出るのは全損失（= 出力/η − 出力）。全損失には電機子銅損・鉄損・機械損が入り、分巻（自励）なら界磁銅損も入る。他励は界磁が別電源なので、問題文が界磁入力を含めると書かないかぎり入れない。',
+       '鉄損と機械損の和のように個別の損失を問われたら、全損失から既知の損失（電機子銅損・界磁銅損など）を引いた残りを答える。機械損だけを出すには、鉄損も分かっている必要がある。',
+       '入力を組むときは「出力＋全損失」か「EIₐ＋固定損（鉄損・機械損）」のどちらか1つを選ぶ。分巻発電機の EIₐ には負荷出力・界磁銅損・電機子銅損が入っているので、そこへ銅損を足すと二重に数える。',
+       '但し書きに「損失は銅損のみ」などとあれば、その損失を必ず分母に入れる。'],
+    was:'効率から出した全損失を、そのまま機械損（鉄損＋機械損）として答えた。別の日には、EIₐ に電機子銅損と界磁銅損をさらに足して効率の分母にした。',
+    history:{ ng:3, risky:3, first:'2026-09-21', last:'2026-09-25' } },
+  { id:'dc-power-state', page:'dc-machine', anchor:'emf',
+    q:'直流電動機の発生トルクを電力から出すとき、どの電力を、どの角速度で割るか。運転状態が2つある問題ではどうするか。',
+    a:['T = P/ω で、P は電磁変換電力 EIₐ を使う。EIₐ は電機子入力 VIₐ から電機子銅損 Iₐ²Rₐ を引いた残り（直巻は直巻界磁の銅損も引く）で、T = EIₐ/ω は発生（電磁）トルクになる。',
+       '軸出力は EIₐ からさらに鉄損と機械損を引いたもの。鉄損・機械損を無視するときだけ EIₐ が軸出力で、軸トルクは軸出力/ω。',
+       'ω = 2πN/60（N は min⁻¹）。電源周波数を ω に使わない。',
+       '状態が変われば E・Iₐ・N も変わる。状態ごとに EIₐ と ω を出し直し、前の状態の出力を流用しない。',
+       'kW は W に直してから電流で割る（kW のまま割ると電圧の桁が 1000 倍ずれる）。'],
+    was:'出力 18.5 kW を 18.5 V として扱い、逆起電力を出せなかった。2回目のトルクに1回目の出力を代入した。回転数から ω を作れず、50 Hz を代入した。',
+    history:{ ng:4, risky:1, first:'2026-09-22', last:'2026-09-25' } },
+  { id:'dc-coil-emf', page:'dc-machine', anchor:'emf-blv-two',
+    q:'1巻きのコイルの起電力は、導体1本の起電力 Bℓv の何倍か。電機子全体のブラシ間電圧は、導体数 Z と並列回路数 a からどう決まるか。',
+    a:['1巻きのコイルには有効導体が2本あり、直列につながる。だからコイル1巻きの起電力は 2Bℓv。B・ℓ・v から出すときは、磁極数は各導体に磁界を与える側なので別に掛けない。',
+       '極あたりの磁束 Φ から導体1本の起電力を出すときは e = pΦn/60 で、ここに磁極数 p が入る（E = pZΦn/(60a) の p はこれ）。',
+       'ブラシ間には a 本の経路が並列に入り、1本の経路の中に Z/a 本の導体が直列に入る。',
+       'ブラシ間電圧は、1経路の中の起電力を足した (Z/a)·e。並列の経路どうしの電圧は足さない。'],
+    was:'有効導体2本が直列で起電力が足されることを反映しなかった。磁極数 2 も掛けるのか迷った。別の日には「a 並列」と「Z/a 直列」を逆にした。',
+    history:{ ng:2, risky:0, first:'2026-09-23', last:'2026-09-23' } },
+  { id:'rot-coil-emax', page:'dc-machine', anchor:'emf-blv-two',
+    q:'磁束密度 B の一様な磁界の中で、面積 S の1巻きコイルが角速度 ω で回る。誘導起電力の最大値はいくらか。',
+    a:['e_max = BSω = Φₘω（Φₘ = BS、ω = 2πf、または ω = 2πn/60）。Φ×f ではなく、Φ に角速度を掛けた形になる。',
+       'これはコイル全体の式で、2Bℓv と同じ式である（v = ω × 半径なので 2Bℓv = BSω）。導体2本ぶんの ×2 は既に入っているので、重ねて掛けない。'],
+    history:{ ng:1, risky:0, first:'2026-09-20', last:'2026-09-20' } },
+  { id:'dc-armature', page:'dc-machine', anchor:'structure',
+    q:'電機子とは何か。直流機と同期機では、電機子はふつうどこにあるか。',
+    a:['電機子は、電力変換の主な作用を受け持つ巻線と鉄心の部分である。起電力を誘導し、負荷電流が流れる。',
+       '直流機ではふつう回転子が電機子、同期機ではふつう固定子が電機子である（界磁が逆の側にある）。'],
+    history:{ ng:0, risky:1, first:'2026-09-22', last:'2026-09-22' } },
+  // ─── 三相誘導電動機 induction-machine ───
+  { id:'im-power-flow', page:'induction-machine', anchor:'circuit',
+    q:'三相誘導電動機の二次入力 P₂ は、二次銅損・内部の機械的出力・軸出力にどう分かれるか。効率の分子と分母は何か。',
+    a:['P₂ : 二次銅損 : 内部の機械的出力 = 1 : s : (1 − s)。軸出力は、内部の機械的出力からさらに機械損を引いたもの（機械損を無視するときだけ両者は等しい）。',
+       'P₂ = 内部の機械的出力/(1 − s) には二次銅損が既に入っている。一次入力へ戻すときは、P₂ に一次銅損と鉄損だけを足す。',
+       '効率 = 軸出力 ÷ 一次入力。P₂ ÷ 一次入力は、一次から二次へ渡る割合であって効率ではない。'],
+    was:'二次入力を出力とみなし、「二次入力 ÷ 一次入力」を効率にした。別の日には、二次入力に二次銅損をもう一度足した。内部の機械的出力と軸出力を同じものとした。',
+    history:{ ng:4, risky:1, first:'2026-09-25', last:'2026-10-11' } },
+  { id:'im-p2-omega', page:'induction-machine', anchor:'solver-map',
+    q:'誘導電動機で、二次入力 P₂ と出力は、それぞれトルク T にどの角速度を掛けたものか。トルクが半分になったら二次入力はどうなるか。',
+    a:['P₂ = ω_s T（ω_s は同期角速度）。周波数・極数が一定なら ω_s は一定なので、P₂ ∝ T。トルクが半分なら二次入力も半分になる。',
+       '内部の機械的出力は ωT = (1 − s)ω_s T で、実際の回転角速度 ω を使う。トルク一定で出力を比べるなら、比は実回転速度 (1 − s)Nₛ の比（同期速度の比ではない）。',
+       '問題文に「出力一定」と書かれていなければ、Tω 一定を仮定しない。'],
+    was:'「トルクと角速度の積が一定。トルク半分なら角速度2倍」と、書かれていない出力一定を仮定した。別の日には、トルク一定の出力比に同期速度の比を使った。',
+    history:{ ng:3, risky:1, first:'2026-09-25', last:'2026-10-18' } },
+  { id:'im-i2-s', page:'induction-machine', anchor:'solver-map',
+    q:'周波数一定の誘導電動機で、トルク一定のまま滑りが 2 % から 4 % に変わった（二次抵抗は変えていない）。二次電流は何倍か。',
+    a:['T = P₂/ω_s で ω_s は一定。P₂ = 3I₂²r₂/s（等価回路の二次側）なので、トルク一定 → I₂²/s 一定 → I₂ ∝ √s。滑りが2倍なら I₂ は √2 倍になる。',
+       '二次抵抗を足して滑りが変わった場合（比例推移）は、(r₂ + R)/s が一定なので I₂ は変わらない。r₂ が同じかどうかを先に確かめる。'],
+    was:'トルクの求め方が分からず、トルク一定を I₂²/s 一定へ言い換えられなかった。',
+    history:{ ng:1, risky:0, first:'2026-09-26', last:'2026-09-26' } },
+  { id:'im-v2s', page:'induction-machine', anchor:'solver-map',
+    q:'周波数一定のまま電源電圧を下げた。負荷トルクが一定なら、定常状態の滑りはどうなるか。電圧を下げた直後はどうか。',
+    a:['滑りが小さい範囲（r₂′/s が支配的）では T ∝ V²s。負荷トルク一定なら V²s 一定なので、s₂ = s₁(V₁/V₂)²。電圧が下がると滑りが増え、速度が下がる。',
+       '電圧を下げた直後は速度がまだ変わらないので s は同じで、トルクは V² に比例して減る。そこから減速して、V²s が元に戻る滑りで落ち着く。',
+       'ただし、下げた電圧での最大トルク（V² に比例）が負荷トルクより小さければ、釣り合う滑りが無い。減速し続けて停動する。',
+       'これは低滑りの近似式である（定格付近の数 % の滑りでだけ使える）。'],
+    history:{ ng:0, risky:1, first:'2026-10-18', last:'2026-10-18' } },
+  { id:'im-slip-freq', page:'induction-machine', anchor:'solver-map',
+    q:'誘導電動機を、滑り周波数を一定に保ったまま電源周波数を下げて運転する。何が一定で、何が変わるか。',
+    a:['一定なのは滑り周波数 sf。滑り s = (sf)/f は、周波数を下げると大きくなる。s を一定と置かない。',
+       '極数が同じなら、同期速度と回転速度の差 Nₛ − N = 120·sf/p が一定になる。',
+       '同期速度も回転速度も、電源周波数に合わせて変わる。「一定」と書かれた量の単位（Hz か、無次元の s か）を先に確かめる。'],
+    was:'滑り周波数一定の条件で、滑り s を一定として計算した。別の日には「滑り周波数一定だから回転数が同じ」と説明した。',
+    history:{ ng:1, risky:1, first:'2026-09-26', last:'2026-09-26' } },
+  // ─── 変圧器 transformer ───
+  { id:'tr-tests', page:'transformer', anchor:'sc-test',
+    q:'変圧器の短絡試験と無負荷試験では、それぞれ何を加え、電力計は何を読むか。なぜもう一方の損失を無視できるか。',
+    a:['短絡試験: 二次を短絡し、一次に低い電圧（インピーダンス電圧）を加えて定格電流を流す。電力計の読みは全負荷銅損。',
+       '短絡試験で鉄損を無視できるのは、印加電圧が低く磁束が小さいから。励磁枝のインピーダンスが小さいからではない（励磁枝のインピーダンスは大きい）。',
+       '無負荷試験: 二次を開放し、一次に定格電圧を加える。電力計の読みは鉄損。電流が小さいので銅損を無視できる。'],
+    was:'短絡試験では一次に定格電圧を加えると考えていた。励磁回路は「小さいから」無視できると丸暗記していた。',
+    history:{ ng:1, risky:1, first:'2026-09-06', last:'2026-09-13' } },
+  { id:'tr-ratio-phase', page:'transformer', anchor:'basic',
+    q:'Y-Δ 結線の三相変圧器で、巻数比はどの電圧どうしの比か。',
+    a:['巻数比は、巻線1本どうしの電圧（相電圧）の比である。',
+       'Δ 側は巻線の電圧 = 線間電圧。Y 側は巻線の電圧 = 線間電圧/√3。線間電圧の比をそのまま巻数比にしない。'],
+    history:{ ng:1, risky:1, first:'2026-09-12', last:'2026-09-12' } },
+  { id:'tr-vreg', page:'transformer', anchor:'vreg-projection',
+    q:'変圧器の電圧変動率の定義は何か。近似式は、何を何の向きに投影したものか。遅れ力率と進み力率で符号はどうなるか。',
+    a:['定義は ε = (V₂₀ − V₂)/V₂ × 100 [%]（V₂₀ は無負荷、V₂ は定格負荷の二次端子電圧）。',
+       '近似式 ε ≈ p cosφ + q sinφ は、負荷電流による内部の電圧降下（抵抗 R とリアクタンス X の降下）を端子電圧の向きに投影したもの。p は百分率抵抗降下、q は百分率リアクタンス降下で、どちらも定格電流が基準（負荷率が違えば、その比を掛ける）。',
+       '遅れ力率では sinφ を正、進み力率では負として入れる。進み力率では電圧変動率が小さくなり、負にもなる。'],
+    history:{ ng:0, risky:2, first:'2026-09-05', last:'2026-09-13' } },
+  { id:'tr-vv-loss', page:'transformer', anchor:'vconn',
+    q:'単相変圧器2台の V-V 結線で、三相容量と負荷損は1台の値とどう関係するか。',
+    a:['三相容量 = √3 × 1台の容量。',
+       'V 結線では線電流がそのまま巻線電流になる。1台の負荷損は（巻線電流/定格電流）² × 1台の全負荷銅損で、最後に2台分を足す。'],
+    history:{ ng:1, risky:0, first:'2026-09-06', last:'2026-09-06' } },
+  { id:'tr-3winding', page:'transformer', anchor:'three-winding',
+    q:'三巻線変圧器で一次電流を求めるとき、二次電流と三次電流をそのまま足してよいか。',
+    a:['足さない。二次・三次それぞれの有効電力 P と無効電力 Q を出し、P どうし・Q どうしを足す。P と Q は巻数比で換算しない（電力は一次側でも二次側でも同じ値）。',
+       'Q は遅れを正、進み（コンデンサ）を負として足す。三次がコンデンサなら、二次の遅れの Q を打ち消す向きに働く（R2 問9 は打ち消し合って Q₁ = 0）。',
+       '合計した P₁ と Q₁ から S₁ = √(P₁² + Q₁²) を出し、三相なら I₁ = S₁/(√3 V₁)。電圧も力率も違う電流は向きが違うので、大きさをそのまま足せない。'],
+    history:{ ng:0, risky:1, first:'2026-09-05', last:'2026-09-05' } },
+  { id:'tr-referral', page:'transformer', anchor:'basic-ref',
+    q:'巻数比 a = N₁/N₂ の変圧器で、二次側の量を一次側へ換算すると、電圧・電流・インピーダンスはそれぞれ何倍になるか。',
+    a:['V′ = aV、I′ = I/a、Z′ = a²Z。',
+       '換算すると理想変圧器を計算上消せるので、一次側から見た1つの等価回路として扱える。'],
+    history:{ ng:0, risky:1, first:'2026-09-05', last:'2026-09-05' } },
+  { id:'tr-iron-loss', page:'transformer', anchor:'loss-iron-copper',
+    q:'変圧器の鉄損のうち、ヒステリシス損と渦電流損は、それぞれ何で減らすか。',
+    a:['ヒステリシス損は、磁性材料（ヒステリシスの小さい材料）の選び方と磁束密度で抑える。',
+       '渦電流損は、薄い鋼板を絶縁して積み重ねた積層鉄心と、抵抗率の高い材料で抑える。'],
+    history:{ ng:0, risky:1, first:'2026-09-18', last:'2026-09-18' } },
+];
 </script>
   <script>
 /* built from kikai-kakomon-topics.js — 直接編集しない。正(SoT)は kikai-kakomon-topics.js。編集後に build-kikai-wiki.py を実行する */
@@ -7206,7 +7352,21 @@ const HomePage = ({
     }]
   }), /*#__PURE__*/React.createElement("div", {
     className: "content"
-  }, /*#__PURE__*/React.createElement("div", {
+  }, typeof MissCardsToday === "function" && /*#__PURE__*/React.createElement(MissCardsToday, {
+    onNav: onNav
+  }), typeof WikiReviewToday === "function" && /*#__PURE__*/React.createElement(WikiReviewToday, {
+    onNav: onNav
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: "0 0 18px"
+    }
+  }, /*#__PURE__*/React.createElement("strong", null, "過去問の復習"), "は ", /*#__PURE__*/React.createElement("a", {
+    href: "#",
+    onClick: e => {
+      e.preventDefault();
+      onNav("study-log", "tracker");
+    }
+  }, "E 学習記録「過去問の進捗」"), " で、 復習予定日が来たマスから解く。"), /*#__PURE__*/React.createElement("div", {
     className: "stat-strip"
   }, /*#__PURE__*/React.createElement("div", {
     className: "stat"
@@ -7240,19 +7400,7 @@ const HomePage = ({
     className: "stat-value"
   }, "120 〜 200 時間"), /*#__PURE__*/React.createElement("div", {
     className: "stat-sub"
-  }, "復習中心で効率化"))), /*#__PURE__*/React.createElement("p", {
-    style: {
-      margin: "10px 0 0"
-    }
-  }, /*#__PURE__*/React.createElement("strong", null, "今日の復習"), "は ", /*#__PURE__*/React.createElement("a", {
-    href: "#",
-    onClick: e => {
-      e.preventDefault();
-      onNav("study-log", "tracker");
-    }
-  }, "E 学習記録「過去問の進捗」"), " で、 復習予定日が来たマスから解く。"), typeof WikiReviewToday === "function" && /*#__PURE__*/React.createElement(WikiReviewToday, {
-    onNav: onNav
-  }), /*#__PURE__*/React.createElement("h2", null, /*#__PURE__*/React.createElement("span", {
+  }, "復習中心で効率化"))), /*#__PURE__*/React.createElement("h2", null, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
   }, "1."), "はじめに"), /*#__PURE__*/React.createElement("p", null, "本Wikiは", /*#__PURE__*/React.createElement("strong", null, "理論科目の電気回路（交流・三相・ベクトル）を一通り学んだ人"), "を想定する。機械の各単元は初めて学ぶ前提で書き、各単元では ", /*#__PURE__*/React.createElement("strong", null, "要点を最短経路で押さえる"), " ことを優先する。説明は教科書調（である調）に統一し、図解・回路図・ベクトル図を充実させた。"), /*#__PURE__*/React.createElement("h3", {
     id: "what-is-tested"
@@ -10633,6 +10781,314 @@ const WikiReviewToday = ({
     }
   }, "E 学習記録「過去問の進捗」"), "。"));
 };
+
+/* ---- 誤答カード（ホーム最上部）。KIKAI_MISS_CARDS（kikai-quiz-data.js）を「問い → 自分で答える → 答えを開く → ◎△×」で回す。
+   答えは開くまで隠す。並べて読むだけでは分かった気になり、同じ考え違いを繰り返す（直流機の定常 Iₐ は6回）。
+   記録は確認問題と同じ FSRS で次回日を持ち（kikaiScheduleFields）、期限が来たカードと未着手のカードだけを出す。
+   キーは denken_check::kikai_<page>::misscard::<id>。kikaiWikiDue の対象には入れない（同じホームで二重に出るため）。 */
+const KIKAI_MISS_SHOW = 5;
+const kikaiMissKey = c => `denken_check::kikai_${c.page}::misscard::${c.id}`;
+const kikaiMissRead = c => {
+  try {
+    const v = localStorage.getItem(kikaiMissKey(c));
+    const r = v ? JSON.parse(v) : null;
+    return r && typeof r === 'object' ? r : null;
+  } catch (e) {
+    return null;
+  }
+};
+// 実在する日付か（13月45日のように、形だけ YYYY-MM-DD に合う値を弾く）
+const kikaiIsRealDate = iso => {
+  if (typeof iso !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const [y, m, d] = iso.split('-').map(Number);
+  const x = new Date(y, m - 1, d);
+  return x.getFullYear() === y && x.getMonth() === m - 1 && x.getDate() === d;
+};
+// 期限が来たか。誤答カードはホームでしか答え直せないので、読めない記録は ◎ でも出す（隠れたまま戻れなくなるより安全）:
+// 未着手・次回日が無い／壊れている・記号と status が食い違う（法規の間違いノートなど、ここ以外で status だけ書き換えられた）
+const kikaiMissIsDue = (rec, today) => {
+  if (!rec || !rec.status) return true;
+  if (!kikaiIsRealDate(rec.nextDue)) return true;
+  if (rec.mark && KIKAI_MARKS[rec.mark] && KIKAI_MARKS[rec.mark].status !== rec.status) return true;
+  return rec.nextDue <= today;
+};
+const kikaiPageLabel = id => {
+  try {
+    for (const ch of window.WIKI_DATA && window.WIKI_DATA.chapters || []) for (const p of ch.pages) if (p.id === id) return `${p.num} ${p.title}`;
+  } catch (e) {}
+  return id;
+};
+const kikaiShortDate = iso => /^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}` : '';
+const MissCard = ({
+  c,
+  onNav,
+  done,
+  onGraded
+}) => {
+  const [open, setOpen] = React.useState(false);
+  const t = c.history || {};
+  const grade = (mark, el) => {
+    const status = KIKAI_MARKS[mark].status;
+    if (mark !== '◎') noteFlyOff(el);
+    try {
+      const base = kikaiMissRead(c) || {};
+      const now = new Date().toISOString();
+      const today = kikaiLocalDate();
+      const rec = Object.assign({}, base, kikaiScheduleFields(base, status), {
+        status,
+        mark,
+        answeredOn: today,
+        lastWrongOn: status === 'wrong' ? today : base.lastWrongOn || '',
+        updatedAt: now,
+        firstSeenAt: base.firstSeenAt || now,
+        reviewCount: (base.reviewCount || 0) + 1,
+        source: 'kikai-misscard',
+        itemType: 'misscard',
+        articleTitle: '機械 誤答カード — ' + kikaiPageLabel(c.page),
+        itemTitle: c.q.length > 44 ? c.q.slice(0, 44) + '…' : c.q,
+        articleUrl: 'denken3-kikai-wiki.html#' + c.page + (c.anchor ? '/' + c.anchor : ''),
+        memo: '正: ' + (c.a || []).join(' ')
+      });
+      localStorage.setItem(kikaiMissKey(c), JSON.stringify(rec));
+      onGraded(c.id, rec);
+      window.dispatchEvent(new CustomEvent('section-check-changed', {
+        detail: {
+          key: kikaiMissKey(c),
+          status
+        }
+      }));
+    } catch (e) {
+      onGraded(c.id, {
+        mark,
+        nextDue: ''
+      });
+    } // 保存できない端末でも、その場の自己評価は表示する
+  };
+  const btn = (mark, label) => /*#__PURE__*/React.createElement("button", {
+    key: mark,
+    type: "button",
+    onClick: e => grade(mark, e.currentTarget),
+    "aria-label": `${mark} ${label}`,
+    style: {
+      padding: '4px 10px',
+      minWidth: 36,
+      background: 'transparent',
+      color: 'var(--ink)',
+      border: '1px solid var(--rule)',
+      borderRadius: 4,
+      cursor: 'pointer',
+      fontWeight: 700,
+      fontSize: 14
+    }
+  }, mark, " ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      fontWeight: 400
+    }
+  }, label));
+  return /*#__PURE__*/React.createElement("li", {
+    style: {
+      listStyle: 'none',
+      margin: '0 0 10px',
+      padding: '10px 12px',
+      border: '1px solid var(--rule)',
+      borderRadius: 6,
+      background: 'var(--bg-elev)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: 'var(--ink-soft)'
+    }
+  }, kikaiPageLabel(c.page), ' ・ ', "過去の記録 ", t.ng ? `× ${t.ng}` : '', t.ng && t.risky ? '・' : '', t.risky ? `△ ${t.risky}` : '', t.last ? `（最後 ${kikaiShortDate(t.last)}）` : ''), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '4px 0 0',
+      fontWeight: 600
+    }
+  }, c.q), done ? /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '6px 0 0',
+      fontSize: 13,
+      color: 'var(--ink-soft)'
+    }
+  }, "記録した: ", /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: 'var(--ink)'
+    }
+  }, done.mark), done.nextDue ? ` → 次は ${kikaiShortDate(done.nextDue)}` : '（この端末には保存できなかった）') : /*#__PURE__*/React.createElement("details", {
+    onToggle: e => setOpen(e.currentTarget.open),
+    style: {
+      marginTop: 6
+    }
+  }, /*#__PURE__*/React.createElement("summary", {
+    style: {
+      cursor: 'pointer',
+      color: 'var(--ink-soft)',
+      fontSize: 13
+    }
+  }, "自分の答えを1行言ってから、答えを開く"), /*#__PURE__*/React.createElement("ul", {
+    style: {
+      margin: '6px 0 0',
+      paddingLeft: 20,
+      fontSize: 14
+    }
+  }, (c.a || []).map((s, i) => /*#__PURE__*/React.createElement("li", {
+    key: i,
+    style: {
+      margin: '2px 0'
+    }
+  }, s))), c.was && /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '6px 0 0',
+      fontSize: 13
+    }
+  }, /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: 'var(--danger)'
+    }
+  }, "前の自分の答え:"), " ", c.was), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '6px 0 0',
+      fontSize: 13
+    }
+  }, /*#__PURE__*/React.createElement("a", {
+    href: "#",
+    onClick: e => {
+      e.preventDefault();
+      onNav(c.page, c.anchor);
+    }
+  }, "本文で確かめる（", kikaiPageLabel(c.page), "）")), open && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 8,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: 'var(--ink-soft)'
+    }
+  }, "開く前に言えたか:"), btn('◎', '言えた'), btn('△', 'あやしい'), btn('×', '言えない'))));
+};
+const MissCardsToday = ({
+  onNav
+}) => {
+  const [, bump] = React.useState(0);
+  const [limit, setLimit] = React.useState(KIKAI_MISS_SHOW);
+  // この画面で評価したカードは、期限が先へ延びても消さずに結果を見せる（押した瞬間に消えると、何が起きたか分からない）
+  const [done, setDone] = React.useState({});
+  React.useEffect(() => {
+    const on = () => bump(n => n + 1);
+    window.addEventListener('section-check-changed', on);
+    window.addEventListener('storage', on);
+    return () => {
+      window.removeEventListener('section-check-changed', on);
+      window.removeEventListener('storage', on);
+    };
+  }, []);
+  const cards = typeof KIKAI_MISS_CARDS !== 'undefined' && Array.isArray(KIKAI_MISS_CARDS) ? KIKAI_MISS_CARDS : [];
+  if (!cards.length) return null;
+  const today = kakomonToday();
+  const rows = cards.map((c, i) => ({
+    c,
+    i,
+    rec: kikaiMissRead(c)
+  }));
+  // 何度も落とした考え違いから先に出す（× の数 → △ の数 → 最後に落とした日が新しい順）
+  const score = r => [-(r.c.history && r.c.history.ng || 0), -(r.c.history && r.c.history.risky || 0), r.c.history && r.c.history.last ? -Number(r.c.history.last.replace(/-/g, '')) : 0, r.i];
+  const cmp = (x, y) => {
+    const a = score(x),
+      b = score(y);
+    for (let k = 0; k < a.length; k++) if (a[k] !== b[k]) return a[k] - b[k];
+    return 0;
+  };
+  const due = rows.filter(r => done[r.c.id] || kikaiMissIsDue(r.rec, today)).sort(cmp);
+  const waiting = rows.filter(r => !done[r.c.id] && !kikaiMissIsDue(r.rec, today)).sort((x, y) => String(x.rec.nextDue || '') < String(y.rec.nextDue || '') ? -1 : 1);
+  const left = due.filter(r => !done[r.c.id]).length;
+  const tot = cards.reduce((n, c) => n + (c.history && c.history.ng || 0) + (c.history && c.history.risky || 0), 0);
+  const onGraded = (id, rec) => setDone(prev => Object.assign({}, prev, {
+    [id]: rec
+  }));
+  return /*#__PURE__*/React.createElement("section", {
+    style: {
+      margin: '4px 0 18px'
+    },
+    "aria-labelledby": "miss-cards"
+  }, /*#__PURE__*/React.createElement("h2", {
+    id: "miss-cards",
+    style: {
+      marginTop: 0
+    }
+  }, "自分の誤答カード"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '0 0 4px'
+    }
+  }, /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: left ? 'var(--danger)' : 'var(--ink-soft)'
+    }
+  }, "今日 ", left, " 枚"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--ink-soft)'
+    }
+  }, "（全 ", cards.length, " 枚）")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '0 0 8px',
+      fontSize: 13,
+      color: 'var(--ink-soft)'
+    }
+  }, "Notion の復習ログで × か △ になった考え方を、同じ考え違いごとに ", cards.length, " 枚にまとめた（", KIKAI_MISS_CARDS_ASOF, " 時点の ", tot, " 件）。 問いに", /*#__PURE__*/React.createElement("strong", null, "自分で答えてから"), "開き、◎△× を押す。△× は1〜数日後に、◎ は間隔を空けて戻ってくる。"), due.length === 0 && /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '0 0 8px',
+      fontSize: 13
+    }
+  }, "今日の分は終わり。次に戻ってくるカードは下の一覧にある。"), /*#__PURE__*/React.createElement("ul", {
+    style: {
+      margin: 0,
+      padding: 0
+    }
+  }, due.slice(0, limit).map(r => /*#__PURE__*/React.createElement(MissCard, {
+    key: r.c.id,
+    c: r.c,
+    onNav: onNav,
+    done: done[r.c.id],
+    onGraded: onGraded
+  }))), due.length > limit && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: "trap-btn maru",
+    style: {
+      padding: '3px 10px'
+    },
+    onClick: () => setLimit(limit + KIKAI_MISS_SHOW)
+  }, "次の ", Math.min(KIKAI_MISS_SHOW, due.length - limit), " 枚を出す（残り ", due.length - limit, " 枚）"), waiting.length > 0 && /*#__PURE__*/React.createElement("details", {
+    style: {
+      marginTop: 8,
+      fontSize: 13
+    }
+  }, /*#__PURE__*/React.createElement("summary", {
+    style: {
+      cursor: 'pointer',
+      color: 'var(--ink-soft)'
+    }
+  }, "次回日を待っているカード ", waiting.length, " 枚"), /*#__PURE__*/React.createElement("ul", {
+    style: {
+      margin: '4px 0 0',
+      paddingLeft: 20
+    }
+  }, waiting.map(r => /*#__PURE__*/React.createElement("li", {
+    key: r.c.id,
+    style: {
+      margin: '2px 0'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--ink-soft)'
+    }
+  }, kikaiShortDate(r.rec.nextDue), KIKAI_MARKS[r.rec.mark] ? ` ・前回 ${r.rec.mark}` : ''), ' ', r.c.q.length > 44 ? r.c.q.slice(0, 44) + '…' : r.c.q)))));
+};
 const kakomonDaysSince = iso => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return null;
   const [y, m, d] = iso.split('-').map(Number);
@@ -10764,7 +11220,7 @@ const kakomonStep = (prev, next, today, load) => {
      - 検査に落ちたキーは取り込まない（数だけ報告する）。
        他科目（理論・法規）の書き出しは prefix が違うので丸ごと拒否する
      - マージは**既存を消さない**。過去問マスは日付の新しい方を採り、
-       確認問題・ひっかけ（trap）・1分復習（quickreview）は updatedAt の新しい方を採り、
+       確認問題・ひっかけ（trap）・1分復習（quickreview）・誤答カード（misscard）は updatedAt の新しい方を採り、
        節の理解度は既存があればそちらを残す（日付を持たないため）
      - 置き換えは既存を全消しするので、明示の二度押しを要求する
    ============================================================ */
@@ -10780,6 +11236,7 @@ const kikaiKeyKind = k => {
   if (/::quiz::[^:]+$/.test(k)) return 'quiz';
   if (/::trap::[^:]+$/.test(k)) return 'trap';
   if (/::quickreview::[^:]+$/.test(k)) return 'quickreview';
+  if (/::misscard::[^:]+$/.test(k)) return 'misscard';
   return null;
 };
 
@@ -10803,6 +11260,7 @@ function kikaiCountStore(data) {
     quiz: 0,
     trap: 0,
     quickreview: 0,
+    misscard: 0,
     keys: 0
   };
   Object.keys(data || {}).forEach(k => {
@@ -10891,8 +11349,8 @@ function kikaiValidateImport(text) {
           skipped++;
           return;
         }
-        // trap / quickreview は間違いノートが status で集約するので、status の無い値は取り込まない
-        if ((kind === 'trap' || kind === 'quickreview') && typeof p.status !== 'string') {
+        // trap / quickreview / misscard は status で集約・期限判定するので、status の無い値は取り込まない
+        if ((kind === 'trap' || kind === 'quickreview' || kind === 'misscard') && typeof p.status !== 'string') {
           skipped++;
           return;
         }
@@ -11026,8 +11484,8 @@ function kikaiApplyImport(incoming, mode) {
         localStorage.setItem(k, JSON.stringify(merged));
         return;
       }
-      if (kind === 'quiz' || kind === 'trap' || kind === 'quickreview') {
-        // updatedAt の新しい方を採る（3種とも記録時に updatedAt を書く）
+      if (kind === 'quiz' || kind === 'trap' || kind === 'quickreview' || kind === 'misscard') {
+        // updatedAt の新しい方を採る（4種とも記録時に updatedAt を書く）
         let a = null,
           b = null;
         try {
@@ -11181,7 +11639,7 @@ const ProgressTransfer = () => {
       fontSize: 13,
       marginBottom: 8
     }
-  }, /*#__PURE__*/React.createElement("strong", null, "この端末の記録"), ": 過去問 ", /*#__PURE__*/React.createElement("strong", null, counts.kakomon), " マス ／ 節の理解度 ", /*#__PURE__*/React.createElement("strong", null, counts.section), " 件 ／ 確認問題 ", /*#__PURE__*/React.createElement("strong", null, counts.quiz), " 件 ／ ひっかけ ", /*#__PURE__*/React.createElement("strong", null, counts.trap), " 件 ／ 1分復習 ", /*#__PURE__*/React.createElement("strong", null, counts.quickreview), " 件", /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("strong", null, "この端末の記録"), ": 過去問 ", /*#__PURE__*/React.createElement("strong", null, counts.kakomon), " マス ／ 節の理解度 ", /*#__PURE__*/React.createElement("strong", null, counts.section), " 件 ／ 確認問題 ", /*#__PURE__*/React.createElement("strong", null, counts.quiz), " 件 ／ ひっかけ ", /*#__PURE__*/React.createElement("strong", null, counts.trap), " 件 ／ 1分復習 ", /*#__PURE__*/React.createElement("strong", null, counts.quickreview), " 件 ／ 誤答カード ", /*#__PURE__*/React.createElement("strong", null, counts.misscard), " 件", /*#__PURE__*/React.createElement("span", {
     style: {
       color: 'var(--ink-soft)'
     }
@@ -11270,7 +11728,7 @@ const ProgressTransfer = () => {
       fontSize: 12.5,
       lineHeight: 1.9
     }
-  }, /*#__PURE__*/React.createElement("li", null, "書き出した日時: ", /*#__PURE__*/React.createElement("strong", null, String(checked.payload.exportedAt || '不明').replace('T', ' ').slice(0, 16)), "／ 形式 v", checked.payload.schemaVersion), /*#__PURE__*/React.createElement("li", null, "読み込む内容: 過去問 ", /*#__PURE__*/React.createElement("strong", null, inc.kakomon), " マス ／ 節の理解度 ", /*#__PURE__*/React.createElement("strong", null, inc.section), " 件 ／ 確認問題 ", /*#__PURE__*/React.createElement("strong", null, inc.quiz), " 件 ／ ひっかけ ", /*#__PURE__*/React.createElement("strong", null, inc.trap), " 件 ／ 1分復習 ", /*#__PURE__*/React.createElement("strong", null, inc.quickreview), " 件"), /*#__PURE__*/React.createElement("li", null, "この端末との差: 新しいキー ", /*#__PURE__*/React.createElement("strong", null, d.newKeys), " ／ 中身が違うキー ", /*#__PURE__*/React.createElement("strong", null, d.changedKeys), " ／ 同じキー ", /*#__PURE__*/React.createElement("strong", null, d.sameKeys)), /*#__PURE__*/React.createElement("li", null, "過去問マスの内訳: この端末に無い ", /*#__PURE__*/React.createElement("strong", null, d.newCells), " ／ 読み込む側が新しい ", /*#__PURE__*/React.createElement("strong", null, d.updatedCells), " ／ この端末の方が新しい ", /*#__PURE__*/React.createElement("strong", null, d.keptCells)), checked.skipped > 0 && /*#__PURE__*/React.createElement("li", {
+  }, /*#__PURE__*/React.createElement("li", null, "書き出した日時: ", /*#__PURE__*/React.createElement("strong", null, String(checked.payload.exportedAt || '不明').replace('T', ' ').slice(0, 16)), "／ 形式 v", checked.payload.schemaVersion), /*#__PURE__*/React.createElement("li", null, "読み込む内容: 過去問 ", /*#__PURE__*/React.createElement("strong", null, inc.kakomon), " マス ／ 節の理解度 ", /*#__PURE__*/React.createElement("strong", null, inc.section), " 件 ／ 確認問題 ", /*#__PURE__*/React.createElement("strong", null, inc.quiz), " 件 ／ ひっかけ ", /*#__PURE__*/React.createElement("strong", null, inc.trap), " 件 ／ 1分復習 ", /*#__PURE__*/React.createElement("strong", null, inc.quickreview), " 件 ／ 誤答カード ", /*#__PURE__*/React.createElement("strong", null, inc.misscard), " 件"), /*#__PURE__*/React.createElement("li", null, "この端末との差: 新しいキー ", /*#__PURE__*/React.createElement("strong", null, d.newKeys), " ／ 中身が違うキー ", /*#__PURE__*/React.createElement("strong", null, d.changedKeys), " ／ 同じキー ", /*#__PURE__*/React.createElement("strong", null, d.sameKeys)), /*#__PURE__*/React.createElement("li", null, "過去問マスの内訳: この端末に無い ", /*#__PURE__*/React.createElement("strong", null, d.newCells), " ／ 読み込む側が新しい ", /*#__PURE__*/React.createElement("strong", null, d.updatedCells), " ／ この端末の方が新しい ", /*#__PURE__*/React.createElement("strong", null, d.keptCells)), checked.skipped > 0 && /*#__PURE__*/React.createElement("li", {
     style: {
       color: 'var(--warn)'
     }
@@ -11296,7 +11754,7 @@ const ProgressTransfer = () => {
       color: 'var(--danger)'
     }),
     onClick: () => doApply('replace')
-  }, "本当に置き換える（この端末の ", counts.kakomon, " マス・", counts.section + counts.quiz + counts.trap + counts.quickreview, " 件を消す）"), /*#__PURE__*/React.createElement("button", {
+  }, "本当に置き換える（この端末の ", counts.kakomon, " マス・", counts.section + counts.quiz + counts.trap + counts.quickreview + counts.misscard, " 件を消す）"), /*#__PURE__*/React.createElement("button", {
     type: "button",
     style: btn(false),
     onClick: () => {
@@ -12036,7 +12494,8 @@ Object.assign(window, {
 Object.assign(window, {
   WikiReviewToday,
   kikaiWikiDue,
-  kikaiScheduleFields
+  kikaiScheduleFields,
+  MissCardsToday
 });
 </script>
   <script>
