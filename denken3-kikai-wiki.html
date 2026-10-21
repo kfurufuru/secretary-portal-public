@@ -1428,80 +1428,83 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
 </style>
 </head>
 <body>
-  <details class="portal-back-pill" data-portal-back>
-    <summary aria-label="他Wikiへ移動">↔ Wiki</summary>
-    <nav class="portal-back-menu" aria-label="Wiki switcher">
-      <a href="https://kfurufuru.github.io/secretary-portal-public/">🏠 Portal</a>
-      <a href="denken3-riron-wiki.html">📘 理論Wiki(改)</a>
-      <a href="https://kfurufuru.github.io/denken-wiki-riron/">📘 理論Wiki(旧)</a>
-      <a href="https://kfurufuru.github.io/denken-wiki/">📗 法規Wiki(旧)</a>
-      <a href="denken-hoki-wiki.html">📗 法規Wiki(新)</a>
-      <a href="denken3-denryoku-wiki.html">⚡ 電力Wiki(新)</a>
-      <a href="https://kfurufuru.github.io/denken-wiki-denryoku/">⚡ 電力Wiki(旧)</a>
-      <a href="denken3-kikai-wiki.html" data-current>⚙️ 機械Wiki</a>
-      <a href="https://kfurufuru.github.io/ei-wiki/">🔧 電気計装Wiki</a>
-    </nav>
-  </details>
-  <style data-portal-back-style>
-    /* B案2軽量実装（AI社員諮問 2026-05-26）。P2.6 wiki registry SoT 化完成後に
-       registry 駆動の動的注入へ差し替え予定の暫定 UI。 */
-    .portal-back-pill {
-      position: fixed; top: 8px; right: 8px; z-index: 1000;
-      font-family: var(--font-sans, var(--sans, system-ui, sans-serif));
-    }
-    .portal-back-pill > summary {
-      list-style: none;
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 6px 12px; border-radius: 999px;
-      background: var(--bg-elev, #fff);
-      border: 1px solid var(--rule, var(--line, #ddd));
-      color: var(--ink-soft, var(--ink-2, #555));
-      font-size: 12px;
-      cursor: pointer;
-      box-shadow: 0 1px 3px rgba(0,0,0,.06);
-      transition: background .15s ease, color .15s ease, border-color .15s ease;
-      user-select: none;
-    }
-    .portal-back-pill > summary::-webkit-details-marker { display: none; }
-    .portal-back-pill > summary::marker { content: ""; }
-    .portal-back-pill > summary:hover,
-    .portal-back-pill[open] > summary {
-      background: var(--accent-soft, #f0f0f0);
-      color: var(--accent-ink, var(--accent, var(--ink, #000)));
-      border-color: var(--accent, #888);
-    }
-    .portal-back-menu {
-      position: absolute; top: calc(100% + 4px); right: 0;
-      display: flex; flex-direction: column;
-      min-width: 180px;
-      background: var(--bg-elev, #fff);
-      border: 1px solid var(--rule, var(--line, #ddd));
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,.1);
-      padding: 4px 0;
-    }
-    .portal-back-menu a {
-      padding: 6px 12px;
-      font-size: 12px;
-      color: var(--ink-soft, var(--ink-2, #555));
-      text-decoration: none;
-      white-space: nowrap;
-      transition: background .12s ease;
-    }
-    .portal-back-menu a:hover {
-      background: var(--accent-soft, #f0f0f0);
-      color: var(--accent-ink, var(--accent, var(--ink, #000)));
-    }
-    .portal-back-menu a[data-current] {
-      font-weight: 700;
-      color: var(--accent-ink, var(--accent, var(--ink, #000)));
-      background: var(--accent-soft, #f0f0f0);
-      cursor: default;
-      pointer-events: none;
-    }
+    <!-- Wiki 切り替え（正本。4科目の build-*-wiki.py がこのファイルを読み、表示中の科目の data-wiki に
+       aria-current="page" を付けて埋め込む。成果物やテンプレートに直接書かない）。
+       次の試験（理論・電力・機械）は1タップで移動し、ほかは「⋯」の中に置く。試験の科目が変わったら並びを直す。
+       色は --bg-elev／--ink 系／--rule／--bg-sunken のみ（Wiki 色ポリシー: 色付き背景を使わない）。
+       法規Wiki は別名のトークン（--ink-2 など）なので、var() の2番目に入れてある。 -->
+  <nav class="wiki-switch" aria-label="Wiki 切り替え">
+    <a class="ws-seg" data-wiki="riron" href="denken3-riron-wiki.html" title="理論Wiki" aria-label="理論Wiki">理</a>
+    <a class="ws-seg" data-wiki="denryoku" href="denken3-denryoku-wiki.html" title="電力Wiki" aria-label="電力Wiki">電</a>
+    <a class="ws-seg" data-wiki="kikai" aria-current="page" href="denken3-kikai-wiki.html" title="機械Wiki" aria-label="機械Wiki">機</a>
+    <details class="ws-more">
+      <summary title="ほかのWiki" aria-label="ほかのWiki"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="12.5" cy="8" r="1.3"/></svg></summary>
+      <div class="ws-menu">
+        <p class="ws-group ws-exam">次の試験</p>
+        <a class="ws-exam" href="denken3-riron-wiki.html">理論Wiki</a>
+        <a class="ws-exam" href="denken3-denryoku-wiki.html">電力Wiki</a>
+        <a class="ws-exam" href="denken3-kikai-wiki.html">機械Wiki</a>
+        <p class="ws-group ws-exam">ほか</p>
+        <a data-wiki="hoki" href="denken-hoki-wiki.html">法規Wiki</a>
+        <a href="https://kfurufuru.github.io/ei-wiki/">電気計装Wiki</a>
+        <a href="https://kfurufuru.github.io/secretary-portal-public/">ポータル</a>
+        <p class="ws-group">旧版</p>
+        <a href="https://kfurufuru.github.io/denken-wiki-riron/">理論Wiki（旧）</a>
+        <a href="https://kfurufuru.github.io/denken-wiki-denryoku/">電力Wiki（旧）</a>
+        <a href="https://kfurufuru.github.io/denken-wiki/">法規Wiki（旧）</a>
+      </div>
+    </details>
+  </nav>
+  <style data-wiki-switch-style>
+    .wiki-switch { position: fixed; top: 8px; right: 8px; z-index: 1000; display: flex; align-items: center; gap: 2px;
+      padding: 3px; border-radius: 999px; background: var(--bg-elev, #fff); border: 1px solid var(--rule, var(--line, #ddd));
+      box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 14px -6px rgba(0,0,0,.18);
+      font-family: var(--font-sans, var(--sans, system-ui, sans-serif)); }
+    .ws-seg { display: grid; place-items: center; width: 30px; height: 26px; border-radius: 999px;
+      font-size: 13px; font-weight: 700; line-height: 1; color: var(--ink-mute, var(--ink-3, #6b6b6b)); text-decoration: none;
+      transition: color .15s ease, transform .15s ease; }
+    .ws-seg:hover { color: var(--ink, #111); transform: translateY(-1px); }
+    .ws-seg:active { transform: scale(.94); }
+    .ws-seg[aria-current="page"] { color: var(--bg-elev, #fff); background: var(--ink, #111); pointer-events: none; }
+    .ws-seg:focus-visible, .ws-more > summary:focus-visible, .ws-menu a:focus-visible {
+      outline: 2px solid var(--ink, #111); outline-offset: 2px; }
+    .ws-more { position: relative; }
+    .ws-more > summary { list-style: none; display: grid; place-items: center; width: 28px; height: 26px; border-radius: 999px;
+      color: var(--ink-mute, var(--ink-3, #6b6b6b)); cursor: pointer; user-select: none; }
+    .ws-more > summary::-webkit-details-marker { display: none; }
+    .ws-more > summary::marker { content: ""; }
+    .ws-more > summary:hover, .ws-more[open] > summary { color: var(--ink, #111); }
+    .ws-more > summary svg { width: 14px; height: 14px; fill: currentColor; transition: transform .25s ease; }
+    .ws-more[open] > summary svg { transform: rotate(90deg); }
+    /* 表示中の Wiki が「⋯」の中にあるとき（法規）は、⋯ を表示中の印にする */
+    .ws-more:has(a[aria-current="page"]) > summary { color: var(--bg-elev, #fff); background: var(--ink, #111); }
+    .ws-menu { position: absolute; top: calc(100% + 9px); right: -3px; min-width: 168px; padding: 6px;
+      display: flex; flex-direction: column; background: var(--bg-elev, #fff); border: 1px solid var(--rule, var(--line, #ddd));
+      border-radius: 12px; box-shadow: 0 12px 32px -12px rgba(0,0,0,.28), 0 2px 6px rgba(0,0,0,.06);
+      transform-origin: top right; animation: ws-in .16s cubic-bezier(.2,.9,.3,1.2); }
+    @keyframes ws-in { from { opacity: 0; transform: translateY(-6px) scale(.96); } }
+    .ws-menu a { padding: 7px 10px; border-radius: 8px; font-size: 13px; color: var(--ink-soft, var(--ink-2, #555));
+      text-decoration: none; white-space: nowrap; transition: background .12s ease, color .12s ease; }
+    .ws-menu a:hover { background: var(--bg-sunken, var(--bg-2, #f2f2f2)); color: var(--ink, #111); }
+    .ws-menu a[aria-current="page"] { color: var(--ink, #111); font-weight: 700; pointer-events: none; }
+    .ws-group { margin: 6px 10px 2px; padding-top: 6px; border-top: 1px solid var(--rule, var(--line, #ddd));
+      font-size: 10.5px; color: var(--ink-mute, var(--ink-3, #6b6b6b)); }
+    /* 「⋯」の中の「次の試験」はスマホ幅だけ出す（PC は上の3文字で1タップ移動できるため） */
+    .ws-exam { display: none; }
+    .ws-menu > .ws-group:first-child { margin-top: 2px; padding-top: 0; border-top: 0; }
+    /* スマホ幅は、表示中の1文字と「⋯」だけにする（約68px。旧ボタンとほぼ同じ幅）。
+       3文字を並べると右上の約114px を常にふさぎ、法規のパンくず・理論の「出題頻度」バッジが隠れたため
+       （375px で全ページを測り、旧ボタン比で法規19・理論10ページの文字が新たに隠れた）。 */
     @media (max-width: 600px) {
-      .portal-back-pill > summary { font-size: 11px; padding: 4px 10px; }
-      .portal-back-menu a { font-size: 11px; padding: 5px 10px; }
+      .ws-seg:not([aria-current="page"]) { display: none; }
+      .ws-exam { display: block; }
+    }
+    /* PC 幅で右の目次（.toc）の見出し「On this page」がこのボタンの下に入らないよう、上の余白を広げる
+       （理論・機械・電力は .toc の上余白が 36px で、ボタンは上から 8〜42px を使う。法規は .toc を後から
+       React 側で出すのでこの指定は効かず、法規の「目次」はボタンより左にあるため隠れない）。 */
+    .toc { padding-top: 52px; }
+    @media (prefers-reduced-motion: reduce) {
+      .wiki-switch *, .wiki-switch *::before { animation: none !important; transition: none !important; }
     }
   </style>
   <div id="root"></div>
@@ -6812,6 +6815,10 @@ const Term = ({
     },
     onKeyDown: e => {
       if (e.key === 'Escape') hide();
+      /* role="button" なので Enter・Space でも開閉する（Escape で閉じた後に開き直せるように） */else if ((e.key === 'Enter' || e.key === ' ') && !(e.target.closest && e.target.closest('.term-pop'))) {
+        e.preventDefault();
+        pos ? hide() : show();
+      }
     }
   }, children, pos && /*#__PURE__*/React.createElement("span", {
     className: "term-pop",
