@@ -17737,6 +17737,8 @@ function MachigaiNotePage({
       const raw = localStorage.getItem(r.key);
       const existing = raw ? JSON.parse(raw) : {};
       if (existing.status === newStatus) {
+        const hasMemo = typeof existing.memo === 'string' && existing.memo.trim() !== '';
+        if (!confirm('同じ理解度をもう一度押したので、この記録を削除しますか？' + (hasMemo ? '\nメモも消え、' : '\n') + '元に戻せません。')) return;
         localStorage.removeItem(r.key);
       } else {
         const nowIso = new Date().toISOString();
@@ -18470,7 +18472,7 @@ function MachigaiNotePage({
         key: sk,
         type: "button",
         onClick: () => handleStatusChange(r, sk),
-        title: active ? 'もう一度押すと記録削除' : sdef.label + 'に更新',
+        title: active ? 'もう一度押すと記録削除（確認あり）' : sdef.label + 'に更新',
         style: {
           display: 'inline-flex',
           alignItems: 'center',
