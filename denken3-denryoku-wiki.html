@@ -1066,6 +1066,10 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
         <a href="https://kfurufuru.github.io/denken-wiki-riron/">理論Wiki（旧）</a>
         <a href="https://kfurufuru.github.io/denken-wiki-denryoku/">電力Wiki（旧）</a>
         <a href="https://kfurufuru.github.io/denken-wiki/">法規Wiki（旧）</a>
+        <p class="ws-group" data-ws-export hidden>記録</p>
+        <button type="button" class="ws-export" data-ws-export hidden
+          title="この端末の自己評価を、records.json へ取り込むファイル（denken-wiki-records v1）に保存する">記録を書き出す（SR用）</button>
+        <p class="ws-export-msg" data-ws-export hidden role="status"></p>
       </div>
     </details>
   </nav>
@@ -1099,6 +1103,14 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
     @keyframes ws-in { from { opacity: 0; transform: translateY(-6px) scale(.96); } }
     .ws-menu a { padding: 7px 10px; border-radius: 8px; font-size: 13px; color: var(--ink-soft, var(--ink-2, #555));
       text-decoration: none; white-space: nowrap; transition: background .12s ease, color .12s ease; }
+    .ws-menu .ws-export { padding: 7px 10px; border: 0; border-radius: 8px; background: none; font: inherit; font-size: 13px;
+      color: var(--ink-soft, var(--ink-2, #555)); text-align: left; white-space: nowrap; cursor: pointer;
+      transition: background .12s ease, color .12s ease; }
+    .ws-menu .ws-export:hover { background: var(--bg-sunken, var(--bg-2, #f2f2f2)); color: var(--ink, #111); }
+    .ws-menu .ws-export:focus-visible { outline: 2px solid var(--ink, #111); outline-offset: 2px; }
+    .ws-export-msg { margin: 2px 10px 4px; max-width: 220px; font-size: 11.5px; line-height: 1.5;
+      color: var(--ink-mute, var(--ink-3, #6b6b6b)); white-space: normal; }
+    .ws-menu [hidden] { display: none; }
     .ws-menu a:hover { background: var(--bg-sunken, var(--bg-2, #f2f2f2)); color: var(--ink, #111); }
     .ws-menu a[aria-current="page"] { color: var(--ink, #111); font-weight: 700; pointer-events: none; }
     .ws-group { margin: 6px 10px 2px; padding-top: 6px; border-top: 1px solid var(--rule, var(--line, #ddd));
@@ -1121,6 +1133,96 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
       .wiki-switch *, .wiki-switch *::before { animation: none !important; transition: none !important; }
     }
   </style>
+  <script data-wiki-switch-export>
+    /* 「記録を書き出す」。表示中の科目が window.denkenWikiRecords = { subject, collect } を置いたときだけ出す
+       （置くのは理論・電力・機械。法規は置かないので出ない）。形式は denken-wiki-records v1 で、
+       読む側は scripts/wiki_to_records.py（設計書 inbox/design-wiki-to-records-20261022.md 4節）。
+       科目の collect() は記録を集めるだけにして、評価→結果と日時→日本時間の日付の読み替えはここ1か所で行う
+       （3科目で別々に書くと、同じ「△」が科目ごとに違う結果になりうる）。 */
+    (function () {
+      var RESULT = { wrong: 'ng', vague: 'risky', review: 'risky', understood: 'ok',
+                     '×': 'ng', '△': 'risky', '○': 'ok', '◎': 'ok' };
+      var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+      function jst(t) { return new Date(t + 9 * 3600000).toISOString(); }
+      // 'YYYY-MM-DD'（ページが端末の地方時で付けた日付）はそのまま、ISO の日時（'YYYY-MM-DDT…'）も端末の地方時の日付にする
+      // （日本時間で読むと、地方時の日付を持つ欄と同じ1回の評価が2日に割れる。日本の端末では日本時間と同じ）。
+      // Date.parse は暦に無い日（2月の30日など）を翌月へ繰り越し、数字1文字を西暦2001年と読み、0年や1万年も受けるので、
+      // 形と暦の往復一致と年の範囲（取り込み側の Python の date が受ける1〜9999年）で弾く
+      function realDay(d) {
+        if (!DAY_RE.test(d) || d < '0001-01-01') return false;
+        var t = Date.parse(d + 'T00:00:00Z');
+        return !isNaN(t) && new Date(t).toISOString().slice(0, 10) === d;
+      }
+      function pad(n) { return (n < 10 ? '0' : '') + n; }
+      function dayOf(v) {
+        if (typeof v !== 'string') return '';
+        if (DAY_RE.test(v)) return realDay(v) ? v : '';
+        if (!/^\d{4}-\d{2}-\d{2}T/.test(v) || !realDay(v.slice(0, 10))) return '';
+        var x = new Date(Date.parse(v));
+        if (isNaN(x.getTime())) return '';
+        var d = ('000' + x.getFullYear()).slice(-4) + '-' + pad(x.getMonth() + 1) + '-' + pad(x.getDate());
+        return realDay(d) ? d : '';
+      }
+      // ページ id は英数字・-・_・. だけ（取り込み側の strip() と JS の trim() は消す空白が違うので、空白の扱いに頼らない）
+      var PAGE_RE = /^[A-Za-z0-9][\w.-]*$/;
+      function build(src) {
+        var got = src.collect() || {};
+        var items = [], undated = {}, seen = {};
+        var put = function (k, n) { if (n) undated[k] = (undated[k] || 0) + n; };
+        Object.keys(got.undated || {}).forEach(function (k) { put(k, +got.undated[k] || 0); });
+        (got.items || []).forEach(function (it) {
+          var page = typeof it.pageId === 'string' && PAGE_RE.test(it.pageId) ? it.pageId : '';
+          // hasOwnProperty で引く（'toString' のような評価名で Object の関数を拾わない）
+          var result = Object.prototype.hasOwnProperty.call(RESULT, it.status) ? RESULT[it.status] : '';
+          var date = dayOf(it.at);
+          // 取り込めない形は捨てずに数だけ残す（取り込み側の一覧に出る）
+          if (!result) return put('noResult', 1);
+          if (!date) return put('noDate', 1);
+          if (!page) return put('noPage', 1);
+          // 同じ記録・同じ日・同じ結果は1件にする（履歴と lastWrongAt が同じ回答を指すことがある。
+          // 重ねると取り込み側のメモの件数が実際の回答数より多くなる）
+          var id = String(it.key || '') + '|' + date + '|' + result;
+          if (seen[id]) return;
+          seen[id] = 1;
+          items.push({ key: String(it.key || ''), kind: String(it.kind || ''), pageId: page,
+                       result: result, date: date, title: String(it.title || '').slice(0, 80) });
+        });
+        items.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+        return { app: 'denken-wiki-records', schemaVersion: 1, subject: src.subject,
+                 exportedAt: jst(Date.now()).slice(0, 19) + '+09:00', items: items, undated: undated };
+      }
+      var more = document.querySelector('.wiki-switch .ws-more');
+      if (!more) return;
+      var parts = more.querySelectorAll('[data-ws-export]');
+      var btn = more.querySelector('.ws-export'), msg = more.querySelector('.ws-export-msg');
+      // 科目のスクリプトはこれより後に読まれるので、メニューを開いたときに判定する
+      more.addEventListener('toggle', function () {
+        if (!more.open) return;
+        var on = !!(window.denkenWikiRecords && typeof window.denkenWikiRecords.collect === 'function');
+        for (var i = 0; i < parts.length; i++) parts[i].hidden = !on || (parts[i] === msg && !msg.textContent);
+      });
+      btn.addEventListener('click', function () {
+        var doc;
+        try { doc = build(window.denkenWikiRecords); }
+        catch (e) { msg.textContent = '書き出せなかった（' + (e && e.message || e) + '）'; msg.hidden = false; return; }
+        var skip = 0;
+        Object.keys(doc.undated).forEach(function (k) { skip += doc.undated[k]; });
+        if (!doc.items.length) {
+          msg.textContent = 'この端末に、取り込める記録が無い（取り込めない記録 ' + skip + ' 件）。保存しなかった。';
+        } else {
+          var name = 'denken-wiki-records-' + doc.subject + '-' + doc.exportedAt.slice(0, 10).replace(/-/g, '') + '.json';
+          var url = URL.createObjectURL(new Blob([JSON.stringify(doc, null, 1)], { type: 'application/json' }));
+          var a = document.createElement('a');
+          a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+          msg.textContent = doc.items.length + ' 件を ' + name + ' に保存した'
+            + (skip ? '（節の自己評価など、取り込めない記録 ' + skip + ' 件は数だけ入れた）' : '')
+            + '。PC で python scripts/wiki_to_records.py <ファイル> を実行する。';
+        }
+        msg.hidden = false;
+      });
+    })();
+  </script>
   <div id="root"></div>
   <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1" crossorigin="anonymous"></script>
@@ -3413,6 +3515,77 @@ const SectionCheckSummary = ({
       fontWeight: 600
     }
   }, "✨ すべてのセクションが ◎ または ○ です。お疲れさまでした！"));
+};
+
+/* 「記録を書き出す」（右上の「⋯」。wiki-switcher.html）が呼ぶ。records.json へ運ぶ記録を集めるだけで、
+   評価→結果・日付の読み替えと保存は wiki-switcher.html 側が行う（設計書 inbox/design-wiki-to-records-20261022.md）。
+   - 過去問の誤答カードは判定の履歴（最大10件）を持つので、1回ずつ出す（取り込み側が1テーマ1日の最悪にまとめる）。
+     単元（page）を選ばずに作ったカードは pageId が空になり、取り込まれず数だけ残る。
+   - 節の自己評価は日付を持たないので、数だけ出す。 */
+const DENRYOKU_SECTION_KEY_RE = /^denken_check::denryoku_[^:]+::section::/;
+const denryokuRecordsForExport = () => {
+  const items = [];
+  let section = 0;
+  const keys = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+  } catch (e) {/* 触れない端末は空 */}
+  keys.forEach(k => {
+    let raw = null;
+    try {
+      raw = k ? localStorage.getItem(k) : null;
+    } catch (e) {
+      raw = null;
+    }
+    if (!k || !raw) return;
+    if (DENRYOKU_SECTION_KEY_RE.test(k)) {
+      section++;
+      return;
+    }
+    if (k.indexOf(DENRYOKU_MISS_PREFIX) !== 0) return;
+    let rec = null;
+    try {
+      rec = JSON.parse(raw);
+    } catch (e) {
+      rec = null;
+    }
+    // 読めない記録は捨てずに「評価が読めない」として数に残す（status を持たない item は書き出し側が数える）
+    if (!rec || typeof rec !== 'object' || Array.isArray(rec)) {
+      items.push({
+        key: k,
+        kind: 'misscard',
+        pageId: ''
+      });
+      return;
+    }
+    const base = {
+      key: k,
+      kind: 'misscard',
+      pageId: typeof rec.page === 'string' ? rec.page : '',
+      title: typeof rec.itemTitle === 'string' ? rec.itemTitle : ''
+    };
+    const hist = Array.isArray(rec.history) ? rec.history.filter(h => h && typeof h === 'object') : [];
+    hist.forEach(h => items.push(Object.assign({}, base, {
+      status: h.mark,
+      at: h.at
+    })));
+    // 今の状態も出す。法規の間違いノートは status と updatedAt だけを書き換え、mark と history は古いまま残す
+    // （denryokuMissOutside と同じ前提。同じ日・同じ結果の重複は書き出し側が1件にする）
+    items.push(Object.assign({}, base, {
+      status: hist.length ? rec.status : rec.status || rec.mark,
+      at: rec.updatedAt
+    }));
+  });
+  return {
+    items,
+    undated: {
+      section
+    }
+  };
+};
+window.denkenWikiRecords = {
+  subject: 'denryoku',
+  collect: denryokuRecordsForExport
 };
 Object.assign(window, {
   Eq,
