@@ -2506,6 +2506,8 @@ window.WIKI_DATA = {
       def: "巻線形誘導電動機の二次回路に外部抵抗をつないで滑りを変え、速度を制御する方法（比例推移の利用）。かご形には使えない。二次銅損が増えるので効率は悪い。" },
     { term: "極数切換", reading: "KYOKUSUU KIRIKAE", letter: "か",
       def: "固定子巻線の結線を切り替えて極数 p を変え、同期速度 Ns = 120f/p を段階的に変える誘導電動機の速度制御（2:1 が普通）。同じ巻線の切り替えなので連続可変ではない。かご形専用（巻線形は回転子の極数も変えなければならない）。二次抵抗制御と違って効率は下がりにくい。" },
+    { term: "永久コンデンサ形", reading: "EIKYUU CONDENSER", letter: "あ",
+      def: "単相誘導電動機の方式。1個のコンデンサを補助巻線に常につないだまま運転する（コンデンサ運転形）。遠心力スイッチが要らず静かなので扇風機・換気扇に多い。容量を運転向きに選ぶので始動トルクは小さい。始動後に始動用を切り離すコンデンサ始動・運転形との区別。" },
     { term: "基底周波数", reading: "KITEI SHUUHASUU", letter: "か",
       def: "V/f 一定制御で、電圧が定格値に達する周波数（普通は定格周波数）。ここまでは V/f 一定で磁束を保つ。これより上は電圧を上げられないので V 一定になり、磁束が減って定出力の特性になる。" },
     { term: "分布巻・短節巻", reading: "BUNPUMAKI TANSETSUMAKI", letter: "は",
@@ -3075,7 +3077,7 @@ const KIKAI_DAILY_POOL = [
     choices:[{key:'A',label:'10 W/m²',correct:true},{key:'B',label:'80 W/m²',correct:false},{key:'C',label:'1.25 W/m²',correct:false},{key:'D',label:'0.1 W/m²',correct:false}],
     tags:['#数値計算','#公式','#ひっかけ注意'],
     explanation:'単位面積当たりを聞かれているので、熱流密度 q = λΔT/l を使い面積は持ち込まない（求める量は q）。q = 0.04 × 25/0.10 = 10 W/m²。80 は面積を掛けた壁全体の熱流 Φ = 80 W を [W/m²] と取り違えた値、1.25 は q をさらに面積で割った値、0.1 は厚さで割らずに掛けた値。温度こう配 ΔT/l = 250 K/m に λ を掛ける、と単位から組み立てると取り違えない。',
-    evidence:['本ページ「熱回路 — 熱の伝わり方と熱抵抗」節「よく出る2つの派生」の②（単位面積当たりの熱流）'], verified:'high',
+    evidence:['本ページ「熱回路 — 熱の伝わり方と熱抵抗」節「2つの派生」の②（単位面積当たりの熱流）'], verified:'high',
     wikiPageId:'heat' },
 
   // ─── 電動機応用 drive-mech (6) ───
@@ -3636,8 +3638,8 @@ const KIKAI_MISS_CARDS = [
   { id:'tr-vreg', page:'transformer', anchor:'vreg-projection',
     q:'変圧器の電圧変動率の定義は何か。近似式は、何を何の向きに投影したものか。遅れ力率と進み力率で符号はどうなるか。',
     a:['定義は ε = (V₂₀ − V₂)/V₂ × 100 [%]（V₂₀ は無負荷、V₂ は定格負荷の二次端子電圧）。',
-       '近似式 ε ≈ p cosφ + q sinφ は、負荷電流による内部の電圧降下（抵抗 R とリアクタンス X の降下）を端子電圧の向きに投影したもの。p は百分率抵抗降下、q は百分率リアクタンス降下で、どちらも定格電流が基準（負荷率が違えば、その比を掛ける）。',
-       '遅れ力率では sinφ を正、進み力率では負として入れる。進み力率では電圧変動率が小さくなり、負にもなる。'],
+       '近似式 ε ≈ p cosθ + q sinθ（θ は負荷の力率角）は、負荷電流による内部の電圧降下（抵抗 R とリアクタンス X の降下）を端子電圧の向きに投影したもの。p は百分率抵抗降下、q は百分率リアクタンス降下で、どちらも定格電流が基準（負荷率が違えば、その比を掛ける）。',
+       '遅れ力率では sinθ を正、進み力率では負として入れる。進み力率では電圧変動率が小さくなり、負にもなる。'],
     history:{ ng:0, risky:2, first:'2026-09-05', last:'2026-09-13' } },
   { id:'tr-vv-loss', page:'transformer', anchor:'vconn',
     q:'単相変圧器2台の V-V 結線で、三相容量と負荷損は1台の値とどう関係するか。',
@@ -17677,7 +17679,9 @@ const DCMachinePage = ({
   id: "emf-blv-two"
 }, "なぜ「1巻き」で2倍になるのか — 有効導体は2本ある"), /*#__PURE__*/React.createElement("p", null, "コイルを1巻きぶんだけ取り出すと、電機子の中には", /*#__PURE__*/React.createElement("strong", null, "行きの辺と帰りの辺"), "の2本の導体が入っている。 この2本は", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "互いに反対の磁極（N の下と S の下）にいる"), "ので、 磁束の向きが逆・導体の運動方向も逆になり、", /*#__PURE__*/React.createElement("strong", null, "起電力の向きはコイルを1周する向きにそろう"), "。 つまり2本の ", /*#__PURE__*/React.createElement(Eq, {
+}, "互いに反対の磁極（N の下と S の下）にいる"), "ので、 電機子に入る・出るという", /*#__PURE__*/React.createElement("strong", null, "磁束の向きだけが逆"), "になる。2本とも同じ回転の向き（周方向）に動くので、", /*#__PURE__*/React.createElement("strong", null, "電機子に対して見れば運動の向きは逆にならない"), "。 起電力の向き（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "v \\times B"
+}), " の向き）は、どちらか片方が逆になるたびに反転する。そのため、2本の起電力は軸方向に互いに逆向きになり、", /*#__PURE__*/React.createElement("strong", null, "コイルを1周する向きにそろう"), "。 （紙面に固定した向きで見ると、逆になるのは運動の向き（上向き・下向き）だけで、磁束は両方とも同じ向きを向く。どちらで見ても「逆になるのは片方だけ」である。両方が逆なら起電力は1周で打ち消し合う。） つまり2本の ", /*#__PURE__*/React.createElement(Eq, {
   tex: "e_1"
 }), " が", /*#__PURE__*/React.createElement("strong", null, "直列に足し合わさる"), "。"), /*#__PURE__*/React.createElement(Eq, {
   display: true,
@@ -17718,7 +17722,7 @@ const DCMachinePage = ({
 }), " に回転数や周波数をそのまま掛けるのではない。 また、磁束の式 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "BS\\omega"
 }), " には導体2本ぶんがすでに入っているので、さらに 2 を掛けない。"), /*#__PURE__*/React.createElement(DiagramFrame, {
-  caption: "図1.1.4  1巻きコイルの有効導体は2本。N極下とS極下で B の向きも運動方向も逆になり、コイルを一周する向きに起電力がそろって直列に足される。",
+  caption: "図1.1.4  1巻きコイルの有効導体は2本。N極下とS極下では磁束の向き（電機子に入る・出る）だけが逆で、回転の向きは同じなので、コイルを一周する向きに起電力がそろって直列に足される。",
   viewBox: "0 0 460 250"
 }, /*#__PURE__*/React.createElement("rect", {
   x: "30",
@@ -23663,7 +23667,7 @@ const SinglePhaseIMLayers = () => {
     textAnchor: "middle",
     fontSize: "11.5",
     fill: "var(--ink-soft)"
-  }, "家電＝くま取り"), /*#__PURE__*/React.createElement("rect", {
+  }, "扇風機＝永久C"), /*#__PURE__*/React.createElement("rect", {
     x: "356",
     y: "70",
     width: "112",
@@ -24162,7 +24166,7 @@ const SinglePhaseIMPage = ({
 }, "1.2 三相誘導電動機"), " 5節の逆相制動）。くま取りコイル形は、コイルの位置で向きが決まるので、電気的には逆転できない。"), /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
   label: "覚え方"
-}, /*#__PURE__*/React.createElement("p", null, "始動トルクの大小（一般的傾向）: ", /*#__PURE__*/React.createElement("strong", null, "くま取り < 分相 < コンデンサ始動 < 反発始動"), "。家電は静音・小型のくま取り、井戸ポンプは始動トルク大のコンデンサ始動が多い。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, /*#__PURE__*/React.createElement("p", null, "始動トルクの大小（一般的傾向）: ", /*#__PURE__*/React.createElement("strong", null, "くま取り < 分相 < コンデンサ始動 < 反発始動"), "。扇風機・換気扇は遠心力スイッチが要らず静かな永久コンデンサ形、構造を簡単にしたい小容量機はくま取り、井戸ポンプは始動トルク大のコンデンサ始動が多い。")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "single-phase-im",
   sectionId: "start"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -25804,7 +25808,7 @@ const ImpedanceTriangle = () => /*#__PURE__*/React.createElement("figure", {
   y: "233",
   fontSize: "12",
   fill: "var(--warn)"
-}, "θ"), /*#__PURE__*/React.createElement("text", {
+}, "φ"), /*#__PURE__*/React.createElement("text", {
   x: "157",
   y: "260",
   textAnchor: "middle",
@@ -28813,11 +28817,45 @@ const TransformerPage = ({
   sub: "理論とのつながり（開く）"
 }, /*#__PURE__*/React.createElement("p", null, "この回路の正体は、理論で学ぶ ", /*#__PURE__*/React.createElement("strong", null, "2つの結合コイルのT形等価回路"), "（", /*#__PURE__*/React.createElement(Eq, {
   tex: "L_1-M,\\ L_2-M,\\ M"
-}), " の3インダクタ）そのもの。対応は次の通り："), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "励磁インダクタンス ↔ 相互インダクタンス ", /*#__PURE__*/React.createElement(Eq, {
-  tex: "M"
+}), " の3インダクタ）を、", /*#__PURE__*/React.createElement("strong", null, "二次を一次へ換算した形"), "である。巻数比を ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "a = N_1/N_2"
+}), " として、対応は次の通り："), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "励磁インダクタンス ↔ ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "aM"
 })), "（鉄心を共有し磁束を結合する分）"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "漏れリアクタンス ↔ ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "L_1-aM,\\ a^2L_2-aM"
+})), "（相手と結合しない", /*#__PURE__*/React.createElement(Term, null, "漏れ磁束"), "の分。後者は二次の漏れを一次へ換算した値）")), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "6px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "理論の ", /*#__PURE__*/React.createElement(Eq, {
   tex: "L_1-M,\\ L_2-M"
-})), "（相手と結合しない", /*#__PURE__*/React.createElement(Term, null, "漏れ磁束"), "の分）")), /*#__PURE__*/React.createElement("p", null, "結合係数 ", /*#__PURE__*/React.createElement(Eq, {
+}), " がそのまま漏れになるのは、巻数が等しい（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "a=1"
+}), "）ときだけ"), "。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "a \\ne 1"
+}), " では ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "L_1-M"
+}), " に励磁の分が混ざり、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "a>1"
+}), "（降圧）では ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "L_2-M"
+}), " が負にもなる（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "a<1"
+}), " では ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "L_1-M"
+}), " の方。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "L_1 = \\ell_1 + N_1^2/R_m"
+}), "・", /*#__PURE__*/React.createElement(Eq, {
+  tex: "M = N_1N_2/R_m"
+}), " から ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "L_1 - M = \\ell_1 + N_1(N_1-N_2)/R_m"
+}), "。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\ell_1"
+}), " は一次の漏れインダクタンス、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "R_m"
+}), " は磁気抵抗）。"), /*#__PURE__*/React.createElement("p", null, "結合係数 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "k=M/\\sqrt{L_1 L_2}"
 }), " が1に近いほど漏れが小さく、理想変圧器（", /*#__PURE__*/React.createElement(Eq, {
   tex: "k=1"
@@ -43390,7 +43428,9 @@ const AutoControlPage = ({
   className: "marker"
 }, "負帰還をかけるとゲインは ", /*#__PURE__*/React.createElement(Eq, {
   tex: "1/(1+K)"
-}), " に下がるが、折れ点は ", /*#__PURE__*/React.createElement(Eq, {
+}), " 倍に下がる（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "K \\to K/(1+K)"
+}), "）が、折れ点は ", /*#__PURE__*/React.createElement(Eq, {
   tex: "(1+K)"
 }), " 倍に上がる"), "—— ここでは 11 分の1 と 11 倍。", /*#__PURE__*/React.createElement("strong", null, "ゲインを捨てて帯域（速応性）を買っている"), "のがフィードバックの正体である。 これはセクション2 で見た「時定数が 2 s → 0.2 s に短縮」を周波数側から見た同じ現象である。"), /*#__PURE__*/React.createElement("p", {
   style: {
@@ -43939,7 +43979,7 @@ const AutoControlPage = ({
   tex: "T_D s"
 }), " は ", /*#__PURE__*/React.createElement(Eq, {
   tex: "+90^\\circ"
-})), " 回すので位相余裕を増やし、安定度を上げる。 「I は安定度を下げ、D は上げる」という定性的な結論は、ここから出ている暗記事項ではない。")), /*#__PURE__*/React.createElement("div", {
+})), " 回すので位相余裕を増やし、安定度を上げる。 「I は安定度を下げ、D は上げる」という定性的な結論は、この位相の増減から導かれる。丸暗記する事項ではない。")), /*#__PURE__*/React.createElement("div", {
   className: "table-wrap"
 }, /*#__PURE__*/React.createElement("table", {
   className: "data"
@@ -52391,7 +52431,13 @@ const DriveMechPage = ({
       tex: "6.28\\times10^{3} \\times 31.4 \\approx 1.97\\times10^{5}"
     }), " J で ", /*#__PURE__*/React.createElement(Eq, {
       tex: "W"
-    }), " と一致する。", /*#__PURE__*/React.createElement("strong", null, "エネルギー側と時間側が独立に合う"), "ので計算は正しい。"))), /*#__PURE__*/React.createElement(Box, {
+    }), " と一致する。 ただし ", /*#__PURE__*/React.createElement(Eq, {
+      tex: "(T\\omega/2)\\times(J\\omega/T) = \\tfrac{1}{2}J\\omega^2"
+    }), " と、2つは", /*#__PURE__*/React.createElement("strong", null, "代数的には同じ式"), "なので独立な検算ではない。", /*#__PURE__*/React.createElement(Eq, {
+      tex: "J"
+    }), "・", /*#__PURE__*/React.createElement(Eq, {
+      tex: "\\omega"
+    }), " の取り違えは両方に同じように入るので、ここでは見つからない。見ているのは途中の数値の転記ミスまでである。"))), /*#__PURE__*/React.createElement(Box, {
       kind: "example",
       label: "理解を深める — はずみ車のエネルギー ½Jω² はコイル ½LI²・コンデンサ ½CV² と同型"
     }, /*#__PURE__*/React.createElement("p", null, "はずみ車（フライホイール）は回転体の", /*#__PURE__*/React.createElement("strong", null, "慣性"), "で運動エネルギー ", /*#__PURE__*/React.createElement(Eq, {
