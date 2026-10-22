@@ -17759,11 +17759,25 @@ function MachigaiNotePage({
       setRecords(collectRecords());
     } catch (e) {}
   }
+  function storedMemo(key) {
+    try {
+      const v = JSON.parse(localStorage.getItem(key) || 'null');
+      return v && typeof v.memo === 'string' && v.memo.trim() !== '' ? v : null;
+    } catch (e) {
+      return null;
+    }
+  }
   function handleClearFiltered() {
-    if (!confirm('表示中の ' + filtered.length + ' 件を削除しますか？')) return;
+    const keep = filtered.filter(r => storedMemo(r.key));
+    const drop = filtered.length - keep.length;
+    const msg = '表示中の ' + filtered.length + ' 件を間違いノートから外しますか？' + (keep.length ? '\nメモのある ' + keep.length + ' 件は消さずに、理解度だけを外して残します。' : '') + (drop ? '\nメモの無い ' + drop + ' 件は削除します（元に戻せません）。' : '');
+    if (!confirm(msg)) return;
     filtered.forEach(r => {
       try {
-        localStorage.removeItem(r.key);
+        const v = storedMemo(r.key);
+        if (v) localStorage.setItem(r.key, JSON.stringify(Object.assign({}, v, {
+          status: null
+        })));else localStorage.removeItem(r.key);
       } catch (e) {}
     });
     setRecords(collectRecords());
