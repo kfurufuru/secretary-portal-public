@@ -49,6 +49,12 @@ header h1 small{font-family:var(--font-sans);font-weight:400;color:var(--ink-3);
 .stage{display:flex;flex-direction:column;background:var(--canvas);min-height:0}
 .view{position:relative;flex:1;min-height:0}
 .view canvas{display:block;width:100%;height:100%}
+/* PC で高さが低い画面: 操作帯（「基準と比べる」を含む）が高くなると 3D が 48px まで潰れた（901×600 で実測）。
+   3D に表示領域の半分を最低保証し、入りきらない操作帯はその中で縦にスクロールさせる */
+@media (min-width:901px){
+  .view{min-height:50%}
+  .ctrlbar{min-height:0;overflow-y:auto}
+}
 .ctrlbar{background:#141920;color:#E6E9E4;border-top:1px solid rgba(255,255,255,.08);padding:8px 14px;display:flex;gap:6px 22px;flex-wrap:wrap;align-items:flex-end;font-size:12.5px}
 .ctrlbar .title{font-size:11.5px;letter-spacing:.08em;color:#AEB6BD;align-self:center;white-space:nowrap}
 .ctrlbar details.more{flex-basis:100%;order:1;border-top:1px dashed rgba(255,255,255,.14);padding-top:4px}
@@ -3090,6 +3096,13 @@ function litReadout(key){
   if (!key || !readoutEl) return;
   readoutEl.querySelectorAll('.lit').forEach(e=>e.classList.remove('lit'));
   readoutEl.querySelectorAll('[data-k="'+key+'"]').forEach(e=>e.classList.add('lit'));
+  /* PC の低い画面では操作帯が中でスクロールする。光らせた読み値が隠れていたら、操作帯の中だけを動かして見せる
+     （scrollIntoView はページごと動かすので使わない） */
+  const bar = readoutEl.closest('.ctrlbar'), el = readoutEl.querySelector('.lit');
+  if (bar && el && bar.scrollHeight > bar.clientHeight + 1){
+    const br = bar.getBoundingClientRect(), er = el.getBoundingClientRect();
+    if (er.top < br.top || er.bottom > br.bottom) bar.scrollTop += er.top - br.top - 8;
+  }
   clearTimeout(litTimer);
   litTimer = setTimeout(()=>readoutEl && readoutEl.querySelectorAll('.lit').forEach(e=>e.classList.remove('lit')), 4000);
 }
