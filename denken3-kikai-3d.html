@@ -222,6 +222,15 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
 .cards summary::marker{color:var(--accent)}
 .cards .cbody{padding:2px 12px 12px;font-size:12.5px;line-height:1.7;color:var(--ink-2)}
 .cards .cbody b{color:var(--ink)}
+/* カード内の図。タップで全画面に拡大する（小さい画面で文字が潰れるため） */
+.figzoom{display:block;width:100%;padding:0;margin:8px 0 4px;border:1px solid var(--line-2);border-radius:4px;background:var(--panel);cursor:zoom-in}
+.figzoom svg{display:block;width:100%;height:auto}
+.figcap{font-size:11.5px;color:var(--ink-3);margin:0 0 8px}
+.cards .k3d{border:1px solid var(--accent);background:transparent;color:var(--accent-ink);border-radius:3px;padding:2px 10px;font-size:12px;min-height:32px}
+#figdlg{width:min(96vw,1100px);max-width:none;max-height:94vh;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);cursor:zoom-out}
+#figdlg::backdrop{background:rgba(0,0,0,.6)}
+#figdlg svg{display:block;width:100%;min-width:680px;height:auto;max-height:86vh}
+#figdlg p{margin:6px 0 0;font-size:12px;color:var(--ink-3);text-align:center}
 .tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0}
 .tbl table{border-collapse:collapse;width:100%;min-width:min(100%,340px);font-size:12px}
 .tbl th,.tbl td{border:1px solid var(--line-2);padding:5px 8px;text-align:left;vertical-align:top}
@@ -827,7 +836,7 @@ const STUDY = {
       ['巻線形で二次抵抗を足すと最大トルクの大きさはどうなるか', '変わらない。最大トルクが出る滑りだけが大きくなる（比例推移）。外部抵抗を足せるのは二次回路を引き出せる巻線形だけで、かご形ではできない。また比例推移が使えるのはトルク・一次電流・力率であって、出力・効率・二次銅損には使えない。'],
       ['始動時（s=1）に二次電流が大きいのはなぜか', '等価回路の二次抵抗が r₂/s と表され、s=1 で最小になるからインピーダンスが最も小さくなる。二次起電力が最大になるのと同時に、二次周波数が上がって漏れリアクタンスも増えるので、周波数だけでは説明がつかない。'],
     ],
-    cards: ['slip'],
+    cards: ['slip','wound'],
   },
 
   synchronous: {
@@ -1105,6 +1114,7 @@ const CARDS = {
   comm: { t:'整流子が向きをそろえる', body:'comm' },
   react:{ t:'電機子反作用の因果', body:'react' },
   slip: { t:'滑りが 0 と 1 のとき', body:'slip' },
+  wound:{ t:'巻線形の結線（スリップリングとブラシ）', body:'wound' },
   cmp:  { t:'誘導機と同期機の違い', body:'cmp' },
   vconn:{ t:'V結線と単巻変圧器（分母を間違えない）', body:'vconn' },
   exc:  { t:'励磁電流の中身と、並行運転の負荷分担', body:'exc' },
@@ -3335,6 +3345,61 @@ function cardBody(k){
     <p>補極を<b>電機子巻線と直列</b>に入れるのは、反作用が電機子電流に比例するから。
     直列なら負荷が変わっても自動で釣り合う。補償巻線は磁極面の溝に入れて、より広く打ち消す。
     <b>3Dの傾きは模式表示で、実機の角度ではない。</b></p>`;
+  if (k==='wound'){
+    const ws = STUDY['induction-machine'].tour.findIndex(x=>x.focus==='外部抵抗');
+    return `
+    <p><b>3Dでは見えない「つながり」をここで見る。</b>回転子の三相巻線は、軸の上の<b>3本のスリップリング</b>につながる。
+    リングは回転子と一緒に回り、<b>止まっているブラシ</b>がその表面をこすって接触する。
+    だから、回っている巻線（二次回路）に、外に置いた抵抗を直列に入れられる。</p>
+    <button class="figzoom" type="button" aria-label="結線図を拡大する"><svg viewBox="0 0 640 300" role="img" aria-label="巻線形誘導電動機の二次回路。回転子の三相巻線がスリップリングとブラシを通って外部抵抗につながる" font-family="var(--font-sans)" font-size="15">
+        <rect x="12" y="10" width="13" height="13" rx="2" fill="var(--accent)"/><text x="31" y="22" fill="var(--ink-2)" font-size="13">回転子と一緒に回る</text>
+        <rect x="170" y="10" width="13" height="13" rx="2" fill="var(--steel)"/><text x="189" y="22" fill="var(--ink-2)" font-size="13">止まっている</text>
+        <circle cx="110" cy="140" r="80" fill="none" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
+        <line x1="190" y1="140" x2="365" y2="140" stroke="var(--accent)" stroke-opacity=".45" stroke-width="6" stroke-linecap="round"/>
+        <g fill="none" stroke="var(--accent)" stroke-width="2.2">
+          <g transform="rotate(60 110 140)"><path d="M110,140 V125 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 V70"/></g>
+          <g transform="rotate(180 110 140)"><path d="M110,140 V125 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 V70"/></g>
+          <g transform="rotate(300 110 140)"><path d="M110,140 V125 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 V70"/></g>
+          <path d="M170.6,105 H215 V205 H257 V185"/>
+          <path d="M110,210 V228 H292 V185"/>
+          <path d="M49.4,105 H20 V246 H327 V185"/>
+        </g>
+        <circle cx="110" cy="140" r="3.5" fill="var(--accent)"/>
+        <text x="110" y="124" text-anchor="middle" fill="var(--ink-2)" font-size="12">中性点</text>
+                <text x="372" y="145" fill="var(--ink-3)" font-size="13">軸</text>
+        <g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2">
+          <rect x="250" y="95" width="14" height="90" rx="4"/><rect x="285" y="95" width="14" height="90" rx="4"/><rect x="320" y="95" width="14" height="90" rx="4"/>
+        </g>
+        <g fill="var(--steel)"><rect x="251" y="78" width="12" height="16" rx="1"/><rect x="286" y="78" width="12" height="16" rx="1"/><rect x="321" y="78" width="12" height="16" rx="1"/></g>
+        <text x="244" y="90" text-anchor="end" fill="var(--ink)">ブラシ</text>
+        <g fill="none" stroke="var(--steel)" stroke-width="2.2">
+          <path d="M257,78 V34 H550 V110"/><path d="M292,78 V50 H500 V110"/><path d="M327,78 V66 H450 V110"/>
+          <path d="M450,170 V200 M500,170 V200 M550,170 V200 M450,200 H550"/>
+          <rect x="442" y="110" width="16" height="60" fill="var(--panel)"/><rect x="492" y="110" width="16" height="60" fill="var(--panel)"/><rect x="542" y="110" width="16" height="60" fill="var(--panel)"/>
+          <path d="M434,166 L466,114 M484,166 L516,114 M534,166 L566,114" stroke-width="1.6"/>
+          <path d="M466,114 l-7,2 M466,114 l-1,7 M516,114 l-7,2 M516,114 l-1,7 M566,114 l-7,2 M566,114 l-1,7" stroke-width="1.6"/>
+        </g>
+        <circle cx="500" cy="200" r="3.5" fill="var(--steel)"/>
+        <text x="500" y="232" text-anchor="middle" fill="var(--ink)">外部抵抗（二次抵抗・可変）</text>
+        <text x="500" y="252" text-anchor="middle" fill="var(--ink-2)" font-size="13">始動用：大きく → 加速後は 0（短絡）</text>
+        <text x="500" y="270" text-anchor="middle" fill="var(--ink-2)" font-size="13">速度制御：運転中も入れたまま</text>
+        <text x="110" y="280" text-anchor="middle" fill="var(--ink)">回転子巻線（三相・Y結線）</text>
+        <text x="300" y="280" text-anchor="middle" fill="var(--ink)">スリップリング（3本）</text>
+      </svg></button>
+    <p class="figcap">図をタップすると拡大する。結線の模式図で、巻線の実際の配置（スロットに分布して収める）は描いていない。</p>
+    <p><b>何のために外へ出すか。</b>始動時に外部抵抗を大きくすると、始動電流を抑えながら始動トルクを大きくできる。
+    最大トルクの大きさは変わらず、それが出る滑りが大きい側へ移るだけ（比例推移）。
+    ただし足しすぎると、最大トルクの山が s = 1 より右へ行き、始動トルクは逆に下がる。始動に使うときは、加速につれて抵抗を減らし、最後は短絡（0）する。<br>
+    もう1つの使い方が<b>速度制御（二次抵抗制御）</b>。運転中も抵抗を入れたままにすると、同じ負荷トルクで滑りが大きくなり、速度が下がる。その分は二次銅損として抵抗で熱になるので、効率は悪い。</p>
+    <div class="tbl"><table>
+      <tr><th></th><th>巻線形誘導機</th><th>かご形誘導機</th><th>同期機（ブラシ式励磁）</th></tr>
+      <tr><th>スリップリング</th><td>3本</td><td>無い</td><td>2本</td></tr>
+      <tr><th>流れる電流</th><td>回転子の三相交流（二次電流）</td><td>—（端絡環で回転子の中で短絡済み）</td><td>界磁の直流（外から入れる）</td></tr>
+      <tr><th>外からできること</th><td>二次抵抗を足す・減らす</td><td>何もできない</td><td>界磁電流を変える</td></tr>
+    </table></div>
+    <p><b>「スリップリングがある＝巻線形誘導機」ではない。</b>同期機にもある。本数と、流れる電流が交流か直流かで見分ける。</p>
+    ${ws>=0 ? `<button class="k3d" data-step="${ws}">3Dで外部抵抗を足してみる →</button>` : ''}`;
+  }
   if (k==='slip') return `
     <div class="tbl"><table>
       <tr><th></th><th>s = 0（同期速度）</th><th>s = 1（停止・始動時）</th></tr>
@@ -3502,6 +3567,16 @@ function bindCards(){
     });
     drawConv(0);
   }
+  cs.querySelectorAll('.figzoom').forEach(b=>b.onclick=()=>{
+    let dlg = document.getElementById('figdlg');
+    if (!dlg){
+      dlg = document.createElement('dialog'); dlg.id = 'figdlg';
+      dlg.onclick = ()=>dlg.close();
+      document.body.appendChild(dlg);
+    }
+    dlg.innerHTML = b.innerHTML + '<p>どこかをタップすると閉じる（画面が狭いときは横にスクロールできる）</p>';
+    dlg.showModal();
+  });
   syncCards();
 }
 /* 状態が変わったらカード内の連動表示だけ更新する（作り直さない＝開閉状態を保つ） */
