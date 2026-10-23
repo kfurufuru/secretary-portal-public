@@ -10250,14 +10250,145 @@ const ConceptQuizScore = ({
 };
 
 /* ---- ConceptQuiz: ページ冒頭の「まず腕試し」ブロック（テスト効果＝先に思い出す） ---- */
+/* 確認問題の出し方（学習効率のための規則。記録の付け方は変えない）。
+   1. 期限で分ける: FSRS の次回日 nextDue が先の問題は、記号（◎△×）を問わず「寝かせ中」に折りたたむ。
+      今日 × を付けた問題も翌日以降に回る。同じ日の解き直しは △ にしかならず（G23）、
+      直後に見た答えを繰り返すだけなので、時間を使う割に定着しない（間隔効果）。
+      次回日が無い・実在しない日付・記号と status が食い違う記録は、期限到来とみなす（隠れたまま戻れなくなるより安全）。
+   2. 期限が来た問題の順番: 復習（× → △ → ◎）を先、未回答（必須 → 任意）を後。
+      忘れかけの記憶を先に救う。新しい問題は、復習を片付けた後に足す。
+   3. 一度に出す数を絞る（KIKAI_QUIZ_BATCH）。全問を並べると選ぶ手間がかかり、上から順に解く動機が弱まる。
+      続けたいときは「次の N問」で足す。
+   並び・期限の判定はページを開いた時点で固定する（答えた直後に問題が動くと、解説を読む前に見失う）。 */
+const KIKAI_QUIZ_BATCH = 5;
+const kikaiQuizIsRequired = q => q.rank === 'S' || q.rank === 'A';
+// 'new'＝未回答 / 'due'＝期限到来 / 'rest'＝寝かせ中（next に次回日）
+const kikaiQuizState = (rec, today) => {
+  if (!rec || !rec.status) return {
+    state: 'new'
+  };
+  const m = kikaiStatusMark(rec.status);
+  if (!m) return {
+    state: 'due'
+  };
+  if (rec.mark && rec.mark !== m) return {
+    state: 'due'
+  };
+  if (!kikaiIsRealDate(rec.nextDue)) return {
+    state: 'due'
+  };
+  return rec.nextDue > today ? {
+    state: 'rest',
+    next: rec.nextDue
+  } : {
+    state: 'due'
+  };
+};
+/* 絞り込み（本人が選ぶ。選んだものはこの端末に残す。全ページ共通）。期限の規則は絞り込みの後にも掛ける。
+   - wrong: いまが × か、一度でも × を付けた（lastWrongOn がある）問題。いま ◎ でも含める
+   - weak: いまが △（迷った正解・理由を言えない正解・同じ日の解き直し）
+   - required: 必須（rank S/A＝出題が多い） */
+const KIKAI_QUIZ_MODE_KEY = 'denken_kikai_quiz_mode';
+const KIKAI_QUIZ_MODES = [{
+  id: 'all',
+  label: 'おすすめ'
+}, {
+  id: 'wrong',
+  label: '× 間違えたことがある'
+}, {
+  id: 'weak',
+  label: '△ 理解が浅い'
+}, {
+  id: 'required',
+  label: '必須（頻出）'
+}];
+const kikaiQuizMatch = (mode, q, rec) => {
+  if (mode === 'wrong') return !!rec && (rec.status === 'wrong' || typeof rec.lastWrongOn === 'string' && rec.lastWrongOn !== '');
+  if (mode === 'weak') return !!rec && (rec.status === 'vague' || rec.status === 'review');
+  if (mode === 'required') return kikaiQuizIsRequired(q);
+  return true;
+};
 const ConceptQuiz = ({
   pageId,
   pageTitle
 }) => {
   const pool = (KIKAI_DAILY_POOL || []).filter(q => q.wikiPageId === pageId);
+  const ids = pool.map(q => q.id).join(',');
+  const [mode, setModeState] = React.useState(() => {
+    try {
+      const v = localStorage.getItem(KIKAI_QUIZ_MODE_KEY);
+      return KIKAI_QUIZ_MODES.some(m => m.id === v) ? v : 'all';
+    } catch (e) {
+      return 'all';
+    }
+  });
+  const [shownN, setShownN] = React.useState(KIKAI_QUIZ_BATCH);
+  const setMode = v => {
+    setModeState(v);
+    setShownN(KIKAI_QUIZ_BATCH);
+    try {
+      localStorage.setItem(KIKAI_QUIZ_MODE_KEY, v);
+    } catch (e) {}
+  };
+  const snap = React.useMemo(() => {
+    const today = kakomonToday();
+    const recs = {},
+      st = {};
+    ids.split(',').filter(Boolean).forEach(id => {
+      let rec = null;
+      try {
+        const raw = localStorage.getItem(`denken_check::kikai_${pageId}::quiz::${id}`);
+        const v = raw ? JSON.parse(raw) : null;
+        rec = v && typeof v === 'object' ? v : null;
+      } catch (e) {}
+      recs[id] = rec;
+      st[id] = kikaiQuizState(rec, today);
+    });
+    return {
+      recs,
+      st
+    };
+  }, [pageId, ids]);
   if (!pool.length) return null;
-  const required = pool.filter(q => q.rank === 'S' || q.rank === 'A');
-  const optional = pool.filter(q => q.rank !== 'S' && q.rank !== 'A');
+  const {
+    recs,
+    st
+  } = snap;
+  // 必須が0問のページ（出題の少ない単元）は、任意の未回答も必須と同じ扱いにする（折りたたむと腕試しが始まらない）
+  const hasRequired = pool.some(kikaiQuizIsRequired);
+  const order = {};
+  pool.forEach((q, i) => {
+    order[q.id] = i;
+  });
+  // 小さいほど先。復習（× 0・△ 1・◎ 2）→ 未回答（必須 3・任意 4）
+  const rankOf = q => {
+    if (st[q.id].state === 'new') return kikaiQuizIsRequired(q) || !hasRequired ? 3 : 4;
+    const m = kikaiStatusMark(recs[q.id] && recs[q.id].status);
+    return m === '×' ? 0 : m === '△' ? 1 : 2;
+  };
+  const byRank = (a, b) => rankOf(a) - rankOf(b) || (kikaiQuizIsRequired(a) ? 0 : 1) - (kikaiQuizIsRequired(b) ? 0 : 1) || order[a.id] - order[b.id];
+  const matched = pool.filter(q => kikaiQuizMatch(mode, q, recs[q.id]));
+  const queue = matched.filter(q => st[q.id].state !== 'rest').sort(byRank);
+  const rested = matched.filter(q => st[q.id].state === 'rest').sort((a, b) => st[a.id].next < st[b.id].next ? -1 : st[a.id].next > st[b.id].next ? 1 : byRank(a, b));
+  // おすすめでは、任意の未回答は既定どおり折りたたみに置く（必須を先に固めるため）
+  const main = mode === 'all' ? queue.filter(q => rankOf(q) !== 4) : queue;
+  const optionalNew = mode === 'all' ? queue.filter(q => rankOf(q) === 4) : [];
+  const visible = main.slice(0, shownN);
+  const left = main.length - visible.length;
+  const nReview = main.filter(q => st[q.id].state === 'due').length;
+  const nearest = rested.length ? st[rested[0].id].next : '';
+  const count = m => pool.filter(q => kikaiQuizMatch(m, q, recs[q.id])).length;
+  const item = q => /*#__PURE__*/React.createElement(ConceptQuizItem, {
+    key: q.id,
+    q: q,
+    pageId: pageId,
+    pageTitle: pageTitle,
+    required: kikaiQuizIsRequired(q)
+  });
+  const restLabel = q => {
+    const m = kikaiStatusMark(recs[q.id] && recs[q.id].status);
+    return `${m} 次回 ${kikaiShortDate(st[q.id].next)}`;
+  };
   return /*#__PURE__*/React.createElement("div", {
     style: {
       border: '2px solid var(--accent)',
@@ -10300,33 +10431,66 @@ const ConceptQuiz = ({
       fontWeight: 600,
       textDecoration: 'none'
     }
-  }, "📕 間違えた問題・⚠過信した問題を「間違いノート」でまとめて復習 →")), required.map(q => /*#__PURE__*/React.createElement(ConceptQuizItem, {
-    key: q.id,
-    q: q,
-    pageId: pageId,
-    pageTitle: pageTitle,
-    required: true
-  })), optional.length > 0 && required.length === 0 && /*#__PURE__*/React.createElement("div", {
+  }, "📕 間違えた問題・⚠過信した問題を「間違いノート」でまとめて復習 →")), /*#__PURE__*/React.createElement("div", {
     style: {
-      marginTop: 8
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+      flexWrap: 'wrap',
+      margin: '0 0 6px'
     }
-  }, /*#__PURE__*/React.createElement("p", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 12,
-      color: 'var(--ink-soft)',
-      margin: '0 0 8px'
+      color: 'var(--ink-soft)'
     }
-  }, "このページは過去問の出題が少ないため、全問を", /*#__PURE__*/React.createElement("strong", {
+  }, "出す問題:"), KIKAI_QUIZ_MODES.map(m => /*#__PURE__*/React.createElement("button", {
+    key: m.id,
+    type: "button",
+    onClick: () => setMode(m.id),
+    "aria-pressed": mode === m.id,
     style: {
-      color: 'var(--info)'
+      padding: '3px 10px',
+      fontSize: 12,
+      borderRadius: 4,
+      cursor: 'pointer',
+      background: mode === m.id ? 'var(--accent)' : 'transparent',
+      color: mode === m.id ? 'var(--bg)' : 'var(--ink-soft)',
+      border: mode === m.id ? '1px solid var(--accent)' : '1px solid var(--rule)'
     }
-  }, "任意"), "として出している。"), optional.map(q => /*#__PURE__*/React.createElement(ConceptQuizItem, {
-    key: q.id,
-    q: q,
-    pageId: pageId,
-    pageTitle: pageTitle,
-    required: false
-  }))), optional.length > 0 && required.length > 0 && /*#__PURE__*/React.createElement("details", {
+  }, m.label, m.id === 'all' ? '' : ` ${count(m.id)}`))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      margin: '0 0 10px'
+    }
+  }, /*#__PURE__*/React.createElement("strong", null, "今日解く ", main.length, "問"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--ink-soft)'
+    }
+  }, "（復習 ", nReview, "・未回答 ", main.length - nReview, "）"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--ink-mute)',
+      fontSize: 11
+    }
+  }, mode === 'all' ? ' — 復習（× → △ → ◎）を先、未回答を後に出す。次回日が先の問題は下に寝かせる。' : ' — 絞り込み中。弱い問題を避けて、得意な問題だけを解いていないかに注意する。')), visible.map(item), left > 0 && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => setShownN(n => n + KIKAI_QUIZ_BATCH),
+    style: {
+      marginTop: 6,
+      padding: '6px 12px',
+      fontSize: 13,
+      borderRadius: 6,
+      cursor: 'pointer',
+      background: 'transparent',
+      color: 'var(--accent)',
+      border: '1px solid var(--accent)'
+    }
+  }, "次の ", Math.min(KIKAI_QUIZ_BATCH, left), "問を出す（残り ", left, "問）"), main.length === 0 && /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      margin: '4px 0 0'
+    }
+  }, matched.length === 0 ? 'このページに該当する問題はない。' : rested.length ? `今日解く問題はない。次は ${kikaiShortDate(nearest)}。` : '今日解く問題はない。', optionalNew.length > 0 ? ' 余力があれば下の任意問題へ。' : ''), optionalNew.length > 0 && /*#__PURE__*/React.createElement("details", {
     style: {
       marginTop: 8
     }
@@ -10337,17 +10501,40 @@ const ConceptQuiz = ({
       fontWeight: 600,
       color: 'var(--ink-soft)'
     }
-  }, "＋ 任意問題（理解を深める ", optional.length, "問）"), /*#__PURE__*/React.createElement("div", {
+  }, "＋ 任意問題（理解を深める・未回答 ", optionalNew.length, "問）"), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 8
     }
-  }, optional.map(q => /*#__PURE__*/React.createElement(ConceptQuizItem, {
-    key: q.id,
-    q: q,
-    pageId: pageId,
-    pageTitle: pageTitle,
-    required: false
-  })))));
+  }, optionalNew.map(item))), rested.length > 0 && /*#__PURE__*/React.createElement("details", {
+    style: {
+      marginTop: 8
+    }
+  }, /*#__PURE__*/React.createElement("summary", {
+    style: {
+      cursor: 'pointer',
+      fontSize: 13,
+      fontWeight: 600,
+      color: 'var(--ink-soft)'
+    }
+  }, "寝かせ中 ", rested.length, "問（次回日が来たら上に戻る・次は ", kikaiShortDate(nearest), "）"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      color: 'var(--ink-mute)',
+      margin: '6px 0'
+    }
+  }, "今日解いた問題と、◎ で次回日が先の問題。今解き直しても記録は伸びにくい（同じ日の解き直しは △ 止まり・思い出す手間が小さいほど定着しない）。解説を読み返すのはよい。"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 8
+    }
+  }, rested.map(q => /*#__PURE__*/React.createElement("div", {
+    key: q.id
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: 'var(--ink-mute)',
+      margin: '6px 0 -4px'
+    }
+  }, restLabel(q)), item(q))))));
 };
 
 /* ---- KakomonProgress: 過去問題集（年度回 x 問番号）の進捗グリッド ----
