@@ -1127,18 +1127,18 @@ const CARDS = {
   conv: { t:'なぜ一次側換算をするのか', body:'conv' },
   test: { t:'無負荷試験と短絡試験', body:'test' },
   comm: { t:'整流子が向きをそろえる', body:'comm' },
-  dcwire:{ t:'直流機の結線（他励・分巻・直巻・複巻）', body:'dcwire' },
+  dcwire:{ t:'直流機の結線（他励・分巻・直巻・複巻）', body:'dcwire', q:['R3/1','H26/1','H25/1','R7上/1','R7下/1','R4下/1'] },
   react:{ t:'電機子反作用の因果', body:'react' },
   slip: { t:'滑りが 0 と 1 のとき', body:'slip' },
-  wound:{ t:'巻線形の結線（スリップリングとブラシ）', body:'wound' },
-  cage: { t:'かご形の回路（導体棒と端絡環）と二重かご形', body:'cage' },
-  field:{ t:'同期機の結線（界磁は直流・電機子は三相）', body:'field' },
+  wound:{ t:'巻線形の結線（スリップリングとブラシ）', body:'wound', q:['R4上/3','R6上/3','R7下/3','H23/2','R3/4'] },
+  cage: { t:'かご形の回路（導体棒と端絡環）と二重かご形', body:'cage', q:['R3/3','H26/3','H27/3','R4下/3','R3/4'] },
+  field:{ t:'同期機の結線（界磁は直流・電機子は三相）', body:'field', q:['H30/5','R4下/4','H28/5','R8上/15b'] },
   cmp:  { t:'誘導機と同期機の違い', body:'cmp' },
   vconn:{ t:'V結線と単巻変圧器（分母を間違えない）', body:'vconn' },
   exc:  { t:'励磁電流の中身と、並行運転の負荷分担', body:'exc' },
   pz:   { t:'短絡試験から %Z へ、%Z から短絡電流へ', body:'pz' },
   eff:  { t:'効率の出し方（通常・全日・規約）と損失の分類', body:'eff' },
-  conn3:{ t:'三相結線の組み合わせとスコット結線', body:'conn3' },
+  conn3:{ t:'三相結線の組み合わせとスコット結線', body:'conn3', q:['H23/8','H29/7','R5上/8','H24/8','H27/7'] },
   pepath:{ t:'なぜ OFF でも電流が流れるのか（環流）', body:'pepath' },
   peavg:{ t:'平均電圧のものさし（0.45／0.9／1.35）', body:'peavg' },
   dmpow:{ t:'効率を掛けるのか割るのか（所要動力の型）', body:'dmpow' },
@@ -3185,7 +3185,7 @@ function renderPanel(){
     <ul class="parts">${m.parts.map(([c,n,d])=>`<li><span class="sw" style="background:${c}"></span><div><b>${esc(n)}</b>${d?`<br><span>${mark(d)}</span>`:''}</div></li>`).join('')}</ul>
 
     <h3>もう一歩</h3>
-    <div class="cards" id="cards">${(st.cards||[]).map(k=>`<details data-card="${k}"${figCards.includes(k)?' open':''}><summary>${esc(CARDS[k].t)}</summary><div class="cbody">${cardBody(k)}</div></details>`).join('')}</div>
+    <div class="cards" id="cards">${(st.cards||[]).map(k=>`<details data-card="${k}"${figCards.includes(k)?' open':''}><summary>${esc(CARDS[k].t)}</summary><div class="cbody">${cardBody(k)}${cardQs(k)}</div></details>`).join('')}</div>
 
     <h3>即答チェック</h3>
     <ul class="check">${st.check.map(([q,a])=>`<li><details><summary>${esc(q)}</summary><p>${esc(a)}</p></details></li>`).join('')}</ul>
@@ -3760,6 +3760,13 @@ function cardBody(k){
     誘導機は負荷が増えると遅くなり、同期機は遅くならずに角度がつく。
     力率を調整できるのは同期機だけで、これが同期調相機の役割。</p>`;
   return '';
+}
+/* 図のカード → その図で解ける過去問（KAKOMON の照合済みの行）。図を見て閉じず、過去問へ進む道を作る */
+function cardQs(k){
+  const qs = (CARDS[k].q || []).map(id => KAKOMON.find(q => q.s + '/' + q.c === id)).filter(Boolean);
+  if (!qs.length) return '';
+  return `<div class="secgroup" style="margin-top:12px"><span>この図で解く過去問 ${qs.length}問</span></div>
+    <ul class="kak">${qs.map(q=>`<li><span class="id">${q.s} 問${q.c}</span><span><a href="${wikiUrl(q.p,q.sec)}" target="_blank" rel="noopener">${esc(q.t)}</a><span class="d" title="難易度 ${q.d}">${'●'.repeat(q.d)}</span></span></li>`).join('')}</ul>`;
 }
 function bindCards(){
   const cs = document.getElementById('cards'); if (!cs) return;
