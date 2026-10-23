@@ -927,7 +927,7 @@ const STUDY = {
       ['タービン発電機の回転子が円筒形なのはなぜ', '高速で遠心力が大きいから。極数が少なく（2極・4極）細長い形になる。'],
       ['P ∝ sinδ が使えるのはどんな条件か', '円筒形（非突極）で、電機子抵抗を無視した基本モデルのとき。突極機はリラクタンストルクの項が加わるので同じ式にはならない。'],
     ],
-    cards: ['cmp'],
+    cards: ['field','cmp'],
   },
   'power-elec': {
     oneLiner: 'スイッチの ON 時間の割合が電圧を決め、切れた電流の帰り道はダイオードが作る。',
@@ -1131,6 +1131,7 @@ const CARDS = {
   slip: { t:'滑りが 0 と 1 のとき', body:'slip' },
   wound:{ t:'巻線形の結線（スリップリングとブラシ）', body:'wound' },
   cage: { t:'かご形の回路（導体棒と端絡環）と二重かご形', body:'cage' },
+  field:{ t:'同期機の結線（界磁は直流・電機子は三相）', body:'field' },
   cmp:  { t:'誘導機と同期機の違い', body:'cmp' },
   vconn:{ t:'V結線と単巻変圧器（分母を間違えない）', body:'vconn' },
   exc:  { t:'励磁電流の中身と、並行運転の負荷分担', body:'exc' },
@@ -3375,6 +3376,66 @@ function cardBody(k){
     <p>補極を<b>電機子巻線と直列</b>に入れるのは、反作用が電機子電流に比例するから。
     直列なら負荷が変わっても自動で釣り合う。補償巻線は磁極面の溝に入れて、より広く打ち消す。
     <b>3Dの傾きは模式表示で、実機の角度ではない。</b></p>`;
+  if (k==='field'){
+    const fs = STUDY.synchronous.tour.findIndex(x=>x.focus==='スリップリング');
+    return `
+    <p><b>固定子は誘導機と同じ三相巻線。違うのは回転子に流れる電流。</b>誘導機の回転子電流は磁界に誘導される交流だが、同期機の回転子にあるのは<b>界磁巻線</b>で、外から直流の界磁電流 I<sub>f</sub> を流して磁極（N・S）を作る。
+    ブラシ式励磁なら、直流は軸の上の<b>スリップリング2本</b>とブラシを通して入れる。回転子が回ると磁束も一緒に回り、固定子の<b>電機子巻線（三相）</b>に起電力が出る。
+    発電機ならここから系統へ電力を出し、電動機なら逆に系統から受け取る。</p>
+    <button class="figzoom" type="button" aria-label="図を拡大する"><svg viewBox="0 0 640 300" role="img" aria-label="同期機の結線。回転子の界磁巻線はスリップリング2本とブラシを通して直流の励磁電源につながり、固定子の三相電機子巻線は系統につながる" font-family="var(--font-sans)" font-size="15">
+        <rect x="12" y="10" width="13" height="13" rx="2" fill="var(--accent)"/><text x="31" y="22" fill="var(--ink-2)" font-size="13">回転子と一緒に回る</text>
+        <rect x="170" y="10" width="13" height="13" rx="2" fill="var(--steel)"/><text x="189" y="22" fill="var(--ink-2)" font-size="13">止まっている</text>
+        <circle cx="100" cy="150" r="62" fill="none" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
+        <line x1="182" y1="150" x2="320" y2="150" stroke="var(--accent)" stroke-opacity=".45" stroke-width="6" stroke-linecap="round"/>
+        <text x="327" y="155" fill="var(--ink-3)" font-size="13">軸</text>
+        <text x="100" y="100" text-anchor="middle" fill="var(--ink)" font-size="14" font-weight="700">N</text>
+        <text x="100" y="213" text-anchor="middle" fill="var(--ink)" font-size="14" font-weight="700">S</text>
+        <g fill="none" stroke="var(--accent)" stroke-width="2.2">
+          <path d="M100,110 V130 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 V190"/>
+          <path d="M100,110 H175 V228 H222 V195"/>
+          <path d="M100,190 H150 V248 H262 V195"/>
+        </g>
+        <text x="112" y="155" fill="var(--ink-2)" font-size="12">界磁巻線</text>
+        <g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2">
+          <rect x="215" y="105" width="14" height="90" rx="4"/><rect x="255" y="105" width="14" height="90" rx="4"/>
+        </g>
+        <g fill="var(--steel)"><rect x="216" y="88" width="12" height="16" rx="1"/><rect x="256" y="88" width="12" height="16" rx="1"/></g>
+        <g fill="none" stroke="var(--steel)" stroke-width="2.2">
+          <path d="M222,88 V44 H330"/><path d="M262,88 V62 H300 V100 H330"/>
+          <path d="M346,44 H372"/><rect x="330" y="36" width="16" height="16" fill="var(--panel)" stroke="none"/>
+          <path d="M330,32 V56 M346,38 V50"/>
+          <rect x="372" y="36" width="56" height="16" fill="var(--panel)"/>
+          <path d="M366,58 L434,30" stroke-width="1.6"/><path d="M434,30 l-8,0 M434,30 l-4,7" stroke-width="1.6"/>
+          <path d="M428,44 H448 V100 H330"/>
+        </g>
+        <text x="338" y="76" text-anchor="middle" fill="var(--ink-2)" font-size="12">直流</text>
+        <text x="400" y="122" text-anchor="middle" fill="var(--ink)" font-size="14">励磁電源と界磁抵抗器</text>
+        <text x="400" y="140" text-anchor="middle" fill="var(--ink-2)" font-size="12">ここで界磁電流 I<tspan dy="3" font-size="10">f</tspan><tspan dy="-3"> を調整</tspan></text>
+        <text x="280" y="202" fill="var(--ink)">スリップリング（2本）</text>
+        <text x="208" y="99" text-anchor="end" fill="var(--ink)">ブラシ</text>
+        <g fill="none" stroke="var(--steel)" stroke-width="2.2">
+          <g transform="rotate(0 545 200)"><path d="M545,200 V188 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 V150"/></g>
+          <g transform="rotate(120 545 200)"><path d="M545,200 V188 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 V150"/></g>
+          <g transform="rotate(240 545 200)"><path d="M545,200 V188 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 V150"/></g>
+          <path d="M545,150 V136"/>
+          <path d="M588.3,225 l17,10"/><path d="M501.7,225 l-17,10"/>
+        </g>
+        <circle cx="545" cy="200" r="3.5" fill="var(--steel)"/>
+        <g fill="var(--ink-2)" font-size="13"><text x="551" y="134">U</text><text x="610" y="246">V</text><text x="468" y="246">W</text></g>
+        <text x="545" y="268" text-anchor="middle" fill="var(--ink)" font-size="14">電機子巻線（固定子・三相）</text>
+        <text x="545" y="288" text-anchor="middle" fill="var(--ink-2)" font-size="13">系統へ（三相交流）</text>
+        <path d="M100,250 V266 H438" fill="none" stroke="var(--ink-3)" stroke-dasharray="4 4"/>
+        <path d="M438,266 l-8,-4 v8 z" fill="var(--ink-3)"/>
+        <text x="96" y="284" fill="var(--ink-2)" font-size="12">磁束が回転子と一緒に回り、電機子に起電力を誘導</text>
+      </svg></button>
+    <p class="figcap">図をタップすると拡大する。結線の模式図で、巻線の実際の配置は描いていない。巻線形誘導機（3本・回転子の二次回路に外部抵抗を入れる）とは、リングの本数と流れる電流が違う。界磁と電機子の置き場所が逆なのは<b>直流機</b>のほう（直流機は界磁が止まり、電機子が回る＝回転電機子形）。</p>
+    <p><b>なぜ界磁のほうを回すのか（回転界磁形）。</b>電機子は高電圧・大電流の三相で、界磁は低電圧の直流で電力も小さい。
+    摺動部（リングとブラシ）を通すのを小さいほうにすれば、高電圧の電機子を止まった側に置けて、絶縁も保守も楽になる。だから大形の同期発電機は回転界磁形にする。
+    大形機では、軸に交流励磁機と回転整流器を載せてスリップリングを無くす<b>ブラシレス励磁</b>もある。</p>
+    <p><b>I<sub>f</sub> を変えると何が変わるか。</b>無限大母線（電圧と周波数が一定の大きな系統）につなぎ、有効電力（負荷）を一定にしたまま I<sub>f</sub> を変えると、力率（無効電力）が変わる（V曲線）。
+    単独で負荷に電力を出す発電機なら、端子電圧が変わる。</p>
+    ${fs>=0 ? `<button class="k3d" data-step="${fs}">3Dで界磁電流を動かす →</button>` : ''}`;
+  }
   if (k==='cage'){
     const cs0 = STUDY['induction-machine'].tour.findIndex(x=>x.set && x.set.wound===false);
     return `
