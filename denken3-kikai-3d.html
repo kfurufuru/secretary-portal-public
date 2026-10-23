@@ -182,6 +182,11 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
   .legend{max-width:calc(100% - 20px)}
   .ctrlbar{gap:8px 16px}
   aside{border-left:0;border-top:1px solid var(--line)}
+  /* スマホ: 高さを画面に固定すると、3D と操作帯で埋まってパネルが潰れ、操作帯の読み値が上に重なる。
+     ページごと縦にスクロールさせる（3D の大きさは .view の 46vh で決まるので変わらない） */
+  body{overflow:auto}
+  .app{height:auto;min-height:100vh}
+  aside{overflow:visible}
   .hint{display:none}
   header h1 small{display:none}
 }
@@ -226,6 +231,8 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
 .figzoom{display:block;width:100%;padding:0;margin:8px 0 4px;border:1px solid var(--line-2);border-radius:4px;background:var(--panel);cursor:zoom-in}
 .figzoom svg{display:block;width:100%;height:auto}
 .figcap{font-size:11.5px;color:var(--ink-3);margin:0 0 8px}
+.figjump{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 14px;font-size:12px;color:var(--ink-3)}
+.figjump button{border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent-ink);border-radius:4px;padding:3px 10px;font-size:12.5px;min-height:32px}
 .cards .k3d{border:1px solid var(--accent);background:transparent;color:var(--accent-ink);border-radius:3px;padding:2px 10px;font-size:12px;min-height:32px}
 #figdlg{width:min(96vw,1100px);max-width:none;max-height:94vh;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);cursor:zoom-out}
 #figdlg::backdrop{background:rgba(0,0,0,.6)}
@@ -3126,6 +3133,8 @@ function renderPanel(){
   const tourBySec = {}; st.tour.forEach((x,k)=>{ if (x.sec && !(x.sec in tourBySec)) tourBySec[x.sec] = k; });
   /* 過去問1問 → その問題を名指ししているツアーの歩 */
   const stepByQ = {}; st.tour.forEach((x,k)=>{ for (const qid of (x.q||[])) if (!(qid in stepByQ)) stepByQ[qid] = k; });
+  /* 図（拡大できる SVG）を持つカード。最初から開き、冒頭から飛べるようにする */
+  const figCards = (st.cards||[]).filter(k=>cardBody(k).includes('class="figzoom"'));
   const charts =
     `<canvas class="mini" id="mini" width="700" height="300"></canvas><p class="mini-cap" id="miniCap"></p>`
     + (id==='synchronous' ? `<canvas class="mini" id="mini2" width="700" height="300" style="margin-top:10px"></canvas><p class="mini-cap" id="mini2Cap"></p>`
@@ -3137,6 +3146,7 @@ function renderPanel(){
     <div class="oneliner"><small>30秒理解</small>${esc(st.oneLiner)}</div>
     <p class="lead">${esc(m.lead)}</p>
     <p class="viewnote" id="viewnote"></p>
+    ${figCards.length ? `<p class="figjump">図で見る：${figCards.map(k=>`<button data-fig="${k}">${esc(CARDS[k].t)} ↓</button>`).join('')}</p>` : ''}
 
     <h3>電験で狙われるポイント</h3>
     <ul class="exam">${st.exam.map(([n,f,w])=>`<li><span class="en">${esc(n)}</span><span class="ef">${esc(f)}</span><span class="ew">${mark(w)}</span></li>`).join('')}</ul>
@@ -3158,7 +3168,7 @@ function renderPanel(){
     <ul class="parts">${m.parts.map(([c,n,d])=>`<li><span class="sw" style="background:${c}"></span><div><b>${esc(n)}</b>${d?`<br><span>${mark(d)}</span>`:''}</div></li>`).join('')}</ul>
 
     <h3>もう一歩</h3>
-    <div class="cards" id="cards">${(st.cards||[]).map(k=>`<details data-card="${k}"><summary>${esc(CARDS[k].t)}</summary><div class="cbody">${cardBody(k)}</div></details>`).join('')}</div>
+    <div class="cards" id="cards">${(st.cards||[]).map(k=>`<details data-card="${k}"${figCards.includes(k)?' open':''}><summary>${esc(CARDS[k].t)}</summary><div class="cbody">${cardBody(k)}</div></details>`).join('')}</div>
 
     <h3>即答チェック</h3>
     <ul class="check">${st.check.map(([q,a])=>`<li><details><summary>${esc(q)}</summary><p>${esc(a)}</p></details></li>`).join('')}</ul>
@@ -3183,6 +3193,10 @@ function renderPanel(){
     <div class="note">過去問の行をクリックすると、その論点のWikiの節が開く。解説・答え・数値はWiki側。ここは形と動きを見る場所。</div>`;
   bindQuiz(st);
   bindCards();
+  panel.querySelectorAll('[data-fig]').forEach(b=>b.onclick=()=>{
+    const d = panel.querySelector(`details[data-card="${b.dataset.fig}"]`); if (!d) return;
+    d.open = true; d.scrollIntoView({behavior: reduced?'auto':'smooth', block:'start'});
+  });
   panel.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{
     tourStep = +b.dataset.step; renderTour();
     document.getElementById('tour').scrollIntoView({behavior: reduced?'auto':'smooth', block:'center'});
