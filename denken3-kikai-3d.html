@@ -836,7 +836,7 @@ const STUDY = {
       ['巻線形で二次抵抗を足すと最大トルクの大きさはどうなるか', '変わらない。最大トルクが出る滑りだけが大きくなる（比例推移）。外部抵抗を足せるのは二次回路を引き出せる巻線形だけで、かご形ではできない。また比例推移が使えるのはトルク・一次電流・力率であって、出力・効率・二次銅損には使えない。'],
       ['始動時（s=1）に二次電流が大きいのはなぜか', '等価回路の二次抵抗が r₂/s と表され、s=1 で最小になるからインピーダンスが最も小さくなる。二次起電力が最大になるのと同時に、二次周波数が上がって漏れリアクタンスも増えるので、周波数だけでは説明がつかない。'],
     ],
-    cards: ['slip','wound'],
+    cards: ['slip','cage','wound'],
   },
 
   synchronous: {
@@ -1115,6 +1115,7 @@ const CARDS = {
   react:{ t:'電機子反作用の因果', body:'react' },
   slip: { t:'滑りが 0 と 1 のとき', body:'slip' },
   wound:{ t:'巻線形の結線（スリップリングとブラシ）', body:'wound' },
+  cage: { t:'かご形の回路（導体棒と端絡環）と二重かご形', body:'cage' },
   cmp:  { t:'誘導機と同期機の違い', body:'cmp' },
   vconn:{ t:'V結線と単巻変圧器（分母を間違えない）', body:'vconn' },
   exc:  { t:'励磁電流の中身と、並行運転の負荷分担', body:'exc' },
@@ -3345,6 +3346,51 @@ function cardBody(k){
     <p>補極を<b>電機子巻線と直列</b>に入れるのは、反作用が電機子電流に比例するから。
     直列なら負荷が変わっても自動で釣り合う。補償巻線は磁極面の溝に入れて、より広く打ち消す。
     <b>3Dの傾きは模式表示で、実機の角度ではない。</b></p>`;
+  if (k==='cage'){
+    const cs0 = STUDY['induction-machine'].tour.findIndex(x=>x.set && x.set.wound===false);
+    return `
+    <p><b>かご形の二次回路は、回転子の中で閉じている。</b>溝に入れた導体棒（銅かアルミ）の両端を、端絡環でまとめてつないである。
+    回転磁界が棒を切ると棒に起電力が出て、電流が端絡環を通って一周する。
+    外へ出る口（スリップリング）が無いので、巻線形のように二次抵抗を外から足すことはできない。そのかわり構造が簡単で丈夫。</p>
+    <button class="figzoom" type="button" aria-label="図を拡大する"><svg viewBox="0 0 640 300" role="img" aria-label="かご形回転子の二次回路の展開図と、二重かご形・深溝形の溝の断面" font-family="var(--font-sans)" font-size="15">
+        <text x="12" y="22" fill="var(--ink-2)" font-size="13">展開図（回転子を切り開いて平らにした）</text>
+        <text x="372" y="22" fill="var(--ink-2)" font-size="13">溝の断面（始動を良くする形）</text>
+        <text x="180" y="42" text-anchor="middle" fill="var(--ink)">端絡環</text>
+        <g fill="var(--steel-soft)" stroke="var(--steel)" stroke-width="2"><rect x="20" y="50" width="320" height="14" rx="3"/><rect x="20" y="210" width="320" height="14" rx="3"/></g>
+        <g fill="var(--steel)"><rect x="40" y="64" width="8" height="146"/><rect x="74" y="64" width="8" height="146"/><rect x="108" y="64" width="8" height="146"/><rect x="142" y="64" width="8" height="146"/><rect x="176" y="64" width="8" height="146"/><rect x="210" y="64" width="8" height="146"/><rect x="244" y="64" width="8" height="146"/><rect x="278" y="64" width="8" height="146"/><rect x="312" y="64" width="8" height="146"/></g>
+        <g fill="var(--accent)"><path d="M44,128 l-6,12 h12 z"/><path d="M78,128 l-6,12 h12 z"/><path d="M112,128 l-6,12 h12 z"/><path d="M146,128 l-6,12 h12 z"/><path d="M214,146 l-6,-12 h12 z"/><path d="M248,146 l-6,-12 h12 z"/><path d="M282,146 l-6,-12 h12 z"/><path d="M316,146 l-6,-12 h12 z"/><path d="M188,57 l-12,-6 v12 z"/><path d="M172,217 l12,-6 v12 z"/></g>
+        <text x="180" y="256" text-anchor="middle" fill="var(--ink)" font-size="13">縦の棒＝導体棒　上下の帯＝端絡環</text>
+        <text x="180" y="276" text-anchor="middle" fill="var(--ink-2)" font-size="13">橙の矢印＝ある瞬間の二次電流の向き</text>
+        <line x1="362" y1="72" x2="630" y2="72" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
+        <text x="496" y="64" text-anchor="middle" fill="var(--ink-2)" font-size="12">エアギャップ側（回転子の表面）</text>
+        <g fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5">
+          <circle cx="420" cy="96" r="9"/>
+                    <rect x="560" y="80" width="14" height="36"/>
+        </g>
+        <rect x="405" y="123" width="30" height="55" rx="4" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <rect x="418" y="105" width="4" height="18" fill="none" stroke="var(--ink-3)" stroke-dasharray="2 2"/>
+        <text x="412" y="119" text-anchor="end" fill="var(--ink-3)" font-size="11">すき間</text>
+        <rect x="560" y="116" width="14" height="74" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <text x="436" y="101" fill="var(--ink)" font-size="13">外側（細い）</text>
+        <text x="442" y="156" fill="var(--ink)" font-size="13">内側（太い）</text>
+        <text x="420" y="210" text-anchor="middle" fill="var(--ink)">二重かご形</text>
+        <text x="567" y="210" text-anchor="middle" fill="var(--ink)">深溝形</text>
+        <text x="496" y="240" text-anchor="middle" fill="var(--ink-2)" font-size="12">塗りつぶし＝始動時に電流が集まる所</text>
+        <text x="496" y="258" text-anchor="middle" fill="var(--ink-2)" font-size="12">枠だけ＝始動時は電流が少ない所</text>
+      </svg></button>
+    <p class="figcap">図をタップすると拡大する。左の矢印はある瞬間の電流の向きだけを示し、大きさは棒ごとに違う。中央の棒は、この瞬間に電流が 0 の位置。この分布は時間とともにずれていく。端絡環もリングの形だが、棒どうしをつなぐだけで、ブラシは当たらない。</p>
+    <p><b>外から足せない代わりに、溝の形で始動を良くする。</b>始動時（s = 1）は二次周波数 f₂ = s·f が電源と同じで高い。
+    このときは漏れリアクタンスが効いて、電流が<b>エアギャップ側</b>の通り道に寄る。二重かご形では外側の細い棒そのものの抵抗が大きく、深溝形では電流の通る断面が狭くなって実効的な抵抗が大きくなる。だから普通かご形より、始動電流を抑えながら始動トルクを大きくできる。
+    運転中は f₂ が小さく、電流は抵抗の小さい通り道に広がるので、効率は大きく落ちない。<b>実効的な二次抵抗が f₂ に応じて自動的に（連続的に）変わる</b>と見る。
+    代わりに漏れリアクタンスが大きくなるので、普通かご形より力率と最大トルクがやや下がる。</p>
+    <div class="tbl"><table>
+      <tr><th></th><th>二重かご形</th><th>深溝形</th></tr>
+      <tr><th>作り</th><td>エアギャップ側に細い棒（抵抗大）、奥に太い棒（抵抗小・漏れリアクタンス大）の2段</td><td>細く深い棒が1本</td></tr>
+      <tr><th>始動時（f₂ 大）</th><td>外側の棒に電流が集まる</td><td>電流が棒のエアギャップ側に寄る（表皮効果）</td></tr>
+      <tr><th>運転中（f₂ 小）</th><td>主に内側の棒が流す</td><td>棒全体に広がる</td></tr>
+    </table></div>
+    ${cs0>=0 ? `<button class="k3d" data-step="${cs0}">3Dでかご形に戻して回転磁界を見る →</button>` : ''}`;
+  }
   if (k==='wound'){
     const ws = STUDY['induction-machine'].tour.findIndex(x=>x.focus==='外部抵抗');
     return `
