@@ -4065,7 +4065,7 @@ const KAKOMON_TOPICS = [
     source: '平成23年度 第三種電気主任技術者試験 機械科目' },
   { session: 'H23', cell: '7', topic: 'transformer', subtopic: 'loss', difficulty: 3, title: '変圧器の効率：出力を半分にしたときと出力電圧が20%低下したとき（鉄損は電圧の2乗に比例）の銅損と効率',
     source: '平成23年度 第三種電気主任技術者試験 機械科目' },
-  { session: 'H23', cell: '8', topic: 'transformer', difficulty: 2, title: '三相変圧器の結線図（Δ-Δ・Δ-Y・Y-Δ・Y-Y・V-V）から二次電圧が一次より30°遅れる結線を選ぶ',
+  { session: 'H23', cell: '8', topic: 'transformer', subtopic: 'parallel', difficulty: 2, title: '三相変圧器の結線図（Δ-Δ・Δ-Y・Y-Δ・Y-Y・V-V）から二次電圧が一次より30°遅れる結線を選ぶ',
     source: '平成23年度 第三種電気主任技術者試験 機械科目' },
   { session: 'H23', cell: '9', topic: 'power-elec', difficulty: 2, title: '逆並列サイリスタの単相双方向スイッチ（抵抗負荷）の両端電圧波形から各サイリスタの点弧状態を読む',
     source: '平成23年度 第三種電気主任技術者試験 機械科目' },
@@ -4333,7 +4333,7 @@ const KAKOMON_TOPICS = [
     source: '平成29年度 第三種電気主任技術者試験 機械科目' },
   { session: 'H29', cell: '6', topic: 'yougo-konzai', difficulty: 2, title: '変圧器・直流機・誘導機・同期機の共通点（トルク特性・等価回路・電機子反作用）の組合せ',
     source: '平成29年度 第三種電気主任技術者試験 機械科目' },
-  { session: 'H29', cell: '7', topic: 'transformer', difficulty: 3, title: '単相変圧器3台の三相結線とV結線の結線図から一次と二次の角変位を読む',
+  { session: 'H29', cell: '7', topic: 'transformer', subtopic: 'parallel', difficulty: 3, title: '単相変圧器3台の三相結線とV結線の結線図から一次と二次の角変位を読む',
     source: '平成29年度 第三種電気主任技術者試験 機械科目' },
   { session: 'H29', cell: '8', topic: 'transformer', subtopic: 'loss', difficulty: 2, title: '全負荷銅損と鉄損から力率1の最大効率時の負荷率と効率を求める',
     source: '平成29年度 第三種電気主任技術者試験 機械科目' },
@@ -27539,7 +27539,7 @@ const TransformerPage = ({
   label: "60点狙いで読む順（節の並びとは違う）"
 }, /*#__PURE__*/React.createElement("p", null, "このページの節は", /*#__PURE__*/React.createElement("strong", null, "知識のつながり順"), "に並べてある。 一方、", /*#__PURE__*/React.createElement("strong", null, "得点に近い順"), "に読むなら下の順路がよい。並びは", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "台帳（H21〜R8上 の22回）で小問の多い順"), "で、 損失・効率が最も多く（17小問）、", /*#__PURE__*/React.createElement(Term, null, "単巻変圧器"), "（6）、", /*#__PURE__*/React.createElement(Term, null, "電圧変動率"), "・巻数比と換算（各5）、", /*#__PURE__*/React.createElement(Term, null, "短絡試験"), "・電力用コンデンサ（各4）が続く。"), /*#__PURE__*/React.createElement("p", {
+}, "台帳（H21〜R8上 の22回）で小問の多い順"), "で、 損失・効率が最も多く（17小問）、", /*#__PURE__*/React.createElement(Term, null, "単巻変圧器"), "（6）、", /*#__PURE__*/React.createElement(Term, null, "電圧変動率"), "・巻数比と換算・並行運転（各5）、", /*#__PURE__*/React.createElement(Term, null, "短絡試験"), "・電力用コンデンサ（各4）が続く。"), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "8px 0 0",
     lineHeight: 2
@@ -27578,6 +27578,12 @@ const TransformerPage = ({
   href: "#",
   onClick: e => {
     e.preventDefault();
+    onNav("transformer", "parallel");
+  }
+}, "並行運転"), " → ", /*#__PURE__*/React.createElement("a", {
+  href: "#",
+  onClick: e => {
+    e.preventDefault();
     onNav("transformer", "sc-test");
   }
 }, "短絡試験"), " → ", /*#__PURE__*/React.createElement("a", {
@@ -27593,12 +27599,6 @@ const TransformerPage = ({
     onNav("transformer", "equiv");
   }
 }, "等価回路"), " → ", /*#__PURE__*/React.createElement("a", {
-  href: "#",
-  onClick: e => {
-    e.preventDefault();
-    onNav("transformer", "parallel");
-  }
-}, "並行運転"), " → ", /*#__PURE__*/React.createElement("a", {
   href: "#",
   onClick: e => {
     e.preventDefault();
@@ -34081,7 +34081,93 @@ const TransformerPage = ({
     e.preventDefault();
     onNav("keiki-yo-henseiki", "ratio");
   }
-}, "2.3 計器用変成器 5-3"), "）。極性を逆につなぐと、2台の二次電圧が足し合わされて巻線の中で短絡と同じ電流が流れる。"), /*#__PURE__*/React.createElement("p", {
+}, "2.3 計器用変成器 5-3"), "）。極性を逆につなぐと、2台の二次電圧が足し合わされて巻線の中で短絡と同じ電流が流れる。"), /*#__PURE__*/React.createElement("h3", {
+  id: "parallel-angle"
+}, "角変位を結線図から読む — 巻線の・印側と反対側がどの端子につながるか"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "結論から"), "：", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "単相変圧器1台の中では、二次巻線の電圧は一次巻線の電圧と同相"), "（どちらも・印側を＋として測った電圧どうし。負荷電流による小さな位相ずれは角変位では考えない）。 だから結線図では、", /*#__PURE__*/React.createElement("strong", null, "一次・二次の各巻線の・印側と反対側がどの端子につながるか"), "をたどればよい。"), /*#__PURE__*/React.createElement("p", null, "たどる途中では、Δ側の巻線は線間電圧（例 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot V_{UV} = \\dot E_U - \\dot E_V"
+}), "）を、Y側の巻線は相電圧（例 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot E_U"
+}), "）を受け持つ。 相順が U→V→W なら、", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "線間電圧 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot V_{UV}"
+}), " は相電圧 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot E_U"
+}), " より 30°（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\pi/6"
+}), "）進む"), "。 答える角変位は、最後に", /*#__PURE__*/React.createElement("strong", null, "一次・二次とも同じ種類の電圧"), "（相電圧どうし、または線間電圧どうし）に換算して比べる。"), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data"
+}, /*#__PURE__*/React.createElement("caption", null, "H29 問7 の4つの結線（結線は一次-二次の順。一次側の電圧に対する二次側の電圧の角変位）"), /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  scope: "col",
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "図（結線）"), /*#__PURE__*/React.createElement("th", {
+  scope: "col"
+}, "端子をたどった結果（4図とも・印は一次 U", /*#__PURE__*/React.createElement("sub", null, "k"), "・二次 u", /*#__PURE__*/React.createElement("sub", null, "k"), " の側）"), /*#__PURE__*/React.createElement("th", {
+  scope: "col",
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "角変位"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "図1（Δ-Y）"), /*#__PURE__*/React.createElement("td", null, "一次巻線 1 は・印側が U・反対側が V で、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot V_{UV}"
+}), " を受ける。二次は反対側の端子を中性点にまとめ、・印側を u に出すので、二次の u 相電圧は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot V_{UV}"
+}), " と同相。これを一次の相電圧 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot E_U"
+}), " と比べる（相電圧どうし）と 30° 進む"), /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "進み ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\pi/6"
+})))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "図2（Δ-Δ）"), /*#__PURE__*/React.createElement("td", null, "二次の u-v 間の電圧は一次の U-V 間の電圧と同相"), /*#__PURE__*/React.createElement("td", null, "0")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "図3（Y-Δ）"), /*#__PURE__*/React.createElement("td", null, "一次巻線 1 は・印側が U・反対側が中性点で、", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot E_U"
+}), " を受ける。二次の u-v 間の電圧は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot E_U"
+}), " と同相。これを二次の相電圧に換算すると、二次の u 相電圧は ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\dot E_U"
+}), " より 30° 遅れる"), /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "遅れ ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\pi/6"
+})))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "図4（V-V）"), /*#__PURE__*/React.createElement("td", null, "二次の u-v 間の電圧は一次の U-V 間の電圧と同相"), /*#__PURE__*/React.createElement("td", null, "0"))))), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "6px 0 8px",
+    fontSize: 13
+  }
+}, "H29 問7 の正答は (1)（図1 進み・図2 0・図3 遅れ・図4 0）だった（問題文は試験センター公表の問題冊子で、正答 (1) は同じく公表の解答で確認）。"), /*#__PURE__*/React.createElement(Box, {
+  kind: "mistake",
+  label: "・印の読み違いと、つなぎ替えは別の話"
+}, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "・印の読み違い"), "：片側の3巻線をそろって逆向き（反対側を＋）に読むと、答えが 180° ずれる。進み 30° は遅れ 150° に、遅れ 30° は進み 150° に、0 は 180° になる。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "6px 0 0"
+  }
+}, /*#__PURE__*/React.createElement("strong", null, "つなぎ替え"), "：", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "「Δ-Y なら必ず進み」と覚えない"), "。図1で、一次の3巻線の・印側を U・V・W に置いたまま反対側を W・U・V に替える（巻線 1 は U-W 間）と、同じ Δ-Y でも遅れ 30° になる。これは読み違い（180° ずれ）ではなく、巻線の相手の端子が変わった結果（60° ずれ）である。図の端子を・印からたどるのが確実である。")), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "10px 0 6px"
   }
