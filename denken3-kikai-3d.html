@@ -750,7 +750,7 @@ const STUDY = {
       ['直巻発電機を定電圧電源に使わない理由', '界磁電流＝負荷電流なので、無負荷では残留電圧しか出ず、負荷電流とともに端子電圧が大きく変わるから。'],
       ['直巻電動機を無負荷で運転してはいけない理由', '界磁に負荷電流が流れるので、無負荷で電流が小さくなると磁束も小さくなり、n ∝ E/Φ が危険な高速まで上がる（暴走）。だからベルト掛けにせず負荷と直結する。'],
     ],
-    cards: ['comm','react'],
+    cards: ['dcwire','comm','react'],
   },
 
   'induction-machine': {
@@ -1127,6 +1127,7 @@ const CARDS = {
   conv: { t:'なぜ一次側換算をするのか', body:'conv' },
   test: { t:'無負荷試験と短絡試験', body:'test' },
   comm: { t:'整流子が向きをそろえる', body:'comm' },
+  dcwire:{ t:'直流機の結線（他励・分巻・直巻・複巻）', body:'dcwire' },
   react:{ t:'電機子反作用の因果', body:'react' },
   slip: { t:'滑りが 0 と 1 のとき', body:'slip' },
   wound:{ t:'巻線形の結線（スリップリングとブラシ）', body:'wound' },
@@ -3376,6 +3377,62 @@ function cardBody(k){
     <p>補極を<b>電機子巻線と直列</b>に入れるのは、反作用が電機子電流に比例するから。
     直列なら負荷が変わっても自動で釣り合う。補償巻線は磁極面の溝に入れて、より広く打ち消す。
     <b>3Dの傾きは模式表示で、実機の角度ではない。</b></p>`;
+  if (k==='dcwire'){
+    const ds = STUDY['dc-machine'].tour.findIndex(x=>x.set && x.set.dcExc==='shunt' && x.focus.startsWith('界磁巻線'));
+    return `
+    <p><b>直流機は、界磁が止まり、電機子が回る（回転電機子形）。</b>同期機とは置き場所が逆。
+    電機子の電流は整流子とブラシを通って出入りする（整流子のはたらきは「整流子が向きをそろえる」カード）。
+    界磁巻線をどこから給電するかで4種類に分かれ、それで速度とトルクの特性が決まる。図は電動機の場合。</p>
+    <button class="figzoom" type="button" aria-label="図を拡大する"><svg viewBox="0 0 640 436" role="img" aria-label="直流電動機の4つの励磁方式の結線図。他励・分巻・直巻・複巻" font-family="var(--font-sans)" font-size="15">
+        <rect x="12" y="10" width="13" height="13" rx="2" fill="var(--accent)"/><text x="31" y="22" fill="var(--ink-2)" font-size="13">回る（電機子 A）</text><rect x="170" y="10" width="13" height="13" rx="2" fill="var(--steel)"/><text x="189" y="22" fill="var(--ink-2)" font-size="13">止まっている（界磁・ブラシ・配線）</text>
+        <line x1="320" y1="40" x2="320" y2="430" stroke="var(--line)"/><line x1="8" y1="232" x2="632" y2="232" stroke="var(--line)"/>
+        <text x="12" y="58" fill="var(--ink)" font-size="15" font-weight="700">他励</text><text x="52" y="58" fill="var(--ink-2)" font-size="12">界磁は別の電源</text>
+        <circle cx="30" cy="84" r="3.5" fill="var(--steel)"/><circle cx="30" cy="184" r="3.5" fill="var(--steel)"/><text x="18" y="89" text-anchor="end" fill="var(--ink-2)" font-size="13">+</text><text x="18" y="189" text-anchor="end" fill="var(--ink-2)" font-size="13">−</text><text x="22" y="139" text-anchor="middle" fill="var(--ink-2)" font-size="12">V</text>
+        <path d="M30,84 H130 V106 M130,162 V184 H30" stroke="var(--steel)" stroke-width="2" fill="none"/>
+        <circle cx="130" cy="134" r="18" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.2"/><text x="130" y="139" text-anchor="middle" fill="var(--accent-ink)" font-size="14" font-weight="700">A</text><rect x="124" y="106" width="12" height="9" fill="var(--steel)"/><rect x="124" y="153" width="12" height="9" fill="var(--steel)"/>
+        <path d="M230,114 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10" stroke="var(--steel)" stroke-width="2" fill="none"/>
+        <path d="M230,114 V94 H290 V126 M230,154 V174 H290 V142" stroke="var(--steel)" stroke-width="2" fill="none"/>
+        <path d="M280,126 H300" stroke="var(--steel)" stroke-width="1.6"/><path d="M285,142 H295" stroke="var(--steel)" stroke-width="3.5"/>
+        <text x="242" y="138" fill="var(--ink-2)" font-size="11">界磁</text>
+        <text x="12" y="206" fill="var(--ink)" font-size="12">I = Ia。Φ を電機子と別に決められる</text><text x="12" y="222" fill="var(--ink-2)" font-size="12">速度はほぼ一定</text>
+        <text x="332" y="58" fill="var(--ink)" font-size="15" font-weight="700">分巻</text><text x="372" y="58" fill="var(--ink-2)" font-size="12">界磁が電機子と並列</text>
+        <circle cx="350" cy="84" r="3.5" fill="var(--steel)"/><circle cx="350" cy="184" r="3.5" fill="var(--steel)"/><text x="338" y="89" text-anchor="end" fill="var(--ink-2)" font-size="13">+</text><text x="338" y="189" text-anchor="end" fill="var(--ink-2)" font-size="13">−</text><text x="342" y="139" text-anchor="middle" fill="var(--ink-2)" font-size="12">V</text>
+        <path d="M350,84 H530 V106 M530,162 V184 H350 M440,84 V114 M440,154 V184" stroke="var(--steel)" stroke-width="2" fill="none"/>
+        <path d="M440,114 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10" stroke="var(--steel)" stroke-width="2" fill="none"/>
+        <text x="452" y="138" fill="var(--ink-2)" font-size="11">界磁</text>
+        <circle cx="530" cy="134" r="18" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.2"/><text x="530" y="139" text-anchor="middle" fill="var(--accent-ink)" font-size="14" font-weight="700">A</text><rect x="524" y="106" width="12" height="9" fill="var(--steel)"/><rect x="524" y="153" width="12" height="9" fill="var(--steel)"/>
+        <circle cx="440" cy="84" r="3" fill="var(--steel)"/><circle cx="440" cy="184" r="3" fill="var(--steel)"/>
+        <text x="332" y="206" fill="var(--ink)" font-size="12">I = Ia + If。Φ ほぼ一定 → T ∝ Ia</text><text x="332" y="222" fill="var(--ink-2)" font-size="12">速度はほぼ一定</text>
+        <text x="12" y="262" fill="var(--ink)" font-size="15" font-weight="700">直巻</text><text x="52" y="262" fill="var(--ink-2)" font-size="12">界磁が電機子と直列</text>
+        <circle cx="30" cy="288" r="3.5" fill="var(--steel)"/><circle cx="30" cy="388" r="3.5" fill="var(--steel)"/><text x="18" y="293" text-anchor="end" fill="var(--ink-2)" font-size="13">+</text><text x="18" y="393" text-anchor="end" fill="var(--ink-2)" font-size="13">−</text><text x="22" y="343" text-anchor="middle" fill="var(--ink-2)" font-size="12">V</text>
+        <path d="M30,288 H80 M120,288 H200 V310 M200,366 V388 H30" stroke="var(--steel)" stroke-width="2" fill="none"/>
+        <path d="M80,288 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0" stroke="var(--steel)" stroke-width="2" fill="none"/>
+        <text x="100" y="275" text-anchor="middle" fill="var(--ink-2)" font-size="11">界磁</text>
+        <circle cx="200" cy="338" r="18" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.2"/><text x="200" y="343" text-anchor="middle" fill="var(--accent-ink)" font-size="14" font-weight="700">A</text><rect x="194" y="310" width="12" height="9" fill="var(--steel)"/><rect x="194" y="357" width="12" height="9" fill="var(--steel)"/>
+        <text x="12" y="410" fill="var(--ink)" font-size="12">I = Ia = If。Φ ∝ Ia → T ∝ Ia²（飽和前）</text><text x="12" y="426" fill="var(--ink-2)" font-size="12">無負荷にすると速度が上がりすぎる</text>
+        <text x="332" y="262" fill="var(--ink)" font-size="15" font-weight="700">複巻</text><text x="372" y="262" fill="var(--ink-2)" font-size="12">分巻＋直巻（外分巻）</text>
+        <circle cx="350" cy="288" r="3.5" fill="var(--steel)"/><circle cx="350" cy="388" r="3.5" fill="var(--steel)"/><text x="338" y="293" text-anchor="end" fill="var(--ink-2)" font-size="13">+</text><text x="338" y="393" text-anchor="end" fill="var(--ink-2)" font-size="13">−</text><text x="342" y="343" text-anchor="middle" fill="var(--ink-2)" font-size="12">V</text>
+        <path d="M350,288 H470 M510,288 H560 V310 M560,366 V388 H350 M420,288 V318 M420,358 V388" stroke="var(--steel)" stroke-width="2" fill="none"/>
+        <path d="M420,318 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10" stroke="var(--steel)" stroke-width="2" fill="none"/>
+        <text x="432" y="342" fill="var(--ink-2)" font-size="11">分巻界磁</text>
+        <path d="M470,288 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0" stroke="var(--steel)" stroke-width="2" fill="none"/>
+        <text x="490" y="275" text-anchor="middle" fill="var(--ink-2)" font-size="11">直巻界磁</text>
+        <circle cx="560" cy="338" r="18" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.2"/><text x="560" y="343" text-anchor="middle" fill="var(--accent-ink)" font-size="14" font-weight="700">A</text><rect x="554" y="310" width="12" height="9" fill="var(--steel)"/><rect x="554" y="357" width="12" height="9" fill="var(--steel)"/>
+        <circle cx="420" cy="288" r="3" fill="var(--steel)"/><circle cx="420" cy="388" r="3" fill="var(--steel)"/>
+        <text x="332" y="410" fill="var(--ink)" font-size="12">和動複巻は分巻と直巻の中間の特性</text>
+      </svg></button>
+    <p class="figcap">図をタップすると拡大する。丸（A）が電機子で、上下の小さな四角がブラシ（内側に整流子がある）。電流の記号は I＝電源から流れる電流、I<sub>a</sub>＝電機子電流、I<sub>f</sub>＝界磁電流。</p>
+    <div class="tbl"><table>
+      <tr><th>方式</th><th>界磁のつなぎ方</th><th>電流</th><th>電動機の特性</th></tr>
+      <tr><th>他励</th><td>別の電源</td><td>I = I<sub>a</sub></td><td>Φ を電機子と別に調整できる。速度はほぼ一定</td></tr>
+      <tr><th>分巻</th><td>電機子と並列</td><td>I = I<sub>a</sub> + I<sub>f</sub></td><td>Φ がほぼ一定 → T ∝ I<sub>a</sub>。負荷が増えても速度はわずかに下がるだけ</td></tr>
+      <tr><th>直巻</th><td>電機子と直列</td><td>I = I<sub>a</sub> = I<sub>f</sub></td><td>Φ ∝ I<sub>a</sub>（磁気飽和まで）→ T ∝ I<sub>a</sub><sup>2</sup>。始動トルクが大きい。軽負荷で速度が上がりすぎるので、無負荷運転やベルト掛けをしない</td></tr>
+      <tr><th>複巻</th><td>分巻界磁＋直巻界磁（図は外分巻）</td><td>I = I<sub>a</sub> + I<sub>f</sub>（直巻界磁には I<sub>a</sub>）</td><td>2つの界磁の磁束が加わる和動複巻は、分巻と直巻の中間の特性。打ち消し合う差動複巻もある</td></tr>
+    </table></div>
+    <p><b>速度の式で見ると違いが分かる。</b>分巻は n ∝ (V − I<sub>a</sub>R<sub>a</sub>)/Φ。Φ が一定なので、n は I<sub>a</sub>R<sub>a</sub> の分だけ少し下がる。
+    直巻は界磁も直列に入るので n ∝ {V − I<sub>a</sub>(R<sub>a</sub> + R<sub>s</sub>)}/Φ（R<sub>s</sub>＝直巻界磁の抵抗）。負荷が軽くなると I<sub>a</sub> とともに Φ も小さくなり、分母が 0 に近づいて n が急に上がる（残留磁気があるので厳密には 0 にならない）。</p>
+    ${ds>=0 ? `<button class="k3d" data-step="${ds}">3Dで分巻と直巻を切り替える →</button>` : ''}`;
+  }
   if (k==='field'){
     const fs = STUDY.synchronous.tour.findIndex(x=>x.focus==='スリップリング');
     return `
