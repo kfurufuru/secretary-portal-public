@@ -10989,7 +10989,9 @@ const KIKAI_WIKI_KINDS = {
   trap: 'ひっかけ',
   quickreview: '1分復習'
 };
-/* localStorage から Wiki 内の記録を集め、今日やるもの（nextDue ≦ 今日、または次回日の無い △×）を返す */
+/* localStorage から Wiki 内の記録を集め、今日やるもの（nextDue ≦ 今日、または次回日の無い △×）を返す。
+   並びは単元ページの確認問題（ConceptQuiz）と同じ規則: × → △ → ◎ の順に先。同じ記号なら期限の古いものから。
+   今日 × を付けた問題は次回日が明日以降なので、ここには出ない（同じ日の解き直しは △ 止まりで定着しない）。 */
 const kikaiWikiDue = today => {
   const t = today || kakomonToday();
   const out = [];
@@ -11020,8 +11022,11 @@ const kikaiWikiDue = today => {
     if (!rec || typeof rec !== 'object' || !rec.status) return;
     const weak = rec.status === 'wrong' || rec.status === 'vague' || rec.status === 'review';
     // 次回日が無い・壊れている記録は、△× なら期限到来とみなす（安全側）
-    const validDue = typeof rec.nextDue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(rec.nextDue);
-    const due = validDue ? rec.nextDue <= t : weak;
+    // 記号と status が食い違う記録（法規の間違いノートなど、ここ以外で status だけ書き換えられた）も期限到来とみなす
+    const mark = kikaiStatusMark(rec.status);
+    const mismatch = !!(rec.mark && mark && rec.mark !== mark);
+    const validDue = kikaiIsRealDate(rec.nextDue);
+    const due = mismatch || (validDue ? rec.nextDue <= t : weak);
     if (!due) return;
     out.push({
       key: k,
@@ -11033,14 +11038,15 @@ const kikaiWikiDue = today => {
       article: rec.articleTitle || ''
     });
   });
-  // 古い期限から。同じ日なら × → △ → ◎ の順
+  // × → △ → ◎ の順。同じ記号なら古い期限から（次回日の無い記録は最も古い扱い）
   const rank = {
     wrong: 0,
     review: 1,
     vague: 1,
     understood: 2
   };
-  out.sort((a, b) => (a.nextDue || '') < (b.nextDue || '') ? -1 : (a.nextDue || '') > (b.nextDue || '') ? 1 : rank[a.status] - rank[b.status]);
+  const rk = r => r.status in rank ? rank[r.status] : 0;
+  out.sort((a, b) => rk(a) - rk(b) || ((a.nextDue || '') < (b.nextDue || '') ? -1 : (a.nextDue || '') > (b.nextDue || '') ? 1 : 0));
   return out;
 };
 /* 「今日やる」の1件。ページから行が消えた・文が変わった記録（孤児）は、開いても解けないので一覧から消えない。
@@ -11069,7 +11075,7 @@ const WikiDueItem = ({
     style: {
       margin: '3px 0'
     }
-  }, /*#__PURE__*/React.createElement("span", {
+  }, kikaiStatusMark(r.status), " ", /*#__PURE__*/React.createElement("span", {
     style: {
       color: 'var(--ink-soft)'
     }
@@ -11112,6 +11118,16 @@ const WikiReviewToday = ({
     };
   }, []);
   const due = kikaiWikiDue();
+  // 単元は、いちばん急ぐ問題の順に並ぶ（due は × → △ → ◎ の順に並んでいるので、最初に出た順がそのまま急ぐ順）
+  const nByMark = {
+    '×': 0,
+    '△': 0,
+    '◎': 0
+  };
+  due.forEach(r => {
+    const m = kikaiStatusMark(r.status);
+    if (m in nByMark) nByMark[m]++;
+  });
   const byPage = {};
   due.forEach(r => {
     (byPage[r.pageId] = byPage[r.pageId] || []).push(r);
@@ -11142,7 +11158,12 @@ const WikiReviewToday = ({
     style: {
       color: 'var(--ink-soft)'
     }
-  }, "0 件")), due.length === 0 && /*#__PURE__*/React.createElement("p", {
+  }, "0 件"), due.length > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: 'var(--ink-soft)'
+    }
+  }, "（× ", nByMark['×'], "・△ ", nByMark['△'], "・◎ ", nByMark['◎'], "。× → △ → ◎ の順に、急ぐ単元から並べた）")), due.length === 0 && /*#__PURE__*/React.createElement("p", {
     style: {
       margin: '4px 0 0',
       fontSize: 13,
@@ -11178,7 +11199,7 @@ const WikiReviewToday = ({
         fontSize: 12,
         color: 'var(--ink-mute)'
       }
-    }, rs.slice(0, 3).map(r => (r.title || '').replace(/^【正誤】/, '')).join(' ／ '), rs.length > 3 ? ` ／ ほか ${rs.length - 3} 件` : ''), /*#__PURE__*/React.createElement("details", {
+    }, rs.slice(0, 3).map(r => kikaiStatusMark(r.status) + ' ' + (r.title || '').replace(/^【正誤】/, '')).join(' ／ '), rs.length > 3 ? ` ／ ほか ${rs.length - 3} 件` : ''), /*#__PURE__*/React.createElement("details", {
       style: {
         fontSize: 12.5
       }
