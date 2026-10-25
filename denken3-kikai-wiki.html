@@ -1423,6 +1423,38 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
 .om-qlist li.u { color: var(--ink-mute); }
 .om-id { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft); }
 .om-qlist li.v .om-id { color: var(--accent-ink); font-weight: 700; }
+
+/* === 図のスマホ横スクロール（法規 hoki-head-template.html と同じ作り） ===
+   幅 360〜610 の viewBox を本文カラム（390px 端末で約 316〜338px）に縮めると、図中の文字が
+   6〜7px まで潰れていた（実測: 文字を含む図 73 枚のうち 67 枚が最小 10px 未満）。
+   スマホ幅では図を設計幅のまま描き、図の直接親の中だけを横スクロールさせる。ページ全体は横に溢れない。
+   幅リストは kikai-*.jsx の viewBox 実測分布。横向き（幅 760px 超）では従来どおり縮小表示。 */
+@media (max-width: 760px) {
+  .main :is(div, figure, p, li, section):has(
+    > svg[viewBox^="0 0 360 "],
+    > svg[viewBox^="0 0 380 "],
+    > svg[viewBox^="0 0 400 "],
+    > svg[viewBox^="0 0 420 "],
+    > svg[viewBox^="0 0 440 "],
+    > svg[viewBox^="0 0 460 "],
+    > svg[viewBox^="0 0 470 "],
+    > svg[viewBox^="0 0 480 "],
+    > svg[viewBox^="0 0 500 "],
+    > svg[viewBox^="0 0 610 "]) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .main svg[viewBox^="0 0 360 "] { min-width: 360px; }
+  .main svg[viewBox^="0 0 380 "] { min-width: 380px; }
+  .main svg[viewBox^="0 0 400 "] { min-width: 400px; }
+  .main svg[viewBox^="0 0 420 "] { min-width: 420px; }
+  .main svg[viewBox^="0 0 440 "] { min-width: 440px; }
+  .main svg[viewBox^="0 0 460 "] { min-width: 460px; }
+  .main svg[viewBox^="0 0 470 "] { min-width: 470px; }
+  .main svg[viewBox^="0 0 480 "] { min-width: 480px; }
+  .main svg[viewBox^="0 0 500 "] { min-width: 500px; }
+  .main svg[viewBox^="0 0 610 "] { min-width: 610px; }
+}
   </style>
 <script>
   /* dark/light 早期適用（React mount 前・フラッシュ防止）。法規Wiki の
@@ -5838,6 +5870,8 @@ const DiagramFrame = ({
   viewBox = "0 0 400 240"
 }) => /*#__PURE__*/React.createElement("div", {
   className: "diagram"
+}, /*#__PURE__*/React.createElement("div", {
+  className: "diagram-scroll"
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: viewBox,
   xmlns: "http://www.w3.org/2000/svg",
@@ -5847,7 +5881,7 @@ const DiagramFrame = ({
   strokeWidth: "1.4",
   strokeLinecap: "round",
   strokeLinejoin: "round"
-}, children), caption && /*#__PURE__*/React.createElement("div", {
+}, children)), caption && /*#__PURE__*/React.createElement("div", {
   className: "diagram-caption"
 }, "— ", caption, " —"));
 
