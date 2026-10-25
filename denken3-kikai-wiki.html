@@ -17742,6 +17742,460 @@ const ArmatureReactionFig = () => /*#__PURE__*/React.createElement("figure", {
     lineHeight: 1.6
   }
 }, "図1.1.3\u3000電機子反作用と対策。無負荷では界磁磁束が左右対称で中性軸は幾何学的中性軸と一致するが、負荷時は電機子電流が作る磁束が直交方向に加わって合成磁束が傾き、電気的中性軸が移動する（発電機は回転方向へ、電動機は逆方向へ）。補極は幾何学的中性軸上、補償巻線は磁極片の溝に置く。"));
+
+/* ============================================================
+   図1.1.0c 端子電圧を下げた直後から最終定常まで（表1.1.0b の「切替直後」→「定常」）
+   他励・界磁一定・負荷トルク一定。電機子インダクタンス・機械損は無視（表1.1.0b と同じ前提）。
+   E(t) は一次遅れで E1 → E2 に近づく（J·dω/dt = T − T_L と Iₐ = (V − E)/Rₐ から）。
+   時定数 τ = Rₐ/3 [s] は形を見るための設定で、実機の値ではない。
+   ============================================================ */
+const DCV_V1 = 200,
+  DCV_I0 = 20;
+const DCV_T0 = -0.5,
+  DCV_T1 = 6,
+  DCV_X0 = 48,
+  DCV_X1 = 628,
+  DCV_Y0 = 170,
+  DCV_Y1 = 16;
+const DcVoltageStepSim = () => {
+  const [ra, setRa] = React.useState(2);
+  const [v2, setV2] = React.useState(180);
+  const [t, setT] = React.useState(0);
+  const E1 = DCV_V1 - ra * DCV_I0,
+    E2 = v2 - ra * DCV_I0,
+    tau = ra / 3;
+  const E = s => s < 0 ? E1 : E2 + (E1 - E2) * Math.exp(-s / tau);
+  const V = s => s < 0 ? DCV_V1 : v2;
+  const I = s => s < 0 ? DCV_I0 : (V(s) - E(s)) / ra;
+  const N = s => E(s) / E1 * 100;
+  const tx = s => DCV_X0 + (s - DCV_T0) / (DCV_T1 - DCV_T0) * (DCV_X1 - DCV_X0);
+  const scaleY = (lo, hi) => v => DCV_Y0 - (v - lo) / (hi - lo) * (DCV_Y0 - DCV_Y1);
+  const ticks = (lo, hi, step) => {
+    const a = [];
+    for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) a.push(Math.round(v));
+    return a;
+  };
+  const path = (fn, ty) => {
+    let d = `M${tx(DCV_T0)} ${ty(fn(DCV_T0))} L${tx(-1e-9)} ${ty(fn(-1e-9))}`;
+    for (let i = 0; i <= 240; i++) {
+      const s = i / 240 * DCV_T1;
+      d += ` L${tx(s)} ${ty(fn(s))}`;
+    }
+    return d;
+  };
+  const iJump = I(0);
+  const iLo = Math.min(0, Math.floor((iJump - 5) / 10) * 10),
+    iHi = 25;
+  const tyI = scaleY(iLo, iHi);
+  const nSteady = E2 / E1 * 100,
+    vRatio = v2 / DCV_V1 * 100;
+  const nLo = Math.floor(Math.min(nSteady, vRatio) / 5) * 5 - 5,
+    nHi = 102;
+  const tyN = scaleY(nLo, nHi);
+  const It = I(t);
+  // 「最終定常」の閾値は表示（小数1桁）が 20.0 A になる幅にする。t＝6 s の残差は全範囲で 0.0031 A 以下（最悪 Rₐ＝2 Ω・150 V で 25e⁻⁹ A）
+  let phase;
+  if (t < 0) phase = "変更前：発生トルク＝負荷トルク（Iₐ＝20 A）。加速も減速もしない。";else if (Math.abs(It - DCV_I0) < 0.05) phase = "最終定常（ほぼ収束。理論上は時間とともに限りなく近づく）：Iₐ は 20 A に戻り、トルクも元と同じ。下げた電圧ぶんは E の低下＝回転速度の低下で吸収された。";else if (t === 0 && It < 0) phase = "直後：回転速度が慣性で変わらないため、逆起電力 E も変わらない。その E が新しい V を上回るので Iₐ が逆向きに流れ、発電方向の電磁トルク（制動トルク）で減速を開始する。電源が電力を受け取れるときに限り、これが回生制動になる。";else if (t === 0) phase = "直後：回転速度が慣性で変わらないため、逆起電力 E も変わらない。V だけ下がったので Iₐ＝(V−E)/Rₐ が減り、発生トルクが負荷トルクに負けて減速を開始する。";else if (It < 0) phase = "減速中（発電方向の電流）：E はまだ V より高く、Iₐ は逆向きのまま。制動トルクで減速し、E が下がるにつれて Iₐ は 0 を通って 20 A へ戻っていく。";else phase = "減速中：減速で E が下がり、Iₐ＝(V−E)/Rₐ が 20 A に向かって戻っていく。発生トルクが負荷トルクに追いつくまで減速が続く。";
+  const axis = (ty, tickVals, unit) => /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("line", {
+    x1: DCV_X0,
+    x2: DCV_X1,
+    y1: DCV_Y0,
+    y2: DCV_Y0,
+    stroke: "var(--rule)"
+  }), tickVals.map(v => /*#__PURE__*/React.createElement("g", {
+    key: v
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: DCV_X0,
+    x2: DCV_X1,
+    y1: ty(v),
+    y2: ty(v),
+    stroke: "var(--rule-soft)",
+    strokeDasharray: "2 4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: DCV_X0 - 6,
+    y: ty(v) + 4,
+    textAnchor: "end",
+    fontSize: "13",
+    fill: "var(--ink-mute)"
+  }, v))), [0, 1, 2, 3, 4, 5, 6].map(s => /*#__PURE__*/React.createElement("text", {
+    key: s,
+    x: tx(s),
+    y: DCV_Y0 + 16,
+    textAnchor: "middle",
+    fontSize: "13",
+    fill: "var(--ink-mute)"
+  }, s, " s")), /*#__PURE__*/React.createElement("line", {
+    x1: tx(0),
+    x2: tx(0),
+    y1: DCV_Y1,
+    y2: DCV_Y0,
+    stroke: "var(--ink-mute)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: tx(0) + 4,
+    y: DCV_Y1 - 4,
+    fontSize: "13",
+    fill: "var(--ink-mute)"
+  }, "ここで V を下げる"), /*#__PURE__*/React.createElement("text", {
+    x: "2",
+    y: DCV_Y1 - 4,
+    fontSize: "13",
+    fill: "var(--ink-mute)"
+  }, unit));
+  const BL = 92,
+    BR = 628,
+    bsc = (BR - BL) / DCV_V1;
+  const bars = [["変更前", DCV_V1, E1], ["最終定常", v2, E2]];
+  const cellS = {
+    border: "1px solid var(--rule)",
+    borderRadius: 6,
+    padding: "6px 10px",
+    minWidth: 0
+  };
+  const lab = {
+    fontSize: 11.5,
+    color: "var(--ink-mute)"
+  };
+  const val = {
+    fontFamily: "var(--font-mono)",
+    fontSize: 16,
+    fontWeight: 700,
+    color: "var(--ink)"
+  };
+  const btn = {
+    font: "inherit",
+    fontSize: 12.5,
+    padding: "4px 12px",
+    borderRadius: 5,
+    border: "1px solid var(--rule)",
+    background: "var(--bg)",
+    color: "var(--ink)",
+    cursor: "pointer"
+  };
+  const f1 = x => x.toFixed(1);
+  return /*#__PURE__*/React.createElement("figure", {
+    style: {
+      margin: "10px 0 16px",
+      background: "var(--bg-elev)",
+      borderRadius: 8,
+      padding: "12px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+      gap: "6px 16px",
+      fontSize: 12.5,
+      color: "var(--ink-soft)"
+    }
+  }, /*#__PURE__*/React.createElement("label", null, "電機子抵抗 Rₐ：", /*#__PURE__*/React.createElement("strong", {
+    style: {
+      fontFamily: "var(--font-mono)"
+    }
+  }, ra.toFixed(1), " Ω"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0.5",
+    max: "2",
+    step: "0.1",
+    value: ra,
+    onChange: e => setRa(parseFloat(e.target.value)),
+    style: {
+      width: "100%"
+    },
+    "aria-label": "電機子抵抗"
+  })), /*#__PURE__*/React.createElement("label", null, "下げた後の端子電圧 V：", /*#__PURE__*/React.createElement("strong", {
+    style: {
+      fontFamily: "var(--font-mono)"
+    }
+  }, v2, " V"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "150",
+    max: "195",
+    step: "5",
+    value: v2,
+    onChange: e => setV2(parseFloat(e.target.value)),
+    style: {
+      width: "100%"
+    },
+    "aria-label": "下げた後の端子電圧"
+  })), /*#__PURE__*/React.createElement("label", null, "時刻 t：", /*#__PURE__*/React.createElement("strong", {
+    style: {
+      fontFamily: "var(--font-mono)"
+    }
+  }, t < 0 ? "変更前" : t.toFixed(2) + " s"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: DCV_T0,
+    max: DCV_T1,
+    step: "0.01",
+    value: t,
+    onChange: e => setT(parseFloat(e.target.value)),
+    style: {
+      width: "100%"
+    },
+    "aria-label": "時刻"
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      flexWrap: "wrap",
+      margin: "8px 0"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    style: btn,
+    onClick: () => setT(-0.3)
+  }, "変更前"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    style: btn,
+    onClick: () => setT(0)
+  }, "直後"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    style: btn,
+    onClick: () => setT(DCV_T1)
+  }, "最終定常")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      margin: "0 0 8px",
+      padding: "8px 10px",
+      borderRadius: 6,
+      background: "var(--bg)",
+      color: "var(--ink)"
+    }
+  }, phase), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: cellS
+  }, /*#__PURE__*/React.createElement("div", {
+    style: lab
+  }, "端子電圧 V"), /*#__PURE__*/React.createElement("div", {
+    style: val
+  }, V(t), " V")), /*#__PURE__*/React.createElement("div", {
+    style: cellS
+  }, /*#__PURE__*/React.createElement("div", {
+    style: lab
+  }, "逆起電力 E（回転速度に比例）"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...val,
+      color: "var(--info)"
+    }
+  }, f1(E(t)), " V")), /*#__PURE__*/React.createElement("div", {
+    style: cellS
+  }, /*#__PURE__*/React.createElement("div", {
+    style: lab
+  }, "電機子電流 Iₐ"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...val,
+      color: "var(--accent-ink)"
+    }
+  }, f1(It), " A")), /*#__PURE__*/React.createElement("div", {
+    style: cellS
+  }, /*#__PURE__*/React.createElement("div", {
+    style: lab
+  }, "電磁トルク（変更前を 1）"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...val,
+      color: "var(--accent-ink)"
+    }
+  }, (It / DCV_I0).toFixed(2))), /*#__PURE__*/React.createElement("div", {
+    style: cellS
+  }, /*#__PURE__*/React.createElement("div", {
+    style: lab
+  }, "回転速度（変更前を 100%）"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...val,
+      color: "var(--info)"
+    }
+  }, N(t).toFixed(1), " %")), /*#__PURE__*/React.createElement("div", {
+    style: cellS
+  }, /*#__PURE__*/React.createElement("div", {
+    style: lab
+  }, "電磁変換電力 EIₐ＝ωT（負は機械→電気）"), /*#__PURE__*/React.createElement("div", {
+    style: val
+  }, Math.round(E(t) * It), " W"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      overflowX: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 640 196",
+    role: "img",
+    "aria-label": "電機子電流 Iₐ の時間変化。電圧を下げた直後に減り、減速しながら元の値に戻る",
+    style: {
+      display: "block",
+      width: "100%",
+      minWidth: 500,
+      height: "auto",
+      marginTop: 10
+    }
+  }, axis(tyI, ticks(iLo, iHi, iHi - iLo > 60 ? 20 : 10), "Iₐ [A]"), iLo < 0 && /*#__PURE__*/React.createElement("line", {
+    x1: DCV_X0,
+    x2: DCV_X1,
+    y1: tyI(0),
+    y2: tyI(0),
+    stroke: "var(--ink-mute)"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: DCV_X0,
+    x2: DCV_X1,
+    y1: tyI(DCV_I0),
+    y2: tyI(DCV_I0),
+    stroke: "var(--accent)",
+    strokeDasharray: "6 4",
+    opacity: "0.7"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: DCV_X1,
+    y: tyI(DCV_I0) - 6,
+    textAnchor: "end",
+    fontSize: "13",
+    fill: "var(--accent-ink)"
+  }, "負荷トルクとつり合う電流 20 A"), /*#__PURE__*/React.createElement("path", {
+    d: path(I, tyI),
+    fill: "none",
+    stroke: "var(--accent)",
+    strokeWidth: "2.4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: tx(0.15),
+    y: Math.min(tyI(iJump) + 16, DCV_Y0 - 4),
+    fontSize: "13",
+    fill: "var(--accent-ink)"
+  }, iJump < 0 ? "制動トルク（発電方向）→ 減速を開始" : "発生トルク＜負荷トルク → 減速"), /*#__PURE__*/React.createElement("circle", {
+    cx: tx(t),
+    cy: tyI(It),
+    r: "5",
+    fill: "var(--accent)",
+    stroke: "var(--bg-elev)",
+    strokeWidth: "2"
+  })), /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 640 196",
+    role: "img",
+    "aria-label": "回転速度の時間変化。電圧比より少し大きく下がって落ち着く",
+    style: {
+      display: "block",
+      width: "100%",
+      minWidth: 500,
+      height: "auto",
+      marginTop: 4
+    }
+  }, axis(tyN, ticks(nLo, 100, 5), "速度 [%]"), /*#__PURE__*/React.createElement("line", {
+    x1: DCV_X0,
+    x2: DCV_X1,
+    y1: tyN(vRatio),
+    y2: tyN(vRatio),
+    stroke: "var(--ink-mute)",
+    strokeDasharray: "6 4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: DCV_X1,
+    y: tyN(vRatio) - 6,
+    textAnchor: "end",
+    fontSize: "13",
+    fill: "var(--ink-mute)"
+  }, "電圧比 ", vRatio.toFixed(1), "%"), /*#__PURE__*/React.createElement("path", {
+    d: path(N, tyN),
+    fill: "none",
+    stroke: "var(--info)",
+    strokeWidth: "2.4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: DCV_X1,
+    y: tyN(nSteady) + 16,
+    textAnchor: "end",
+    fontSize: "13",
+    fill: "var(--info)"
+  }, "最終定常 ", nSteady.toFixed(1), "%（E の比 ", f1(E2), "/", f1(E1), "）"), /*#__PURE__*/React.createElement("circle", {
+    cx: tx(t),
+    cy: tyN(N(t)),
+    r: "5",
+    fill: "var(--info)",
+    stroke: "var(--bg-elev)",
+    strokeWidth: "2"
+  })), /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 640 146",
+    role: "img",
+    "aria-label": "変更前と最終定常の端子電圧の配分 V＝E＋IₐRₐ。定常どうしは Iₐ が等しいので IₐRₐ も等しく、下げた電圧はそのまま E の低下になる",
+    style: {
+      display: "block",
+      width: "100%",
+      minWidth: 500,
+      height: "auto",
+      marginTop: 4
+    }
+  }, bars.map(([name, v, e], k) => {
+    const y = 8 + k * 70,
+      loss = v - e;
+    return /*#__PURE__*/React.createElement("g", {
+      key: name
+    }, /*#__PURE__*/React.createElement("text", {
+      x: "0",
+      y: y + 14,
+      fontSize: "13",
+      fontWeight: "700",
+      fill: "var(--ink)"
+    }, name), /*#__PURE__*/React.createElement("text", {
+      x: "0",
+      y: y + 30,
+      fontSize: "13",
+      fill: "var(--ink-mute)"
+    }, "V＝", v, " V"), /*#__PURE__*/React.createElement("rect", {
+      x: BL,
+      y: y,
+      width: e * bsc,
+      height: "30",
+      fill: "var(--info)",
+      opacity: "0.85"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: BL + e * bsc,
+      y: y,
+      width: loss * bsc,
+      height: "30",
+      fill: "var(--ink-mute)",
+      opacity: "0.6"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: BL,
+      y: y + 48,
+      fontSize: "13",
+      fill: "var(--ink-soft)"
+    }, "E ", f1(e), " V ＋ IₐRₐ ", f1(loss), " V ＝ ", v, " V"));
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: BL + E1 * bsc,
+    x2: BL + E1 * bsc,
+    y1: "4",
+    y2: "112",
+    stroke: "var(--ink)",
+    strokeDasharray: "3 3",
+    opacity: "0.5"
+  }))), /*#__PURE__*/React.createElement("figcaption", {
+    style: {
+      fontSize: "12px",
+      color: "var(--ink-mute)",
+      lineHeight: 1.6,
+      marginTop: 6
+    }
+  }, /*#__PURE__*/React.createElement("div", null, "図1.1.0c\u3000他励電動機の端子電圧を 200 V から下げた直後から最終定常まで（負荷トルク一定・界磁一定・変更前の Iₐ＝20 A。数値は説明用）。"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 4
+    }
+  }, "直後は回転速度が慣性で変わらないので、逆起電力 E も変わらず、Iₐ だけが (V−E)/Rₐ で減る。減速で E が下がると Iₐ は再び増える。最終定常では Iₐ もトルクも元に戻り、下げた電圧はすべて E の低下（＝回転速度の低下）になる。"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 4
+    }
+  }, "回転速度の比は E の比で、電圧の比より小さい（Rₐ を小さくすると電圧の比に近づく）。下の帯は変更前と最終定常の比較で、定常どうしは Iₐ が等しいので IₐRₐ も等しい。"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 4
+    }
+  }, /*#__PURE__*/React.createElement("strong", null, "変更前と最終定常を比べると"), "、電磁変換電力 EIₐ＝ωT が下がるのはトルクではなく ω が下がるから。過渡中は Iₐ も電磁トルクも変わり、EIₐ と負荷へ渡る出力の差は回転部の運動エネルギーの増減になる（減速中は運動エネルギーが放出される）ので、EIₐ を軸出力と同じものと読まない。EIₐ が負のときは、機械側から電気側へ変換している。"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 4
+    }
+  }, "Iₐ が負（逆向き）になると発電方向の電磁トルク（制動トルク）が生じる。これが回生制動になるのは、電源がその電力を受け取れるときに限る（この図は電力を受け取れる理想的な電源を仮定。8節）。"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 4
+    }
+  }, "狭い画面ではグラフを横にスクロールできる。前提：電機子インダクタンス・機械損・電機子反作用・ブラシ降下を無視（表1.1.0b と同じ）。そのため直後の Iₐ は階段状に跳ぶ（実機ではなめらかに変わる）。Rₐ＝0.5 Ω・150 V では直後の理想値が −80 A になるが、実機では保護装置や電流制限が働く。この図は電流制限を入れない説明用のモデルである。"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 4
+    }
+  }, "時定数の物理式は τ＝JRₐ/(KₑKₜ)（E＝Kₑω、T＝KₜIₐ と置いたとき。J は回転部の慣性モーメント）で、Rₐ に比例する。図の時間軸は形を見るために τ＝Rₐ/3 秒と置いた設定で、実機の値ではない。「最終定常」の表示は、定常値にほぼ収束した時点からの近似である。")));
+};
 const DCMachinePage = ({
   onNav
 }) => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Crumbs, {
@@ -18015,7 +18469,9 @@ const DCMachinePage = ({
   tex: "V = E - I_aR_a"
 }), "。出力は ", /*#__PURE__*/React.createElement(Eq, {
   tex: "VI_a = EI_a - I_a^2R_a"
-})))))), /*#__PURE__*/React.createElement(Box, {
+})))))), /*#__PURE__*/React.createElement("p", null, "表の「切替直後」から「定常」への移り方を、", /*#__PURE__*/React.createElement("strong", null, "他励"), "（界磁は別電源で φ 一定）の電動機の端子電圧を下げる例で、時間の流れとして見る。", /*#__PURE__*/React.createElement("span", {
+  className: "marker"
+}, "端子電圧を下げた直後、Iₐ は（弱め界磁の直後のように増えるのではなく）減る"), "（E が回転速度とともに元のまま残るため）。分巻では V とともに界磁電流と φ も下がるので、表の注のとおり φ の変化も入れる（界磁回路の過渡変化も別に考える。この図はそのまま使えない）。つまみで Rₐ・下げた後の電圧・時刻を動かせる。"), /*#__PURE__*/React.createElement(DcVoltageStepSim, null), /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
   label: "解き方の5手順 — 何を求めるか → 状態判定 → 物理関係 → 式 → 検算"
 }, /*#__PURE__*/React.createElement("ol", {
