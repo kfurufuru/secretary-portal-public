@@ -1527,6 +1527,44 @@ const wikiQuizPlan = (pool, recs, mode, today) => {
 };
 // 次回日の短い表示（M/D）
 const wikiShortDate = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}` : '');
+
+/* ---- ホームの「今日やる」（期限が来た記録の一覧） ----
+   localStorage の denken_check::<subject>_<page>::<kind>::<id> を集め、今日やるもの
+  （nextDue ≦ 今日、記号と status が食い違う記録、次回日の無い △×）を返す。
+   並びは確認問題と同じ規則: × → △ → ◎ の順に先。同じ記号なら期限の古いものから（次回日の無い記録は最も古い扱い）。
+   今日 × を付けた問題は次回日が明日以降なので出ない（同じ日の解き直しは △ 止まりで定着しない）。
+   ◎ で次回日が無い／壊れている記録は出さない（次回日の仕組みより前の古い ◎ で一覧が埋まるため。単元ページでは出す）。
+   今の Wiki に無い単元 id（改名・手作りの取り込み）の記録は出さない（開けないので一覧から消せなくなる）。
+   機械の kikaiWikiDue（kikai-tracker.jsx）と同じ規則。理論の RironReviewToday がこれを使う。 */
+const wikiDueList = (subject, kinds, today) => {
+  const t = today || kakomonToday();
+  const out = [];
+  let keys = [];
+  try { keys = Object.keys(localStorage); } catch (e) { return out; }
+  const known = {};
+  try { ((window.WIKI_DATA && window.WIKI_DATA.chapters) || []).forEach((ch) => (ch.pages || []).forEach((p) => { known[p.id] = true; })); } catch (e) {}
+  const hasKnown = Object.keys(known).length > 0;
+  const re = new RegExp('^denken_check::' + subject + '_([^:]+)::(' + kinds.join('|') + ')::');
+  keys.forEach((k) => {
+    const m = re.exec(k);
+    if (!m) return;
+    if (hasKnown && !known[m[1]]) return;
+    let rec = null;
+    try { rec = JSON.parse(localStorage.getItem(k)); } catch (e) { return; }
+    if (!rec || typeof rec !== 'object' || !rec.status) return;
+    const mark = wikiStatusMark(rec.status);
+    const weak = mark === '×' || mark === '△';
+    const mismatch = !!(rec.mark && mark && rec.mark !== mark);
+    const due = mismatch || (wikiIsRealDate(rec.nextDue) ? rec.nextDue <= t : weak);
+    if (!due) return;
+    out.push({ key: k, pageId: m[1], kind: m[2], status: rec.status, nextDue: rec.nextDue || '',
+      title: rec.itemTitle || '', article: rec.articleTitle || '' });
+  });
+  const rank = { wrong: 0, review: 1, vague: 1, understood: 2 };
+  const rk = (r) => (r.status in rank ? rank[r.status] : 0);
+  out.sort((a, b) => (rk(a) - rk(b)) || ((a.nextDue || '') < (b.nextDue || '') ? -1 : (a.nextDue || '') > (b.nextDue || '') ? 1 : 0));
+  return out;
+};
 </script>
   <script>
 /* built from riron-data.js — 直接編集しない。正(SoT)は riron-data.js。編集後に build-riron-wiki.py を実行する */
@@ -4502,6 +4540,188 @@ const RironMissCard = ({
     onSetMemo: setMemo
   }))));
 };
+
+/* ---- ホームの「今日やる」（理論の確認問題）。機械のホームと同じ規則（wiki-review.js の wikiDueList）。
+   次回日を持つのは確認問題だけなので、対象は確認問題に限る（ひっかけ・1分復習は次回日を持たない）。
+   誤答カードは上の RironMissCards が自分の次回日で出すので、ここには入れない。
+   単元を押すと、確認問題がある「学習」タブを開く。 */
+const RironDueItem = ({
+  r
+}) => {
+  const [arm, setArm] = useState(false);
+  const remove = () => {
+    try {
+      localStorage.removeItem(r.key);
+    } catch (e) {}
+    try {
+      window.dispatchEvent(new CustomEvent('section-check-changed', {
+        detail: {
+          key: r.key
+        }
+      }));
+    } catch (e) {}
+  };
+  const btn = {
+    padding: '1px 8px',
+    marginLeft: 6,
+    fontSize: 12,
+    borderRadius: 4,
+    cursor: 'pointer',
+    background: 'transparent',
+    border: '1px solid var(--rule)',
+    color: 'var(--ink-soft)'
+  };
+  return /*#__PURE__*/React.createElement("li", {
+    style: {
+      margin: '3px 0'
+    }
+  }, wikiStatusMark(r.status), " ", r.title || '（題名なし）', !arm && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    style: btn,
+    onClick: () => setArm(true)
+  }, "記録を消す"), arm && /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontSize: 12,
+      color: 'var(--ink-soft)'
+    }
+  }, "単元を開いても同じ問題が見つからないときだけ消す（見つかるなら、解き直せば次回日が延びる）。", /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    style: {
+      ...btn,
+      color: 'var(--danger)',
+      borderColor: 'var(--danger)'
+    },
+    onClick: remove
+  }, "本当に消す"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    style: btn,
+    onClick: () => setArm(false)
+  }, "やめる")));
+};
+const RironReviewToday = ({
+  onNav
+}) => {
+  const [, bump] = useState(0);
+  useEffect(() => {
+    const on = () => bump(n => n + 1);
+    window.addEventListener('section-check-changed', on);
+    window.addEventListener('storage', on);
+    return () => {
+      window.removeEventListener('section-check-changed', on);
+      window.removeEventListener('storage', on);
+    };
+  }, []);
+  const due = wikiDueList('riron', ['quiz']);
+  const nByMark = {
+    '×': 0,
+    '△': 0,
+    '◎': 0
+  };
+  due.forEach(r => {
+    const m = wikiStatusMark(r.status);
+    if (m in nByMark) nByMark[m]++;
+  });
+  // 単元は、いちばん急ぐ問題の順に並ぶ（due は × → △ → ◎ の順に並んでいるので、最初に出た順がそのまま急ぐ順）
+  const byPage = {};
+  due.forEach(r => {
+    (byPage[r.pageId] = byPage[r.pageId] || []).push(r);
+  });
+  const pages = Object.keys(byPage);
+  const pageTitle = id => {
+    try {
+      for (const ch of window.WIKI_DATA && window.WIKI_DATA.chapters || []) for (const p of ch.pages || []) if (p.id === id) return `${p.num} ${p.title}`;
+    } catch (e) {}
+    return id;
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    id: "review-today",
+    style: {
+      border: '1px solid var(--rule)',
+      borderRadius: 8,
+      padding: '12px 14px',
+      margin: '10px 0 14px',
+      background: 'var(--bg-elev)',
+      scrollMarginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: 0
+    }
+  }, /*#__PURE__*/React.createElement("strong", null, "今日やる（確認問題）"), ' ', due.length ? /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: 'var(--danger)'
+    }
+  }, due.length, " 件") : /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--ink-soft)'
+    }
+  }, "0 件"), due.length > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: 'var(--ink-soft)'
+    }
+  }, "（× ", nByMark['×'], "・△ ", nByMark['△'], "・◎ ", nByMark['◎'], "。× → △ → ◎ の順に、急ぐ単元から並べた）")), due.length === 0 && /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '4px 0 0',
+      fontSize: 13,
+      color: 'var(--ink-soft)'
+    }
+  }, "確認問題に答えると次回日が付き、忘れかけた頃にここへ戻ってくる（今日間違えた問題は明日以降）。"), pages.length > 0 && /*#__PURE__*/React.createElement("ul", {
+    style: {
+      margin: '6px 0 0',
+      paddingLeft: 20,
+      fontSize: 13.5
+    }
+  }, pages.map(id => {
+    const rs = byPage[id];
+    return /*#__PURE__*/React.createElement("li", {
+      key: id,
+      style: {
+        margin: '2px 0'
+      }
+    }, /*#__PURE__*/React.createElement("a", {
+      href: "#",
+      onClick: e => {
+        e.preventDefault();
+        onNav(id, 'learn');
+      }
+    }, pageTitle(id)), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: 'var(--ink-soft)'
+      }
+    }, "（", rs.length, " 問）"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: 'block',
+        fontSize: 12,
+        color: 'var(--ink-mute)'
+      }
+    }, rs.slice(0, 3).map(r => wikiStatusMark(r.status) + ' ' + (r.title || '')).join(' ／ '), rs.length > 3 ? ` ／ ほか ${rs.length - 3} 件` : ''), /*#__PURE__*/React.createElement("details", {
+      style: {
+        fontSize: 12.5
+      }
+    }, /*#__PURE__*/React.createElement("summary", {
+      style: {
+        cursor: 'pointer',
+        color: 'var(--ink-soft)'
+      }
+    }, "1件ずつ見る（見つからない問題の記録を消す）"), /*#__PURE__*/React.createElement("ul", {
+      style: {
+        margin: '2px 0 4px',
+        paddingLeft: 18
+      }
+    }, rs.map(r => /*#__PURE__*/React.createElement(RironDueItem, {
+      key: r.key,
+      r: r
+    })))));
+  })), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '6px 0 0',
+      fontSize: 12,
+      color: 'var(--ink-soft)'
+    }
+  }, "単元を開くと「学習」タブの確認問題へ移る。◎ が付けば次回は先へ延び、△・× なら近くに戻る。"));
+};
 const RironMissCards = ({
   onNav
 }) => {
@@ -6088,6 +6308,8 @@ const HomePage = ({
   }), /*#__PURE__*/React.createElement("div", {
     className: "content"
   }, typeof RironMissCards === "function" && /*#__PURE__*/React.createElement(RironMissCards, {
+    onNav: onNav
+  }), typeof RironReviewToday === "function" && /*#__PURE__*/React.createElement(RironReviewToday, {
     onNav: onNav
   }), /*#__PURE__*/React.createElement(SR1Card, {
     onNav: onNav
