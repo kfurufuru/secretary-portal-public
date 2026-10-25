@@ -1908,7 +1908,7 @@ const wikiShortDate = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? `${Numbe
    今日 × を付けた問題は次回日が明日以降なので出ない（同じ日の解き直しは △ 止まりで定着しない）。
    ◎ で次回日が無い／壊れている記録は出さない（次回日の仕組みより前の古い ◎ で一覧が埋まるため。単元ページでは出す）。
    今の Wiki に無い単元 id（改名・手作りの取り込み）の記録は出さない（開けないので一覧から消せなくなる）。
-   機械の kikaiWikiDue（kikai-tracker.jsx）と同じ規則。理論の RironReviewToday がこれを使う。 */
+   機械の kikaiWikiDue（kikai-tracker.jsx）と理論の RironReviewToday がこれを使う。 */
 const wikiDueList = (subject, kinds, today) => {
   const t = today || kakomonToday();
   const out = [];
@@ -11037,66 +11037,9 @@ const KIKAI_WIKI_KINDS = {
   trap: 'ひっかけ',
   quickreview: '1分復習'
 };
-/* localStorage から Wiki 内の記録を集め、今日やるもの（nextDue ≦ 今日、または次回日の無い △×）を返す。
-   並びは単元ページの確認問題（ConceptQuiz）と同じ規則: × → △ → ◎ の順に先。同じ記号なら期限の古いものから。
-   今日 × を付けた問題は次回日が明日以降なので、ここには出ない（同じ日の解き直しは △ 止まりで定着しない）。 */
-const kikaiWikiDue = today => {
-  const t = today || kakomonToday();
-  const out = [];
-  let keys = [];
-  try {
-    keys = Object.keys(localStorage);
-  } catch (e) {
-    return out;
-  }
-  // 今の Wiki に無い単元 id（改名・手作りの取り込み）の記録は出さない（開けないので一覧から消せなくなる）
-  const known = {};
-  try {
-    (window.WIKI_DATA && window.WIKI_DATA.chapters || []).forEach(ch => ch.pages.forEach(p => {
-      known[p.id] = true;
-    }));
-  } catch (e) {}
-  const hasKnown = Object.keys(known).length > 0;
-  keys.forEach(k => {
-    const m = /^denken_check::kikai_([^:]+)::(quiz|trap|quickreview)::/.exec(k);
-    if (!m) return;
-    if (hasKnown && !known[m[1]]) return;
-    let rec = null;
-    try {
-      rec = JSON.parse(localStorage.getItem(k));
-    } catch (e) {
-      return;
-    }
-    if (!rec || typeof rec !== 'object' || !rec.status) return;
-    const weak = rec.status === 'wrong' || rec.status === 'vague' || rec.status === 'review';
-    // 次回日が無い・壊れている記録は、△× なら期限到来とみなす（安全側）
-    // 記号と status が食い違う記録（法規の間違いノートなど、ここ以外で status だけ書き換えられた）も期限到来とみなす
-    const mark = kikaiStatusMark(rec.status);
-    const mismatch = !!(rec.mark && mark && rec.mark !== mark);
-    const validDue = kikaiIsRealDate(rec.nextDue);
-    const due = mismatch || (validDue ? rec.nextDue <= t : weak);
-    if (!due) return;
-    out.push({
-      key: k,
-      pageId: m[1],
-      kind: m[2],
-      status: rec.status,
-      nextDue: rec.nextDue || '',
-      title: rec.itemTitle || '',
-      article: rec.articleTitle || ''
-    });
-  });
-  // × → △ → ◎ の順。同じ記号なら古い期限から（次回日の無い記録は最も古い扱い）
-  const rank = {
-    wrong: 0,
-    review: 1,
-    vague: 1,
-    understood: 2
-  };
-  const rk = r => r.status in rank ? rank[r.status] : 0;
-  out.sort((a, b) => rk(a) - rk(b) || ((a.nextDue || '') < (b.nextDue || '') ? -1 : (a.nextDue || '') > (b.nextDue || '') ? 1 : 0));
-  return out;
-};
+/* ホームの「今日やる」に出す Wiki 内の記録（確認問題・ひっかけ・1分復習）。
+   規則（期限・× → △ → ◎ の並び・出さない記録）は wiki-review.js の wikiDueList（理論と共通）。 */
+const kikaiWikiDue = today => wikiDueList('kikai', ['quiz', 'trap', 'quickreview'], today);
 /* 「今日やる」の1件。ページから行が消えた・文が変わった記録（孤児）は、開いても解けないので一覧から消えない。
    その逃げ道として、1件ずつ記録を消せるようにする。誤って消さないよう、2段階で押させる。 */
 const WikiDueItem = ({
