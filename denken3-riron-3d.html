@@ -233,6 +233,16 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
 .cards summary::marker{color:var(--accent)}
 .cards .cbody{padding:2px 12px 12px;font-size:12.5px;line-height:1.7;color:var(--ink-2)}
 .cards .cbody b{color:var(--ink)}
+/* カード内の図。タップで全画面に拡大する（小さい画面で文字が潰れるため。機械3D工場と同じ） */
+.figzoom{display:block;width:100%;padding:0;margin:8px 0 4px;border:1px solid var(--line-2);border-radius:4px;background:var(--panel);cursor:zoom-in}
+.figzoom svg{display:block;width:100%;height:auto}
+.figcap{font-size:11.5px;color:var(--ink-3);margin:0 0 8px}
+.figjump{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 14px;font-size:12px;color:var(--ink-3)}
+.figjump button{border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent-ink);border-radius:4px;padding:3px 10px;font-size:12.5px;min-height:32px}
+#figdlg{width:min(96vw,1100px);max-width:none;max-height:94vh;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);cursor:zoom-out}
+#figdlg::backdrop{background:rgba(0,0,0,.6)}
+#figdlg svg{display:block;width:100%;min-width:680px;height:auto;max-height:86vh}
+#figdlg p{margin:6px 0 0;font-size:12px;color:var(--ink-3);text-align:center}
 .tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0}
 .tbl table{border-collapse:collapse;width:100%;min-width:min(100%,340px);font-size:12px}
 .tbl th,.tbl td{border:1px solid var(--line-2);padding:5px 8px;text-align:left;vertical-align:top}
@@ -2800,7 +2810,7 @@ const STUDY = {
     "1/3（ZY = ZΔ/3）。"
    ]
   ],
-  "cards": []
+  "cards": ["ydelta"]
  },
  "elec": {
   "oneLiner": "整流の平均は 半波 0.45V・全波 0.9V。トランジスタは IC = hFE·IB で動作点が決まり、飽和すると比例しない。オペアンプは仮想短絡で、反転 −Rf/Ri・非反転 1 + Rf/Ri。",
@@ -3445,7 +3455,9 @@ const STUDY = {
   "cards": []
  }
 };
-const CARDS = {};
+const CARDS = {
+  ydelta: { t:'三相の結線（Y と Δ、相と線）', q:['R08上/15','R07上/15','R05下/15','R05上/15','R04下/15','R04上/15','H30/15'] },
+};
 /* ツアーの各歩から過去問を名指しで引くための表。キーは「年度/問番号」 */
 const QID = new Map(KAKOMON.map(q => [q.s + '/' + q.c, q]));
 
@@ -4798,9 +4810,78 @@ function drawMini(){
 }
 
 /* カードは理論の3D工場では使わない（機械の3D工場と同じ枠組みを保つための空の定義） */
-const CARD_BODY = {};
+const CARD_BODY = {
+  ydelta: `
+    <p><b>三相の問題は、まず「相」と「線」を分ける。</b>相＝1つの負荷 Z にかかる電圧・流れる電流。線＝電線どうしの電圧（線間電圧）・電線の電流（線電流）。
+    Y は電流が、Δ は電圧が、相と線で同じになる。</p>
+    <button class="figzoom" type="button" aria-label="図を拡大する"><svg viewBox="0 0 640 325" role="img" aria-label="三相の Y 結線と Δ 結線。相の量と線の量の関係と、平衡負荷の Y-Δ 変換" font-family="var(--font-sans)" font-size="15">
+        <rect x="12" y="10" width="13" height="13" rx="2" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="31" y="22" fill="var(--ink-2)" font-size="13">負荷 Z（相の量＝1つの Z にかかる電圧・流れる電流）</text>
+        <text x="150" y="52" text-anchor="middle" fill="var(--ink)" font-size="15" font-weight="700">Y 結線</text>
+        <text x="470" y="52" text-anchor="middle" fill="var(--ink)" font-size="15" font-weight="700">Δ 結線</text>
+        <g transform="translate(150,175) rotate(-90)"><path d="M0,0 H18 M52,0 H70" stroke="var(--steel)" stroke-width="2.2" fill="none"/><rect x="18" y="-7" width="34" height="14" rx="2" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/></g>
+        <g transform="translate(150,175) rotate(30)"><path d="M0,0 H18 M52,0 H70" stroke="var(--steel)" stroke-width="2.2" fill="none"/><rect x="18" y="-7" width="34" height="14" rx="2" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/></g>
+        <g transform="translate(150,175) rotate(150)"><path d="M0,0 H18 M52,0 H70" stroke="var(--steel)" stroke-width="2.2" fill="none"/><rect x="18" y="-7" width="34" height="14" rx="2" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/></g>
+        <circle cx="150" cy="175" r="3" fill="var(--steel)"/><text x="150" y="199" text-anchor="middle" fill="var(--ink-2)" font-size="12" font-weight="400">N</text>
+        <circle cx="150.0" cy="105.0" r="3" fill="var(--ink)"/><text x="150" y="97" text-anchor="middle" fill="var(--ink)" font-size="14" font-weight="700">a</text>
+        <circle cx="210.6" cy="210.0" r="3" fill="var(--ink)"/><text x="222.62177826491072" y="220.0" text-anchor="middle" fill="var(--ink)" font-size="14" font-weight="700">b</text>
+        <circle cx="89.4" cy="210.0" r="3" fill="var(--ink)"/><text x="77.37822173508928" y="220.0" text-anchor="middle" fill="var(--ink)" font-size="14" font-weight="700">c</text>
+        <path d="M150,105 L210.6,210.0" stroke="var(--ink-2)" stroke-dasharray="4 3" fill="none"/>
+        <text x="206" y="146" text-anchor="start" fill="var(--ink)" font-size="13" font-weight="400">V（線間）</text>
+        <text x="140" y="142" text-anchor="end" fill="var(--accent)" font-size="13" font-weight="700">E（相）</text>
+        <path d="M262,175 H352" stroke="var(--ink-3)" stroke-width="1.6"/><path d="M352,175 l-7,-4 v8 z" fill="var(--ink-3)"/><path d="M262,175 l7,-4 v8 z" fill="var(--ink-3)"/>
+        <text x="307" y="165" text-anchor="middle" fill="var(--ink-2)" font-size="12" font-weight="400">平衡なら</text>
+        <text x="307" y="195" text-anchor="middle" fill="var(--ink)" font-size="13" font-weight="700">Z<tspan baseline-shift="sub" font-size="10">Y</tspan> = Z<tspan baseline-shift="sub" font-size="10">Δ</tspan> / 3</text>
+        <g transform="translate(470,99.17096231345239) rotate(60)"><path d="M0,0 H53 M87,0 H140" stroke="var(--steel)" stroke-width="2.2" fill="none"/><rect x="53" y="-7" width="34" height="14" rx="2" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/></g>
+        <g transform="translate(540,220.4145188432738) rotate(180)"><path d="M0,0 H53 M87,0 H140" stroke="var(--steel)" stroke-width="2.2" fill="none"/><rect x="53" y="-7" width="34" height="14" rx="2" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/></g>
+        <g transform="translate(400,220.4145188432738) rotate(-60)"><path d="M0,0 H53 M87,0 H140" stroke="var(--steel)" stroke-width="2.2" fill="none"/><rect x="53" y="-7" width="34" height="14" rx="2" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/></g>
+        <path d="M470.0,99.2 l0,-24" stroke="var(--steel)" stroke-width="2.2"/>
+        <circle cx="470.0" cy="99.2" r="3" fill="var(--ink)"/>
+        <path d="M540.0,220.4 l20,12" stroke="var(--steel)" stroke-width="2.2"/>
+        <circle cx="540.0" cy="220.4" r="3" fill="var(--ink)"/>
+        <path d="M400.0,220.4 l-20,12" stroke="var(--steel)" stroke-width="2.2"/>
+        <circle cx="400.0" cy="220.4" r="3" fill="var(--ink)"/>
+        <text x="480" y="85.17096231345239" text-anchor="start" fill="var(--ink)" font-size="14" font-weight="700">a</text>
+        <text x="564" y="240.4145188432738" text-anchor="start" fill="var(--ink)" font-size="14" font-weight="700">b</text>
+        <text x="376" y="240.4145188432738" text-anchor="end" fill="var(--ink)" font-size="14" font-weight="700">c</text>
+        <text x="462" y="85.17096231345239" text-anchor="end" fill="var(--ink)" font-size="13" font-weight="400">I（線）</text>
+        <text x="532" y="150" text-anchor="start" fill="var(--accent)" font-size="13" font-weight="700">I<tspan baseline-shift="sub" font-size="10">p</tspan>（相）</text>
+        <text x="150" y="290" text-anchor="middle" fill="var(--ink)" font-size="13" font-weight="400">線間電圧 V = √3 × 相電圧 E</text>
+        <text x="150" y="308" text-anchor="middle" fill="var(--ink-2)" font-size="12" font-weight="400">線電流 = 相電流</text>
+        <text x="470" y="290" text-anchor="middle" fill="var(--ink)" font-size="13" font-weight="400">線間電圧 = 相電圧</text>
+        <text x="470" y="308" text-anchor="middle" fill="var(--ink-2)" font-size="12" font-weight="400">線電流 I = √3 × 相電流 I<tspan baseline-shift="sub" font-size="10">p</tspan></text>
+      </svg></button>
+    <p class="figcap">図をタップすると拡大する。平衡三相の負荷の結線図。橙が1つの負荷 Z と、そこにかかる・流れる相の量。</p>
+    <div class="tbl"><table>
+      <tr><th></th><th>Y 結線</th><th>Δ 結線</th></tr>
+      <tr><th>線間電圧</th><td>V<sub>ab</sub> は相電圧 E<sub>a</sub> の √3 倍（相順 a→b→c なら E<sub>a</sub> より 30° 進む）</td><td>相電圧と同じ</td></tr>
+      <tr><th>線電流</th><td>相電流と同じ</td><td>I<sub>a</sub> は相電流 I<sub>ab</sub> の √3 倍（相順 a→b→c なら I<sub>ab</sub> より 30° 遅れる）</td></tr>
+      <tr><th>平衡負荷の置き換え</th><td>Z<sub>Y</sub> = Z<sub>Δ</sub> / 3</td><td>Z<sub>Δ</sub> = 3·Z<sub>Y</sub></td></tr>
+    </table></div>
+    <p><b>解き方の基本は「Y に直して1相分で計算」。</b>Δ 負荷は Z/3 の Y に置き換える。相電圧 V/√3 を換算後の1相のインピーダンス Z/3 で割ると、換算後の Y の相電流（＝線電流）が出る。元の Δ の相電流は、その 1/√3。
+    電力は1相分の3倍、または √3·V·I·cosθ。θ は相電圧と相電流の位相差（負荷のインピーダンス角）で、線間電圧と線電流の位相差ではない。</p>`,
+};
 function cardBody(k){ return CARD_BODY[k] || ''; }
-function bindCards(){ syncCards(); }
+/* 図のカード → その図で解ける過去問（KAKOMON の行）。図を見て閉じず、過去問へ進む道を作る */
+function cardQs(k){
+  const qs = (CARDS[k].q || []).map(id => QID.get(id)).filter(Boolean);
+  if (!qs.length) return '';
+  return `<div class="secgroup" style="margin-top:12px"><span>この図で解く過去問 ${qs.length}問</span></div>
+    <ul class="kak">${qs.map(q=>`<li><span class="id">${q.s} 問${q.c}</span><span><a href="${secUrl(q.p,q.sec)}" target="_blank" rel="noopener">${esc(q.t)}</a></span></li>`).join('')}</ul>`;
+}
+function bindCards(){
+  const cs = document.getElementById('cards');
+  if (cs) cs.querySelectorAll('.figzoom').forEach(b=>b.onclick=()=>{
+    let dlg = document.getElementById('figdlg');
+    if (!dlg){
+      dlg = document.createElement('dialog'); dlg.id = 'figdlg';
+      dlg.onclick = ()=>dlg.close();
+      document.body.appendChild(dlg);
+    }
+    dlg.innerHTML = b.innerHTML + '<p>どこかをタップすると閉じる（画面が狭いときは横にスクロールできる）</p>';
+    dlg.showModal();
+  });
+  syncCards();
+}
 function syncCards(){
   const vn = document.getElementById('viewnote'); if (!vn) return;
   const N = {
@@ -5061,6 +5142,8 @@ function renderPanel(){
   const tourBySec = {}; st.tour.forEach((x,k)=>{ if (x.sec && !(x.sec in tourBySec)) tourBySec[x.sec] = k; });
   /* 過去問1問 → その問題を名指ししているツアーの歩 */
   const stepByQ = {}; st.tour.forEach((x,k)=>{ for (const qid of (x.q||[])) if (!(qid in stepByQ)) stepByQ[qid] = k; });
+  /* 図（拡大できる SVG）を持つカード。最初から開き、冒頭から飛べるようにする */
+  const figCards = (st.cards||[]).filter(k=>cardBody(k).includes('class="figzoom"'));
   const charts = `<canvas class="mini" id="mini" width="700" height="300"></canvas><p class="mini-cap" id="miniCap"></p>`;
   panel.innerHTML = `
     <div class="kicker">${esc(m.kicker)}</div>
@@ -5068,6 +5151,7 @@ function renderPanel(){
     <div class="oneliner"><small>30秒理解</small>${esc(st.oneLiner)}</div>
     <p class="lead">${esc(m.lead)}</p>
     <p class="viewnote" id="viewnote"></p>
+    ${figCards.length ? `<p class="figjump">図で見る：${figCards.map(k=>`<button data-fig="${k}">${esc(CARDS[k].t)} ↓</button>`).join('')}</p>` : ''}
 
     <h3>電験で狙われるポイント</h3>
     <ul class="exam">${st.exam.map(([n,f,w])=>`<li><span class="en">${esc(n)}</span><span class="ef">${esc(f)}</span><span class="ew">${mark(w)}</span></li>`).join('')}</ul>
@@ -5089,7 +5173,7 @@ function renderPanel(){
     <ul class="parts">${m.parts.map(([c,n,d])=>`<li><span class="sw" style="background:${c}"></span><div><b>${esc(n)}</b>${d?`<br><span>${mark(d)}</span>`:''}</div></li>`).join('')}</ul>
 
     <h3>もう一歩</h3>
-    <div class="cards" id="cards">${(st.cards||[]).map(k=>`<details data-card="${k}"><summary>${esc(CARDS[k].t)}</summary><div class="cbody">${cardBody(k)}</div></details>`).join('')}</div>
+    <div class="cards" id="cards">${(st.cards||[]).map(k=>`<details data-card="${k}"${figCards.includes(k)?' open':''}><summary>${esc(CARDS[k].t)}</summary><div class="cbody">${cardBody(k)}${cardQs(k)}</div></details>`).join('')}</div>
 
     <h3>即答チェック</h3>
     <ul class="check">${st.check.map(([q,a])=>`<li><details><summary>${esc(q)}</summary><p>${esc(a)}</p></details></li>`).join('')}</ul>
@@ -5114,6 +5198,10 @@ function renderPanel(){
     <div class="note">過去問の行をクリックすると、その論点のWikiの節が開く。解説・答えはWiki側。ここは形と動きを見る場所。</div>`;
   bindQuiz(st);
   bindCards();
+  panel.querySelectorAll('[data-fig]').forEach(b=>b.onclick=()=>{
+    const d = panel.querySelector(`details[data-card="${b.dataset.fig}"]`); if (!d) return;
+    d.open = true; d.scrollIntoView({behavior: reduced?'auto':'smooth', block:'start'});
+  });
   panel.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{
     tourStep = +b.dataset.step; renderTour();
     document.getElementById('tour').scrollIntoView({behavior: reduced?'auto':'smooth', block:'center'});
