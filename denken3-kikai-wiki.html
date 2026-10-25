@@ -21582,6 +21582,311 @@ const SyncPhasorFig = () => /*#__PURE__*/React.createElement(DiagramFrame, {
     fill: 'var(--ink-mute)'
   }
 }, "発電機は符号が逆（E = V + j xs I）"));
+
+/* 同期機（回転界磁形）の構造。直流機の図1.1.1 と同じく、左が軸に垂直な断面、右が軸方向の別位置。
+   幾何の約束: 角度 θ は右（3時）を 0° として反時計回りに測り、画面座標は (cx + r cosθ, cy − r sinθ)
+   （SVG は y 軸が下向きなので sin の符号を反転する）。
+   4極・突極形（水車発電機の型）。機械角 30° ごとに電機子のコイル辺を置き、電気角は機械角の2倍。
+   U を 90°（12時）に置くと、V は電気角 120° 遅れ＝機械角 +60°（150°）、W は +120°（210°）、
+   戻り側 U'・V'・W' はそれぞれ1極ピッチ（機械角 90°）先。同じ並びが 180° 先でもう一度繰り返す。
+   回転子は反時計回りに回るので、N極（90°・270°）の中心は U→V→W の順にコイル辺の前を通る
+   ＝起電力は U・V・W の順に 120° ずつ遅れる（相順 U→V→W）。 */
+const SynchronousStructure = () => {
+  const cx = 130,
+    cy = 118;
+  const pt = (r, deg) => [cx + r * Math.cos(deg * Math.PI / 180), cy - r * Math.sin(deg * Math.PI / 180)];
+  const sides = [[90, "U"], [120, "W'"], [150, "V"], [180, "U'"], [210, "W"], [240, "V'"], [270, "U"], [300, "W'"], [330, "V"], [0, "U'"], [30, "W"], [60, "V'"]];
+  const poles = [[90, "N"], [180, "S"], [270, "N"], [0, "S"]];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "diagram"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: "8px 18px"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 260 276",
+    width: "300",
+    xmlns: "http://www.w3.org/2000/svg",
+    fill: "none",
+    strokeWidth: "1.4",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    role: "img",
+    "aria-label": "図1.3.0（1枚目）同期発電機の断面。固定子に三相の電機子巻線、回転子に4つの界磁極"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: "92",
+    className: "diagram-stroke"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: "62",
+    className: "diagram-stroke"
+  }), sides.map(([deg, lb], i) => {
+    const [x, y] = pt(76, deg);
+    const ret = lb.endsWith("'");
+    return /*#__PURE__*/React.createElement("g", {
+      key: "as" + i
+    }, /*#__PURE__*/React.createElement("circle", {
+      cx: x,
+      cy: y,
+      r: "8",
+      stroke: "var(--accent)",
+      strokeWidth: "1.4",
+      fill: ret ? "var(--bg-elev)" : "var(--accent-soft)"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: x,
+      y: y + 3.4,
+      textAnchor: "middle",
+      fontSize: "10",
+      fontWeight: "700",
+      fill: "var(--accent-ink)"
+    }, lb));
+  }), poles.map(([deg]) => /*#__PURE__*/React.createElement("g", {
+    key: "pl" + deg,
+    transform: `rotate(${90 - deg} ${cx} ${cy})`
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: cx - 11,
+    y: cy - 46,
+    width: "22",
+    height: "26",
+    className: "diagram-stroke diagram-fill-bg"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: cx - 18,
+    y: cy - 56,
+    width: "36",
+    height: "10",
+    rx: "2",
+    className: "diagram-stroke diagram-fill-bg"
+  }))), /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: "22",
+    className: "diagram-stroke diagram-fill-bg"
+  }), poles.map(([deg, lb]) => {
+    const [x, y] = pt(34, deg);
+    return /*#__PURE__*/React.createElement("text", {
+      key: "pn" + deg,
+      x: x,
+      y: y + 4,
+      textAnchor: "middle",
+      className: "diagram-text",
+      fontSize: "11",
+      fontWeight: "700"
+    }, lb);
+  }), poles.flatMap(([deg]) => [-1, 1].map(s => {
+    const t = deg * Math.PI / 180;
+    const x = cx + 34 * Math.cos(t) - s * 15.5 * Math.sin(t);
+    const y = cy - 34 * Math.sin(t) - s * 15.5 * Math.cos(t);
+    return /*#__PURE__*/React.createElement("circle", {
+      key: "fw" + deg + s,
+      cx: x,
+      cy: y,
+      r: "2.8",
+      fill: "var(--warn)",
+      stroke: "none"
+    });
+  })), /*#__PURE__*/React.createElement("path", {
+    d: `M ${pt(13, -45).join(" ")} A 13 13 0 1 0 ${pt(13, 225).join(" ")}`,
+    stroke: "var(--ink)",
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("polygon", {
+    points: "125.8,132.1 119.3,128.7 122.4,125.6",
+    fill: "var(--ink)",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: "3.5",
+    fill: "var(--ink)",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "20",
+    cy: "232",
+    r: "5",
+    stroke: "var(--accent)",
+    strokeWidth: "1.4",
+    fill: "var(--accent-soft)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "30",
+    y: "236",
+    fontSize: "10.5",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "固定子＝電機子（三相交流・大電流）"), /*#__PURE__*/React.createElement("circle", {
+    cx: "20",
+    cy: "250",
+    r: "2.8",
+    fill: "var(--warn)",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "30",
+    y: "254",
+    fontSize: "10.5",
+    fontWeight: "700",
+    fill: "var(--warn)"
+  }, "回転子＝界磁（直流で励磁・小電力）"), /*#__PURE__*/React.createElement("circle", {
+    cx: "20",
+    cy: "268",
+    r: "5",
+    stroke: "var(--accent)",
+    strokeWidth: "1.4",
+    fill: "var(--bg-elev)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "30",
+    y: "272",
+    fontSize: "10.5",
+    className: "diagram-text"
+  }, "白抜き＝戻り側（U'・V'・W'）")), /*#__PURE__*/React.createElement("svg", {
+    viewBox: "244 8 228 226",
+    width: "255",
+    xmlns: "http://www.w3.org/2000/svg",
+    fill: "none",
+    strokeWidth: "1.4",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    role: "img",
+    "aria-label": "図1.3.0（2枚目）スリップリングとブラシ。直流の界磁電流だけが通る"
+  }, /*#__PURE__*/React.createElement("text", {
+    x: "360",
+    y: "22",
+    textAnchor: "middle",
+    className: "diagram-text",
+    fontSize: "10"
+  }, "スリップリングとブラシ（軸方向の別位置）"), /*#__PURE__*/React.createElement("rect", {
+    x: "322",
+    y: "34",
+    width: "90",
+    height: "20",
+    rx: "3",
+    stroke: "var(--warn)",
+    strokeWidth: "1.4",
+    fill: "var(--warn-soft)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "367",
+    y: "48",
+    textAnchor: "middle",
+    fontSize: "10",
+    fontWeight: "700",
+    fill: "var(--warn)"
+  }, "励磁装置（直流）"), /*#__PURE__*/React.createElement("line", {
+    x1: "350",
+    y1: "54",
+    x2: "350",
+    y2: "80",
+    stroke: "var(--warn)",
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "384",
+    y1: "54",
+    x2: "384",
+    y2: "80",
+    stroke: "var(--warn)",
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "258",
+    y: "86",
+    width: "44",
+    height: "64",
+    className: "diagram-stroke diagram-fill-bg"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "280",
+    y: "115",
+    textAnchor: "middle",
+    className: "diagram-text",
+    fontSize: "10"
+  }, "回転子"), /*#__PURE__*/React.createElement("text", {
+    x: "280",
+    y: "129",
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "var(--warn)"
+  }, "（界磁）"), /*#__PURE__*/React.createElement("line", {
+    x1: "302",
+    y1: "118",
+    x2: "456",
+    y2: "118",
+    className: "diagram-stroke"
+  }), /*#__PURE__*/React.createElement("ellipse", {
+    cx: "350",
+    cy: "118",
+    rx: "6",
+    ry: "18",
+    className: "diagram-stroke diagram-fill-bg"
+  }), /*#__PURE__*/React.createElement("ellipse", {
+    cx: "384",
+    cy: "118",
+    rx: "6",
+    ry: "18",
+    className: "diagram-stroke diagram-fill-bg"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "344",
+    y: "80",
+    width: "12",
+    height: "20",
+    fill: "var(--warn-soft)",
+    stroke: "var(--warn)",
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "378",
+    y: "80",
+    width: "12",
+    height: "20",
+    fill: "var(--warn-soft)",
+    stroke: "var(--warn)",
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "420",
+    y: "94",
+    className: "diagram-text",
+    fontSize: "10"
+  }, "ブラシ"), /*#__PURE__*/React.createElement("text", {
+    x: "420",
+    y: "146",
+    className: "diagram-text",
+    fontSize: "10"
+  }, "リング"), /*#__PURE__*/React.createElement("line", {
+    x1: "418",
+    y1: "143",
+    x2: "391",
+    y2: "128",
+    className: "diagram-stroke-soft",
+    strokeDasharray: "3 3"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "360",
+    y: "174",
+    textAnchor: "middle",
+    className: "diagram-text",
+    fontSize: "10"
+  }, "ブラシとリングを通るのは"), /*#__PURE__*/React.createElement("text", {
+    x: "360",
+    y: "189",
+    textAnchor: "middle",
+    fontSize: "10",
+    fontWeight: "700",
+    fill: "var(--warn)"
+  }, "直流の界磁電流だけ（小電力）"), /*#__PURE__*/React.createElement("text", {
+    x: "360",
+    y: "212",
+    textAnchor: "middle",
+    className: "diagram-text",
+    fontSize: "10"
+  }, "三相の出力（大電流）は"), /*#__PURE__*/React.createElement("text", {
+    x: "360",
+    y: "227",
+    textAnchor: "middle",
+    fontSize: "10",
+    fontWeight: "700",
+    fill: "var(--accent-ink)"
+  }, "固定子の端子から直接取り出す"))), /*#__PURE__*/React.createElement("div", {
+    className: "diagram-caption"
+  }, "— 図1.3.0  同期発電機（回転界磁形）の構造。1枚目は軸に垂直な断面（突極形＝水車発電機の型。図は4極で描いたが、実機の水車発電機はもっと多極）。固定子に三相の電機子巻線（U・V・W と戻り側 U'・V'・W'）、回転子に直流で励磁する界磁極がある。4極なので各相のコイルは2組ある。回転子が矢印の向き（反時計回り）に回ると、N極は U→V→W の順にコイル辺の前を通るので、起電力は U・V・W の順に 120° ずつ遅れる（U と V の間にある W' は W の戻り側）。2枚目は軸方向の別位置にあるスリップリングとブラシで、ここを通るのは直流の界磁電流だけ（スリップリングを使う励磁方式の場合）。直流機（図1.1.1）とは界磁と電機子の置き場所が逆である。 —"));
+};
 const SynchronousPage = ({
   onNav
 }) => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Crumbs, {
@@ -21646,13 +21951,22 @@ const SynchronousPage = ({
   id: "structure"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "1."), "構造と動作"), /*#__PURE__*/React.createElement("p", null, "同期機は、磁束をつくる巻線（", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "界磁")), "。直流で", /*#__PURE__*/React.createElement(Term, null, "励磁"), "する）と、起電力が誘導されて負荷電流が流れる巻線（", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "電機子")), "）からなる。直流機とは置き場所が逆で、", /*#__PURE__*/React.createElement(Term, null, "固定子"), "が電機子（三相巻線）、", /*#__PURE__*/React.createElement(Term, null, "回転子"), "が界磁である。こうすると三相の大電流を回転子から取り出さずに済み、", /*#__PURE__*/React.createElement(Term, null, "スリップリング"), "には小さな直流の界磁電流だけを通せばよい。回転子は同期運転中 ", /*#__PURE__*/React.createElement("span", {
+}, "1."), "構造と動作"), /*#__PURE__*/React.createElement("p", null, "同期機は、磁束をつくる巻線（", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "界磁")), "。直流で", /*#__PURE__*/React.createElement(Term, null, "励磁"), "する）と、起電力が誘導されて負荷電流が流れる巻線（", /*#__PURE__*/React.createElement("strong", null, /*#__PURE__*/React.createElement(Term, null, "電機子")), "）からなる。直流機とは置き場所が逆で、", /*#__PURE__*/React.createElement(Term, null, "固定子"), "が電機子（三相巻線）、", /*#__PURE__*/React.createElement(Term, null, "回転子"), "が界磁である。こうすると三相の大電流を回転子から取り出さずに済み、", /*#__PURE__*/React.createElement(Term, null, "スリップリング"), "には小さな直流の界磁電流だけを通せばよい。電機子巻線が静止しているので、導体の絶縁も容易になる。この形を", /*#__PURE__*/React.createElement("strong", null, "回転界磁形"), "といい、小容量のものを除けば同期発電機は一般にこの形である（H30 問5 は、この置き場所を穴埋めで問うた。理由の「導体の絶縁が容易」「大きな電流が取り出せる」は問題文に書かれていた）。回転子は同期運転中 ", /*#__PURE__*/React.createElement("span", {
   className: "marker"
 }, "常に", /*#__PURE__*/React.createElement(Term, null, "同期速度")), " ", /*#__PURE__*/React.createElement(Eq, {
   tex: "N_s = 120f/p"
 }), " で回る。", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "誘導機と異なり", /*#__PURE__*/React.createElement(Term, null, "滑り"), "はゼロ"), "。"), /*#__PURE__*/React.createElement(Box, {
+}, "誘導機と異なり", /*#__PURE__*/React.createElement(Term, null, "滑り"), "はゼロ"), "。"), /*#__PURE__*/React.createElement(SynchronousStructure, null), /*#__PURE__*/React.createElement("p", {
+  style: {
+    margin: "6px 0 0",
+    fontSize: "13px"
+  }
+}, "立体で見るなら ", /*#__PURE__*/React.createElement("a", {
+  href: "denken3-kikai-3d.html#synchronous",
+  target: "_blank",
+  rel: "noopener"
+}, "3D工場の同期機 ↗"), "。"), /*#__PURE__*/React.createElement(Box, {
   kind: "example",
   label: "理解を深める — 起電力の正体は理論「電磁誘導」"
 }, /*#__PURE__*/React.createElement("p", null, "同期発電機が電圧を生むのは、回転する ", /*#__PURE__*/React.createElement("strong", null, "界磁の磁束"), " が固定子（電機子）巻線を周期的に切るから。これは理論で学ぶ ", /*#__PURE__*/React.createElement("strong", null, "電磁誘導（ファラデーの法則）"), " ", /*#__PURE__*/React.createElement(Eq, {
