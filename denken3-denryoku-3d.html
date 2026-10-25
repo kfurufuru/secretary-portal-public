@@ -117,6 +117,10 @@ header h1 small{font-family:var(--font-sans);font-weight:400;color:var(--ink-3);
 .check summary{cursor:pointer;font-size:13px;font-weight:500}
 .check summary::marker{color:var(--accent)}
 .check p{margin:8px 0 0;font-size:12.5px;color:var(--ink-2)}
+.check .ckprev{font-size:11.5px;font-weight:400;color:var(--ink-3)}
+.ckbtn{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:var(--ink-3)}
+.ckbtn button{font:inherit;font-size:12px;padding:3px 9px;border:1px solid var(--line-2);border-radius:4px;background:var(--panel);color:var(--ink-2);cursor:pointer}
+.ckbtn button.on{border-color:var(--accent);color:var(--accent);font-weight:600}
 .labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .lbl{position:absolute;transform:translate(-50%,-100%);font-size:11.5px;color:#E9EDF0;background:rgba(16,20,26,.72);padding:2px 8px;border-radius:3px;white-space:nowrap;letter-spacing:.02em;border-left:2px solid var(--lc,#B5601F)}
 .lbl.big{font-size:13px;font-weight:500;padding:4px 10px;pointer-events:auto;cursor:pointer}
@@ -5107,7 +5111,8 @@ function renderPanel(){
     <div class="cards" id="cards">${(st.cards||[]).map(k=>`<details data-card="${k}"${figCards.includes(k)?' open':''}><summary>${esc(CARDS[k].t)}</summary><div class="cbody">${cardBody(k)}${cardQs(k)}</div></details>`).join('')}</div>
 
     <h3>即答チェック</h3>
-    <ul class="check">${st.check.map(([q,a])=>`<li><details><summary>${esc(q)}</summary><p>${esc(a)}</p></details></li>`).join('')}</ul>
+    <p class="qnote">開く前に答えを言ってみる。開いたら、言えたかを押す（この端末に記録し、言えなかった問題は間違いノートに入る）。</p>
+    <ul class="check" id="check">${st.check.map(([q,a],i)=>`<li data-c="${i}"><details><summary>${esc(q)}<span class="ckprev"></span></summary><p>${esc(a)}</p><div class="ckbtn"><span>言えたか</span><button data-s="understood">◎ 言えた</button><button data-s="vague">△ うろ覚え</button><button data-s="wrong">× 言えなかった</button></div></details></li>`).join('')}</ul>
 
     <h3>次にやること</h3>
     <div class="steps">
@@ -5128,6 +5133,7 @@ function renderPanel(){
       <p class="note">解説サイトの題名を索引として写したもので、問題冊子では確かめていない。上の件数には入れていない。</p></details>` : ''}
     <div class="note">過去問の行をクリックすると、その論点のWikiの節が開く。解説・答えはWiki側。ここは形と動きを見る場所。</div>`;
   bindQuiz(st);
+  bindCheck(st);
   bindCards();
   panel.querySelectorAll('[data-fig]').forEach(b=>b.onclick=()=>{
     const d = panel.querySelector(`details[data-card="${b.dataset.fig}"]`); if (!d) return;
@@ -5148,7 +5154,7 @@ function mark(t){ return esc(t).replace(/\*\*(.+?)\*\*/g, '<b style="color:var(-
    答えをこの端末に残す。間違えた問題は、Wiki の「間違いノート」（denken-hoki-wiki.html#chokuzen-machigai）に
    自動で入る。間違いノートは同じサイトの denken_check:: で始まる記録をすべて集めるので、キーと中身をその形に合わせる。
    ・キー: denken_check::<科目>_3d-<単元>::predict::<問題文のハッシュ>（問題を並べ替えても記録がずれない）
-   ・status: 一発で正解＝understood（◎）／間違い＝wrong（×）／前に間違えた問題を正解＝vague（△。後日また出す）。
+   ・status: 一発で正解＝understood（◎）／間違い＝wrong（×）／前に間違えた問題を正解・うろ覚え＝vague（△ 要復習。後日また出す）。
      間違えた日と同じ日に解き直して正解しても △ のまま（答えを見た直後の正解は、思い出したことにならない） */
 const REC_SUBJ = 'denryoku', REC_NAME = '電力';
 function recHash(s){ let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; return h.toString(36); }
@@ -5158,29 +5164,59 @@ function recRead(key){
   catch (e) { return null; }
 }
 const recDay = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; };
-function recWrite(id, item, ok){
-  const key = recKey(id, item), prev = recRead(key), now = new Date().toISOString(), m = MACHINES[id];
+/* 記録の共通部。res は 'good'（正解・言えた）／'vague'（うろ覚え）／'bad'（間違い・言えなかった）。
+   前に間違えた問題は、別の日に正解して初めて ◎ に戻す */
+function recSave(id, key, res, fields){
+  const prev = recRead(key), now = new Date().toISOString(), m = MACHINES[id];
   const weak = prev && (prev.status === 'wrong' || prev.status === 'vague');
-  const status = !ok ? 'wrong'
+  const status = res === 'bad' ? 'wrong' : res === 'vague' ? 'vague'
     : !weak ? 'understood'
     : (prev.status === 'wrong' || recDay(prev.updatedAt) === recDay(now)) ? 'vague' : 'understood';
-  const K = 'アイウエオ';
-  const rec = {
-    status, itemType: '3d-predict', lastAnswerCorrect: ok,
+  const rec = Object.assign({
+    status,
     articleTitle: `${REC_NAME}3D工場 — ${m.num} ${m.title}`,
     articleUrl: `denken3-${REC_SUBJ}-3d.html#${id}`,
-    itemTitle: `${item.q}（${item.opts.map((o, k) => K[k] + ' ' + o).join('／')}）`,
-    memo: `A: ${K[item.ans]} ${item.opts[item.ans]}\n${item.why}`,
     updatedAt: now, firstSeenAt: (prev && prev.firstSeenAt) || now, reviewCount: ((prev && prev.reviewCount) || 0) + 1,
-  };
+  }, fields);
   try { localStorage.setItem(key, JSON.stringify(rec)); } catch (e) { return null; }   // 保存できない環境（シークレット等）でもクイズは動かす
   return rec;
 }
-const REC_MARK = { understood: '◎ 一発で正解', vague: '△ 間違えた後に正解', review: '△ 要確認', wrong: '× 間違えた' };
+function recWrite(id, item, ok){
+  const K = 'アイウエオ';
+  return recSave(id, recKey(id, item), ok ? 'good' : 'bad', {
+    itemType: '3d-predict', lastAnswerCorrect: ok,
+    itemTitle: `${item.q}（${item.opts.map((o, k) => K[k] + ' ' + o).join('／')}）`,
+    memo: `A: ${K[item.ans]} ${item.opts[item.ans]}\n${item.why}`,
+  });
+}
+/* 即答チェック: 開く前に答えを言ってみて、開いたら「言えたか」を自分で押す（自己評価なので lastAnswerCorrect は持たない）。
+   △ うろ覚えは vague として記録する（後日また出す） */
+function recCheckKey(id, q){ return `denken_check::${REC_SUBJ}_3d-${id}::check::${recHash(q)}`; }
+function recCheck(id, q, a, s){
+  const res = s === 'understood' ? 'good' : s === 'vague' ? 'vague' : 'bad';
+  return recSave(id, recCheckKey(id, q), res, { itemType: '3d-check', itemTitle: q, memo: `A: ${a}` });
+}
+const REC_MARK = { understood: '◎ 一発で正解', vague: '△ 要復習', review: '△ 要確認', wrong: '× 間違えた' };
 function recLine(rec){
   if (!rec) return '';
   const d = new Date(rec.updatedAt);
   return `前回 ${REC_MARK[rec.status] || ''}${isNaN(d) ? '' : `（${d.getMonth()+1}/${d.getDate()}）`}`;
+}
+
+/* 即答チェックの自己評価（記録は recCheck） */
+function bindCheck(st){
+  const box = document.getElementById('check'); if (!box) return;
+  box.querySelectorAll('li[data-c]').forEach(li=>{
+    const [q, a] = st.check[+li.dataset.c];
+    const prevEl = li.querySelector('.ckprev');
+    const line = recLine(recRead(recCheckKey(state.current, q)));
+    prevEl.textContent = line ? '　' + line : '';
+    li.querySelectorAll('.ckbtn button').forEach(b=>b.onclick = ()=>{
+      const rec = recCheck(state.current, q, a, b.dataset.s);
+      li.querySelectorAll('.ckbtn button').forEach(x=>x.classList.toggle('on', x === b));
+      if (rec) prevEl.textContent = '　今回 ' + REC_MARK[rec.status].split(' ')[0] + ' を記録した';
+    });
+  });
 }
 
 /* ---------- 予想 → 操作 → 確認 ----------
