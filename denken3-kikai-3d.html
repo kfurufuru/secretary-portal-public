@@ -210,6 +210,8 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
 .quiz{list-style:none;padding:0;margin:0;display:grid;gap:10px;counter-reset:q}
 .quiz>li{border:1px solid var(--line);border-radius:6px;padding:11px 13px;background:var(--panel);counter-increment:q}
 .quiz>li.done{border-color:var(--line-2)}
+.qprev{font-size:12px;color:var(--ink-3);margin:2px 0 4px}.qprev:empty{display:none}
+.qnote{font-size:12px;color:var(--ink-3);margin:-2px 0 8px}.qnote a{color:var(--accent)}
 .qq{font-size:13.5px;font-weight:500;line-height:1.6;margin-bottom:9px;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start}
 .qn{font-family:var(--font-mono);font-size:11px;background:var(--steel);color:var(--panel);border-radius:3px;padding:1px 6px;margin-top:3px}
 .qopts{display:grid;gap:5px}
@@ -242,7 +244,7 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
 .cards .k3d{border:1px solid var(--accent);background:transparent;color:var(--accent-ink);border-radius:3px;padding:2px 10px;font-size:12px;min-height:32px}
 #figdlg{width:min(96vw,1100px);max-width:none;max-height:94vh;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);cursor:zoom-out}
 #figdlg::backdrop{background:rgba(0,0,0,.6)}
-#figdlg svg{display:block;width:100%;min-width:680px;height:auto;max-height:86vh}
+#figdlg svg{display:block;width:100%;min-width:480px;max-width:600px;height:auto;margin:0 auto}
 #figdlg p{margin:6px 0 0;font-size:12px;color:var(--ink-3);text-align:center}
 .tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0}
 .tbl table{border-collapse:collapse;width:100%;min-width:min(100%,340px);font-size:12px}
@@ -3169,9 +3171,11 @@ function renderPanel(){
     <ul class="exam">${st.exam.map(([n,f,w])=>`<li><span class="en">${esc(n)}</span><span class="ef">${esc(f)}</span><span class="ew">${mark(w)}</span></li>`).join('')}</ul>
 
     <h3>予想してから動かす</h3>
+    <p class="qnote">答えはこの端末に記録する。間違えた問題は <a href="denken-hoki-wiki.html#chokuzen-machigai" target="_blank" rel="noopener">間違いノート</a> に入り、後で弱点だけ復習できる。</p>
     <ol class="quiz" id="quiz">${st.predict.map((p,i)=>`
       <li data-q="${i}">
         <div class="qq"><span class="qn">Q${i+1}</span><span>${esc(p.q)}</span></div>
+        <div class="qprev"></div>
         <div class="qopts">${p.opts.map((o,k)=>`<button data-o="${k}"><span class="mk">${'アイウエ'[k]}</span><span>${esc(o)}</span></button>`).join('')}</div>
         <div class="qfb" hidden></div>
       </li>`).join('')}</ol>
@@ -3225,6 +3229,45 @@ function renderPanel(){
 /* 見えているものの説明だけ **強調** を許す（本文の意味は変えず、条件語を目立たせるため） */
 function mark(t){ return esc(t).replace(/\*\*(.+?)\*\*/g, '<b style="color:var(--ink)">$1</b>'); }
 
+/* ---------- 予想クイズの記録（学習ループにつなぐ） ----------
+   答えをこの端末に残す。間違えた問題は、Wiki の「間違いノート」（denken-hoki-wiki.html#chokuzen-machigai）に
+   自動で入る。間違いノートは同じサイトの denken_check:: で始まる記録をすべて集めるので、キーと中身をその形に合わせる。
+   ・キー: denken_check::<科目>_3d-<単元>::predict::<問題文のハッシュ>（問題を並べ替えても記録がずれない）
+   ・status: 一発で正解＝understood（◎）／間違い＝wrong（×）／前に間違えた問題を正解＝vague（△。後日また出す）。
+     間違えた日と同じ日に解き直して正解しても △ のまま（答えを見た直後の正解は、思い出したことにならない） */
+const REC_SUBJ = 'kikai', REC_NAME = '機械';
+function recHash(s){ let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; return h.toString(36); }
+function recKey(id, item){ return `denken_check::${REC_SUBJ}_3d-${id}::predict::${recHash(item.q)}`; }
+function recRead(key){
+  try { const v = JSON.parse(localStorage.getItem(key) || 'null'); return (v && typeof v === 'object' && v.status) ? v : null; }
+  catch (e) { return null; }
+}
+const recDay = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; };
+function recWrite(id, item, ok){
+  const key = recKey(id, item), prev = recRead(key), now = new Date().toISOString(), m = MACHINES[id];
+  const weak = prev && (prev.status === 'wrong' || prev.status === 'vague');
+  const status = !ok ? 'wrong'
+    : !weak ? 'understood'
+    : (prev.status === 'wrong' || recDay(prev.updatedAt) === recDay(now)) ? 'vague' : 'understood';
+  const K = 'アイウエオ';
+  const rec = {
+    status, itemType: '3d-predict', lastAnswerCorrect: ok,
+    articleTitle: `${REC_NAME}3D工場 — ${m.num} ${m.title}`,
+    articleUrl: `denken3-${REC_SUBJ}-3d.html#${id}`,
+    itemTitle: `${item.q}（${item.opts.map((o, k) => K[k] + ' ' + o).join('／')}）`,
+    memo: `A: ${K[item.ans]} ${item.opts[item.ans]}\n${item.why}`,
+    updatedAt: now, firstSeenAt: (prev && prev.firstSeenAt) || now, reviewCount: ((prev && prev.reviewCount) || 0) + 1,
+  };
+  try { localStorage.setItem(key, JSON.stringify(rec)); } catch (e) { return null; }   // 保存できない環境（シークレット等）でもクイズは動かす
+  return rec;
+}
+const REC_MARK = { understood: '◎ 一発で正解', vague: '△ 間違えた後に正解', review: '△ 要確認', wrong: '× 間違えた' };
+function recLine(rec){
+  if (!rec) return '';
+  const d = new Date(rec.updatedAt);
+  return `前回 ${REC_MARK[rec.status] || ''}${isNaN(d) ? '' : `（${d.getMonth()+1}/${d.getDate()}）`}`;
+}
+
 /* ---------- 予想 → 操作 → 確認 ----------
    選ぶ前に答えを見せない。選んだ瞬間に 3D と操作帯を実際にその状態へ動かし、
    どの読み値の話かを光らせる。式の暗記を「見た動き」に結び直すのが狙い。 */
@@ -3234,6 +3277,8 @@ function bindQuiz(st){
     const qi = +li.dataset.q, item = st.predict[qi];
     const fb = li.querySelector('.qfb');
     const btns = [...li.querySelectorAll('.qopts button')];
+    const prevEl = li.querySelector('.qprev');
+    prevEl.textContent = recLine(recRead(recKey(state.current, item)));
     const answer = (k)=>{
       const ok = k === item.ans;
       btns.forEach((b,bi)=>{ b.disabled = true;
@@ -3241,6 +3286,8 @@ function bindQuiz(st){
         else if (bi === k) b.classList.add('ng');
         else b.classList.add('dim'); });
       li.classList.add('done');
+      const rec = recWrite(state.current, item, ok);
+      if (rec) prevEl.textContent = '今回 ' + REC_MARK[rec.status].split(' ')[0] + ' を記録した（間違いノートに反映）';
       fb.hidden = false;
       fb.innerHTML = '<span class="verdict '+(ok?'ok':'ng')+'">'+(ok?'正解':'惜しい')+'</span>'+esc(item.why)
         + '<br><button class="again">もう一度やる</button>';
@@ -3383,43 +3430,17 @@ function cardBody(k){
     <p><b>直流機は、界磁が止まり、電機子が回る（回転電機子形）。</b>同期機とは置き場所が逆。
     電機子の電流は整流子とブラシを通って出入りする（整流子のはたらきは「整流子が向きをそろえる」カード）。
     界磁巻線をどこから給電するかで4種類に分かれ、それで速度とトルクの特性が決まる。図は電動機の場合。</p>
-    <button class="figzoom" type="button" aria-label="図を拡大する"><svg viewBox="0 0 640 436" role="img" aria-label="直流電動機の4つの励磁方式の結線図。他励・分巻・直巻・複巻" font-family="var(--font-sans)" font-size="15">
-        <rect x="12" y="10" width="13" height="13" rx="2" fill="var(--accent)"/><text x="31" y="22" fill="var(--ink-2)" font-size="13">回る（電機子 A）</text><rect x="170" y="10" width="13" height="13" rx="2" fill="var(--steel)"/><text x="189" y="22" fill="var(--ink-2)" font-size="13">止まっている（界磁・ブラシ・配線）</text>
-        <line x1="320" y1="40" x2="320" y2="430" stroke="var(--line)"/><line x1="8" y1="232" x2="632" y2="232" stroke="var(--line)"/>
-        <text x="12" y="58" fill="var(--ink)" font-size="15" font-weight="700">他励</text><text x="52" y="58" fill="var(--ink-2)" font-size="12">界磁は別の電源</text>
-        <circle cx="30" cy="84" r="3.5" fill="var(--steel)"/><circle cx="30" cy="184" r="3.5" fill="var(--steel)"/><text x="18" y="89" text-anchor="end" fill="var(--ink-2)" font-size="13">+</text><text x="18" y="189" text-anchor="end" fill="var(--ink-2)" font-size="13">−</text><text x="22" y="139" text-anchor="middle" fill="var(--ink-2)" font-size="12">V</text>
-        <path d="M30,84 H130 V106 M130,162 V184 H30" stroke="var(--steel)" stroke-width="2" fill="none"/>
-        <circle cx="130" cy="134" r="18" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.2"/><text x="130" y="139" text-anchor="middle" fill="var(--accent-ink)" font-size="14" font-weight="700">A</text><rect x="124" y="106" width="12" height="9" fill="var(--steel)"/><rect x="124" y="153" width="12" height="9" fill="var(--steel)"/>
-        <path d="M230,114 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10" stroke="var(--steel)" stroke-width="2" fill="none"/>
-        <path d="M230,114 V94 H290 V126 M230,154 V174 H290 V142" stroke="var(--steel)" stroke-width="2" fill="none"/>
-        <path d="M280,126 H300" stroke="var(--steel)" stroke-width="1.6"/><path d="M285,142 H295" stroke="var(--steel)" stroke-width="3.5"/>
-        <text x="242" y="138" fill="var(--ink-2)" font-size="11">界磁</text>
-        <text x="12" y="206" fill="var(--ink)" font-size="12">I = Ia。Φ を電機子と別に決められる</text><text x="12" y="222" fill="var(--ink-2)" font-size="12">速度はほぼ一定</text>
-        <text x="332" y="58" fill="var(--ink)" font-size="15" font-weight="700">分巻</text><text x="372" y="58" fill="var(--ink-2)" font-size="12">界磁が電機子と並列</text>
-        <circle cx="350" cy="84" r="3.5" fill="var(--steel)"/><circle cx="350" cy="184" r="3.5" fill="var(--steel)"/><text x="338" y="89" text-anchor="end" fill="var(--ink-2)" font-size="13">+</text><text x="338" y="189" text-anchor="end" fill="var(--ink-2)" font-size="13">−</text><text x="342" y="139" text-anchor="middle" fill="var(--ink-2)" font-size="12">V</text>
-        <path d="M350,84 H530 V106 M530,162 V184 H350 M440,84 V114 M440,154 V184" stroke="var(--steel)" stroke-width="2" fill="none"/>
-        <path d="M440,114 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10" stroke="var(--steel)" stroke-width="2" fill="none"/>
-        <text x="452" y="138" fill="var(--ink-2)" font-size="11">界磁</text>
-        <circle cx="530" cy="134" r="18" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.2"/><text x="530" y="139" text-anchor="middle" fill="var(--accent-ink)" font-size="14" font-weight="700">A</text><rect x="524" y="106" width="12" height="9" fill="var(--steel)"/><rect x="524" y="153" width="12" height="9" fill="var(--steel)"/>
-        <circle cx="440" cy="84" r="3" fill="var(--steel)"/><circle cx="440" cy="184" r="3" fill="var(--steel)"/>
-        <text x="332" y="206" fill="var(--ink)" font-size="12">I = Ia + If。Φ ほぼ一定 → T ∝ Ia</text><text x="332" y="222" fill="var(--ink-2)" font-size="12">速度はほぼ一定</text>
-        <text x="12" y="262" fill="var(--ink)" font-size="15" font-weight="700">直巻</text><text x="52" y="262" fill="var(--ink-2)" font-size="12">界磁が電機子と直列</text>
-        <circle cx="30" cy="288" r="3.5" fill="var(--steel)"/><circle cx="30" cy="388" r="3.5" fill="var(--steel)"/><text x="18" y="293" text-anchor="end" fill="var(--ink-2)" font-size="13">+</text><text x="18" y="393" text-anchor="end" fill="var(--ink-2)" font-size="13">−</text><text x="22" y="343" text-anchor="middle" fill="var(--ink-2)" font-size="12">V</text>
-        <path d="M30,288 H80 M120,288 H200 V310 M200,366 V388 H30" stroke="var(--steel)" stroke-width="2" fill="none"/>
-        <path d="M80,288 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0" stroke="var(--steel)" stroke-width="2" fill="none"/>
-        <text x="100" y="275" text-anchor="middle" fill="var(--ink-2)" font-size="11">界磁</text>
-        <circle cx="200" cy="338" r="18" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.2"/><text x="200" y="343" text-anchor="middle" fill="var(--accent-ink)" font-size="14" font-weight="700">A</text><rect x="194" y="310" width="12" height="9" fill="var(--steel)"/><rect x="194" y="357" width="12" height="9" fill="var(--steel)"/>
-        <text x="12" y="410" fill="var(--ink)" font-size="12">I = Ia = If。Φ ∝ Ia → T ∝ Ia²（飽和前）</text><text x="12" y="426" fill="var(--ink-2)" font-size="12">無負荷にすると速度が上がりすぎる</text>
-        <text x="332" y="262" fill="var(--ink)" font-size="15" font-weight="700">複巻</text><text x="372" y="262" fill="var(--ink-2)" font-size="12">分巻＋直巻（外分巻）</text>
-        <circle cx="350" cy="288" r="3.5" fill="var(--steel)"/><circle cx="350" cy="388" r="3.5" fill="var(--steel)"/><text x="338" y="293" text-anchor="end" fill="var(--ink-2)" font-size="13">+</text><text x="338" y="393" text-anchor="end" fill="var(--ink-2)" font-size="13">−</text><text x="342" y="343" text-anchor="middle" fill="var(--ink-2)" font-size="12">V</text>
-        <path d="M350,288 H470 M510,288 H560 V310 M560,366 V388 H350 M420,288 V318 M420,358 V388" stroke="var(--steel)" stroke-width="2" fill="none"/>
-        <path d="M420,318 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10" stroke="var(--steel)" stroke-width="2" fill="none"/>
-        <text x="432" y="342" fill="var(--ink-2)" font-size="11">分巻界磁</text>
-        <path d="M470,288 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0" stroke="var(--steel)" stroke-width="2" fill="none"/>
-        <text x="490" y="275" text-anchor="middle" fill="var(--ink-2)" font-size="11">直巻界磁</text>
-        <circle cx="560" cy="338" r="18" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.2"/><text x="560" y="343" text-anchor="middle" fill="var(--accent-ink)" font-size="14" font-weight="700">A</text><rect x="554" y="310" width="12" height="9" fill="var(--steel)"/><rect x="554" y="357" width="12" height="9" fill="var(--steel)"/>
-        <circle cx="420" cy="288" r="3" fill="var(--steel)"/><circle cx="420" cy="388" r="3" fill="var(--steel)"/>
-        <text x="332" y="410" fill="var(--ink)" font-size="12">和動複巻は分巻と直巻の中間の特性</text>
+    <button class="figzoom" type="button" aria-label="図を拡大する"><svg viewBox="0 0 320 832" role="img" aria-label="直流電動機の4つの励磁方式の結線図。他励・分巻・直巻・複巻" font-family="var(--font-sans)" font-size="15">
+        <rect x="12" y="10" width="13" height="13" rx="2" fill="var(--accent)"/>
+        <text x="31" y="22" fill="var(--ink-2)" font-size="13">回る（電機子 A）</text>
+        <g transform="translate(-158,18)"><rect x="170" y="10" width="13" height="13" rx="2" fill="var(--steel)"/><text x="189" y="22" fill="var(--ink-2)" font-size="13">止まっている（界磁・ブラシ・配線）</text></g>
+        <g transform="translate(0,12)"><text x="12" y="58" fill="var(--ink)" font-size="15" font-weight="700">他励</text><text x="52" y="58" fill="var(--ink-2)" font-size="12">界磁は別の電源</text><circle cx="30" cy="84" r="3.5" fill="var(--steel)"/><circle cx="30" cy="184" r="3.5" fill="var(--steel)"/><text x="18" y="89" text-anchor="end" fill="var(--ink-2)" font-size="13">+</text><text x="18" y="189" text-anchor="end" fill="var(--ink-2)" font-size="13">−</text><text x="22" y="139" text-anchor="middle" fill="var(--ink-2)" font-size="12">V</text><path d="M30,84 H130 V106 M130,162 V184 H30" stroke="var(--steel)" stroke-width="2" fill="none"/><circle cx="130" cy="134" r="18" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.2"/><text x="130" y="139" text-anchor="middle" fill="var(--accent-ink)" font-size="14" font-weight="700">A</text><rect x="124" y="106" width="12" height="9" fill="var(--steel)"/><rect x="124" y="153" width="12" height="9" fill="var(--steel)"/><path d="M230,114 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10" stroke="var(--steel)" stroke-width="2" fill="none"/><path d="M230,114 V94 H290 V126 M230,154 V174 H290 V142" stroke="var(--steel)" stroke-width="2" fill="none"/><path d="M280,126 H300" stroke="var(--steel)" stroke-width="1.6"/><path d="M285,142 H295" stroke="var(--steel)" stroke-width="3.5"/><text x="242" y="138" fill="var(--ink-2)" font-size="11">界磁</text><text x="12" y="206" fill="var(--ink)" font-size="12">I = Ia。Φ を電機子と別に決められる</text><text x="12" y="222" fill="var(--ink-2)" font-size="12">速度はほぼ一定</text></g>
+        <g transform="translate(-320,207)"><text x="332" y="58" fill="var(--ink)" font-size="15" font-weight="700">分巻</text><text x="372" y="58" fill="var(--ink-2)" font-size="12">界磁が電機子と並列</text><circle cx="350" cy="84" r="3.5" fill="var(--steel)"/><circle cx="350" cy="184" r="3.5" fill="var(--steel)"/><text x="338" y="89" text-anchor="end" fill="var(--ink-2)" font-size="13">+</text><text x="338" y="189" text-anchor="end" fill="var(--ink-2)" font-size="13">−</text><text x="342" y="139" text-anchor="middle" fill="var(--ink-2)" font-size="12">V</text><path d="M350,84 H530 V106 M530,162 V184 H350 M440,84 V114 M440,154 V184" stroke="var(--steel)" stroke-width="2" fill="none"/><path d="M440,114 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10" stroke="var(--steel)" stroke-width="2" fill="none"/><text x="452" y="138" fill="var(--ink-2)" font-size="11">界磁</text><circle cx="530" cy="134" r="18" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.2"/><text x="530" y="139" text-anchor="middle" fill="var(--accent-ink)" font-size="14" font-weight="700">A</text><rect x="524" y="106" width="12" height="9" fill="var(--steel)"/><rect x="524" y="153" width="12" height="9" fill="var(--steel)"/><circle cx="440" cy="84" r="3" fill="var(--steel)"/><circle cx="440" cy="184" r="3" fill="var(--steel)"/><text x="332" y="206" fill="var(--ink)" font-size="12">I = Ia + If。Φ ほぼ一定 → T ∝ Ia</text><text x="332" y="222" fill="var(--ink-2)" font-size="12">速度はほぼ一定</text></g>
+        <g transform="translate(0,198)"><text x="12" y="262" fill="var(--ink)" font-size="15" font-weight="700">直巻</text><text x="52" y="262" fill="var(--ink-2)" font-size="12">界磁が電機子と直列</text><circle cx="30" cy="288" r="3.5" fill="var(--steel)"/><circle cx="30" cy="388" r="3.5" fill="var(--steel)"/><text x="18" y="293" text-anchor="end" fill="var(--ink-2)" font-size="13">+</text><text x="18" y="393" text-anchor="end" fill="var(--ink-2)" font-size="13">−</text><text x="22" y="343" text-anchor="middle" fill="var(--ink-2)" font-size="12">V</text><path d="M30,288 H80 M120,288 H200 V310 M200,366 V388 H30" stroke="var(--steel)" stroke-width="2" fill="none"/><path d="M80,288 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0" stroke="var(--steel)" stroke-width="2" fill="none"/><text x="100" y="275" text-anchor="middle" fill="var(--ink-2)" font-size="11">界磁</text><circle cx="200" cy="338" r="18" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.2"/><text x="200" y="343" text-anchor="middle" fill="var(--accent-ink)" font-size="14" font-weight="700">A</text><rect x="194" y="310" width="12" height="9" fill="var(--steel)"/><rect x="194" y="357" width="12" height="9" fill="var(--steel)"/><text x="12" y="410" fill="var(--ink)" font-size="12">I = Ia = If。Φ ∝ Ia → T ∝ Ia²（飽和前）</text><text x="12" y="426" fill="var(--ink-2)" font-size="12">無負荷にすると速度が上がりすぎる</text></g>
+        <g transform="translate(-320,393)"><text x="332" y="262" fill="var(--ink)" font-size="15" font-weight="700">複巻</text><text x="372" y="262" fill="var(--ink-2)" font-size="12">分巻＋直巻（外分巻）</text><circle cx="350" cy="288" r="3.5" fill="var(--steel)"/><circle cx="350" cy="388" r="3.5" fill="var(--steel)"/><text x="338" y="293" text-anchor="end" fill="var(--ink-2)" font-size="13">+</text><text x="338" y="393" text-anchor="end" fill="var(--ink-2)" font-size="13">−</text><text x="342" y="343" text-anchor="middle" fill="var(--ink-2)" font-size="12">V</text><path d="M350,288 H470 M510,288 H560 V310 M560,366 V388 H350 M420,288 V318 M420,358 V388" stroke="var(--steel)" stroke-width="2" fill="none"/><path d="M420,318 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10" stroke="var(--steel)" stroke-width="2" fill="none"/><text x="432" y="342" fill="var(--ink-2)" font-size="11">分巻界磁</text><path d="M470,288 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0" stroke="var(--steel)" stroke-width="2" fill="none"/><text x="490" y="275" text-anchor="middle" fill="var(--ink-2)" font-size="11">直巻界磁</text><circle cx="560" cy="338" r="18" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.2"/><text x="560" y="343" text-anchor="middle" fill="var(--accent-ink)" font-size="14" font-weight="700">A</text><rect x="554" y="310" width="12" height="9" fill="var(--steel)"/><rect x="554" y="357" width="12" height="9" fill="var(--steel)"/><circle cx="420" cy="288" r="3" fill="var(--steel)"/><circle cx="420" cy="388" r="3" fill="var(--steel)"/><text x="332" y="410" fill="var(--ink)" font-size="12">和動複巻は分巻と直巻の中間の特性</text></g>
+        <line x1="8" y1="243" x2="312" y2="243" stroke="var(--line)"/>
+        <line x1="8" y1="438" x2="312" y2="438" stroke="var(--line)"/>
+        <line x1="8" y1="633" x2="312" y2="633" stroke="var(--line)"/>
       </svg></button>
     <p class="figcap">図をタップすると拡大する。丸（A）が電機子で、上下の小さな四角がブラシ（内側に整流子がある）。電流の記号は I＝電源から流れる電流、I<sub>a</sub>＝電機子電流、I<sub>f</sub>＝界磁電流。</p>
     <div class="tbl"><table>
@@ -3439,51 +3460,39 @@ function cardBody(k){
     <p><b>固定子は誘導機と同じ三相巻線。違うのは回転子に流れる電流。</b>誘導機の回転子電流は磁界に誘導される交流だが、同期機の回転子にあるのは<b>界磁巻線</b>で、外から直流の界磁電流 I<sub>f</sub> を流して磁極（N・S）を作る。
     ブラシ式励磁なら、直流は軸の上の<b>スリップリング2本</b>とブラシを通して入れる。回転子が回ると磁束も一緒に回り、固定子の<b>電機子巻線（三相）</b>に起電力が出る。
     発電機ならここから系統へ電力を出し、電動機なら逆に系統から受け取る。</p>
-    <button class="figzoom" type="button" aria-label="図を拡大する"><svg viewBox="0 0 640 300" role="img" aria-label="同期機の結線。回転子の界磁巻線はスリップリング2本とブラシを通して直流の励磁電源につながり、固定子の三相電機子巻線は系統につながる" font-family="var(--font-sans)" font-size="15">
-        <rect x="12" y="10" width="13" height="13" rx="2" fill="var(--accent)"/><text x="31" y="22" fill="var(--ink-2)" font-size="13">回転子と一緒に回る</text>
-        <rect x="170" y="10" width="13" height="13" rx="2" fill="var(--steel)"/><text x="189" y="22" fill="var(--ink-2)" font-size="13">止まっている</text>
-        <circle cx="100" cy="150" r="62" fill="none" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
-        <line x1="182" y1="150" x2="320" y2="150" stroke="var(--accent)" stroke-opacity=".45" stroke-width="6" stroke-linecap="round"/>
-        <text x="327" y="155" fill="var(--ink-3)" font-size="13">軸</text>
-        <text x="100" y="100" text-anchor="middle" fill="var(--ink)" font-size="14" font-weight="700">N</text>
-        <text x="100" y="213" text-anchor="middle" fill="var(--ink)" font-size="14" font-weight="700">S</text>
-        <g fill="none" stroke="var(--accent)" stroke-width="2.2">
+    <button class="figzoom" type="button" aria-label="図を拡大する"><svg viewBox="0 0 360 556" role="img" aria-label="同期機の結線。回転子の界磁巻線はスリップリング2本とブラシを通して直流の励磁電源につながり、固定子の三相電機子巻線は系統につながる" font-family="var(--font-sans)" font-size="15">
+        <rect x="12" y="10" width="13" height="13" rx="2" fill="var(--accent)"/>
+        <text x="31" y="22" fill="var(--ink-2)" font-size="13">回転子と一緒に回る</text>
+        <rect x="170" y="10" width="13" height="13" rx="2" fill="var(--steel)"/>
+        <text x="189" y="22" fill="var(--ink-2)" font-size="13">止まっている</text>
+        <text x="352" y="44" text-anchor="end" fill="var(--ink)" font-size="14">励磁電源と界磁抵抗器</text>
+        <text x="352" y="62" text-anchor="end" fill="var(--ink-2)" font-size="12">ここで界磁電流 I<tspan dy="3" font-size="10">f</tspan><tspan dy="-3"> を調整</tspan></text>
+        <g transform="translate(0,50)"><circle cx="100" cy="150" r="62" fill="none" stroke="var(--ink-3)" stroke-dasharray="5 4"/><line x1="182" y1="150" x2="320" y2="150" stroke="var(--accent)" stroke-opacity=".45" stroke-width="6" stroke-linecap="round"/><text x="327" y="155" fill="var(--ink-3)" font-size="13">軸</text><text x="100" y="100" text-anchor="middle" fill="var(--ink)" font-size="14" font-weight="700">N</text><text x="100" y="213" text-anchor="middle" fill="var(--ink)" font-size="14" font-weight="700">S</text><g fill="none" stroke="var(--accent)" stroke-width="2.2">
           <path d="M100,110 V130 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 a5,5 0 0 1 0,10 V190"/>
           <path d="M100,110 H175 V228 H222 V195"/>
           <path d="M100,190 H150 V248 H262 V195"/>
-        </g>
-        <text x="112" y="155" fill="var(--ink-2)" font-size="12">界磁巻線</text>
-        <g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2">
+        </g><text x="112" y="155" fill="var(--ink-2)" font-size="12">界磁巻線</text><g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2">
           <rect x="215" y="105" width="14" height="90" rx="4"/><rect x="255" y="105" width="14" height="90" rx="4"/>
-        </g>
-        <g fill="var(--steel)"><rect x="216" y="88" width="12" height="16" rx="1"/><rect x="256" y="88" width="12" height="16" rx="1"/></g>
-        <g fill="none" stroke="var(--steel)" stroke-width="2.2">
-          <path d="M222,88 V44 H330"/><path d="M262,88 V62 H300 V100 H330"/>
-          <path d="M346,44 H372"/><rect x="330" y="36" width="16" height="16" fill="var(--panel)" stroke="none"/>
-          <path d="M330,32 V56 M346,38 V50"/>
-          <rect x="372" y="36" width="56" height="16" fill="var(--panel)"/>
-          <path d="M366,58 L434,30" stroke-width="1.6"/><path d="M434,30 l-8,0 M434,30 l-4,7" stroke-width="1.6"/>
-          <path d="M428,44 H448 V100 H330"/>
-        </g>
-        <text x="338" y="76" text-anchor="middle" fill="var(--ink-2)" font-size="12">直流</text>
-        <text x="400" y="122" text-anchor="middle" fill="var(--ink)" font-size="14">励磁電源と界磁抵抗器</text>
-        <text x="400" y="140" text-anchor="middle" fill="var(--ink-2)" font-size="12">ここで界磁電流 I<tspan dy="3" font-size="10">f</tspan><tspan dy="-3"> を調整</tspan></text>
-        <text x="280" y="202" fill="var(--ink)">スリップリング（2本）</text>
-        <text x="208" y="99" text-anchor="end" fill="var(--ink)">ブラシ</text>
-        <g fill="none" stroke="var(--steel)" stroke-width="2.2">
+        </g><g fill="var(--steel)"><rect x="216" y="88" width="12" height="16" rx="1"/><rect x="256" y="88" width="12" height="16" rx="1"/></g><text x="208" y="99" text-anchor="end" fill="var(--ink)">ブラシ</text><g fill="none" stroke="var(--steel)" stroke-width="2.2">
+          <path d="M222,88 V44 H276"/><path d="M262,88 V66 H282 V100"/>
+          <path d="M292,44 H306"/><rect x="276" y="36" width="16" height="16" fill="var(--panel)" stroke="none"/>
+          <path d="M276,32 V56 M292,38 V50"/>
+          <rect x="306" y="36" width="40" height="16" fill="var(--panel)"/>
+          <path d="M300,58 L352,30" stroke-width="1.6"/><path d="M352,30 l-8,0 M352,30 l-4,7" stroke-width="1.6"/>
+          <path d="M346,44 H352 V100 H282"/>
+        </g><text x="284" y="28" text-anchor="middle" fill="var(--ink-2)" font-size="12">直流</text></g>
+        <text x="242" y="324" text-anchor="middle" fill="var(--ink)">スリップリング（2本）</text>
+        <path d="M60,262 V450 H122" fill="none" stroke="var(--ink-3)" stroke-dasharray="4 4"/>
+        <path d="M122,450 l-8,-4 v8 z" fill="var(--ink-3)"/>
+        <text x="70" y="350" fill="var(--ink-2)" font-size="12">磁束が回転子と一緒に回り、</text>
+        <text x="70" y="367" fill="var(--ink-2)" font-size="12">電機子に起電力を誘導</text>
+        <g transform="translate(-365,250)"><g fill="none" stroke="var(--steel)" stroke-width="2.2">
           <g transform="rotate(0 545 200)"><path d="M545,200 V188 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 V150"/></g>
           <g transform="rotate(120 545 200)"><path d="M545,200 V188 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 V150"/></g>
           <g transform="rotate(240 545 200)"><path d="M545,200 V188 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 V150"/></g>
           <path d="M545,150 V136"/>
           <path d="M588.3,225 l17,10"/><path d="M501.7,225 l-17,10"/>
-        </g>
-        <circle cx="545" cy="200" r="3.5" fill="var(--steel)"/>
-        <g fill="var(--ink-2)" font-size="13"><text x="551" y="134">U</text><text x="610" y="246">V</text><text x="468" y="246">W</text></g>
-        <text x="545" y="268" text-anchor="middle" fill="var(--ink)" font-size="14">電機子巻線（固定子・三相）</text>
-        <text x="545" y="288" text-anchor="middle" fill="var(--ink-2)" font-size="13">系統へ（三相交流）</text>
-        <path d="M100,250 V266 H438" fill="none" stroke="var(--ink-3)" stroke-dasharray="4 4"/>
-        <path d="M438,266 l-8,-4 v8 z" fill="var(--ink-3)"/>
-        <text x="96" y="284" fill="var(--ink-2)" font-size="12">磁束が回転子と一緒に回り、電機子に起電力を誘導</text>
+        </g><circle cx="545" cy="200" r="3.5" fill="var(--steel)"/><g fill="var(--ink-2)" font-size="13"><text x="551" y="134">U</text><text x="610" y="246">V</text><text x="468" y="246">W</text></g><text x="545" y="268" text-anchor="middle" fill="var(--ink)" font-size="14">電機子巻線（固定子・三相）</text><text x="545" y="288" text-anchor="middle" fill="var(--ink-2)" font-size="13">系統へ（三相交流）</text></g>
       </svg></button>
     <p class="figcap">図をタップすると拡大する。結線の模式図で、巻線の実際の配置は描いていない。巻線形誘導機（3本・回転子の二次回路に外部抵抗を入れる）とは、リングの本数と流れる電流が違う。界磁と電機子の置き場所が逆なのは<b>直流機</b>のほう（直流機は界磁が止まり、電機子が回る＝回転電機子形）。</p>
     <p><b>なぜ界磁のほうを回すのか（回転界磁形）。</b>電機子は高電圧・大電流の三相で、界磁は低電圧の直流で電力も小さい。
@@ -3499,33 +3508,21 @@ function cardBody(k){
     <p><b>かご形の二次回路は、回転子の中で閉じている。</b>溝に入れた導体棒（銅かアルミ）の両端を、端絡環でまとめてつないである。
     回転磁界が棒を切ると棒に起電力が出て、電流が端絡環を通って一周する。
     外へ出る口（スリップリング）が無いので、巻線形のように二次抵抗を外から足すことはできない。そのかわり構造が簡単で丈夫。</p>
-    <button class="figzoom" type="button" aria-label="図を拡大する"><svg viewBox="0 0 640 300" role="img" aria-label="かご形回転子の二次回路の展開図と、二重かご形・深溝形の溝の断面" font-family="var(--font-sans)" font-size="15">
+    <button class="figzoom" type="button" aria-label="図を拡大する"><svg viewBox="0 0 345 566" role="img" aria-label="かご形回転子の二次回路の展開図と、二重かご形・深溝形の溝の断面" font-family="var(--font-sans)" font-size="15">
         <text x="12" y="22" fill="var(--ink-2)" font-size="13">展開図（回転子を切り開いて平らにした）</text>
-        <text x="372" y="22" fill="var(--ink-2)" font-size="13">溝の断面（始動を良くする形）</text>
         <text x="180" y="42" text-anchor="middle" fill="var(--ink)">端絡環</text>
         <g fill="var(--steel-soft)" stroke="var(--steel)" stroke-width="2"><rect x="20" y="50" width="320" height="14" rx="3"/><rect x="20" y="210" width="320" height="14" rx="3"/></g>
         <g fill="var(--steel)"><rect x="40" y="64" width="8" height="146"/><rect x="74" y="64" width="8" height="146"/><rect x="108" y="64" width="8" height="146"/><rect x="142" y="64" width="8" height="146"/><rect x="176" y="64" width="8" height="146"/><rect x="210" y="64" width="8" height="146"/><rect x="244" y="64" width="8" height="146"/><rect x="278" y="64" width="8" height="146"/><rect x="312" y="64" width="8" height="146"/></g>
         <g fill="var(--accent)"><path d="M44,128 l-6,12 h12 z"/><path d="M78,128 l-6,12 h12 z"/><path d="M112,128 l-6,12 h12 z"/><path d="M146,128 l-6,12 h12 z"/><path d="M214,146 l-6,-12 h12 z"/><path d="M248,146 l-6,-12 h12 z"/><path d="M282,146 l-6,-12 h12 z"/><path d="M316,146 l-6,-12 h12 z"/><path d="M188,57 l-12,-6 v12 z"/><path d="M172,217 l12,-6 v12 z"/></g>
         <text x="180" y="256" text-anchor="middle" fill="var(--ink)" font-size="13">縦の棒＝導体棒　上下の帯＝端絡環</text>
         <text x="180" y="276" text-anchor="middle" fill="var(--ink-2)" font-size="13">橙の矢印＝ある瞬間の二次電流の向き</text>
-        <line x1="362" y1="72" x2="630" y2="72" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
-        <text x="496" y="64" text-anchor="middle" fill="var(--ink-2)" font-size="12">エアギャップ側（回転子の表面）</text>
-        <g fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5">
+        <g transform="translate(-345,300)"><text x="372" y="22" fill="var(--ink-2)" font-size="13">溝の断面（始動を良くする形）</text><line x1="362" y1="72" x2="630" y2="72" stroke="var(--ink-3)" stroke-dasharray="5 4"/><text x="496" y="64" text-anchor="middle" fill="var(--ink-2)" font-size="12">エアギャップ側（回転子の表面）</text><g fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5">
           <circle cx="420" cy="96" r="9"/>
                     <rect x="560" y="80" width="14" height="36"/>
-        </g>
-        <rect x="405" y="123" width="30" height="55" rx="4" fill="none" stroke="var(--accent)" stroke-width="2"/>
-        <rect x="418" y="105" width="4" height="18" fill="none" stroke="var(--ink-3)" stroke-dasharray="2 2"/>
-        <text x="412" y="119" text-anchor="end" fill="var(--ink-3)" font-size="11">すき間</text>
-        <rect x="560" y="116" width="14" height="74" fill="none" stroke="var(--accent)" stroke-width="2"/>
-        <text x="436" y="101" fill="var(--ink)" font-size="13">外側（細い）</text>
-        <text x="442" y="156" fill="var(--ink)" font-size="13">内側（太い）</text>
-        <text x="420" y="210" text-anchor="middle" fill="var(--ink)">二重かご形</text>
-        <text x="567" y="210" text-anchor="middle" fill="var(--ink)">深溝形</text>
-        <text x="496" y="240" text-anchor="middle" fill="var(--ink-2)" font-size="12">塗りつぶし＝始動時に電流が集まる所</text>
-        <text x="496" y="258" text-anchor="middle" fill="var(--ink-2)" font-size="12">枠だけ＝始動時は電流が少ない所</text>
+        </g><rect x="405" y="123" width="30" height="55" rx="4" fill="none" stroke="var(--accent)" stroke-width="2"/><rect x="418" y="105" width="4" height="18" fill="none" stroke="var(--ink-3)" stroke-dasharray="2 2"/><text x="412" y="119" text-anchor="end" fill="var(--ink-3)" font-size="11">すき間</text><rect x="560" y="116" width="14" height="74" fill="none" stroke="var(--accent)" stroke-width="2"/><text x="436" y="101" fill="var(--ink)" font-size="13">外側（細い）</text><text x="442" y="156" fill="var(--ink)" font-size="13">内側（太い）</text><text x="420" y="210" text-anchor="middle" fill="var(--ink)">二重かご形</text><text x="567" y="210" text-anchor="middle" fill="var(--ink)">深溝形</text><text x="496" y="240" text-anchor="middle" fill="var(--ink-2)" font-size="12">塗りつぶし＝始動時に電流が集まる所</text><text x="496" y="258" text-anchor="middle" fill="var(--ink-2)" font-size="12">枠だけ＝始動時は電流が少ない所</text></g>
+        <line x1="8" y1="293" x2="337" y2="293" stroke="var(--line)"/>
       </svg></button>
-    <p class="figcap">図をタップすると拡大する。左の矢印はある瞬間の電流の向きだけを示し、大きさは棒ごとに違う。中央の棒は、この瞬間に電流が 0 の位置。この分布は時間とともにずれていく。端絡環もリングの形だが、棒どうしをつなぐだけで、ブラシは当たらない。</p>
+    <p class="figcap">図をタップすると拡大する。展開図の矢印はある瞬間の電流の向きだけを示し、大きさは棒ごとに違う。中央の棒は、この瞬間に電流が 0 の位置。この分布は時間とともにずれていく。端絡環もリングの形だが、棒どうしをつなぐだけで、ブラシは当たらない。</p>
     <p><b>外から足せない代わりに、溝の形で始動を良くする。</b>始動時（s = 1）は二次周波数 f₂ = s·f が電源と同じで高い。
     このときは漏れリアクタンスが効いて、電流が<b>エアギャップ側</b>の通り道に寄る。二重かご形では外側の細い棒そのものの抵抗が大きく、深溝形では電流の通る断面が狭くなって実効的な抵抗が大きくなる。だから普通かご形より、始動電流を抑えながら始動トルクを大きくできる。
     運転中は f₂ が小さく、電流は抵抗の小さい通り道に広がるので、効率は大きく落ちない。<b>実効的な二次抵抗が f₂ に応じて自動的に（連続的に）変わる</b>と見る。
@@ -3544,40 +3541,29 @@ function cardBody(k){
     <p><b>3Dでは見えない「つながり」をここで見る。</b>回転子の三相巻線は、軸の上の<b>3本のスリップリング</b>につながる。
     リングは回転子と一緒に回り、<b>止まっているブラシ</b>がその表面をこすって接触する。
     だから、回っている巻線（二次回路）に、外に置いた抵抗を直列に入れられる。</p>
-    <button class="figzoom" type="button" aria-label="結線図を拡大する"><svg viewBox="0 0 640 300" role="img" aria-label="巻線形誘導電動機の二次回路。回転子の三相巻線がスリップリングとブラシを通って外部抵抗につながる" font-family="var(--font-sans)" font-size="15">
-        <rect x="12" y="10" width="13" height="13" rx="2" fill="var(--accent)"/><text x="31" y="22" fill="var(--ink-2)" font-size="13">回転子と一緒に回る</text>
-        <rect x="170" y="10" width="13" height="13" rx="2" fill="var(--steel)"/><text x="189" y="22" fill="var(--ink-2)" font-size="13">止まっている</text>
-        <circle cx="110" cy="140" r="80" fill="none" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
-        <line x1="190" y1="140" x2="365" y2="140" stroke="var(--accent)" stroke-opacity=".45" stroke-width="6" stroke-linecap="round"/>
-        <g fill="none" stroke="var(--accent)" stroke-width="2.2">
+    <button class="figzoom" type="button" aria-label="結線図を拡大する"><svg viewBox="0 0 360 432" role="img" aria-label="巻線形誘導電動機の二次回路。回転子の三相巻線がスリップリングとブラシを通って外部抵抗につながる" font-family="var(--font-sans)" font-size="15">
+        <rect x="12" y="10" width="13" height="13" rx="2" fill="var(--accent)"/>
+        <text x="31" y="22" fill="var(--ink-2)" font-size="13">回転子と一緒に回る</text>
+        <rect x="170" y="10" width="13" height="13" rx="2" fill="var(--steel)"/>
+        <text x="189" y="22" fill="var(--ink-2)" font-size="13">止まっている</text>
+        <g fill="none" stroke="var(--steel)" stroke-width="2.2"><path d="M257,150 V130 M292,150 V130 M327,150 V130"/><path d="M257,70 V50 M292,70 V50 M327,70 V50 M257,50 H327"/><rect x="249" y="70" width="16" height="60" fill="var(--panel)"/><rect x="284" y="70" width="16" height="60" fill="var(--panel)"/><rect x="319" y="70" width="16" height="60" fill="var(--panel)"/><path d="M241,126 L273,74 M276,126 L308,74 M311,126 L343,74" stroke-width="1.6"/><path d="M273,74 l-7,2 M273,74 l-1,7 M308,74 l-7,2 M308,74 l-1,7 M343,74 l-7,2 M343,74 l-1,7" stroke-width="1.6"/></g>
+        <circle cx="292" cy="50" r="3.5" fill="var(--steel)"/>
+        <text x="236" y="96" text-anchor="end" fill="var(--ink)">外部抵抗</text>
+        <text x="236" y="114" text-anchor="end" fill="var(--ink-2)" font-size="13">（二次抵抗・可変）</text>
+        <g transform="translate(0,72)"><circle cx="110" cy="140" r="80" fill="none" stroke="var(--ink-3)" stroke-dasharray="5 4"/><line x1="190" y1="140" x2="338" y2="140" stroke="var(--accent)" stroke-opacity=".45" stroke-width="6" stroke-linecap="round"/><g fill="none" stroke="var(--accent)" stroke-width="2.2">
           <g transform="rotate(60 110 140)"><path d="M110,140 V125 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 V70"/></g>
           <g transform="rotate(180 110 140)"><path d="M110,140 V125 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 V70"/></g>
           <g transform="rotate(300 110 140)"><path d="M110,140 V125 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 a5,5 0 0 1 0,-10 V70"/></g>
           <path d="M170.6,105 H215 V205 H257 V185"/>
           <path d="M110,210 V228 H292 V185"/>
           <path d="M49.4,105 H20 V246 H327 V185"/>
-        </g>
-        <circle cx="110" cy="140" r="3.5" fill="var(--accent)"/>
-        <text x="110" y="124" text-anchor="middle" fill="var(--ink-2)" font-size="12">中性点</text>
-                <text x="372" y="145" fill="var(--ink-3)" font-size="13">軸</text>
-        <g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2">
+        </g><circle cx="110" cy="140" r="3.5" fill="var(--accent)"/><text x="110" y="124" text-anchor="middle" fill="var(--ink-2)" font-size="12">中性点</text><g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2">
           <rect x="250" y="95" width="14" height="90" rx="4"/><rect x="285" y="95" width="14" height="90" rx="4"/><rect x="320" y="95" width="14" height="90" rx="4"/>
-        </g>
-        <g fill="var(--steel)"><rect x="251" y="78" width="12" height="16" rx="1"/><rect x="286" y="78" width="12" height="16" rx="1"/><rect x="321" y="78" width="12" height="16" rx="1"/></g>
-        <text x="244" y="90" text-anchor="end" fill="var(--ink)">ブラシ</text>
-        <g fill="none" stroke="var(--steel)" stroke-width="2.2">
-          <path d="M257,78 V34 H550 V110"/><path d="M292,78 V50 H500 V110"/><path d="M327,78 V66 H450 V110"/>
-          <path d="M450,170 V200 M500,170 V200 M550,170 V200 M450,200 H550"/>
-          <rect x="442" y="110" width="16" height="60" fill="var(--panel)"/><rect x="492" y="110" width="16" height="60" fill="var(--panel)"/><rect x="542" y="110" width="16" height="60" fill="var(--panel)"/>
-          <path d="M434,166 L466,114 M484,166 L516,114 M534,166 L566,114" stroke-width="1.6"/>
-          <path d="M466,114 l-7,2 M466,114 l-1,7 M516,114 l-7,2 M516,114 l-1,7 M566,114 l-7,2 M566,114 l-1,7" stroke-width="1.6"/>
-        </g>
-        <circle cx="500" cy="200" r="3.5" fill="var(--steel)"/>
-        <text x="500" y="232" text-anchor="middle" fill="var(--ink)">外部抵抗（二次抵抗・可変）</text>
-        <text x="500" y="252" text-anchor="middle" fill="var(--ink-2)" font-size="13">始動用：大きく → 加速後は 0（短絡）</text>
-        <text x="500" y="270" text-anchor="middle" fill="var(--ink-2)" font-size="13">速度制御：運転中も入れたまま</text>
-        <text x="110" y="280" text-anchor="middle" fill="var(--ink)">回転子巻線（三相・Y結線）</text>
-        <text x="300" y="280" text-anchor="middle" fill="var(--ink)">スリップリング（3本）</text>
+        </g><g fill="var(--steel)"><rect x="251" y="78" width="12" height="16" rx="1"/><rect x="286" y="78" width="12" height="16" rx="1"/><rect x="321" y="78" width="12" height="16" rx="1"/></g><text x="244" y="90" text-anchor="end" fill="var(--ink)">ブラシ</text><text x="345" y="145" fill="var(--ink-3)" font-size="13">軸</text></g>
+        <text x="20" y="346" fill="var(--ink)">回転子巻線（三相・Y結線）</text>
+        <text x="352" y="368" text-anchor="end" fill="var(--ink)">スリップリング（3本）</text>
+        <text x="180" y="400" text-anchor="middle" fill="var(--ink-2)" font-size="13">外部抵抗は 始動用：大きく → 加速後は 0（短絡）</text>
+        <text x="180" y="420" text-anchor="middle" fill="var(--ink-2)" font-size="13">速度制御用：運転中も入れたまま</text>
       </svg></button>
     <p class="figcap">図をタップすると拡大する。結線の模式図で、巻線の実際の配置（スロットに分布して収める）は描いていない。</p>
     <p><b>何のために外へ出すか。</b>始動時に外部抵抗を大きくすると、始動電流を抑えながら始動トルクを大きくできる。
@@ -3674,13 +3660,16 @@ function cardBody(k){
     </table></div>
     <p><b>30° はどこから来るか。</b>結線図を、各巻線の電圧の向きに合わせて描く。同じ変圧器の一次と二次は同じ鉄心に巻くので、極性をそろえてつなげば電圧の向きが同じ。だから<b>平行に描ける</b>。
     Y の腕を三角形の辺に並べ替えると、二次の端子 u は一次の U から 30° 回った位置に来る。これが角変位。</p>
-    <button class="figzoom" type="button" aria-label="図を拡大する"><svg viewBox="0 0 640 330" role="img" aria-label="Y-Δ結線。同じ変圧器の一次巻線と二次巻線を平行に描くと、二次の端子が一次より30度回った位置に来る" font-family="var(--font-sans)" font-size="15">
-        <rect x="12" y="10" width="13" height="13" rx="2" fill="#D24A43"/><text x="31" y="22" fill="var(--ink-2)" font-size="13">変圧器1</text><rect x="102" y="10" width="13" height="13" rx="2" fill="#9E7A10"/><text x="121" y="22" fill="var(--ink-2)" font-size="13">変圧器2</text><rect x="192" y="10" width="13" height="13" rx="2" fill="#3572D6"/><text x="211" y="22" fill="var(--ink-2)" font-size="13">変圧器3</text><text x="290" y="22" fill="var(--ink-2)" font-size="13">同じ色＝同じ変圧器の一次と二次</text>
-        <text x="150" y="58" text-anchor="middle" fill="var(--ink)" font-weight="700">一次：Y結線</text><text x="450" y="58" text-anchor="middle" fill="var(--ink)" font-weight="700">二次：Δ結線</text>
-        <path d="M0,0 H16.0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 H80" transform="translate(150,190) rotate(-90)" fill="none" stroke="#D24A43" stroke-width="2.6"/><path d="M0,0 H16.0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 H80" transform="translate(150,190) rotate(30)" fill="none" stroke="#9E7A10" stroke-width="2.6"/><path d="M0,0 H16.0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 H80" transform="translate(150,190) rotate(150)" fill="none" stroke="#3572D6" stroke-width="2.6"/><circle cx="150" cy="190" r="3.5" fill="var(--ink-2)"/><text x="150" y="224" text-anchor="middle" fill="var(--ink-2)" font-size="12">中性点</text><g fill="var(--ink)" font-size="14" font-weight="700"><text x="150" y="102" text-anchor="middle">U</text><text x="228" y="244">V</text><text x="62" y="244">W</text></g>
-        <path d="M0,0 H46.0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 H140" transform="translate(500,260) rotate(-90)" fill="none" stroke="#D24A43" stroke-width="2.6"/><path d="M0,0 H46.0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 H140" transform="translate(500,120) rotate(150)" fill="none" stroke="#3572D6" stroke-width="2.6"/><path d="M0,0 H46.0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 H140" transform="translate(378.8,190) rotate(30)" fill="none" stroke="#9E7A10" stroke-width="2.6"/><g fill="var(--ink-2)"><circle cx="500" cy="120" r="3"/><circle cx="500" cy="260" r="3"/><circle cx="378.8" cy="190" r="3"/></g><g fill="var(--ink)" font-size="14" font-weight="700"><text x="510" y="116">u</text><text x="510" y="272">v</text><text x="368" y="195" text-anchor="end">w</text></g>
-        <circle cx="459.6" cy="190" r="2.5" fill="var(--ink-3)"/><g fill="none" stroke="var(--ink-2)" stroke-dasharray="4 3"><path d="M459.6,190 V150"/><path d="M459.6,190 L493.3,131.6"/></g><path d="M459.6,165 A25,25 0 0 1 472.1,168.35" fill="none" stroke="var(--ink)" stroke-width="1.6"/><text x="461" y="160" fill="var(--ink)" font-size="12" font-weight="700">30°</text>
-        <text x="150" y="298" text-anchor="middle" fill="var(--ink)" font-size="13">線間電圧 = √3 × 相電圧</text><text x="150" y="316" text-anchor="middle" fill="var(--ink-2)" font-size="12">線電流 = 相電流</text><text x="450" y="298" text-anchor="middle" fill="var(--ink)" font-size="13">線間電圧 = 相電圧</text><text x="450" y="316" text-anchor="middle" fill="var(--ink-2)" font-size="12">線電流 = √3 × 相電流</text>
+    <button class="figzoom" type="button" aria-label="図を拡大する"><svg viewBox="0 0 330 650" role="img" aria-label="Y-Δ結線。同じ変圧器の一次巻線と二次巻線を平行に描くと、二次の端子が一次より30度回った位置に来る" font-family="var(--font-sans)" font-size="15">
+        <rect x="12" y="10" width="13" height="13" rx="2" fill="#D24A43"/>
+        <text x="31" y="22" fill="var(--ink-2)" font-size="13">変圧器1</text>
+        <rect x="102" y="10" width="13" height="13" rx="2" fill="#9E7A10"/>
+        <text x="121" y="22" fill="var(--ink-2)" font-size="13">変圧器2</text>
+        <rect x="192" y="10" width="13" height="13" rx="2" fill="#3572D6"/>
+        <text x="211" y="22" fill="var(--ink-2)" font-size="13">変圧器3</text>
+        <g transform="translate(-278,18)"><text x="290" y="22" fill="var(--ink-2)" font-size="13">同じ色＝同じ変圧器の一次と二次</text></g>
+        <g transform="translate(15,28)"><text x="150" y="58" text-anchor="middle" fill="var(--ink)" font-weight="700">一次：Y結線</text><path d="M0,0 H16.0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 H80" transform="translate(150,190) rotate(-90)" fill="none" stroke="#D24A43" stroke-width="2.6"/><path d="M0,0 H16.0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 H80" transform="translate(150,190) rotate(30)" fill="none" stroke="#9E7A10" stroke-width="2.6"/><path d="M0,0 H16.0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 H80" transform="translate(150,190) rotate(150)" fill="none" stroke="#3572D6" stroke-width="2.6"/><circle cx="150" cy="190" r="3.5" fill="var(--ink-2)"/><text x="150" y="224" text-anchor="middle" fill="var(--ink-2)" font-size="12">中性点</text><g fill="var(--ink)" font-size="14" font-weight="700"><text x="150" y="102" text-anchor="middle">U</text><text x="228" y="244">V</text><text x="62" y="244">W</text></g><text x="150" y="298" text-anchor="middle" fill="var(--ink)" font-size="13">線間電圧 = √3 × 相電圧</text><text x="150" y="316" text-anchor="middle" fill="var(--ink-2)" font-size="12">線電流 = 相電流</text></g>
+        <g transform="translate(-285,320)"><text x="450" y="58" text-anchor="middle" fill="var(--ink)" font-weight="700">二次：Δ結線</text><path d="M0,0 H46.0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 H140" transform="translate(500,260) rotate(-90)" fill="none" stroke="#D24A43" stroke-width="2.6"/><path d="M0,0 H46.0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 H140" transform="translate(500,120) rotate(150)" fill="none" stroke="#3572D6" stroke-width="2.6"/><path d="M0,0 H46.0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 H140" transform="translate(378.8,190) rotate(30)" fill="none" stroke="#9E7A10" stroke-width="2.6"/><g fill="var(--ink-2)"><circle cx="500" cy="120" r="3"/><circle cx="500" cy="260" r="3"/><circle cx="378.8" cy="190" r="3"/></g><g fill="var(--ink)" font-size="14" font-weight="700"><text x="510" y="116">u</text><text x="510" y="272">v</text><text x="368" y="195" text-anchor="end">w</text></g><circle cx="459.6" cy="190" r="2.5" fill="var(--ink-3)"/><g fill="none" stroke="var(--ink-2)" stroke-dasharray="4 3"><path d="M459.6,190 V150"/><path d="M459.6,190 L493.3,131.6"/></g><path d="M459.6,165 A25,25 0 0 1 472.1,168.35" fill="none" stroke="var(--ink)" stroke-width="1.6"/><text x="461" y="160" fill="var(--ink)" font-size="12" font-weight="700">30°</text><text x="450" y="298" text-anchor="middle" fill="var(--ink)" font-size="13">線間電圧 = 相電圧</text><text x="450" y="316" text-anchor="middle" fill="var(--ink-2)" font-size="12">線電流 = √3 × 相電流</text></g>
       </svg></button>
     <p class="figcap">図をタップすると拡大する。巻線の向き＝電圧のベクトルの向きで描いた結線図（相順 U→V→W、反時計回りを進みとする約束）。破線は Δ の中心（仮想の中性点・小さな点）から引いた。縦の破線が一次 U と同じ向き、斜めの破線が二次 u の向き。この図は二次が 30° 遅れるつなぎ順で、Δ の辺のつなぎ順を逆にすると 30° 進む。</p>
     <p><b>角変位が違う結線どうしは並行運転できない。</b>Δ-Δ（0°）と Δ-Y（30°）をつなぐと
