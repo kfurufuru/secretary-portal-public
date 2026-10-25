@@ -1251,6 +1251,284 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
   <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1" crossorigin="anonymous"></script>
   <script>
+/* built from wiki-review.js — 直接編集しない。正(SoT)は wiki-review.js。編集後に build-riron-wiki.py を実行する */
+/* wiki-review.js — 機械・理論の Wiki で共通の、復習の次回日と確認問題の出し方。
+   ここが正（SoT）。build-kikai-wiki.py と build-riron-wiki.py の両方が、各科目のソースより先に読み込む。
+   以前は機械の kikai-tracker.jsx だけが持っていた。理論へ同じ規則を入れるとき、写しを作ると
+   2つの式が食い違う（同じ問題に2つの次回日が出る）ので、ここへ移して共用にした。
+   React に依存しない純粋な関数と定数だけを置く（画面の部品は各科目のソースに置く）。 */
+
+// ローカル日付。toISOString は UTC なので、日本の深夜に付けた記録が前日扱いになる
+const kakomonToday = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+const kakomonAddDays = (iso, n) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return '';
+  const [y, m, d] = iso.split('-').map(Number);
+  const x = new Date(y, m - 1, d + n);
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+};
+
+/* 再挑戦の間隔は忘却曲線から算出する（固定日数ではない）。
+   計算は scripts/fsrs_engine.py（py-fsrs から逐語移植した FSRS-6）の JS 移植で、
+   records.json 側のスケジューラと同じ式・同じ定数を使う。別式にすると
+   「同じ問題に2つの再挑戦日が出る」ため。数値一致は機械照合している。
+   判定 → FSRS rating: × = Again(1) / △ = Hard(2) / ○ = Good(3) / ◎ = Easy(4)
+   ◎○ も対象にする（「試験直前に、○ だが半年触っていない」を拾うため）。 */
+const FSRS_W = [
+  0.212, 1.2931, 2.3065, 8.2956, 6.4133, 0.8334, 3.0194, 0.001, 1.8722,
+  0.1666, 0.796, 1.4835, 0.0614, 0.2629, 1.6483, 0.6014, 1.8729, 0.5425,
+  0.0912, 0.0658, 0.1542,
+];
+const FSRS_DECAY = -FSRS_W[20];
+const FSRS_FACTOR = Math.pow(0.9, 1 / FSRS_DECAY) - 1;
+const FSRS_RETENTION = 0.9;
+const FSRS_MAX_INTERVAL = 365;
+const fsrsClampD = (d) => Math.min(Math.max(d, 1.0), 10.0);
+const fsrsClampS = (s) => Math.max(s, 0.001);
+const fsrsInitS = (rating) => fsrsClampS(FSRS_W[rating - 1]);
+const fsrsInitD = (rating, clamp) => {
+  const d = FSRS_W[4] - Math.pow(Math.E, FSRS_W[5] * (rating - 1)) + 1;
+  return clamp === false ? d : fsrsClampD(d);
+};
+const fsrsRetrievability = (elapsed, s) =>
+  Math.pow(1 + FSRS_FACTOR * Math.max(0, elapsed) / s, FSRS_DECAY);
+const fsrsNextD = (difficulty, rating) => {
+  const arg1 = fsrsInitD(4, false);
+  const delta = -(FSRS_W[6] * (rating - 3));
+  const arg2 = difficulty + (10.0 - difficulty) * delta / 9.0;
+  return fsrsClampD(FSRS_W[7] * arg1 + (1 - FSRS_W[7]) * arg2);
+};
+const fsrsRecallS = (d, s, r, rating) => s * (
+  1 + Math.pow(Math.E, FSRS_W[8]) * (11 - d) * Math.pow(s, -FSRS_W[9])
+    * (Math.pow(Math.E, (1 - r) * FSRS_W[10]) - 1)
+    * (rating === 2 ? FSRS_W[15] : 1) * (rating === 4 ? FSRS_W[16] : 1));
+const fsrsForgetS = (d, s, r) => Math.min(
+  FSRS_W[11] * Math.pow(d, -FSRS_W[12]) * (Math.pow(s + 1, FSRS_W[13]) - 1)
+    * Math.pow(Math.E, (1 - r) * FSRS_W[14]),
+  s / Math.pow(Math.E, FSRS_W[17] * FSRS_W[18]));
+const fsrsShortS = (s, rating) => {
+  let inc = Math.pow(Math.E, FSRS_W[17] * (rating - 3 + FSRS_W[18])) * Math.pow(s, -FSRS_W[19]);
+  if (rating >= 2) inc = Math.max(inc, 1.0);
+  return fsrsClampS(s * inc);
+};
+// 1回の復習で (stability, difficulty) を更新する。s/d が null なら新規カード
+const fsrsReview = (s, d, rating, elapsed) => {
+  if (s === null || s === undefined || d === null || d === undefined) {
+    return { s: fsrsInitS(rating), d: fsrsInitD(rating) };
+  }
+  if (elapsed < 1) return { s: fsrsShortS(s, rating), d: fsrsNextD(d, rating) };
+  const r = fsrsRetrievability(elapsed, s);
+  const ns = rating === 1 ? fsrsForgetS(d, s, r) : fsrsRecallS(d, s, r, rating);
+  return { s: fsrsClampS(ns), d: fsrsNextD(d, rating) };
+};
+// Python の round() は偶数丸め。Math.round は 0.5 を切り上げるので、ちょうど x.5 の
+// stability で1日ずれる（実運用では超越関数の積なので到達しないが、式が同じと言う以上は揃える）
+const fsrsRoundHalfEven = (x) => {
+  const f = Math.floor(x);
+  // 許容誤差を入れてはいけない。Python の round() は実際の double をそのまま丸めるので、
+  // 1.4999999 を「ちょうど半分」とみなすと JS だけが 2 を返して食い違う（実測）
+  if (x - f !== 0.5) return Math.round(x);
+  return (f % 2 === 0) ? f : f + 1;
+};
+const fsrsInterval = (s) => Math.min(Math.max(
+  fsrsRoundHalfEven((s / FSRS_FACTOR) * (Math.pow(FSRS_RETENTION, 1 / FSRS_DECAY) - 1)), 1), FSRS_MAX_INTERVAL);
+
+/* 試験日に合わせて次回日を抑える。FSRS は「いつまでに」の制約が無い前提の設計なので、
+   ◎ を重ねると 365日後＝試験のはるか後ろへ寝かせてしまう。一方、単純に試験日で頭打ちにすると、
+   成熟したマスの次回日がすべて試験初日に重なる（220マスの模擬で全マスが初日になった。評価 G2）。
+   そこで次の3段で抑える（締切と上限の値は評価 D5 の決定）:
+     1. 締切: 試験日の KAKOMON_REVIEW_LEAD_DAYS 日前（KAKOMON_REVIEW_DEADLINE）。
+        締切より前に付けた判定は、次回日を締切以下にする。締切以降は試験日以下にする。
+        ＝寝かせたマスも、締切までにもう一度は回ってくる（試験前の最後の2週間は総仕上げに使える）。
+     2. 1日の上限: KAKOMON_DAILY_CAP マス。次回日の日にすでに上限まで入っていたら、
+        1日ずつ前倒しして空いている日に置く（今日の翌日より前には置かない。全部埋まっていれば元の日）。
+        前倒しは「早めに解き直す」側なので、忘却曲線上は安全側。
+     3. 締切前の最終確認: 締切より前に付けた判定で、締切で抑えた次回日から翌日まで全部埋まっているときは、
+        その回を「締切前の最終確認」とみなし、締切の翌日〜試験の前日の間に同じ前倒しで置く。
+        そこも全部埋まっていれば、窓の中で最も空いている日に、上限を超えて置く（評価 D6(a)）。
+        試験日には送らない。試験日に送ると、最後の解き直しが締切よりずっと前のまま試験を迎えるマスが出る
+        （220マスの模擬で80マス・最も古いものは試験の35日前だった）。
+        これが無いと、締切前の判定は必ず次回日が締切以下になるので、締切の当日に全マスが
+        期限到来になる（220マスの模擬で締切日に全マスが集まった）。
+   日付の出所: 試験センター 第三種電気主任技術者試験「試験日程」（https://www.shiken.or.jp/chief/third/・
+   2026-10-19 取得）の令和8年度下期「一次試験 筆記方式 2027年3月21日（日曜日）」。一次照合済み。
+   受験するのは筆記方式（CBT 方式は選ばない）。
+   以前は CBT 初日を保守側として置いていたため、締切が筆記の約7週間前になっていた。
+   試験が過ぎたら抑えるのをやめる（値を変えるのは KAKOMON_EXAM_DATE の1行。締切はそこから計算する）。 */
+const KAKOMON_EXAM_DATE = '2027-03-21';
+const KAKOMON_REVIEW_LEAD_DAYS = 14;
+const KAKOMON_DAILY_CAP = 10;
+// 読み込み時に計算する（関数の定義順に依存しないよう、日付の計算を直接書く）
+const KAKOMON_REVIEW_DEADLINE = (() => {
+  const [y, m, d] = KAKOMON_EXAM_DATE.split('-').map(Number);
+  const x = new Date(y, m - 1, d - KAKOMON_REVIEW_LEAD_DAYS);
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+})();
+// 2つのローカル日付（YYYY-MM-DD）の差（日数）。どちらかが不正なら null
+const kakomonDaysBetween = (from, to) => {
+  const re = /^\d{4}-\d{2}-\d{2}$/;
+  if (!re.test(from || '') || !re.test(to || '')) return null;
+  const [y1, m1, d1] = from.split('-').map(Number);
+  const [y2, m2, d2] = to.split('-').map(Number);
+  return Math.round((new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1)) / 86400000);
+};
+// today に付けた判定の次回日の上限。締切より前は締切、締切以降は試験日、試験後は無し
+const kakomonCapDate = (today) => {
+  if (today < KAKOMON_REVIEW_DEADLINE) return KAKOMON_REVIEW_DEADLINE;
+  if (today < KAKOMON_EXAM_DATE) return KAKOMON_EXAM_DATE;
+  return null;
+};
+/* s: 安定度、today: 判定した日（省略時は今日）、load: { 'YYYY-MM-DD': その日が次回日のマス数 }
+   （省略時は1日の上限を見ない）。戻り値は記録に入れる i（今日からの日数）。 */
+const kakomonInterval = (s, today, load) => {
+  const t = today || kakomonToday();
+  const natural = fsrsInterval(s);
+  const cap = kakomonCapDate(t);
+  const left = cap ? kakomonDaysBetween(t, cap) : null;
+  const i = (left !== null && left > 0) ? Math.min(natural, left) : natural;
+  if (!load) return i;
+  // target 日後から minJ 日後まで、1日ずつ前倒しして空いている日を探す。無ければ null
+  const fit = (target, minJ) => {
+    for (let j = target; j >= minJ; j--) if ((load[kakomonAddDays(t, j)] || 0) < KAKOMON_DAILY_CAP) return j;
+    return null;
+  };
+  const j = fit(i, 1);
+  if (j !== null) return j;
+  // 締切で抑えたのに締切まで空きが無い＝この回を締切前の最終確認とし、締切の翌日〜試験の前日に置く。
+  // そこも埋まっていれば、試験日へは送らず、窓の中で最も空いている日に上限を超えて置く
+  // （試験日に置くと、最後の解き直しが締切よりずっと前のまま試験を迎えるマスが出る。再評価 FB1-2-01・OC2-02）
+  if (cap === KAKOMON_REVIEW_DEADLINE && natural > left) {
+    const left2 = kakomonDaysBetween(t, KAKOMON_EXAM_DATE);
+    const i2 = Math.min(natural, left2 - 1);
+    const j2 = i2 > left ? fit(i2, left + 1) : null;
+    if (j2 !== null) return j2;
+    // 窓が全部埋まっていれば、窓の中で最も空いている日に上限を超えて置く（同数なら遅い日）
+    const lo = left + 1, hi = left2 - 1;
+    if (lo > hi) return left;
+    let best = hi;
+    for (let j = hi; j >= lo; j--) {
+      if ((load[kakomonAddDays(t, j)] || 0) < (load[kakomonAddDays(t, best)] || 0)) best = j;
+    }
+    return best;
+  }
+  return i;   // 翌日まで全部埋まっていれば元の日のまま
+};
+
+/* ---- Wiki 内の記録（確認問題・ひっかけ表・1分復習）の次回日 ----
+   以前は過去問グリッドだけが FSRS で次回日を持ち、Wiki 内の記録は「付けたら終わり」で二度と出てこなかった。
+   同じ FSRS-6 と締切（kakomonInterval の 1. 締切）で次回日 nextDue を持たせ、ホームの「今日やる」に出す。
+   - 評価は機械の KIKAI_MARKS と同じ（理論も同じ対応で使う）: ◎ understood=4、△ vague=2（旧 review も 2）、× wrong=1
+   - 同じ日に何度押しても、その日の最初の状態（fsrsBase）から計算し直す（同じ日の連打で間隔が伸びない）
+   - その日に一度でも × を付けたら、その日の評価は × として扱う（fsrsBase.w）。× の後に正しく答え直しても、
+     次回日は × のときと同じ近さに置く（答え直した正解は「覚えていた」ではなく「直前に見た」ので）
+   - 記録の数値が壊れていたら新規カードとして扱う（NaN を書かない）
+   - 1日の上限（KAKOMON_DAILY_CAP）は過去問グリッドだけに掛ける（こちらは件数だけ出し、超えた分は明日へ回してよい）
+   - 次回日を持たない旧記録は、△×（vague/review/wrong）なら期限到来とみなす（◎ は出さない） */
+const WIKI_STATUS_RATING = { understood: 4, vague: 2, review: 2, wrong: 1 };
+const wikiScheduleFields = (base, status) => {
+  const rating = WIKI_STATUS_RATING[status];
+  if (!rating) return {};
+  const today = kakomonToday();
+  const okS = (x) => typeof x === 'number' && isFinite(x) && x > 0;
+  const okD = (x) => typeof x === 'number' && isFinite(x) && x >= 1 && x <= 10;
+  let s0 = null, d0 = null, e0 = 0, w0 = false;
+  const fb = base && base.fsrsBase;
+  if (base && base.fsrsOn === today && fb && typeof fb === 'object') {
+    if (okS(fb.s) && okD(fb.d)) { s0 = fb.s; d0 = fb.d; e0 = (typeof fb.e === 'number' && fb.e > 0) ? fb.e : 0; }
+    w0 = fb.w === true;
+  } else if (base && okS(base.fsrsS) && okD(base.fsrsD) && base.fsrsOn) {
+    s0 = base.fsrsS; d0 = base.fsrsD; e0 = Math.max(0, kakomonDaysBetween(base.fsrsOn, today) || 0);
+  }
+  const w = w0 || rating === 1;
+  const r = fsrsReview(s0, d0, w ? 1 : rating, e0);
+  const i = kakomonInterval(r.s, today);
+  return { fsrsS: r.s, fsrsD: r.d, fsrsOn: today, fsrsBase: { s: s0, d: d0, e: e0, w }, nextDue: kakomonAddDays(today, i) };
+};
+
+// 実在する日付か（13月45日のように、形だけ YYYY-MM-DD に合う値を弾く）
+const wikiIsRealDate = (iso) => {
+  if (typeof iso !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const [y, m, d] = iso.split('-').map(Number);
+  const x = new Date(y, m - 1, d);
+  return x.getFullYear() === y && x.getMonth() === m - 1 && x.getDate() === d;
+};
+
+/* ---- 確認問題の出し方（学習効率のための規則。記録の付け方は変えない） ----
+   1. 期限で分ける: FSRS の次回日 nextDue が先の問題は、記号（◎△×）を問わず「寝かせ中」に折りたたむ。
+      今日 × を付けた問題も翌日以降に回る。同じ日の解き直しは △ にしかならず、
+      直後に見た答えを繰り返すだけなので、時間を使う割に定着しない（間隔効果）。
+      次回日が無い・実在しない日付・記号と status が食い違う記録は、期限到来とみなす（隠れたまま戻れなくなるより安全）。
+   2. 期限が来た問題の順番: 復習（× → △ → ◎）を先、未回答（必須 → 任意）を後。同じ記号なら必須を先。
+      忘れかけの記憶を先に救う。新しい問題は、復習を片付けた後に足す。
+      必須が0問のページは、任意の未回答も必須と同じ扱いにする（折りたたむと腕試しが始まらない）。
+   3. 一度に出す数を絞る（WIKI_QUIZ_BATCH）。全問を並べると選ぶ手間がかかり、上から順に解く動機が弱まる。
+   4. 絞り込み（本人が選ぶ）。期限の規則は絞り込みの後にも掛ける。
+      - wrong: いまが × か、一度でも × を付けた（lastWrongOn がある）問題。いま ◎ でも含める
+      - weak: いまが △
+      - required: 必須（rank S/A＝出題が多い）
+   並び・期限の判定は、呼ぶ側がページを開いた時点の記録で1回だけ行う（答えた直後に問題が動くと、解説を読む前に見失う）。 */
+const WIKI_QUIZ_BATCH = 5;
+const WIKI_QUIZ_MODES = [
+  { id: 'all', label: 'おすすめ' },
+  { id: 'wrong', label: '× 間違えたことがある' },
+  { id: 'weak', label: '△ 理解が浅い' },
+  { id: 'required', label: '必須（頻出）' },
+];
+// 記録の status → 記号。理論の確認問題は understood / review / wrong、機械は vague も使う
+const wikiStatusMark = (st) => (st === 'understood' ? '◎' : (st === 'vague' || st === 'review') ? '△' : st === 'wrong' ? '×' : '');
+const wikiQuizIsRequired = (q) => q.rank === 'S' || q.rank === 'A';
+// 'new'＝未回答 / 'due'＝期限到来 / 'rest'＝寝かせ中（next に次回日）
+const wikiQuizState = (rec, today) => {
+  if (!rec || !rec.status) return { state: 'new' };
+  const m = wikiStatusMark(rec.status);
+  if (!m) return { state: 'due' };
+  if (rec.mark && rec.mark !== m) return { state: 'due' };
+  if (!wikiIsRealDate(rec.nextDue)) return { state: 'due' };
+  return rec.nextDue > today ? { state: 'rest', next: rec.nextDue } : { state: 'due' };
+};
+const wikiQuizMatch = (mode, q, rec) => {
+  if (mode === 'wrong') return !!rec && (rec.status === 'wrong' || (typeof rec.lastWrongOn === 'string' && rec.lastWrongOn !== ''));
+  if (mode === 'weak') return !!rec && (rec.status === 'vague' || rec.status === 'review');
+  if (mode === 'required') return wikiQuizIsRequired(q);
+  return true;
+};
+/* pool（そのページの問題）と recs（{ 問題id: 記録 or null }）から、出す順番を決める。
+   戻り値: main（今日解く問題・順番どおり）／optionalNew（おすすめの時だけ、任意の未回答。折りたたみに置く）／
+   rested（寝かせ中・次回日の近い順）／st（問題id → wikiQuizState）／nReview（main のうち復習の数）／
+   nearest（寝かせ中で最も近い次回日）／matched（絞り込みに合った問題の数）／count(mode)（絞り込みごとの件数） */
+const wikiQuizPlan = (pool, recs, mode, today) => {
+  const st = {};
+  pool.forEach(q => { st[q.id] = wikiQuizState(recs[q.id], today); });
+  const hasRequired = pool.some(wikiQuizIsRequired);
+  const order = {};
+  pool.forEach((q, i) => { order[q.id] = i; });
+  // 小さいほど先。復習（× 0・△ 1・◎ 2）→ 未回答（必須 3・任意 4）
+  const rankOf = (q) => {
+    if (st[q.id].state === 'new') return (wikiQuizIsRequired(q) || !hasRequired) ? 3 : 4;
+    const m = wikiStatusMark(recs[q.id] && recs[q.id].status);
+    return m === '×' ? 0 : m === '△' ? 1 : 2;
+  };
+  const byRank = (a, b) => (rankOf(a) - rankOf(b))
+    || ((wikiQuizIsRequired(a) ? 0 : 1) - (wikiQuizIsRequired(b) ? 0 : 1)) || (order[a.id] - order[b.id]);
+  const matched = pool.filter(q => wikiQuizMatch(mode, q, recs[q.id]));
+  const queue = matched.filter(q => st[q.id].state !== 'rest').sort(byRank);
+  const rested = matched.filter(q => st[q.id].state === 'rest')
+    .sort((a, b) => (st[a.id].next < st[b.id].next ? -1 : st[a.id].next > st[b.id].next ? 1 : byRank(a, b)));
+  const main = mode === 'all' ? queue.filter(q => rankOf(q) !== 4) : queue;
+  const optionalNew = mode === 'all' ? queue.filter(q => rankOf(q) === 4) : [];
+  return {
+    st, main, optionalNew, rested, matched: matched.length,
+    nReview: main.filter(q => st[q.id].state === 'due').length,
+    nearest: rested.length ? st[rested[0].id].next : '',
+    count: (m) => pool.filter(q => wikiQuizMatch(m, q, recs[q.id])).length,
+  };
+};
+// 次回日の短い表示（M/D）
+const wikiShortDate = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}` : '');
+</script>
+  <script>
 /* built from riron-data.js — 直接編集しない。正(SoT)は riron-data.js。編集後に build-riron-wiki.py を実行する */
 /* data.js */
 /* ============================================================
@@ -52219,7 +52497,9 @@ const ConceptQuizItem = ({
       const now = new Date().toISOString();
       const d = new Date();
       const today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-      const rec = Object.assign({}, base, {
+      // 次回日（FSRS-6）を持たせる。機械と同じ式（wiki-review.js の wikiScheduleFields）。
+      // これが無いと、確認問題は「付けたら終わり」で、期限の来た問題だけを出す並べ方ができない
+      const rec = Object.assign({}, base, wikiScheduleFields(base, status), {
         status: status,
         updatedAt: now,
         // 間違えた日（端末の地方時）。status は最後の回答しか残さないので、同じ日に解き直して正解しても
@@ -52625,14 +52905,73 @@ const ConceptQuizScore = ({
     }
   }, "◎＝一発で正解 ／ △＝間違えた後に正解（丸暗記の疑いがあるので後日また出す） ／ ×＝不正解。", latest && `　最終回答: ${fmtDate(latest)}。`, "記録はこの端末（ブラウザ）に保存され、別の端末・シークレットウィンドウには引き継がれない。"));
 };
+
+/* ConceptQuiz の出し方（期限で分ける・復習が先・5問ずつ・絞り込み）は機械と同じ規則で、
+   規則と並べ方は wiki-review.js（wikiQuizPlan）にある。ここは画面だけを持つ。
+   5問を超える分は描画したまま hidden にする（AI 可読ミラー gen_riron_mirror.py は DOM から本文を取るので、
+   描画しないと問題文がミラーから消える）。絞り込みの保存先はこの端末・理論の全ページ共通。 */
+const RIRON_QUIZ_MODE_KEY = 'denken_riron_quiz_mode';
 const ConceptQuiz = ({
   pageId,
   pageTitle
 }) => {
   const pool = (RIRON_DAILY_POOL || []).filter(q => q.wikiPageId === pageId);
+  const ids = pool.map(q => q.id).join(',');
+  const [mode, setModeState] = React.useState(() => {
+    try {
+      const v = localStorage.getItem(RIRON_QUIZ_MODE_KEY);
+      return WIKI_QUIZ_MODES.some(m => m.id === v) ? v : 'all';
+    } catch (e) {
+      return 'all';
+    }
+  });
+  const [shownN, setShownN] = React.useState(WIKI_QUIZ_BATCH);
+  const setMode = v => {
+    setModeState(v);
+    setShownN(WIKI_QUIZ_BATCH);
+    try {
+      localStorage.setItem(RIRON_QUIZ_MODE_KEY, v);
+    } catch (e) {}
+  };
+  // 記録はページを開いた時点で1回だけ読む（答えた直後に問題が動くと、解説を読む前に見失う）
+  const snap = React.useMemo(() => {
+    const recs = {};
+    ids.split(',').filter(Boolean).forEach(id => {
+      let rec = null;
+      try {
+        const raw = localStorage.getItem(`denken_check::riron_${pageId}::quiz::${id}`);
+        const v = raw ? JSON.parse(raw) : null;
+        rec = v && typeof v === 'object' ? v : null;
+      } catch (e) {}
+      recs[id] = rec;
+    });
+    return {
+      recs,
+      today: kakomonToday()
+    };
+  }, [pageId, ids]);
   if (!pool.length) return null;
-  const required = pool.filter(q => q.rank === 'S' || q.rank === 'A');
-  const optional = pool.filter(q => q.rank !== 'S' && q.rank !== 'A');
+  const {
+    recs
+  } = snap;
+  const plan = wikiQuizPlan(pool, recs, mode, snap.today);
+  const {
+    st,
+    main,
+    optionalNew,
+    rested,
+    nReview,
+    nearest,
+    count
+  } = plan;
+  const left = Math.max(0, main.length - shownN);
+  const item = q => /*#__PURE__*/React.createElement(ConceptQuizItem, {
+    key: q.id,
+    q: q,
+    pageId: pageId,
+    pageTitle: pageTitle,
+    required: wikiQuizIsRequired(q)
+  });
   return /*#__PURE__*/React.createElement("div", {
     style: {
       border: '2px solid var(--accent)',
@@ -52674,13 +53013,69 @@ const ConceptQuiz = ({
       fontWeight: 600,
       textDecoration: 'none'
     }
-  }, "📕 間違えた問題・⚠過信した問題を「間違いノート」でまとめて復習 →")), required.map(q => /*#__PURE__*/React.createElement(ConceptQuizItem, {
+  }, "📕 間違えた問題・⚠過信した問題を「間違いノート」でまとめて復習 →")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+      flexWrap: 'wrap',
+      margin: '0 0 6px'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: 'var(--ink-soft)'
+    }
+  }, "出す問題:"), WIKI_QUIZ_MODES.map(m => /*#__PURE__*/React.createElement("button", {
+    key: m.id,
+    type: "button",
+    onClick: () => setMode(m.id),
+    "aria-pressed": mode === m.id,
+    style: {
+      padding: '3px 10px',
+      fontSize: 12,
+      borderRadius: 4,
+      cursor: 'pointer',
+      background: mode === m.id ? 'var(--accent)' : 'transparent',
+      color: mode === m.id ? 'var(--bg)' : 'var(--ink-soft)',
+      border: mode === m.id ? '1px solid var(--accent)' : '1px solid var(--rule)'
+    }
+  }, m.label, m.id === 'all' ? '' : ` ${count(m.id)}`))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      margin: '0 0 10px'
+    }
+  }, /*#__PURE__*/React.createElement("strong", null, "今日解く ", main.length, "問"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--ink-soft)'
+    }
+  }, "（復習 ", nReview, "・未回答 ", main.length - nReview, "）"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--ink-mute)',
+      fontSize: 11
+    }
+  }, mode === 'all' ? ' — 復習（× → △ → ◎）を先、未回答を後に出す。次回日が先の問題は下に寝かせる。' : ' — 絞り込み中。弱い問題を避けて、得意な問題だけを解いていないかに注意する。')), main.map((q, i) => /*#__PURE__*/React.createElement("div", {
     key: q.id,
-    q: q,
-    pageId: pageId,
-    pageTitle: pageTitle,
-    required: true
-  })), optional.length > 0 && /*#__PURE__*/React.createElement("details", {
+    hidden: i >= shownN
+  }, item(q))), left > 0 && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => setShownN(n => n + WIKI_QUIZ_BATCH),
+    style: {
+      marginTop: 6,
+      padding: '6px 12px',
+      fontSize: 13,
+      borderRadius: 6,
+      cursor: 'pointer',
+      background: 'transparent',
+      color: 'var(--accent)',
+      border: '1px solid var(--accent)'
+    }
+  }, "次の ", Math.min(WIKI_QUIZ_BATCH, left), "問を出す（残り ", left, "問）"), main.length === 0 && /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      margin: '4px 0 0'
+    }
+  }, plan.matched === 0 ? 'このページに該当する問題はない。' : rested.length ? `今日解く問題はない。次は ${wikiShortDate(nearest)}。` : '今日解く問題はない。', optionalNew.length > 0 ? ' 余力があれば下の任意問題へ。' : ''), optionalNew.length > 0 && /*#__PURE__*/React.createElement("details", {
     style: {
       marginTop: 8
     }
@@ -52691,17 +53086,40 @@ const ConceptQuiz = ({
       fontWeight: 600,
       color: 'var(--ink-soft)'
     }
-  }, "＋ 任意問題（理解を深める ", optional.length, "問）"), /*#__PURE__*/React.createElement("div", {
+  }, "＋ 任意問題（理解を深める・未回答 ", optionalNew.length, "問）"), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 8
     }
-  }, optional.map(q => /*#__PURE__*/React.createElement(ConceptQuizItem, {
-    key: q.id,
-    q: q,
-    pageId: pageId,
-    pageTitle: pageTitle,
-    required: false
-  })))));
+  }, optionalNew.map(item))), rested.length > 0 && /*#__PURE__*/React.createElement("details", {
+    style: {
+      marginTop: 8
+    }
+  }, /*#__PURE__*/React.createElement("summary", {
+    style: {
+      cursor: 'pointer',
+      fontSize: 13,
+      fontWeight: 600,
+      color: 'var(--ink-soft)'
+    }
+  }, "寝かせ中 ", rested.length, "問（次回日が来たら上に戻る・次は ", wikiShortDate(nearest), "）"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      color: 'var(--ink-mute)',
+      margin: '6px 0'
+    }
+  }, "今日解いた問題と、◎ で次回日が先の問題。今解き直しても記録は伸びにくい（同じ日の解き直しは △ 止まり・思い出す手間が小さいほど定着しない）。解説を読み返すのはよい。"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 8
+    }
+  }, rested.map(q => /*#__PURE__*/React.createElement("div", {
+    key: q.id
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: 'var(--ink-mute)',
+      margin: '6px 0 -4px'
+    }
+  }, wikiStatusMark(recs[q.id] && recs[q.id].status), " 次回 ", wikiShortDate(st[q.id].next)), item(q))))));
 };
 const MIXED_QUIZ_COUNT = 5;
 const MixedQuiz = ({
