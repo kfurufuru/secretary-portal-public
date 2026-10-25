@@ -233,6 +233,16 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
 .cards summary::marker{color:var(--accent)}
 .cards .cbody{padding:2px 12px 12px;font-size:12.5px;line-height:1.7;color:var(--ink-2)}
 .cards .cbody b{color:var(--ink)}
+/* カード内の図。タップで全画面に拡大する（小さい画面で文字が潰れるため。機械3D工場と同じ） */
+.figzoom{display:block;width:100%;padding:0;margin:8px 0 4px;border:1px solid var(--line-2);border-radius:4px;background:var(--panel);cursor:zoom-in}
+.figzoom svg{display:block;width:100%;height:auto}
+.figcap{font-size:11.5px;color:var(--ink-3);margin:0 0 8px}
+.figjump{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 14px;font-size:12px;color:var(--ink-3)}
+.figjump button{border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent-ink);border-radius:4px;padding:3px 10px;font-size:12.5px;min-height:32px}
+#figdlg{width:min(96vw,1100px);max-width:none;max-height:94vh;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);cursor:zoom-out}
+#figdlg::backdrop{background:rgba(0,0,0,.6)}
+#figdlg svg{display:block;width:100%;min-width:680px;height:auto;max-height:86vh}
+#figdlg p{margin:6px 0 0;font-size:12px;color:var(--ink-3);text-align:center}
 .tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0}
 .tbl table{border-collapse:collapse;width:100%;min-width:min(100%,340px);font-size:12px}
 .tbl th,.tbl td{border:1px solid var(--line-2);padding:5px 8px;text-align:left;vertical-align:top}
@@ -2232,7 +2242,7 @@ const STUDY = {
     "電圧源を短絡することになり、大電流が流れて焼損するから。"
    ]
   ],
-  "cards": []
+  "cards": ["trconn"]
  },
  "kakuu-souden": {
   "oneLiner": "電圧を2倍にすると損失は1/4。たるみは径間の2乗に比例し、張力に反比例する。",
@@ -3380,10 +3390,13 @@ const STUDY = {
     "0.8² = 0.64 倍。"
    ]
   ],
-  "cards": []
+  "cards": ["tanso3"]
  }
 };
-const CARDS = {};
+const CARDS = {
+  trconn: { t:'変圧器の結線（Δ-Y・Y-Y-Δ・Y-Y・V-V）', q:['R08上/6','R05下/6','R04下/7','H30/12','H29/7','H25/6','H22/7'] },
+  tanso3: { t:'単相3線式の結線（中性線とバランサ）', q:['R08上/13','R07上/11','R05下/13','R03/12','H28/17','H23/9'] },
+};
 /* ツアーの各歩から過去問を名指しで引くための表。キーは「年度/問番号」 */
 const QID = new Map(KAKOMON.map(q => [q.s + '/' + q.c, q]));
 
@@ -4737,9 +4750,107 @@ function drawMini(){
 }
 
 /* カードは電力の3D工場では使わない（機械の3D工場と同じ枠組みを保つための空の定義） */
-const CARD_BODY = {};
+const CARD_BODY = {
+  trconn: `
+    <p><b>どの結線を使うかは、第3調波の逃げ道と中性点の接地で決まる。</b>変圧器の励磁電流には第3調波が含まれる。
+    Δ 巻線があれば第3調波の電流が Δ の中を回れる（環流）ので、電圧の波形がひずまない。Y 巻線は中性点を接地できる。</p>
+    <button class="figzoom" type="button" aria-label="図を拡大する"><svg viewBox="0 0 640 450" role="img" aria-label="変圧器の三相結線4種。Δ-Y、Y-Y-Δ、Y-Y、V-V" font-family="var(--font-sans)" font-size="15">
+        <rect x="12" y="10" width="13" height="13" rx="2" fill="var(--accent)"/><text x="31" y="22" fill="var(--ink-2)" font-size="13">Δ 巻線（第3調波の電流が中を回れる）</text><rect x="330" y="10" width="13" height="13" rx="2" fill="var(--steel)"/><text x="349" y="22" fill="var(--ink-2)" font-size="13">Y 巻線・V 結線</text>
+        <line x1="320" y1="36" x2="320" y2="444" stroke="var(--line)"/><line x1="8" y1="244" x2="632" y2="244" stroke="var(--line)"/>
+        <text x="12" y="58" fill="var(--ink)" font-size="15" font-weight="700">Δ-Y</text><text x="12" y="76" fill="var(--ink-2)" font-size="12">発電所の主変圧器（昇圧）</text>
+        <path d="M0,0 H18.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H72" transform="translate(54.0,160.8) rotate(-60)" fill="none" stroke="var(--accent)" stroke-width="2.2"/><path d="M0,0 H18.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H72" transform="translate(90.0,98.4) rotate(60)" fill="none" stroke="var(--accent)" stroke-width="2.2"/><path d="M0,0 H18.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H72" transform="translate(126.0,160.8) rotate(180)" fill="none" stroke="var(--accent)" stroke-width="2.2"/>
+        <path d="M140,140 H180" stroke="var(--ink-3)" stroke-width="1.6"/><path d="M180,140 l-7,-4 v8 z" fill="var(--ink-3)"/>
+        <path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(235.0,140.0) rotate(-90)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(235.0,140.0) rotate(30)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(235.0,140.0) rotate(150)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><circle cx="235" cy="140" r="2.6" fill="var(--steel)"/><path d="M235,140 V170 M226,170 H244 M229,174 H241 M232,178 H238" fill="none" stroke="var(--ink-2)" stroke-width="1.6"/>
+        <text x="90" y="200" text-anchor="middle" fill="var(--ink-2)" font-size="12">発電機側 Δ</text>
+        <text x="235" y="200" text-anchor="middle" fill="var(--ink-2)" font-size="12">送電線側 Y（中性点接地）</text>
+        <text x="12" y="224" text-anchor="start" fill="var(--ink)" font-size="12">Δ で第3調波を環流。Y 側で中性点を接地できる</text>
+        <text x="332" y="58" fill="var(--ink)" font-size="15" font-weight="700">Y-Y-Δ</text><text x="332" y="76" fill="var(--ink-2)" font-size="12">送電用・変電所の三巻線変圧器</text>
+        <path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(400.0,130.0) rotate(-90)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(400.0,130.0) rotate(30)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(400.0,130.0) rotate(150)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><circle cx="400" cy="130" r="2.6" fill="var(--steel)"/><path d="M400,130 V160 M391,160 H409 M394,164 H406 M397,168 H403" fill="none" stroke="var(--ink-2)" stroke-width="1.6"/>
+        <path d="M445,130 H485" stroke="var(--ink-3)" stroke-width="1.6"/><path d="M485,130 l-7,-4 v8 z" fill="var(--ink-3)"/>
+        <path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(540.0,130.0) rotate(-90)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(540.0,130.0) rotate(30)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(540.0,130.0) rotate(150)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><circle cx="540" cy="130" r="2.6" fill="var(--steel)"/><path d="M540,130 V160 M531,160 H549 M534,164 H546 M537,168 H543" fill="none" stroke="var(--ink-2)" stroke-width="1.6"/>
+        <path d="M0,0 H2.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H40" transform="translate(448.0,203.5) rotate(-60)" fill="none" stroke="var(--accent)" stroke-width="2.2"/><path d="M0,0 H2.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H40" transform="translate(468.0,168.9) rotate(60)" fill="none" stroke="var(--accent)" stroke-width="2.2"/><path d="M0,0 H2.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H40" transform="translate(488.0,203.5) rotate(180)" fill="none" stroke="var(--accent)" stroke-width="2.2"/>
+        <text x="500" y="197" text-anchor="start" fill="var(--ink-2)" font-size="12">三次 Δ（安定巻線）</text>
+        <text x="332" y="236" text-anchor="start" fill="var(--ink)" font-size="12">Y-Y の欠点を三次の Δ で補う</text>
+        <text x="12" y="272" fill="var(--ink)" font-size="15" font-weight="700">Y-Y</text><text x="12" y="290" fill="var(--ink-2)" font-size="12">三次巻線なし</text>
+        <path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(90.0,345.0) rotate(-90)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(90.0,345.0) rotate(30)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(90.0,345.0) rotate(150)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><circle cx="90" cy="345" r="2.6" fill="var(--steel)"/><path d="M90,345 V375 M81,375 H99 M84,379 H96 M87,383 H93" fill="none" stroke="var(--ink-2)" stroke-width="1.6"/>
+        <path d="M140,345 H180" stroke="var(--ink-3)" stroke-width="1.6"/><path d="M180,345 l-7,-4 v8 z" fill="var(--ink-3)"/>
+        <path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(235.0,345.0) rotate(-90)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(235.0,345.0) rotate(30)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><path d="M0,0 H4.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H44" transform="translate(235.0,345.0) rotate(150)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><circle cx="235" cy="345" r="2.6" fill="var(--steel)"/><path d="M235,345 V375 M226,375 H244 M229,379 H241 M232,383 H238" fill="none" stroke="var(--ink-2)" stroke-width="1.6"/>
+        <text x="12" y="420" text-anchor="start" fill="var(--ink)" font-size="12">第3調波の通り道が無い。中性点を接地すると</text>
+        <text x="12" y="436" text-anchor="start" fill="var(--ink)" font-size="12">第3調波電流が大地を通り、通信線に誘導障害</text>
+        <text x="332" y="272" fill="var(--ink)" font-size="15" font-weight="700">V-V</text><text x="332" y="290" fill="var(--ink-2)" font-size="12">変圧器2台で三相</text>
+        <path d="M0,0 H18.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H72" transform="translate(384.0,329.2) rotate(60)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><path d="M0,0 H18.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H72" transform="translate(420.0,391.6) rotate(-60)" fill="none" stroke="var(--steel)" stroke-width="2.2"/>
+        <path d="M468,350 H508" stroke="var(--ink-3)" stroke-width="1.6"/><path d="M508,350 l-7,-4 v8 z" fill="var(--ink-3)"/>
+        <path d="M0,0 H18.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H72" transform="translate(524.0,329.2) rotate(60)" fill="none" stroke="var(--steel)" stroke-width="2.2"/><path d="M0,0 H18.0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 a4.5,4.5 0 0 1 9.0,0 H72" transform="translate(560.0,391.6) rotate(-60)" fill="none" stroke="var(--steel)" stroke-width="2.2"/>
+        <text x="332" y="420" text-anchor="start" fill="var(--ink)" font-size="12">出力 √3·P（P＝1台の容量）</text>
+        <text x="332" y="436" text-anchor="start" fill="var(--ink)" font-size="12">利用率 √3/2 ≒ 0.866</text>
+      </svg></button>
+    <p class="figcap">図をタップすると拡大する。巻線の向き＝電圧ベクトルの向きで描いた結線の模式図。橙が Δ 巻線。</p>
+    <div class="tbl"><table>
+      <tr><th>結線</th><th>使う所</th><th>理由と注意</th></tr>
+      <tr><th>Δ-Y</th><td>発電所の主変圧器（昇圧）</td><td>発電機側の Δ で第3調波を環流させ、送電線側の Y で中性点を接地する。高圧側を Y にすると、巻線にかかる電圧が線間電圧の 1/√3 で済み、絶縁に有利。一次と二次で 30° の角変位がある</td></tr>
+      <tr><th>Y-Y-Δ</th><td>送電用・変電所</td><td>両側の Y で中性点を接地でき、三次の Δ（安定巻線）で第3調波を環流させる</td></tr>
+      <tr><th>Y-Y</th><td>三次巻線なしでは使いにくい</td><td>第3調波の通り道が無い。中性点を接地しなければ起電力がひずみ、接地すれば第3調波の電流が大地を通って通信線に誘導障害を与える</td></tr>
+      <tr><th>V-V</th><td>配電・2台で三相</td><td>出力は √3·P（P＝1台の容量）。利用率 √3/2 ≒ 0.866。Δ-Δ の1台が故障しても V で運転を続けられる</td></tr>
+    </table></div>`,
+  tanso3: `
+    <p><b>柱上変圧器の二次巻線の真ん中から中性線を出し、接地する。</b>外線 a・中性線 N・外線 b の3本で、
+    a–N と N–b に 100 V、a–b に 200 V がとれる。</p>
+    <button class="figzoom" type="button" aria-label="図を拡大する"><svg viewBox="0 0 640 315" role="img" aria-label="単相3線式の結線。変圧器二次巻線の中点から中性線を出して接地し、100V負荷と200V負荷、末端のバランサをつなぐ" font-family="var(--font-sans)" font-size="15">
+        <text x="70" y="48" text-anchor="middle" fill="var(--ink)" font-size="12">柱上変圧器の二次巻線</text>
+        <path d="M0,0 H21.0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 H90" transform="translate(70.0,70.0) rotate(90)" fill="none" stroke="var(--steel)" stroke-width="2.6"/>
+        <path d="M0,0 H21.0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 H90" transform="translate(70.0,160.0) rotate(90)" fill="none" stroke="var(--steel)" stroke-width="2.6"/>
+        <g stroke="var(--steel)" stroke-width="2.2" fill="none"><path d="M70,70 H580"/><path d="M70,250 H580"/></g>
+        <path d="M70,160 H430" stroke="var(--ink)" stroke-width="2.2" fill="none"/>
+        <path d="M110,160 V188 M101,188 H119 M104,192 H116 M107,196 H113" stroke="var(--ink-2)" stroke-width="1.6" fill="none"/>
+        <text x="110" y="212" text-anchor="middle" fill="var(--ink-2)" font-size="12">B種接地</text>
+        <g font-size="14" font-weight="700" fill="var(--ink)"><text x="54" y="75" text-anchor="end">a</text><text x="54" y="165" text-anchor="end">N</text><text x="54" y="255" text-anchor="end">b</text></g>
+        <path d="M250,70 V92 M250,138 V160" stroke="var(--steel)" stroke-width="2.2"/><rect x="242" y="92" width="16" height="46" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+        <text x="266" y="120" text-anchor="start" fill="var(--ink)" font-size="12">R₁（100 V）</text>
+        <path d="M250,160 V182 M250,228 V250" stroke="var(--steel)" stroke-width="2.2"/><rect x="242" y="182" width="16" height="46" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+        <text x="266" y="210" text-anchor="start" fill="var(--ink)" font-size="12">R₂（100 V）</text>
+        <path d="M580,70 V125 M580,195 V250" stroke="var(--steel)" stroke-width="2.2"/><rect x="572" y="125" width="16" height="70" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+        <text x="570" y="215" text-anchor="end" fill="var(--ink)" font-size="12">R₃（200 V）</text>
+        <path d="M0,0 H25.0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 H90" transform="translate(430.0,70.0) rotate(90)" fill="none" stroke="var(--steel)" stroke-width="2.2"/>
+        <path d="M0,0 H25.0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 a5,5 0 0 1 10,0 H90" transform="translate(430.0,160.0) rotate(90)" fill="none" stroke="var(--steel)" stroke-width="2.2"/>
+        <circle cx="430" cy="160" r="3" fill="var(--ink)"/><circle cx="430" cy="70" r="3" fill="var(--steel)"/><circle cx="430" cy="250" r="3" fill="var(--steel)"/>
+        <rect x="408" y="58" width="44" height="204" rx="4" fill="none" stroke="var(--ink-3)" stroke-dasharray="4 3"/>
+        <text x="430" y="280" text-anchor="middle" fill="var(--ink-2)" font-size="12">バランサ（巻数比 1:1 の単巻変圧器）</text>
+        <path d="M150,62 H190" stroke="var(--ink-2)" stroke-width="1.4"/><path d="M190,62 l-7,-4 v8 z" fill="var(--ink-2)"/><text x="196" y="60" fill="var(--ink)" font-size="13">I<tspan dy="3" font-size="10">a</tspan></text>
+        <path d="M190,242 H150" stroke="var(--ink-2)" stroke-width="1.4"/><path d="M150,242 l7,-4 v8 z" fill="var(--ink-2)"/><text x="196" y="240" fill="var(--ink)" font-size="13">I<tspan dy="3" font-size="10">b</tspan></text>
+        <text x="150" y="152" fill="var(--ink)" font-size="13">I<tspan dy="3" font-size="10">N</tspan><tspan dy="-3"> = I</tspan><tspan dy="3" font-size="10">a</tspan><tspan dy="-3"> − I</tspan><tspan dy="3" font-size="10">b</tspan></text>
+        <text x="320" y="300" text-anchor="middle" fill="var(--ink)" font-size="12">a–N・N–b は 100 V、a–b は 200 V。中性線（N）には上下の 100 V 負荷の電流の差が流れる</text>
+      </svg></button>
+    <p class="figcap">図をタップすると拡大する。結線の模式図。200 V 負荷 R₃ の電流は外線だけを流れ、中性線には流れない。I<sub>N</sub> は電源へ戻る向きを正とする。</p>
+    <div class="tbl"><table>
+      <tr><th>状態</th><th>起きること</th></tr>
+      <tr><th>平衡（R₁ = R₂）</th><td>I<sub>N</sub> = 0。同じ電力を、同じ太さ・同じ距離の電線で、同じ力率の負荷へ送ると、電力損失は単相2線式（100 V）の 1/4（電線の総量をそろえて比べると 3/8）</td></tr>
+      <tr><th>不平衡</th><td>中性線に差の電流が流れる。平衡のときと比べて、重い負荷の側の電圧が下がり、軽い側が上がる</td></tr>
+      <tr><th>中性線の断線</th><td>R₁ と R₂ が 200 V に直列になり、抵抗の比で電圧を分ける。軽い負荷（抵抗の大きい側）に高い電圧がかかる</td></tr>
+      <tr><th>末端にバランサ</th><td>上下の電圧をそろえ、電源側の中性線の電流を 0 にする（差の電流をバランサが受け持つ）。負荷と同じ点に置き、外線2本の抵抗が等しい場合の話</td></tr>
+    </table></div>`,
+};
 function cardBody(k){ return CARD_BODY[k] || ''; }
-function bindCards(){ syncCards(); }
+/* 図のカード → その図で解ける過去問（KAKOMON の行）。図を見て閉じず、過去問へ進む道を作る */
+function cardQs(k){
+  const qs = (CARDS[k].q || []).map(id => QID.get(id)).filter(Boolean);
+  if (!qs.length) return '';
+  return `<div class="secgroup" style="margin-top:12px"><span>この図で解く過去問 ${qs.length}問</span></div>
+    <ul class="kak">${qs.map(q=>`<li><span class="id">${q.s} 問${q.c}</span><span><a href="${secUrl(q.p,q.sec)}" target="_blank" rel="noopener">${esc(q.t)}</a></span></li>`).join('')}</ul>`;
+}
+function bindCards(){
+  const cs = document.getElementById('cards');
+  if (cs) cs.querySelectorAll('.figzoom').forEach(b=>b.onclick=()=>{
+    let dlg = document.getElementById('figdlg');
+    if (!dlg){
+      dlg = document.createElement('dialog'); dlg.id = 'figdlg';
+      dlg.onclick = ()=>dlg.close();
+      document.body.appendChild(dlg);
+    }
+    dlg.innerHTML = b.innerHTML + '<p>どこかをタップすると閉じる（画面が狭いときは横にスクロールできる）</p>';
+    dlg.showModal();
+  });
+  syncCards();
+}
 const VIEWNOTE = {};
 function syncCards(){
   const vn = document.getElementById('viewnote');
@@ -4965,6 +5076,8 @@ function renderPanel(){
   const tourBySec = {}; st.tour.forEach((x,k)=>{ if (x.sec && !(x.sec in tourBySec)) tourBySec[x.sec] = k; });
   /* 過去問1問 → その問題を名指ししているツアーの歩 */
   const stepByQ = {}; st.tour.forEach((x,k)=>{ for (const qid of (x.q||[])) if (!(qid in stepByQ)) stepByQ[qid] = k; });
+  /* 図（拡大できる SVG）を持つカード。最初から開き、冒頭から飛べるようにする */
+  const figCards = (st.cards||[]).filter(k=>cardBody(k).includes('class="figzoom"'));
   const charts = `<canvas class="mini" id="mini" width="700" height="300"></canvas><p class="mini-cap" id="miniCap"></p>`;
   panel.innerHTML = `
     <div class="kicker">${esc(m.kicker)}</div>
@@ -4972,6 +5085,7 @@ function renderPanel(){
     <div class="oneliner"><small>30秒理解</small>${esc(st.oneLiner)}</div>
     <p class="lead">${esc(m.lead)}</p>
     <p class="viewnote" id="viewnote"></p>
+    ${figCards.length ? `<p class="figjump">図で見る：${figCards.map(k=>`<button data-fig="${k}">${esc(CARDS[k].t)} ↓</button>`).join('')}</p>` : ''}
 
     <h3>電験で狙われるポイント</h3>
     <ul class="exam">${st.exam.map(([n,f,w])=>`<li><span class="en">${esc(n)}</span><span class="ef">${esc(f)}</span><span class="ew">${mark(w)}</span></li>`).join('')}</ul>
@@ -4993,7 +5107,7 @@ function renderPanel(){
     <ul class="parts">${m.parts.map(([c,n,d])=>`<li><span class="sw" style="background:${c}"></span><div><b>${esc(n)}</b>${d?`<br><span>${mark(d)}</span>`:''}</div></li>`).join('')}</ul>
 
     <h3>もう一歩</h3>
-    <div class="cards" id="cards">${(st.cards||[]).map(k=>`<details data-card="${k}"><summary>${esc(CARDS[k].t)}</summary><div class="cbody">${cardBody(k)}</div></details>`).join('')}</div>
+    <div class="cards" id="cards">${(st.cards||[]).map(k=>`<details data-card="${k}"${figCards.includes(k)?' open':''}><summary>${esc(CARDS[k].t)}</summary><div class="cbody">${cardBody(k)}${cardQs(k)}</div></details>`).join('')}</div>
 
     <h3>即答チェック</h3>
     <ul class="check">${st.check.map(([q,a])=>`<li><details><summary>${esc(q)}</summary><p>${esc(a)}</p></details></li>`).join('')}</ul>
@@ -5018,6 +5132,10 @@ function renderPanel(){
     <div class="note">過去問の行をクリックすると、その論点のWikiの節が開く。解説・答えはWiki側。ここは形と動きを見る場所。</div>`;
   bindQuiz(st);
   bindCards();
+  panel.querySelectorAll('[data-fig]').forEach(b=>b.onclick=()=>{
+    const d = panel.querySelector(`details[data-card="${b.dataset.fig}"]`); if (!d) return;
+    d.open = true; d.scrollIntoView({behavior: reduced?'auto':'smooth', block:'start'});
+  });
   panel.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{
     tourStep = +b.dataset.step; renderTour();
     document.getElementById('tour').scrollIntoView({behavior: reduced?'auto':'smooth', block:'center'});
