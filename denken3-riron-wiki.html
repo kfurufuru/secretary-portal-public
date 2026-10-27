@@ -1609,8 +1609,12 @@ const wikiShortDate = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? `${Numbe
    今日 × を付けた問題は次回日が明日以降なので出ない（同じ日の解き直しは △ 止まりで定着しない）。
    ◎ で次回日が無い／壊れている記録は出さない（次回日の仕組みより前の古い ◎ で一覧が埋まるため。単元ページでは出す）。
    今の Wiki に無い単元 id（改名・手作りの取り込み）の記録は出さない（開けないので一覧から消せなくなる）。
-   機械の kikaiWikiDue（kikai-tracker.jsx）と理論の RironReviewToday がこれを使う。 */
-const wikiDueList = (subject, kinds, today) => {
+   機械の kikaiWikiDue（kikai-tracker.jsx）と理論の RironReviewToday がこれを使う。
+   kinds は正規表現の断片（例 'quiz'・'trap-\\d+'）。opts.bare が真なら、種類の直後でキーが終わるもの
+  （理論のひっかけ denken_check::riron_trap-patterns::trap-12）も拾う。既定は種類の後に '::' が要る（機械の形）。
+   opts.legacyDue(rec, kind) を渡すと、次回日を持たない記録の判定をそれに任せる（undefined を返したら既定の「△× なら出す」）。
+   理論のひっかけは、パターン集の「⚠ 復習推奨」と同じ従来の日数で判定するために使う（ページとホームで出る問題を揃える）。 */
+const wikiDueList = (subject, kinds, today, opts) => {
   const t = today || kakomonToday();
   const out = [];
   let keys = [];
@@ -1618,7 +1622,7 @@ const wikiDueList = (subject, kinds, today) => {
   const known = {};
   try { ((window.WIKI_DATA && window.WIKI_DATA.chapters) || []).forEach((ch) => (ch.pages || []).forEach((p) => { known[p.id] = true; })); } catch (e) {}
   const hasKnown = Object.keys(known).length > 0;
-  const re = new RegExp('^denken_check::' + subject + '_([^:]+)::(' + kinds.join('|') + ')::');
+  const re = new RegExp('^denken_check::' + subject + '_([^:]+)::(' + kinds.join('|') + ')' + ((opts && opts.bare) ? '(?:::|$)' : '::'));
   keys.forEach((k) => {
     const m = re.exec(k);
     if (!m) return;
@@ -1629,7 +1633,8 @@ const wikiDueList = (subject, kinds, today) => {
     const mark = wikiStatusMark(rec.status);
     const weak = mark === '×' || mark === '△';
     const mismatch = !!(rec.mark && mark && rec.mark !== mark);
-    const due = mismatch || (wikiIsRealDate(rec.nextDue) ? rec.nextDue <= t : weak);
+    const legacy = (opts && opts.legacyDue) ? opts.legacyDue(rec, m[2]) : undefined;
+    const due = mismatch || (wikiIsRealDate(rec.nextDue) ? rec.nextDue <= t : (legacy === undefined ? weak : !!legacy));
     if (!due) return;
     out.push({ key: k, pageId: m[1], kind: m[2], status: rec.status, nextDue: rec.nextDue || '',
       title: rec.itemTitle || '', article: rec.articleTitle || '' });
@@ -3958,8 +3963,12 @@ const rironFormatDaysAgo = isoDate => {
   if (d === 1) return "昨日";
   return d + "日前";
 };
+// 次回日（FSRS・wiki-review.js の wikiScheduleFields）を持つ記録はそれで判定する（ひっかけパターン集は付ける）。
+// 持たない記録（誤答カード・次回日の仕組みより前のひっかけ）は従来どおり上の日数で判定する。
+// 同じ問題に2つの再挑戦日を出さないため、次回日があるときは日数を見ない。
 const isRironReviewDue = record => {
   if (!record || !record.status) return false;
+  if (wikiIsRealDate(record.nextDue)) return record.nextDue <= kakomonToday();
   const threshold = RIRON_SRS_THRESHOLD_DAYS[record.status];
   if (!threshold) return false;
   const d = rironDaysSince(record.updatedAt);
@@ -3977,7 +3986,9 @@ const buildTrapMeta = (num, trap, category) => {
 
 // 汎用 hook: localStorage `denken_check::*` record を read/write
 // 返り値: [record, setStatus(s|null), setMemo(text)]
-function useCheckRecord(storageKey, buildMeta) {
+// opts.schedule が真なら、状態を付けるたびに次回日（FSRS-6・機械と同じ式）を記録へ足す（ひっかけパターン集が使う）
+function useCheckRecord(storageKey, buildMeta, opts) {
+  const schedule = !!(opts && opts.schedule);
   const read = () => {
     try {
       const raw = localStorage.getItem(storageKey);
@@ -4045,7 +4056,7 @@ function useCheckRecord(storageKey, buildMeta) {
         history: nextHistory
       };
       patch[lastFieldKey] = now;
-      return Object.assign({}, cur, meta, patch);
+      return Object.assign({}, cur, meta, schedule ? wikiScheduleFields(cur, newStatus) : {}, patch);
     });
   };
   const setMemo = memoText => {
@@ -4320,7 +4331,7 @@ const ReviewSignal = ({
       letterSpacing: "0.04em"
     },
     "aria-label": "復習推奨タイミング",
-    title: "前回 " + rironFormatDaysAgo(record.updatedAt) + "、しきい値超え"
+    title: wikiIsRealDate(record.nextDue) ? "次回日 " + wikiShortDate(record.nextDue) + " を過ぎた" : "前回 " + rironFormatDaysAgo(record.updatedAt) + "、しきい値超え"
   }, "⚠ 復習推奨"));
 };
 
@@ -4385,7 +4396,9 @@ const TrapCheckPills = ({
 }) => {
   const storageKey = RIRON_TRAP_KEY(num);
   const buildMeta = useMemo(() => () => buildTrapMeta(num, trap, category), [num, trap, category]);
-  const [record, setStatus, setMemo] = useCheckRecord(storageKey, buildMeta);
+  const [record, setStatus, setMemo] = useCheckRecord(storageKey, buildMeta, {
+    schedule: true
+  });
   return /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: "12px",
@@ -4544,10 +4557,10 @@ const RironMissCard = ({
   }))));
 };
 
-/* ---- ホームの「今日やる」（理論の確認問題）。機械のホームと同じ規則（wiki-review.js の wikiDueList）。
-   次回日を持つのは確認問題だけなので、対象は確認問題に限る（ひっかけ・1分復習は次回日を持たない）。
-   誤答カードは上の RironMissCards が自分の次回日で出すので、ここには入れない。
-   単元を押すと、確認問題がある「学習」タブを開く。 */
+/* ---- ホームの「今日やる」（理論の確認問題・ひっかけパターン）。機械のホームと同じ規則（wiki-review.js の wikiDueList）。
+   対象は次回日を持つ確認問題とひっかけパターン集。誤答カードは上の RironMissCards が自分の間隔で出すので、ここには入れない。
+   次回日を持たない古いひっかけの記録は、パターン集の「⚠ 復習推奨」と同じ判定（isRironReviewDue＝従来の日数）で出す。
+   単元を押すと、確認問題がある「学習」タブを開く（ひっかけはパターン集のページ）。 */
 const RironDueItem = ({
   r
 }) => {
@@ -4615,7 +4628,12 @@ const RironReviewToday = ({
       window.removeEventListener('storage', on);
     };
   }, []);
-  const due = wikiDueList('riron', ['quiz']);
+  const due = wikiDueList('riron', ['quiz', 'trap-\\d+'], undefined, {
+    bare: true,
+    legacyDue: (rec, kind) => kind.indexOf('trap-') === 0 ? isRironReviewDue(rec) : undefined
+  }).map(r => r.kind.indexOf('trap-') === 0 ? Object.assign({}, r, {
+    kind: 'trap'
+  }) : r);
   const nByMark = {
     '×': 0,
     '△': 0,
@@ -4651,7 +4669,7 @@ const RironReviewToday = ({
     style: {
       margin: 0
     }
-  }, /*#__PURE__*/React.createElement("strong", null, "今日やる（確認問題）"), ' ', due.length ? /*#__PURE__*/React.createElement("strong", {
+  }, /*#__PURE__*/React.createElement("strong", null, "今日やる（確認問題・ひっかけ）"), ' ', due.length ? /*#__PURE__*/React.createElement("strong", {
     style: {
       color: 'var(--danger)'
     }
@@ -4670,7 +4688,7 @@ const RironReviewToday = ({
       fontSize: 13,
       color: 'var(--ink-soft)'
     }
-  }, "確認問題に答えると次回日が付き、忘れかけた頃にここへ戻ってくる（今日間違えた問題は明日以降）。"), pages.length > 0 && /*#__PURE__*/React.createElement("ul", {
+  }, "確認問題に答えるか、ひっかけパターンに理解度を付けると次回日が付き、忘れかけた頃にここへ戻ってくる（今日間違えた問題は明日以降）。"), pages.length > 0 && /*#__PURE__*/React.createElement("ul", {
     style: {
       margin: '6px 0 0',
       paddingLeft: 20,
@@ -4687,7 +4705,7 @@ const RironReviewToday = ({
       href: "#",
       onClick: e => {
         e.preventDefault();
-        onNav(id, 'learn');
+        if (id === 'trap-patterns') onNav(id);else onNav(id, 'learn');
       }
     }, pageTitle(id)), /*#__PURE__*/React.createElement("span", {
       style: {
@@ -4723,7 +4741,7 @@ const RironReviewToday = ({
       fontSize: 12,
       color: 'var(--ink-soft)'
     }
-  }, "単元を開くと「学習」タブの確認問題へ移る。◎ が付けば次回は先へ延び、△・× なら近くに戻る。"));
+  }, "単元を開くと「学習」タブの確認問題へ移る（ひっかけはパターン集へ）。理解した・◎ なら次回は先へ延び、△・× なら近くに戻る。"));
 };
 const RironMissCards = ({
   onNav

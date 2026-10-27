@@ -1951,8 +1951,12 @@ const wikiShortDate = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? `${Numbe
    今日 × を付けた問題は次回日が明日以降なので出ない（同じ日の解き直しは △ 止まりで定着しない）。
    ◎ で次回日が無い／壊れている記録は出さない（次回日の仕組みより前の古い ◎ で一覧が埋まるため。単元ページでは出す）。
    今の Wiki に無い単元 id（改名・手作りの取り込み）の記録は出さない（開けないので一覧から消せなくなる）。
-   機械の kikaiWikiDue（kikai-tracker.jsx）と理論の RironReviewToday がこれを使う。 */
-const wikiDueList = (subject, kinds, today) => {
+   機械の kikaiWikiDue（kikai-tracker.jsx）と理論の RironReviewToday がこれを使う。
+   kinds は正規表現の断片（例 'quiz'・'trap-\\d+'）。opts.bare が真なら、種類の直後でキーが終わるもの
+  （理論のひっかけ denken_check::riron_trap-patterns::trap-12）も拾う。既定は種類の後に '::' が要る（機械の形）。
+   opts.legacyDue(rec, kind) を渡すと、次回日を持たない記録の判定をそれに任せる（undefined を返したら既定の「△× なら出す」）。
+   理論のひっかけは、パターン集の「⚠ 復習推奨」と同じ従来の日数で判定するために使う（ページとホームで出る問題を揃える）。 */
+const wikiDueList = (subject, kinds, today, opts) => {
   const t = today || kakomonToday();
   const out = [];
   let keys = [];
@@ -1960,7 +1964,7 @@ const wikiDueList = (subject, kinds, today) => {
   const known = {};
   try { ((window.WIKI_DATA && window.WIKI_DATA.chapters) || []).forEach((ch) => (ch.pages || []).forEach((p) => { known[p.id] = true; })); } catch (e) {}
   const hasKnown = Object.keys(known).length > 0;
-  const re = new RegExp('^denken_check::' + subject + '_([^:]+)::(' + kinds.join('|') + ')::');
+  const re = new RegExp('^denken_check::' + subject + '_([^:]+)::(' + kinds.join('|') + ')' + ((opts && opts.bare) ? '(?:::|$)' : '::'));
   keys.forEach((k) => {
     const m = re.exec(k);
     if (!m) return;
@@ -1971,7 +1975,8 @@ const wikiDueList = (subject, kinds, today) => {
     const mark = wikiStatusMark(rec.status);
     const weak = mark === '×' || mark === '△';
     const mismatch = !!(rec.mark && mark && rec.mark !== mark);
-    const due = mismatch || (wikiIsRealDate(rec.nextDue) ? rec.nextDue <= t : weak);
+    const legacy = (opts && opts.legacyDue) ? opts.legacyDue(rec, m[2]) : undefined;
+    const due = mismatch || (wikiIsRealDate(rec.nextDue) ? rec.nextDue <= t : (legacy === undefined ? weak : !!legacy));
     if (!due) return;
     out.push({ key: k, pageId: m[1], kind: m[2], status: rec.status, nextDue: rec.nextDue || '',
       title: rec.itemTitle || '', article: rec.articleTitle || '' });
