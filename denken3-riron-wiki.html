@@ -1137,6 +1137,28 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
   .main svg[viewBox^="0 0 780 "] { min-width: 780px; }
   .main svg[viewBox^="0 0 860 "] { min-width: 860px; }
 }
+
+/* === 表・整形済みテキスト・長いリンクのスマホはみ出し対策 ===
+   .table-wrap で包み忘れた表、折り返さない <pre>、改行できない長い URL があると、ページ全体が
+   横に溢れていた（実測: 幅 360px で 10 ページ・タブ、最大 72px）。表と <pre> は直接の親か自分の
+   中だけを横スクロールにし、http で始まるリンクはどこでも改行できるようにする。
+   溢れないときは見た目が変わらない。 */
+@media (max-width: 760px) {
+  .main :is(div, section, figure, li, details):not(.content):has(> table) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* 本文の箱を介さず置かれた表は、表そのものを横スクロールの枠にする
+     （.content ごと横スクロールにすると本文の文章まで横に動くため） */
+  .main pre,
+  .main > table,
+  .main .content > table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+.main a[href^="http"] { overflow-wrap: anywhere; }
   </style>
 </head>
 <body>
