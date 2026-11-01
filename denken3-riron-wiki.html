@@ -3985,8 +3985,8 @@ const rironFormatDaysAgo = isoDate => {
   if (d === 1) return "昨日";
   return d + "日前";
 };
-// 次回日（FSRS・wiki-review.js の wikiScheduleFields）を持つ記録はそれで判定する（ひっかけパターン集は付ける）。
-// 持たない記録（誤答カード・次回日の仕組みより前のひっかけ）は従来どおり上の日数で判定する。
+// 次回日（FSRS・wiki-review.js の wikiScheduleFields）を持つ記録はそれで判定する（ひっかけパターン集・誤答カードは付ける）。
+// 持たない記録（次回日の仕組みより前の記録）は従来どおり上の日数で判定する。
 // 同じ問題に2つの再挑戦日を出さないため、次回日があるときは日数を見ない。
 const isRironReviewDue = record => {
   if (!record || !record.status) return false;
@@ -4008,7 +4008,7 @@ const buildTrapMeta = (num, trap, category) => {
 
 // 汎用 hook: localStorage `denken_check::*` record を read/write
 // 返り値: [record, setStatus(s|null), setMemo(text)]
-// opts.schedule が真なら、状態を付けるたびに次回日（FSRS-6・機械と同じ式）を記録へ足す（ひっかけパターン集が使う）
+// opts.schedule が真なら、状態を付けるたびに次回日（FSRS-6・機械と同じ式）を記録へ足す（ひっかけパターン集・誤答カードが使う）
 function useCheckRecord(storageKey, buildMeta, opts) {
   const schedule = !!(opts && opts.schedule);
   const read = () => {
@@ -4442,7 +4442,9 @@ const TrapCheckPills = ({
 
 /* ---- 誤答カード（ホーム最上部）。RIRON_MISS_CARDS（riron-data.js）を「問い → 自分で答える → 答えを開く → 理解度」で回す。
    答えは開くまで隠す（先に思い出すことで定着する。並べて読むだけでは分かった気になる）。
-   記録の形と復習の間隔は引っかけパターン集と同じ（useCheckRecord・CheckPills・RIRON_SRS_THRESHOLD_DAYS）。
+   記録の形と復習の間隔は引っかけパターン集と同じ（useCheckRecord・CheckPills）。理解度を付けるたびに
+   次回日（FSRS-6・wiki-review.js の wikiScheduleFields）を記録し、期限はそれで決める。次回日を持たない古い記録だけ
+   従来の日数（RIRON_SRS_THRESHOLD_DAYS）で判定する（isRironReviewDue）。
    キーは denken_check::riron_<page>::misscard::<id>。
    元の記録（Notion の過去問管理）には「どう考えて間違えたか」が残っていないので、カードは前の答えを持たない（機械の誤答カードとの違い）。
    代わりにメモ欄で、自分の考え違いを1行残せるようにする。 */
@@ -4466,6 +4468,8 @@ const rironMissIsDue = rec => {
   return isRironReviewDue(rec);
 };
 const rironMissDaysLeft = rec => {
+  // 次回日があれば、それまでの日数（期限の判定 isRironReviewDue と同じものを見る）
+  if (wikiIsRealDate(rec.nextDue)) return Math.max(1, kakomonDaysBetween(kakomonToday(), rec.nextDue) || 1);
   const t = rironMissKnown(rec.status) ? RIRON_SRS_THRESHOLD_DAYS[rec.status] : null;
   const d = rironDaysSince(rec.updatedAt);
   return t && d !== null ? Math.max(1, t - d) : null;
@@ -4495,7 +4499,9 @@ const RironMissCard = ({
     itemTitle: c.q.length > 44 ? c.q.slice(0, 44) + "…" : c.q,
     itemType: "riron-misscard"
   }), [c.id]);
-  const [record, setStatus, setMemo] = useCheckRecord(rironMissKey(c), buildMeta);
+  const [record, setStatus, setMemo] = useCheckRecord(rironMissKey(c), buildMeta, {
+    schedule: true
+  });
   const h = c.history || {};
   return /*#__PURE__*/React.createElement("li", {
     style: {
@@ -4580,7 +4586,7 @@ const RironMissCard = ({
 };
 
 /* ---- ホームの「今日やる」（理論の確認問題・ひっかけパターン）。機械のホームと同じ規則（wiki-review.js の wikiDueList）。
-   対象は次回日を持つ確認問題とひっかけパターン集。誤答カードは上の RironMissCards が自分の間隔で出すので、ここには入れない。
+   対象は次回日を持つ確認問題とひっかけパターン集。誤答カードは上の RironMissCards が同じ次回日で出すので、ここには入れない（二重に出さない）。
    次回日を持たない古いひっかけの記録は、パターン集の「⚠ 復習推奨」と同じ判定（isRironReviewDue＝従来の日数）で出す。
    単元を押すと、確認問題がある「学習」タブを開く（ひっかけはパターン集のページ）。 */
 const RironDueItem = ({
