@@ -463,7 +463,7 @@ const MACHINES = {
       ['#3B5A73','突極形回転子（水車発電機）','極数が多く低速。横に太い。切替で見比べる'],
       ['#5C6B78','円筒形回転子（タービン発電機）','2極か4極で高速。細長い。遠心力に耐える形'],
       ['#F0B57E','負荷角δ（矢印と磁極のずれ）','円筒形・抵抗を無視した基本モデルでは P ∝ sinδ。δ=90°で最大、それを超えると同期を保てない。δ のつく向きは電動機と発電機で逆'],
-      ['#3572D6','力の流れ（青い矢印と光の粒）','電動機は 電気 → 軸 → 負荷、発電機は 原動機 → 軸 → 電気。「運転」で切り替える'],
+      ['#3572D6','エネルギーの流れ（青い矢印と光の粒）','電動機は 電気 → 軸 → 負荷、発電機は 原動機 → 軸 → 電気。「運転」で切り替える。**電流や電子の向きではない**（交流の電流は1秒に50〜60回向きが入れ替わる）。逆になるのは有効電力 P の向きで、電圧と同じ位相の電流成分が、電動機では流れ込み、発電機では流れ出る'],
       ['#8E9AA6','軸の先（負荷・原動機）','電動機なら負荷の送風機。発電機なら原動機で、突極形は水車、円筒形は蒸気タービン（形は模式）'],
       ['#7E8C99','制動巻線（突極の表面の棒）','始動時はかご形として働き、乱調を抑える'],
     ],
@@ -910,7 +910,7 @@ const STUDY = {
        see:'速さは変わらないまま、磁極の向きだけが矢印から遅れる。',
        so:'ばねを引いた状態と同じで、この角度 δ が大きいほど引き戻す力＝出力が大きい。速度ではなく角度で出力が決まる。',
        q:['R3/5']},
-      {t:'発電機にすると磁極が先に進む', sec:'structure', focus:'力の流れ', set:{syncRole:'gen', delta:30, rotor:'cyl', If:1.4, syncKs:1, syncF:50, syncWind:'conc', syncPar:false},
+      {t:'発電機にすると磁極が先に進む', sec:'structure', focus:'エネルギーの流れ', set:{syncRole:'gen', delta:30, rotor:'cyl', If:1.4, syncKs:1, syncF:50, syncWind:'conc', syncPar:false},
        op:'「運転」を 発電機 にして、「電動機」と見比べる。',
        see:'軸の左の送風機が蒸気タービンに替わり、青い矢印が逆向き（タービン → 軸 → 電気）になる。磁極は回転磁界の矢印より δ だけ先を回る。下のベクトル図では E₀ が V より上（進み）に回る。',
        so:'電動機は磁界に引っ張られて δ 遅れ、発電機は原動機に押されて δ 進む。中身は同じ機械で、軸に力を入れるか取り出すかで役が変わる。出力の式 P = (E₀·V/Xs)·sinδ は同じ。力率は逆になり、発電機は過励磁で遅れ、不足励磁で進み。',
@@ -1868,7 +1868,7 @@ function buildSync(g){
   mesh(new THREE.CylinderGeometry(.24,.24,1.5,16), M.steel, turb, -.7, 0, 0).rotation.z = Math.PI/2;
   const turbCase = mesh(new THREE.CylinderGeometry(.75,1.25,1.6,32,1,true,Math.PI*.15,Math.PI*1.7), M.ghostGrey, g, -3.85, 0, 0); turbCase.rotation.z = Math.PI/2;
   const turbBase = mesh(new THREE.BoxGeometry(1.6,.3,1.1), M.steelDark, g, -3.85, -1.45, 0);
-  /* 端子箱（三相の電気の出入り口）と、力の流れの矢印。矢印は局所 −x 向きに作り、発電機では y 軸まわりに反転する */
+  /* 端子箱（三相の電気の出入り口）と、エネルギーの流れの矢印（電流の向きではない）。矢印は局所 −x 向きに作り、発電機では y 軸まわりに反転する */
   const term = new THREE.Group(); term.position.set(.6, 2.45, 0); g.add(term);
   mesh(new THREE.BoxGeometry(.6,.4,.6), M.steelDark, term);
   [M.u, M.v, M.w].forEach((m,i)=>mesh(new THREE.CylinderGeometry(.05,.05,.6,8), m, term, 0, .5, (i-1)*.16));
@@ -1891,7 +1891,7 @@ function buildSync(g){
       {obj:term, t:'端子箱（三相の電気の出入り口）', c:'#C9A227'},
       gen ? {obj: hydro ? runner : turb, t: hydro ? '原動機：水車（軸に力を入れる）' : '原動機：蒸気タービン（軸に力を入れる）', c:'#8E9AA6'}
           : {obj:fan, t:'負荷：送風機（軸から力を取り出す）', c:'#8E9AA6'},
-      {obj:flowTip, t: gen ? '力の流れ：原動機 → 軸 → 電気（発電機）' : '力の流れ：電気 → 軸 → 負荷（電動機）', c:'#3572D6'},
+      {obj:flowTip, t: gen ? 'エネルギーの流れ：原動機 → 軸 → 電気（発電機）' : 'エネルギーの流れ：電気 → 軸 → 負荷（電動機）', c:'#3572D6'},
     ];
   };
 }
@@ -2896,7 +2896,7 @@ function refreshCtrl(){
   if (state.current==='synchronous' && state.syncPar !== _lastSyncPar){
     const had = _lastSyncPar !== null; _lastSyncPar = state.syncPar; if (had){ buildCtrl(); return; }
   }
-  /* 同期機は運転（電動機／発電機）と回転子の形で、軸の先の凡例（送風機・水車・蒸気タービン）と力の流れの向きが変わる */
+  /* 同期機は運転（電動機／発電機）と回転子の形で、軸の先の凡例（送風機・水車・蒸気タービン）とエネルギーの流れの向きが変わる */
   if (state.current==='synchronous' && state.syncRole+'/'+state.rotor !== _lastSyncSig){
     const had = _lastSyncSig !== null; _lastSyncSig = state.syncRole+'/'+state.rotor; if (had) rebuildLabels();
   }
