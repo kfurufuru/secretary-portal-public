@@ -3641,7 +3641,17 @@ const DK = {
   bldg: std({color:0xc9c5ba, roughness:.85}),
   roofG: std({color:0x5a6570, roughness:.7}),
   coal: std({color:0x26282b, roughness:1}),
+  gravel: std({color:0x6f6c66, roughness:1}),
+  yard: std({color:0x5f656c, roughness:.95}),
+  asphalt: std({color:0x3d4247, roughness:.95}),
+  soil: std({color:0x7a6248, roughness:1}),
+  leaf: std({color:0x4f7a3f, roughness:.95}),
+  trunk: std({color:0x6b4f36, roughness:.9}),
 };
+/* 情景の共通部品（水力・火力と同じ見た目にそろえるため、残り5設備でも使う） */
+function ground(g, mat){ return mesh(new THREE.BoxGeometry(8,.04,5.5), mat, g, 0, .02, 0); }
+function tree(g, x, z, h=1.1){ mesh(new THREE.CylinderGeometry(.05,.07,h*.35,6), DK.trunk, g, x, h*.175, z); mesh(new THREE.ConeGeometry(h*.28,h*.75,7), DK.leaf, g, x, h*.35 + h*.37, z); }
+function mountains(g, list){ for (const [x, z, h, r] of list) mesh(new THREE.ConeGeometry(r,h,7), DK.mount, g, x, h/2, z); }
 /* 情景用の小物 */
 /* 2次元の輪郭 pts（[x,y] の並び）を z 方向に厚み d だけ押し出す（中心 z=z0） */
 function prism(pts, d, mat, parent, z0=0){
@@ -3653,9 +3663,13 @@ function prism(pts, d, mat, parent, z0=0){
 }
 /* 子の座標で組んだ Group の position を、子の外接箱の中心へ移す（見た目は変えない）。凡例の引き出し線が部品を指すように */
 function centerGroup(grp){
+  /* 子に Group が入れ子でも測れるよう、子孫のメッシュを grp の座標系で集める（親の行列は使わない。build 中は親の matrixWorld が未更新） */
   const b = new THREE.Box3();
-  for (const ch of grp.children){ ch.updateMatrix(); if (!ch.geometry.boundingBox) ch.geometry.computeBoundingBox();
-    b.union(ch.geometry.boundingBox.clone().applyMatrix4(ch.matrix)); }
+  const walk = (o, m) => { o.updateMatrix(); const mm = m.clone().multiply(o.matrix);
+    if (o.geometry){ if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); b.union(o.geometry.boundingBox.clone().applyMatrix4(mm)); }
+    for (const ch of o.children) walk(ch, mm); };
+  for (const ch of grp.children) walk(ch, new THREE.Matrix4());
+  if (b.isEmpty()) return grp;
   const c = b.getCenter(new THREE.Vector3());
   for (const ch of grp.children) ch.position.sub(c);
   grp.position.add(c); return grp;
@@ -3836,6 +3850,7 @@ function buildKaryoku(g){
   pipe(V3(2.5,.3,.45), V3(3.5,.3,.45), DK.cold, sea, .06); pipe(V3(2.5,.5,.95), V3(3.5,.5,.95), DK.water, sea, .06); centerGroup(sea);
   const pump = mesh(new THREE.CylinderGeometry(.18,.18,.3,14), M.steelDark, g, .3, .3, 1.1);
   /* 情景: 貯炭場とコンベヤ、ボイラの鉄骨、タービン建屋（手前の壁を外した断面）、冷却水を取る海、煙突の煙 */
+  ground(g, DK.yard);   // 構内の舗装（他の設備と同じく台の上に地面を敷く）
   const coal = new THREE.Group(); g.add(coal);
   mesh(new THREE.ConeGeometry(.6,.7,10), DK.coal, coal, -3.4, .35, 1.9);
   pipe(V3(-3.3,.55,1.75), V3(-2.75,3.0,.75), M.steelDark, coal, .07); centerGroup(coal);
@@ -3904,6 +3919,7 @@ function buildGenshiryoku(g){
   const rpv = mesh(new THREE.CylinderGeometry(.5,.5,2.0,24), DK.glass, g, -1.6, 1.4, 0);
   const core = new THREE.Group(); g.add(core);
   for (let i=0;i<9;i++){ const x=(i%3-1)*.2, z=(Math.floor(i/3)-1)*.2; mesh(new THREE.CylinderGeometry(.06,.06,1.0,8), DK.fuel, core, -1.6+x, 1.2, z); }
+  centerGroup(core);
   const rods = new THREE.Group(); g.add(rods);
   for (let i=0;i<4;i++){ const x=(i%2-.5)*.2, z=(Math.floor(i/2)-.5)*.2; mesh(new THREE.CylinderGeometry(.04,.04,1.0,6), DK.rod, rods, x, 0, z); }
   rods.position.set(-1.6, 1.2, 0);
@@ -3913,19 +3929,31 @@ function buildGenshiryoku(g){
   const tb = mesh(new THREE.CylinderGeometry(.3,.45,1.1,18), M.steelLight, g, 1.4, 1.2, 0); tb.rotation.z = Math.PI/2;
   const gen = mesh(new THREE.CylinderGeometry(.4,.4,.8,18), M.steelDark, g, 2.5, 1.2, 0); gen.rotation.z = Math.PI/2;
   const cond = mesh(new THREE.BoxGeometry(1.0,.5,.9), M.tank, g, 1.4, .35, 0);
+  /* 情景: 敷地・タービン建屋（手前の壁を外した断面）・冷却水を取る海。日本の原子力発電所は海水で復水器を冷やす */
+  ground(g, DK.grass);
+  mesh(new THREE.BoxGeometry(2.6,2.0,.1), DK.bldg, g, 1.95, 1.0, -.75);
+  mesh(new THREE.BoxGeometry(2.7,.1,1.6), DK.roofG, g, 1.95, 2.05, 0);
+  mesh(new THREE.BoxGeometry(.55,.3,4.0), DK.water, g, 3.72, .15, .6);
+  const seaN = new THREE.Group(); g.add(seaN);
+  pipe(V3(1.9,.25,.25), V3(3.5,.25,.25), DK.cold, seaN, .05); pipe(V3(1.9,.45,-.25), V3(3.5,.45,-.25), DK.water, seaN, .05); centerGroup(seaN);
+  /* 山は置かない（格納容器のガラス越しに重なって、炉の中の部品と見分けにくくなった。2026-11-01 実描画） */
   /* PWR の一次系（炉 ⇄ 蒸気発生器）と二次系（蒸気発生器 → タービン → 復水器 → 蒸気発生器） */
   const prim = new THREE.Group(); g.add(prim);
   pipe(V3(-1.1,2.1), V3(-.4,2.1), DK.hot, prim, .07); pipe(V3(-.4,.7), V3(-1.1,.7), DK.cold, prim, .07);
   const sec2 = new THREE.Group(); g.add(sec2);
   pipe(V3(-.4,2.3), V3(.85,2.3), DK.hot, sec2, .06); pipe(V3(.85,2.3), V3(.85,1.2), DK.hot, sec2, .06);
+  /* 給水（復水器 → 蒸気発生器）。以前は管が無く、光点が宙を通っていた（2026-11-01 実描画） */
+  pipe(V3(.9,.4), V3(-.4,.4), DK.cold, sec2, .05); pipe(V3(-.4,.4), V3(-.4,.52), DK.cold, sec2, .05);
   const bwrLine = new THREE.Group(); g.add(bwrLine);
   pipe(V3(-1.6,2.4), V3(.85,2.4), DK.hot, bwrLine, .07); pipe(V3(.85,2.4), V3(.85,1.2), DK.hot, bwrLine, .07);
+  pipe(V3(.9,.4), V3(-1.6,.4), DK.cold, bwrLine, .05);   // 給水（復水器 → 原子炉圧力容器）
   const fPwrP = dkPath(g, [V3(-1.6,1.9), V3(-1.1,2.1), V3(-.4,2.1), V3(-.4,.7), V3(-1.1,.7), V3(-1.6,.6)], 10, DK.dotS, true);
   const fPwrS = dkPath(g, [V3(-.4,2.3), V3(.85,2.3), V3(.85,1.2), V3(1.4,1.2), V3(1.4,.4), V3(-.4,.4), V3(-.4,1.2)], 12, DK.dotW, true);
   const fBwr = dkPath(g, [V3(-1.6,2.2), V3(-1.6,2.4), V3(.85,2.4), V3(.85,1.2), V3(1.4,1.2), V3(1.4,.4), V3(-1.6,.4), V3(-1.6,.8)], 16, DK.dotS, true);
   Object.assign(g.userData, {rods, sg, pzr, recirc, prim, sec2, bwrLine, fPwrP, fPwrS, fBwr, tb, gen, core, T:0});
   g.userData.labels = (st) => [
     {obj:cv, t:'原子炉格納容器', c:'#9FB3C4'},
+    {obj:seaN, t:'冷却水（海水）', c:'#3572D6'},
     {obj:rpv, t:'原子炉圧力容器', c:'#9FB3C4'},
     {obj:core, t:'燃料（低濃縮ウラン）', c:'#7FB069'},
     {obj:rods, t: st.gType==='pwr' ? '制御棒（上から入れる）' : '制御棒（下から入れる）', c:'#2B2B2B'},
@@ -3954,11 +3982,21 @@ function animGenshiryoku(g, t, st, dt){
    受電線 → 避雷器 → 断路器 → 遮断器（＋変流器）→ 主変圧器 → 二次側の母線。
    断路器は電流を切れないので、止めるときは「遮断器 → 断路器」、入れるときは「断路器 → 遮断器」 */
 function buildHenden(g){
+  /* 情景: 砂利敷きの構内・囲いの柵・制御所の建屋・鉄構へ入ってくる送電線 */
+  ground(g, DK.gravel);
+  for (const [a, b] of [[V3(-3.9,0,-2.6), V3(3.9,0,-2.6)], [V3(-3.9,0,-2.6), V3(-3.9,0,2.6)], [V3(3.9,0,-2.6), V3(3.9,0,2.6)]]){
+    for (const y of [.35,.7]) pipe(V3(a.x,y,a.z), V3(b.x,y,b.z), M.steelLight, g, .015);
+    const n = Math.round(a.distanceTo(b)/.8); for (let i=0;i<=n;i++){ const p = a.clone().lerp(b, i/n); pipe(V3(p.x,0,p.z), V3(p.x,.75,p.z), M.steelLight, g, .02); } }
+  mesh(new THREE.BoxGeometry(1.4,1.1,.9), DK.bldg, g, 3.0, .55, -1.9);
+  mesh(new THREE.BoxGeometry(1.5,.08,1.0), DK.roofG, g, 3.0, 1.14, -1.9);
+  pipe(V3(-4.0,2.9,0), V3(-3.2,2.5,0), M.brass, g, .035);   // 送電線（区画の外から鉄構へ）
   const gantry = new THREE.Group(); g.add(gantry);
   for (const s of [-1,1]) mesh(new THREE.BoxGeometry(.12,2.6,.12), DK.tower, gantry, -3.2, 1.3, s*.8);
   mesh(new THREE.BoxGeometry(.12,.12,1.8), DK.tower, gantry, -3.2, 2.6, 0);
   const la = new THREE.Group(); g.add(la); la.position.set(-2.4, 0, -.7);
   for (let k=0;k<6;k++) mesh(new THREE.CylinderGeometry(.13,.13,.18,14), M.ceramic, la, 0, .5+k*.22, 0);
+  /* 避雷器は線路から枝分かれして大地との間に入る（直列には入らない）。線路から頭へ短い引き込みを描き、足元は大地に立てる */
+  pipe(V3(0,1.62,0), V3(0,1.85,.7), M.brass, la, .025);
   const ds = new THREE.Group(); g.add(ds); ds.position.set(-1.5, 0, 0);
   for (const s of [-.35,.35]) mesh(new THREE.CylinderGeometry(.07,.07,1.3,10), M.ceramic, ds, s, .9, 0);
   const blade = mesh(new THREE.BoxGeometry(.75,.05,.05), M.brass, ds, 0, 1.6, 0);
@@ -3976,6 +4014,7 @@ function buildHenden(g){
   pipe(V3(-3.2,2.5), V3(-2.4,1.85), M.brass, line, .035); pipe(V3(-2.4,1.85), V3(-1.85,1.6), M.brass, line, .035);
   pipe(V3(-1.15,1.6), V3(-.55,1.85), M.brass, line, .035); pipe(V3(-.25,1.85), V3(1.0,1.95), M.brass, line, .035);
   const fl = dkPath(g, [V3(-3.2,2.5), V3(-2.4,1.85), V3(-1.85,1.6), V3(-1.15,1.6), V3(-.55,1.85), V3(-.25,1.85), V3(1.0,1.95), V3(1.0,2.0,-.2), V3(3.2,2.0,-.2), V3(3.2,.4,-.6)], 16, M.curr);
+  for (const o of [gantry, la, ds, bus]) centerGroup(o);   // 凡例の引き出し線が部品を指すように（原点・足元を指していた）
   Object.assign(g.userData, {blade, cb, fl, T:0});
   g.userData.labels = [
     {obj:gantry, t:'受電用の鉄構（ここへ送電線が入る）', c:'#8E9AA6'},
@@ -3999,16 +4038,21 @@ function animHenden(g, t, st, dt){
    鉄塔3基・2径間。たるみは実寸の比 D/S が小さすぎて見えないので、図では 10 倍に誇張する */
 const TW_X = [-3.2, 0, 3.2], TW_H = 3.6, PH_Y = [3.3, 2.75, 2.2];
 function buildSouden(g){
+  /* 情景: 草地と山・木（木は電線の下を避け、径間の外と手前・奥に置く。たるみを大きくすると電線が地面近くまで下がるため） */
+  ground(g, DK.grass);
+  mountains(g, [[-2.6,-2.6,3.0,1.1], [.6,-2.7,3.6,1.2], [3.2,-2.6,2.6,1.0]]);
+  for (const [x, z] of [[-3.6,1.9], [-1.5,2.1], [1.6,2.0], [3.6,1.8], [-2.0,-1.9], [2.2,-1.9]]) tree(g, x, z);
   for (const x of TW_X){
     const tw = new THREE.Group(); g.add(tw); tw.position.x = x;
     for (const [sx,sz] of [[-1,-1],[-1,1],[1,-1],[1,1]]) pipe(V3(sx*.35,0,sz*.35), V3(sx*.08,TW_H,sz*.08), DK.tower, tw, .03);
     for (const y of PH_Y) pipe(V3(0,y,-.75), V3(0,y,.75), DK.tower, tw, .03);
     for (const y of PH_Y) for (const s of [-1,1]){ for (let k=0;k<4;k++) mesh(new THREE.CylinderGeometry(.06,.06,.03,10), M.ceramic, tw, 0, y-.08-k*.07, s*.65); }
   }
-  const towers = g.children.slice();
+  const towers = g.children.filter(o => o.isGroup);
   const lines = new THREE.Group(); g.add(lines);
   const gw = new THREE.Group(); g.add(gw);
-  pipe(V3(TW_X[0],TW_H+.05), V3(TW_X[2],TW_H+.05), DK.wireAl, gw, .02);
+  pipe(V3(TW_X[0],TW_H+.05), V3(TW_X[2],TW_H+.05), DK.wireAl, gw, .02); centerGroup(gw);
+  lines.position.y = 2.2;   // 凡例の引き出し線の点（電線の束の中）。animSouden は電線をこの高さ基準で作る
   Object.assign(g.userData, {lines, sagKey:null, towers});
   g.userData.labels = [
     {obj:towers[1], t:'鉄塔', c:'#8E9AA6'},
@@ -4026,7 +4070,7 @@ function animSouden(g, t, st, dt){
   for (let span=0; span<2; span++){
     const x0 = TW_X[span], x1 = TW_X[span+1];
     for (const y of PH_Y) for (const s of [-1,1]){
-      const pts = []; for (let i=0;i<=16;i++){ const f=i/16, x=x0+(x1-x0)*f; pts.push(V3(x, y-.36 - 4*vis*f*(1-f), s*.65)); }
+      const pts = []; for (let i=0;i<=16;i++){ const f=i/16, x=x0+(x1-x0)*f; pts.push(V3(x, y-.36 - 4*vis*f*(1-f) - u.lines.position.y, s*.65)); }
       const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, .018, 6), DK.wireAl);
       u.lines.add(tube);
     }
@@ -4041,6 +4085,11 @@ function animSouden(g, t, st, dt){
    ---------- */
 const CC_LAY_X = {direct:-2.1, duct:0, tunnel:2.1};
 function buildChichuu(g){
+  /* 情景: 道路の下を通るケーブル。ケーブル断面は拡大した見本として路面の上に置く（実寸ではない） */
+  const road = ground(g, DK.asphalt);
+  mesh(new THREE.BoxGeometry(8,.06,.9), DK.concrete, g, 0, .05, -2.3);                     // 歩道
+  for (let i=0;i<6;i++) mesh(new THREE.BoxGeometry(.7,.01,.08), M.meter, g, -3.3+i*1.3, .045, 2.0);   // 車線の白線
+  for (const x of [-3.0, -.2, 2.6]) tree(g, x, -2.35, 1.0);
   const ax = (r, x0, x1, mat, parent) => { const o = mesh(new THREE.CylinderGeometry(r, r, x1-x0, 40), mat, parent, (x0+x1)/2, 1.1, 0); o.rotation.z = Math.PI/2; return o; };
   /* ケーブル断面（段むき）。外側の層ほど手前で切ってある */
   const cab = new THREE.Group(); g.add(cab);
@@ -4079,6 +4128,7 @@ function buildChichuu(g){
   const person = new THREE.Group(); tunnel.add(person);
   mesh(new THREE.CylinderGeometry(.09,.09,.55,10), M.u, person, CC_LAY_X.tunnel+.3, .55, .3);
   mesh(new THREE.SphereGeometry(.09,10,10), DK.house, person, CC_LAY_X.tunnel+.3, .92, .3);
+  for (const o of [direct, duct, tunnel]) centerGroup(o);
   const hl = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.75, 2.3), new THREE.MeshBasicMaterial({color:0xf0b57e, wireframe:true}));
   hl.position.set(0, .9, 0); lay.add(hl);
   /* マーレーループ法 */
@@ -4089,7 +4139,7 @@ function buildChichuu(g){
   const jump = pipe(V3(MX1,1.0,-.35), V3(MX1,1.0,.35), M.copper, mur, .04);
   const fault = new THREE.Group(); mur.add(fault);
   mesh(new THREE.SphereGeometry(.11,14,14), std({color:0xd24a43, emissive:0xd24a43, emissiveIntensity:1.2}), fault, 0, 1.0, -.35);
-  pipe(V3(0,1.0,-.35), V3(0,.05,-.35), M.u, fault, .015);
+  pipe(V3(0,1.0,-.35), V3(0,.05,-.35), M.u, fault, .015); centerGroup(fault);   // 中心の x は 0 のままなので、anim が x を決めても位置はずれない
   const bridge = mesh(new THREE.BoxGeometry(.8,1.0,1.1), M.tank, mur, -3.0, .8, 0);
   for (const z of [-.35,.35]) pipe(V3(-2.6,1.0,z), V3(MX0,1.0,z), M.copper, mur, .03);
   const dial = mesh(new THREE.CylinderGeometry(.28,.28,.04,24), M.ceramic, mur, -3.0, 1.0, .56); dial.rotation.x = Math.PI/2;
@@ -4113,6 +4163,7 @@ function buildChichuu(g){
     {obj:osemi, t:'④ 外部半導電層', c:'#2A2D31'},
     {obj:shield, t:'⑤ 遮へい銅テープ（接地する）', c:'#C07A3A'},
     {obj:sheath, t:'⑥ シース（ビニル防食層）', c:'#1F2226'},
+    {obj:road, t:'道路（ケーブルは拡大した見本。実際は路面の下に布設する）', c:'#3D4247'},
   ];
 }
 function animChichuu(g, t, st, dt){
@@ -4132,6 +4183,11 @@ function animChichuu(g, t, st, dt){
 /* ---------- 3.2 配電（単相3線式） ----------
    柱上変圧器の低圧側は 外線a・中性線n・外線b の3本。a–n と n–b に 100 V、a–b に 200 V */
 function buildHaiden(g){
+  /* 情景: 住宅地。電柱は道路の脇、家と工場は道路の手前の敷地 */
+  ground(g, DK.grass);
+  mesh(new THREE.BoxGeometry(8,.03,1.1), DK.asphalt, g, 0, .05, -.9);
+  for (let i=0;i<6;i++) mesh(new THREE.BoxGeometry(.6,.01,.06), M.meter, g, -3.3+i*1.3, .07, -.9);
+  for (const [x, z] of [[-3.3,1.8], [-.6,2.2], [3.4,2.0], [-3.4,-2.2], [1.0,-2.2], [3.3,-2.1]]) tree(g, x, z, .9);
   const pole = mesh(new THREE.CylinderGeometry(.09,.13,4.2,12), DK.pole, g, -2.4, 2.1, 0);
   pipe(V3(-2.4,4.0,-.7), V3(-2.4,4.0,.7), M.steel, g, .04);
   const hv = new THREE.Group(); g.add(hv);
@@ -4164,6 +4220,7 @@ function buildHaiden(g){
   for (let i=0;i<3;i++) mesh(new THREE.CylinderGeometry(.14,.14,.6,14), M.steelLight, cap, i*.34, .3, 0);
   pipe(V3(.5,.55,1.2), V3(.7,.55,1.0), DK.wireAl, tp, .015);
   const fl3 = dkPath(g, [V3(-3.4,4.05,0), V3(2.6,4.05,0), V3(2.2,1.2,.8)], 14, M.curr);
+  centerGroup(hv); centerGroup(lvN);
   Object.assign(g.userData, {gap, bulbs, bal, sp, tp, cap, fl3, T:0});
   g.userData.labels = (st) => st.hView==='tp' ? [
     {obj:hv, t:'高圧配電線（三相3線式・6.6 kV など）', c:'#B9C2CA'},
