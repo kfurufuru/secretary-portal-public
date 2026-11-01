@@ -3634,7 +3634,43 @@ const DK = {
   roof: std({color:0x7a3b2e, roughness:.8}),
   bulb: std({color:0xfff2c0, emissive:0xffd060, emissiveIntensity:1}),
   pole: std({color:0x9aa1a6, roughness:.85}),
+  /* 情景（地形・建屋・燃料・煙）。設備の部品より彩度を落とし、流れの色（水の青・蒸気の赤）を食わない */
+  grass: std({color:0x5d7a45, roughness:.95}),
+  rock: std({color:0x7d7468, roughness:.95}),
+  mount: std({color:0x4f6a43, roughness:1}),
+  bldg: std({color:0xc9c5ba, roughness:.85}),
+  roofG: std({color:0x5a6570, roughness:.7}),
+  coal: std({color:0x26282b, roughness:1}),
 };
+/* 情景用の小物 */
+/* 2次元の輪郭 pts（[x,y] の並び）を z 方向に厚み d だけ押し出す（中心 z=z0） */
+function prism(pts, d, mat, parent, z0=0){
+  const sh = new THREE.Shape(); sh.moveTo(pts[0][0], pts[0][1]); for (const [x,y] of pts.slice(1)) sh.lineTo(x, y);
+  const geo = new THREE.ExtrudeGeometry(sh, {depth:d, bevelEnabled:false}); geo.translate(0, 0, z0 - d/2);
+  /* 凡例の引き出し線は部品の position を指すので、形の中心を position に移す（原点のままだと地面を指した） */
+  geo.computeBoundingBox(); const c = geo.boundingBox.getCenter(new THREE.Vector3()); geo.translate(-c.x, -c.y, -c.z);
+  return mesh(geo, mat, parent, c.x, c.y, c.z);
+}
+/* 子の座標で組んだ Group の position を、子の外接箱の中心へ移す（見た目は変えない）。凡例の引き出し線が部品を指すように */
+function centerGroup(grp){
+  const b = new THREE.Box3();
+  for (const ch of grp.children){ ch.updateMatrix(); if (!ch.geometry.boundingBox) ch.geometry.computeBoundingBox();
+    b.union(ch.geometry.boundingBox.clone().applyMatrix4(ch.matrix)); }
+  const c = b.getCenter(new THREE.Vector3());
+  for (const ch of grp.children) ch.position.sub(c);
+  grp.position.add(c); return grp;
+}
+/* 煙突の煙（上がりながら広がって薄れる）。anim で smokeRun を呼ぶ */
+function smokeAt(parent, x, y, z, n=7){
+  const puffs = []; for (let i=0;i<n;i++){
+    const m = new THREE.MeshStandardMaterial({color:0xd4d8dc, transparent:true, opacity:.4, roughness:1, depthWrite:false});
+    const o = new THREE.Mesh(new THREE.SphereGeometry(.2,12,10), m); parent.add(o); puffs.push(o); }
+  return {puffs, x, y, z};
+}
+function smokeRun(sm, T){
+  sm.puffs.forEach((o, i) => { const f = ((T*.25 + i/sm.puffs.length) % 1);
+    o.position.set(sm.x + f*.9, sm.y + f*1.6, sm.z - f*.3); o.scale.setScalar(.6 + f*2.2); o.material.opacity = .45*(1 - f); });
+}
 /* 電流・水・蒸気の流れを光点で描く閉路（または開路）。pts の順が流れる向き */
 function dkPath(parent, pts, n, mat, closed){
   if (closed) pts = pts.concat([pts[0]]);
@@ -3660,33 +3696,77 @@ const pipe = (a, b, mat, parent, r=.09) => wire3(a, b, mat, parent, r);
 
 /* ---------- 1.1 水力 ----------
    貯水池 → 導水路 → サージタンク → 水圧管路 → 水車 → 放水路。揚水では流れが逆になる。
-   水車は形式（ペルトン／フランシス／プロペラ）で形が変わる */
+   水車は形式（ペルトン／フランシス／プロペラ）で形が変わる。
+   立軸機（水車の軸が鉛直）として描く: ランナは水平に寝かせ、真上の発電機と同じ鉛直軸で回す
+   （以前はランナの面が立っていて軸が水平なのに、発電機は鉛直軸で真上に載っていた。2026-11-01 実描画で確認）。
+   反動水車（フランシス・プロペラ）はケーシングから吸出し管を通って放水面の下へ出る。
+   ペルトンは吸出し管を持たず、バケットに当たった水は大気中を落ちて放水路へ出る（電力Wiki 1.1 の吸出し管の項） */
 function buildSuiryoku(g){
-  const res = mesh(new THREE.BoxGeometry(1.6,2.2,3.0), DK.water, g, -2.6, 1.4, 0);
-  const dam = mesh(new THREE.BoxGeometry(.5,3.0,3.4), DK.concrete, g, -1.6, 1.6, 0);
-  const head = pipe(V3(-1.35,2.6), V3(0,2.6), M.steel, g, .14);
+  /* 情景: 谷にせき止めた貯水池・山・水圧管路が下る斜面・発電所の建屋・放水路から流れ出る川。
+     建屋は手前の壁を外した断面にし、水車と発電機が見えるようにする */
+  mesh(new THREE.BoxGeometry(8,.04,5.5), DK.grass, g, 0, .02, 0);
+  /* 谷の奥の岸だけを置く。手前の岸は外して断面にする（置くと貯水池の水面が隠れ、総落差の上端が見えなかった。2026-11-01 幅 390 で実描画） */
+  mesh(new THREE.BoxGeometry(2.7,3.0,1.2), DK.rock, g, -2.65, 1.5, -2.1);
+  mesh(new THREE.BoxGeometry(2.7,.06,1.2), DK.grass, g, -2.65, 3.03, -2.1);
+  for (const [x, z, h, r] of [[-3.3,-2.6,4.6,1.3], [-1.7,-2.7,3.8,1.2], [.2,-2.6,3.2,1.1]])
+    mesh(new THREE.ConeGeometry(r,h,7), DK.mount, g, x, h/2, z);
+  const res = mesh(new THREE.BoxGeometry(2.15,2.2,3.0), DK.water, g, -2.925, 1.4, 0);
+  /* 重力式ダム: 上流面は鉛直、下流面は斜め（底が広い） */
+  const dam = prism([[-1.85,0], [-1.85,3.1], [-1.5,3.1], [-.75,0]], 3.2, DK.concrete, g);
+  prism([[-1.3,0], [-1.3,2.05], [-.3,2.0], [.3,1.95], [1.3,.78], [1.3,0]], 1.8, DK.grass, g);   // 水圧管路が下る斜面
+  /* 導水路は貯水池の水面（y=2.5）より下で取る（以前は y=2.6 で、水面より上から取っていた。2026-11-01 監査） */
+  const head = pipe(V3(-1.35,2.3), V3(0,2.3), M.steel, g, .14);
   const surge = mesh(new THREE.CylinderGeometry(.3,.3,1.8,20), M.steelLight, g, 0, 3.0, 0);
-  const pen = pipe(V3(0,2.5), V3(1.7,.95), M.steel, g, .14);
-  const house = mesh(new THREE.BoxGeometry(1.6,1.0,1.8), DK.glass, g, 2.2, 1.0, 0);
+  const pen = pipe(V3(0,2.5), V3(1.35,.95), M.steel, g, .14);
+  /* 発電所の建屋（奥の壁・左の壁の上半分・屋根）。水圧管路は左の壁の下から入る */
+  mesh(new THREE.BoxGeometry(1.3,2.6,.1), DK.bldg, g, 2.05, 1.3, -.95);
+  mesh(new THREE.BoxGeometry(.1,1.3,1.9), DK.bldg, g, 1.42, 1.95, 0);
+  mesh(new THREE.BoxGeometry(1.45,.12,2.0), DK.roofG, g, 2.05, 2.66, 0);
   const tail = mesh(new THREE.BoxGeometry(1.2,.35,2.2), DK.water, g, 3.3, .45, 0);
+  mesh(new THREE.BoxGeometry(1.2,.35,1.65), DK.water, g, 3.3, .45, 1.925);   // 放水路から川へ
+  /* 回るのは runner（鉛直軸）。中の lay で各形式を寝かせる（形はランナの面 = xy 平面で作ってある） */
   const runner = new THREE.Group(); g.add(runner); runner.position.set(2.0, .95, 0);
-  /* 形式ごとの水車。どれか1つだけ見せる */
+  const lay = new THREE.Group(); runner.add(lay); lay.rotation.x = Math.PI/2;
   const types = {};
-  { const t = new THREE.Group(); runner.add(t); types.pelton = t;
+  { const t = new THREE.Group(); lay.add(t); types.pelton = t;
     mesh(new THREE.CylinderGeometry(.42,.42,.06,28), M.steelLight, t).rotation.x = Math.PI/2;
     for (let i=0;i<14;i++){ const a=i/14*Math.PI*2; const b = mesh(new THREE.BoxGeometry(.12,.1,.14), M.brass, t, Math.cos(a)*.47, Math.sin(a)*.47, 0); b.rotation.z = a; } }
-  { const t = new THREE.Group(); runner.add(t); types.francis = t;
-    const sc = mesh(new THREE.TorusGeometry(.5,.13,10,30), M.steelDark, t);
+  { const t = new THREE.Group(); lay.add(t); types.francis = t;
     mesh(new THREE.CylinderGeometry(.32,.32,.22,24), M.steelLight, t).rotation.x = Math.PI/2;
     for (let i=0;i<10;i++){ const a=i/10*Math.PI*2; const b = mesh(new THREE.BoxGeometry(.05,.26,.2), M.brass, t, Math.cos(a)*.26, Math.sin(a)*.26, 0); b.rotation.z = a + .5; } }
-  { const t = new THREE.Group(); runner.add(t); types.propeller = t;
+  { const t = new THREE.Group(); lay.add(t); types.propeller = t; t.scale.setScalar(.9);
     mesh(new THREE.SphereGeometry(.14,14,14), M.steelLight, t);
     for (let i=0;i<4;i++){ const a=i/4*Math.PI*2; const b = mesh(new THREE.BoxGeometry(.46,.1,.03), M.brass, t, Math.cos(a)*.27, Math.sin(a)*.27, 0); b.rotation.z = a; b.rotation.x = .5; } }
-  const nozzle = mesh(new THREE.ConeGeometry(.1,.35,12), M.steel, g, 1.55, 1.4, 0); nozzle.rotation.z = Math.PI*.75;
+  /* 反動水車の渦巻きケーシングと吸出し管（回らない）。水圧管の端（x=1.35）からケーシングの外周（x=1.5）へ入る */
+  const reaction = new THREE.Group(); g.add(reaction);
+  const casing = mesh(new THREE.TorusGeometry(.62,.12,10,30), M.steelDark, reaction, 2.0, .95, 0); casing.rotation.x = Math.PI/2;   // 内径 .50 > 翼の外径
+  pipe(V3(1.33,.95), V3(1.4,.95), M.steel, reaction, .12);
+  const draft = new THREE.Group(); reaction.add(draft);
+  mesh(new THREE.CylinderGeometry(.18,.24,.5,18), M.steel, draft, 2.0, .62, 0);      // ランナの真下で下へ広がる
+  pipe(V3(2.0,.4), V3(2.85,.4), M.steel, draft, .2);                                  // 曲がって放水面の下へ出る
+  centerGroup(draft);
+  /* ペルトンの導水: 水圧管の端から脇へ回り、ノズルの噴流がバケットに接線方向から当たる */
+  const pfeed = new THREE.Group(); g.add(pfeed);
+  pipe(V3(1.35,.95), V3(1.35,.95,-.55), M.steel, pfeed, .1);
+  pipe(V3(1.35,.95,-.55), V3(1.53,.95,-.55), M.steel, pfeed, .1);
+  const nozzle = mesh(new THREE.ConeGeometry(.1,.3,12), M.steel, pfeed, 1.53, .95, -.36); nozzle.rotation.x = Math.PI/2;
+  mesh(new THREE.BoxGeometry(1.2,.3,1.1), DK.water, pfeed, 2.1, .475, 0);   // ランナの下の放水の溜まり（水面は放水路と同じ y=0.625。ランナはその上）
   const gen = mesh(new THREE.CylinderGeometry(.45,.45,.6,24), M.steelDark, g, 2.0, 1.95, 0);
   const shaftV = pipe(V3(2.0,1.0), V3(2.0,1.7), M.steelLight, g, .05);
-  const flow = dkPath(g, [V3(-2.6,2.6), V3(-1.35,2.6), V3(0,2.6), V3(0,2.5), V3(1.7,.95), V3(2.0,.95), V3(3.3,.6)], 18, DK.dotW);
-  Object.assign(g.userData, {runner, types, nozzle, flow, T:0});
+  /* 総落差 Hg: 貯水池の水面（y=2.5）と放水路の水面（y=0.625）の高さの差。寸法線は放水路の手前に立てる
+     （放水路の右端に立てると、幅 390 の画面で枠の外に出た。2026-11-01 実描画） */
+  const hgMark = new THREE.Group(); g.add(hgMark);
+  { const yU = 2.5, yL = .625, x = 3.3, z = 1.25;
+    pipe(V3(x,yL+.12,z), V3(x,yU-.12,z), M.arrow, hgMark, .025);
+    mesh(new THREE.ConeGeometry(.07,.16,10), M.arrow, hgMark, x, yU-.08, z);
+    const dn = mesh(new THREE.ConeGeometry(.07,.16,10), M.arrow, hgMark, x, yL+.08, z); dn.rotation.x = Math.PI;
+    pipe(V3(-1.8,yU,z), V3(x+.15,yU,z), M.arrow, hgMark, .012);   // 上の水面の高さ（ダムの下流側から寸法線まで）
+    pipe(V3(x,yL,1.1), V3(x,yL,z+.1), M.arrow, hgMark, .012);     // 下の水面の高さ（放水路の手前の縁から）
+    hgMark.traverse(o => { o.castShadow = false; }); centerGroup(hgMark); }
+  const P0 = [V3(-2.6,2.3), V3(-1.35,2.3), V3(0,2.3), V3(0,2.5), V3(1.35,.95)];
+  const flowR = dkPath(g, P0.concat([V3(1.4,.95), V3(2.0,.95), V3(2.0,.4), V3(2.85,.4), V3(3.6,.5)]), 18, DK.dotW);
+  const flowP = dkPath(g, P0.concat([V3(1.35,.95,-.55), V3(1.53,.95,-.55), V3(1.53,.95,0), V3(1.7,.5,.05), V3(2.85,.5), V3(3.6,.5)]), 18, DK.dotW);
+  Object.assign(g.userData, {runner, types, reaction, pfeed, flowR, flowP, T:0});
   g.userData.labels = (st) => [
     {obj:res, t:'貯水池（総落差の上の水面）', c:'#3572D6'},
     {obj:dam, t:'ダム', c:'#9AA1A6'},
@@ -3694,19 +3774,28 @@ function buildSuiryoku(g){
     {obj:surge, t:'サージタンク（水撃作用をやわらげる）', c:'#8E9AA6'},
     {obj:pen, t:'水圧管路（ここで損失落差が出る）', c:'#6B7580'},
     {obj:runner, t:({pelton:'ペルトン水車（衝動水車）', francis:'フランシス水車（反動水車）', propeller:'プロペラ水車（反動水車）'})[st.sType], c:'#D9C7A0'},
-    ...(st.sType==='pelton' ? [{obj:nozzle, t:'ノズル（水を噴流にしてバケットに当てる）', c:'#6B7580'}] : []),
+    ...(st.sType==='pelton' ? [{obj:nozzle, t:'ノズル（水を噴流にしてバケットに当てる）', c:'#6B7580'}]
+                           : [{obj:draft, t:'吸出し管（反動水車だけにある。ランナ出口の速度エネルギーを圧力として回収する）', c:'#6B7580'}]),
     {obj:gen, t: st.sMode==='pump' ? '発電電動機（いまは電動機）' : '発電機', c:'#3B5A73'},
     {obj:tail, t:'放水路（総落差の下の水面）', c:'#3572D6'},
+    {obj:hgMark, t:'総落差 Hg（上の水面と下の水面の高さの差）', c:'#F0B57E'},
   ];
 }
 function animSuiryoku(g, t, st, dt){
   const u = g.userData; if (!st.paused) u.T += dt;
   for (const k in u.types) u.types[k].visible = (k === st.sType);
-  u.nozzle.visible = st.sType === 'pelton';
+  const pel = st.sType === 'pelton';
+  u.pfeed.visible = pel; u.reaction.visible = !pel;
   const dir = st.sMode === 'pump' ? -1 : 1;
-  u.runner.rotation.z -= (st.paused ? 0 : dir*dt*3);
-  dkScale(u.flow, st.sQ/50);                              // 水の粒の大きさ ∝ 流量 Q
-  dkRun(u.flow, u.T*1.4, !st.paused, dir);
+  /* ペルトン（衝動水車）は水を汲み上げられない。揚水を選んでも、噴流を逆に流して見せない（読み値の表で断る） */
+  const still = st.paused || (pel && st.sMode === 'pump');
+  /* 鉛直軸で回る（発電機と同じ軸）。噴流（x=1.53 で +z 向き）が当たるバケットが噴流と同じ向きに進む回り方にする
+     （rotation.y を増やすと、中心の左 0.47 の点は +z へ動く。逆にすると噴流と正面衝突した。2026-11-01 監査） */
+  u.runner.rotation.y += (still ? 0 : dir*dt*3);
+  const on = pel ? u.flowP : u.flowR, off = pel ? u.flowR : u.flowP;
+  dkScale(on, st.sQ/50);                                   // 水の粒の大きさ ∝ 流量 Q
+  dkRun(on, u.T*1.4, !still, dir);
+  dkRun(off, 0, false);
 }
 
 /* ---------- 1.2 火力（汽力） ----------
@@ -3715,8 +3804,12 @@ function animSuiryoku(g, t, st, dt){
 function buildKaryoku(g){
   const boiler = mesh(new THREE.BoxGeometry(1.4,3.6,1.4), DK.glass, g, -2.4, 2.0, 0);
   const flame = mesh(new THREE.ConeGeometry(.42,1.0,16), DK.flame, g, -2.4, 1.0, 0);
+  /* 火炉の壁の水管（奥の壁と左の壁）。下の管寄せから入った水が、炎に熱せられながら上がって蒸気になる */
   const wall = new THREE.Group(); g.add(wall);
   for (let i=0;i<6;i++) mesh(new THREE.CylinderGeometry(.04,.04,2.6,6), DK.cold, wall, -2.95+i*.22, 1.9, -.55);
+  for (let i=1;i<5;i++) mesh(new THREE.CylinderGeometry(.04,.04,2.6,6), DK.cold, wall, -2.95, 1.9, -.55+i*.22);
+  for (const [y, m] of [[.6, DK.cold], [3.2, DK.hot]]){   // 下の管寄せは水（青）、上の管寄せは蒸発した後（赤）
+    pipe(V3(-2.95,y,-.55), V3(-1.85,y,-.55), m, wall, .06); pipe(V3(-2.95,y,-.55), V3(-2.95,y,.33), m, wall, .06); }
   const sh = new THREE.Group(); g.add(sh); sh.position.set(-2.4, 3.45, 0);
   for (let i=0;i<5;i++) mesh(new THREE.TorusGeometry(.3,.04,6,20), DK.hot, sh, 0, 0, -.4+i*.2);
   const back = mesh(new THREE.BoxGeometry(.7,2.8,1.2), DK.glass, g, -1.3, 2.4, 0);
@@ -3730,14 +3823,40 @@ function buildKaryoku(g){
   const gen = mesh(new THREE.CylinderGeometry(.42,.42,1.0,20), M.steelDark, g, 3.0, 1.25, .7); gen.rotation.z = Math.PI/2;
   const cond = mesh(new THREE.BoxGeometry(1.2,.6,1.0), M.tank, g, 1.9, .4, .7);
   const sea = new THREE.Group(); g.add(sea);
-  pipe(V3(2.5,.3,.45), V3(3.5,.3,.45), DK.cold, sea, .06); pipe(V3(2.5,.5,.95), V3(3.5,.5,.95), DK.water, sea, .06);
+  pipe(V3(2.5,.3,.45), V3(3.5,.3,.45), DK.cold, sea, .06); pipe(V3(2.5,.5,.95), V3(3.5,.5,.95), DK.water, sea, .06); centerGroup(sea);
   const pump = mesh(new THREE.CylinderGeometry(.18,.18,.3,14), M.steelDark, g, .3, .3, 1.1);
-  /* 水・蒸気の環（手前 z≈0.7〜1.1）と燃焼ガスの道（奥 z≈0） */
-  const wPts = [V3(1.9,.4,.9), V3(.3,.3,1.1), V3(-1.3,.3,1.1), V3(-1.3,2.3,.45), V3(-1.3,2.3,0), V3(-2.4,2.3,-.55), V3(-2.4,.9,-.55), V3(-2.4,3.45,0), V3(-2.4,3.9,.7), V3(.45,3.9,.7), V3(.45,1.25,.7), V3(1.4,1.25,.7), V3(1.9,.7,.7), V3(1.9,.4,.9)];
+  /* 情景: 貯炭場とコンベヤ、ボイラの鉄骨、タービン建屋（手前の壁を外した断面）、冷却水を取る海、煙突の煙 */
+  const coal = new THREE.Group(); g.add(coal);
+  mesh(new THREE.ConeGeometry(.6,.7,10), DK.coal, coal, -3.4, .35, 1.9);
+  pipe(V3(-3.3,.55,1.75), V3(-2.75,3.0,.75), M.steelDark, coal, .07); centerGroup(coal);
+  for (const x of [-3.15,-1.65]) for (const z of [-.75,.75]) pipe(V3(x,0,z), V3(x,4.0,z), M.steelDark, g, .045);
+  for (const z of [-.75,.75]) pipe(V3(-3.15,4.0,z), V3(-1.65,4.0,z), M.steelDark, g, .045);
+  mesh(new THREE.BoxGeometry(3.4,2.3,.1), DK.bldg, g, 1.9, 1.15, .05);
+  mesh(new THREE.BoxGeometry(3.5,.1,1.5), DK.roofG, g, 1.9, 2.35, .75);
+  mesh(new THREE.BoxGeometry(.55,.3,3.6), DK.water, g, 3.72, .15, .9);
+  const smoke = smokeAt(g, 0, 4.6, -.2);
+  /* 水・蒸気の環（手前 z≈0.7〜1.1）と燃焼ガスの道（奥 z≈0）。
+     光点は管の中だけを通す（以前は管が無く、光点が宙を飛び、蒸発も火炉の真ん中を斜めに抜けていた。2026-11-01 実描画で確認）。
+     水: 復水器 → 給水ポンプ → 節炭器 → 火炉の裏を下りて壁の水管の下へ → 壁の水管を上がって蒸発 → 過熱器 → 主蒸気管 → 高圧・低圧タービン → 復水器 */
+  const wPts = [V3(1.9,.35,1.1), V3(.3,.35,1.1), V3(-1.3,.35,1.1), V3(-1.3,2.3,1.1), V3(-1.3,2.3,.3), V3(-1.3,2.3,-.85),
+    V3(-1.3,.6,-.85), V3(-2.4,.6,-.85), V3(-2.4,.6,-.55), V3(-2.51,.6,-.55), V3(-2.51,3.2,-.55), V3(-2.4,3.2,-.55), V3(-2.4,3.45,-.4), V3(-2.4,3.45,.45),
+    V3(-2.4,3.9,.7), V3(.45,3.9,.7), V3(.45,1.25,.7), V3(1.9,1.25,.7), V3(1.9,.7,.7)];
+  /* 管: 水（青）と蒸気（赤）。機器の中を通る区間（節炭器・壁の水管・過熱器・タービン・復水器）には引かない */
+  const lines = new THREE.Group(); g.add(lines);
+  for (const [a, b, m] of [
+    [V3(1.3,.35,1.1), V3(.48,.35,1.1), DK.cold], [V3(.12,.35,1.1), V3(-1.3,.35,1.1), DK.cold],
+    [V3(-1.3,.35,1.1), V3(-1.3,2.3,1.1), DK.cold], [V3(-1.3,2.3,1.1), V3(-1.3,2.3,.6), DK.cold],
+    [V3(-1.3,2.3,-.6), V3(-1.3,2.3,-.85), DK.cold], [V3(-1.3,2.3,-.85), V3(-1.3,.6,-.85), DK.cold],
+    [V3(-1.3,.6,-.85), V3(-2.4,.6,-.85), DK.cold], [V3(-2.4,.6,-.85), V3(-2.4,.6,-.55), DK.cold],
+    [V3(-2.4,3.2,-.55), V3(-2.4,3.45,-.4), DK.hot], [V3(-2.4,3.45,.45), V3(-2.4,3.9,.7), DK.hot],
+    [V3(-2.4,3.9,.7), V3(.45,3.9,.7), DK.hot], [V3(.45,3.9,.7), V3(.45,1.25,.7), DK.hot],
+  ]) pipe(a, b, m, lines, .06);
+  /* 往きの最後の点から最初の点（復水器の中）へ戻して環を閉じる */
+  wPts.push(V3(1.9,.35,1.1));
   const gPts = [V3(-2.4,.7,0), V3(-2.4,3.45,.15), V3(-1.3,3.6,.15), V3(-1.3,2.3,.15), V3(-1.3,1.1,.15), V3(-.55,.9,.15), V3(0,.7,-.2), V3(0,4.5,-.2)];
   const aPts = [V3(-.55,.35,-.9), V3(-.55,.9,-.3), V3(-2.4,.55,-.3)];
   const wf = dkPath(g, wPts, 26, DK.dotS), gf = dkPath(g, gPts, 16, DK.dotG), af = dkPath(g, aPts, 6, DK.dotW);
-  Object.assign(g.userData, {flame, wf, gf, af, hp, lp, gen, T:0});
+  Object.assign(g.userData, {flame, wf, gf, af, hp, lp, gen, smoke, T:0});
   g.userData.labels = [
     {obj:boiler, t:'ボイラ（火炉・水管で水を蒸気に）', c:'#9FB3C4'},
     {obj:sh, t:'過熱器（飽和蒸気をさらに熱する）', c:'#D24A43'},
@@ -3751,6 +3870,7 @@ function buildKaryoku(g){
     {obj:cond, t:'復水器（蒸気を水に戻す。最大の熱損失）', c:'#4A5B68'},
     {obj:sea, t:'冷却水（海水）', c:'#3572D6'},
     {obj:pump, t:'給水ポンプ', c:'#3B5A73'},
+    {obj:coal, t:'燃料（ここでは石炭。重油・LNG を燃やす発電所もある）', c:'#26282B'},
   ];
 }
 function animKaryoku(g, t, st, dt){
@@ -3762,6 +3882,7 @@ function animKaryoku(g, t, st, dt){
   dkRun(u.gf, u.T*1.3, st.kFlow==='gas' && !st.paused);
   dkRun(u.af, u.T*1.0, st.kFlow==='gas' && !st.paused);
   for (const o of [u.hp, u.lp, u.gen]) o.rotation.x -= st.paused ? 0 : dt*4;
+  smokeRun(u.smoke, u.T);
 }
 
 /* ---------- 1.3 原子力 ----------
@@ -4527,6 +4648,7 @@ function refreshCtrl(){
             ['Pin','揚水の所要電力 9.8·Q·Hp/(ηp·ηm)', f1(m.Pin/1000)+' MW'],
             ['P','同じ流量で発電したときの出力', f1(m.P/1000)+' MW'],
             ['tot','揚水発電の総合効率 ηt·ηg·ηp·ηm·(Hg−hl)/(Hg+hl)', f1(m.total*100)+' %（同じ流量・同じ時間で比べた値）']];
+      if (state.sType==='pelton') rows.unshift(['pel','ペルトン水車で揚水', 'できない。衝動水車は水を汲み上げられない。揚水はポンプ水車で行う（下の値は計算式の練習用）']);
       note='※ 揚水では損失落差を総落差に足し、効率では割る。発電では損失落差を引き、効率を掛ける。向きが逆になるのが急所';
     }
   }
