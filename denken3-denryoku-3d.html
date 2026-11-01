@@ -3713,10 +3713,11 @@ function buildSuiryoku(g){
   const res = mesh(new THREE.BoxGeometry(2.15,2.2,3.0), DK.water, g, -2.925, 1.4, 0);
   /* 重力式ダム: 上流面は鉛直、下流面は斜め（底が広い） */
   const dam = prism([[-1.85,0], [-1.85,3.1], [-1.5,3.1], [-.75,0]], 3.2, DK.concrete, g);
-  prism([[-1.3,0], [-1.3,2.05], [-.3,2.0], [.3,1.95], [1.3,.78], [1.3,0]], 1.8, DK.grass, g);   // 水圧管路が下る斜面
-  /* 導水路は貯水池の水面（y=2.5）より下で取る（以前は y=2.6 で、水面より上から取っていた。2026-11-01 監査） */
-  const head = pipe(V3(-1.35,2.3), V3(0,2.3), M.steel, g, .14);
-  const surge = mesh(new THREE.CylinderGeometry(.3,.3,1.8,20), M.steelLight, g, 0, 3.0, 0);
+  prism([[-1.3,0], [-1.3,1.8], [-.3,1.75], [.3,1.75], [1.3,.78], [1.3,0]], 1.8, DK.grass, g);   // 水圧管路が下る斜面
+  /* 導水路は貯水池の水面より下で取る。水面は総落差 Hg で y=2.25〜3.0 を動くので、取水口（上端 y=2.14）はその最低より下に置く
+     （以前は y=2.6 で、水面より上から取っていた。2026-11-01 監査） */
+  const head = pipe(V3(-1.35,2.0), V3(0,2.0), M.steel, g, .14);
+  const surge = mesh(new THREE.CylinderGeometry(.3,.3,1.8,20), M.steelLight, g, 0, 2.8, 0);
   const pen = pipe(V3(0,2.5), V3(1.35,.95), M.steel, g, .14);
   /* 発電所の建屋（奥の壁・左の壁の上半分・屋根）。水圧管路は左の壁の下から入る */
   mesh(new THREE.BoxGeometry(1.3,2.6,.1), DK.bldg, g, 2.05, 1.3, -.95);
@@ -3753,20 +3754,21 @@ function buildSuiryoku(g){
   mesh(new THREE.BoxGeometry(1.2,.3,1.1), DK.water, pfeed, 2.1, .475, 0);   // ランナの下の放水の溜まり（水面は放水路と同じ y=0.625。ランナはその上）
   const gen = mesh(new THREE.CylinderGeometry(.45,.45,.6,24), M.steelDark, g, 2.0, 1.95, 0);
   const shaftV = pipe(V3(2.0,1.0), V3(2.0,1.7), M.steelLight, g, .05);
-  /* 総落差 Hg: 貯水池の水面（y=2.5）と放水路の水面（y=0.625）の高さの差。寸法線は放水路の手前に立てる
-     （放水路の右端に立てると、幅 390 の画面で枠の外に出た。2026-11-01 実描画） */
-  const hgMark = new THREE.Group(); g.add(hgMark);
-  { const yU = 2.5, yL = .625, x = 3.3, z = 1.25;
-    pipe(V3(x,yL+.12,z), V3(x,yU-.12,z), M.arrow, hgMark, .025);
-    mesh(new THREE.ConeGeometry(.07,.16,10), M.arrow, hgMark, x, yU-.08, z);
-    const dn = mesh(new THREE.ConeGeometry(.07,.16,10), M.arrow, hgMark, x, yL+.08, z); dn.rotation.x = Math.PI;
-    pipe(V3(-1.8,yU,z), V3(x+.15,yU,z), M.arrow, hgMark, .012);   // 上の水面の高さ（ダムの下流側から寸法線まで）
-    pipe(V3(x,yL,1.1), V3(x,yL,z+.1), M.arrow, hgMark, .012);     // 下の水面の高さ（放水路の手前の縁から）
-    hgMark.traverse(o => { o.castShadow = false; }); centerGroup(hgMark); }
-  const P0 = [V3(-2.6,2.3), V3(-1.35,2.3), V3(0,2.3), V3(0,2.5), V3(1.35,.95)];
+  /* 総落差 Hg: 貯水池の水面と放水路の水面（y=0.625）の高さの差。寸法線は放水路の手前に立てる
+     （放水路の右端に立てると、幅 390 の画面で枠の外に出た。2026-11-01 実描画）。
+     上の水面の高さは anim で総落差 Hg から決める（hgY）。部品は y=0 を基準に作り、anim で伸ばす・動かす */
+  const hgMark = new THREE.Group(); g.add(hgMark); hgMark.position.set(3.3, 1.5, 1.25);
+  const hgRod = mesh(new THREE.CylinderGeometry(.025,.025,1,8), M.arrow, hgMark);
+  const hgUp = mesh(new THREE.ConeGeometry(.07,.16,10), M.arrow, hgMark);
+  const hgDn = mesh(new THREE.ConeGeometry(.07,.16,10), M.arrow, hgMark); hgDn.rotation.x = Math.PI;
+  const hgLineU = pipe(V3(-5.1,0,0), V3(.15,0,0), M.arrow, hgMark, .012);   // 上の水面の高さ（ダムの下流側 x=-1.8 から寸法線まで）
+  const hgLineL = pipe(V3(0,0,-.15), V3(0,0,.1), M.arrow, hgMark, .012);    // 下の水面の高さ（放水路の手前の縁から）
+  hgMark.traverse(o => { o.castShadow = false; });
+  Object.assign(hgMark.userData, {hgRod, hgUp, hgDn, hgLineU, hgLineL, yL:.625});
+  const P0 = [V3(-2.6,2.0), V3(-1.35,2.0), V3(0,2.0), V3(0,2.5), V3(1.35,.95)];
   const flowR = dkPath(g, P0.concat([V3(1.4,.95), V3(2.0,.95), V3(2.0,.4), V3(2.85,.4), V3(3.6,.5)]), 18, DK.dotW);
   const flowP = dkPath(g, P0.concat([V3(1.35,.95,-.55), V3(1.53,.95,-.55), V3(1.53,.95,0), V3(1.7,.5,.05), V3(2.85,.5), V3(3.6,.5)]), 18, DK.dotW);
-  Object.assign(g.userData, {runner, types, reaction, pfeed, flowR, flowP, T:0});
+  Object.assign(g.userData, {runner, types, reaction, pfeed, flowR, flowP, res, hgMark, T:0});
   g.userData.labels = (st) => [
     {obj:res, t:'貯水池（総落差の上の水面）', c:'#3572D6'},
     {obj:dam, t:'ダム', c:'#9AA1A6'},
@@ -3778,11 +3780,19 @@ function buildSuiryoku(g){
                            : [{obj:draft, t:'吸出し管（反動水車だけにある。ランナ出口の速度エネルギーを圧力として回収する）', c:'#6B7580'}]),
     {obj:gen, t: st.sMode==='pump' ? '発電電動機（いまは電動機）' : '発電機', c:'#3B5A73'},
     {obj:tail, t:'放水路（総落差の下の水面）', c:'#3572D6'},
-    {obj:hgMark, t:'総落差 Hg（上の水面と下の水面の高さの差）', c:'#F0B57E'},
+    {obj:hgMark, t:'総落差 Hg（上下の水面の高さの差。有効落差 H = Hg − hl とは別。図の高さは Hg に比例しない）', c:'#F0B57E'},
   ];
 }
+/* 総落差 Hg［m］→ 図の上の水面の高さ y。20〜600 m（30倍）をそのまま箱に入れると低い側が潰れるので、対数で y=2.25〜3.0 に割り当てる
+   （2.25 は導水路の取水口の上端 2.14 より上、3.0 はダムの天端 3.1 より下）。縮尺どおりではないことは凡例に書く */
+function hgY(Hg){ const f = Math.log(Math.max(20, Math.min(600, Hg))/20)/Math.log(30); return 2.25 + .75*f; }
 function animSuiryoku(g, t, st, dt){
   const u = g.userData; if (!st.paused) u.T += dt;
+  { const yU = hgY(st.sHg), yL = u.hgMark.userData.yL, m = u.hgMark.userData, o = u.hgMark.position.y;
+    u.res.scale.y = (yU - .3)/2.2; u.res.position.y = .3 + (yU - .3)/2;          // 貯水池の箱は底 y=0.3 のまま、上面を yU に
+    m.hgRod.scale.y = Math.max(.01, (yU - .12) - (yL + .12)); m.hgRod.position.y = (yU + yL)/2 - o;
+    m.hgUp.position.y = yU - .08 - o; m.hgDn.position.y = yL + .08 - o;
+    m.hgLineU.position.y = yU - o; m.hgLineL.position.y = yL - o; }
   for (const k in u.types) u.types[k].visible = (k === st.sType);
   const pel = st.sType === 'pelton';
   u.pfeed.visible = pel; u.reaction.visible = !pel;
