@@ -452,17 +452,19 @@ const MACHINES = {
   synchronous: {
     num:'1.3', title:'同期機', x:13,
     kicker:'回転機。回転磁界と同じ速さで回る',
-    lead:'固定子は誘導機と同じ三相巻線。回転子は直流で励磁した磁極で、回転磁界に「かみ合って」同期速度で回る。負荷がかかると磁極が磁界からδだけ遅れる（負荷角）。',
-    /* 3D は機械単体で、軸の先（原動機・負荷）を描いていない。発電所の発電機の姿は電力3D工場にあるので、作り直さずそこへ渡す */
+    lead:'固定子は誘導機と同じ三相巻線。回転子は直流で励磁した磁極で、回転磁界に「かみ合って」同期速度で回る。負荷がかかると、磁極と回転磁界のあいだに角度δがつく（負荷角）。',
+    /* 軸の先（原動機・負荷）は「運転」で切り替える模式。発電所に据えた姿（水路・ボイラ）は電力3D工場にあるので、作り直さずそこへ渡す */
     where:{
-      t:'この3Dは軸の先を描いていない。**軸を水車や蒸気タービンで回せば発電機**で、発電所の発電機はこれ（突極形＝水車発電機、円筒形＝タービン発電機）。工場では、圧縮機・送風機を回す大形の**同期電動機**や、エンジンで回す非常用発電機として据わる。原理は同じで、軸に力を入れるか、軸から力を取り出すかで役が変わる。',
+      t:'3Dの下の「運転」を切り替えると、軸の先が替わる。**軸を水車や蒸気タービンで回せば発電機**で、発電所の発電機はこれ（突極形＝水車発電機、円筒形＝タービン発電機）。工場では、圧縮機・送風機を回す大形の**同期電動機**や、エンジンで回す非常用発電機として据わる。原理は同じで、軸に力を入れるか、軸から力を取り出すかで役が変わる。',
       links:[['水力発電所に据えた姿','denken3-denryoku-3d.html#suiryoku'],['火力発電所に据えた姿','denken3-denryoku-3d.html#karyoku']],
     },
     parts:[
       ['#D24A43','固定子巻線（三相）','回転磁界を作る。発電機なら逆にここに起電力が出る。1相あたり E = 4.44 k f N Φm で、線間値はその√3倍'],
       ['#3B5A73','突極形回転子（水車発電機）','極数が多く低速。横に太い。切替で見比べる'],
       ['#5C6B78','円筒形回転子（タービン発電機）','2極か4極で高速。細長い。遠心力に耐える形'],
-      ['#F0B57E','負荷角δ（矢印と磁極のずれ）','円筒形・抵抗を無視した基本モデルでは P ∝ sinδ。δ=90°で最大、それを超えると同期を保てない'],
+      ['#F0B57E','負荷角δ（矢印と磁極のずれ）','円筒形・抵抗を無視した基本モデルでは P ∝ sinδ。δ=90°で最大、それを超えると同期を保てない。δ のつく向きは電動機と発電機で逆'],
+      ['#3572D6','力の流れ（青い矢印と光の粒）','電動機は 電気 → 軸 → 負荷、発電機は 原動機 → 軸 → 電気。「運転」で切り替える'],
+      ['#8E9AA6','軸の先（負荷・原動機）','電動機なら負荷の送風機。発電機なら原動機で、突極形は水車、円筒形は蒸気タービン（形は模式）'],
       ['#7E8C99','制動巻線（突極の表面の棒）','始動時はかご形として働き、乱調を抑える'],
     ],
     sections:[
@@ -875,62 +877,70 @@ const STUDY = {
       ['同期速度', 'Ns = 120f/p（滑り 0）', '誘導機と違い、負荷が変わっても回転速度は変わらない'],
       ['誘導起電力（1相）', 'E = 4.44 k f N Φm', '**1相**の実効値。線間値を問われたら√3倍。k は巻線係数で、分布巻・短節巻では k < 1'],
       ['出力と負荷角（1相）', 'P = (E·V/Xs)·sinδ', 'E・V は**相電圧**で1相分。三相合計は3倍。円筒形・抵抗を無視した基本モデルで、δ=90°で最大'],
-      ['V曲線', '不足励磁→遅れ／過励磁→進み', '谷が力率1。同期調相機はこれで無効電力を調整する'],
+      ['V曲線', '不足励磁→遅れ／過励磁→進み', '電動機の場合。谷が力率1。同期調相機はこれで無効電力を調整する。**発電機は逆**（過励磁で遅れ）'],
       ['短絡比', 'Ks = 1/Zs[pu] = 100/%Zs', '百分率同期インピーダンスの逆数。大きいほど電圧変動率が小さく安定度が高い（鉄機械）'],
     ],
     predict: [
       { q:'円筒形同期電動機の負荷角δを 30° から 60° にした。出力はどうなるか（E・V・Xs 一定）。',
-        opts:['約0.6倍','変わらない','約1.7倍','約2.0倍'], ans:2, set:{delta:60, rotor:'cyl', If:1, syncKs:1, syncF:50, syncWind:'conc', syncPar:false}, hi:'P',
+        opts:['約0.6倍','変わらない','約1.7倍','約2.0倍'], ans:2, set:{delta:60, rotor:'cyl', If:1, syncKs:1, syncF:50, syncWind:'conc', syncPar:false, syncRole:'motor'}, hi:'P',
         why:'P = (E·V/Xs)·sinδ なので、出力は sinδ に比例する。sin60°/sin30° = 0.866/0.5 ≈ 1.73 倍。δ=90° で最大になり、それを超えると同期を保てない。※円筒形・抵抗無視の基本モデル。' },
       { q:'同期電動機の界磁電流 If を、力率1になる値より大きくした（過励磁）。力率は？',
-        opts:['遅れになる','進みになる','1のまま','0になる'], ans:1, set:{If:1.5, delta:20, syncP:.5, syncKs:1, syncF:50, syncWind:'conc', syncPar:false}, hi:'pf',
+        opts:['遅れになる','進みになる','1のまま','0になる'], ans:1, set:{If:1.5, delta:20, syncP:.5, syncKs:1, syncF:50, syncWind:'conc', syncPar:false, syncRole:'motor'}, hi:'pf',
         why:'過励磁では電機子電流が進み位相になる。V曲線の谷（力率1）より右側。この性質を使って無効電力を供給するのが同期調相機。不足励磁なら逆に遅れ。' },
       { q:'三相同期電動機の滑りはいくらか。',
-        opts:['0','0.03 前後','1','負荷で変わる'], ans:0, set:{delta:20, If:1, syncKs:1, syncF:50, syncWind:'conc', syncPar:false}, hi:'slip0',
+        opts:['0','0.03 前後','1','負荷で変わる'], ans:0, set:{delta:20, If:1, syncKs:1, syncF:50, syncWind:'conc', syncPar:false, syncRole:'motor'}, hi:'slip0',
         why:'同期機は回転磁界と同じ速さで回るので滑りは常に0。負荷が増えると速度ではなく負荷角δが大きくなる。ここが誘導機との決定的な違い。' },
+      { q:'同じ同期機を、蒸気タービンで軸を回す発電機として運転した。回転子の磁極は、回転磁界の矢印に対してどうなるか。',
+        opts:['δ だけ遅れて回る','δ だけ進んで回る','矢印とぴったり重なる','滑りの分だけ遅く回る'], ans:1, set:{syncRole:'gen', delta:30, rotor:'cyl', If:1.4, syncKs:1, syncF:50, syncWind:'conc', syncPar:false}, hi:'role',
+        why:'発電機では、タービンが回転子を押して磁界より先へ進める。だから起電力 E₀ は端子電圧 V より δ 進む（E₀ = V + jXs·I）。電動機は逆で、磁界に引っ張られて δ 遅れる。どちらも P = (E₀·V/Xs)·sinδ で、δ の向きだけが逆。速さは同期速度のままで、滑りは 0。' },
     ],
     points: [
       ['回転磁界と同じ速さで回る。滑りは常に0', '回転子は直流で励磁した磁石。負荷が増えても速度は落ちず、負荷角δが大きくなる'],
       ['負荷角 δ が出力を決める', 'P = (E·V/Xs)·sinδ（円筒形・抵抗無視）。δ=90°で最大、超えると同期を保てない'],
-      ['界磁電流で力率が変わる（Vカーブ）', '過励磁で進み、不足励磁で遅れ。谷が力率1。同期調相機はこれを使う'],
+      ['界磁電流で力率が変わる（Vカーブ）', '電動機は過励磁で進み、不足励磁で遅れ。谷が力率1。同期調相機はこれを使う。**発電機は逆**で、過励磁で遅れ・不足励磁で進み'],
     ],
     tour: [
-      {t:'磁界にかみ合って回る', sec:'structure', focus:'回転子', set:{delta:15, If:1, rotor:'salient', syncKs:1, syncF:50, syncWind:'conc', syncPar:false},
+      {t:'磁界にかみ合って回る', sec:'structure', focus:'回転子', set:{delta:15, If:1, rotor:'salient', syncKs:1, syncF:50, syncWind:'conc', syncPar:false, syncRole:'motor'},
        op:'矢印と回転子の回り方を見比べる。',
        see:'誘導機と違って、完全に同じ速さで回っている。',
        so:'回転子は直流で励磁した電磁石。磁石が磁界にかみ合うので滑りは常に 0。速度は Ns = 120f/p だけで決まる。',
        q:['R5上/6','R5下/6']},
-      {t:'負荷をかけると角度がつく', sec:'structure', focus:'回転磁界', set:{delta:60, rotor:'cyl', If:1, syncKs:1, syncF:50, syncWind:'conc', syncPar:false},
+      {t:'負荷をかけると角度がつく', sec:'structure', focus:'回転磁界', set:{delta:60, rotor:'cyl', If:1, syncKs:1, syncF:50, syncWind:'conc', syncPar:false, syncRole:'motor'},
        op:'負荷角 δ を 60° まで上げる。',
        see:'速さは変わらないまま、磁極の向きだけが矢印から遅れる。',
        so:'ばねを引いた状態と同じで、この角度 δ が大きいほど引き戻す力＝出力が大きい。速度ではなく角度で出力が決まる。',
        q:['R3/5']},
-      {t:'90°を超えると同期を保てない', sec:'start-hunting', focus:'回転磁界', set:{delta:90, rotor:'cyl', If:1, syncKs:1, syncF:50, syncWind:'conc', syncPar:false},
+      {t:'発電機にすると磁極が先に進む', sec:'structure', focus:'力の流れ', set:{syncRole:'gen', delta:30, rotor:'cyl', If:1.4, syncKs:1, syncF:50, syncWind:'conc', syncPar:false},
+       op:'「運転」を 発電機 にして、「電動機」と見比べる。',
+       see:'軸の左の送風機が蒸気タービンに替わり、青い矢印が逆向き（タービン → 軸 → 電気）になる。磁極は回転磁界の矢印より δ だけ先を回る。下のベクトル図では E₀ が V より上（進み）に回る。',
+       so:'電動機は磁界に引っ張られて δ 遅れ、発電機は原動機に押されて δ 進む。中身は同じ機械で、軸に力を入れるか取り出すかで役が変わる。出力の式 P = (E₀·V/Xs)·sinδ は同じ。力率は逆になり、発電機は過励磁で遅れ、不足励磁で進み。',
+       q:['H28/15a','H22/15a']},
+      {t:'90°を超えると同期を保てない', sec:'start-hunting', focus:'回転磁界', set:{delta:90, rotor:'cyl', If:1, syncKs:1, syncF:50, syncWind:'conc', syncPar:false, syncRole:'motor'},
        op:'負荷角 δ を 90° まで上げる。',
        see:'ずれが直角になり、下の P-δ 曲線の頂上に乗る。',
        so:'P ∝ sinδ なので δ=90°で出力が最大。超えると引き戻す力が減って脱調する。δ が振動するのが乱調で、制動巻線が抑える。※円筒形・抵抗無視の基本モデル。',
        q:['R3/5','R6上/5','R7下/5']},
-      {t:'界磁電流で力率が動く', sec:'vcurve', focus:'スリップリング', set:{delta:20, If:1.5, syncP:.5, rotor:'salient', syncKs:1, syncF:50, syncWind:'conc', syncPar:false},
+      {t:'界磁電流で力率が動く', sec:'vcurve', focus:'スリップリング', set:{delta:20, If:1.5, syncP:.5, rotor:'salient', syncKs:1, syncF:50, syncWind:'conc', syncPar:false, syncRole:'motor'},
        op:'負荷角を 20° に戻し、界磁電流 If を大きくする。',
        see:'下のVカーブで動作点が谷の右側へ移り、電機子電流がまた増えていく。ベクトル図では E₀ が伸びて先端が V の先を越え、I が V より進む側へ回る。負荷は保ったままなので、負荷角 δ は小さくなっていく。',
-       so:'谷が力率1。右（過励磁）は進み、左（不足励磁）は遅れ。同期調相機はこれだけのために回す。発電機視点ではラベルが反転するので機種を確かめる。',
+       so:'谷が力率1。右（過励磁）は進み、左（不足励磁）は遅れ。同期調相機はこれだけのために回す。「運転」を発電機にするとラベルが反転する（過励磁で遅れ）ので、問題がどちらの機械かを先に確かめる。',
        q:['R4下/4','R8上/15b','R5下/5','R6上/6','R8上/15a','H24/16b','H26/15b','R2/5']},
-      {t:'回転子の形は速度で決まる', sec:'rotor-types', focus:'回転子', set:{rotor:'cyl', If:1, delta:20, syncKs:1, syncF:50, syncWind:'conc', syncPar:false},
+      {t:'回転子の形は速度で決まる', sec:'rotor-types', focus:'回転子', set:{rotor:'cyl', If:1, delta:20, syncKs:1, syncF:50, syncWind:'conc', syncPar:false, syncRole:'motor'},
        op:'「回転子」を 突極形 と 円筒形 で切り替える。',
        see:'横に太い突極形（4極）から、細長い円筒形（2極）に変わる。同じ周波数のまま、突極形は円筒形の半分の速さで回る。読み値の同期速度は 1500 → 3000 min⁻¹（50 Hz）。周波数を 60 Hz にすると両方とも 1.2 倍になる。',
        so:'Ns = 120f/p がそのまま形になる。タービンは高速＝2極か4極で、遠心力に耐える細い円筒。水車は低速＝極数が多く、横に太い突極。',
        q:['R6下/5','R8上/5','H30/5','R5下/6']},
-      {t:'界磁電流と起電力・短絡比', sec:'vcurve', focus:'スリップリング', set:{If:1.4, delta:20, syncP:.5, rotor:'cyl', syncKs:1, syncF:50, syncWind:'conc', syncPar:false},
+      {t:'界磁電流と起電力・短絡比', sec:'vcurve', focus:'スリップリング', set:{If:1.4, delta:20, syncP:.5, rotor:'cyl', syncKs:1, syncF:50, syncWind:'conc', syncPar:false, syncRole:'motor'},
        op:'界磁電流 If を大きくしていく。次に If を 1 に戻し、「短絡比 Ks」を 1.0 → 1.5 にする。',
        see:'読み値の E₀ と持続短絡電流 Ks·If が界磁電流に比例して増える（不飽和の直線部の模式）。負荷を保ったままなので、P-δ 曲線の山が高くなった分だけ負荷角 δ は小さくなる。Ks を 1.5 にすると Zs = 1/Ks が 1.00 → 0.67 pu（100 % → 67 %）に下がり、同じ負荷で δ が 20° → 13° に小さくなる。',
        so:'無負荷飽和曲線（E₀ と If）も短絡曲線（Is と If）も If の関数。定格電圧を出す If のときの三相短絡電流を定格電流で割ったものが短絡比 Ks で、Ks = 1/Zs[pu] = 100/%Zs。短絡比が大きい機械は同期インピーダンスが小さい。',
        q:['R3/6','R4上/5','R4下/5','R5上/5','R6下/6','R6下/15a','R7上/6','R7下/6','H18/3','H19/5','H20/4','H21/5','H25/6','H27/5']},
-      {t:'巻き方で起電力が少し減る（巻線係数）', sec:'structure', focus:'回転子', set:{rotor:'cyl', If:1, delta:20, syncKs:1, syncF:50, syncWind:'conc', syncPar:false},
+      {t:'巻き方で起電力が少し減る（巻線係数）', sec:'structure', focus:'回転子', set:{rotor:'cyl', If:1, delta:20, syncKs:1, syncF:50, syncWind:'conc', syncPar:false, syncRole:'motor'},
        op:'「電機子巻線」を 集中・全節 → 分布・全節 → 分布・短節 と切り替える。',
        see:'1相の起電力が 1110 V → 1072 V → 1036 V と下がる（N = 100 回・Φ = 0.05 Wb・50 Hz の例）。巻線係数は 1 → 0.966 → 0.933。',
        so:'E = 4.44·kw·f·N·Φ。分布巻はコイルの位置がずれて起電力が少しずつ位相のずれた和になり、短節巻はコイル幅が極間隔より狭い分だけ鎖交が減る。そのぶん減るが、波形がひずみにくくなる（高調波を減らす）。三相 Y 結線なら線間はこの √3 倍。',
        q:['R5上/6','R4下/7','R6下/7','R2/4']},
-      {t:'並行運転：起電力の差が横流を流す', sec:'parallel', focus:'回転子', set:{rotor:'cyl', If:1, delta:20, syncKs:1, syncF:50, syncWind:'conc', syncPar:true, parDE:.1, parDth:10},
+      {t:'並行運転：起電力の差が横流を流す', sec:'parallel', focus:'回転子', set:{rotor:'cyl', If:1, delta:20, syncKs:1, syncF:50, syncWind:'conc', syncPar:true, syncRole:'gen', parDE:.1, parDth:10},
        op:'「並行運転」を 試す にする。起電力の差 ΔE と位相差 Δθ を動かす。',
        see:'ΔE = 0.10 なら無効横流 0.050 pu、Δθ = 10° なら有効横流 0.087 pu。両方 0 にすると差のベクトルが消え、横流も 0 になる。',
        so:'並行運転の条件は起電力の大きさ・位相・周波数・波形が等しいこと（三相は相回転も）。大きさの差は無効横流 ΔE/(2Zs)、位相の差は有効横流（同期化電流）E·sin(Δθ/2)/Zs を流す。周波数が違うと位相差が刻々と変わるので、同期検定器で差が 0 になった瞬間に投入する。',
@@ -1793,14 +1803,55 @@ function buildSync(g){
   for (let i=0;i<2;i++) mesh(new THREE.CylinderGeometry(.34,.34,.12,24), M.brass, rings, 1.6+i*.25, 0, 0).rotation.z=Math.PI/2;
   for (let i=0;i<2;i++) mesh(new THREE.BoxGeometry(.1,.25,.18), M.black, g, 1.6+i*.25, .45, 0);
   const arrow = makeFieldArrow(1.4); g.add(arrow);
-  Object.assign(g.userData, {rotor, salient, cyl, arrow});
-  g.userData.labels = [
-    {obj:g.userData.frame, t:'固定子（三相巻線）', c:'#D24A43'},
-    {obj:salient, t:'回転子（突極形・直流励磁）', c:'#3B5A73', key:'salient'},
-    {obj:cyl, t:'回転子（円筒形・直流励磁）', c:'#5C6B78', key:'cyl'},
-    {obj:arrow.userData.tip, t:'回転磁界', c:'#F0B57E'},
-    {obj:rings, t:'スリップリング（励磁）', c:'#D9C7A0'},
-  ];
+  /* 軸の先（左＝駆動側）。発電機か電動機かは、この軸の先で決まる。
+     電動機なら負荷（送風機）、発電機なら原動機（突極形→水車・円筒形→蒸気タービン）。形は模式で、寸法は実機と無関係。
+     回る部分は rotor に入れて回転子と一緒に回し、ケーシングは g に置いて止めておく */
+  mesh(new THREE.CylinderGeometry(.2,.2,1.5,16), M.steelLight, rotor, -2.95, 0, 0).rotation.z = Math.PI/2;
+  mesh(new THREE.CylinderGeometry(.42,.42,.2,24), M.steel, rotor, -2.75, 0, 0).rotation.z = Math.PI/2;      // 軸継手
+  const fan = new THREE.Group(); fan.position.x = -3.75; rotor.add(fan);
+  mesh(new THREE.CylinderGeometry(.3,.3,.45,16), M.steel, fan).rotation.z = Math.PI/2;
+  for (let i=0;i<6;i++){ const b = new THREE.Group(); b.rotation.x = i/6*Math.PI*2; fan.add(b); mesh(new THREE.BoxGeometry(.4,.95,.07), M.steelLight, b, 0, .72, 0).rotation.y = .55; }
+  const fanCase = new THREE.Group(); fanCase.position.x = -3.75; g.add(fanCase);
+  for (const dx of [-.32,.32]) mesh(new THREE.TorusGeometry(1.32,.06,8,40), M.steelDark, fanCase, dx, 0, 0).rotation.y = Math.PI/2;
+  mesh(new THREE.BoxGeometry(.9,.3,.9), M.steelDark, fanCase, 0, -1.45, 0);
+  const runner = new THREE.Group(); runner.position.x = -3.8; rotor.add(runner);       // 水車のランナ（羽根車）
+  mesh(new THREE.ConeGeometry(.42,.7,20), M.brass, runner, -.15, 0, 0).rotation.z = Math.PI/2;
+  for (let i=0;i<10;i++){ const b = new THREE.Group(); b.rotation.x = i/10*Math.PI*2; runner.add(b); mesh(new THREE.BoxGeometry(.5,.85,.06), M.brass, b, 0, .62, 0).rotation.set(0, .7, .25); }
+  const runCase = new THREE.Group(); runCase.position.x = -3.8; g.add(runCase);         // 渦巻ケーシング（水を周りから羽根へ導く）
+  mesh(new THREE.TorusGeometry(1.35,.3,12,40), M.tank, runCase).rotation.y = Math.PI/2;
+  mesh(new THREE.CylinderGeometry(.3,.3,1.4,16), M.tank, runCase, 0, 1.0, 1.55).rotation.x = Math.PI/2;
+  mesh(new THREE.BoxGeometry(.9,.3,.9), M.steelDark, runCase, 0, -1.65, 0);
+  const turb = new THREE.Group(); turb.position.x = -3.15; rotor.add(turb);            // 蒸気タービンの羽根車。蒸気は左から入って膨らみながら右へ進み、
+  for (let i=0;i<5;i++) mesh(new THREE.CylinderGeometry(1.07-i*.13,1.07-i*.13,.12,32), M.steelLight, turb, -.15-i*.28, 0, 0).rotation.z = Math.PI/2;   // 発電機の側ほど羽根が大きい
+  mesh(new THREE.CylinderGeometry(.24,.24,1.5,16), M.steel, turb, -.7, 0, 0).rotation.z = Math.PI/2;
+  const turbCase = mesh(new THREE.CylinderGeometry(.75,1.25,1.6,32,1,true,Math.PI*.15,Math.PI*1.7), M.ghostGrey, g, -3.85, 0, 0); turbCase.rotation.z = Math.PI/2;
+  const turbBase = mesh(new THREE.BoxGeometry(1.6,.3,1.1), M.steelDark, g, -3.85, -1.45, 0);
+  /* 端子箱（三相の電気の出入り口）と、力の流れの矢印。矢印は局所 −x 向きに作り、発電機では y 軸まわりに反転する */
+  const term = new THREE.Group(); term.position.set(.6, 2.45, 0); g.add(term);
+  mesh(new THREE.BoxGeometry(.6,.4,.6), M.steelDark, term);
+  [M.u, M.v, M.w].forEach((m,i)=>mesh(new THREE.CylinderGeometry(.05,.05,.6,8), m, term, 0, .5, (i-1)*.16));
+  const flowMat = std({color:0x3572d6, emissive:0x3572d6, emissiveIntensity:.5});
+  const pulseMat = std({color:0xbcd6ff, emissive:0x6ea0f0, emissiveIntensity:1.2});
+  const flow = new THREE.Group(); flow.position.set(-1.55, 3.2, 0); g.add(flow);
+  mesh(new THREE.CylinderGeometry(.06,.06,4.4,10), flowMat, flow).rotation.z = Math.PI/2;
+  const flowTip = mesh(new THREE.ConeGeometry(.2,.45,14), flowMat, flow, -2.4, 0, 0); flowTip.rotation.z = Math.PI/2;
+  const pulses = [0,1,2,3].map(()=>mesh(new THREE.SphereGeometry(.11,12,8), pulseMat, flow));
+  for (const o of [flowTip, ...pulses]) o.castShadow = false;
+  Object.assign(g.userData, {rotor, salient, cyl, arrow, fan, fanCase, runner, runCase, turb, turbCase, turbBase, flow, pulses});
+  g.userData.labels = (st) => {
+    const gen = st.syncRole === 'gen', hydro = st.rotor === 'salient';
+    return [
+      {obj:g.userData.frame, t:'固定子（三相巻線）', c:'#D24A43'},
+      {obj:salient, t:'回転子（突極形・直流励磁）', c:'#3B5A73', key:'salient'},
+      {obj:cyl, t:'回転子（円筒形・直流励磁）', c:'#5C6B78', key:'cyl'},
+      {obj:arrow.userData.tip, t:'回転磁界', c:'#F0B57E'},
+      {obj:rings, t:'スリップリング（励磁）', c:'#D9C7A0'},
+      {obj:term, t:'端子箱（三相の電気の出入り口）', c:'#C9A227'},
+      gen ? {obj: hydro ? runner : turb, t: hydro ? '原動機：水車（軸に力を入れる）' : '原動機：蒸気タービン（軸に力を入れる）', c:'#8E9AA6'}
+          : {obj:fan, t:'負荷：送風機（軸から力を取り出す）', c:'#8E9AA6'},
+      {obj:flowTip, t: gen ? '力の流れ：原動機 → 軸 → 電気（発電機）' : '力の流れ：電気 → 軸 → 負荷（電動機）', c:'#3572D6'},
+    ];
+  };
 }
 function animSync(g, t, st, dt){
   const u = g.userData;
@@ -1808,7 +1859,16 @@ function animSync(g, t, st, dt){
   const poleK = (st.rotor==='salient' ? .5 : 1) * st.syncF/50;
   u.arrow.rotation.x -= (st.paused?0:st.ws*poleK)*dt;
   u.salient.visible = st.rotor==='salient'; u.cyl.visible = st.rotor==='cyl';
-  u.rotor.rotation.x = u.arrow.rotation.x + st.delta*Math.PI/180;   // 同期。負荷角だけ遅れる
+  /* 同期。電動機は磁界に引っ張られて負荷角だけ遅れ、発電機は原動機に押されて負荷角だけ進む
+     （矢印は rotation.x が減る向きに回るので、+δ が遅れ、−δ が進み） */
+  const gen = st.syncRole === 'gen', hydro = st.rotor === 'salient';
+  u.rotor.rotation.x = u.arrow.rotation.x + (gen ? -1 : 1)*st.delta*Math.PI/180;
+  u.fan.visible = u.fanCase.visible = !gen;
+  u.runner.visible = u.runCase.visible = gen && hydro;
+  u.turb.visible = u.turbCase.visible = u.turbBase.visible = gen && !hydro;
+  u.flow.rotation.y = gen ? Math.PI : 0;
+  u.flowPh = (u.flowPh || 0) + (st.paused ? 0 : dt*.35);
+  u.pulses.forEach((o,i)=>{ const f = (u.flowPh + i/4) % 1; o.position.x = 2.0 - f*4.2; });
 }
 
 /* ---------- パワーエレクトロニクス ----------
@@ -2255,7 +2315,7 @@ const state = {
   current:null, paused:false, ws:1.6,
   slip:.05, wound:false, im_k:3, imClamp:false, im_v:1, im_start:'d', imStall:false, imTl:0, im_p:4, im_f:50,
   react:false, load:.5, dcExc:'shunt', dcMode:'motor', dcRf:1.2,
-  rotor:'salient', delta:20, If:1.0, syncP:.5, syncKs:1, syncF:50, syncWind:'conc', syncPar:false, parDE:.1, parDth:10, syncLost:false, syncP0:0,
+  rotor:'salient', delta:20, If:1.0, syncP:.5, syncKs:1, syncF:50, syncWind:'conc', syncPar:false, syncRole:'motor', parDE:.1, parDth:10, syncLost:false, syncP0:0,
   dcV:1, dcKf:1, dcComp:'none', dcWindT:'lap', tfLoad:.7, tfPf:1, tfTemp:20, tfView:'core', bankV:false, bankPh:'dd', autoA:1.2, parZa:4, parZb:5, parSb:300, parLoad:600, capP:500, capPf1:.8, capPf2:.95, capL:6,
   tfTest:'run', tfIron:'off', tfLam:true,
   peConv:'buck', peD:.6, peLoad:'RL', peHw:'RL', peAlpha:60, peBr:'R', peDev:'igbt',
@@ -2281,7 +2341,7 @@ const VIEWS = {
   'transformer:cap':{target:[-13,1.4,0], dist:8, theta:.5, phi:1.15, wide:true},
   'dc-machine':{target:[-4.5,2.4,0], dist:8.5, theta:.8, phi:1.2},
   'induction-machine':{target:[4.5,2.4,0], dist:9, theta:.8, phi:1.2},
-  synchronous:{target:[13,2.4,0], dist:9, theta:.8, phi:1.2},
+  synchronous:{target:[11.2,2.0,0], dist:12, theta:.38, phi:1.2},   // 軸の先（左の負荷・原動機）まで入れる
   /* 盤の中心は x=22。距離は実測で決めた（枠に収まり、横幅の 7 割前後を占める値）。
      画面の縦横で距離を変える判定は置かない——開いた直後の #view は
      レイアウトが確定する前で縦長に見え（実測 0.83 → 確定後 1.36）、
@@ -2649,6 +2709,7 @@ function buildCtrl(){
   } else if (id==='synchronous'){
     const gD = range('負荷角 δ', 0, 90, 1, 'delta', v=>Math.round(v)+'°');
     gD._input.oninput = ()=>{ state.delta = +gD._input.value; state.syncLost = false; refreshCtrl(); };
+    ctrlbar.appendChild(group('運転', seg([['motor','電動機'],['gen','発電機']], 'syncRole')));
     ctrlbar.appendChild(gD);
     /* 界磁電流を動かすときは負荷（P ∝ E₀·sinδ）を保つ。E₀ ∝ If が増えれば δ は小さく、
        減って sinδ が 1 を超える（最大出力に届かない）なら脱調 */
@@ -2772,7 +2833,7 @@ function syncCtrl(){
   ctrlbar.querySelectorAll('.cg[data-key]').forEach(g=>{ if(g._input){ g._input.value = state[g.dataset.key]; g.querySelector('.val').textContent = g._fmt(state[g.dataset.key]); } });
   ctrlbar.querySelectorAll('.seg[data-key]').forEach(d=>{ [...d.children].forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===String(state[d.dataset.key])))); });
 }
-let _lastTfSig = null, _lastPeConv = null, _lastDmView = null, _lastPeHw = null, _lastDcSig = null, _lastImWound = null, _lastSyncPar = null;
+let _lastTfSig = null, _lastPeConv = null, _lastDmView = null, _lastPeHw = null, _lastDcSig = null, _lastImWound = null, _lastSyncPar = null, _lastSyncSig = null;
 const tfSig = () => state.tfView + '/' + state.bankV + '/' + (state.tfView==='core' && state.tfTest==='sc');
 function refreshCtrl(){
   /* 回路を切り替えると操作帯の中身（通流率／負荷）と凡例が変わる */
@@ -2783,6 +2844,10 @@ function refreshCtrl(){
   /* 直流機は運転（電動機／発電機）と励磁方式で操作帯の中身（負荷の名前・界磁抵抗）が変わる */
   if (state.current==='synchronous' && state.syncPar !== _lastSyncPar){
     const had = _lastSyncPar !== null; _lastSyncPar = state.syncPar; if (had){ buildCtrl(); return; }
+  }
+  /* 同期機は運転（電動機／発電機）と回転子の形で、軸の先の凡例（送風機・水車・蒸気タービン）と力の流れの向きが変わる */
+  if (state.current==='synchronous' && state.syncRole+'/'+state.rotor !== _lastSyncSig){
+    const had = _lastSyncSig !== null; _lastSyncSig = state.syncRole+'/'+state.rotor; if (had) rebuildLabels();
   }
   /* 誘導機は巻線形のときだけ「二次回路の抵抗」スライダーを出す */
   if (state.current==='induction-machine' && state.wound !== _lastImWound){
@@ -2841,9 +2906,13 @@ function refreshCtrl(){
     /* 力率は「Vカーブの谷より右か左か」で決まる。谷は負荷で右へ動くので、
        固定しきい値で判定するとグラフと読み値が逆転する（全負荷で実際に逆転していた）。
        力率はフェーザ syI から直接出す（Vカーブ・ベクトル図と同じ式）。 */
-    const I = syI(), Ia = Math.hypot(I.re, I.im), pf = Ia > 1e-9 ? I.re/Ia : 1;
-    const pfTxt = Ia < 1e-9 ? '—' : Math.abs(I.im) < .02*Math.max(Ia, .1) ? '1（谷）' : pf.toFixed(2)+(I.im < 0 ? ' 遅れ（不足励磁）' : ' 進み（過励磁）');
-    rows=[['slip0','滑り','0（磁界と同じ速さ）'],
+    /* 発電機は「出ていく電流」で力率を見る。syRoleI は電動機の I の共役で、遅れ／進みと励磁の対応が電動機と逆になる */
+    const gen = state.syncRole === 'gen';
+    const I = syRoleI(), Ia = Math.hypot(I.re, I.im), pf = Ia > 1e-9 ? I.re/Ia : 1;
+    const pfTxt = Ia < 1e-9 ? '—' : Math.abs(I.im) < .02*Math.max(Ia, .1) ? '1（谷）'
+      : pf.toFixed(2)+(I.im < 0 ? (gen ? ' 遅れ（過励磁）' : ' 遅れ（不足励磁）') : (gen ? ' 進み（不足励磁）' : ' 進み（過励磁）'));
+    rows=[['role','運転', gen ? '発電機（軸に力を入れて電気を取り出す）' : '電動機（電気を入れて軸から力を取り出す）'],   // δ の向きは書かない（予想クイズの答えになる）
+          ['slip0','滑り','0（磁界と同じ速さ）'],
           ['delta','負荷角 δ', Math.round(state.delta)+'°'],
           ['P','出力 P = E₀·V·sinδ/Xs', syP().toFixed(2)+(state.delta>=90?'（限界）':'')],
           ['ia','電機子電流 Ia', Ia.toFixed(2)+' pu'],
@@ -3911,7 +3980,7 @@ function drawMini(){
     if (state.im_start==='y') parts.push('Y 結線中は巻線1相の電圧が 1/√3 なので、トルクも線電流も直入れの 1/3。');
     cap.textContent = parts.join(' ');
   } else if (state.current==='synchronous'){
-    axes(); ctx.fillStyle=ink3; ctx.fillText('If →', R-60, B+30); ctx.fillText('Ia', L-40, T+10); ctx.fillText('遅れ', L+20, B+30); ctx.fillText('進み', R-140, B+30);
+    axes(); ctx.fillStyle=ink3; ctx.fillText('If →', R-60, B+30); ctx.fillText('Ia', L-40, T+10); const genV = state.syncRole==='gen'; ctx.fillText(genV ? '進み' : '遅れ', L+20, B+30); ctx.fillText(genV ? '遅れ' : '進み', R-140, B+30);
     const xOf = If => L + (If-.3)/1.4*(R-L), YM = 1.6, yOf = v => B - Math.min(v, YM)/YM*(B-T);
     /* 出力 P を保ったまま If を動かしたときの電機子電流（同期機のフェーザから計算）。最大出力に届かない If は描かない */
     const IaAt = (If, P) => { const d = syDelta(P, If); if (d === null) return null; const I = syI(If, d); return Math.hypot(I.re, I.im); };
@@ -3924,7 +3993,9 @@ function drawMini(){
     ctx.setLineDash([2,4]); ctx.strokeStyle=steel; ctx.beginPath(); for (let i=0;i<=20;i++){ const P=i/20*.7, If=IF0(P), v=IaAt(If,P); if (v===null) continue; i? ctx.lineTo(xOf(If),yOf(v)): ctx.moveTo(xOf(If),yOf(v)); } ctx.stroke(); ctx.setLineDash([]);
     const I = syI(); ctx.fillStyle=acc; ctx.beginPath(); ctx.arc(xOf(state.If), yOf(Math.hypot(I.re, I.im)), 8, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle=ink; ctx.fillText('P='+Pnow.toFixed(2)+'（実線）', R-230, T+12);
-    cap.textContent = '同期電動機のVカーブ。フェーザ V = E₀ + jXs·I から計算した値（V=1・Xs=1/Ks・抵抗無視）。破線は無負荷・半負荷・全負荷、実線はいまの出力。谷（点線の上）が力率1で、左は不足励磁で遅れ、右は過励磁で進み。負荷が増えると谷が右上へ動く。';
+    cap.textContent = genV
+      ? '同期発電機のVカーブ。フェーザ E₀ = V + jXs·I から計算した値（V=1・Xs=1/Ks・抵抗無視）。破線は無負荷・半負荷・全負荷、実線はいまの出力。谷（点線の上）が力率1で、左は不足励磁で進み、右は過励磁で遅れ（電動機と逆）。曲線の形は電動機と同じ。負荷が増えると谷が右上へ動く。'
+      : '同期電動機のVカーブ。フェーザ V = E₀ + jXs·I から計算した値（V=1・Xs=1/Ks・抵抗無視）。破線は無負荷・半負荷・全負荷、実線はいまの出力。谷（点線の上）が力率1で、左は不足励磁で遅れ、右は過励磁で進み。負荷が増えると谷が右上へ動く。';
   } else if (state.current==='transformer' && state.tfView==='core' && state.tfIron==='hys'){
     /* B-H ループ。1周で囲む面積が、その1サイクルで熱になる分 */
     const ph = groups.transformer.userData.ph*2.2;
@@ -4265,6 +4336,10 @@ const SY_KD = Math.sin(Math.PI/6)/(2*Math.sin(Math.PI/12)), SY_KP = Math.sin(5*M
 const SY_WIND = {conc:{t:'集中巻・全節巻', kw:1}, dist:{t:'分布巻・全節巻', kw:SY_KD}, short:{t:'分布巻・短節巻（5/6）', kw:SY_KD*SY_KP}};                       // 無負荷・半負荷・全負荷の出力（pu）
 function syP(If=state.If, d=state.delta, Ks=state.syncKs){ return Ks*If*Math.sin(d*Math.PI/180); }
 function syI(If=state.If, d=state.delta, Ks=state.syncKs){ const r=d*Math.PI/180; return {re: Ks*If*Math.sin(r), im: -Ks*(1 - If*Math.cos(r))}; }
+/* 運転に合わせた電機子電流。電動機は流れ込む電流 I = (V − E₀)/(jXs)（E₀ は δ 遅れ）。
+   発電機は流れ出る電流 I = (E₀ − V)/(jXs)（E₀ は δ 進む）で、計算すると電動機の I の共役になる。
+   大きさは同じなので Vカーブの形は変わらず、遅れ／進みだけが入れ替わる */
+function syRoleI(If=state.If, d=state.delta, Ks=state.syncKs){ const I = syI(If, d, Ks); return state.syncRole==='gen' ? {re:I.re, im:-I.im} : I; }
 /* 出力 P を保つ負荷角。最大出力 Ks·If に届かなければ null（脱調） */
 function syDelta(P, If=state.If, Ks=state.syncKs){ const r = P/(Ks*If); return r > 1 ? null : Math.asin(r)*180/Math.PI; }
 /* 力率1になる界磁電流（Vカーブの谷）。E₀·cosδ = V かつ E₀·sinδ = P·Xs から E₀ = √(1 + (P/Ks)²) */
@@ -4280,9 +4355,11 @@ function eta(a, pf=state.tfPf){ const out = a*TF_S*pf; return out <= 0 ? 0 : out
 /* 電圧変動率（近似式・遅れ力率）。負荷率 α に比例 */
 function tfEps(a, pf=state.tfPf){ return a*(TF_P*pf + TF_Q*Math.sqrt(Math.max(0, 1-pf*pf))); }
 
-/* ---------- 同期電動機のベクトル図 ----------
-   V（基準・横向き）= E₀ + jXs·I。E₀ は V より δ 遅れ、jXs·I は E₀ の先端から V の先端へ向かう。
-   I は jXs·I を 90° 戻した向き（I = (V − E₀)/(jXs)）。値は syI と同じ式なので読み値・Vカーブと一致する */
+/* ---------- 同期機のベクトル図 ----------
+   電動機: V（基準・横向き）= E₀ + jXs·I。E₀ は V より δ 遅れ、jXs·I は E₀ の先端から V の先端へ向かう。
+   I は jXs·I を 90° 戻した向き（I = (V − E₀)/(jXs)）。
+   発電機: E₀ = V + jXs·I。E₀ は V より δ 進み、jXs·I は V の先端から E₀ の先端へ向かう（I = (E₀ − V)/(jXs)）。
+   値は syRoleI と同じ式なので読み値・Vカーブと一致する */
 function drawMini3(){
   const c = document.getElementById('mini3'); if (!c || state.current!=='synchronous') return;
   const ctx = c.getContext('2d'), W=c.width, H=c.height; ctx.clearRect(0,0,W,H);
@@ -4290,7 +4367,16 @@ function drawMini3(){
   const ink=css.getPropertyValue('--ink').trim(), ink3=css.getPropertyValue('--ink-3').trim(),
         acc=css.getPropertyValue('--accent').trim(), steel=css.getPropertyValue('--steel').trim(), line=css.getPropertyValue('--line').trim();
   ctx.font='22px "JetBrains Mono", monospace'; ctx.lineWidth=3;
-  const ox=70, oy=H/2-10, k=(W-180)/1.8;                 // 1 pu の長さ
+  const gen = state.syncRole === 'gen';
+  const r=state.delta*Math.PI/180, E={re: state.If*Math.cos(r), im: (gen ? 1 : -1)*state.If*Math.sin(r)}, I=syRoleI(), Xs=1/state.syncKs;
+  const Is = .8/Math.max(Math.hypot(I.re,I.im), .8);          // 電流は長さをそろえて向きだけ見せる（尺度は別）
+  /* 電動機は従来どおり中央に原点。発電機は E₀ が上へ伸び、遅れの I が下へ伸びるので、
+     4本の先端が枠に収まる縮尺と原点を選ぶ（縦横は同じ縮尺）。「I は V より…」の文字は下の端に置く */
+  let ox=70, oy=H/2-10, k=(W-180)/1.8;                   // 1 pu の長さ
+  if (gen){
+    const ims = [0, E.im, I.im*Is], top = Math.max(...ims), bot = Math.min(...ims);
+    k = Math.min(k, (H-80)/Math.max(top-bot, .1)); oy = 40 + top*k;
+  }
   const X = (re) => ox + re*k, Y = (im) => oy - im*k;
   const arrow = (x0,y0,x1,y1,col,lab,dx=8,dy=-8) => {
     ctx.strokeStyle=col; ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
@@ -4299,17 +4385,28 @@ function drawMini3(){
     if (lab) ctx.fillText(lab, x1+dx, y1+dy);
   };
   ctx.strokeStyle=line; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(ox-20,oy); ctx.lineTo(W-20,oy); ctx.stroke(); ctx.lineWidth=3;
-  const r=state.delta*Math.PI/180, E={re: state.If*Math.cos(r), im: -state.If*Math.sin(r)}, I=syI(), Xs=1/state.syncKs;
   arrow(X(0),Y(0),X(1),Y(0), ink, 'V', 6, -10);
-  arrow(X(0),Y(0),X(E.re),Y(E.im), steel, 'E₀', 6, 24);
-  arrow(X(E.re),Y(E.im),X(1),Y(0), acc, 'jXs·I', -40, 30);
-  const Is = .8/Math.max(Math.hypot(I.re,I.im), .8);          // 電流は長さをそろえて向きだけ見せる（尺度は別）
+  arrow(X(0),Y(0),X(E.re),Y(E.im), steel, 'E₀', 6, gen ? -10 : 24);
+  if (gen){   /* 文字は線分の中点に置く（先端に置くと、δ と If が小さいとき軸の下の δ・V の文字と重なる）。
+                 線分が縦向きに近ければ右に、横向きに近ければ真上に出して、線と V の文字を避ける */
+    arrow(X(1),Y(0),X(E.re),Y(E.im), acc, '');
+    const dx = X(E.re)-X(1), dy = Y(E.im)-Y(0), mx = (X(1)+X(E.re))/2, my = (Y(0)+Y(E.im))/2, lead = I.im > 0;
+    ctx.fillStyle=acc;
+    if (Math.hypot(dx, dy) < 90) ctx.fillText('jXs·I', X(1)+14, Y(0)+30);   // 短い（力率1の近く）: V の先端の右下（E₀・V の文字は上、I の先端は V より左）
+    else if (Math.abs(dy) > Math.abs(dx)) ctx.fillText('jXs·I', mx+12, my+8);                 // 縦向き: 線の右
+    else { ctx.textAlign='center'; ctx.fillText('jXs·I', mx, lead ? my+26 : my-14); ctx.textAlign='left'; }   // 横向き: I と反対側
+  }
+  else arrow(X(E.re),Y(E.im),X(1),Y(0), acc, 'jXs·I', -40, 30);
   arrow(X(0),Y(0),X(I.re*Is),Y(I.im*Is), '#3572D6', 'I', 6, I.im<0? 24 : -10);
-  ctx.fillStyle=ink3; ctx.fillText('δ='+Math.round(state.delta)+'°', X(.25), Y(-.12));
+  ctx.fillStyle=ink3; if (gen){ if (I.im > 0) ctx.fillText('δ='+Math.round(state.delta)+'°', X(.15), Y(0)+28); else ctx.fillText('δ='+Math.round(state.delta)+'°', X(.42), Y(.06)); }   // I と重ならない側（進みの I は上なので軸の下の左寄り、遅れの I は下なので V と E₀ のあいだ）
+  else ctx.fillText('δ='+Math.round(state.delta)+'°', X(.25), Y(-.12));
   const lag = I.im < -1e-3, lead = I.im > 1e-3;
-  ctx.fillStyle=ink; ctx.fillText(lag ? 'I は V より遅れ' : lead ? 'I は V より進み' : 'I は V と同相（力率1）', W-300, 34);
+  ctx.fillStyle=ink; ctx.fillText(lag ? 'I は V より遅れ' : lead ? 'I は V より進み' : 'I は V と同相（力率1）', W-300, gen ? H-14 : 34);
   const cap=document.getElementById('mini3Cap');
-  if (cap) cap.textContent='ベクトル図（電動機）：V = E₀ + jXs·I。E₀ ∝ If、Xs = 1/Ks、電機子抵抗は無視。I は jXs·I を 90° 戻した向き（長さは見やすく縮めてある）。'
+  if (cap) cap.textContent = gen
+    ? 'ベクトル図（発電機）：E₀ = V + jXs·I。E₀ は V より δ 進む。E₀ ∝ If、Xs = 1/Ks、電機子抵抗は無視。I は流れ出る電流で、jXs·I を 90° 戻した向き（長さは見やすく縮めてある）。'
+      + '界磁電流を上げて E₀ が伸びると I が V より遅れ（過励磁＝遅れ無効電力を送り出す）、下げると進む（不足励磁）。電動機と逆。I の V 方向の成分が出力 P に比例する。'
+    : 'ベクトル図（電動機）：V = E₀ + jXs·I。E₀ ∝ If、Xs = 1/Ks、電機子抵抗は無視。I は jXs·I を 90° 戻した向き（長さは見やすく縮めてある）。'
     + '界磁電流を上げて E₀ が伸びると、E₀ の先端が V の先端を越えた側へ回り込み、I が V より進む（過励磁）。I の V 方向の成分が出力 P に比例する。';
 }
 
@@ -4555,7 +4652,8 @@ const CAUSAL = {
     note: () => '3D: 回転磁界（矢印）に対する回転子の遅れが滑り s（3D の速さは極数・周波数では変えていない）。トルクは定格電圧・直入れの最大トルクを 1 とした値',
   },
   synchronous: {
-    inputs: [['delta','負荷角 δ', v => Math.round(v)+'°', 1], ['If','界磁電流 If', v => f1(v,2)+' pu', 1], ['syncKs','短絡比 Ks', v => f1(v,1), 1], ['syncP','負荷', v => ({0:'無負荷', .5:'半負荷', 1:'全負荷'})[v] ?? v],
+    ctx: ['syncRole'],
+    inputs: [['syncRole','運転', v => v==='gen' ? '発電機' : '電動機'], ['delta','負荷角 δ', v => Math.round(v)+'°', 1], ['If','界磁電流 If', v => f1(v,2)+' pu', 1], ['syncKs','短絡比 Ks', v => f1(v,1), 1], ['syncP','負荷', v => ({0:'無負荷', .5:'半負荷', 1:'全負荷'})[v] ?? v],
              ['rotor','回転子（極数）', v => v==='salient' ? '突極形（4 極）' : '円筒形（2 極）'], ['syncF','周波数', v => v+' Hz', 1], ['syncWind','電機子巻線', v => ({conc:'集中・全節', dist:'分布・全節', short:'分布・短節'})[v]],
              ['parDE','起電力の差 ΔE', v => f1(v,2)+' pu', 1], ['parDth','位相差 Δθ', v => v+'°', 1]],
     outs: () => { const I = syI(), Ia = Math.hypot(I.re, I.im), lost = state.syncLost, r = [['P', lost ? '出力 P（脱調＝同期を保てない）' : '出力 P', lost ? null : syP()], ['Ia', '電機子電流 Ia', lost ? null : Ia], ['E0', '無負荷起電力 E₀', state.If],
