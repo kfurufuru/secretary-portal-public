@@ -4442,6 +4442,9 @@ function shoot(part){
 function updateLabels(){
   const w = cv.clientWidth, h = cv.clientHeight;
   if (!state.current){
+    /* 隣り合う機器のラベルが横に重なると、どちらも読めなかった（2026-11-01 実測: 幅 1400 で2組・1024 で6組・390 で3組）。
+       左から順に置き、先に置いたラベルと重なるものは、重ならなくなるまで上へずらす（x は機器の真上のまま） */
+    const placed = [];
     for (const n of labelNodes){
       const v = n.pos.clone().project(camera);
       const show = v.z <= 1;
@@ -4449,9 +4452,15 @@ function updateLabels(){
       if (show){
         /* 端の機器はラベルが枠外へはみ出して読めなくなる。中身の幅ぶんだけ内側に留める
            （.lbl は translate(-50%) で中央合わせなので、左右に半分ずつ出る） */
-        const hw = n.hw || (n.hw = n.el.offsetWidth/2);
+        const hw = n.hw || (n.hw = n.el.offsetWidth/2), lh = n.lh || (n.lh = n.el.offsetHeight);
         const x = Math.min(Math.max((v.x+1)/2*w, hw + 4), w - hw - 4);
-        n.el.style.left = x+'px'; n.el.style.top = ((1-v.y)/2*h - 6)+'px';
+        let y = (1-v.y)/2*h - 6;                       // ラベルの下端（translate(-100%) なので上へ伸びる）
+        for (let k = 0; k < placed.length; k++){
+          const q = placed[k];
+          if (x - hw < q.x + q.hw + 4 && q.x - q.hw < x + hw + 4 && y - lh < q.y + 2 && q.y - q.lh < y + 2){ y = q.y - q.lh - 4; k = -1; }
+        }
+        placed.push({x, y, hw, lh});
+        n.el.style.left = x+'px'; n.el.style.top = y+'px';
       }
     }
     return;
