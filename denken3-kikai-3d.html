@@ -1248,6 +1248,48 @@ const mesh = (g, m, parent, x=0, y=0, z=0) => { const o = new THREE.Mesh(g, m); 
   for (const m of ORDER) mesh(new THREE.BoxGeometry(7, .3, 5.5), M.steelDark, scene, MACHINES[m].x, .15, 0);
 }
 
+/* --- 情景: それぞれの機械が実際に据わる場所（電力3D工場と同じく、学習用の部品には手を入れない）---
+   台の上に床の仕上げを敷き、台の後ろ（z < −2.75。機械の外接箱は z ≥ −2.37）に、その場所らしい物を1〜2点置く。
+   変圧器 = 変電設備の砂利の区画と柵、直流機・誘導電動機・電動機応用 = 工場の床と黄色の安全通路線・ケーブルラック、
+   同期機 = 発電所のタービン建屋の床と手すり、パワエレ = 電気室の床と並んだ盤。
+   情景は groups に入れない（凡例・指し示し・アニメーションに影響しない）。 */
+{
+  const SC = {
+    gravel: std({color:0x6f6c66, roughness:1}), concrete: std({color:0x5f6469, roughness:.95}),
+    hall: std({color:0x4d5a52, roughness:.85}), tile: std({color:0x555c63, roughness:.8}),
+    yellow: std({color:0xe0b31b, roughness:.6}), rail: std({color:0xc9a227, metalness:.4, roughness:.5}),
+    fence: std({color:0x9aa5b1, metalness:.5, roughness:.5}), panel: std({color:0x6f7b86, metalness:.3, roughness:.6}),
+  };
+  const deck = (x, mat) => mesh(new THREE.BoxGeometry(7, .03, 5.5), mat, scene, x, .315, 0);
+  const lane = (x) => { for (const [w, d, dx, dz] of [[6.7,.08,0,2.6],[6.7,.08,0,-2.6],[.08,5.28,3.31,0],[.08,5.28,-3.31,0]]) mesh(new THREE.BoxGeometry(w, .01, d), SC.yellow, scene, x+dx, .335, dz); };
+  const bar = (a, b, mat, r=.03) => wire3(a, b, mat, scene, r);
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const Z = -3.2;   // 台の後ろ
+  for (const id of ORDER){
+    const x = MACHINES[id].x;
+    if (id === 'transformer'){
+      deck(x, SC.gravel);
+      for (let i=0;i<=7;i++) bar(V(x-3.5+i, 0, Z), V(x-3.5+i, 1.5, Z), SC.fence, .03);
+      for (const y of [.5, 1.0, 1.45]) bar(V(x-3.5, y, Z), V(x+3.5, y, Z), SC.fence, .015);
+      mesh(new THREE.BoxGeometry(.5,.35,.03), SC.yellow, scene, x+1.5, 1.1, Z+.05);   // 「高電圧 危険」の札（文字は描かない）
+    } else if (id === 'synchronous'){
+      deck(x, SC.hall); lane(x);
+      for (let i=0;i<=7;i++) bar(V(x-3.5+i, 0, Z), V(x-3.5+i, 1.1, Z), SC.rail, .03);
+      for (const y of [.55, 1.1]) bar(V(x-3.5, y, Z), V(x+3.5, y, Z), SC.rail, .025);
+    } else if (id === 'power-elec'){
+      deck(x, SC.tile);
+      for (let i=-3;i<=3;i++) mesh(new THREE.BoxGeometry(.01, .005, 5.5), SC.panel, scene, x+i, .333, 0);   // 床タイルの目地
+      for (const dx of [-2.4, -1.2, 1.2, 2.4]){ mesh(new THREE.BoxGeometry(1.1, 2.2, .7), SC.panel, scene, x+dx, 1.1, Z-.1);
+        mesh(new THREE.BoxGeometry(.02, 1.9, .01), SC.fence, scene, x+dx, 1.15, Z+.26); }   // 並んだ盤（扉の合わせ目）
+    } else {
+      deck(x, SC.concrete); lane(x);
+      for (const dx of [-3.2, 0, 3.2]) bar(V(x+dx, 0, Z), V(x+dx, 2.2, Z), SC.panel, .05);
+      mesh(new THREE.BoxGeometry(7, .06, .5), SC.panel, scene, x, 2.2, Z);    // ケーブルラック
+      for (let i=0;i<4;i++) bar(V(x-3.4, 2.27, Z-.15+i*.1), V(x+3.4, 2.27, Z-.15+i*.1), M.black, .025);
+    }
+  }
+}
+
 /* ---------- 変圧器 ----------
    3つの見る対象を持つ。
      core … 三相内鉄形1台。鉄心・巻線・磁束・損失

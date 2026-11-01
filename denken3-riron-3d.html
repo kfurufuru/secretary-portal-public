@@ -3703,6 +3703,19 @@ const VIEWS = {
   mesh(new THREE.BoxGeometry(W, 9, .5), M.wall, scene, cx, 4.5, -14);
   for (let i=-5;i<=5;i++){ mesh(new THREE.BoxGeometry(.5,9,.5), M.steel, scene, cx+i*10, 4.5, -13.6); if (i<5) mesh(new THREE.BoxGeometry(5,2.2,.1), M.window, scene, cx+i*10+5, 6.2, -13.7); }
   for (const m of ORDER) mesh(new THREE.BoxGeometry(7, .3, 4.5), M.steelDark, scene, MACHINES[m].x, .15, 0);
+  /* 情景: 実験室の実験台。理論の模型には実在の据え付け場所が無いので、地形や建物は置かない（置くと、
+     その場所で起きる現象だと誤解させる）。台を実験台の天板にし、奥に有孔ボードとコンセントタップを立てる。
+     模型の外接箱は z ≥ −1.62 なので、奥の物は z = −2.0 より後ろに置く。groups に入れない（凡例・指し示しに影響しない）。 */
+  const top = std({color:0x464b52, roughness:.7}), edge = std({color:0x2b2f34, roughness:.6});
+  const peg = std({color:0xb8a27e, roughness:.9}), hole = std({color:0x6b5a40, roughness:1}), strip = std({color:0xe6e8ea, roughness:.5});
+  for (const m of ORDER){
+    const x = MACHINES[m].x;
+    mesh(new THREE.BoxGeometry(7, .03, 4.5), top, scene, x, .315, 0);                       // 天板
+    for (const dz of [-2.25, 2.25]) mesh(new THREE.BoxGeometry(7, .3, .04), edge, scene, x, .15, dz);   // 天板の縁
+    mesh(new THREE.BoxGeometry(6.6, 1.1, .04), peg, scene, x, .3 + .55, -2.15);              // 有孔ボード
+    for (let i=0;i<12;i++) for (let j=0;j<3;j++) mesh(new THREE.BoxGeometry(.04,.04,.01), hole, scene, x - 2.95 + i*.54, .55 + j*.3, -2.125);
+    mesh(new THREE.BoxGeometry(1.4, .08, .14), strip, scene, x + 2.2, .37, -2.0);            // コンセントタップ
+  }
 }
 
 /* ---------- 理論の実験台で使う材質と共通の部品 ---------- */
