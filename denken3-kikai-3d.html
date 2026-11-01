@@ -4370,13 +4370,12 @@ function drawMini3(){
   const gen = state.syncRole === 'gen';
   const r=state.delta*Math.PI/180, E={re: state.If*Math.cos(r), im: (gen ? 1 : -1)*state.If*Math.sin(r)}, I=syRoleI(), Xs=1/state.syncKs;
   const Is = .8/Math.max(Math.hypot(I.re,I.im), .8);          // 電流は長さをそろえて向きだけ見せる（尺度は別）
-  /* 電動機は従来どおり中央に原点。発電機は E₀ が上へ伸び、遅れの I が下へ伸びるので、
-     4本の先端が枠に収まる縮尺と原点を選ぶ（縦横は同じ縮尺）。「I は V より…」の文字は下の端に置く */
-  let ox=70, oy=H/2-10, k=(W-180)/1.8;                   // 1 pu の長さ
-  if (gen){
-    const ims = [0, E.im, I.im*Is], top = Math.max(...ims), bot = Math.min(...ims);
-    k = Math.min(k, (H-80)/Math.max(top-bot, .1)); oy = 40 + top*k;
-  }
+  /* 4本の先端が枠に収まる縮尺と原点を選ぶ（縦横は同じ縮尺）。E₀ は電動機なら下、発電機なら上へ伸び、
+     I は進みなら上、遅れなら下へ伸びる。固定の原点と縮尺では δ=90° や If が大きいとき E₀ が枠の外に出ていた。
+     「I は V より…」の文字は下の端に置く */
+  const sE = gen ? 1 : -1;                                // E₀ が軸のどちら側か（上 = +1）
+  const ox=70, ims = [0, E.im, I.im*Is], top = Math.max(...ims), bot = Math.min(...ims);
+  const k = Math.min((W-180)/1.8, (H-120)/Math.max(top-bot, .1)), oy = 40 + top*k;   // k = 1 pu の長さ。下の 80px は先端の文字と「I は V より…」の分
   const X = (re) => ox + re*k, Y = (im) => oy - im*k;
   const arrow = (x0,y0,x1,y1,col,lab,dx=8,dy=-8) => {
     ctx.strokeStyle=col; ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
@@ -4386,22 +4385,24 @@ function drawMini3(){
   };
   ctx.strokeStyle=line; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(ox-20,oy); ctx.lineTo(W-20,oy); ctx.stroke(); ctx.lineWidth=3;
   arrow(X(0),Y(0),X(1),Y(0), ink, 'V', 6, -10);
-  arrow(X(0),Y(0),X(E.re),Y(E.im), steel, 'E₀', 6, gen ? -10 : 24);
-  if (gen){   /* 文字は線分の中点に置く（先端に置くと、δ と If が小さいとき軸の下の δ・V の文字と重なる）。
-                 線分が縦向きに近ければ右に、横向きに近ければ真上に出して、線と V の文字を避ける */
-    arrow(X(1),Y(0),X(E.re),Y(E.im), acc, '');
-    const dx = X(E.re)-X(1), dy = Y(E.im)-Y(0), mx = (X(1)+X(E.re))/2, my = (Y(0)+Y(E.im))/2, lead = I.im > 0;
+  arrow(X(0),Y(0),X(E.re),Y(E.im), steel, 'E₀', 6, sE > 0 ? -10 : 24);
+  /* jXs·I は発電機なら V の先端 → E₀ の先端、電動機なら E₀ の先端 → V の先端。
+     文字は線分の中点に置く（先端に置くと、δ と If が小さいとき δ・V・E₀ の文字と重なる）。
+     縦向きに近ければ線の右、横向きに近ければ I と反対側、短ければ（力率1の近く）V の先端の右下 */
+  if (gen) arrow(X(1),Y(0),X(E.re),Y(E.im), acc, ''); else arrow(X(E.re),Y(E.im),X(1),Y(0), acc, '');
+  { const dx = X(E.re)-X(1), dy = Y(E.im)-Y(0), mx = (X(1)+X(E.re))/2, my = (Y(0)+Y(E.im))/2;
     ctx.fillStyle=acc;
-    if (Math.hypot(dx, dy) < 90) ctx.fillText('jXs·I', X(1)+14, Y(0)+30);   // 短い（力率1の近く）: V の先端の右下（E₀・V の文字は上、I の先端は V より左）
-    else if (Math.abs(dy) > Math.abs(dx)) ctx.fillText('jXs·I', mx+12, my+8);                 // 縦向き: 線の右
-    else { ctx.textAlign='center'; ctx.fillText('jXs·I', mx, lead ? my+26 : my-14); ctx.textAlign='left'; }   // 横向き: I と反対側
-  }
-  else arrow(X(E.re),Y(E.im),X(1),Y(0), acc, 'jXs·I', -40, 30);
+    if (Math.hypot(dx, dy) < 90) ctx.fillText('jXs·I', X(1)+(sE > 0 ? 14 : 60), Y(0)+30);   // 短い: V の先端の右下（電動機は E₀ の文字が先端の右下にあるので、さらに右）
+    else if (Math.abs(dy) > Math.abs(dx)) ctx.fillText('jXs·I', mx+12, my+8);
+    else { ctx.textAlign='center'; ctx.fillText('jXs·I', mx, I.im > 0 ? my+26 : my-14); ctx.textAlign='left'; } }
   arrow(X(0),Y(0),X(I.re*Is),Y(I.im*Is), '#3572D6', 'I', 6, I.im<0? 24 : -10);
-  ctx.fillStyle=ink3; if (gen){ if (I.im > 0) ctx.fillText('δ='+Math.round(state.delta)+'°', X(.15), Y(0)+28); else ctx.fillText('δ='+Math.round(state.delta)+'°', X(.42), Y(.06)); }   // I と重ならない側（進みの I は上なので軸の下の左寄り、遅れの I は下なので V と E₀ のあいだ）
-  else ctx.fillText('δ='+Math.round(state.delta)+'°', X(.25), Y(-.12));
+  /* δ の文字: I が E₀ と同じ側なら反対側の左寄り、反対側なら V と E₀ のあいだ */
+  ctx.fillStyle=ink3;
+  { const dl = 'δ='+Math.round(state.delta)+'°', same = I.im*sE > 0;
+    if (same) ctx.fillText(dl, X(.15), sE > 0 ? Y(0)+28 : Y(0)-12);
+    else ctx.fillText(dl, X(.42), sE > 0 ? Y(.06) : Y(-.06)+22); }   // I と重ならない側（進みの I は上なので軸の下の左寄り、遅れの I は下なので V と E₀ のあいだ）
   const lag = I.im < -1e-3, lead = I.im > 1e-3;
-  ctx.fillStyle=ink; ctx.fillText(lag ? 'I は V より遅れ' : lead ? 'I は V より進み' : 'I は V と同相（力率1）', W-300, gen ? H-14 : 34);
+  ctx.fillStyle=ink; ctx.fillText(lag ? 'I は V より遅れ' : lead ? 'I は V より進み' : 'I は V と同相（力率1）', W-300, H-14);
   const cap=document.getElementById('mini3Cap');
   if (cap) cap.textContent = gen
     ? 'ベクトル図（発電機）：E₀ = V + jXs·I。E₀ は V より δ 進む。E₀ ∝ If、Xs = 1/Ks、電機子抵抗は無視。I は流れ出る電流で、jXs·I を 90° 戻した向き（長さは見やすく縮めてある）。'
