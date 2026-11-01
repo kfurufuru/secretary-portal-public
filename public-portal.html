@@ -1,275 +1,319 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>電験3種 学習ポータル</title>
-<meta name="description" content="電験三種（第三種電気主任技術者）の受験3科目（理論・電力・機械）Wikiと、学習計画・間違いノートの入口。">
+<meta name="description" content="第三種電気主任技術者試験の学習Wiki。発電所から需要家までの電気の通り道に沿って、理論・電力・機械の入口を並べています。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;600&family=Fraunces:opsz,wght@9..144,300;9..144,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
 <style>
+/* 配色: 受配電盤の塗装面（灰）と表示灯（赤＝今期受験・緑＝参考）。色だけで区別せず、必ず文字を添える。 */
 :root{
-  --bg:oklch(.985 .005 85);--bg2:oklch(.965 .008 85);
-  --surface:oklch(.995 .003 85);--surface2:oklch(.97 .008 85);
-  --line:oklch(.86 .01 85);--line2:oklch(.92 .008 85);
-  --ink:oklch(.21 .012 270);--ink2:oklch(.40 .012 270);
-  --ink3:oklch(.55 .012 270);--ink4:oklch(.70 .012 270);
-  --accent:oklch(.55 .14 165);--amber:oklch(.62 .14 60);--violet:oklch(.55 .16 295);
-  --r:14px;--pad:18px;--gap:14px;
-  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
-  --sans:"Inter","Noto Sans JP",system-ui,sans-serif;
-  --serif:"Fraunces","Noto Sans JP",serif;
-  --shadow:0 1px 0 oklch(1 0 0/.8) inset,0 0 0 1px oklch(0 0 0/.04),0 18px 40px -28px oklch(0 0 0/.25);
+  --page:#E6E5DE;      /* 盤室の壁 */
+  --panel:#B9B8AE;     /* 盤面 */
+  --plate:#F1F0EB;     /* 銘板 */
+  --ink:#1E2830;       /* 盤の文字 */
+  --ink-soft:#46505A;
+  --rule:#8E8D84;
+  --lamp-red:#B8322A;  /* 表示灯 赤 */
+  --lamp-green:#2F7650;/* 表示灯 緑 */
+  --font:"BIZ UDPGothic","IPAPGothic","Hiragino Sans","Yu Gothic",sans-serif;
 }
-html[data-theme="midnight"]{
-  --bg:oklch(.17 .012 255);--bg2:oklch(.20 .014 255);
-  --surface:oklch(.235 .014 255);--surface2:oklch(.27 .014 255);
-  --line:oklch(.32 .015 255/.8);--line2:oklch(.32 .015 255/.35);
-  --ink:oklch(.96 .005 255);--ink2:oklch(.78 .012 255);
-  --ink3:oklch(.58 .012 255);--ink4:oklch(.42 .012 255);
-  --accent:oklch(.82 .16 165);--amber:oklch(.84 .14 75);--violet:oklch(.74 .16 295);
-  --shadow:0 1px 0 oklch(1 0 0/.04) inset,0 0 0 1px oklch(1 0 0/.03),0 24px 60px -30px oklch(0 0 0/.55);
+:root[data-theme="dark"]{
+    --page:#1F2124;
+    --panel:#2E302E;
+    --plate:#26282A;
+    --ink:#E8E7E0;
+    --ink-soft:#B4B3AB;
+    --rule:#6B6A63;
+    --lamp-red:#E2574C;
+    --lamp-green:#4FB37F;
 }
 *{box-sizing:border-box}
-html,body{margin:0}
+html{-webkit-text-size-adjust:100%}
 body{
-  font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;
-  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  margin:0;background:var(--page);color:var(--ink);
+  font-family:var(--font);font-size:16px;line-height:1.75;
+  font-feature-settings:"palt" 0;
 }
-body::before{
-  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:
-    radial-gradient(80rem 50rem at 12% -10%,oklch(.95 .05 165/.55),transparent 60%),
-    radial-gradient(60rem 40rem at 95% 110%,oklch(.95 .05 60/.35),transparent 60%);
+a{color:inherit}
+a:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:2px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+
+/* ヘッダー */
+.site{display:flex;align-items:baseline;justify-content:space-between;gap:8px 16px;padding-top:18px;padding-bottom:18px}
+.themebtn{font:inherit;font-size:14px;color:var(--ink-soft);background:none;border:0;padding:4px 0;cursor:pointer;text-decoration:underline;text-underline-offset:4px}
+.themebtn:hover{color:var(--ink)}
+.themebtn:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:2px}
+.site__name{font-weight:700;font-size:15px;text-decoration:none}
+.site{flex-wrap:wrap}
+
+/* ヒーロー＝盤面 */
+.panel{--ink-soft:#353E47;background:var(--panel);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+:root[data-theme="dark"] .panel{--ink-soft:#B4B3AB}
+.hero{padding-top:56px;padding-bottom:40px}
+.hero h1{
+  margin:0;font-weight:700;letter-spacing:-.02em;line-height:1.25;
+  font-size:clamp(34px,6.4vw,64px);max-width:15em;word-break:keep-all;overflow-wrap:anywhere;
 }
-html[data-theme="midnight"] body::before{
-  background:
-    radial-gradient(80rem 50rem at 12% -10%,oklch(.30 .06 165/.18),transparent 60%),
-    radial-gradient(60rem 40rem at 95% 110%,oklch(.32 .08 295/.14),transparent 60%);
+.hero__lead{margin:20px 0 0;max-width:36em;font-size:17px;color:var(--ink)}
+
+/* 単線結線図 */
+.sld{margin:44px 0 0;padding:0;list-style:none;position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:0 8px}
+.sld::before,.sld::after{
+  content:"";position:absolute;left:calc(100%/12);right:calc(100%/12);top:27px;height:3px;background:var(--rule);
 }
-a{color:inherit;text-decoration:none}
-button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.serif{font-family:var(--serif)}
-.micro{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.sld::after{background:var(--ink);transform-origin:left center;animation:energize 1.8s cubic-bezier(.6,0,.3,1) .3s both}
+@keyframes energize{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.node{position:relative;z-index:1;text-align:center;padding:0 2px}
+.node svg{display:block;margin:0 auto;width:56px;height:56px;overflow:visible}
+.node svg .bg{fill:var(--panel)}
+.node svg .st{fill:none;stroke:var(--ink);stroke-width:2.4}
+.node svg text{fill:var(--ink);font-family:var(--font);font-weight:700;font-size:17px}
+.node__name{display:block;margin-top:10px;font-weight:700;font-size:16px;line-height:1.4}
+.node__subj{display:inline-block;margin-top:6px;padding:0 8px;border:1px solid var(--ink);border-radius:2px;font-size:13px;line-height:1.7}
+.node__what{display:block;margin-top:6px;font-size:13px;line-height:1.6;color:var(--ink-soft)}
+.span{margin:28px 0 0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center}
+.span__bar{grid-column:1 / -1;height:10px;border:2px solid var(--ink);border-top:0;margin:0 calc(100%/12)}
+.span__subj{padding:0 8px;border:1px solid var(--ink);border-radius:2px;font-size:13px;line-height:1.7;white-space:nowrap}
+.span{padding-left:calc(100%/12 - 20px)}
+.span__what{font-size:14px}
+.sld-note{margin:22px 0 0;font-size:14px;color:var(--ink-soft);max-width:44em}
 
-.wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:26px 22px 60px}
+/* 表示灯 */
+.lamp{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;white-space:nowrap}
+.lamp::before{content:"";width:14px;height:14px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 2px rgba(0,0,0,.18)}
+.lamp--red{--c:var(--lamp-red)}
+.lamp--green{--c:var(--lamp-green)}
 
-/* Topbar */
-.top{display:flex;align-items:center;gap:12px;margin-bottom:30px}
-.brand{display:flex;align-items:center;gap:11px}
-.mark{width:30px;height:30px;border-radius:9px;position:relative;flex:0 0 auto;
-  background:conic-gradient(from 220deg,var(--accent),var(--violet),var(--amber),var(--accent));
-  box-shadow:0 0 0 1px oklch(1 0 0/.08),0 6px 20px -6px oklch(0 0 0/.5);}
-.mark::after{content:"";position:absolute;inset:6px;border-radius:5px;background:var(--surface)}
-.mark::before{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;
-  transform:translate(-50%,-50%) rotate(45deg);background:var(--ink);border-radius:1px}
-.bname{font-weight:600;font-size:15px;letter-spacing:-.01em}
-.bsub{display:block;font-size:10.5px;color:var(--ink3);font-family:var(--mono);letter-spacing:.12em}
-.themebtn{margin-left:auto;display:inline-flex;align-items:center;gap:7px;
-  padding:7px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);
-  font-size:12px;color:var(--ink2);font-family:var(--mono)}
-.themebtn:hover{color:var(--ink);border-color:var(--line)}
-.themebtn svg{width:14px;height:14px}
+/* セクション */
+.sec{padding-top:56px;padding-bottom:8px}
+.sec h2{margin:0 0 6px;font-size:24px;line-height:1.4;letter-spacing:-.01em}
+.sec__lead{margin:0 0 24px;color:var(--ink-soft);max-width:40em}
 
-/* Hero */
-.hero{margin-bottom:34px}
-.hero h1{font-family:var(--serif);font-weight:400;font-size:clamp(28px,5vw,40px);
-  line-height:1.15;letter-spacing:-.01em;margin:0 0 10px}
-.hero h1 em{font-style:italic;color:var(--accent)}
-.hero p{margin:0;max-width:60ch;color:var(--ink2);font-size:14.5px;line-height:1.7}
+/* 銘板（今期の3科目） */
+.plates{display:grid;gap:12px}
+.plate{
+  display:grid;grid-template-columns:7.5em 1fr auto;gap:4px 24px;align-items:center;
+  padding:20px 22px;background:var(--plate);border:1px solid var(--rule);border-radius:3px;text-decoration:none;
+}
+.plate:hover{border-color:var(--ink)}
+.plate__name{font-size:26px;font-weight:700;line-height:1.3;grid-row:span 2}
+.plate__range{font-size:15px}
+.plate__feat{font-size:14px;color:var(--ink-soft)}
+.plate__go{grid-row:span 2;font-weight:700;font-size:15px;text-decoration:underline;text-underline-offset:4px}
+.plate .lamp{grid-column:1;grid-row:3;margin-top:4px}
 
-/* Sections */
-.sec{margin-top:34px}
-.sechead{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;padding-bottom:8px;
-  border-bottom:1px solid var(--line2)}
-.sechead h2{font-size:14px;font-weight:600;margin:0;letter-spacing:.01em}
-.sechead span{font-size:12px;color:var(--ink3)}
+/* 学習の回し方 */
+.loop{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:2px solid var(--ink)}
+.loop li{padding:18px 20px 20px 0;border-right:1px solid var(--rule);margin-right:20px}
+.loop li:last-child{border-right:0;margin-right:0}
+.loop__n{font-size:44px;font-weight:700;line-height:1}
+.loop h3{margin:10px 0 4px;font-size:18px;line-height:1.45}
+.loop p{margin:0;font-size:15px}
+.loop a{font-weight:700;text-underline-offset:4px}
+.loop-back{margin:12px 0 0;font-size:14px;color:var(--ink-soft)}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--gap)}
-.card{display:flex;align-items:center;gap:13px;padding:16px;border-radius:var(--r);
-  border:1px solid var(--line2);background:var(--surface);box-shadow:var(--shadow);
-  transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease}
-.card:hover{transform:translateY(-2px);border-color:oklch(from var(--accent) l c h/.4);
-  box-shadow:0 1px 0 oklch(1 0 0/.7) inset,0 0 0 1px oklch(from var(--accent) l c h/.18),0 22px 44px -30px oklch(0 0 0/.4)}
-.ico{width:38px;height:38px;flex:0 0 auto;border-radius:10px;display:grid;place-items:center;
-  font-family:var(--serif);font-size:17px;font-weight:400;color:var(--bg);
-  background:linear-gradient(140deg,var(--accent),var(--violet))}
-.card.amber .ico{background:linear-gradient(140deg,var(--amber),var(--accent))}
-.card.violet .ico{background:linear-gradient(140deg,var(--violet),var(--accent))}
-.body{min-width:0;flex:1}
-.body b{display:block;font-weight:600;font-size:14px;margin-bottom:2px}
-.body small{display:block;color:var(--ink3);font-size:12px;line-height:1.45}
-.ext{margin-left:6px;flex:0 0 auto;color:var(--ink4)}
-.ext svg{width:14px;height:14px;display:block}
+/* 参考 */
+.refs{margin:0;padding:0;list-style:none;border-top:1px solid var(--rule)}
+.refs li{display:grid;grid-template-columns:8em 12em 1fr;gap:4px 18px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--rule)}
+.refs a{font-weight:700;text-underline-offset:4px}
+.sub{margin:32px 0 8px;font-size:17px}
+.refs span:last-child{font-size:15px;color:var(--ink-soft)}
 
-/* Compact list for tools */
-.mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
-.mrow{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:11px;
-  border:1px solid var(--line2);background:var(--surface2);font-size:13px;color:var(--ink2);
-  transition:color .14s,border-color .14s}
-.mrow:hover{color:var(--ink);border-color:var(--line)}
-.mrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:0 0 auto}
-.mrow .dot.violet{background:var(--violet)}
-.mrow .dot.amber{background:var(--amber)}
-.mrow small{margin-left:auto;color:var(--ink4);font-family:var(--mono);font-size:10.5px}
+.foot{margin-top:64px;padding-top:24px;padding-bottom:48px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink-soft)}
+.foot p{margin:0;max-width:48em}
 
-.foot{margin-top:44px;padding-top:18px;border-top:1px solid var(--line2);
-  font-size:12px;color:var(--ink3);line-height:1.7}
-.foot .serif{font-style:italic;color:var(--ink2)}
-
-@media(max-width:560px){
-  .wrap{padding:20px 16px 48px}
-  .grid{grid-template-columns:1fr}
+/* 狭い幅: 結線図を縦にする */
+@media (max-width:760px){
+  .hero{padding-top:36px;padding-bottom:28px}
+  .hero__lead{font-size:16px}
+  .sld{grid-template-columns:1fr;gap:0;margin-top:32px}
+  .sld::before,.sld::after{left:27px;right:auto;top:28px;bottom:28px;width:3px;height:auto}
+  .sld::after{transform-origin:center top;animation-name:energize-v}
+  @keyframes energize-v{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+  .node{display:grid;grid-template-columns:56px 1fr;column-gap:16px;text-align:left;padding:0 0 18px}
+  .node svg{grid-row:span 3;margin:0}
+  .node__name{margin-top:4px}
+  .node__subj{justify-self:start;margin-top:2px}
+  .node__what{margin-top:2px}
+  .span{margin-top:6px}
+  .span__bar{display:none}
+  .span{padding-left:0}
+  .plate{grid-template-columns:1fr;padding:18px}
+  .plate__name,.plate__go{grid-row:auto}
+  .plate .lamp{grid-column:auto;grid-row:1;margin:0}
+  .plate__go{order:9;margin-top:6px}
+  .loop{grid-template-columns:1fr}
+  .loop li{border-right:0;margin-right:0;border-bottom:1px solid var(--rule);padding:16px 0}
+  .refs li{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  .sld::after{animation:none}
 }
 </style>
+<script>
+(function(){
+  var t;
+  try{t=localStorage.getItem("portal_theme_v1");}catch(e){}
+  if(t!=="midnight"&&t!=="paper"){
+    t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"midnight":"paper";
+  }
+  document.documentElement.setAttribute("data-theme",t==="midnight"?"dark":"light");
+})();
+</script>
 </head>
 <body>
-<div class="wrap">
 
-  <header class="top">
-    <div class="brand">
-      <div class="mark"></div>
-      <div>
-        <div class="bname">電験3種 学習ポータル</div>
-        <span class="bsub">DENKEN 3RD · STUDY HUB</span>
-      </div>
-    </div>
-    <button class="themebtn" id="themebtn" type="button" aria-label="テーマ切替">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-      <span id="themelabel">テーマ</span>
-    </button>
-  </header>
-
-  <section class="hero">
-    <h1 class="serif">暗記ではなく、<em>理解</em>で解く<br>電験三種のための学習Wiki。</h1>
-    <p>第三種電気主任技術者試験を、丸暗記ではなく「なぜそうなるか」の因果理解で攻略するためのWiki集です。2026年度下期に受ける<strong>理論・電力・機械</strong>の3科目を入口に置き、学習計画（逆算スケジュール・進捗）と、4科目を横断する間違いノートをまとめています。</p>
-  </section>
-
-  <section class="sec">
-    <div class="sechead"><h2>受験3科目</h2><span>2026年度下期に受ける科目</span></div>
-    <div class="grid">
-      <a class="card" href="denken3-riron-wiki.html#home">
-        <div class="ico">理</div>
-        <div class="body"><b>理論Wiki</b><small>電磁気・電気回路・電磁誘導・三相交流・電子理論・計測</small></div>
-      </a>
-      <a class="card" href="denken3-denryoku-wiki.html">
-        <div class="ico">電</div>
-        <div class="body"><b>電力Wiki</b><small>発電・変電・送電・配電</small></div>
-      </a>
-      <a class="card violet" href="denken3-kikai-wiki.html#home">
-        <div class="ico">機</div>
-        <div class="body"><b>機械Wiki</b><small>回転機・静止器・電力変換・制御・電気応用</small></div>
-      </a>
-    </div>
-    <div class="grid" style="margin-top:10px">
-      <a class="card amber" href="denken3-shimoki-plan.html">
-        <div class="ico">計</div>
-        <div class="body"><b>下期 学習計画</b><small>逆算スケジュール / 3科目の週ローテーション / 進捗 / 当日の用意</small></div>
-      </a>
-      <a class="card amber" href="denken-hoki-wiki.html#chokuzen-machigai">
-        <div class="ico">誤</div>
-        <div class="body"><b>間違いノート</b><small>4科目を横断して集約。復習の起点はここ</small></div>
-      </a>
-    </div>
-  </section>
-
-  <section class="sec">
-    <div class="sechead"><h2>参考・関連Wiki</h2><span>受験科目以外</span></div>
-    <div class="grid">
-      <a class="card amber" href="denken-hoki-wiki.html">
-        <div class="ico">法</div>
-        <div class="body"><b>法規Wiki</b><small>受験科目外。ただし間違いノートと当日の見直し順路はここにある</small></div>
-      </a>
-      <a class="card amber" href="denken-yougo-teigi-wiki.html">
-        <div class="ico">用</div>
-        <div class="body"><b>法規 用語定義テスト</b><small>省令/解釈の定義31語・暗記＆ミニテスト</small></div>
-      </a>
-      <a class="card" href="learning-science-wiki.html">
-        <div class="ico">学</div>
-        <div class="body"><b>学習科学Wiki</b><small>脳科学×学習法×時間設計</small></div>
-      </a>
-      <a class="card violet" href="it-wiki.html">
-        <div class="ico">IT</div>
-        <div class="body"><b>IT用語Wiki</b><small>エンジニア向け概念・アナロジー</small></div>
-      </a>
-      <a class="card" href="business-skills/index.html">
-        <div class="ico">思</div>
-        <div class="body"><b>思考・行動の設計図</b><small>ビジネススキル53テーマ / 思考・学習・生産性</small></div>
-      </a>
-      <a class="card violet" href="https://claude.ai/artifact/2dmciM9wU8zs3pXLFDTBxh" target="_blank" rel="noopener">
-        <div class="ico">動</div>
-        <div class="body"><b>Wiki モーション語彙</b><small>Wiki改修用・動き18種（本人用・claude.ai へのログインが必要）</small></div>
-        <span class="ext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
-      </a>
-    </div>
-  </section>
-
-  <section class="sec">
-    <div class="sechead"><h2>過去問・PDCA</h2><span>解く → 間違える → 復習する</span></div>
-    <div class="grid">
-      <a class="card amber" href="https://kfurufuru.github.io/denken3-study/" target="_blank" rel="noopener">
-        <div class="ico">問</div>
-        <div class="body"><b>学習ダッシュボード</b><small>今日の学習 / 過去問 / 記録・間隔反復</small></div>
-        <span class="ext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
-      </a>
-      <a class="card violet" href="https://kfurufuru.github.io/denken3-study/denken-map.html" target="_blank" rel="noopener">
-        <div class="ico">図</div>
-        <div class="body"><b>知識マップ</b><small>弱点と得意を一枚で / 科目別レーダー / 認知バグ</small></div>
-        <span class="ext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
-      </a>
-      <a class="card" href="denken3-shimoki-plan.html">
-        <div class="ico">計</div>
-        <div class="body"><b>下期 学習計画</b><small>逆算スケジュール / 進捗 / 当日の用意</small></div>
-      </a>
-      <a class="card" href="learning-science-wiki.html">
-        <div class="ico">習</div>
-        <div class="body"><b>学習科学Wiki</b><small>間隔反復 × 検索練習 × 睡眠と記憶</small></div>
-      </a>
-      <a class="card violet" href="focus-timer.html">
-        <div class="ico">集</div>
-        <div class="body"><b>集中タイマー</b><small>Pomodoro / 4モード / 自動切替</small></div>
-      </a>
-    </div>
-  </section>
-
-  <section class="sec">
-    <div class="sechead"><h2>関連サイト</h2><span>公開ナレッジ</span></div>
-    <div class="mini">
-      <a class="mrow" href="https://kfurufuru.github.io/genai-db/" target="_blank" rel="noopener"><span class="dot"></span>生成AI データベース<small>↗</small></a>
-      <a class="mrow" href="https://kfurufuru.github.io/ei-wiki/" target="_blank" rel="noopener"><span class="dot amber"></span>電気計装Wiki<small>↗</small></a>
-    </div>
-  </section>
-
-  <footer class="foot">
-    <p class="serif">「今日のあなたを支えるのは、昨日のあなたが残したノート。」</p>
-    <p>各Wikiは学習用の個人ナレッジベースです。法令・数値は一次資料での照合を前提に作成していますが、最終的な受験判断はご自身で公式情報をご確認ください。</p>
-  </footer>
-
+<div class="wrap site" role="banner">
+  <span class="site__name">電験三種 学習Wiki</span>
+  <button class="themebtn" id="themebtn" type="button" hidden>暗い表示にする</button>
 </div>
+
+<main>
+<section class="panel" aria-labelledby="hero-title">
+  <div class="wrap hero">
+    <h1 id="hero-title">暗記ではなく、<wbr>因果で解く<wbr>電験三種。</h1>
+    <p class="hero__lead">第三種電気主任技術者試験のための学習Wikiです。発電所から需要家まで、電気の通り道に沿って今期受ける3科目を並べました。設備の名前の下に、それを学ぶ科目を書いています。</p>
+
+    <ol class="sld" aria-label="電気の通り道と、それを学ぶ科目">
+      <li class="node">
+        <svg viewBox="0 0 56 56" aria-hidden="true"><circle class="bg" cx="28" cy="28" r="19"/><circle class="st" cx="28" cy="28" r="17"/><text x="28" y="34" text-anchor="middle">G</text></svg>
+        <span class="node__name">発電所</span>
+        <span class="node__subj">電力</span>
+        <span class="node__what">水力・火力・原子力など</span>
+      </li>
+      <li class="node">
+        <svg viewBox="0 0 56 56" aria-hidden="true"><rect class="bg" x="6" y="12" width="44" height="32"/><circle class="st" cx="21" cy="28" r="12"/><circle class="st" cx="35" cy="28" r="12"/></svg>
+        <span class="node__name">変圧器</span>
+        <span class="node__subj">機械</span>
+        <span class="node__what">原理・等価回路・損失</span>
+      </li>
+      <li class="node">
+        <svg viewBox="0 0 56 56" aria-hidden="true"><rect class="bg" x="16" y="14" width="24" height="28"/><path class="st" d="M19 38 L27 18 M25 38 L33 18 M31 38 L39 18"/></svg>
+        <span class="node__name">送電線</span>
+        <span class="node__subj">電力</span>
+        <span class="node__what">電圧降下・損失・線路定数</span>
+      </li>
+      <li class="node">
+        <svg viewBox="0 0 56 56" aria-hidden="true"><rect class="bg" x="3" y="6" width="50" height="44"/><rect class="st" x="4" y="7" width="48" height="42" stroke-dasharray="4 3"/><circle class="st" cx="22" cy="28" r="10"/><circle class="st" cx="34" cy="28" r="10"/></svg>
+        <span class="node__name">変電所</span>
+        <span class="node__subj">電力</span>
+        <span class="node__what">変電設備と保護</span>
+      </li>
+      <li class="node">
+        <svg viewBox="0 0 56 56" aria-hidden="true"><rect class="bg" x="16" y="14" width="24" height="28"/><path class="st" d="M19 38 L27 18 M25 38 L33 18 M31 38 L39 18"/></svg>
+        <span class="node__name">配電線</span>
+        <span class="node__subj">電力</span>
+        <span class="node__what">配電方式・電圧の調整</span>
+      </li>
+      <li class="node">
+        <svg viewBox="0 0 56 56" aria-hidden="true"><circle class="bg" cx="28" cy="28" r="19"/><circle class="st" cx="28" cy="28" r="17"/><text x="28" y="34" text-anchor="middle">M</text></svg>
+        <span class="node__name">電動機</span>
+        <span class="node__subj">機械</span>
+        <span class="node__what">誘導機・同期機・直流機</span>
+      </li>
+    </ol>
+    <div class="span">
+      <span class="span__bar" aria-hidden="true"></span>
+      <span class="span__subj">理論</span>
+      <span class="span__what">この線のどこでも、電圧・電流・電力を計算する力</span>
+    </div>
+    <p class="sld-note">変圧器そのものの原理は機械、変圧器を置いた変電所の設備と運用は電力で問われます。同じ設備でも、聞かれ方で科目が変わります。</p>
+  </div>
+</section>
+
+<section class="wrap sec" aria-labelledby="subj-title">
+  <h2 id="subj-title">今期受ける3科目</h2>
+  <p class="sec__lead">2026年度下期に受ける科目です。どれも、丸暗記ではなく「なぜそうなるか」の因果から説明します。</p>
+  <div class="plates">
+    <a class="plate" href="denken3-riron-wiki.html#home">
+      <span class="plate__name">理論</span>
+      <span class="plate__range">電磁気・電気回路・電磁誘導・三相交流・電子理論・計測</span>
+      <span class="plate__go">理論Wikiを開く</span>
+      <span class="plate__feat">図とドリルで、式の意味を目で追える</span>
+      <span class="lamp lamp--red">今期受験</span>
+    </a>
+    <a class="plate" href="denken3-denryoku-wiki.html">
+      <span class="plate__name">電力</span>
+      <span class="plate__range">発電・変電・送電・配電</span>
+      <span class="plate__go">電力Wikiを開く</span>
+      <span class="plate__feat">用語辞書と目次で、設備の名前から引ける</span>
+      <span class="lamp lamp--red">今期受験</span>
+    </a>
+    <a class="plate" href="denken3-kikai-wiki.html#home">
+      <span class="plate__name">機械</span>
+      <span class="plate__range">回転機・静止器・電力変換・制御・電気応用</span>
+      <span class="plate__go">機械Wikiを開く</span>
+      <span class="plate__feat">間隔反復で、次に復習する日が決まる</span>
+      <span class="lamp lamp--red">今期受験</span>
+    </a>
+  </div>
+</section>
+
+<section class="wrap sec" aria-labelledby="loop-title">
+  <h2 id="loop-title">学習の回し方</h2>
+  <p class="sec__lead">読むだけで終わらせず、解いて、間違えて、戻ってくる順に並べています。</p>
+  <ol class="loop">
+    <li>
+      <div class="loop__n" aria-hidden="true">1</div>
+      <h3>今日の問題を解く</h3>
+      <p><a href="https://kfurufuru.github.io/denken3-study/">学習ダッシュボード</a>が、今日やる過去問を選びます。</p>
+    </li>
+    <li>
+      <div class="loop__n" aria-hidden="true">2</div>
+      <h3>間違いを1か所に集める</h3>
+      <p>4科目の間違いは<a href="denken-hoki-wiki.html#chokuzen-machigai">間違いノート</a>にまとまります。</p>
+    </li>
+    <li>
+      <div class="loop__n" aria-hidden="true">3</div>
+      <h3>残りの日数と進みを見る</h3>
+      <p><a href="denken3-shimoki-plan.html">下期 学習計画</a>で、3科目の週の割り振りと進み具合を確かめます。</p>
+    </li>
+  </ol>
+  <p class="loop-back">3まで終えたら、翌日はまた1から始めます。</p>
+</section>
+
+<section class="wrap sec" aria-labelledby="ref-title">
+  <h2 id="ref-title">参考にするWiki</h2>
+  <p class="sec__lead">今期は受けない科目と、学び方や周辺の知識を扱うページです。</p>
+  <ul class="refs">
+    <li><span class="lamp lamp--green">今期は受けない</span><a href="denken-hoki-wiki.html">法規Wiki</a><span>今期は受けない科目。間違いノートと、試験当日に見直す順路はここにあります。</span></li>
+    <li><span class="lamp lamp--green">今期は受けない</span><a href="denken-yougo-teigi-wiki.html">法規 用語定義テスト</a><span>省令と解釈で定義された語を覚え、小テストで確かめます。</span></li>
+    <li><span></span><a href="learning-science-wiki.html">学習科学Wiki</a><span>間隔反復・思い出す練習・睡眠と記憶。</span></li>
+    <li><span></span><a href="focus-timer.html">集中タイマー</a><span>決めた時間だけ集中し、休憩に自動で切り替えます。</span></li>
+    <li><span></span><a href="https://kfurufuru.github.io/denken3-study/denken-map.html">知識マップ</a><span>弱点と得意を1枚で見ます。科目別のレーダーと認知バグ。</span></li>
+    <li><span></span><a href="it-wiki.html">IT用語Wiki</a><span>エンジニア向けの概念を、たとえ話で説明します。</span></li>
+    <li><span></span><a href="business-skills/index.html">思考・行動の設計図</a><span>ビジネススキル53テーマ。思考・学習・生産性。</span></li>
+    <li><span></span><a href="https://claude.ai/artifact/2dmciM9wU8zs3pXLFDTBxh">Wiki モーション語彙</a><span>Wiki 改修用の動き18種。本人用で、claude.ai へのログインが必要です。</span></li>
+  </ul>
+  <h3 class="sub">関連サイト</h3>
+  <ul class="refs">
+    <li><span></span><a href="https://kfurufuru.github.io/genai-db/">生成AI データベース</a><span>公開ナレッジ。</span></li>
+    <li><span></span><a href="https://kfurufuru.github.io/ei-wiki/">電気計装Wiki</a><span>電気計装の用語と考え方。</span></li>
+  </ul>
+</section>
+</main>
+
+<footer class="wrap foot">
+  <p>各Wikiは学習用の個人ナレッジベースです。法令・数値は一次資料での照合を前提に作成していますが、最終的な受験判断はご自身で公式情報をご確認ください。</p>
+</footer>
 
 <script>
 (function(){
-  var KEY="portal_theme_v1";
-  var root=document.documentElement;
-  var label=document.getElementById("themelabel");
-  function apply(t){
-    if(t==="midnight"){root.setAttribute("data-theme","midnight");label.textContent="Dark";}
-    else{root.removeAttribute("data-theme");label.textContent="Light";}
-  }
-  var saved;
-  try{saved=localStorage.getItem(KEY);}catch(e){}
-  if(!saved){
-    saved=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"midnight":"paper";
-  }
-  apply(saved);
-  document.getElementById("themebtn").addEventListener("click",function(){
-    var next=root.getAttribute("data-theme")==="midnight"?"paper":"midnight";
-    apply(next);
-    try{localStorage.setItem(KEY,next);}catch(e){}
+  var root=document.documentElement, btn=document.getElementById("themebtn");
+  function label(){ btn.textContent = root.getAttribute("data-theme")==="dark" ? "明るい表示にする" : "暗い表示にする"; }
+  btn.addEventListener("click",function(){
+    var dark = root.getAttribute("data-theme")!=="dark";
+    root.setAttribute("data-theme", dark?"dark":"light");
+    try{localStorage.setItem("portal_theme_v1", dark?"midnight":"paper");}catch(e){}
+    label();
   });
+  label();
+  btn.hidden=false;
 })();
 </script>
 </body>
