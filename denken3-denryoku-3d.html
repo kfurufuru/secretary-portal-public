@@ -3937,6 +3937,29 @@ function buildGenshiryoku(g){
   const seaN = new THREE.Group(); g.add(seaN);
   pipe(V3(1.9,.25,.25), V3(3.5,.25,.25), DK.cold, seaN, .05); pipe(V3(1.9,.45,-.25), V3(3.5,.45,-.25), DK.water, seaN, .05); centerGroup(seaN);
   /* 山は置かない（格納容器のガラス越しに重なって、炉の中の部品と見分けにくくなった。2026-11-01 実描画） */
+  /* 情景の続き（水力と同じ細かさに）: 防潮堤・構内道路・排気筒・主変圧器と相分離母線・送電鉄塔。
+     格納容器（中心 x=−1.1・半径 1.7）と蒸気・給水の管には重ねない */
+  mesh(new THREE.BoxGeometry(.1,.7,4.0), DK.concrete, g, 3.42, .35, .6);                 // 防潮堤（陸と海の境）
+  mesh(new THREE.BoxGeometry(7.2,.03,.5), DK.asphalt, g, -.3, .05, 2.45);                 // 構内道路
+  for (let i=0;i<5;i++) mesh(new THREE.BoxGeometry(.5,.01,.05), M.meter, g, -3.3+i*1.5, .07, 2.45);
+  const stack = new THREE.Group(); g.add(stack);                                          // 排気筒（建屋の換気を高い所から出す）
+  mesh(new THREE.CylinderGeometry(.09,.13,3.8,12), M.steelLight, stack, -3.4, 1.9, -2.1);
+  for (const y of [1.2, 2.4, 3.5]) mesh(new THREE.TorusGeometry(.17,.025,6,16), M.steel, stack, -3.4, y, -2.1).rotation.x = Math.PI/2;
+  centerGroup(stack);
+  const mtr = new THREE.Group(); g.add(mtr);                                              // 主変圧器（タンク・放熱器・ブッシング）
+  /* タービン建屋の右手前（発電機の側）に置く。建屋の裏や格納容器の裏では、正面から見えなかった（2026-11-03 実描画）。
+     送電鉄塔は置かない（どこに立てても建屋か格納容器と重なった）。送電線は陸側（手前の道路の方）へ出す。
+     海側へ出すと、海へ送るように見えた（2026-11-03 GPT 監査） */
+  mesh(new THREE.BoxGeometry(.7,.6,.55), M.tank, mtr, 2.95, .3, 1.75);
+  for (let i=0;i<4;i++) mesh(new THREE.BoxGeometry(.04,.5,.5), M.steel, mtr, 2.54 - i*.07, .3, 1.75);
+  for (const dz of [-.16, 0, .16]) mesh(new THREE.CylinderGeometry(.04,.05,.32,10), M.ceramic, mtr, 3.1, .76, 1.75+dz);
+  centerGroup(mtr);
+  const busN = new THREE.Group(); g.add(busN);                                            // 相分離母線（発電機 → 主変圧器）
+  pipe(V3(2.9,1.2,0), V3(3.05,1.2,0), M.brass, busN, .05); pipe(V3(3.05,1.2,0), V3(3.05,1.2,1.75), M.brass, busN, .05);
+  pipe(V3(3.05,1.2,1.75), V3(2.95,.62,1.75), M.brass, busN, .05);
+  const lnN = new THREE.Group(); g.add(lnN);                                              // 送電線（陸側の系統へ）
+  for (const dz of [-.16, 0, .16]) pipe(V3(3.1,.92,1.75+dz), V3(3.1+dz*3,2.2,2.75), DK.wireAl, lnN, .012);
+  centerGroup(lnN);
   /* PWR の一次系（炉 ⇄ 蒸気発生器）と二次系（蒸気発生器 → タービン → 復水器 → 蒸気発生器） */
   const prim = new THREE.Group(); g.add(prim);
   pipe(V3(-1.1,2.1), V3(-.4,2.1), DK.hot, prim, .07); pipe(V3(-.4,.7), V3(-1.1,.7), DK.cold, prim, .07);
@@ -3962,6 +3985,8 @@ function buildGenshiryoku(g){
     {obj:tb, t:'蒸気タービン', c:'#8E9AA6'},
     {obj:gen, t:'発電機', c:'#3B5A73'},
     {obj:cond, t:'復水器', c:'#4A5B68'},
+    {obj:mtr, t:'主変圧器（発電機の電圧を送電の電圧へ上げる）', c:'#4A5B68'},
+    {obj:stack, t:'排気筒（建屋の換気などの排気を、フィルタを通し放射線を監視して高い所から出す。燃焼の煙突ではない）', c:'#8E9AA6'},
   ];
 }
 function animGenshiryoku(g, t, st, dt){
