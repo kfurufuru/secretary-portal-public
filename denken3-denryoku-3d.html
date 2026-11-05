@@ -3764,29 +3764,66 @@ function buildSuiryoku(g){
   /* 回るのは runner（鉛直軸）。中の lay で各形式を寝かせる（形はランナの面 = xy 平面で作ってある） */
   const runner = new THREE.Group(); g.add(runner); runner.position.set(2.0, .95, 0);
   const lay = new THREE.Group(); runner.add(lay); lay.rotation.x = Math.PI/2;
+  /* 形は電力Wiki 1.1 の実物写真の説明に合わせる（2026-11-05）。
+     ペルトン: 外周のお椀形のバケット（中央の仕切りで左右2つに分かれる）が20個並ぶ。噴流はお椀の口に当たる。
+     フランシス: 上の冠（クラウン）と下の帯（バンド）のあいだに、ねじれた羽根が十数枚並ぶ。周りを案内羽根の輪が囲む。
+     プロペラ（カプラン）: 太いボスに、大きな羽根が数枚。ボスの先は下流（下）へすぼまる。
+     ランナの面＝この xy 平面、軸＝z（lay で鉛直に起こすと、+z が下＝吸出し管の側になる）。
+     発電のときの回り方は、この面で時計回り（中心から見て角度 a の点は、接線 (sin a, −cos a) の向きに進む）。 */
   const types = {};
+  const cupMat = std({color:0xb8bec4, metalness:.6, roughness:.35, side:THREE.DoubleSide});
   { const t = new THREE.Group(); lay.add(t); types.pelton = t;
-    mesh(new THREE.CylinderGeometry(.42,.42,.06,28), M.steelLight, t).rotation.x = Math.PI/2;
-    for (let i=0;i<14;i++){ const a=i/14*Math.PI*2; const b = mesh(new THREE.BoxGeometry(.12,.1,.14), M.brass, t, Math.cos(a)*.47, Math.sin(a)*.47, 0); b.rotation.z = a; } }
+    mesh(new THREE.CylinderGeometry(.30,.30,.07,32), M.steelLight, t).rotation.x = Math.PI/2;        // 円板（ハブ）
+    for (let i=0;i<20;i++){ const a=i/20*Math.PI*2;
+      const b = new THREE.Group(); t.add(b); b.position.set(Math.cos(a)*.42, Math.sin(a)*.42, 0); b.rotation.z = a + Math.PI;
+      /* お椀の口（半球の切り口）は、進む向きの逆＝噴流の来る側を向く。左右2つのお椀を中央の仕切りで分ける */
+      for (const dz of [-.055, .055]) mesh(new THREE.SphereGeometry(.062,12,8,0,Math.PI*2,0,Math.PI/2), cupMat, b, 0, 0, dz);
+      mesh(new THREE.BoxGeometry(.012,.062,.02), cupMat, b, 0, .031, 0);                            // 仕切り（スプリッタ）
+      mesh(new THREE.BoxGeometry(.15,.03,.04), M.steelLight, b, .075, 0, 0);                         // 円板への根元（b の +x が中心向き。ハブ r=.30 まで届く）
+    } }
   { const t = new THREE.Group(); lay.add(t); types.francis = t;
-    mesh(new THREE.CylinderGeometry(.32,.32,.22,24), M.steelLight, t).rotation.x = Math.PI/2;
-    for (let i=0;i<10;i++){ const a=i/10*Math.PI*2; const b = mesh(new THREE.BoxGeometry(.05,.26,.2), M.brass, t, Math.cos(a)*.26, Math.sin(a)*.26, 0); b.rotation.z = a + .5; } }
-  { const t = new THREE.Group(); lay.add(t); types.propeller = t; t.scale.setScalar(.9);
-    mesh(new THREE.SphereGeometry(.14,14,14), M.steelLight, t);
-    for (let i=0;i<4;i++){ const a=i/4*Math.PI*2; const b = mesh(new THREE.BoxGeometry(.46,.1,.03), M.brass, t, Math.cos(a)*.27, Math.sin(a)*.27, 0); b.rotation.z = a; b.rotation.x = .5; } }
+    mesh(new THREE.CylinderGeometry(.30,.30,.03,32), M.u, t, 0, 0, -.11).rotation.x = Math.PI/2;     // 冠（クラウン・上）
+    const band = mesh(new THREE.TorusGeometry(.29,.025,8,32), M.u, t, 0, 0, .11);                   // 帯（バンド・下）
+    for (let i=0;i<14;i++){ const a=i/14*Math.PI*2;
+      const b = mesh(new THREE.BoxGeometry(.2,.02,.2), M.u, t, Math.cos(a)*.2, Math.sin(a)*.2, 0);
+      b.rotation.z = a - .9; b.rotation.y = .35; } }                                                 // ねじれた羽根
+  { const t = new THREE.Group(); lay.add(t); types.propeller = t;
+    mesh(new THREE.CylinderGeometry(.16,.16,.26,24), M.steelLight, t).rotation.x = Math.PI/2;        // ボス
+    const nose = mesh(new THREE.ConeGeometry(.16,.22,24), M.steelLight, t, 0, 0, .24); nose.rotation.x = Math.PI/2;   // 下流へすぼまる先端
+    for (let i=0;i<5;i++){ const a=i/5*Math.PI*2;
+      const b = mesh(new THREE.BoxGeometry(.21,.2,.02), M.brass, t, Math.cos(a)*.265, Math.sin(a)*.265, 0);   // 先端の半径 < 案内羽根の内縁 0.409
+      b.rotation.z = a; b.rotation.x = .55; } }
   /* 反動水車の渦巻きケーシングと吸出し管（回らない）。水圧管の端（x=1.35）からケーシングの外周（x=1.5）へ入る */
   const reaction = new THREE.Group(); g.add(reaction);
-  const casing = mesh(new THREE.TorusGeometry(.62,.12,10,30), M.steelDark, reaction, 2.0, .95, 0); casing.rotation.x = Math.PI/2;   // 内径 .50 > 翼の外径
-  pipe(V3(1.33,.95), V3(1.4,.95), M.steel, reaction, .12);
+  /* 渦巻ケーシング: 入口（x=1.36 の側）が太く、水の回る向きに進むほど細くなる。8つの弧で太さを段々に変える。
+     水は入口から +z の側へ回る（ランナの回る向きと同じ）。世界の xz 面で角度は π から減る向き */
+  const casing = new THREE.Group(); reaction.add(casing); casing.position.set(2.0, .95, 0);
+  for (let k=0;k<8;k++){ const arc = Math.PI*2/8, start = Math.PI - (k+1)*arc, tube = .14 - k*.012;
+    const geo = new THREE.TorusGeometry(.64, tube, 10, 8, arc); geo.rotateZ(start); geo.rotateX(Math.PI/2);
+    mesh(geo, M.steelDark, casing); }
+  centerGroup(casing);
+  pipe(V3(1.25,.95), V3(1.4,.95), M.steel, reaction, .13);
+  /* 案内羽根（ガイドベーン）: ケーシングとランナのあいだの輪。開き具合で流量を変える（回らない） */
+  const guide = new THREE.Group(); reaction.add(guide);
+  for (let i=0;i<18;i++){ const a=i/18*Math.PI*2;
+    const v = mesh(new THREE.BoxGeometry(.11,.2,.02), M.v, guide, 2.0+Math.cos(a)*.44, .95, Math.sin(a)*.44); v.rotation.y = -a - 1.1; }   // 内へ入る水の旋回を、ランナの回る向き（＝ケーシングの流れ）にそろえる
+  centerGroup(guide);
   const draft = new THREE.Group(); reaction.add(draft);
   mesh(new THREE.CylinderGeometry(.18,.24,.5,18), M.steel, draft, 2.0, .62, 0);      // ランナの真下で下へ広がる
   pipe(V3(2.0,.4), V3(2.85,.4), M.steel, draft, .2);                                  // 曲がって放水面の下へ出る
   centerGroup(draft);
   /* ペルトンの導水: 水圧管の端から脇へ回り、ノズルの噴流がバケットに接線方向から当たる */
   const pfeed = new THREE.Group(); g.add(pfeed);
-  pipe(V3(1.35,.95), V3(1.35,.95,-.55), M.steel, pfeed, .1);
-  pipe(V3(1.35,.95,-.55), V3(1.53,.95,-.55), M.steel, pfeed, .1);
-  const nozzle = mesh(new THREE.ConeGeometry(.1,.3,12), M.steel, pfeed, 1.53, .95, -.36); nozzle.rotation.x = Math.PI/2;
+  pipe(V3(1.35,.95), V3(1.35,.95,-.7), M.steel, pfeed, .1);
+  pipe(V3(1.35,.95,-.7), V3(1.58,.95,-.7), M.steel, pfeed, .1);
+  /* ノズルは外周のバケットの真ん中（ピッチ円 x=1.58）を接線の向きに狙う。ニードル弁が噴流の太さ＝流量を変え、
+     デフレクタは急いで止めるときに噴流をバケットからそらす（ニードルはゆっくり閉じて水撃を避ける） */
+  /* ノズル・ニードル・デフレクタは、バケットが回って通る輪（ランナ中心から半径 0.36〜0.51）の外に置く */
+  const nozzle = mesh(new THREE.CylinderGeometry(.035,.1,.3,12,1,true), M.steel, pfeed, 1.58, .95, -.55); nozzle.rotation.x = Math.PI/2;   // 先端に口（半径 .035）
+  const needle = mesh(new THREE.ConeGeometry(.03,.1,10), M.black, pfeed, 1.58, .95, -.40); needle.rotation.x = Math.PI/2;   // 口の中に座り、先だけ出る
+  const deflector = mesh(new THREE.BoxGeometry(.02,.14,.16), M.steelDark, pfeed, 1.45, .95, -.25); deflector.rotation.y = .5;   // 噴流の外側（軸から .13）
+  const jet = mesh(new THREE.CylinderGeometry(1,1,.36,12), std({color:0x7fc4ff, transparent:true, opacity:.75, emissive:0x2f7fd0, emissiveIntensity:.5}), pfeed, 1.58, .95, -.18);
+  jet.rotation.x = Math.PI/2; jet.castShadow = false;
   mesh(new THREE.BoxGeometry(1.2,.3,1.1), DK.water, pfeed, 2.1, .475, 0);   // ランナの下の放水の溜まり（水面は放水路と同じ y=0.625。ランナはその上）
   const gen = mesh(new THREE.CylinderGeometry(.45,.45,.6,24), M.steelDark, g, 2.0, 1.95, 0);
   const shaftV = pipe(V3(2.0,1.0), V3(2.0,1.7), M.steelLight, g, .05);
@@ -3803,8 +3840,8 @@ function buildSuiryoku(g){
   Object.assign(hgMark.userData, {hgRod, hgUp, hgDn, hgLineU, hgLineL, yL:.625});
   const P0 = [V3(-2.6,2.0), V3(-1.35,2.0), V3(0,2.0), V3(0,2.5), V3(1.35,.95)];
   const flowR = dkPath(g, P0.concat([V3(1.4,.95), V3(2.0,.95), V3(2.0,.4), V3(2.85,.4), V3(3.6,.5)]), 18, DK.dotW);
-  const flowP = dkPath(g, P0.concat([V3(1.35,.95,-.55), V3(1.53,.95,-.55), V3(1.53,.95,0), V3(1.7,.5,.05), V3(2.85,.5), V3(3.6,.5)]), 18, DK.dotW);
-  Object.assign(g.userData, {runner, types, reaction, pfeed, flowR, flowP, res, hgMark, T:0});
+  const flowP = dkPath(g, P0.concat([V3(1.35,.95,-.7), V3(1.58,.95,-.7), V3(1.58,.95,0), V3(1.7,.5,.05), V3(2.85,.5), V3(3.6,.5)]), 18, DK.dotW);
+  Object.assign(g.userData, {runner, types, reaction, pfeed, flowR, flowP, res, hgMark, jet, T:0});
   g.userData.labels = (st) => [
     {obj:res, t:'貯水池（総落差の上の水面）', c:'#3572D6'},
     {obj:dam, t:'ダム', c:'#9AA1A6'},
@@ -3812,8 +3849,12 @@ function buildSuiryoku(g){
     {obj:surge, t:'サージタンク（水撃作用をやわらげる）', c:'#8E9AA6'},
     {obj:pen, t:'水圧管路（ここで損失落差が出る）', c:'#6B7580'},
     {obj:runner, t:({pelton:'ペルトン水車（衝動水車）', francis:'フランシス水車（反動水車）', propeller:'プロペラ水車（反動水車）'})[st.sType], c:'#D9C7A0'},
-    ...(st.sType==='pelton' ? [{obj:nozzle, t:'ノズル（水を噴流にしてバケットに当てる）', c:'#6B7580'}]
-                           : [{obj:draft, t:'吸出し管（反動水車だけにある。ランナ出口の速度エネルギーを圧力として回収する）', c:'#6B7580'}]),
+    ...(st.sType==='pelton' ? [{obj:nozzle, t:'ノズル（水を噴流にしてバケットに当てる）', c:'#6B7580'},
+                               {obj:needle, t:'ニードル弁（噴流の太さ＝流量を変える）', c:'#2B2B2B'},
+                               {obj:deflector, t:'デフレクタ（急いで止めるとき噴流をそらす）', c:'#3B5A73'}]
+                           : [{obj:casing, t:'渦巻ケーシング（入口が太く、回るほど細くなる）', c:'#3B5A73'},
+                              {obj:guide, t:'案内羽根（ガイドベーン。開き具合で流量を変える）', c:'#C9A227'},
+                              {obj:draft, t:'吸出し管（反動水車だけにある。ランナ出口の速度エネルギーを圧力として回収する）', c:'#6B7580'}]),
     {obj:gen, t: st.sMode==='pump' ? '発電電動機（いまは電動機）' : '発電機', c:'#3B5A73'},
     {obj:tail, t:'放水路（総落差の下の水面）', c:'#3572D6'},
     {obj:hgMark, t:'総落差 Hg（上下の水面の高さの差。有効落差 H = Hg − hl とは別。図の高さは Hg に比例しない）', c:'#F0B57E'},
@@ -3835,9 +3876,11 @@ function animSuiryoku(g, t, st, dt){
   const dir = st.sMode === 'pump' ? -1 : 1;
   /* ペルトン（衝動水車）は水を汲み上げられない。揚水を選んでも、噴流を逆に流して見せない（読み値の表で断る） */
   const still = st.paused || (pel && st.sMode === 'pump');
-  /* 鉛直軸で回る（発電機と同じ軸）。噴流（x=1.53 で +z 向き）が当たるバケットが噴流と同じ向きに進む回り方にする
+  /* 鉛直軸で回る（発電機と同じ軸）。噴流（x=1.58 で +z 向き）が当たるバケットが噴流と同じ向きに進む回り方にする
      （rotation.y を増やすと、中心の左 0.47 の点は +z へ動く。逆にすると噴流と正面衝突した。2026-11-01 監査） */
   u.runner.rotation.y += (still ? 0 : dir*dt*3);
+  { const r = .025*Math.sqrt(Math.max(.1, st.sQ)/50); u.jet.scale.set(Math.min(.06, r), 1, Math.min(.06, r));   // 噴流の太さ: 断面積 ∝ 流量 Q
+    u.jet.visible = pel && st.sMode === 'gen' && !st.paused; }
   const on = pel ? u.flowP : u.flowR, off = pel ? u.flowR : u.flowP;
   dkScale(on, st.sQ/50);                                   // 水の粒の大きさ ∝ 流量 Q
   dkRun(on, u.T*1.4, !still, dir);
