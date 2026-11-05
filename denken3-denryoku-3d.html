@@ -3752,9 +3752,12 @@ function buildSuiryoku(g){
   prism([[-1.3,0], [-1.3,1.8], [-.3,1.75], [.3,1.75], [1.3,.78], [1.3,0]], 1.8, DK.grass, g);   // 水圧管路が下る斜面
   /* 導水路は貯水池の水面より下で取る。水面は総落差 Hg で y=2.25〜3.0 を動くので、取水口（上端 y=2.14）はその最低より下に置く
      （以前は y=2.6 で、水面より上から取っていた。2026-11-01 監査） */
-  const head = pipe(V3(-1.35,2.0), V3(0,2.0), M.steel, g, .14);
-  const surge = mesh(new THREE.CylinderGeometry(.3,.3,1.8,20), M.steelLight, g, 0, 2.8, 0);
-  const pen = pipe(V3(0,2.5), V3(1.35,.95), M.steel, g, .14);
+  /* 水の通る管（導水路・水圧管路・渦巻ケーシング・吸出し管）は半透明にし、中を流れる水の光点を見せる。
+     不透明だと、ランナから真下へ抜ける水が吸出し管の中に隠れ、水が横へ出ていくだけに見えた（2026-11-05 監修者さんの指摘） */
+  const pipeSee = std({color:0x8e9aa6, metalness:.3, roughness:.4, transparent:true, opacity:.42, depthWrite:false});
+  const head = pipe(V3(-1.35,2.0), V3(0,2.0), pipeSee, g, .14);
+  const surge = mesh(new THREE.CylinderGeometry(.3,.3,1.8,20), std({color:0x8e9aa6, metalness:.3, roughness:.4, transparent:true, opacity:.55, depthWrite:false}), g, 0, 2.8, 0);   // 半透明（中を通る水を見せる）
+  const pen = pipe(V3(0,2.5), V3(1.35,.95), pipeSee, g, .14);
   /* 発電所の建屋（奥の壁・左の壁の上半分・屋根）。水圧管路は左の壁の下から入る */
   mesh(new THREE.BoxGeometry(1.3,2.6,.1), DK.bldg, g, 2.05, 1.3, -.95);
   mesh(new THREE.BoxGeometry(.1,1.3,1.9), DK.bldg, g, 1.42, 1.95, 0);
@@ -3800,17 +3803,17 @@ function buildSuiryoku(g){
   const casing = new THREE.Group(); reaction.add(casing); casing.position.set(2.0, .95, 0);
   for (let k=0;k<8;k++){ const arc = Math.PI*2/8, start = Math.PI - (k+1)*arc, tube = .14 - k*.012;
     const geo = new THREE.TorusGeometry(.64, tube, 10, 8, arc); geo.rotateZ(start); geo.rotateX(Math.PI/2);
-    mesh(geo, M.steelDark, casing); }
+    mesh(geo, std({color:0x3b5a73, metalness:.3, roughness:.5, transparent:true, opacity:.6, depthWrite:false}), casing); }
   centerGroup(casing);
-  pipe(V3(1.25,.95), V3(1.4,.95), M.steel, reaction, .13);
+  pipe(V3(1.25,.95), V3(1.4,.95), pipeSee, reaction, .13);
   /* 案内羽根（ガイドベーン）: ケーシングとランナのあいだの輪。開き具合で流量を変える（回らない） */
   const guide = new THREE.Group(); reaction.add(guide);
   for (let i=0;i<18;i++){ const a=i/18*Math.PI*2;
     const v = mesh(new THREE.BoxGeometry(.11,.2,.02), M.v, guide, 2.0+Math.cos(a)*.44, .95, Math.sin(a)*.44); v.rotation.y = -a - 1.1; }   // 内へ入る水の旋回を、ランナの回る向き（＝ケーシングの流れ）にそろえる
   centerGroup(guide);
   const draft = new THREE.Group(); reaction.add(draft);
-  mesh(new THREE.CylinderGeometry(.18,.24,.5,18), M.steel, draft, 2.0, .62, 0);      // ランナの真下で下へ広がる
-  pipe(V3(2.0,.4), V3(2.85,.4), M.steel, draft, .2);                                  // 曲がって放水面の下へ出る
+  mesh(new THREE.CylinderGeometry(.18,.24,.5,18), pipeSee, draft, 2.0, .62, 0);      // ランナの真下で下へ広がる
+  pipe(V3(2.0,.4), V3(2.85,.4), pipeSee, draft, .2);                                  // 曲がって放水面の下へ出る
   centerGroup(draft);
   /* ペルトンの導水: 水圧管の端から脇へ回り、ノズルの噴流がバケットに接線方向から当たる */
   const pfeed = new THREE.Group(); g.add(pfeed);
@@ -3840,15 +3843,18 @@ function buildSuiryoku(g){
   Object.assign(hgMark.userData, {hgRod, hgUp, hgDn, hgLineU, hgLineL, yL:.625});
   const P0 = [V3(-2.6,2.0), V3(-1.35,2.0), V3(0,2.0), V3(0,2.5), V3(1.35,.95)];
   const flowR = dkPath(g, P0.concat([V3(1.4,.95), V3(2.0,.95), V3(2.0,.4), V3(2.85,.4), V3(3.6,.5)]), 18, DK.dotW);
+  /* プロペラ（カプラン）: 案内羽根を通った水は、羽根の上で向きを変え、羽根の間（中心から半径 0.27）を軸に沿って下る。
+     フランシスと同じ経路だと、羽根の輪を横切ってから中心で下がって見えた（2026-11-05 Fable 監査） */
+  const flowK = dkPath(g, P0.concat([V3(1.4,.95), V3(1.73,1.12), V3(1.73,.78), V3(2.0,.55), V3(2.0,.4), V3(2.85,.4), V3(3.6,.5)]), 18, DK.dotW);
   const flowP = dkPath(g, P0.concat([V3(1.35,.95,-.7), V3(1.58,.95,-.7), V3(1.58,.95,0), V3(1.7,.5,.05), V3(2.85,.5), V3(3.6,.5)]), 18, DK.dotW);
-  Object.assign(g.userData, {runner, types, reaction, pfeed, flowR, flowP, res, hgMark, jet, T:0});
+  Object.assign(g.userData, {runner, types, reaction, pfeed, flowR, flowK, flowP, res, hgMark, jet, T:0});
   g.userData.labels = (st) => [
     {obj:res, t:'貯水池（総落差の上の水面）', c:'#3572D6'},
     {obj:dam, t:'ダム', c:'#9AA1A6'},
     {obj:head, t:'導水路', c:'#6B7580'},
     {obj:surge, t:'サージタンク（水撃作用をやわらげる）', c:'#8E9AA6'},
     {obj:pen, t:'水圧管路（ここで損失落差が出る）', c:'#6B7580'},
-    {obj:runner, t:({pelton:'ペルトン水車（衝動水車）', francis:'フランシス水車（反動水車）', propeller:'プロペラ水車（反動水車）'})[st.sType], c:'#D9C7A0'},
+    {obj:runner, t:({pelton:'ペルトン水車（衝動水車。噴流は横から当たり、水は下へ落ちる）', francis:'フランシス水車（反動水車。水は外周から横に入り、中心から軸の向き（この図は立軸なので真下）へ抜ける）', propeller:'プロペラ水車（反動水車。水は羽根の間を軸に沿って（この図は立軸なので真下へ）抜ける）'})[st.sType], c:'#D9C7A0'},
     ...(st.sType==='pelton' ? [{obj:nozzle, t:'ノズル（水を噴流にしてバケットに当てる）', c:'#6B7580'},
                                {obj:needle, t:'ニードル弁（噴流の太さ＝流量を変える）', c:'#2B2B2B'},
                                {obj:deflector, t:'デフレクタ（急いで止めるとき噴流をそらす）', c:'#3B5A73'}]
@@ -3881,10 +3887,10 @@ function animSuiryoku(g, t, st, dt){
   u.runner.rotation.y += (still ? 0 : dir*dt*3);
   { const r = .025*Math.sqrt(Math.max(.1, st.sQ)/50); u.jet.scale.set(Math.min(.06, r), 1, Math.min(.06, r));   // 噴流の太さ: 断面積 ∝ 流量 Q
     u.jet.visible = pel && st.sMode === 'gen' && !st.paused; }
-  const on = pel ? u.flowP : u.flowR, off = pel ? u.flowR : u.flowP;
+  const on = pel ? u.flowP : st.sType === 'propeller' ? u.flowK : u.flowR;
   dkScale(on, st.sQ/50);                                   // 水の粒の大きさ ∝ 流量 Q
   dkRun(on, u.T*1.4, !still, dir);
-  dkRun(off, 0, false);
+  for (const f of [u.flowP, u.flowR, u.flowK]) if (f !== on) dkRun(f, 0, false);
 }
 
 /* ---------- 1.2 火力（汽力） ----------
