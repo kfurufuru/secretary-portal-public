@@ -3887,11 +3887,18 @@ function buildDC(g){
   const leg = (p, q) => { const m = p.clone().lerp(q, .5), ang = Math.atan2(q.z - p.z, q.x - p.x);
     wr(p, q, br); return resistor(br, m.x, .25, m.z, .55, -ang); };
   const r1 = leg(A, B), r2 = leg(A, C), r3 = leg(B, D), r4 = leg(C, D);
-  wr(B, C, br, M.copper, .015);
-  const gal = dial(br, 0, .7, 0, .32); gal.rotation.x = -Math.PI/2.4;
+  /* 検流計は B–C の橋絡部に直列に入れる。線と同じ高さに寝かせて置き、B からの線は検流計の縁に入り、反対の縁から C へ出る
+     （電流の光点も検流計の中を通る）。以前は B–C の直線の上に浮かせていて、つながりが図から読めず、検流計の円盤が
+     電流の光点を 41% 隠した（2026-11-07 検査20。横へずらして浮かせた試作は、線が検流計に届かず R3 を隠した。監査） */
+  /* 検流計は手前へ 75° 傾けて置くので、B 側の縁は上がり、C 側の縁は下がる。線はその縁の点まで引く（線の高さのまま縁へ向けると、
+     B 側に 0.056 の隙間が残った。2026-11-07 監査） */
+  const GR = .3, GT = -Math.PI/2.4;
+  const eB = P3(0, .3 + GR*Math.cos(GT), GR*Math.sin(GT)), eC = P3(0, .3 - GR*Math.cos(GT), -GR*Math.sin(GT));
+  wr(B, eB, br, M.copper, .015); wr(eC, C, br, M.copper, .015);
+  const gal = dial(br, 0, .3, 0, GR); gal.rotation.x = GT;
   const bat = mesh(new THREE.BoxGeometry(.5,.5,.35), M.steelDark, br, 0, .35, -1.45);
   wr(A, P3(-1.6,.25,-1.45), br); wr(P3(-1.6,.25,-1.45), P3(-.25,.25,-1.45), br); wr(P3(.25,.25,-1.45), P3(1.6,.25,-1.45), br); wr(P3(1.6,.25,-1.45), D, br);
-  const fb = rrPath(br, [B, C], 6, RR.dotI);
+  const fb = rrPath(br, [B, eB, eC, C], 6, RR.dotI);
   const mp = new THREE.Group(); g.add(mp);
   const bat2 = mesh(new THREE.BoxGeometry(.5,.6,.4), M.steelDark, mp, -1.6, .4, 0);
   const rint = resistor(mp, -.7, .3, -.8, .5);

@@ -3961,8 +3961,13 @@ function buildKaryoku(g){
   const back = mesh(new THREE.BoxGeometry(.7,2.8,1.2), DK.glass, g, -1.3, 2.4, 0);
   const eco = new THREE.Group(); g.add(eco); eco.position.set(-1.3, 2.3, 0);
   for (let i=0;i<4;i++) mesh(new THREE.TorusGeometry(.22,.035,6,18), DK.cold, eco, 0, 0, -.3+i*.2);
-  const aph = mesh(new THREE.CylinderGeometry(.35,.35,.5,20), M.steelLight, g, -.55, .9, 0);
-  const stack = mesh(new THREE.CylinderGeometry(.18,.24,4.2,16), M.steel, g, 0, 2.4, -.2);
+  /* 空気予熱器と煙突は半透明にし、中を通る排ガス・空気の光点を見せる。煙突はタービン建屋と主蒸気管の裏に重ならない z=-0.8 に置く
+     （不透明で z=-0.2 だと、表示の切替で見せる排ガスの 45%・空気の 60% が既定のカメラから隠れた。2026-11-07 検査20） */
+  const seeThru = std({color:0x8e9aa6, metalness:.3, roughness:.4, transparent:true, opacity:.42, depthWrite:false});
+  /* 空気予熱器は排ガスと空気が熱を交換する機器なので、床と見分けられる暖色の半透明にする */
+  const aph = mesh(new THREE.CylinderGeometry(.35,.35,.5,20), std({color:0xd98c4a, metalness:.2, roughness:.5, transparent:true, opacity:.55, depthWrite:false}), g, -.55, .9, 0);
+  const stack = mesh(new THREE.CylinderGeometry(.18,.24,4.2,16), seeThru, g, 0, 2.4, -.8);
+  pipe(V3(-.55,.9,.15), V3(0,.7,-.8), seeThru, g, .12);   // 空気予熱器から煙突の根元への煙道（ダクト）。排ガスはこの中を通る
   const fan = mesh(new THREE.CylinderGeometry(.22,.22,.3,16), M.steelDark, g, -.55, .35, -.9); fan.rotation.x = Math.PI/2;
   const hp = mesh(new THREE.CylinderGeometry(.3,.42,.9,20), M.steelLight, g, .9, 1.25, .7); hp.rotation.z = Math.PI/2;
   const lp = mesh(new THREE.CylinderGeometry(.42,.6,1.1,20), M.steelLight, g, 1.9, 1.25, .7); lp.rotation.z = Math.PI/2;
@@ -3981,7 +3986,7 @@ function buildKaryoku(g){
   mesh(new THREE.BoxGeometry(3.4,2.3,.1), DK.bldg, g, 1.9, 1.15, .05);
   mesh(new THREE.BoxGeometry(3.5,.1,1.5), DK.roofG, g, 1.9, 2.35, .75);
   mesh(new THREE.BoxGeometry(.55,.3,3.6), DK.water, g, 3.72, .15, .9);
-  const smoke = smokeAt(g, 0, 4.6, -.2);
+  const smoke = smokeAt(g, 0, 4.6, -.8);
   /* 水・蒸気の環（手前 z≈0.7〜1.1）と燃焼ガスの道（奥 z≈0）。
      光点は管の中だけを通す（以前は管が無く、光点が宙を飛び、蒸発も火炉の真ん中を斜めに抜けていた。2026-11-01 実描画で確認）。
      水: 復水器 → 給水ポンプ → 節炭器 → 火炉の裏を下りて壁の水管の下へ → 壁の水管を上がって蒸発 → 過熱器 → 主蒸気管 → 高圧・低圧タービン → 復水器 */
@@ -4000,7 +4005,7 @@ function buildKaryoku(g){
   ]) pipe(a, b, m, lines, .06);
   /* 往きの最後の点から最初の点（復水器の中）へ戻して環を閉じる */
   wPts.push(V3(1.9,.35,1.1));
-  const gPts = [V3(-2.4,.7,0), V3(-2.4,3.45,.15), V3(-1.3,3.6,.15), V3(-1.3,2.3,.15), V3(-1.3,1.1,.15), V3(-.55,.9,.15), V3(0,.7,-.2), V3(0,4.5,-.2)];
+  const gPts = [V3(-2.4,.7,0), V3(-2.4,3.45,.15), V3(-1.3,3.6,.15), V3(-1.3,2.3,.15), V3(-1.3,1.1,.15), V3(-.55,.9,.15), V3(0,.7,-.8), V3(0,4.5,-.8)];
   const aPts = [V3(-.55,.35,-.9), V3(-.55,.9,-.3), V3(-2.4,.55,-.3)];
   const wf = dkPath(g, wPts, 26, DK.dotS), gf = dkPath(g, gPts, 16, DK.dotG), af = dkPath(g, aPts, 6, DK.dotW);
   Object.assign(g.userData, {flame, wf, gf, af, hp, lp, gen, smoke, T:0});
@@ -4008,7 +4013,7 @@ function buildKaryoku(g){
     {obj:boiler, t:'ボイラ（火炉・水管で水を蒸気に）', c:'#9FB3C4'},
     {obj:sh, t:'過熱器（飽和蒸気をさらに熱する）', c:'#D24A43'},
     {obj:eco, t:'節炭器（排ガスで給水を予熱）', c:'#3572D6'},
-    {obj:aph, t:'空気予熱器（排ガスで燃焼用空気を予熱）', c:'#8E9AA6'},
+    {obj:aph, t:'空気予熱器（排ガスで燃焼用空気を予熱）', c:'#D98C4A'},
     {obj:fan, t:'押込通風機', c:'#3B5A73'},
     {obj:stack, t:'煙突', c:'#6B7580'},
     {obj:hp, t:'高圧タービン', c:'#8E9AA6'},
