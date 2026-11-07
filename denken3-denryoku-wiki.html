@@ -2936,6 +2936,78 @@ const FormulaCard = ({
   tex: eq,
   display: true
 })), note && /*#__PURE__*/React.createElement("div", null, note)));
+
+/* 左右に並べて比べる図を、PC では横並び・スマホでは縦積みにする（電力・機械・理論で同じ実装。直すときは3つとも直す）。
+   中身は1つの svg 要素のまま書き、表示範囲（viewBox）だけを切り口ごとに替えて並べる（絵は描き直さない）。
+   cuts: 切り口の x（viewBox の座標）。y: 縦の表示範囲 [y0, y1]（省略で全体）。
+   head／note: 図の上／下に出す1行（切り口をまたいでいた見出し・まとめを svg の外へ出したもの）。 */
+const SplitSvg = ({
+  cuts,
+  y,
+  head,
+  note,
+  children
+}) => {
+  const svg = React.Children.only(children);
+  const vbs = String(svg.props.viewBox).trim();
+  const [vx, vy, W, H] = vbs.split(/[\s,]+/).map(Number);
+  const [y0, y1] = y || [vy, vy + H];
+  const xs = [vx, ...cuts, vx + W];
+  // 元の svg の上限幅（maxWidth）を、パネルの幅の比で引き継ぐ。上限が無ければパネルにも付けない
+  const mw = svg.props.style && svg.props.style.maxWidth;
+  const ratio = typeof mw === "number" ? mw / W : typeof mw === "string" && /px$/.test(mw) ? parseFloat(mw) / W : null;
+  // 2枚目以降は <defs>（marker など）を外す。url(#id) は文書全体で1枚目の定義に解決される（id の重複を作らない）
+  const kids = i => i === 0 ? svg.props.children : React.Children.map(svg.props.children, c => c && c.type === "defs" ? null : c);
+  const line = {
+    fontSize: "12px",
+    fontWeight: 700,
+    color: "var(--ink)",
+    textAlign: "center",
+    lineHeight: 1.6
+  };
+  return /*#__PURE__*/React.createElement(React.Fragment, null, head && /*#__PURE__*/React.createElement("p", {
+    style: {
+      ...line,
+      margin: "0 0 6px"
+    }
+  }, head), /*#__PURE__*/React.createElement("div", {
+    role: "img",
+    "aria-label": svg.props["aria-label"],
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      alignItems: "flex-start"
+    }
+  }, xs.slice(0, -1).map((x0, i) => {
+    const w = xs[i + 1] - x0;
+    // 並べる基準は幅の 0.8 倍: 少し縮めても横に並べ、それより狭い幅（スマホ）で縦に積む
+    return React.cloneElement(svg, {
+      key: i,
+      viewBox: `${x0} ${y0} ${w} ${y1 - y0}`,
+      "data-split-viewbox": vbs,
+      "data-split-index": String(i),
+      role: undefined,
+      "aria-label": undefined,
+      "aria-hidden": "true",
+      focusable: "false",
+      style: {
+        display: "block",
+        flex: `1 1 ${Math.round(w * 0.8)}px`,
+        width: "100%",
+        maxWidth: ratio ? `${w * ratio}px` : undefined,
+        minWidth: 0,
+        height: "auto",
+        margin: 0
+      }
+    }, kids(i));
+  })), note && /*#__PURE__*/React.createElement("p", {
+    style: {
+      ...line,
+      margin: "6px 0 0"
+    }
+  }, note));
+};
 const CableCard = ({
   c
 }) => /*#__PURE__*/React.createElement("figure", {
@@ -5694,10 +5766,13 @@ const HaidenPage = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [370],
+  note: "この図は1相あたり。三相3線式の線間電圧降下は √3 倍、単相2線式は 2 倍"
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 340",
   role: "img",
-  "aria-label": "左は電圧降下のベクトル図。受電端電圧を基準にとり、電流Iを角シータだけ遅らせ、その先端に電流と同相の抵抗降下IRと、電流より90度進むリアクタンス降下jXIを継ぐと送電端電圧になる。基準軸に落とした長さが電圧降下となる。右は力率改善の電流三角形。有効電流の長さを変えずに遅れ無効電流だけをコンデンサの進み電流で打ち消すため、線電流が短くなる。下段の帯は、この図が1相あたりであり三相3線式では線間で√3倍、単相2線式では2倍になることを示す。",
+  "aria-label": "左は電圧降下のベクトル図。受電端電圧を基準にとり、電流Iを角シータだけ遅らせ、その先端に電流と同相の抵抗降下IRと、電流より90度進むリアクタンス降下jXIを継ぐと送電端電圧になる。基準軸に落とした長さが電圧降下となる。右は力率改善の電流三角形。有効電流の長さを変えずに遅れ無効電流だけをコンデンサの進み電流で打ち消すため、線電流が短くなる。",
   style: {
     display: "block",
     width: "100%",
@@ -5991,23 +6066,7 @@ const HaidenPage = ({
   textAnchor: "middle",
   fontSize: "11",
   fill: "var(--ink-mute)"
-}, "前提：有効電力 P 一定・電圧一定"), /*#__PURE__*/React.createElement("rect", {
-  x: "20",
-  y: "302",
-  width: "660",
-  height: "30",
-  rx: "6",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "350",
-  y: "321",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "600",
-  fill: "var(--accent-ink)"
-}, "この図は1相あたり。三相3線式の線間電圧降下は √3 倍、単相2線式は 2 倍")), /*#__PURE__*/React.createElement("figcaption", {
+}, "前提：有効電力 P 一定・電圧一定"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -8759,6 +8818,8 @@ const KakuuSoudenPage = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [386]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 350",
   role: "img",
@@ -9093,7 +9154,7 @@ const KakuuSoudenPage = ({
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--ink-mute)"
-}, "（①の図は風圧が無い＝W が真下の場合）")), /*#__PURE__*/React.createElement("figcaption", {
+}, "（①の図は風圧が無い＝W が真下の場合）"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -9135,6 +9196,8 @@ const KakuuSoudenPage = ({
     border: "1px solid var(--rule)",
     borderRadius: "10px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [320]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 640 250",
   width: "100%",
@@ -9329,7 +9392,7 @@ const KakuuSoudenPage = ({
   textAnchor: "start",
   fontSize: "10",
   fill: "var(--ink-mute)"
-}, "E は 1/r で減衰")), /*#__PURE__*/React.createElement("p", {
+}, "E は 1/r で減衰"))), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "8px 4px 0",
     fontSize: "12px",
@@ -9400,6 +9463,8 @@ const KakuuSoudenPage = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [350]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 340",
   role: "img",
@@ -9793,7 +9858,7 @@ const KakuuSoudenPage = ({
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--ink-mute)"
-}, "jXI が基準と逆向きに効くので送電端の方が短くなる（差は誇張）")), /*#__PURE__*/React.createElement("figcaption", {
+}, "jXI が基準と逆向きに効くので送電端の方が短くなる（差は誇張）"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -16208,10 +16273,14 @@ const KeikiHenseiPage = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [355],
+  y: [0, 318],
+  note: "CT＝直列・開放 NG ／ VT＝並列・短絡 NG（左右が対称になっている）"
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 362",
   role: "img",
-  "aria-label": "変流器と計器用変圧器の接続方法を対比した図。左の変流器は主回路に直列に挿入され、鉄心に主回路の導体を通す形で大電流を検出し、二次側は電流計と閉じた回路を作る。二次を開放すると異常高電圧が生じるため開放してはならない。右の計器用変圧器は二本の相導体の間に並列に接続され、高電圧を分けて取り出し、二次側は電圧計につながる。二次を短絡すると過電流が流れるため短絡してはならない。直列と並列、開放禁止と短絡禁止が左右で対称になっている。",
+  "aria-label": "変流器と計器用変圧器の接続方法を対比した図。左の変流器は主回路に直列に挿入され、鉄心に主回路の導体を通す形で大電流を検出し、二次側は電流計と閉じた回路を作る。二次を開放すると異常高電圧が生じるため開放してはならない。右の計器用変圧器は二本の相導体の間に並列に接続され、高電圧を分けて取り出し、二次側は電圧計につながる。二次を短絡すると過電流が流れるため短絡してはならない。",
   style: {
     display: "block",
     width: "100%",
@@ -16411,23 +16480,7 @@ const KeikiHenseiPage = ({
   fontSize: "10",
   fontWeight: "700",
   fill: "var(--danger)"
-}, "二次 短絡 NG（過電流）"), /*#__PURE__*/React.createElement("rect", {
-  x: "20",
-  y: "322",
-  width: "660",
-  height: "32",
-  rx: "6",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "350",
-  y: "342",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "600",
-  fill: "var(--accent-ink)"
-}, "CT＝直列・開放 NG ／ VT＝並列・短絡 NG（左右が対称になっている）")), /*#__PURE__*/React.createElement("figcaption", {
+}, "二次 短絡 NG（過電流）"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -16533,6 +16586,8 @@ const KeikiHenseiPage = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [350]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 348",
   role: "img",
@@ -16886,7 +16941,7 @@ const KeikiHenseiPage = ({
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--ink-mute)"
-}, "※ 二次回路の帰路は省略")), /*#__PURE__*/React.createElement("figcaption", {
+}, "※ 二次回路の帰路は省略"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -18045,6 +18100,8 @@ const HogoKeidenPage = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [350]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 400",
   role: "img",
@@ -18387,7 +18444,7 @@ const HogoKeidenPage = ({
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--ink-mute)"
-}, "0.3 s / 0.6 s は設定例（実際は遮断時間・誤差から決める）")), /*#__PURE__*/React.createElement("figcaption", {
+}, "0.3 s / 0.6 s は設定例（実際は遮断時間・誤差から決める）"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -19478,6 +19535,8 @@ const ChichuuSoudenPage = ({
     border: "1px solid var(--rule)",
     borderRadius: "10px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [320]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 640 250",
   width: "100%",
@@ -19688,7 +19747,7 @@ const ChichuuSoudenPage = ({
   textAnchor: "start",
   fontSize: "10",
   fill: "var(--ink-mute)"
-}, "E は 1/r で減衰")), /*#__PURE__*/React.createElement("p", {
+}, "E は 1/r で減衰"))), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "8px 4px 0",
     fontSize: "12px",
@@ -20154,6 +20213,8 @@ const YudoShougaiPage = ({
     border: "1px solid var(--rule)",
     borderRadius: "10px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [340]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 680 280",
   width: "100%",
@@ -20371,7 +20432,7 @@ const YudoShougaiPage = ({
   fontSize: "11.5",
   fontWeight: "600",
   fill: "var(--ink-soft)"
-}, "電流 → 磁界 → 相互インダクタンス M")), /*#__PURE__*/React.createElement("p", {
+}, "電流 → 磁界 → 相互インダクタンス M"))), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "8px 4px 0",
     fontSize: "12px",

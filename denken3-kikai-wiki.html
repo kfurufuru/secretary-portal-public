@@ -5876,32 +5876,115 @@ Object.assign(window, {
    Diagrams — SVG illustrations for the wiki
    ============================================================ */
 
+/* 左右に並べて比べる図を、PC では横並び・スマホでは縦積みにする（電力・機械・理論で同じ実装。直すときは3つとも直す）。
+   中身は1つの svg 要素のまま書き、表示範囲（viewBox）だけを切り口ごとに替えて並べる（絵は描き直さない）。
+   cuts: 切り口の x（viewBox の座標）。y: 縦の表示範囲 [y0, y1]（省略で全体）。
+   head／note: 図の上／下に出す1行（切り口をまたいでいた見出し・まとめを svg の外へ出したもの）。 */
+const SplitSvg = ({
+  cuts,
+  y,
+  head,
+  note,
+  children
+}) => {
+  const svg = React.Children.only(children);
+  const vbs = String(svg.props.viewBox).trim();
+  const [vx, vy, W, H] = vbs.split(/[\s,]+/).map(Number);
+  const [y0, y1] = y || [vy, vy + H];
+  const xs = [vx, ...cuts, vx + W];
+  // 元の svg の上限幅（maxWidth）を、パネルの幅の比で引き継ぐ。上限が無ければパネルにも付けない
+  const mw = svg.props.style && svg.props.style.maxWidth;
+  const ratio = typeof mw === "number" ? mw / W : typeof mw === "string" && /px$/.test(mw) ? parseFloat(mw) / W : null;
+  // 2枚目以降は <defs>（marker など）を外す。url(#id) は文書全体で1枚目の定義に解決される（id の重複を作らない）
+  const kids = i => i === 0 ? svg.props.children : React.Children.map(svg.props.children, c => c && c.type === "defs" ? null : c);
+  const line = {
+    fontSize: "12px",
+    fontWeight: 700,
+    color: "var(--ink)",
+    textAlign: "center",
+    lineHeight: 1.6
+  };
+  return /*#__PURE__*/React.createElement(React.Fragment, null, head && /*#__PURE__*/React.createElement("p", {
+    style: {
+      ...line,
+      margin: "0 0 6px"
+    }
+  }, head), /*#__PURE__*/React.createElement("div", {
+    role: "img",
+    "aria-label": svg.props["aria-label"],
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      alignItems: "flex-start"
+    }
+  }, xs.slice(0, -1).map((x0, i) => {
+    const w = xs[i + 1] - x0;
+    // 並べる基準は幅の 0.8 倍: 少し縮めても横に並べ、それより狭い幅（スマホ）で縦に積む
+    return React.cloneElement(svg, {
+      key: i,
+      viewBox: `${x0} ${y0} ${w} ${y1 - y0}`,
+      "data-split-viewbox": vbs,
+      "data-split-index": String(i),
+      role: undefined,
+      "aria-label": undefined,
+      "aria-hidden": "true",
+      focusable: "false",
+      style: {
+        display: "block",
+        flex: `1 1 ${Math.round(w * 0.8)}px`,
+        width: "100%",
+        maxWidth: ratio ? `${w * ratio}px` : undefined,
+        minWidth: 0,
+        height: "auto",
+        margin: 0
+      }
+    }, kids(i));
+  })), note && /*#__PURE__*/React.createElement("p", {
+    style: {
+      ...line,
+      margin: "6px 0 0"
+    }
+  }, note));
+};
 const DiagramFrame = ({
   title,
   caption,
   children,
   viewBox = "0 0 400 240",
-  maxWidth
-}) => /*#__PURE__*/React.createElement("div", {
-  className: "diagram"
-}, /*#__PURE__*/React.createElement("div", {
-  className: "diagram-scroll"
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: viewBox,
-  xmlns: "http://www.w3.org/2000/svg",
-  role: "img",
-  "aria-label": title || caption,
-  style: maxWidth ? {
-    width: "100%",
-    maxWidth
-  } : undefined,
-  fill: "none",
-  strokeWidth: "1.4",
-  strokeLinecap: "round",
-  strokeLinejoin: "round"
-}, children)), caption && /*#__PURE__*/React.createElement("div", {
-  className: "diagram-caption"
-}, "— ", caption, " —"));
+  maxWidth,
+  split,
+  splitY,
+  head,
+  note
+}) => {
+  const svgEl = /*#__PURE__*/React.createElement("svg", {
+    viewBox: viewBox,
+    xmlns: "http://www.w3.org/2000/svg",
+    role: "img",
+    "aria-label": title || caption,
+    style: maxWidth ? {
+      width: "100%",
+      maxWidth
+    } : undefined,
+    fill: "none",
+    strokeWidth: "1.4",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }, children);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "diagram"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "diagram-scroll"
+  }, split ? /*#__PURE__*/React.createElement(SplitSvg, {
+    cuts: split,
+    y: splitY,
+    head: head,
+    note: note
+  }, svgEl) : svgEl), caption && /*#__PURE__*/React.createElement("div", {
+    className: "diagram-caption"
+  }, "— ", caption, " —"));
+};
 
 /* Three-phase rotating field — 3 stator windings around a rotor */
 const RotatingFieldDiagram = () => /*#__PURE__*/React.createElement(DiagramFrame, {
@@ -25950,6 +26033,7 @@ const SynchronousPage = ({
 }, "水車発電機"), /*#__PURE__*/React.createElement("th", {
   scope: "col"
 }, "タービン発電機"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "原動機"), /*#__PURE__*/React.createElement("td", null, "水車"), /*#__PURE__*/React.createElement("td", null, "蒸気タービン")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "回転速度"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "小さい"), "（低速）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "大きい"), "（高速。2極で 3000/3600、4極で 1500/1800 min", /*#__PURE__*/React.createElement("sup", null, "−1"), "（50/60 Hz））")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "極数"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "多い"), "（大きくする）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "少ない"), "（2極・4極）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "回転子の形"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "突極形")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "円筒形（非突極形）"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "直径 / 軸方向長さ"), /*#__PURE__*/React.createElement("td", null, "軸方向に比べ直径が", /*#__PURE__*/React.createElement("strong", null, "大きい"), "（大径・短軸）"), /*#__PURE__*/React.createElement("td", null, "軸方向長さに比べ直径が", /*#__PURE__*/React.createElement("strong", null, "小さい"), "（小径・長軸）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "据付"), /*#__PURE__*/React.createElement("td", null, "立軸が多い"), /*#__PURE__*/React.createElement("td", null, "横軸が多い")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Term, null, "短絡比")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "大きい")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "小さい"), "（大小関係だけを使う。数値の範囲は教材によって書き方が違うので暗記しない）"))))), /*#__PURE__*/React.createElement(DiagramFrame, {
+  split: [235],
   caption: "図1.3.7  回転速度 → 極数 → 回転子の形。水車は低速・多極なので大径短軸の突極形、タービンは高速・少極なので遠心力の制約から小径長軸の円筒形になる。",
   viewBox: "0 0 470 230"
 }, /*#__PURE__*/React.createElement("text", {
@@ -38897,6 +38981,9 @@ const TransformerPage = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [240],
+  note: "電線で分岐しているのではなく、共通の鉄心磁束を介して電力が伝わる"
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 480 252",
   role: "img",
@@ -39112,13 +39199,7 @@ const TransformerPage = ({
   textAnchor: "middle",
   fontSize: "10.5",
   fill: "var(--ink-soft)"
-}, "3組とも同じ磁束 Φ を共有している"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "246",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-soft)"
-}, "電線で分岐しているのではなく、共通の鉄心磁束を介して電力が伝わる"))), /*#__PURE__*/React.createElement(Box, {
+}, "3組とも同じ磁束 Φ を共有している")))), /*#__PURE__*/React.createElement(Box, {
   kind: "warn",
   label: "「分岐回路」の絵で覚えない"
 }, /*#__PURE__*/React.createElement("p", {

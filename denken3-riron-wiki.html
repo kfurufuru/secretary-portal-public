@@ -3582,6 +3582,77 @@ window.subSupToLatex = subSupToLatex;
    MkDocs Material の !!! warn/tip/info/note を置き換えるボックス
    ============================================================ */
 
+/* 左右に並べて比べる図を、PC では横並び・スマホでは縦積みにする（電力・機械・理論で同じ実装。直すときは3つとも直す）。
+   中身は1つの svg 要素のまま書き、表示範囲（viewBox）だけを切り口ごとに替えて並べる（絵は描き直さない）。
+   cuts: 切り口の x（viewBox の座標）。y: 縦の表示範囲 [y0, y1]（省略で全体）。
+   head／note: 図の上／下に出す1行（切り口をまたいでいた見出し・まとめを svg の外へ出したもの）。 */
+const SplitSvg = ({
+  cuts,
+  y,
+  head,
+  note,
+  children
+}) => {
+  const svg = React.Children.only(children);
+  const vbs = String(svg.props.viewBox).trim();
+  const [vx, vy, W, H] = vbs.split(/[\s,]+/).map(Number);
+  const [y0, y1] = y || [vy, vy + H];
+  const xs = [vx, ...cuts, vx + W];
+  // 元の svg の上限幅（maxWidth）を、パネルの幅の比で引き継ぐ。上限が無ければパネルにも付けない
+  const mw = svg.props.style && svg.props.style.maxWidth;
+  const ratio = typeof mw === "number" ? mw / W : typeof mw === "string" && /px$/.test(mw) ? parseFloat(mw) / W : null;
+  // 2枚目以降は <defs>（marker など）を外す。url(#id) は文書全体で1枚目の定義に解決される（id の重複を作らない）
+  const kids = i => i === 0 ? svg.props.children : React.Children.map(svg.props.children, c => c && c.type === "defs" ? null : c);
+  const line = {
+    fontSize: "12px",
+    fontWeight: 700,
+    color: "var(--ink)",
+    textAlign: "center",
+    lineHeight: 1.6
+  };
+  return /*#__PURE__*/React.createElement(React.Fragment, null, head && /*#__PURE__*/React.createElement("p", {
+    style: {
+      ...line,
+      margin: "0 0 6px"
+    }
+  }, head), /*#__PURE__*/React.createElement("div", {
+    role: "img",
+    "aria-label": svg.props["aria-label"],
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      alignItems: "flex-start"
+    }
+  }, xs.slice(0, -1).map((x0, i) => {
+    const w = xs[i + 1] - x0;
+    // 並べる基準は幅の 0.8 倍: 少し縮めても横に並べ、それより狭い幅（スマホ）で縦に積む
+    return React.cloneElement(svg, {
+      key: i,
+      viewBox: `${x0} ${y0} ${w} ${y1 - y0}`,
+      "data-split-viewbox": vbs,
+      "data-split-index": String(i),
+      role: undefined,
+      "aria-label": undefined,
+      "aria-hidden": "true",
+      focusable: "false",
+      style: {
+        display: "block",
+        flex: `1 1 ${Math.round(w * 0.8)}px`,
+        width: "100%",
+        maxWidth: ratio ? `${w * ratio}px` : undefined,
+        minWidth: 0,
+        height: "auto",
+        margin: 0
+      }
+    }, kids(i));
+  })), note && /*#__PURE__*/React.createElement("p", {
+    style: {
+      ...line,
+      margin: "6px 0 0"
+    }
+  }, note));
+};
 const Callout = ({
   variant = "info",
   title,
@@ -5627,6 +5698,8 @@ const FlemingHandsFigure = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [350]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 374",
   role: "img",
@@ -6080,7 +6153,7 @@ const FlemingHandsFigure = ({
   fontSize: "13",
   fontWeight: "700",
   fill: "var(--ink)"
-}, "フレミングの右手の法則")), /*#__PURE__*/React.createElement("figcaption", {
+}, "フレミングの右手の法則"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -7985,6 +8058,8 @@ const ExamOperationPage = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [292]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 640 300",
   role: "img",
@@ -8230,7 +8305,7 @@ const ExamOperationPage = ({
 }, "━ v（電圧・基準）"), "\u3000", /*#__PURE__*/React.createElement("tspan", {
   fill: "var(--ok)",
   fontWeight: "700"
-}, "━ i（進みの電流）"))), /*#__PURE__*/React.createElement("figcaption", {
+}, "━ i（進みの電流）")))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -8679,6 +8754,8 @@ const ComplexPrimerPage = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [350]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 290",
   role: "img",
@@ -8966,7 +9043,7 @@ const ComplexPrimerPage = ({
   textAnchor: "middle",
   fontSize: "11.5",
   fill: "var(--ink-soft)"
-}, "a = r cosθ\u3000b = r sinθ")), /*#__PURE__*/React.createElement("figcaption", {
+}, "a = r cosθ\u3000b = r sinθ"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -9915,6 +9992,8 @@ const VectorOpsPage = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [350]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 300",
   role: "img",
@@ -10173,7 +10252,7 @@ const VectorOpsPage = ({
   fill: "var(--ink)"
 }, "結果は", /*#__PURE__*/React.createElement("tspan", {
   fill: "var(--danger)"
-}, "ベクトル"), "。平行なら面積ゼロ ⇒ 外積0")), /*#__PURE__*/React.createElement("figcaption", {
+}, "ベクトル"), "。平行なら面積ゼロ ⇒ 外積0"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -11260,6 +11339,10 @@ const CapacitorSphereFieldSvg = () => /*#__PURE__*/React.createElement("figure",
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [240],
+  y: [0, 260],
+  note: "電界が一様かどうかで、使える式（V＝E·d か 積分か）が変わる"
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 480 278",
   role: "img",
@@ -11548,13 +11631,7 @@ const CapacitorSphereFieldSvg = () => /*#__PURE__*/React.createElement("figure",
   y2: "246",
   stroke: "var(--rule)",
   strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "266",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "電界が一様かどうかで、使える式（V＝E·d か 積分か）が変わる")), /*#__PURE__*/React.createElement("figcaption", {
+}))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -11570,6 +11647,10 @@ const CapacitorDielectricBoundarySvg = () => /*#__PURE__*/React.createElement("f
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [240],
+  y: [0, 258],
+  note: "連続なのは「D の法線成分」と「E の接線成分」の2つだけ"
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 480 278",
   role: "img",
@@ -11842,13 +11923,7 @@ const CapacitorDielectricBoundarySvg = () => /*#__PURE__*/React.createElement("f
   fontSize: "11",
   fontWeight: "700",
   fill: "var(--ok)"
-}, "（法線成分は D で見れば連続）"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "266",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-soft)"
-}, "連続なのは「D の法線成分」と「E の接線成分」の2つだけ")), /*#__PURE__*/React.createElement("figcaption", {
+}, "（法線成分は D で見れば連続）"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -11986,6 +12061,8 @@ const CapacitorFormulasTab = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [350]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 300",
   role: "img",
@@ -12355,7 +12432,7 @@ const CapacitorFormulasTab = ({
   fontSize: "13",
   fontWeight: "700",
   fill: "var(--accent-ink)"
-}, "C = C₁ + C₂")), /*#__PURE__*/React.createElement("figcaption", {
+}, "C = C₁ + C₂"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -12746,6 +12823,8 @@ const CapacitorFormulasTab = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [350]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 300",
   role: "img",
@@ -13014,7 +13093,7 @@ const CapacitorFormulasTab = ({
   textAnchor: "middle",
   fontSize: "11",
   fill: "var(--ink-soft)"
-}, "電束密度 D は全区間で一定（D = εE）")), /*#__PURE__*/React.createElement("figcaption", {
+}, "電束密度 D は全区間で一定（D = εE）"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -13195,6 +13274,10 @@ const CapacitorExplainTab = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [250],
+  y: [28, 218],
+  head: "誘電体を入れると C は必ず ε_r 倍。残りは「何が固定か」で向きが決まる"
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 500 250",
   role: "img",
@@ -13206,13 +13289,7 @@ const CapacitorExplainTab = ({
     maxWidth: "500px",
     margin: "0 auto"
   }
-}, /*#__PURE__*/React.createElement("text", {
-  x: "250",
-  y: "20",
-  textAnchor: "middle",
-  fontSize: "12",
-  fill: "var(--ink-mute)"
-}, "誘電体を入れると C は必ず ε_r 倍。残りは「何が固定か」で向きが決まる"), /*#__PURE__*/React.createElement("rect", {
+}, /*#__PURE__*/React.createElement("rect", {
   x: "30",
   y: "34",
   width: "200",
@@ -13386,7 +13463,7 @@ const CapacitorExplainTab = ({
   y2: "174",
   stroke: "var(--rule)",
   strokeWidth: "1"
-})), /*#__PURE__*/React.createElement("figcaption", {
+}))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -14546,6 +14623,8 @@ const AcPowerFormulasTab = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [350]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 300",
   role: "img",
@@ -14804,7 +14883,7 @@ const AcPowerFormulasTab = ({
   textAnchor: "middle",
   fontSize: "11.5",
   fill: "var(--ink-soft)"
-}, "φ₂ < φ₁ ⇒ 電流が短くなる（線路損失も減る）")), /*#__PURE__*/React.createElement("figcaption", {
+}, "φ₂ < φ₁ ⇒ 電流が短くなる（線路損失も減る）"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -21306,6 +21385,10 @@ const TransistorFormulasTab = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [340],
+  y: [0, 336],
+  note: "覚え方：矢印が「中」を向けば N 形（Points iN）。N と P はキャリアも電圧も全部逆。"
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 680 372",
   role: "img",
@@ -21525,14 +21608,7 @@ const TransistorFormulasTab = ({
   y: "318",
   fontSize: "12",
   fill: "var(--ink-soft)"
-}, "⑤ ゲートは N形（チャネルの逆）"), /*#__PURE__*/React.createElement("text", {
-  x: "340",
-  y: "356",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "覚え方：矢印が「中」を向けば N 形（Points iN）。N と P はキャリアも電圧も全部逆。")), /*#__PURE__*/React.createElement("figcaption", {
+}, "⑤ ゲートは N形（チャネルの逆）"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -21700,6 +21776,8 @@ const TransistorFormulasTab = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [350]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 260",
   role: "img",
@@ -21894,7 +21972,7 @@ const TransistorFormulasTab = ({
   stroke: "var(--rule)",
   strokeWidth: "1",
   strokeDasharray: "4 4"
-})), /*#__PURE__*/React.createElement("figcaption", {
+}))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -22054,6 +22132,8 @@ const TransistorExplainTab = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [240]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 480 250",
   role: "img",
@@ -22301,7 +22381,7 @@ const TransistorExplainTab = ({
   fontSize: "0.72em"
 }, "G"), /*#__PURE__*/React.createElement("tspan", {
   dy: "-0.144em"
-}, "​"), " ≈ 0")), /*#__PURE__*/React.createElement("figcaption", {
+}, "​"), " ≈ 0"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -22713,6 +22793,8 @@ const TransistorExplainTab = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [220]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 440 180",
   role: "img",
@@ -22802,7 +22884,7 @@ const TransistorExplainTab = ({
   y: "128",
   fontSize: "10.5",
   fill: "var(--ok)"
-}, "出力")), /*#__PURE__*/React.createElement("figcaption", {
+}, "出力"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -24324,6 +24406,8 @@ const CoulombFieldFluxFlowSvg = () => /*#__PURE__*/React.createElement("figure",
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [280]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 560 284",
   role: "img",
@@ -24751,7 +24835,7 @@ const CoulombFieldFluxFlowSvg = () => /*#__PURE__*/React.createElement("figure",
   textAnchor: "middle",
   fontSize: "12",
   fill: "var(--ink)"
-}, "F = m′H [N]")), /*#__PURE__*/React.createElement("figcaption", {
+}, "F = m′H [N]"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: 12,
     color: "var(--ink-soft)",
@@ -26079,6 +26163,10 @@ const CoulombFieldExplainTab = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [250],
+  y: [0, 206],
+  note: "E = −dV/dr（電界＝電位の勾配）。電位が高い点 ≠ 電界が強い点"
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 500 240",
   role: "img",
@@ -26180,13 +26268,7 @@ const CoulombFieldExplainTab = ({
   y: "70",
   fontSize: "10",
   fill: "var(--ink-mute)"
-}, "E は V より速く減衰"), /*#__PURE__*/React.createElement("text", {
-  x: "250",
-  y: "222",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "E = −dV/dr（電界＝電位の勾配）。電位が高い点 ≠ 電界が強い点")), /*#__PURE__*/React.createElement("figcaption", {
+}, "E は V より速く減衰"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -30387,6 +30469,8 @@ const ElectromagneticForceFormulasTab = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [242, 480]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 720 260",
   role: "img",
@@ -30687,7 +30771,7 @@ const ElectromagneticForceFormulasTab = ({
   stroke: "var(--rule)",
   strokeWidth: "1",
   strokeDasharray: "4 4"
-})), /*#__PURE__*/React.createElement("figcaption", {
+}))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -31505,6 +31589,8 @@ const ElectromagneticForceFormulasTab = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [250]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 500 240",
   role: "img",
@@ -31670,7 +31756,7 @@ const ElectromagneticForceFormulasTab = ({
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--ink-mute)"
-}, "紙面の奥へ")), /*#__PURE__*/React.createElement("figcaption", {
+}, "紙面の奥へ"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -31877,6 +31963,8 @@ const ElectromagneticForceFormulasTab = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [203, 434]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 640 250",
   role: "img",
@@ -32102,7 +32190,7 @@ const ElectromagneticForceFormulasTab = ({
   stroke: "var(--rule)",
   strokeWidth: "1",
   strokeDasharray: "4 4"
-})), /*#__PURE__*/React.createElement("figcaption", {
+}))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -32184,6 +32272,8 @@ const ElectromagneticForceFormulasTab = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [320]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 640 300",
   role: "img",
@@ -32361,7 +32451,7 @@ const ElectromagneticForceFormulasTab = ({
   stroke: "var(--rule)",
   strokeWidth: "1",
   strokeDasharray: "4 4"
-})), /*#__PURE__*/React.createElement("figcaption", {
+}))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -32379,6 +32469,10 @@ const ElectromagneticForceFormulasTab = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [188, 426],
+  y: [24, 270],
+  head: "原理は1本：磁力線は電流に絡みつく（右ねじ）"
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 640 270",
   role: "img",
@@ -32411,13 +32505,6 @@ const ElectromagneticForceFormulasTab = ({
   d: "M0,0 L5,2 L0,4 z",
   fill: "var(--ink)"
 }))), /*#__PURE__*/React.createElement("text", {
-  x: "320",
-  y: "17",
-  textAnchor: "middle",
-  fontSize: "12.5",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "原理は1本：磁力線は電流に絡みつく（右ねじ）"), /*#__PURE__*/React.createElement("text", {
   x: "107",
   y: "44",
   textAnchor: "middle",
@@ -32632,7 +32719,7 @@ const ElectromagneticForceFormulasTab = ({
   stroke: "var(--rule)",
   strokeWidth: "1",
   strokeDasharray: "4 4"
-})), /*#__PURE__*/React.createElement("figcaption", {
+}))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -33646,6 +33733,8 @@ const ElectromagneticForceExplainTab = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [240]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 480 240",
   role: "img",
@@ -33779,7 +33868,7 @@ const ElectromagneticForceExplainTab = ({
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--ink-mute)"
-}, "磁束を補う＝同向きの磁界")), /*#__PURE__*/React.createElement("figcaption", {
+}, "磁束を補う＝同向きの磁界"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -35633,6 +35722,8 @@ const ElectromagneticForceExplainTab = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [320]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 640 270",
   role: "img",
@@ -35934,7 +36025,7 @@ const ElectromagneticForceExplainTab = ({
   textAnchor: "middle",
   fontSize: "10.5",
   fill: "var(--accent-ink)"
-}, "ランプ（斜めに増え、全部入ると 0）")), /*#__PURE__*/React.createElement("figcaption", {
+}, "ランプ（斜めに増え、全部入ると 0）"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -37909,6 +38000,9 @@ const ElectromagneticForceLearnTab = ({
     textAlign: "center",
     margin: "16px 0"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [240],
+  y: [80, 284]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 480 300",
   width: "100%",
@@ -38121,7 +38215,7 @@ const ElectromagneticForceLearnTab = ({
   fontSize: "11",
   textAnchor: "middle",
   fill: "var(--ink-soft)"
-}, "3辺が等しい ⇒ 合成も同じ大きさ")), /*#__PURE__*/React.createElement("div", {
+}, "3辺が等しい ⇒ 合成も同じ大きさ"))), /*#__PURE__*/React.createElement("div", {
   style: {
     fontSize: "11px",
     color: "var(--ink-soft)",
@@ -48777,6 +48871,10 @@ const AcBasicsFormulasTab = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [350],
+  y: [0, 270],
+  note: "|Z| = √(R² + X²)\u3000\u3000tan φ = X / R"
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 280",
   role: "img",
@@ -49036,14 +49134,7 @@ const AcBasicsFormulasTab = ({
   textAnchor: "middle",
   fontSize: "11.5",
   fill: "var(--ink-mute)"
-}, "コンデンサが勝っている（ICE）"), /*#__PURE__*/React.createElement("text", {
-  x: "350",
-  y: "272",
-  textAnchor: "middle",
-  fontSize: "12.5",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "|Z| = √(R² + X²)\u3000\u3000tan φ = X / R")), /*#__PURE__*/React.createElement("figcaption", {
+}, "コンデンサが勝っている（ICE）"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -51089,6 +51180,8 @@ const RlcResonanceExplainTab = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [305]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 720 285",
   role: "img",
@@ -51389,7 +51482,7 @@ const RlcResonanceExplainTab = ({
   textAnchor: "middle",
   fontSize: "11.5",
   fill: "var(--ink-soft)"
-}, "直列共振（Z最小・I最大の谷）と山谷が正反対")), /*#__PURE__*/React.createElement("figcaption", {
+}, "直列共振（Z最小・I最大の谷）と山谷が正反対"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -55833,6 +55926,11 @@ const InductanceExplainTab = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [320],
+  y: [28, 304],
+  head: "前提（両図共通）：電流の正方向を A→B と定義。いま電流は増加中（di/dt ＞ 0）",
+  note: "実際の極性はどちらも「A が＋」の1つだけ。違うのは ＋ の約束の置き方 ⇒ e = −v（同じ現象の2表記・巻線抵抗を無視した理想コイル）"
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 640 344",
   role: "img",
@@ -55854,14 +55952,7 @@ const InductanceExplainTab = ({
 }, /*#__PURE__*/React.createElement("path", {
   d: "M0,0 L5,2 L0,4 z",
   fill: "var(--ok)"
-}))), /*#__PURE__*/React.createElement("text", {
-  x: "320",
-  y: "22",
-  textAnchor: "middle",
-  fontSize: "12.5",
-  fontWeight: "700",
-  fill: "var(--ink)"
-}, "前提（両図共通）：電流の正方向を A→B と定義。いま電流は増加中（di/dt ＞ 0）"), /*#__PURE__*/React.createElement("line", {
+}))), /*#__PURE__*/React.createElement("line", {
   x1: "320",
   y1: "34",
   x2: "320",
@@ -56207,23 +56298,7 @@ const InductanceExplainTab = ({
   textAnchor: "middle",
   fontSize: "10.5",
   fill: "var(--ink-soft)"
-}, "約束（B が＋）と逆 → だから符号は −"), /*#__PURE__*/React.createElement("rect", {
-  x: "24",
-  y: "310",
-  width: "592",
-  height: "28",
-  rx: "6",
-  fill: "var(--bg)",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "320",
-  y: "329",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fontWeight: "700",
-  fill: "var(--ink)"
-}, "実際の極性はどちらも「A が＋」の1つだけ。違うのは ＋ の約束の置き方 ⇒ e = −v（同じ現象の2表記・巻線抵抗を無視した理想コイル）")), /*#__PURE__*/React.createElement("figcaption", {
+}, "約束（B が＋）と逆 → だから符号は −"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -63306,6 +63381,8 @@ const MeasurementWaveformErrSvg = () => /*#__PURE__*/React.createElement("figure
   style: {
     margin: "16px 0"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [240]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 480 220",
   role: "img",
@@ -63389,7 +63466,7 @@ const MeasurementWaveformErrSvg = () => /*#__PURE__*/React.createElement("figure
   fontSize: "11",
   fontWeight: "700",
   fill: "var(--danger)"
-}, "約11%過大表示 ✗")), /*#__PURE__*/React.createElement("figcaption", {
+}, "約11%過大表示 ✗"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -65563,6 +65640,8 @@ const ElectronMotionForceFrameSVG = () => /*#__PURE__*/React.createElement("div"
     textAlign: "center",
     margin: "16px 0"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [235]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 470 250",
   width: "100%",
@@ -65781,7 +65860,7 @@ const ElectronMotionForceFrameSVG = () => /*#__PURE__*/React.createElement("div"
   fontSize: "11",
   fill: "var(--ink-soft)",
   textAnchor: "middle"
-}, "＝電子は止まって見える")), /*#__PURE__*/React.createElement("div", {
+}, "＝電子は止まって見える"))), /*#__PURE__*/React.createElement("div", {
   style: {
     fontSize: "11px",
     color: "var(--ink-soft)",
@@ -65867,6 +65946,8 @@ const ElectronMotionContrastSVG = () => /*#__PURE__*/React.createElement("div", 
     textAlign: "center",
     margin: "16px 0"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [220]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 440 210",
   width: "100%",
@@ -66057,7 +66138,7 @@ const ElectronMotionContrastSVG = () => /*#__PURE__*/React.createElement("div", 
   fontSize: "11",
   fill: "var(--ink-soft)",
   textAnchor: "middle"
-}, "直角の力 → 円運動（速さ一定）")), /*#__PURE__*/React.createElement("div", {
+}, "直角の力 → 円運動（速さ一定）"))), /*#__PURE__*/React.createElement("div", {
   style: {
     fontSize: "11px",
     color: "var(--ink-soft)",
@@ -69860,6 +69941,8 @@ const BridgeTheveninSvg = () => /*#__PURE__*/React.createElement("figure", {
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [230]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 460 200",
   role: "img",
@@ -69970,7 +70053,7 @@ const BridgeTheveninSvg = () => /*#__PURE__*/React.createElement("figure", {
   fontSize: "13",
   fontWeight: "700",
   fill: "var(--accent-ink)"
-}, "Ig = Vth / (Rth + Rg)")), /*#__PURE__*/React.createElement("figcaption", {
+}, "Ig = Vth / (Rth + Rg)"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -74840,6 +74923,10 @@ const SemiconductorExplainTab = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [350],
+  y: [0, 258],
+  note: "同じ I・同じ B でも、キャリアの符号が違うとホール電圧の極性が逆になる"
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 290",
   role: "img",
@@ -75031,14 +75118,7 @@ const SemiconductorExplainTab = ({
   stroke: "var(--rule)",
   strokeWidth: "1",
   strokeDasharray: "4 4"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "350",
-  y: "278",
-  textAnchor: "middle",
-  fontSize: "12",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "同じ I・同じ B でも、キャリアの符号が違うとホール電圧の極性が逆になる")), /*#__PURE__*/React.createElement("figcaption", {
+}))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -76330,6 +76410,8 @@ const CircuitPatternsPage = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [240]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 480 190",
   role: "img",
@@ -76550,7 +76632,7 @@ const CircuitPatternsPage = ({
   fontSize: "13",
   fontWeight: "700",
   fill: "var(--ink)"
-}, "1/Z = 1/Z₁ + 1/Z₂ + …")), /*#__PURE__*/React.createElement("figcaption", {
+}, "1/Z = 1/Z₁ + 1/Z₂ + …"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
