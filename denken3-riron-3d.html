@@ -3897,6 +3897,10 @@ function buildDC(g){
   wr(B, eB, br, M.copper, .015); wr(eC, C, br, M.copper, .015);
   const gal = dial(br, 0, .3, 0, GR); gal.rotation.x = GT;
   const bat = mesh(new THREE.BoxGeometry(.5,.5,.35), M.steelDark, br, 0, .35, -1.45);
+  /* 電源の極性: A 側（左）が＋、D 側（右）が−（brModel は Va=E、Vd=0）。印が無いと、光点が流れる向きを電位から確かめられなかった（2026-11-07 監査） */
+  { const pm = std({color:0xffffff, emissive:0x666666, roughness:.4});
+    mesh(new THREE.BoxGeometry(.14,.02,.035), pm, br, -.13, .61, -1.45); mesh(new THREE.BoxGeometry(.035,.02,.14), pm, br, -.13, .61, -1.45);   // ＋
+    mesh(new THREE.BoxGeometry(.14,.02,.035), pm, br, .13, .61, -1.45); }                                                                     // −
   wr(A, P3(-1.6,.25,-1.45), br); wr(P3(-1.6,.25,-1.45), P3(-.25,.25,-1.45), br); wr(P3(.25,.25,-1.45), P3(1.6,.25,-1.45), br); wr(P3(1.6,.25,-1.45), D, br);
   const fb = rrPath(br, [B, eB, eC, C], 6, RR.dotI);
   const mp = new THREE.Group(); g.add(mp);
@@ -3912,7 +3916,7 @@ function buildDC(g){
     {obj:bat2, t:'電源 E', c:'#3B5A73'}, {obj:rint, t:'内部抵抗 r', c:'#D9C7A0'}, {obj:load, t:'負荷抵抗 RL', c:'#D9C7A0'}, {obj:lamp, t:'負荷の電力（明るさ）', c:'#FFD060'},
   ] : [
     {obj:r1, t:'R1', c:'#D9C7A0'}, {obj:r2, t:'R2', c:'#D9C7A0'}, {obj:r3, t:'R3', c:'#D9C7A0'}, {obj:r4, t:'R4', c:'#D9C7A0'},
-    {obj:gal, t:'検流計（平衡すると 0）', c:'#F4F1E8'}, {obj:bat, t:'電源 E', c:'#3B5A73'},
+    {obj:gal, t:'検流計（平衡すると 0）', c:'#F4F1E8'}, {obj:bat, t:'電源 E（＋側につながる節点が高い電位。電流は＋から R1・R2 へ出る）', c:'#3B5A73'},
   ];
 }
 function animDC(g, t, st, dt){
