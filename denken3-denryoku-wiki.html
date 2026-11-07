@@ -2946,6 +2946,7 @@ const FormulaCard = ({
 const SplitSvg = ({
   cuts,
   y,
+  cells,
   head,
   note,
   children
@@ -2954,7 +2955,25 @@ const SplitSvg = ({
   const vbs = String(svg.props.viewBox).trim();
   const [vx, vy, W, H] = vbs.split(/[\s,]+/).map(Number);
   const [y0, y1] = y || [vy, vy + H];
-  const xs = [vx, ...cuts, vx + W];
+  // cells: [x, y, 幅, 高さ] の並び（2×2 や「図＋凡例」のように縦横に切る図）。省略時は cuts で縦に切る
+  const boxes = cells || [vx, ...cuts].map((x0, i, a) => [x0, y0, (i + 1 < a.length ? a[i + 1] : vx + W) - x0, y1 - y0]);
+  // 置き場の幅を測り、図の幅の 0.8 倍に届かないときだけ切って縦に積む。届くときは元の svg を1枚そのまま描く
+  const ref = React.useRef(null);
+  const [narrow, setNarrow] = React.useState(false);
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const check = () => setNarrow(el.getBoundingClientRect().width < W * 0.8);
+    check();
+    // ResizeObserver が無い環境では window の resize で測り直す（画面の回転にも追従する）
+    if (!window.ResizeObserver) {
+      window.addEventListener("resize", check);
+      return () => window.removeEventListener("resize", check);
+    }
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [W]);
   // 元の svg の上限幅（maxWidth）を、パネルの幅の比で引き継ぐ。上限が無ければパネルにも付けない
   const mw = svg.props.style && svg.props.style.maxWidth;
   const ratio = typeof mw === "number" ? mw / W : typeof mw === "string" && /px$/.test(mw) ? parseFloat(mw) / W : null;
@@ -2967,12 +2986,22 @@ const SplitSvg = ({
     textAlign: "center",
     lineHeight: 1.6
   };
+  // 幅が足りるときも、y／cells で詰めた縦の範囲（全セルを包む範囲）は効かせる（空いた帯を PC でも出さない）
+  const fx0 = Math.min(...boxes.map(b => b[0])),
+    fy0 = Math.min(...boxes.map(b => b[1]));
+  const fx1 = Math.max(...boxes.map(b => b[0] + b[2])),
+    fy1 = Math.max(...boxes.map(b => b[1] + b[3]));
+  const whole = y || cells ? React.cloneElement(svg, {
+    viewBox: `${fx0} ${fy0} ${fx1 - fx0} ${fy1 - fy0}`
+  }) : svg;
   return /*#__PURE__*/React.createElement(React.Fragment, null, head && /*#__PURE__*/React.createElement("p", {
     style: {
       ...line,
       margin: "0 0 6px"
     }
   }, head), /*#__PURE__*/React.createElement("div", {
+    ref: ref
+  }, !narrow ? whole : /*#__PURE__*/React.createElement("div", {
     role: "img",
     "aria-label": svg.props["aria-label"],
     style: {
@@ -2981,29 +3010,25 @@ const SplitSvg = ({
       justifyContent: "center",
       alignItems: "flex-start"
     }
-  }, xs.slice(0, -1).map((x0, i) => {
-    const w = xs[i + 1] - x0;
-    // 並べる基準は幅の 0.8 倍: 少し縮めても横に並べ、それより狭い幅（スマホ）で縦に積む
-    return React.cloneElement(svg, {
-      key: i,
-      viewBox: `${x0} ${y0} ${w} ${y1 - y0}`,
-      "data-split-viewbox": vbs,
-      "data-split-index": String(i),
-      role: undefined,
-      "aria-label": undefined,
-      "aria-hidden": "true",
-      focusable: "false",
-      style: {
-        display: "block",
-        flex: `1 1 ${Math.round(w * 0.8)}px`,
-        width: "100%",
-        maxWidth: ratio ? `${w * ratio}px` : undefined,
-        minWidth: 0,
-        height: "auto",
-        margin: 0
-      }
-    }, kids(i));
-  })), note && /*#__PURE__*/React.createElement("p", {
+  }, boxes.map(([x0, by, w, bh], i) => React.cloneElement(svg, {
+    key: i,
+    viewBox: `${x0} ${by} ${w} ${bh}`,
+    "data-split-viewbox": vbs,
+    "data-split-index": String(i),
+    role: undefined,
+    "aria-label": undefined,
+    "aria-hidden": "true",
+    focusable: "false",
+    style: {
+      display: "block",
+      flex: `1 1 ${Math.round(w)}px`,
+      width: "100%",
+      maxWidth: ratio ? `${w * ratio}px` : undefined,
+      minWidth: 0,
+      height: "auto",
+      margin: 0
+    }
+  }, kids(i))))), note && /*#__PURE__*/React.createElement("p", {
     style: {
       ...line,
       margin: "6px 0 0"
@@ -12151,10 +12176,18 @@ const HenatsukiPage = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [246, 478],
+  y: [14, 330],
+  note: /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--accent-ink)"
+    }
+  }, "可否は角変位で決まる。Yd1 と Dy11 は60°差で不可、Y-Y と Yd1 の30°差でも不可")
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 700 374",
   role: "img",
-  "aria-label": "三相結線の図。左はY結線とデルタ結線の結線形で、Y結線は中性点が存在し接地するかどうかは別に選べること、デルタ結線は中性点がなく第3高調波を循環して吸収することを示す。中央は位相変位で、一次側と二次側のどちらも線間電圧どうしを比べている。一次側の3本は上からUV、右下がVW、左下がWUで、相順はUVからVWへ、VWからWUへと各120度ずつ遅れる。標準結線のY-デルタでは二次側の線間電圧が一次側より30度遅れる。右はデルタ結線の1台を一次側も二次側も切り離して開放デルタにしたV結線で、三相出力は1台容量の√3倍、利用率86.6%は残り2台を分母とし、出力比57.7%はデルタ3台を分母とする。下の帯は、並行運転できない理由が角変位の不一致であることを示す。",
+  "aria-label": "三相結線の図。左はY結線とデルタ結線の結線形で、Y結線は中性点が存在し接地するかどうかは別に選べること、デルタ結線は中性点がなく第3高調波を循環して吸収することを示す。中央は位相変位で、一次側と二次側のどちらも線間電圧どうしを比べている。一次側の3本は上からUV、右下がVW、左下がWUで、相順はUVからVWへ、VWからWUへと各120度ずつ遅れる。標準結線のY-デルタでは二次側の線間電圧が一次側より30度遅れる。右はデルタ結線の1台を一次側も二次側も切り離して開放デルタにしたV結線で、三相出力は1台容量の√3倍、利用率86.6%は残り2台を分母とし、出力比57.7%はデルタ3台を分母とする。",
   style: {
     display: "block",
     width: "100%",
@@ -12565,23 +12598,7 @@ const HenatsukiPage = ({
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--warn)"
-}, "違うのは分母だけ（H30問12型の罠）"), /*#__PURE__*/React.createElement("rect", {
-  x: "20",
-  y: "334",
-  width: "660",
-  height: "30",
-  rx: "6",
-  fill: "var(--accent-soft)",
-  stroke: "var(--accent)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "350",
-  y: "353",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "600",
-  fill: "var(--accent-ink)"
-}, "可否は角変位で決まる。Yd1 と Dy11 は60°差で不可、Y-Y と Yd1 の30°差でも不可")), /*#__PURE__*/React.createElement("figcaption", {
+}, "違うのは分母だけ（H30問12型の罠）"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",

@@ -5883,6 +5883,7 @@ Object.assign(window, {
 const SplitSvg = ({
   cuts,
   y,
+  cells,
   head,
   note,
   children
@@ -5891,7 +5892,25 @@ const SplitSvg = ({
   const vbs = String(svg.props.viewBox).trim();
   const [vx, vy, W, H] = vbs.split(/[\s,]+/).map(Number);
   const [y0, y1] = y || [vy, vy + H];
-  const xs = [vx, ...cuts, vx + W];
+  // cells: [x, y, 幅, 高さ] の並び（2×2 や「図＋凡例」のように縦横に切る図）。省略時は cuts で縦に切る
+  const boxes = cells || [vx, ...cuts].map((x0, i, a) => [x0, y0, (i + 1 < a.length ? a[i + 1] : vx + W) - x0, y1 - y0]);
+  // 置き場の幅を測り、図の幅の 0.8 倍に届かないときだけ切って縦に積む。届くときは元の svg を1枚そのまま描く
+  const ref = React.useRef(null);
+  const [narrow, setNarrow] = React.useState(false);
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const check = () => setNarrow(el.getBoundingClientRect().width < W * 0.8);
+    check();
+    // ResizeObserver が無い環境では window の resize で測り直す（画面の回転にも追従する）
+    if (!window.ResizeObserver) {
+      window.addEventListener("resize", check);
+      return () => window.removeEventListener("resize", check);
+    }
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [W]);
   // 元の svg の上限幅（maxWidth）を、パネルの幅の比で引き継ぐ。上限が無ければパネルにも付けない
   const mw = svg.props.style && svg.props.style.maxWidth;
   const ratio = typeof mw === "number" ? mw / W : typeof mw === "string" && /px$/.test(mw) ? parseFloat(mw) / W : null;
@@ -5904,12 +5923,22 @@ const SplitSvg = ({
     textAlign: "center",
     lineHeight: 1.6
   };
+  // 幅が足りるときも、y／cells で詰めた縦の範囲（全セルを包む範囲）は効かせる（空いた帯を PC でも出さない）
+  const fx0 = Math.min(...boxes.map(b => b[0])),
+    fy0 = Math.min(...boxes.map(b => b[1]));
+  const fx1 = Math.max(...boxes.map(b => b[0] + b[2])),
+    fy1 = Math.max(...boxes.map(b => b[1] + b[3]));
+  const whole = y || cells ? React.cloneElement(svg, {
+    viewBox: `${fx0} ${fy0} ${fx1 - fx0} ${fy1 - fy0}`
+  }) : svg;
   return /*#__PURE__*/React.createElement(React.Fragment, null, head && /*#__PURE__*/React.createElement("p", {
     style: {
       ...line,
       margin: "0 0 6px"
     }
   }, head), /*#__PURE__*/React.createElement("div", {
+    ref: ref
+  }, !narrow ? whole : /*#__PURE__*/React.createElement("div", {
     role: "img",
     "aria-label": svg.props["aria-label"],
     style: {
@@ -5918,29 +5947,25 @@ const SplitSvg = ({
       justifyContent: "center",
       alignItems: "flex-start"
     }
-  }, xs.slice(0, -1).map((x0, i) => {
-    const w = xs[i + 1] - x0;
-    // 並べる基準は幅の 0.8 倍: 少し縮めても横に並べ、それより狭い幅（スマホ）で縦に積む
-    return React.cloneElement(svg, {
-      key: i,
-      viewBox: `${x0} ${y0} ${w} ${y1 - y0}`,
-      "data-split-viewbox": vbs,
-      "data-split-index": String(i),
-      role: undefined,
-      "aria-label": undefined,
-      "aria-hidden": "true",
-      focusable: "false",
-      style: {
-        display: "block",
-        flex: `1 1 ${Math.round(w * 0.8)}px`,
-        width: "100%",
-        maxWidth: ratio ? `${w * ratio}px` : undefined,
-        minWidth: 0,
-        height: "auto",
-        margin: 0
-      }
-    }, kids(i));
-  })), note && /*#__PURE__*/React.createElement("p", {
+  }, boxes.map(([x0, by, w, bh], i) => React.cloneElement(svg, {
+    key: i,
+    viewBox: `${x0} ${by} ${w} ${bh}`,
+    "data-split-viewbox": vbs,
+    "data-split-index": String(i),
+    role: undefined,
+    "aria-label": undefined,
+    "aria-hidden": "true",
+    focusable: "false",
+    style: {
+      display: "block",
+      flex: `1 1 ${Math.round(w)}px`,
+      width: "100%",
+      maxWidth: ratio ? `${w * ratio}px` : undefined,
+      minWidth: 0,
+      height: "auto",
+      margin: 0
+    }
+  }, kids(i))))), note && /*#__PURE__*/React.createElement("p", {
     style: {
       ...line,
       margin: "6px 0 0"
@@ -20394,104 +20419,117 @@ const DCMachinePage = ({
   }
 }, "安定"), "：電流が変わっても電圧はあまり動かない"))))), /*#__PURE__*/React.createElement(DiagramFrame, {
   caption: "図1.1.5  直流発電機の外部特性。直巻は無負荷で電圧がほぼゼロ、不飽和域で急上昇し、飽和域に入ってようやく平坦になる（＝飽和しているほうが電圧が安定する）。",
-  viewBox: "0 0 470 250"
+  viewBox: "0 0 300 236",
+  maxWidth: "420px"
 }, /*#__PURE__*/React.createElement("line", {
-  x1: "62",
+  x1: "30",
   y1: "205",
-  x2: "450",
+  x2: "290",
   y2: "205",
   stroke: "var(--ink-soft)",
   strokeWidth: "1.5"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "62",
+  x1: "30",
   y1: "205",
-  x2: "62",
+  x2: "30",
   y2: "28",
   stroke: "var(--ink-soft)",
   strokeWidth: "1.5"
 }), /*#__PURE__*/React.createElement("polygon", {
-  points: "450,205 442,201 442,209",
+  points: "290,205 282,201 282,209",
   fill: "var(--ink-soft)"
 }), /*#__PURE__*/React.createElement("polygon", {
-  points: "62,28 58,36 66,36",
+  points: "30,28 26,36 34,36",
   fill: "var(--ink-soft)"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "452",
+  x: "292",
   y: "220",
   fontSize: "11",
   textAnchor: "end",
   fill: "var(--ink)"
 }, "負荷電流 I"), /*#__PURE__*/React.createElement("text", {
-  x: "62",
+  x: "8",
   y: "22",
   fontSize: "11",
-  textAnchor: "middle",
   fill: "var(--ink)"
 }, "端子電圧 V"), /*#__PURE__*/React.createElement("path", {
-  d: "M 70 92 L 440 118",
+  d: "M 35.4 92 L 283.3 118",
   fill: "none",
   stroke: "var(--accent)",
   strokeWidth: "2.4"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "446",
-  y: "100",
+  x: "290",
+  y: "134",
   textAnchor: "end",
   fontSize: "11",
   fontWeight: "700",
   fill: "var(--accent-ink)"
-}, "分巻・他励（ほぼ一定・わずかに下降）"), /*#__PURE__*/React.createElement("path", {
-  d: "M 66 200 Q 150 196 210 120 Q 250 72 300 62 Q 370 55 440 72",
+}, "分巻・他励"), /*#__PURE__*/React.createElement("text", {
+  x: "290",
+  y: "148",
+  textAnchor: "end",
+  fontSize: "11",
+  fontWeight: "700",
+  fill: "var(--accent-ink)"
+}, "（ほぼ一定・わずかに下降）"), /*#__PURE__*/React.createElement("path", {
+  d: "M 32.7 200 Q 89 196 129.2 120 Q 156 72 189.5 62 Q 236.4 55 283.3 72",
   fill: "none",
   stroke: "var(--danger)",
   strokeWidth: "2.6"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "440",
+  x: "283.3",
   y: "52",
   textAnchor: "end",
   fontSize: "11",
   fontWeight: "700",
   fill: "var(--danger)"
 }, "直巻"), /*#__PURE__*/React.createElement("line", {
-  x1: "210",
+  x1: "129.2",
   y1: "40",
-  x2: "210",
+  x2: "129.2",
   y2: "205",
   stroke: "var(--rule)",
   strokeWidth: "1.2",
   strokeDasharray: "5 4"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "136",
+  x: "78",
   y: "52",
   textAnchor: "middle",
   fontSize: "10",
   fontWeight: "700",
   fill: "var(--danger)"
 }, "不飽和域"), /*#__PURE__*/React.createElement("text", {
-  x: "136",
+  x: "78",
   y: "66",
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--ink-soft)"
-}, "φ∝I で急上昇＝不安定"), /*#__PURE__*/React.createElement("text", {
-  x: "330",
-  y: "140",
+}, "φ∝I で急上昇"), /*#__PURE__*/React.createElement("text", {
+  x: "78",
+  y: "80",
+  textAnchor: "middle",
+  fontSize: "10",
+  fill: "var(--ink-soft)"
+}, "＝不安定"), /*#__PURE__*/React.createElement("text", {
+  x: "210",
+  y: "174",
   textAnchor: "middle",
   fontSize: "10",
   fontWeight: "700",
   fill: "var(--ok)"
 }, "飽和域"), /*#__PURE__*/React.createElement("text", {
-  x: "330",
-  y: "154",
+  x: "210",
+  y: "188",
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--ink-soft)"
 }, "φ ほぼ一定＝電圧が安定"), /*#__PURE__*/React.createElement("circle", {
-  cx: "66",
+  cx: "32.7",
   cy: "200",
   r: "3.4",
   fill: "var(--danger)"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "74",
+  x: "36",
   y: "228",
   fontSize: "10",
   fill: "var(--ink-mute)"
@@ -34683,60 +34721,67 @@ const TransformerPage = ({
     padding: "12px 8px 8px"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 480 300",
+  viewBox: "0 0 340 352",
   role: "img",
   "aria-label": "24時間タイムラインの比較図。定格容量100キロボルトアンペアの変圧器で、0時から8時は80キロボルトアンペアの負荷運転、8時から14時は40キロボルトアンペアの負荷運転、14時から19時は無負荷通電（電源は入ったまま負荷ゼロ）、19時から24時は電源切離しとする例。出力の帯は負荷運転中だけ現れ無負荷以降はゼロ。鉄損の帯は0時から19時の通電中ずっと同じ高さで連続し、電源切離し後はゼロ。銅損の帯は負荷運転中だけ現れ、高さは負荷率の2乗に比例して0.64対0.16すなわち4倍の差がつき、無負荷通電中はほぼゼロ、電源切離し中はゼロ",
   style: {
     display: "block",
     width: "100%",
     height: "auto",
-    maxWidth: "480px",
+    maxWidth: "440px",
     margin: "0 auto"
   }
 }, /*#__PURE__*/React.createElement("text", {
-  x: "240",
+  x: "170",
   y: "16",
   textAnchor: "middle",
   fontSize: "12",
   fontWeight: "700",
   fill: "var(--ink)"
-}, "例：定格 100 kV·A・19時間通電（うち14時間が負荷運転）・残り5時間は電源切離し"), /*#__PURE__*/React.createElement("text", {
-  x: "68",
-  y: "45",
+}, "例：定格 100 kV·A・19時間通電"), /*#__PURE__*/React.createElement("text", {
+  x: "170",
+  y: "32",
+  textAnchor: "middle",
+  fontSize: "12",
+  fontWeight: "700",
+  fill: "var(--ink)"
+}, "（うち14時間が負荷運転）・残り5時間は電源切離し"), /*#__PURE__*/React.createElement("text", {
+  x: "40",
+  y: "63",
   textAnchor: "end",
   fontSize: "11",
   fill: "var(--ink-mute)"
 }, "状態"), /*#__PURE__*/React.createElement("rect", {
-  x: "74",
-  y: "30",
-  width: "129",
+  x: "44",
+  y: "48",
+  width: "95.1",
   height: "22",
   rx: "3",
   fill: "var(--accent-soft)",
   stroke: "var(--accent)",
   strokeWidth: "1"
 }), /*#__PURE__*/React.createElement("rect", {
-  x: "203",
-  y: "30",
-  width: "97",
+  x: "139.1",
+  y: "48",
+  width: "71.5",
   height: "22",
   rx: "3",
   fill: "var(--accent-soft)",
   stroke: "var(--accent)",
   strokeWidth: "1"
 }), /*#__PURE__*/React.createElement("rect", {
-  x: "300",
-  y: "30",
-  width: "81",
+  x: "210.6",
+  y: "48",
+  width: "59.7",
   height: "22",
   rx: "3",
   fill: "var(--warn-soft)",
   stroke: "var(--warn)",
   strokeWidth: "1"
 }), /*#__PURE__*/React.createElement("rect", {
-  x: "381",
-  y: "30",
-  width: "81",
+  x: "270.3",
+  y: "48",
+  width: "59.7",
   height: "22",
   rx: "3",
   fill: "var(--bg-sunken)",
@@ -34744,272 +34789,278 @@ const TransformerPage = ({
   strokeWidth: "1",
   strokeDasharray: "4 3"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "138",
-  y: "45",
+  x: "91.2",
+  y: "63",
   textAnchor: "middle",
   fontSize: "10.5",
   fill: "var(--ink)"
 }, "負荷 80kV·A"), /*#__PURE__*/React.createElement("text", {
-  x: "251",
-  y: "45",
+  x: "174.5",
+  y: "63",
   textAnchor: "middle",
   fontSize: "10.5",
   fill: "var(--ink)"
 }, "負荷 40kV·A"), /*#__PURE__*/React.createElement("text", {
-  x: "340",
-  y: "45",
+  x: "240.1",
+  y: "63",
   textAnchor: "middle",
   fontSize: "10.5",
   fontWeight: "700",
   fill: "var(--ink)"
 }, "無負荷通電"), /*#__PURE__*/React.createElement("text", {
-  x: "421",
-  y: "45",
+  x: "299.8",
+  y: "63",
   textAnchor: "middle",
   fontSize: "10.5",
   fill: "var(--ink-mute)"
 }, "電源切離し"), /*#__PURE__*/React.createElement("line", {
-  x1: "203",
-  y1: "30",
-  x2: "203",
-  y2: "202",
+  x1: "139.1",
+  y1: "48",
+  x2: "139.1",
+  y2: "220",
   stroke: "var(--rule)",
   strokeWidth: "1",
   strokeDasharray: "3 3"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "300",
-  y1: "30",
-  x2: "300",
-  y2: "202",
+  x1: "210.6",
+  y1: "48",
+  x2: "210.6",
+  y2: "220",
   stroke: "var(--rule)",
   strokeWidth: "1",
   strokeDasharray: "3 3"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "381",
-  y1: "30",
-  x2: "381",
-  y2: "202",
+  x1: "270.3",
+  y1: "48",
+  x2: "270.3",
+  y2: "220",
   stroke: "var(--rule)",
   strokeWidth: "1",
   strokeDasharray: "3 3"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "68",
-  y: "100",
+  x: "40",
+  y: "118",
   textAnchor: "end",
   fontSize: "11.5",
   fill: "var(--ink-soft)"
 }, "出力"), /*#__PURE__*/React.createElement("line", {
-  x1: "74",
-  y1: "104",
-  x2: "462",
-  y2: "104",
+  x1: "44",
+  y1: "122",
+  x2: "330",
+  y2: "122",
   stroke: "var(--rule)",
   strokeWidth: "1"
 }), /*#__PURE__*/React.createElement("rect", {
-  x: "74",
-  y: "74",
-  width: "129",
+  x: "44",
+  y: "92",
+  width: "95.1",
   height: "30",
   fill: "var(--accent)"
 }), /*#__PURE__*/React.createElement("rect", {
-  x: "203",
-  y: "87",
-  width: "97",
-  height: "17",
+  x: "139.1",
+  y: "107",
+  width: "71.5",
+  height: "15",
   fill: "var(--accent)"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "340",
-  y: "100",
+  x: "240.1",
+  y: "118",
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--ink-mute)"
 }, "0"), /*#__PURE__*/React.createElement("text", {
-  x: "421",
-  y: "100",
+  x: "299.8",
+  y: "118",
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--ink-mute)"
 }, "0"), /*#__PURE__*/React.createElement("text", {
-  x: "68",
-  y: "144",
+  x: "40",
+  y: "162",
   textAnchor: "end",
   fontSize: "11.5",
   fill: "var(--ink-soft)"
 }, "鉄損"), /*#__PURE__*/React.createElement("line", {
-  x1: "74",
-  y1: "148",
-  x2: "462",
-  y2: "148",
+  x1: "44",
+  y1: "166",
+  x2: "330",
+  y2: "166",
   stroke: "var(--rule)",
   strokeWidth: "1"
 }), /*#__PURE__*/React.createElement("rect", {
-  x: "74",
-  y: "134",
-  width: "307",
+  x: "44",
+  y: "152",
+  width: "226.3",
   height: "14",
   fill: "var(--warn)"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "421",
-  y: "144",
+  x: "299.8",
+  y: "162",
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--ink-mute)"
 }, "0"), /*#__PURE__*/React.createElement("text", {
-  x: "227",
-  y: "128",
+  x: "156.8",
+  y: "146",
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--warn)"
 }, "通電中はずっと同じ高さ（負荷によらない）"), /*#__PURE__*/React.createElement("text", {
-  x: "68",
-  y: "192",
+  x: "40",
+  y: "210",
   textAnchor: "end",
   fontSize: "11.5",
   fill: "var(--ink-soft)"
 }, "銅損"), /*#__PURE__*/React.createElement("line", {
-  x1: "74",
-  y1: "196",
-  x2: "462",
-  y2: "196",
+  x1: "44",
+  y1: "214",
+  x2: "330",
+  y2: "214",
   stroke: "var(--rule)",
   strokeWidth: "1"
 }), /*#__PURE__*/React.createElement("rect", {
-  x: "74",
-  y: "172",
-  width: "129",
+  x: "44",
+  y: "190",
+  width: "95.1",
   height: "24",
   fill: "var(--danger)"
 }), /*#__PURE__*/React.createElement("rect", {
-  x: "203",
-  y: "190",
-  width: "97",
+  x: "139.1",
+  y: "208",
+  width: "71.5",
   height: "6",
   fill: "var(--danger)"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "138",
-  y: "168",
-  textAnchor: "middle",
-  fontSize: "10",
-  fill: "var(--danger)"
-}, "x²=0.64"), /*#__PURE__*/React.createElement("text", {
-  x: "251",
+  x: "91.2",
   y: "186",
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--danger)"
+}, "x²=0.64"), /*#__PURE__*/React.createElement("text", {
+  x: "174.5",
+  y: "204",
+  textAnchor: "middle",
+  fontSize: "10",
+  fill: "var(--danger)"
 }, "x²=0.16"), /*#__PURE__*/React.createElement("text", {
-  x: "340",
-  y: "192",
+  x: "240.1",
+  y: "210",
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--ink-mute)"
 }, "≈0"), /*#__PURE__*/React.createElement("text", {
-  x: "421",
-  y: "192",
+  x: "299.8",
+  y: "210",
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--ink-mute)"
 }, "0"), /*#__PURE__*/React.createElement("line", {
-  x1: "74",
-  y1: "206",
-  x2: "462",
-  y2: "206",
+  x1: "44",
+  y1: "224",
+  x2: "330",
+  y2: "224",
   stroke: "var(--ink-mute)",
   strokeWidth: "1.2"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "74",
-  y1: "206",
-  x2: "74",
-  y2: "212",
+  x1: "44",
+  y1: "224",
+  x2: "44",
+  y2: "230",
   stroke: "var(--ink-mute)",
   strokeWidth: "1.2"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "203",
-  y1: "206",
-  x2: "203",
-  y2: "212",
+  x1: "139.1",
+  y1: "224",
+  x2: "139.1",
+  y2: "230",
   stroke: "var(--ink-mute)",
   strokeWidth: "1.2"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "300",
-  y1: "206",
-  x2: "300",
-  y2: "212",
+  x1: "210.6",
+  y1: "224",
+  x2: "210.6",
+  y2: "230",
   stroke: "var(--ink-mute)",
   strokeWidth: "1.2"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "381",
-  y1: "206",
-  x2: "381",
-  y2: "212",
+  x1: "270.3",
+  y1: "224",
+  x2: "270.3",
+  y2: "230",
   stroke: "var(--ink-mute)",
   strokeWidth: "1.2"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "462",
-  y1: "206",
-  x2: "462",
-  y2: "212",
+  x1: "330",
+  y1: "224",
+  x2: "330",
+  y2: "230",
   stroke: "var(--ink-mute)",
   strokeWidth: "1.2"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "74",
-  y: "224",
+  x: "44",
+  y: "242",
   textAnchor: "middle",
   fontSize: "10.5",
   fill: "var(--ink-mute)"
 }, "0"), /*#__PURE__*/React.createElement("text", {
-  x: "203",
-  y: "224",
+  x: "139.1",
+  y: "242",
   textAnchor: "middle",
   fontSize: "10.5",
   fill: "var(--ink-mute)"
 }, "8"), /*#__PURE__*/React.createElement("text", {
-  x: "300",
-  y: "224",
+  x: "210.6",
+  y: "242",
   textAnchor: "middle",
   fontSize: "10.5",
   fill: "var(--ink-mute)"
 }, "14"), /*#__PURE__*/React.createElement("text", {
-  x: "381",
-  y: "224",
+  x: "270.3",
+  y: "242",
   textAnchor: "middle",
   fontSize: "10.5",
   fill: "var(--ink-mute)"
 }, "19"), /*#__PURE__*/React.createElement("text", {
-  x: "462",
-  y: "224",
+  x: "330",
+  y: "242",
   textAnchor: "middle",
   fontSize: "10.5",
   fill: "var(--ink-mute)"
 }, "24"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "240",
+  x: "166.4",
+  y: "258",
   textAnchor: "middle",
   fontSize: "10.5",
   fill: "var(--ink-mute)"
 }, "時刻 [h]"), /*#__PURE__*/React.createElement("rect", {
-  x: "16",
-  y: "248",
-  width: "448",
-  height: "42",
+  x: "8",
+  y: "266",
+  width: "324",
+  height: "80",
   rx: "6",
   fill: "var(--accent-soft)",
   stroke: "var(--accent)",
   strokeWidth: "1"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "265",
+  x: "170",
+  y: "284",
   textAnchor: "middle",
   fontSize: "11",
   fontWeight: "700",
   fill: "var(--accent-ink)"
 }, /*#__PURE__*/React.createElement("tspan", {
-  x: "240",
+  x: "170",
   dy: "0"
-}, "鉄損の帯は通電している間ずっと連続（無負荷でも消えない）"), /*#__PURE__*/React.createElement("tspan", {
-  x: "240",
-  dy: "18"
-}, "銅損の帯は負荷時間だけ・高さは負荷率の2乗（0.64 と 0.16 で4倍差）"))), /*#__PURE__*/React.createElement("figcaption", {
+}, "鉄損の帯は通電している間ずっと連続"), /*#__PURE__*/React.createElement("tspan", {
+  x: "170",
+  dy: "17"
+}, "（無負荷でも消えない）"), /*#__PURE__*/React.createElement("tspan", {
+  x: "170",
+  dy: "20"
+}, "銅損の帯は負荷時間だけ・高さは負荷率の2乗"), /*#__PURE__*/React.createElement("tspan", {
+  x: "170",
+  dy: "17"
+}, "（0.64 と 0.16 で4倍差）"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -40598,6 +40649,8 @@ const RectifierBridgeFig = () => /*#__PURE__*/React.createElement("figure", {
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cells: [[0, 0, 269, 205], [269, 0, 211, 205], [60, 226, 194, 24], [254, 226, 212, 24], [60, 250, 250, 26], [310, 250, 156, 26]]
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 480 285",
   role: "img",
@@ -40848,7 +40901,7 @@ const RectifierBridgeFig = () => /*#__PURE__*/React.createElement("figure", {
   y: "268",
   fontSize: "10",
   fill: "var(--ink-mute)"
-}, "（理想素子。実機は約2VF低下）")), /*#__PURE__*/React.createElement("figcaption", {
+}, "（理想素子。実機は約2VF低下）"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -41464,119 +41517,120 @@ const PowerElecPage = ({
   tex: "\\sqrt2\\sqrt3 \\times 100 = 245"
 }), "（実効値と最大値の混在）のように、取り違えた値を自分で出してしまう"), "。R8上 問16(a) の選択肢は 144・173・200・288・300 で、正答は (2) 173 V だった（問題文は試験センター公表の問題冊子で、正答は同じく公表の解答で確認）。", /*#__PURE__*/React.createElement("strong", null, "実効値を聞かれているのか最大値を聞かれているのかを、式を立てる前に印を付けること。"))), /*#__PURE__*/React.createElement(DiagramFrame, {
   caption: "図2.2.2\u3000三相ダイオード全波整流の出力波形（縦軸は 0 から実際の比率で描いている）。3本の線間電圧の絶対値のうち最も高いものが出力され、60°ごとに乗り換える。最大値は √2·V_L、最小値は乗り換え点の √2·V_L·cos30°（最大の約0.87倍）、平均値は最大の約0.95倍。脈動は小さい。",
-  viewBox: "0 0 470 220"
+  viewBox: "0 0 300 220",
+  maxWidth: "420px"
 }, /*#__PURE__*/React.createElement("line", {
-  x1: "46",
+  x1: "34",
   y1: "176",
-  x2: "452",
+  x2: "285.7",
   y2: "176",
   stroke: "var(--ink-soft)",
   strokeWidth: "1.4"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "46",
+  x1: "34",
   y1: "176",
-  x2: "46",
+  x2: "34",
   y2: "26",
   stroke: "var(--ink-soft)",
   strokeWidth: "1.4"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "40",
+  x: "30.3",
   y: "45",
   textAnchor: "end",
   fontSize: "10",
   fill: "var(--ink-soft)"
 }, "最大"), /*#__PURE__*/React.createElement("text", {
-  x: "40",
+  x: "30.3",
   y: "64",
   textAnchor: "end",
   fontSize: "10",
   fill: "var(--ink-soft)"
 }, "最小"), /*#__PURE__*/React.createElement("text", {
-  x: "40",
+  x: "30.3",
   y: "180",
   textAnchor: "end",
   fontSize: "10",
   fill: "var(--ink-soft)"
 }, "0"), /*#__PURE__*/React.createElement("line", {
-  x1: "46",
+  x1: "34",
   y1: "42",
-  x2: "452",
+  x2: "285.7",
   y2: "42",
   stroke: "var(--rule)",
   strokeWidth: "1",
   strokeDasharray: "4 4"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "46",
+  x1: "34",
   y1: "60",
-  x2: "452",
+  x2: "285.7",
   y2: "60",
   stroke: "var(--rule)",
   strokeWidth: "1",
   strokeDasharray: "4 4"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "46",
+  x1: "34",
   y1: "48",
-  x2: "452",
+  x2: "285.7",
   y2: "48",
   stroke: "var(--ok)",
   strokeWidth: "1.4",
   strokeDasharray: "7 4"
 }), /*#__PURE__*/React.createElement("path", {
-  d: "M 46.0 60.0 L 51.5 54.6 L 57.0 50.1 L 62.5 46.6 L 68.0 44.0 L 73.5 42.5 L 79.0 42.0 L 84.5 42.5 L 90.0 44.0 L 95.5 46.6 L 101.0 50.1 L 106.5 54.6 L 112.0 60.0 L 117.5 54.6 L 123.0 50.1 L 128.5 46.6 L 134.0 44.0 L 139.5 42.5 L 145.0 42.0 L 150.5 42.5 L 156.0 44.0 L 161.5 46.6 L 167.0 50.1 L 172.5 54.6 L 178.0 60.0 L 183.5 54.6 L 189.0 50.1 L 194.5 46.6 L 200.0 44.0 L 205.5 42.5 L 211.0 42.0 L 216.5 42.5 L 222.0 44.0 L 227.5 46.6 L 233.0 50.1 L 238.5 54.6 L 244.0 60.0 L 249.5 54.6 L 255.0 50.1 L 260.5 46.6 L 266.0 44.0 L 271.5 42.5 L 277.0 42.0 L 282.5 42.5 L 288.0 44.0 L 293.5 46.6 L 299.0 50.1 L 304.5 54.6 L 310.0 60.0 L 315.5 54.6 L 321.0 50.1 L 326.5 46.6 L 332.0 44.0 L 337.5 42.5 L 343.0 42.0 L 348.5 42.5 L 354.0 44.0 L 359.5 46.6 L 365.0 50.1 L 370.5 54.6 L 376.0 60.0 L 381.5 54.6 L 387.0 50.1 L 392.5 46.6 L 398.0 44.0 L 403.5 42.5 L 409.0 42.0 L 414.5 42.5 L 420.0 44.0 L 425.5 46.6 L 431.0 50.1 L 436.5 54.6 L 442.0 60.0",
+  d: "M 34 60.0 L 37.4 54.6 L 40.8 50.1 L 44.2 46.6 L 47.6 44.0 L 51 42.5 L 54.5 42.0 L 57.9 42.5 L 61.3 44.0 L 64.7 46.6 L 68.1 50.1 L 71.5 54.6 L 74.9 60.0 L 78.3 54.6 L 81.7 50.1 L 85.2 46.6 L 88.6 44.0 L 92 42.5 L 95.4 42.0 L 98.8 42.5 L 102.2 44.0 L 105.6 46.6 L 109 50.1 L 112.4 54.6 L 115.8 60.0 L 119.2 54.6 L 122.7 50.1 L 126.1 46.6 L 129.5 44.0 L 132.9 42.5 L 136.3 42.0 L 139.7 42.5 L 143.1 44.0 L 146.5 46.6 L 149.9 50.1 L 153.3 54.6 L 156.8 60.0 L 160.2 54.6 L 163.6 50.1 L 167 46.6 L 170.4 44.0 L 173.8 42.5 L 177.2 42.0 L 180.6 42.5 L 184 44.0 L 187.4 46.6 L 190.9 50.1 L 194.3 54.6 L 197.7 60.0 L 201.1 54.6 L 204.5 50.1 L 207.9 46.6 L 211.3 44.0 L 214.7 42.5 L 218.1 42.0 L 221.6 42.5 L 225 44.0 L 228.4 46.6 L 231.8 50.1 L 235.2 54.6 L 238.6 60.0 L 242 54.6 L 245.4 50.1 L 248.8 46.6 L 252.2 44.0 L 255.7 42.5 L 259.1 42.0 L 262.5 42.5 L 265.9 44.0 L 269.3 46.6 L 272.7 50.1 L 276.1 54.6 L 279.5 60.0",
   fill: "none",
   stroke: "var(--danger)",
   strokeWidth: "2.6"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "46",
+  x1: "34",
   y1: "60",
-  x2: "46",
+  x2: "34",
   y2: "176",
   stroke: "var(--rule-soft)",
   strokeWidth: "1"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "112",
+  x1: "74.9",
   y1: "60",
-  x2: "112",
+  x2: "74.9",
   y2: "176",
   stroke: "var(--rule-soft)",
   strokeWidth: "1"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "178",
+  x1: "115.8",
   y1: "60",
-  x2: "178",
+  x2: "115.8",
   y2: "176",
   stroke: "var(--rule-soft)",
   strokeWidth: "1"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "244",
+  x1: "156.8",
   y1: "60",
-  x2: "244",
+  x2: "156.8",
   y2: "176",
   stroke: "var(--rule-soft)",
   strokeWidth: "1"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "310",
+  x1: "197.7",
   y1: "60",
-  x2: "310",
+  x2: "197.7",
   y2: "176",
   stroke: "var(--rule-soft)",
   strokeWidth: "1"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "376",
+  x1: "238.6",
   y1: "60",
-  x2: "376",
+  x2: "238.6",
   y2: "176",
   stroke: "var(--rule-soft)",
   strokeWidth: "1"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "442",
+  x1: "279.5",
   y1: "60",
-  x2: "442",
+  x2: "279.5",
   y2: "176",
   stroke: "var(--rule-soft)",
   strokeWidth: "1"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "79",
+  x: "54.5",
   y: "192",
   textAnchor: "middle",
   fontSize: "10",
@@ -41585,7 +41639,7 @@ const PowerElecPage = ({
   fontSize: "10",
   dy: "3"
 }, "ab")), /*#__PURE__*/React.createElement("text", {
-  x: "145",
+  x: "95.4",
   y: "192",
   textAnchor: "middle",
   fontSize: "10",
@@ -41594,7 +41648,7 @@ const PowerElecPage = ({
   fontSize: "10",
   dy: "3"
 }, "ac")), /*#__PURE__*/React.createElement("text", {
-  x: "211",
+  x: "136.3",
   y: "192",
   textAnchor: "middle",
   fontSize: "10",
@@ -41603,7 +41657,7 @@ const PowerElecPage = ({
   fontSize: "10",
   dy: "3"
 }, "bc")), /*#__PURE__*/React.createElement("text", {
-  x: "277",
+  x: "177.2",
   y: "192",
   textAnchor: "middle",
   fontSize: "10",
@@ -41612,7 +41666,7 @@ const PowerElecPage = ({
   fontSize: "10",
   dy: "3"
 }, "ba")), /*#__PURE__*/React.createElement("text", {
-  x: "343",
+  x: "218.1",
   y: "192",
   textAnchor: "middle",
   fontSize: "10",
@@ -41621,7 +41675,7 @@ const PowerElecPage = ({
   fontSize: "10",
   dy: "3"
 }, "ca")), /*#__PURE__*/React.createElement("text", {
-  x: "409",
+  x: "259.1",
   y: "192",
   textAnchor: "middle",
   fontSize: "10",
@@ -41630,19 +41684,26 @@ const PowerElecPage = ({
   fontSize: "10",
   dy: "3"
 }, "cb")), /*#__PURE__*/React.createElement("text", {
-  x: "244",
+  x: "156.8",
   y: "210",
   textAnchor: "middle",
   fontSize: "10",
   fill: "var(--ink-soft)"
 }, "60°ごとに乗り換える（1周期に6回＝6パルス）"), /*#__PURE__*/React.createElement("text", {
-  x: "250",
-  y: "110",
+  x: "157",
+  y: "104",
   textAnchor: "middle",
   fontSize: "10",
   fontWeight: "700",
   fill: "var(--ok)"
-}, "緑の破線＝平均値 V", /*#__PURE__*/React.createElement("tspan", {
+}, "緑の破線＝平均値"), /*#__PURE__*/React.createElement("text", {
+  x: "157",
+  y: "120",
+  textAnchor: "middle",
+  fontSize: "10",
+  fontWeight: "700",
+  fill: "var(--ok)"
+}, "V", /*#__PURE__*/React.createElement("tspan", {
   fontSize: "10",
   dy: "3"
 }, "d"), /*#__PURE__*/React.createElement("tspan", {
@@ -43693,6 +43754,14 @@ const KeikiYoHenseikiLayers = () => {
       borderRadius: "8px",
       padding: "12px 8px 8px"
     }
+  }, /*#__PURE__*/React.createElement(SplitSvg, {
+    cells: [[0, 28, 233, 170], [237, 28, 233, 170]],
+    head: "① 一次大電流 I₁ は貫通のまま流れ続ける（CT は I₁ を止められない）",
+    note: /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "var(--warn)"
+      }
+    }, "④ 深飽和で Φ が方形波化 → ゼロクロスで dΦ/dt が巨大", /*#__PURE__*/React.createElement("br", null), "→ V₂＝−N₂·dΦ/dt が数kVに跳ね上がり絶縁破壊・感電の危険")
   }, /*#__PURE__*/React.createElement("svg", {
     viewBox: "0 0 470 258",
     role: "img",
@@ -43724,14 +43793,7 @@ const KeikiYoHenseikiLayers = () => {
   }, /*#__PURE__*/React.createElement("path", {
     d: "M0,0 L5,2 L0,4 z",
     fill: "var(--ok)"
-  }))), /*#__PURE__*/React.createElement("text", {
-    x: "235",
-    y: "22",
-    textAnchor: "middle",
-    fontSize: "12",
-    fontWeight: "bold",
-    fill: "var(--accent-ink)"
-  }, "① 一次大電流 I₁ は貫通のまま流れ続ける（CT は I₁ を止められない）"), /*#__PURE__*/React.createElement("line", {
+  }))), /*#__PURE__*/React.createElement("line", {
     x1: "235",
     y1: "36",
     x2: "235",
@@ -43909,29 +43971,7 @@ const KeikiYoHenseikiLayers = () => {
     textAnchor: "middle",
     fontSize: "10.5",
     fill: "var(--ink-soft)"
-  }, "鉄心は飽和限界へ深く突入"), /*#__PURE__*/React.createElement("rect", {
-    x: "30",
-    y: "204",
-    width: "410",
-    height: "44",
-    rx: "6",
-    fill: "var(--bg)",
-    stroke: "var(--warn)",
-    strokeWidth: "1.5"
-  }), /*#__PURE__*/React.createElement("text", {
-    x: "235",
-    y: "221",
-    textAnchor: "middle",
-    fontSize: "12",
-    fontWeight: "700",
-    fill: "var(--warn)"
-  }, /*#__PURE__*/React.createElement("tspan", {
-    x: "235",
-    dy: "0"
-  }, "④ 深飽和で Φ が方形波化 → ゼロクロスで dΦ/dt が巨大"), /*#__PURE__*/React.createElement("tspan", {
-    x: "235",
-    dy: "18"
-  }, "→ V₂＝−N₂·dΦ/dt が数kVに跳ね上がり絶縁破壊・感電の危険"))), /*#__PURE__*/React.createElement("figcaption", {
+  }, "鉄心は飽和限界へ深く突入"))), /*#__PURE__*/React.createElement("figcaption", {
     style: {
       fontSize: "12px",
       color: "var(--ink-mute)",
@@ -59557,11 +59597,12 @@ const OutputMapPage = ({
     id: "template"
   }, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
-  }, "2."), "すべての回転機に共通する1本の流れ"), /*#__PURE__*/React.createElement("p", null, "電動機は左から右、発電機は右から左に流れる。真ん中の変換点での電力 ", /*#__PURE__*/React.createElement(Eq, {
+  }, "2."), "すべての回転機に共通する1本の流れ"), /*#__PURE__*/React.createElement("p", null, "電動機は上（電気の端子）から下（軸）へ、発電機は下から上へ流れる。真ん中の変換点での電力 ", /*#__PURE__*/React.createElement(Eq, {
     tex: "P = \\omega T"
   }), "（電磁トルク × 角速度）を「内部出力」「機械的出力」「電磁変換電力」などと呼ぶ。"), /*#__PURE__*/React.createElement(DiagramFrame, {
-    caption: "図F.2  共通の流れ。変換点の左は電圧・電流で、右はトルク・回転速度で表す世界",
-    viewBox: "0 0 760 250"
+    caption: "図F.2  共通の流れ。変換点の上は電圧・電流で、下はトルク・回転速度で表す世界",
+    viewBox: "0 0 300 404",
+    maxWidth: "420px"
   }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
     id: "om-ah",
     markerWidth: "5",
@@ -59583,210 +59624,235 @@ const OutputMapPage = ({
     d: "M0,0 L5,2 L0,4 z",
     fill: "var(--warn)"
   }))), /*#__PURE__*/React.createElement("rect", {
-    x: "10",
-    y: "18",
-    width: "360",
-    height: "24",
+    x: "6",
+    y: "4",
+    width: "288",
+    height: "22",
     rx: "4",
     fill: "var(--bg-sunken)"
   }), /*#__PURE__*/React.createElement("text", {
-    x: "190",
-    y: "35",
+    x: "150",
+    y: "19",
     textAnchor: "middle",
-    fontSize: "12",
+    fontSize: "11.5",
     fontWeight: "700",
     fill: "var(--ink-soft)"
   }, "電気の世界（電圧・電流で表す）"), /*#__PURE__*/React.createElement("rect", {
-    x: "390",
-    y: "18",
-    width: "360",
-    height: "24",
-    rx: "4",
-    fill: "var(--ok-soft)"
-  }), /*#__PURE__*/React.createElement("text", {
-    x: "570",
-    y: "35",
-    textAnchor: "middle",
-    fontSize: "12",
-    fontWeight: "700",
-    fill: "var(--ok)"
-  }, "機械の世界（トルク・回転速度で表す）"), /*#__PURE__*/React.createElement("rect", {
-    x: "14",
-    y: "70",
-    width: "140",
-    height: "62",
+    x: "70",
+    y: "34",
+    width: "160",
+    height: "56",
     rx: "6",
     fill: "var(--bg)",
     stroke: "var(--ink-soft)",
     strokeWidth: "1.5"
   }), /*#__PURE__*/React.createElement("text", {
-    x: "84",
-    y: "96",
+    x: "150",
+    y: "58",
     textAnchor: "middle",
     fontSize: "14",
     fontWeight: "700",
     fill: "var(--ink)"
   }, "電気の端子"), /*#__PURE__*/React.createElement("text", {
-    x: "84",
-    y: "116",
+    x: "150",
+    y: "78",
     textAnchor: "middle",
     fontSize: "11",
     fill: "var(--ink-soft)"
-  }, "電動機: 入力／発電機: 出力"), /*#__PURE__*/React.createElement("circle", {
-    cx: "380",
-    cy: "101",
-    r: "36",
+  }, "電動機: 入力／発電機: 出力"), /*#__PURE__*/React.createElement("line", {
+    x1: "140",
+    y1: "94",
+    x2: "140",
+    y2: "150",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "2",
+    markerEnd: "url(#om-ah)"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "160",
+    y1: "150",
+    x2: "160",
+    y2: "96",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "1.5",
+    strokeDasharray: "5 4",
+    markerEnd: "url(#om-ah)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "132",
+    y: "116",
+    textAnchor: "end",
+    fontSize: "11",
+    fill: "var(--ink-soft)"
+  }, "電動機 ↓（実線）"), /*#__PURE__*/React.createElement("text", {
+    x: "132",
+    y: "134",
+    textAnchor: "end",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "発電機 ↑（破線）"), /*#__PURE__*/React.createElement("line", {
+    x1: "166",
+    y1: "121",
+    x2: "190",
+    y2: "121",
+    stroke: "var(--warn)",
+    strokeWidth: "1.8",
+    markerEnd: "url(#om-ahl)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "194",
+    y: "112",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--warn)"
+  }, "電気側の損失"), /*#__PURE__*/React.createElement("text", {
+    x: "194",
+    y: "127",
+    fontSize: "11",
+    fill: "var(--ink-soft)"
+  }, "巻線の銅損（I²R）"), /*#__PURE__*/React.createElement("text", {
+    x: "194",
+    y: "142",
+    fontSize: "11",
+    fill: "var(--ink-soft)"
+  }, "誘導機・変圧器は"), /*#__PURE__*/React.createElement("text", {
+    x: "194",
+    y: "157",
+    fontSize: "11",
+    fill: "var(--ink-soft)"
+  }, "鉄損もここ"), /*#__PURE__*/React.createElement("line", {
+    x1: "6",
+    y1: "186",
+    x2: "114",
+    y2: "186",
+    stroke: "var(--rule)",
+    strokeWidth: "1",
+    strokeDasharray: "4 4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "186",
+    y1: "186",
+    x2: "294",
+    y2: "186",
+    stroke: "var(--rule)",
+    strokeWidth: "1",
+    strokeDasharray: "4 4"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "150",
+    cy: "186",
+    r: "32",
     fill: "var(--accent-soft)",
     stroke: "var(--accent)",
     strokeWidth: "2"
   }), /*#__PURE__*/React.createElement("text", {
-    x: "380",
-    y: "97",
+    x: "150",
+    y: "183",
     textAnchor: "middle",
     fontSize: "13",
     fontWeight: "700",
     fill: "var(--accent-ink)"
   }, "変換点"), /*#__PURE__*/React.createElement("text", {
-    x: "380",
-    y: "115",
+    x: "150",
+    y: "200",
     textAnchor: "middle",
     fontSize: "12",
     fill: "var(--accent-ink)"
-  }, "P = ωT"), /*#__PURE__*/React.createElement("rect", {
-    x: "606",
-    y: "70",
-    width: "140",
-    height: "62",
+  }, "P = ωT"), /*#__PURE__*/React.createElement("line", {
+    x1: "140",
+    y1: "222",
+    x2: "140",
+    y2: "278",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "2",
+    markerEnd: "url(#om-ah)"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "160",
+    y1: "278",
+    x2: "160",
+    y2: "224",
+    stroke: "var(--ink-mute)",
+    strokeWidth: "1.5",
+    strokeDasharray: "5 4",
+    markerEnd: "url(#om-ah)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "132",
+    y: "244",
+    textAnchor: "end",
+    fontSize: "11",
+    fill: "var(--ink-soft)"
+  }, "電動機 ↓（実線）"), /*#__PURE__*/React.createElement("text", {
+    x: "132",
+    y: "262",
+    textAnchor: "end",
+    fontSize: "11",
+    fill: "var(--ink-mute)"
+  }, "発電機 ↑（破線）"), /*#__PURE__*/React.createElement("line", {
+    x1: "166",
+    y1: "249",
+    x2: "190",
+    y2: "249",
+    stroke: "var(--warn)",
+    strokeWidth: "1.8",
+    markerEnd: "url(#om-ahl)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "194",
+    y: "240",
+    fontSize: "12",
+    fontWeight: "700",
+    fill: "var(--warn)"
+  }, "機械側の損失"), /*#__PURE__*/React.createElement("text", {
+    x: "194",
+    y: "255",
+    fontSize: "11",
+    fill: "var(--ink-soft)"
+  }, "機械損"), /*#__PURE__*/React.createElement("text", {
+    x: "194",
+    y: "270",
+    fontSize: "11",
+    fill: "var(--ink-soft)"
+  }, "（摩擦・風損）"), /*#__PURE__*/React.createElement("text", {
+    x: "194",
+    y: "285",
+    fontSize: "11",
+    fill: "var(--ink-soft)"
+  }, "直流機・同期機は"), /*#__PURE__*/React.createElement("text", {
+    x: "194",
+    y: "300",
+    fontSize: "11",
+    fill: "var(--ink-soft)"
+  }, "鉄損もここ"), /*#__PURE__*/React.createElement("rect", {
+    x: "70",
+    y: "312",
+    width: "160",
+    height: "56",
     rx: "6",
     fill: "var(--ok-soft)",
     stroke: "var(--ok)",
     strokeWidth: "1.5"
   }), /*#__PURE__*/React.createElement("text", {
-    x: "676",
-    y: "96",
+    x: "150",
+    y: "336",
     textAnchor: "middle",
     fontSize: "14",
     fontWeight: "700",
     fill: "var(--ink)"
   }, "軸"), /*#__PURE__*/React.createElement("text", {
-    x: "676",
-    y: "116",
+    x: "150",
+    y: "356",
     textAnchor: "middle",
     fontSize: "11",
     fill: "var(--ink-soft)"
-  }, "電動機: 出力／発電機: 入力"), /*#__PURE__*/React.createElement("line", {
-    x1: "156",
-    y1: "92",
-    x2: "340",
-    y2: "92",
-    stroke: "var(--ink-mute)",
-    strokeWidth: "2",
-    markerEnd: "url(#om-ah)"
-  }), /*#__PURE__*/React.createElement("line", {
-    x1: "418",
-    y1: "92",
-    x2: "602",
-    y2: "92",
-    stroke: "var(--ink-mute)",
-    strokeWidth: "2",
-    markerEnd: "url(#om-ah)"
+  }, "電動機: 出力／発電機: 入力"), /*#__PURE__*/React.createElement("rect", {
+    x: "6",
+    y: "376",
+    width: "288",
+    height: "22",
+    rx: "4",
+    fill: "var(--ok-soft)"
   }), /*#__PURE__*/React.createElement("text", {
-    x: "248",
-    y: "84",
+    x: "150",
+    y: "391",
     textAnchor: "middle",
-    fontSize: "11",
-    fill: "var(--ink-soft)"
-  }, "電動機 →"), /*#__PURE__*/React.createElement("text", {
-    x: "510",
-    y: "84",
-    textAnchor: "middle",
-    fontSize: "11",
-    fill: "var(--ink-soft)"
-  }, "電動機 →"), /*#__PURE__*/React.createElement("line", {
-    x1: "602",
-    y1: "112",
-    x2: "420",
-    y2: "112",
-    stroke: "var(--ink-mute)",
-    strokeWidth: "1.5",
-    strokeDasharray: "5 4",
-    markerEnd: "url(#om-ah)"
-  }), /*#__PURE__*/React.createElement("line", {
-    x1: "342",
-    y1: "112",
-    x2: "158",
-    y2: "112",
-    stroke: "var(--ink-mute)",
-    strokeWidth: "1.5",
-    strokeDasharray: "5 4",
-    markerEnd: "url(#om-ah)"
-  }), /*#__PURE__*/React.createElement("text", {
-    x: "248",
-    y: "128",
-    textAnchor: "middle",
-    fontSize: "11",
-    fill: "var(--ink-mute)"
-  }, "← 発電機"), /*#__PURE__*/React.createElement("text", {
-    x: "510",
-    y: "128",
-    textAnchor: "middle",
-    fontSize: "11",
-    fill: "var(--ink-mute)"
-  }, "← 発電機"), /*#__PURE__*/React.createElement("line", {
-    x1: "250",
-    y1: "134",
-    x2: "250",
-    y2: "176",
-    stroke: "var(--warn)",
-    strokeWidth: "1.8",
-    markerEnd: "url(#om-ahl)"
-  }), /*#__PURE__*/React.createElement("text", {
-    x: "250",
-    y: "194",
-    textAnchor: "middle",
-    fontSize: "12",
+    fontSize: "11.5",
     fontWeight: "700",
-    fill: "var(--warn)"
-  }, "電気側の損失"), /*#__PURE__*/React.createElement("text", {
-    x: "250",
-    y: "212",
-    textAnchor: "middle",
-    fontSize: "11",
-    fill: "var(--ink-soft)"
-  }, "巻線の銅損（I²R）"), /*#__PURE__*/React.createElement("text", {
-    x: "250",
-    y: "228",
-    textAnchor: "middle",
-    fontSize: "11",
-    fill: "var(--ink-soft)"
-  }, "誘導機・変圧器は鉄損もここ"), /*#__PURE__*/React.createElement("line", {
-    x1: "512",
-    y1: "134",
-    x2: "512",
-    y2: "176",
-    stroke: "var(--warn)",
-    strokeWidth: "1.8",
-    markerEnd: "url(#om-ahl)"
-  }), /*#__PURE__*/React.createElement("text", {
-    x: "512",
-    y: "194",
-    textAnchor: "middle",
-    fontSize: "12",
-    fontWeight: "700",
-    fill: "var(--warn)"
-  }, "機械側の損失"), /*#__PURE__*/React.createElement("text", {
-    x: "512",
-    y: "212",
-    textAnchor: "middle",
-    fontSize: "11",
-    fill: "var(--ink-soft)"
-  }, "機械損（摩擦・風損）"), /*#__PURE__*/React.createElement("text", {
-    x: "512",
-    y: "228",
-    textAnchor: "middle",
-    fontSize: "11",
-    fill: "var(--ink-soft)"
-  }, "直流機・同期機は鉄損もここ")), /*#__PURE__*/React.createElement("p", {
+    fill: "var(--ok)"
+  }, "機械の世界（トルク・回転速度で表す）")), /*#__PURE__*/React.createElement("p", {
     className: "om-cap"
   }, "鉄損を変換点の前で引くか後で引くかは、機種ごとの等価回路の作り方で決まる。誘導機は励磁回路を一次側に置くので二次入力の前で引く。直流機は鉄損が回転する電機子鉄心で生じ、", /*#__PURE__*/React.createElement(Eq, {
     tex: "EI_a"

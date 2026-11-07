@@ -3589,6 +3589,7 @@ window.subSupToLatex = subSupToLatex;
 const SplitSvg = ({
   cuts,
   y,
+  cells,
   head,
   note,
   children
@@ -3597,7 +3598,25 @@ const SplitSvg = ({
   const vbs = String(svg.props.viewBox).trim();
   const [vx, vy, W, H] = vbs.split(/[\s,]+/).map(Number);
   const [y0, y1] = y || [vy, vy + H];
-  const xs = [vx, ...cuts, vx + W];
+  // cells: [x, y, 幅, 高さ] の並び（2×2 や「図＋凡例」のように縦横に切る図）。省略時は cuts で縦に切る
+  const boxes = cells || [vx, ...cuts].map((x0, i, a) => [x0, y0, (i + 1 < a.length ? a[i + 1] : vx + W) - x0, y1 - y0]);
+  // 置き場の幅を測り、図の幅の 0.8 倍に届かないときだけ切って縦に積む。届くときは元の svg を1枚そのまま描く
+  const ref = React.useRef(null);
+  const [narrow, setNarrow] = React.useState(false);
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const check = () => setNarrow(el.getBoundingClientRect().width < W * 0.8);
+    check();
+    // ResizeObserver が無い環境では window の resize で測り直す（画面の回転にも追従する）
+    if (!window.ResizeObserver) {
+      window.addEventListener("resize", check);
+      return () => window.removeEventListener("resize", check);
+    }
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [W]);
   // 元の svg の上限幅（maxWidth）を、パネルの幅の比で引き継ぐ。上限が無ければパネルにも付けない
   const mw = svg.props.style && svg.props.style.maxWidth;
   const ratio = typeof mw === "number" ? mw / W : typeof mw === "string" && /px$/.test(mw) ? parseFloat(mw) / W : null;
@@ -3610,12 +3629,22 @@ const SplitSvg = ({
     textAlign: "center",
     lineHeight: 1.6
   };
+  // 幅が足りるときも、y／cells で詰めた縦の範囲（全セルを包む範囲）は効かせる（空いた帯を PC でも出さない）
+  const fx0 = Math.min(...boxes.map(b => b[0])),
+    fy0 = Math.min(...boxes.map(b => b[1]));
+  const fx1 = Math.max(...boxes.map(b => b[0] + b[2])),
+    fy1 = Math.max(...boxes.map(b => b[1] + b[3]));
+  const whole = y || cells ? React.cloneElement(svg, {
+    viewBox: `${fx0} ${fy0} ${fx1 - fx0} ${fy1 - fy0}`
+  }) : svg;
   return /*#__PURE__*/React.createElement(React.Fragment, null, head && /*#__PURE__*/React.createElement("p", {
     style: {
       ...line,
       margin: "0 0 6px"
     }
   }, head), /*#__PURE__*/React.createElement("div", {
+    ref: ref
+  }, !narrow ? whole : /*#__PURE__*/React.createElement("div", {
     role: "img",
     "aria-label": svg.props["aria-label"],
     style: {
@@ -3624,29 +3653,25 @@ const SplitSvg = ({
       justifyContent: "center",
       alignItems: "flex-start"
     }
-  }, xs.slice(0, -1).map((x0, i) => {
-    const w = xs[i + 1] - x0;
-    // 並べる基準は幅の 0.8 倍: 少し縮めても横に並べ、それより狭い幅（スマホ）で縦に積む
-    return React.cloneElement(svg, {
-      key: i,
-      viewBox: `${x0} ${y0} ${w} ${y1 - y0}`,
-      "data-split-viewbox": vbs,
-      "data-split-index": String(i),
-      role: undefined,
-      "aria-label": undefined,
-      "aria-hidden": "true",
-      focusable: "false",
-      style: {
-        display: "block",
-        flex: `1 1 ${Math.round(w * 0.8)}px`,
-        width: "100%",
-        maxWidth: ratio ? `${w * ratio}px` : undefined,
-        minWidth: 0,
-        height: "auto",
-        margin: 0
-      }
-    }, kids(i));
-  })), note && /*#__PURE__*/React.createElement("p", {
+  }, boxes.map(([x0, by, w, bh], i) => React.cloneElement(svg, {
+    key: i,
+    viewBox: `${x0} ${by} ${w} ${bh}`,
+    "data-split-viewbox": vbs,
+    "data-split-index": String(i),
+    role: undefined,
+    "aria-label": undefined,
+    "aria-hidden": "true",
+    focusable: "false",
+    style: {
+      display: "block",
+      flex: `1 1 ${Math.round(w)}px`,
+      width: "100%",
+      maxWidth: ratio ? `${w * ratio}px` : undefined,
+      minWidth: 0,
+      height: "auto",
+      margin: 0
+    }
+  }, kids(i))))), note && /*#__PURE__*/React.createElement("p", {
     style: {
       ...line,
       margin: "6px 0 0"
@@ -9436,14 +9461,14 @@ const VectorTrianglePage = ({
     padding: "12px 8px 8px"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 460 300",
+  viewBox: "113 54 224 217",
   role: "img",
   "aria-label": "等大2ベクトルAとBを合成すると二等辺三角形になり、合成Rは角の二等分線方向で大きさは2Acos(θ/2)。頂角を二等分する垂線が対称軸となる",
   style: {
     display: "block",
     width: "100%",
     height: "auto",
-    maxWidth: "460px",
+    maxWidth: "224px",
     margin: "0 auto"
   }
 }, /*#__PURE__*/React.createElement("line", {
@@ -18173,14 +18198,14 @@ const ThreePhaseExplainTab = ({
     padding: "12px 8px 8px"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 520 246",
+  viewBox: "34 0.5 433 240.5",
   role: "img",
   "aria-label": "Δ結線電源とY結線負荷を三相3線で接続した回路図。左は頂点a・b・cのΔ電源で、a-b巻線の起電力Eabが200∠0度V。相電流Iabは巻線a-bの中をbからaへ（端子aから線路へ送り出す向き）、相電流Icaは巻線c-aの中をaからcへ流れる。3本の線a・b・cが右のY負荷につながり、a線には線電流I1が電源から負荷へ流れる。Y負荷は3つのインピーダンスZが中性点Nに集まる。中性線は引き出されていない三相3線式",
   style: {
     display: "block",
     width: "100%",
     height: "auto",
-    maxWidth: "520px",
+    maxWidth: "433px",
     margin: "0 auto"
   }
 }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
@@ -25196,10 +25221,10 @@ const CoulombFieldEquipotentialSVG = () => /*#__PURE__*/React.createElement("div
     margin: "16px 0"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 470 300",
+  viewBox: "24 30 422 256",
   width: "100%",
   style: {
-    maxWidth: "470px",
+    maxWidth: "422px",
     height: "auto"
   },
   role: "img",
@@ -25935,163 +25960,208 @@ const CoulombFieldGradientArrowSVG = () => /*#__PURE__*/React.createElement("fig
     padding: "12px 8px 8px"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 640 330",
+  viewBox: "0 0 340 392",
   role: "img",
   "aria-label": "上段に電位V(x)の断面（左から高い平坦部・急な下り坂・緩い下り坂）、下段に同じ位置の電界Eの矢印を並べた図。平坦部はVが最大なのに勾配ゼロでE=0、急な坂ではEが大きく、緩い坂ではEは小さい。Eの矢印はすべて電位が下がる右向きで、xが増えるとVが減るためdV/dxは負、E=−dV/dxは正＝右向きと一致する",
   style: {
     display: "block",
     width: "100%",
     height: "auto",
-    maxWidth: "640px",
+    maxWidth: "440px",
     margin: "0 auto"
   }
 }, /*#__PURE__*/React.createElement("text", {
-  x: "320",
-  y: "20",
+  x: "170",
+  y: "18",
   textAnchor: "middle",
   fontSize: "13",
   fontWeight: "700",
   fill: "var(--accent-ink)"
-}, "電位の断面 V(x) から電界 E を読む — E は「高さ」でなく「傾き」"), /*#__PURE__*/React.createElement("line", {
-  x1: "230",
-  y1: "30",
-  x2: "230",
-  y2: "282",
+}, "電位の断面 V(x) から電界 E を読む"), /*#__PURE__*/React.createElement("text", {
+  x: "170",
+  y: "36",
+  textAnchor: "middle",
+  fontSize: "13",
+  fontWeight: "700",
+  fill: "var(--accent-ink)"
+}, "E は「高さ」でなく「傾き」"), /*#__PURE__*/React.createElement("line", {
+  x1: "130",
+  y1: "46",
+  x2: "130",
+  y2: "302",
   stroke: "var(--rule)",
   strokeWidth: "1",
   strokeDasharray: "4 4"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "350",
-  y1: "30",
-  x2: "350",
-  y2: "282",
+  x1: "210",
+  y1: "46",
+  x2: "210",
+  y2: "302",
   stroke: "var(--rule)",
   strokeWidth: "1",
   strokeDasharray: "4 4"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "60",
-  y1: "36",
-  x2: "60",
-  y2: "180",
+  x1: "26",
+  y1: "56",
+  x2: "26",
+  y2: "194",
   stroke: "var(--ink)",
   strokeWidth: "1.5"
 }), /*#__PURE__*/React.createElement("polygon", {
-  points: "60,30 56,40 64,40",
+  points: "26,50 22,60 30,60",
   fill: "var(--ink)"
 }), /*#__PURE__*/React.createElement("line", {
-  x1: "60",
-  y1: "180",
-  x2: "572",
-  y2: "180",
+  x1: "26",
+  y1: "194",
+  x2: "322",
+  y2: "194",
   stroke: "var(--ink)",
   strokeWidth: "1.5"
 }), /*#__PURE__*/React.createElement("polygon", {
-  points: "580,180 571,176 571,184",
+  points: "330,194 321,190 321,198",
   fill: "var(--ink)"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "44",
-  y: "44",
+  x: "10",
+  y: "62",
   fontSize: "12",
   fill: "var(--ink)"
 }, "V"), /*#__PURE__*/React.createElement("text", {
-  x: "586",
-  y: "184",
+  x: "328",
+  y: "212",
   fontSize: "12",
   fill: "var(--ink)"
 }, "x"), /*#__PURE__*/React.createElement("path", {
-  d: "M 70 64 L 230 64 L 350 142 L 562 164",
+  d: "M 34 78 L 130 78 L 210 156 L 320 178",
   fill: "none",
   stroke: "var(--accent)",
   strokeWidth: "3"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "150",
-  y: "200",
+  x: "82",
+  y: "214",
   textAnchor: "middle",
   fontSize: "11.5",
   fill: "var(--ink)"
-}, "① 平ら（V は最大）"), /*#__PURE__*/React.createElement("text", {
-  x: "290",
-  y: "200",
+}, "① 平ら"), /*#__PURE__*/React.createElement("text", {
+  x: "82",
+  y: "228",
+  textAnchor: "middle",
+  fontSize: "11.5",
+  fill: "var(--ink)"
+}, "（V は最大）"), /*#__PURE__*/React.createElement("text", {
+  x: "170",
+  y: "214",
   textAnchor: "middle",
   fontSize: "11.5",
   fill: "var(--ink)"
 }, "② 急な下り坂"), /*#__PURE__*/React.createElement("text", {
-  x: "456",
-  y: "200",
+  x: "265",
+  y: "214",
   textAnchor: "middle",
   fontSize: "11.5",
   fill: "var(--ink)"
 }, "③ 緩い下り坂"), /*#__PURE__*/React.createElement("text", {
-  x: "44",
-  y: "248",
+  x: "10",
+  y: "270",
   fontSize: "12",
   fill: "var(--ink)"
 }, "E"), /*#__PURE__*/React.createElement("circle", {
-  cx: "150",
-  cy: "244",
+  cx: "82",
+  cy: "266",
   r: "4.5",
   fill: "var(--accent)"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "150",
-  y: "228",
+  x: "82",
+  y: "252",
   textAnchor: "middle",
   fontSize: "12",
   fontWeight: "700",
   fill: "var(--accent-ink)"
 }, "E = 0"), /*#__PURE__*/React.createElement("text", {
-  x: "150",
-  y: "268",
+  x: "82",
+  y: "286",
   textAnchor: "middle",
   fontSize: "11",
   fontWeight: "700",
   fill: "var(--warn)"
-}, "V 最大なのに E ゼロ"), /*#__PURE__*/React.createElement("line", {
-  x1: "243",
-  y1: "244",
-  x2: "325",
-  y2: "244",
+}, "V 最大なのに"), /*#__PURE__*/React.createElement("text", {
+  x: "82",
+  y: "300",
+  textAnchor: "middle",
+  fontSize: "11",
+  fontWeight: "700",
+  fill: "var(--warn)"
+}, "E ゼロ"), /*#__PURE__*/React.createElement("line", {
+  x1: "140",
+  y1: "266",
+  x2: "192",
+  y2: "266",
   stroke: "var(--accent)",
   strokeWidth: "3.5"
 }), /*#__PURE__*/React.createElement("polygon", {
-  points: "337,244 324,238 324,250",
+  points: "204,266 191,260 191,272",
   fill: "var(--accent)"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "290",
-  y: "228",
+  x: "170",
+  y: "238",
   textAnchor: "middle",
   fontSize: "11.5",
   fontWeight: "700",
   fill: "var(--accent-ink)"
-}, "E 大（傾き急）"), /*#__PURE__*/React.createElement("line", {
-  x1: "434",
-  y1: "244",
-  x2: "470",
-  y2: "244",
+}, "E 大"), /*#__PURE__*/React.createElement("text", {
+  x: "170",
+  y: "252",
+  textAnchor: "middle",
+  fontSize: "11.5",
+  fontWeight: "700",
+  fill: "var(--accent-ink)"
+}, "（傾き急）"), /*#__PURE__*/React.createElement("line", {
+  x1: "250",
+  y1: "266",
+  x2: "272",
+  y2: "266",
   stroke: "var(--accent)",
   strokeWidth: "3.5"
 }), /*#__PURE__*/React.createElement("polygon", {
-  points: "482,244 469,238 469,250",
+  points: "284,266 271,260 271,272",
   fill: "var(--accent)"
 }), /*#__PURE__*/React.createElement("text", {
-  x: "458",
-  y: "228",
+  x: "265",
+  y: "252",
   textAnchor: "middle",
   fontSize: "11.5",
   fontWeight: "700",
   fill: "var(--accent-ink)"
 }, "E 小（傾き緩）"), /*#__PURE__*/React.createElement("text", {
-  x: "320",
-  y: "298",
+  x: "170",
+  y: "324",
   textAnchor: "middle",
   fontSize: "11",
   fill: "var(--ink-soft)"
-}, "E の矢印（E ≠ 0 の区間）はすべて右向き＝電位の下り坂の向き（高電位 → 低電位）。これが − 符号の意味"), /*#__PURE__*/React.createElement("text", {
-  x: "320",
-  y: "316",
+}, "E の矢印（E ≠ 0 の区間）はすべて右向き"), /*#__PURE__*/React.createElement("text", {
+  x: "170",
+  y: "339",
+  textAnchor: "middle",
+  fontSize: "11",
+  fill: "var(--ink-soft)"
+}, "＝電位の下り坂の向き（高電位 → 低電位）。"), /*#__PURE__*/React.createElement("text", {
+  x: "170",
+  y: "354",
+  textAnchor: "middle",
+  fontSize: "11",
+  fill: "var(--ink-soft)"
+}, "これが − 符号の意味"), /*#__PURE__*/React.createElement("text", {
+  x: "170",
+  y: "372",
   textAnchor: "middle",
   fontSize: "11",
   fill: "var(--ink-mute)"
-}, "検算：x（右が正）が増えると V が減る → dV/dx ＜ 0 → E = −dV/dx ＞ 0 ＝ 右向き ✓")), /*#__PURE__*/React.createElement("figcaption", {
+}, "検算：x（右が正）が増えると V が減る"), /*#__PURE__*/React.createElement("text", {
+  x: "170",
+  y: "387",
+  textAnchor: "middle",
+  fontSize: "11",
+  fill: "var(--ink-mute)"
+}, "→ dV/dx ＜ 0 → E = −dV/dx ＞ 0 ＝ 右向き ✓")), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -27738,10 +27808,10 @@ const CoulombFieldLearnTab = ({
     margin: "16px 0"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 470 285",
+  viewBox: "6 3 363 280",
   width: "100%",
   style: {
-    maxWidth: "470px",
+    maxWidth: "363px",
     height: "auto"
   },
   role: "img",
@@ -28005,10 +28075,10 @@ const CoulombFieldLearnTab = ({
     margin: "16px 0"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 470 320",
+  viewBox: "6 1 381 315",
   width: "100%",
   style: {
-    maxWidth: "470px",
+    maxWidth: "381px",
     height: "auto"
   },
   role: "img",
@@ -28267,10 +28337,10 @@ const CoulombFieldLearnTab = ({
     margin: "16px 0"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 470 340",
+  viewBox: "6 3 426 334",
   width: "100%",
   style: {
-    maxWidth: "470px",
+    maxWidth: "426px",
     height: "auto"
   },
   role: "img",
@@ -29946,6 +30016,9 @@ const ElectromagneticForceFormulasTab = ({
     borderRadius: 8,
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cells: [[0, 26, 358, 234], [362, 26, 358, 234], [0, 264, 358, 236], [362, 264, 358, 236]],
+  head: /*#__PURE__*/React.createElement(React.Fragment, null, "⊗ ＝ 磁界 B が", /*#__PURE__*/React.createElement("strong", null, "紙面の奥"), "を向いている印（①②④は同じ磁界の中の話・③だけ磁束そのものが変化する）")
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 720 500",
   role: "img",
@@ -29997,15 +30070,7 @@ const ElectromagneticForceFormulasTab = ({
 }, /*#__PURE__*/React.createElement("path", {
   d: "M0,0 L5,2 L0,4 z",
   fill: "var(--accent)"
-}))), /*#__PURE__*/React.createElement("text", {
-  x: "360",
-  y: "20",
-  textAnchor: "middle",
-  fontSize: "11.5",
-  fill: "var(--ink-mute)"
-}, "⊗ ＝ 磁界 B が", /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "紙面の奥"), "を向いている印（①②④は同じ磁界の中の話・③だけ磁束そのものが変化する）"), [[70, 104], [115, 104], [245, 104], [290, 104], [70, 160], [115, 160], [245, 160], [290, 160], [420, 104], [465, 104], [620, 104], [665, 104], [420, 160], [465, 160], [620, 160], [665, 160], [425, 336], [470, 336], [610, 336], [655, 336], [425, 400], [470, 400], [610, 400], [655, 400]].map(([cx, cy], i) => /*#__PURE__*/React.createElement("g", {
+}))), [[70, 104], [115, 104], [245, 104], [290, 104], [70, 160], [115, 160], [245, 160], [290, 160], [420, 104], [465, 104], [620, 104], [665, 104], [420, 160], [465, 160], [620, 160], [665, 160], [425, 336], [470, 336], [610, 336], [655, 336], [425, 400], [470, 400], [610, 400], [655, 400]].map(([cx, cy], i) => /*#__PURE__*/React.createElement("g", {
   key: i,
   stroke: "var(--ink-mute)",
   strokeWidth: "1.3"
@@ -30377,7 +30442,7 @@ const ElectromagneticForceFormulasTab = ({
   stroke: "var(--rule)",
   strokeWidth: "1",
   strokeDasharray: "4 4"
-})), /*#__PURE__*/React.createElement("figcaption", {
+}))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-mute)",
@@ -38327,14 +38392,14 @@ const ElectromagneticForceLearnTab = ({
     padding: "12px 8px 8px"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 470 235",
+  viewBox: "32 0.5 380 228.5",
   role: "img",
   "aria-label": "導体Aは紙面左の鉛直線で電流は下向き。Aの右側の磁界は紙面手前向きで、ループBの4辺すべてで同じ向きになる。ループBの左辺は電流が上向きで右向きの力F1（反発）を受け、右辺は電流が下向きで左向きの力F2（吸引）を受ける。上辺と下辺の力は上下逆向きで打ち消し合う。F1がF2より大きいため合力は正のx方向となる",
   style: {
     display: "block",
     width: "100%",
     height: "auto",
-    maxWidth: "470px",
+    maxWidth: "380px",
     margin: "0 auto"
   }
 }, /*#__PURE__*/React.createElement("text", {
@@ -38624,14 +38689,14 @@ const ElectromagneticForceLearnTab = ({
     padding: "12px 8px 8px"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 470 272",
+  viewBox: "52 0.5 368 270.5",
   role: "img",
   "aria-label": "紙面内に正方形ループABCDを置き、Aが左下、Bが右下、Cが右上、Dが左上。電流はAからB、C、Dの順に流れる。磁束密度B0は水平右向きで辺ABと平行。辺ABと辺CDはB0と平行なので力はゼロ。右辺BCは電流が上向きで紙面の奥向きの力IhB0を受け、左辺DAは電流が下向きで紙面の手前向きの力IhB0を受ける。2つの力は大きさが等しく逆向きで合力はゼロだが、作用線の間隔がhあるため偶力のモーメントIh二乗B0が残り、ループは中央の縦軸まわりに回転する",
   style: {
     display: "block",
     width: "100%",
     height: "auto",
-    maxWidth: "470px",
+    maxWidth: "368px",
     margin: "0 auto"
   }
 }, /*#__PURE__*/React.createElement("text", {
@@ -39513,6 +39578,10 @@ const MagneticCircuitAnalogySvg = () => /*#__PURE__*/React.createElement("figure
   style: {
     margin: "16px 0"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [240],
+  y: [0, 228],
+  note: "V⇔NI ／ I⇔Φ ／ R⇔Rm"
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 480 250",
   role: "img",
@@ -39682,14 +39751,7 @@ const MagneticCircuitAnalogySvg = () => /*#__PURE__*/React.createElement("figure
   textAnchor: "middle",
   fontSize: "11",
   fill: "var(--ink-soft)"
-}, "NI = Φ Rm"), /*#__PURE__*/React.createElement("text", {
-  x: "240",
-  y: "242",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--ink)"
-}, "V⇔NI ／ I⇔Φ ／ R⇔Rm")), /*#__PURE__*/React.createElement("figcaption", {
+}, "NI = Φ Rm"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: 12,
     color: "var(--ink-mute)",
@@ -39824,14 +39886,14 @@ const MagneticCircuitHysteresisSvg = () => /*#__PURE__*/React.createElement("fig
     margin: "16px 0"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 460 280",
+  viewBox: "34 20 417 251",
   role: "img",
   "aria-label": "磁束密度Bと磁界Hのヒステリシスループ。Hを増やすとBが飽和し、Hをゼロに戻してもBrが残る。Bをゼロに戻すには逆向きの保磁力Hcが必要。ループ面積がヒステリシス損",
   style: {
     display: "block",
     width: "100%",
     height: "auto",
-    maxWidth: "460px",
+    maxWidth: "417px",
     margin: "0 auto"
   }
 }, /*#__PURE__*/React.createElement("line", {
@@ -43979,14 +44041,14 @@ const DcCircuitExplainTab = ({
     padding: "10px 8px 8px"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 360 258",
+  viewBox: "8 0.5 346 257.5",
   role: "img",
   "aria-label": "負荷10オームを接続した元の回路。左は60ボルト電源と40オーム2本の直列、右は80ボルト電源と60オーム2本の直列、下側は共通の0ボルト線。中央のa-b間に10オームの負荷がつながっている",
   style: {
     display: "block",
     width: "100%",
     height: "auto",
-    maxWidth: "360px",
+    maxWidth: "346px",
     margin: "0 auto"
   }
 }, /*#__PURE__*/React.createElement("text", {
@@ -44302,14 +44364,14 @@ const DcCircuitExplainTab = ({
     padding: "10px 8px 8px"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 360 258",
+  viewBox: "8 0.5 346 257.5",
   role: "img",
   "aria-label": "10オームの負荷を外して開放した回路。a-b間を渡る電流は0になるが、左の閉回路には0.75アンペア、右の閉回路には約0.67アンペアが流れており、左右それぞれが枝分かれのない直列回路になってVa=30ボルト、Vb=40ボルトとなる",
   style: {
     display: "block",
     width: "100%",
     height: "auto",
-    maxWidth: "360px",
+    maxWidth: "346px",
     margin: "0 auto"
   }
 }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
@@ -49415,6 +49477,14 @@ const AcBasicsExplainTab = ({
     borderRadius: "8px",
     padding: "12px 8px 8px"
   }
+}, /*#__PURE__*/React.createElement(SplitSvg, {
+  cuts: [250],
+  y: [0, 206],
+  note: /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--accent-ink)"
+    }
+  }, "ELI＝L は電圧(E)が先 ／ ICE＝C は電流(I)が先")
 }, /*#__PURE__*/React.createElement("svg", {
   viewBox: "0 0 500 250",
   role: "img",
@@ -49574,21 +49644,7 @@ const AcBasicsExplainTab = ({
   textAnchor: "middle",
   fontSize: "11",
   fill: "var(--ink)"
-}, "電流 i が電圧 v より 90° 進む"), /*#__PURE__*/React.createElement("rect", {
-  x: "40",
-  y: "210",
-  width: "420",
-  height: "30",
-  rx: "5",
-  fill: "var(--accent-soft)"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "250",
-  y: "229",
-  textAnchor: "middle",
-  fontSize: "11",
-  fontWeight: "700",
-  fill: "var(--accent-ink)"
-}, "ELI＝L は電圧(E)が先 ／ ICE＝C は電流(I)が先")), /*#__PURE__*/React.createElement("figcaption", {
+}, "電流 i が電圧 v より 90° 進む"))), /*#__PURE__*/React.createElement("figcaption", {
   style: {
     fontSize: "12px",
     color: "var(--ink-mute)",
@@ -51010,14 +51066,14 @@ const RlcResonanceExplainTab = ({
     padding: "12px 8px 8px"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 460 280",
+  viewBox: "24 16 419 245",
   role: "img",
   "aria-label": "直列RLCの周波数特性。X_Lは右上がり、X_Cは右下がりで共振周波数f0で交わり、合成インピーダンスZはf0で最小=Rになり電流が最大になる",
   style: {
     display: "block",
     width: "100%",
     height: "auto",
-    maxWidth: "460px",
+    maxWidth: "419px",
     margin: "0 auto"
   }
 }, /*#__PURE__*/React.createElement("line", {
@@ -61517,14 +61573,14 @@ const OpAmpSchmittSvg = () => /*#__PURE__*/React.createElement("figure", {
     margin: "16px 0"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 460 280",
+  viewBox: "34 24 426 233",
   role: "img",
   "aria-label": "シュミットトリガのヒステリシス。vinが3Vを超えると出力5V→0V、vinが2Vを下回ると0V→5V。1V幅ののりしろ",
   style: {
     display: "block",
     width: "100%",
     height: "auto",
-    maxWidth: "460px",
+    maxWidth: "426px",
     margin: "0 auto"
   }
 }, /*#__PURE__*/React.createElement("line", {
@@ -70279,14 +70335,14 @@ const BridgeCircuitLayers = () => /*#__PURE__*/React.createElement(React.Fragmen
     padding: "12px 8px 8px"
   }
 }, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 470 300",
+  viewBox: "22 0.5 420 291.5",
   role: "img",
   "aria-label": "ブリッジ平衡の機構：①電源Eが左右2本の直列路に同じ電圧をかけ、②左はR1とR3、右はR2とR4の分圧で中点電位VcとVdが決まり、③R1R4=R2R3のとき分圧比が等しくVc=Vdで電位差ゼロ、④橋絡部の検流計だけIg=0になり4辺には電流が流れ続ける機構図",
   style: {
     display: "block",
     width: "100%",
     height: "auto",
-    maxWidth: "470px",
+    maxWidth: "420px",
     margin: "0 auto"
   }
 }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
