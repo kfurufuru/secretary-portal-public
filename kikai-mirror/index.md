@@ -1,0 +1,25 @@
+# 電験三種 機械 — AI可読ミラーの索引（自動生成）
+
+> React SPA `denken3-kikai-wiki.html` の各ページを描画して生成した Markdown。正本は SPA、ここは再生成物（手動編集しない）。再生成: `python scripts/gen_riron_mirror.py --wiki kikai`
+
+- [1.1 直流機](dc-machine.md)
+- [1.2 三相誘導電動機](induction-machine.md)
+- [1.3 同期機](synchronous.md)
+- [1.4 単相誘導電動機](single-phase-im.md)
+- [2.1 変圧器](transformer.md)
+- [2.2 パワーエレクトロニクス](power-elec.md)
+- [2.3 計器用変成器（CT・VT）](keiki-yo-henseiki.md)
+- [3.1 自動制御](auto-control.md)
+- [3.2 情報・電子回路](info-elec.md)
+- [4.1 照明](lighting.md)
+- [4.2 電熱](heat.md)
+- [4.3 電気化学](chemistry.md)
+- [4.4 電動機応用](drive-mech.md)
+- [4.5 電気加工](denki-kakou.md)
+- [4.6 メカトロニクス](mechatronics.md)
+- [A 出題傾向データ](trends.md)
+- [B 用語集・索引](glossary.md)
+- [C 学習ガイド](guide.md)
+- [D 用語混同まとめ（横断ひっかけ）](yougo-konzai.md)
+- [E 学習記録（過去問トラッカー）](study-log.md)
+- [F 出力語マップ（入力→軸出力・全機種）](output-map.md)
