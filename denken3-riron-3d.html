@@ -3778,12 +3778,19 @@ function dial(parent, x, y, z, r=.35){
 const ES_DOTS = 40, ES_LINES = 28, ES_E_REF = 100/2e-3;   // 粒・力線の上限。電界の基準は 100 V・2 mm（5×10⁴ V/m で 7 本）
 function buildStatics(g){
   board(g, 5, 3);
-  const top = mesh(new THREE.BoxGeometry(2.6,.06,1.8), RR.plate, g, 0, 2.0, 0);
-  const bot = mesh(new THREE.BoxGeometry(2.6,.06,1.8), RR.plate, g, 0, .9, 0);
+  /* 極板は半透明にする。不透明だと、既定のカメラ（斜め上から）では上の極板が間の電気力線と電荷を隠した
+     （検査19 で電気力線の隠れ率 100 %。2026-11-08） */
+  const plateSee = std({color:0xb9c2ca, metalness:.5, roughness:.35, transparent:true, opacity:.45, depthWrite:false});
+  const top = mesh(new THREE.BoxGeometry(2.6,.06,1.8), plateSee, g, 0, 2.0, 0);
+  const bot = mesh(new THREE.BoxGeometry(2.6,.06,1.8), plateSee, g, 0, .9, 0);
   const slab = mesh(new THREE.BoxGeometry(1,1,1), RR.diel, g); slab.castShadow = false;
-  const lines = [], lineGeo = new THREE.BufferGeometry().setFromPoints([P3(0,0,0), P3(0,1,0)]);
+  /* 電気力線は細い管で描く（線の太さ 1 px では見分けにくかった）。長さ 1 の管を y 方向に伸び縮みさせる。
+     向き（＋から−へ）は、各線の中ほどの下向きの矢じりで示す */
+  const lines = [], arrows = [], lineGeo = new THREE.CylinderGeometry(.012,.012,1,6).translate(0,.5,0), arrowGeo = new THREE.ConeGeometry(.035,.08,8).rotateX(Math.PI);
+  const fieldMat = new THREE.MeshBasicMaterial({color:0xfff4d6, transparent:true, opacity:.85});
   /* 7×4 の格子に 28 本。rank は「何本目に表示するか」。11 は 28 と互いに素なので、少ない本数でも格子全体に散らばる */
-  for (let i=0;i<7;i++) for (let j=0;j<4;j++) for (const half of [0,1]){ const l = new THREE.Line(lineGeo, RR.field.clone()); l.position.set(-1.05 + i*.35, 0, -.6 + j*.4); l.userData.x = l.position.x; l.userData.half = half; l.userData.rank = ((i*4 + j)*11) % 28; g.add(l); lines.push(l); }   // half 0 = 下半分、1 = 上半分
+  for (let i=0;i<7;i++) for (let j=0;j<4;j++) for (const half of [0,1]){ const l = new THREE.Mesh(lineGeo, fieldMat.clone()); l.castShadow = false; l.position.set(-1.05 + i*.35, 0, -.6 + j*.4); l.userData.x = l.position.x; l.userData.half = half; l.userData.rank = ((i*4 + j)*11) % 28; g.add(l); lines.push(l);
+    const a = new THREE.Mesh(arrowGeo, fieldMat); a.castShadow = false; a.position.copy(l.position); g.add(a); arrows.push(a); }   // half 0 = 下半分、1 = 上半分
   const pos = [], neg = [];
   for (let i=0;i<ES_DOTS;i++){ const x = -1.15 + (i%8)*.33, z = -.72 + Math.floor(i/8)*.36;
     const p = mesh(new THREE.SphereGeometry(.05,8,8), RR.dotP, g, x, 0, z); p.castShadow = false; pos.push(p);
@@ -3792,7 +3799,7 @@ function buildStatics(g){
   const wTop = new THREE.Group(), wBot = new THREE.Group(); g.add(wTop, wBot);
   wr(P3(1.3,2.0), P3(2.0,2.0), wTop); wr(P3(2.0,2.0), P3(2.0,1.0), wTop);
   wr(P3(1.3,.9), P3(1.75,.9), wBot); wr(P3(1.75,.9), P3(1.75,.75), wBot);
-  Object.assign(g.userData, {top, bot, slab, lines, pos, neg, wTop});
+  Object.assign(g.userData, {top, bot, slab, lines, arrows, pos, neg, wTop});
   g.userData.labels = (st) => [
     {obj:top, t:'上の極板（＋電荷）', c:'#D24A43'},
     {obj:bot, t:'下の極板（−電荷）', c:'#3572D6'},
@@ -3806,6 +3813,9 @@ function buildStatics(g){
 function animStatics(g, t, st, dt){
   const u = g.userData, m = esModel(), gap = st.eD*.28, y0 = .9, y1 = y0 + gap;   // 間隔は d に比例
   u.top.position.y = y1; u.wTop.position.y = y1 - 2.0; u.wTop.children[1].visible = st.eMode==='v';
+  /* 縦の導線は、上の極板の高さから電源の上面（0.75）まで伸び縮みさせる。以前は導線ごと上下に動かしたので、
+     d を 3.5 mm 以上にすると「つないだまま」なのに導線の下端が電源から浮いた（2026-11-08 監査） */
+  { const w = u.wTop.children[1], L = Math.max(.05, y1 - .75); w.scale.y = L; w.position.y = 2.0 - L/2; }
   /* 誘電体の形 */
   u.slab.visible = st.eFill!=='none';
   if (st.eFill==='full'){ u.slab.scale.set(2.6, gap-.06, 1.8); u.slab.position.set(0, y0 + gap/2, 0); }
@@ -3819,10 +3829,20 @@ function animStatics(g, t, st, dt){
     l.position.y = y0 + .03 + l.userData.half*(gap/2 - .03); l.scale.y = gap/2 - .03;
     l.visible = l.userData.rank < n; l.material.opacity = .85;
   });
+  u.arrows.forEach((a, i) => { const l = u.lines[i]; a.visible = l.visible; a.position.y = l.position.y + l.scale.y/2; });
   /* 電荷: 空気・d 2 mm・100 V のときの Q を 6 粒として、Q に比例させる（40 粒で頭打ち） */
   const q0 = E0*ES_S/(2e-3)*100, nq = Math.max(1, Math.min(ES_DOTS, Math.round(6*m.Q/q0)));
-  u.pos.forEach((p, i) => { p.visible = i < nq; p.position.y = y1 + .06; });
-  u.neg.forEach((p, i) => { p.visible = i < nq; p.position.y = y0 - .06; });
+  /* 電荷は極板の向かい合う面（内側）に集まる（外側の面には無い）。以前は外側の面（上の極板の上・下の極板の下）に置いていた。
+     粒は 8×5 の格子に、少ない数でも面全体に散らばる順（k·17 mod 40）で置く（以前は 8 粒まで極板の一辺の1列に並んだ）。
+     左右に分割（並列）では E が共通で、電荷は誘電率に比例して分かれる（誘電体の側：空気の側 ＝ εr : 1。片側 20 粒で頭打ち）。
+     粒と電気力線の位置は1対1に対応させていない（粒の数 ∝ Q、線の本数 ∝ E）。2026-11-08 監査 */
+  const slots = []; for (let k=0;k<ES_DOTS;k++) slots.push((k*17) % ES_DOTS);
+  let pick = slots.slice(0, nq);
+  if (st.eFill==='split'){ const er = st.eEr, nl = Math.min(20, Math.round(nq*er/(1+er))), nr = Math.min(20, nq - nl);
+    pick = slots.filter(sl => sl%8 < 4).slice(0, nl).concat(slots.filter(sl => sl%8 >= 4).slice(0, nr)); }
+  const place = (arr, y) => arr.forEach((p, i) => { const sl = pick[i]; p.visible = sl !== undefined;
+    if (sl !== undefined) p.position.set(-1.15 + (sl%8)*.33, y, -.72 + Math.floor(sl/8)*.36); });
+  place(u.pos, y1 - .08); place(u.neg, y0 + .08);
 }
 
 /* ---------- 2. 磁気回路・電磁力 ----------
