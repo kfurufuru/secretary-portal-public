@@ -1812,6 +1812,124 @@ window.WIKI_DATA = {
     { y: "H18", q: 17, f: "haiden", c: "配", t: "百分率インピーダンスと過電流遮断器の整定", k: "計算", lv: "—" },
   ],
 
+  // 出題実績の「何が問われたか」（キー＝マスタの "年度-問"）。いまは水力の R01〜R07 の21問だけ。
+  // 題・問題タイプはマスタから引く（ここに二重に持たない）。問題文・選択肢は転記せず、自分の言葉で1行に要約した。
+  //   ask=何が問われたか（B問題は (a)(b) の配列）  ans=正答（表では閉じた details に入れる）
+  //   pat=問われ方の型（kakomonAskPat のキー。冊子を読んで決めた。題名からは決めていない）
+  //   sec=解くときに読む節の要素 id（同じページの id。別ページは "ページid:要素id"）。行きのリンクと、節の側の「この節はこう問われた」の両方がこれを使う
+  //   cover=このページだけで解けるか（ok＝決め手がある／partial＝決め手はあるが手順・定義の一部が無い／none＝決め手が無い）  gap=足りないもの（ok でも、正しい選択肢の中身が無ければ書く）
+  //   page=問題冊子の PDF のページ（問の始まり）  rerun=ほぼ同じ文章で出た別の回
+  // 照合（2026-11-14）: 試験センターの問題冊子（kakomonPdf の URL）で全21問の本文を読み、正答は解答 PDF を画像で目視して確定した。
+  //   計算問題は正答の値を自分で計算し直して一致を確かめた。R01〜R03 の冊子は文字が取り出せないので、ページを画像にして読んだ。
+  // 件数・キーの実在・必須欄・sec の飛び先の実在は scripts/check_denryoku_kakomon_claims.py が CI で検査する。
+  kakomonPdf: {
+    "R01": "20190901", "R02": "20200913", "R03": "20210822", "R04上": "20220821", "R04下": "20230326",
+    "R05上": "20230820", "R05下": "20240324", "R06上": "20240818", "R06下": "20250323", "R07上": "20250831", "R07下": "20260322",
+  },
+  kakomonAskPat: {
+    "bunrui": "発電所の分類（落差の得方・流量の使い方）",
+    "shiki": "落差の名前と出力の式・単位",
+    "suisha": "水車の種類と原理（衝動／反動・比速度の大小）",
+    "setsubi": "設備・特徴・概況の正誤（水車・発電機・変圧器・制御・電源構成）",
+    "suigeki": "水撃作用とサージタンク",
+    "denryokuryou": "出力から電力量を出す計算",
+    "yousui": "揚水の計算（効率は割る）",
+    "hisokudo": "比速度と回転速度の計算",
+    "ryutai": "流体の基礎（連続の式・ベルヌーイ・運動エネルギー）",
+    "ryukyo": "流況曲線と調整池",
+  },
+  kakomonAskSec: {
+    "intro": "1節 直感的理解", "sr-rakusa": "1節 落差の図", "suisha": "2節 水車の種類", "sr-suisha-tip": "2節「原理から出る結果」",
+    "sr-bunrui": "2節 発電所の分類表", "sr-f01": "公式01 発電出力", "sr-f02": "公式02 揚水入力", "sr-f03": "公式03 比速度",
+    "sr-f04": "公式04 年間発電電力量", "sr-f05": "公式05 連続の式", "sr-f06": "公式06 ベルヌーイ", "sr-f07": "公式07 単位体積のエネルギー",
+    "sr-f08": "公式08 総水量から電力量", "sr-renzoku": "3節 連続の式の「なぜ」", "sr-units": "3節 N・Pa・J・W のつながり",
+    "sr-ex4": "例題④ 比速度", "sr-ex5": "例題⑤ 運動エネルギー", "sr-ex6": "例題⑥ 総水量から電力量", "sr-ex7": "例題⑦ 流況曲線と調整池",
+    "sr-suigeki": "4節 水撃作用・キャビテーション", "trap": "5節 引っかけ", "seigo": "6節 正誤判定",
+    "karyoku:formula": "1.2 火力 4節 公式（燃料消費量）",
+  },
+  kakomonAsk: {
+    "R07下-1": { pat: "bunrui", page: 4, rerun: "R03-1", cover: "partial", sec: ["sr-bunrui"],
+      gap: "落差の得方による分類（水路式・ダム式・ダム水路式）と、水路式の短所がこのページに無い",
+      ask: "落差の得方（水路式・ダム式・ダム水路式）と流量の使い方（流込み式・調整池式・貯水池式・揚水式）の分類名、水路式の短所、流込み式・調整池式の定義を埋める",
+      ans: "(3) 落差・流量・流込み式・高落差を得にくい・調整池式" },
+    "R07下-2": { pat: "ryutai", page: 5, cover: "ok", sec: ["sr-f07", "sr-ex5"],
+      ask: "水圧管内の水 1 m³ がもつ運動エネルギー [J/m³] を、密度 ρ と流速 v の式で選ぶ（誤答肢は ρ・v の指数や係数を変えた式と √ の式）",
+      ans: "(1) ρv²/2" },
+    "R07上-1": { pat: "shiki", page: 4, cover: "ok", sec: ["sr-units", "sr-f01"],
+      ask: "P＝ρgQH の単位 kg/m³・m/s²・m³/s・m を組み替え、力 N → 仕事 J → 仕事率 W とつないで、9.8QH の単位が kW になることを埋める（力の空欄に Pa、単位に kJ を混ぜた選択肢がある）",
+      ans: "(2) kg·m/s²・N・J・W・kW" },
+    "R07上-15": { pat: "ryukyo", page: 18, cover: "ok", sec: ["sr-ex7", "sr-f05"],
+      ask: ["(a) 流況曲線の渇水量 8 m³/s の日に、1日6時間だけ運転できる最大の使用流量と、止めている18時間に調整池へ貯まる水量",
+            "(b) 200日流量 14 m³/s の日に、(a) の使用流量で1日8時間運転するのに要る有効貯水容量の最小値"],
+      ans: ["(5) 32.0 m³/s・518 400 m³", "(5) 520 000 m³（運転中の不足 (32−14)×8×3600 ＝ 518 400 m³ 以上で最小）"] },
+    "R06下-1": { pat: "setsubi", page: 4, cover: "ok", sec: ["seigo"],
+      gap: "正しい選択肢にある自動電圧調整器と調速機の働き（決め手の主変圧器の結線は6節にある）",
+      ask: "自動電圧調整器と調速機・カプラン水車・主変圧器の結線・ペルトン水車・水車発電機の極数の5つの記述から、誤りを選ぶ",
+      ans: "(3) 主変圧器は発電機側が Δ・系統側が Y。発電機側 Y・系統側 Δ とした記述が誤り" },
+    "R06上-1": { pat: "setsubi", page: 4, cover: "ok", sec: ["seigo", "sr-suisha-tip"],
+      ask: "ペルトン水車（ニードル弁による流量調整・急停止の手順）・小水力発電・クロスフロー水車の5つの記述から、誤りを選ぶ",
+      ans: "(3) 急停止でもニードル弁で噴流を急に止めない（水撃作用が起きる）。デフレクタで噴流をそらし、ニードル弁はゆっくり閉じる" },
+    "R06上-2": { pat: "yousui", page: 5, cover: "ok", sec: ["sr-f02", "sr-f01", "trap"],
+      ask: "総落差 200 m・損失水頭は総落差の 2.5 %・流量 100 m³/s の揚水発電所で、揚水時の電動機入力と発電時の発電機出力を求める（ポンプ・水車の効率 85 %、電動機・発電機の効率 98 %）",
+      ans: "(4) 241 MW・159 MW（揚水は 200＋5＝205 m で効率を割る。発電は 200−5＝195 m で効率を掛ける）" },
+    "R06上-15": { pat: "hisokudo", page: 20, cover: "partial", sec: ["sr-f03", "sr-ex4"],
+      gap: "比速度から回転速度を逆算する手順と、n＝120f/p で極数を選んで比速度を出し直す例題が無い（n＝120f/p は6節の正誤表に1行だけある）",
+      ask: ["(a) 有効落差 200 m・水車出力 85 000 kW・比速度 100 m·kW から回転速度を逆算し、合う水車の種類を選ぶ",
+            "(b) 50 Hz の系統につなぐとき、(a) の回転速度に最も近い同期速度になる磁極数と、その回転速度で計算し直した比速度"],
+      ans: ["(4) フランシス水車・258 min⁻¹", "(5) 24極（250 min⁻¹）・97 m·kW"] },
+    "R05下-1": { pat: "shiki", page: 4, cover: "ok", sec: ["sr-rakusa", "sr-f01", "sr-units"],
+      ask: "図の Hg・hl・H の名前（総落差・損失水頭・有効落差）と、水車出力・発電機出力の式を選ぶ（[kW] の式は ×10³ [W] の式と値が同じで、落差の名前で絞る。効率で割った式も混ぜてある）",
+      ans: "(3) 総落差・損失水頭・有効落差・9.8QHηw×10³ [W]・9.8QHηwηg×10³ [W]" },
+    "R05下-15": { pat: "denryokuryou", page: 19, cover: "partial", sec: ["sr-f04", "sr-f01", "karyoku:formula"],
+      gap: "(b) の、需要の年間電力量から水力の分を引き、残りを汽力の重油の量に直す部分はこのページに無い（燃料消費量は 1.2 火力にある）",
+      ask: ["(a) 最大使用水量 20 m³/s・総落差 200 m・損失水頭 7 m・総合効率 85 %・設備利用率 60 % の水力発電所の年間発電電力量 [GW·h]",
+            "(b) 最大電力 100 MW・年負荷率 60 % の需要のうち、水力で足りない分を汽力がまかなうときの重油の年間消費量 [kL]（発電端熱効率 40 %・発熱量 39 100 kJ/L）"],
+      ans: ["(3) 170 GW·h（有効落差 193 m で出力 32 154 kW。×8 760 h×0.6）", "(3) 82 000 kL（需要 525.6 GW·h から水力 169 GW·h を引いた分を汽力が出す）"] },
+    "R05上-1": { pat: "suisha", page: 4, cover: "ok", sec: ["sr-f03", "seigo"],
+      gap: "比速度の定義（形と運転状態を相似に保ったまま大きさを変え、落差 1 m で 1 kW を出すようにした仮想の水車の回転速度）。決め手の (エ)(オ)（ペルトンの比速度は小さい・高落差でキャビテーション）は6節にある",
+      ask: "比速度の定義（何を相似に保って何を変え、どんな条件で 1 kW を出す仮想の水車か）、適切な比速度の範囲が何ごとに決まるか、ペルトン水車とフランシス水車の比速度の大小、比速度の大きい水車を高落差で使うと起きる現象を埋める",
+      ans: "(4) 相似に保って大きさを（形と運転状態を相似に保って、大きさを変えたとき）・単位落差（1 m）・種類・小さい・キャビテーションが生じ" },
+    "R04下-1": { pat: "setsubi", page: 4, cover: "none", sec: ["sr-ex7", "sr-rakusa"],
+      gap: "決め手の「日本の発電電力量に占める水力の比率」と、水力の特徴（起動・停止が速い・耐用年数が長い・効率が高い）がこのページに無い",
+      ask: "ベルヌーイの定理・水力発電所の特徴・日本の発電電力量に占める水力の比率・流況曲線・有効落差の5つの記述から、誤りを選ぶ",
+      ans: "(3) 近年の水力の比率を「20 %程度」とした記述が誤り（実際はこれより小さい）" },
+    "R04下-2": { pat: "suisha", page: 5, cover: "ok", sec: ["suisha", "sr-suisha-tip"],
+      ask: "ノズルで有効落差が何のエネルギーに変わるか、その力で回る水車の分類、代表の水車名と、向く落差・比速度の大小を埋める",
+      ans: "(5) 運動・衝動・ペルトン・高落差・小さい" },
+    "R04上-1": { pat: "setsubi", page: 4, cover: "ok", sec: ["seigo", "sr-suisha-tip"],
+      gap: "正しい選択肢にある自動電圧調整器と調速機の働き、遠隔監視制御と無人化（決め手の吸出し管は2節・6節にある）",
+      ask: "水車発電機の極数・自動電圧調整器と調速機・吸出し管・遠隔監視制御と無人化・カプラン水車の5つの記述から、誤りを選ぶ",
+      ans: "(3) 吸出し管は反動水車（フランシス・プロペラ）のもので、ペルトン水車には使わない" },
+    "R04上-15": { pat: "yousui", page: 18, cover: "partial", sec: ["sr-f02", "sr-f08"],
+      gap: "総水量から揚水の電力量を出す型（公式08 を、掛けるのでなく効率で割る形）の例題が無い",
+      ask: ["(a) 揚程 450 m・ポンプ効率 90 %・電動機効率 98 % で、下池から 1 800 000 m³ の水を揚げるのに電動機が使う電力量 [MW·h]",
+            "(b) 電動機入力 300 MW で揚水運転しているときの流量 [m³/s]"],
+      ans: ["(5) 2 500 MW·h", "(3) 60.0 m³/s"] },
+    "R03-1": { pat: "bunrui", page: 4, rerun: "R07下-1", cover: "partial", sec: ["sr-bunrui"],
+      gap: "落差の得方による分類（水路式・ダム式・ダム水路式）と、水路式の特徴がこのページに無い",
+      ask: "落差の得方と流量の使い方による分類名、ダム式・ダム水路式と比べた水路式の特徴、流込み式・調整池式の定義を埋める",
+      ans: "(5) 落差・流量・建設費が安い・流込み式・調整池式" },
+    "R03-2": { pat: "ryutai", page: 5, cover: "ok", sec: ["sr-f05", "sr-f06", "sr-renzoku"],
+      ask: "断面 A（内径 2.2 m・流速 3 m/s・圧力 24 kPa）より 30 m 低い断面 B（内径 2 m）の流速と水圧を求める",
+      ans: "(3) 3.6 m/s・316 kPa（連続の式で流速、ベルヌーイの定理で水圧）" },
+    "R02-1": { pat: "suigeki", page: 4, cover: "partial", sec: ["sr-suigeki", "seigo"],
+      gap: "サージタンクの種類（差動式・小孔式・水室式）と、密閉構造ではないことが書かれていない（水位の上下で圧力変動を吸収することは書いてある）",
+      ask: "水撃作用の起こり方と大きくなる条件、サージタンクの目的・種類・構造、差動式サージタンクの働きの5つの記述から、誤りを選ぶ",
+      ans: "(3) 「いずれも密閉構造である」が誤り。サージタンクは水槽の中の水位の昇降で水撃作用を軽減する（同じ問の (4)。差動式の働きは (5)）" },
+    "R02-15": { pat: "denryokuryou", page: 18, cover: "partial", sec: ["sr-ex6", "sr-f04", "sr-f01"],
+      gap: "年間の流出量 V [m³] を年平均流量 Q [m³/s] に直す（1年の秒数で割る）手順が例題に無い",
+      ask: ["(a) 流域面積 15 000 km²・年間降水量 750 mm・流出係数 0.7 から、年間の平均流量 [m³/s]",
+            "(b) (a) の流量を最大使用水量とし、有効落差 100 m・総合効率 80 %・設備利用率 60 % としたときの年間発電電力量 [kW·h]"],
+      ans: ["(4) 250 m³/s", "(4) 1 000 000 000 kW·h（9.8×250×100×0.8 ＝ 196 000 kW。×8 760 h×0.6）"] },
+    "R01-1": { pat: "setsubi", page: 4, cover: "none", sec: ["suisha"],
+      gap: "決め手の揚水発電所の機器構成（別置式・タンデム式・ポンプ水車式）と、水車発電機の形（突極形・立軸形）がこのページに無い",
+      ask: "ガイドベーン・フランシス水車の比速度と落差・揚水発電所の機器構成（別置式・タンデム式・ポンプ水車式）・水車発電機の形・調速機と自動電圧調整器の5つの記述から、誤りを選ぶ",
+      ans: "(3) 水車とポンプを別々に同じ軸へつなぐのはタンデム式。ポンプ水車式は1台の機械が水車とポンプを兼ねる" },
+    "R01-2": { pat: "suisha", page: 5, cover: "ok", sec: ["suisha"],
+      ask: "反動水車と衝動水車で、ランナに入る水がもつエネルギー（圧力水頭／速度水頭）と、フランシス・カプラン・ペルトンの名前を説明文から埋める",
+      ans: "(1) 圧力水頭・フランシス水車・カプラン水車・速度水頭・ペルトン水車" },
+  },
+
   glossary: [
     { term: "水頭", reading: "すいとう", def: "水がもつエネルギーを水柱の高さ [m] に直した量。重さ 1 N 分の水のエネルギーなので [J/N]＝[m] になる。位置水頭 z・圧力水頭 p/(ρg)・速度水頭 v²/(2g) の3つがあり、その和が全水頭。損失が無ければ全水頭は流れのどこでも一定（ベルヌーイの定理）。英語の head の訳で、実際の高さの差である「落差」とは別物（圧力・流速の分も含む）。関連テーマ: 水力発電" },
     { term: "損失水頭", reading: "そんしつすいとう", def: "水路・水圧管路の摩擦などで熱になって失うエネルギーを水頭 [m] で表したもの。発電時は総落差から引き（有効落差＝総落差−損失水頭）、揚水時は総落差に足す（全揚程＝総落差＋損失水頭。ポンプは失う分も余計に押し上げる）。関連テーマ: 水力発電" },
@@ -2850,11 +2968,15 @@ const Crumbs = ({
     onNav(c.id);
   }
 }, c.label) : /*#__PURE__*/React.createElement("span", null, c.label))));
+
+/* id は任意。出題実績のカードから飛ぶ先にする箱だけに付ける（付けない箱の出力は変わらない） */
 const Box = ({
   kind,
   label,
-  children
+  children,
+  id
 }) => /*#__PURE__*/React.createElement("aside", {
+  id: id,
   className: `box box-${kind}`
 }, label && /*#__PURE__*/React.createElement("div", {
   className: "box-label"
@@ -2948,8 +3070,10 @@ const FormulaCard = ({
   num,
   name,
   eq,
-  note
+  note,
+  id
 }) => /*#__PURE__*/React.createElement("div", {
+  id: id,
   className: "formula-card"
 }, /*#__PURE__*/React.createElement("div", {
   className: "num"
@@ -4772,6 +4896,288 @@ const KakomonHistory = ({
     lv: false,
     compact: true
   }));
+};
+
+/* ============================================================
+   出題実績の「何が問われたか」（WIKI_DATA.kakomonAsk）。
+   KakomonAskTable … 出題実績の節に置く。問ごとのカード（問われたこと・解く節へのリンク・問題冊子・閉じた答え）と、型の集計。
+   KakomonAskedHere … 公式カード・例題・節の直後に置く。その要素を sec に挙げた問を並べ、カードへ戻るリンクにする。
+   行きも帰りも同じ sec から描くので、片方だけ直してずれることがない。
+   宣言は1行・自己終了で書く（scripts/check_denryoku_kakomon_claims.py が読む）。
+   ============================================================ */
+const KA_COVER = {
+  ok: {
+    mark: "○",
+    label: "このページで解ける",
+    color: "var(--ok)"
+  },
+  partial: {
+    mark: "△",
+    label: "一部が足りない",
+    color: "var(--warn)"
+  },
+  none: {
+    mark: "×",
+    label: "決め手が無い",
+    color: "var(--danger)"
+  }
+};
+const kaKey = x => x.y + "-" + x.q;
+const kaCardId = key => "ka-" + key;
+const kaRef = key => {
+  const [y, q] = key.split("-");
+  return y + " 問" + q;
+};
+const kaAskOf = () => window.WIKI_DATA && window.WIKI_DATA.kakomonAsk || {};
+const kaLabel = sec => (window.WIKI_DATA && window.WIKI_DATA.kakomonAskSec || {})[sec] || sec;
+/* 同じ節を2回押しても hash が変わらず hashchange が起きないので、そのときは自分でスクロールする */
+const kaJump = (onNav, page, target) => e => {
+  e.preventDefault();
+  const [p, id] = target.includes(":") ? target.split(":") : [page, target];
+  if (location.hash === "#" + p + ":" + encodeURIComponent(id)) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({
+      block: "start"
+    });
+  } else onNav(p, id);
+};
+const kaJoin = v => Array.isArray(v) ? v : [v];
+const kaBtn = {
+  display: "inline-block",
+  margin: "2px 6px 2px 0",
+  padding: "1px 8px",
+  border: "1px solid var(--rule)",
+  borderRadius: 4,
+  fontSize: 13,
+  textDecoration: "none"
+};
+const KakomonAskCard = ({
+  x,
+  a,
+  page,
+  onNav
+}) => {
+  const key = kaKey(x);
+  const cv = KA_COVER[a.cover] || KA_COVER.none;
+  const pdf = (window.WIKI_DATA && window.WIKI_DATA.kakomonPdf || {})[x.y];
+  return /*#__PURE__*/React.createElement("div", {
+    id: kaCardId(key),
+    style: {
+      border: "1px solid var(--rule)",
+      borderRadius: 8,
+      padding: "8px 10px",
+      margin: "8px 0",
+      scrollMarginTop: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--ink-soft)"
+    }
+  }, /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: "var(--ink)"
+    }
+  }, x.y, " 問", x.q), "・", x.k, "・", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: cv.color,
+      fontWeight: 600
+    }
+  }, cv.mark, " ", cv.label)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      margin: "2px 0 4px"
+    }
+  }, /*#__PURE__*/React.createElement(KakomonTitle, {
+    t: x.t
+  })), kaJoin(a.ask).map((s, i) => /*#__PURE__*/React.createElement("p", {
+    key: i,
+    style: {
+      margin: "2px 0"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--ink-mute)",
+      fontSize: 13
+    }
+  }, i === 0 ? "問われたこと：" : ""), s)), a.rerun && /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: "2px 0",
+      fontSize: 13
+    }
+  }, "ほぼ同じ文章で ", /*#__PURE__*/React.createElement("a", {
+    href: "#" + page + ":" + kaCardId(a.rerun),
+    onClick: kaJump(onNav, page, kaCardId(a.rerun))
+  }, kaRef(a.rerun)), " にも出た。空欄の位置と正答の語が違うので、答えを覚えず文章の意味で解く。"), a.gap && /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: "2px 0",
+      fontSize: 13,
+      color: "var(--ink-soft)"
+    }
+  }, a.cover === "ok" ? "このページに無いもの：" : "足りないもの：", a.gap), /*#__PURE__*/React.createElement("div", {
+    style: {
+      margin: "4px 0 0"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--ink-mute)",
+      marginRight: 4
+    }
+  }, "この節で解く"), a.sec.map(s => /*#__PURE__*/React.createElement("a", {
+    key: s,
+    href: "#" + (s.includes(":") ? s : page + ":" + s),
+    onClick: kaJump(onNav, page, s),
+    style: kaBtn
+  }, kaLabel(s))), pdf && /*#__PURE__*/React.createElement("a", {
+    href: "https://www.shiken.or.jp/chief/upload/" + pdf + "_ch_third_q02.pdf#page=" + a.page,
+    target: "_blank",
+    rel: "noopener",
+    style: kaBtn
+  }, "問題冊子を開く（試験センター・p.", a.page, "）")), /*#__PURE__*/React.createElement("details", {
+    style: {
+      marginTop: 4
+    }
+  }, /*#__PURE__*/React.createElement("summary", {
+    style: {
+      cursor: "pointer",
+      color: "var(--ink-soft)",
+      fontSize: 13
+    }
+  }, "自分で解いてから、正答を開く"), kaJoin(a.ans).map((s, i) => /*#__PURE__*/React.createElement("p", {
+    key: i,
+    style: {
+      margin: "4px 0 0"
+    }
+  }, Array.isArray(a.ans) ? "(" + "ab"[i] + ") " : "", s))));
+};
+const KakomonAskTable = ({
+  f,
+  page,
+  onNav
+}) => {
+  const asks = kaAskOf();
+  const rows = kakomonSelect({
+    f
+  }).filter(x => asks[kaKey(x)]);
+  const [by, setBy] = React.useState("pat");
+  const pats = window.WIKI_DATA && window.WIKI_DATA.kakomonAskPat || {};
+  const groups = Object.keys(pats).map(p => ({
+    p,
+    rows: rows.filter(x => asks[kaKey(x)].pat === p)
+  })).filter(g => g.rows.length > 0).sort((a, b) => b.rows.length - a.rows.length);
+  const nCover = c => rows.filter(x => asks[kaKey(x)].cover === c).length;
+  const card = x => /*#__PURE__*/React.createElement(KakomonAskCard, {
+    key: kaKey(x),
+    x: x,
+    a: asks[kaKey(x)],
+    page: page,
+    onNav: onNav
+  });
+  const tab = (v, label) => /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => setBy(v),
+    "aria-pressed": by === v,
+    style: {
+      padding: "2px 10px",
+      marginRight: 6,
+      background: by === v ? "var(--accent-soft)" : "transparent",
+      color: "var(--ink)",
+      border: "1px solid var(--rule)",
+      borderRadius: 4,
+      cursor: "pointer",
+      fontSize: 13
+    }
+  }, label);
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "table-wrap"
+  }, /*#__PURE__*/React.createElement("table", {
+    className: "data"
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "問われ方の型"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      whiteSpace: "nowrap"
+    }
+  }, "問数"), /*#__PURE__*/React.createElement("th", null, "出た回"))), /*#__PURE__*/React.createElement("tbody", null, groups.map(g => /*#__PURE__*/React.createElement("tr", {
+    key: g.p
+  }, /*#__PURE__*/React.createElement("td", null, pats[g.p]), /*#__PURE__*/React.createElement("td", null, g.rows.length), /*#__PURE__*/React.createElement("td", null, g.rows.map((x, i) => /*#__PURE__*/React.createElement(React.Fragment, {
+    key: kaKey(x)
+  }, i > 0 && "・", /*#__PURE__*/React.createElement("a", {
+    href: "#" + page + ":" + kaCardId(kaKey(x)),
+    onClick: kaJump(onNav, page, kaCardId(kaKey(x)))
+  }, x.y, " 問", x.q))))))))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13
+    }
+  }, "このページだけで解けるか（冊子を読んで判定）：", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: KA_COVER.ok.color
+    }
+  }, "○ ", nCover("ok"), "問"), "・", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: KA_COVER.partial.color
+    }
+  }, "△ ", nCover("partial"), "問"), "・", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: KA_COVER.none.color
+    }
+  }, "× ", nCover("none"), "問"), "（全", rows.length, "問）。△と×は、カードの「足りないもの」に書いた。"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      margin: "6px 0"
+    }
+  }, tab("pat", "型ごとに並べる"), tab("year", "新しい回から並べる")), by === "year" ? rows.map(card) : groups.map(g => /*#__PURE__*/React.createElement("div", {
+    key: g.p
+  }, /*#__PURE__*/React.createElement("h4", {
+    style: {
+      margin: "14px 0 2px"
+    }
+  }, pats[g.p], "（", g.rows.length, "問）"), g.rows.map(card))));
+};
+const KakomonAskedHere = ({
+  id,
+  page,
+  onNav
+}) => {
+  const asks = kaAskOf();
+  const keys = Object.keys(asks).filter(k => asks[k].sec.includes(id));
+  if (keys.length === 0) return null;
+  const link = k => /*#__PURE__*/React.createElement("a", {
+    href: "#" + page + ":" + kaCardId(k),
+    onClick: kaJump(onNav, page, kaCardId(k))
+  }, kaRef(k));
+  const list = /*#__PURE__*/React.createElement("ul", {
+    style: {
+      margin: "2px 0",
+      paddingLeft: 18
+    }
+  }, keys.map(k => /*#__PURE__*/React.createElement("li", {
+    key: k
+  }, link(k), "：", kaJoin(asks[k].ask).join(" ／ "))));
+  const box = {
+    margin: "4px 0 12px",
+    padding: "4px 10px",
+    borderLeft: "3px solid var(--accent)",
+    fontSize: 13
+  };
+  /* 3問以上は本文を長くしないよう、問われたことの一覧を畳む（問番号のリンクは畳まずに見せる） */
+  if (keys.length >= 3) return /*#__PURE__*/React.createElement("details", {
+    style: box
+  }, /*#__PURE__*/React.createElement("summary", {
+    style: {
+      cursor: "pointer",
+      color: "var(--ink-soft)",
+      fontWeight: 600
+    }
+  }, "ここが問われた過去問（", keys.length, "問）：", keys.map((k, i) => /*#__PURE__*/React.createElement(React.Fragment, {
+    key: k
+  }, i > 0 && "・", kaRef(k))), "\u3000問われたことを開く"), list);
+  return /*#__PURE__*/React.createElement("div", {
+    style: box
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "var(--ink-soft)",
+      fontWeight: 600
+    }
+  }, "ここが問われた過去問（", keys.length, "問）"), list);
 };
 const HaidenPage = ({
   data,
@@ -13161,6 +13567,7 @@ const SuiryokuPage = ({
 }, /*#__PURE__*/React.createElement("p", null, "水の比重量 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\rho g = 1000 \\times 9.8 = 9800\\,\\text{N/m}^3 = 9.8\\,\\text{kN/m}^3"
 }), "。これに流量 Q[m³/s]・有効落差 H[m] を掛け、kW にまとめた係数が 9.8。単位確認：[kN/m³]×[m³/s]×[m]＝[kW]。")), /*#__PURE__*/React.createElement("figure", {
+  id: "sr-rakusa",
   style: {
     margin: "12px 0 14px",
     background: "var(--bg-elev)",
@@ -13369,7 +13776,11 @@ const SuiryokuPage = ({
     marginTop: "6px",
     lineHeight: 1.6
   }
-}, "落差の内訳：取水口水面から放水面までの高さが", /*#__PURE__*/React.createElement("strong", null, "総落差 Hg"), "。水路・水圧管路の摩擦で失う分が", /*#__PURE__*/React.createElement("strong", null, "損失水頭 hl"), "で、残った", /*#__PURE__*/React.createElement("strong", null, "有効落差 H = Hg − hl"), " だけが水車の仕事になる。P=9.8QHη の H は必ずこの有効落差。")), /*#__PURE__*/React.createElement("h3", {
+}, "落差の内訳：取水口水面から放水面までの高さが", /*#__PURE__*/React.createElement("strong", null, "総落差 Hg"), "。水路・水圧管路の摩擦で失う分が", /*#__PURE__*/React.createElement("strong", null, "損失水頭 hl"), "で、残った", /*#__PURE__*/React.createElement("strong", null, "有効落差 H = Hg − hl"), " だけが水車の仕事になる。P=9.8QHη の H は必ずこの有効落差。")), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-rakusa",
+  page: "suiryoku",
+  onNav: onNav
+}), /*#__PURE__*/React.createElement("h3", {
   id: "mizu-nagare"
 }, "出力の流れ（棒の長さ＝出力）"), /*#__PURE__*/React.createElement("p", null, "棒は", /*#__PURE__*/React.createElement("strong", null, "1秒あたりのエネルギー＝出力 [kW]"), " を表す。", /*#__PURE__*/React.createElement("strong", null, "流量 Q は途中で減らない"), "（連続の式）。減るのは、落差のうち摩擦などで熱になる分（損失水頭。水路・水圧管路の摩擦のほか、取水口・曲がり・放水路の損失を含む）と、水車・発電機の損失である。"), /*#__PURE__*/React.createElement("p", {
   style: {
@@ -13438,7 +13849,8 @@ const SuiryokuPage = ({
   className: "data"
 }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "項目"), /*#__PURE__*/React.createElement("th", null, "衝動水車（ペルトン）"), /*#__PURE__*/React.createElement("th", null, "反動水車（フランシス/カプラン）"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "原理（違いの起点）"), /*#__PURE__*/React.createElement("td", null, "水の圧力を", /*#__PURE__*/React.createElement("strong", null, "ノズルで全部"), "速さに変える。ランナーは大気中にあり、噴流がバケットに当たる力で回る（ランナーの前後とも大気圧）"), /*#__PURE__*/React.createElement("td", null, "ランナーはケーシングの中で水に満たされる。水は", /*#__PURE__*/React.createElement("strong", null, "ランナーを通るあいだも"), "圧力を失い、ランナーから流れ出る水の反動もランナーを回す")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "適用落差"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "高落差・小流量"), "（300m級〜）"), /*#__PURE__*/React.createElement("td", null, "フランシスは", /*#__PURE__*/React.createElement("strong", null, "中〜高落差"), "（40〜600m級・揚水にも使用）／カプラン・プロペラは", /*#__PURE__*/React.createElement("strong", null, "低落差・大流量"), "（〜60m級）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "比速度 Ns"), /*#__PURE__*/React.createElement("td", null, "低い"), /*#__PURE__*/React.createElement("td", null, "高い（フランシス→カプランで増）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "キーワード"), /*#__PURE__*/React.createElement("td", null, "ノズル・バケット"), /*#__PURE__*/React.createElement("td", null, "フランシス＝混流／カプラン＝可動翼"))))), /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
-  label: "試験で問われるのは「原理から出る結果」"
+  label: "試験で問われるのは「原理から出る結果」",
+  id: "sr-suisha-tip"
 }, /*#__PURE__*/React.createElement("p", null, "違いは", /*#__PURE__*/React.createElement("strong", null, "「水の圧力が速さに変わる場所」がノズルだけか、ランナーの中もか"), "の1点。論説の選択肢は、この1点から出る結果を聞く。"), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "吸出し管は反動水車だけ"), "：ランナーの出口が放水面まで水でつながるので、ランナーより下の落差も使える。ペルトンはランナーが大気中なので、ランナーより下の落差は使えない。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "流量の調整"), "：ペルトンはノズルの中のニードル弁で調整する。急停止ではデフレクタで噴流をそらし、ニードル弁はゆっくり閉じる（急に閉じると水撃作用）。反動水車はガイドベーンで調整し、カプランはランナーの羽根の角度も流量に合わせて変える。クロスフロー水車も、ガイドベーンで調整する。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "キャビテーション"), "：吸出し管の中の圧力が下がりすぎて起きる型は、反動水車の論点。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "蒸気タービンも同じ軸"), "：衝動タービンはノズル（静翼）だけで膨張し、反動タービンは動翼の中でも膨張する（", /*#__PURE__*/React.createElement("a", {
   href: "#",
   onClick: e => {
@@ -13451,7 +13863,11 @@ const SuiryokuPage = ({
     e.preventDefault();
     onNav("suiryoku", "seigo");
   }
-}, "6節"), " の正誤表で確かめる（R04上 問1・R06上 問1・R05上 問1）。")), /*#__PURE__*/React.createElement(Box, {
+}, "6節"), " の正誤表で確かめる（R04上 問1・R06上 問1・R05上 問1）。")), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-suisha-tip",
+  page: "suiryoku",
+  onNav: onNav
+}), /*#__PURE__*/React.createElement(Box, {
   kind: "warn",
   label: "落差レンジの数値は「目安」（公式根拠ではない）"
 }, /*#__PURE__*/React.createElement("p", null, "上表の「300m級」「40〜600m」「〜60m」は文献により幅があり、", /*#__PURE__*/React.createElement("strong", null, "実機の適用範囲は互いに重なる"), "（同じ落差でフランシスもペルトンも成立しうる）。境界値を丸暗記すると、レンジがずれた出典の設問で外す。"), /*#__PURE__*/React.createElement("p", null, "試験で問われるのは", /*#__PURE__*/React.createElement("strong", null, "絶対値ではなく相対関係"), "。", /*#__PURE__*/React.createElement("strong", null, "ペルトン（高落差・小流量）→ フランシス（中落差・中流量）→ カプラン（低落差・大流量）"), " の順序と、それが比速度 Ns の小→大と一致することだけを覚える。")), /*#__PURE__*/React.createElement("figure", {
@@ -13846,10 +14262,15 @@ const SuiryokuPage = ({
   tex: "P = 9.8QH\\eta",
   inline: true
 }), " の H が小さくても Q で出力を稼げる。だから低落差向きで、比速度が大きい。")), /*#__PURE__*/React.createElement("div", {
-  className: "table-wrap"
+  className: "table-wrap",
+  id: "sr-bunrui"
 }, /*#__PURE__*/React.createElement("table", {
   className: "data"
-}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "発電所分類"), /*#__PURE__*/React.createElement("th", null, "特徴"), /*#__PURE__*/React.createElement("th", null, "調整単位"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "流れ込み式"), /*#__PURE__*/React.createElement("td", null, "自然流量をそのまま利用（調整なし）"), /*#__PURE__*/React.createElement("td", null, "—（ベース）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "調整池式"), /*#__PURE__*/React.createElement("td", null, "1日〜1週間程度分を貯留"), /*#__PURE__*/React.createElement("td", null, "日〜週")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "貯水池式"), /*#__PURE__*/React.createElement("td", null, "大型ダムで季節間調整"), /*#__PURE__*/React.createElement("td", null, "季節")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "揚水式"), /*#__PURE__*/React.createElement("td", null, "上下調整池＋ポンプで揚水"), /*#__PURE__*/React.createElement("td", null, "ピーク・需給調整"))))), /*#__PURE__*/React.createElement("h3", {
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "発電所分類"), /*#__PURE__*/React.createElement("th", null, "特徴"), /*#__PURE__*/React.createElement("th", null, "調整単位"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "流れ込み式"), /*#__PURE__*/React.createElement("td", null, "自然流量をそのまま利用（調整なし）"), /*#__PURE__*/React.createElement("td", null, "—（ベース）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "調整池式"), /*#__PURE__*/React.createElement("td", null, "1日〜1週間程度分を貯留"), /*#__PURE__*/React.createElement("td", null, "日〜週")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "貯水池式"), /*#__PURE__*/React.createElement("td", null, "大型ダムで季節間調整"), /*#__PURE__*/React.createElement("td", null, "季節")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "揚水式"), /*#__PURE__*/React.createElement("td", null, "上下調整池＋ポンプで揚水"), /*#__PURE__*/React.createElement("td", null, "ピーク・需給調整"))))), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-bunrui",
+  page: "suiryoku",
+  onNav: onNav
+}), /*#__PURE__*/React.createElement("h3", {
   id: "dam"
 }, "ダムの種類", /*#__PURE__*/React.createElement("span", {
   className: "h-src"
@@ -13857,7 +14278,11 @@ const SuiryokuPage = ({
   className: "table-wrap"
 }, /*#__PURE__*/React.createElement("table", {
   className: "data"
-}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "ダム"), /*#__PURE__*/React.createElement("th", null, "しくみ・向く場所"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "重力ダム"), /*#__PURE__*/React.createElement("td", null, "コンクリートの重さで水圧に耐える。コンクリートの量は多いが、構造が簡単で安定性が良い。日本で最も多い")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "アーチダム"), /*#__PURE__*/React.createElement("td", null, "水圧をアーチで", /*#__PURE__*/React.createElement("strong", null, "両岸の岩盤"), "に伝える。両岸の幅が", /*#__PURE__*/React.createElement("strong", null, "狭く"), "、岩盤が丈夫な所に向く。コンクリートの量を減らせる（R08上 問1 で「両岸の幅が広く」が誤り）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "ロックフィルダム"), /*#__PURE__*/React.createElement("td", null, "岩石を積み上げてつくり、内側に粘土などの遮水壁を置く。建設地の近くに岩石・砂利が多い所に向く")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "アースダム"), /*#__PURE__*/React.createElement("td", null, "土を主材料にする。灌漑用の池などに向き、軟弱な地盤でもつくれる")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "取水ダム"), /*#__PURE__*/React.createElement("td", null, "水路式発電所の水路に水を導くために、河川に設ける低いダム"))))), /*#__PURE__*/React.createElement(SectionCheck, {
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "ダム"), /*#__PURE__*/React.createElement("th", null, "しくみ・向く場所"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "重力ダム"), /*#__PURE__*/React.createElement("td", null, "コンクリートの重さで水圧に耐える。コンクリートの量は多いが、構造が簡単で安定性が良い。日本で最も多い")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "アーチダム"), /*#__PURE__*/React.createElement("td", null, "水圧をアーチで", /*#__PURE__*/React.createElement("strong", null, "両岸の岩盤"), "に伝える。両岸の幅が", /*#__PURE__*/React.createElement("strong", null, "狭く"), "、岩盤が丈夫な所に向く。コンクリートの量を減らせる（R08上 問1 で「両岸の幅が広く」が誤り）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "ロックフィルダム"), /*#__PURE__*/React.createElement("td", null, "岩石を積み上げてつくり、内側に粘土などの遮水壁を置く。建設地の近くに岩石・砂利が多い所に向く")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "アースダム"), /*#__PURE__*/React.createElement("td", null, "土を主材料にする。灌漑用の池などに向き、軟弱な地盤でもつくれる")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "取水ダム"), /*#__PURE__*/React.createElement("td", null, "水路式発電所の水路に水を導くために、河川に設ける低いダム"))))), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "suisha",
+  page: "suiryoku",
+  onNav: onNav
+}), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "suiryoku",
   sectionId: "suisha"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -13865,46 +14290,87 @@ const SuiryokuPage = ({
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
 }, "3."), "公式マップ（最重要）"), /*#__PURE__*/React.createElement(FormulaCard, {
+  id: "sr-f01",
   num: "01",
   name: "発電出力（必須）",
   eq: "P = 9.8\\,Q\\,H\\,\\eta\\,[\\text{kW}]",
   note: "Q=流量[m³/s]、H=有効落差=総落差−損失水頭[m]、η=水車効率×発電機効率。"
+}), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-f01",
+  page: "suiryoku",
+  onNav: onNav
 }), /*#__PURE__*/React.createElement(FormulaCard, {
+  id: "sr-f02",
   num: "02",
   name: "揚水入力（効率は割る）",
   eq: "P_{\\text{pump}} = \\dfrac{9.8\\,Q\\,H_p}{\\eta_{\\text{pump}}}\\,[\\text{kW}]",
   note: "H_p＝全揚程＝総落差＋損失水頭（発電時と符号が逆＝足す）。η で割るのはポンプ・電動機の損失分。管路の損失水頭は H_p 側に足す（別勘定・二重計上も省略も不可）。発電はη掛ける／揚水はη割る、が最頻出の引っかけ。"
+}), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-f02",
+  page: "suiryoku",
+  onNav: onNav
 }), /*#__PURE__*/React.createElement(FormulaCard, {
+  id: "sr-f03",
   num: "03",
   name: "比速度",
   eq: "N_s = \\dfrac{N\\sqrt{P}}{H^{5/4}}",
   note: "N=回転速度[min⁻¹]、P=ランナー1個（ペルトンはノズル1本）当たりの出力[kW]、H=有効落差[m]。Ns が大きいほど低落差・大流量型。ペルトン(低)→フランシス(中)→カプラン(高)。"
+}), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-f03",
+  page: "suiryoku",
+  onNav: onNav
 }), /*#__PURE__*/React.createElement(FormulaCard, {
+  id: "sr-f04",
   num: "04",
   name: "年間発電電力量・設備利用率",
   eq: "E = P \\times T\\,[\\text{kWh}]",
   note: "T=年間運転時間[h]。設備利用率 = E /(P_rated × 8760) × 100 [%]。発電電力量・重油使用量比較(R05下問15型)の起点。"
+}), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-f04",
+  page: "suiryoku",
+  onNav: onNav
 }), /*#__PURE__*/React.createElement(FormulaCard, {
+  id: "sr-f05",
   num: "05",
   name: "流量と流速（連続の式）",
   eq: "Q = A_1 v_1 = A_2 v_2\\,[\\text{m}^3/\\text{s}]",
   note: "A=水路断面積[m²]、v=平均流速[m/s]。流量は途中で増減しないので、断面が狭まれば流速は上がる。使用水量=Q[m³/s]×t[s] で有効貯水容量(R07上問15型)を組み立てる（運転時間が[h]で与えられたら ×3600 して[s]に直す）。"
+}), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-f05",
+  page: "suiryoku",
+  onNav: onNav
 }), /*#__PURE__*/React.createElement(FormulaCard, {
+  id: "sr-f06",
   num: "06",
   name: "ベルヌーイの定理（全水頭一定）",
   eq: "z + \\dfrac{p}{\\rho g} + \\dfrac{v^2}{2g} = \\text{一定}\\,[\\text{m}]",
   note: "位置水頭＋圧力水頭＋速度水頭の和が一定（損失を無視した場合）。3項とも単位は[m]で、この和が全水頭。損失があるぶん下流側で全水頭が減り、その減少分が損失水頭 hl。R03問2型。"
+}), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-f06",
+  page: "suiryoku",
+  onNav: onNav
 }), /*#__PURE__*/React.createElement(FormulaCard, {
+  id: "sr-f07",
   num: "07",
   name: "単位体積当たりのエネルギー",
   eq: "w_k = \\dfrac{1}{2}\\rho v^2\\,[\\text{J/m}^3]",
   note: "運動エネルギー。位置エネルギーは w_p = ρgz [J/m³]（z=高さ[m]。公式06の位置水頭と同じ記号）。ρ=1000 kg/m³ を入れて計算する。体積[m³]を掛ければ [J] になる。R07下問2型。"
+}), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-f07",
+  page: "suiryoku",
+  onNav: onNav
 }), /*#__PURE__*/React.createElement(FormulaCard, {
+  id: "sr-f08",
   num: "08",
   name: "総水量からの発電電力量（÷3600 が要る型）",
   eq: "E = \\dfrac{9.8\\,V H \\eta}{3600}\\,[\\text{kWh}]",
   note: "V=水の総量[m³]（年間流出量など）。9.8VHη の単位は [kJ]＝[kW·s] なので、3600[s/h] で割って [kWh] にする。答えが [GW·h] ならさらに 10⁶ で割る。R06下 法規問11（流込式水力発電所の年間可能発電電力量）型。"
+}), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-f08",
+  page: "suiryoku",
+  onNav: onNav
 }), /*#__PURE__*/React.createElement(Box, {
+  id: "sr-renzoku",
   kind: "tip",
   label: "連続の式（公式05）の「なぜ」— 水は縮まず、途中で湧きも消えもしない"
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "Q = Av の意味"), "：v は断面の平均流速 [m/s]（管の中心ほど速く壁ぎわほど遅いので、その平均）。平均流速 v の水は1秒で v [m] 進む。断面積 A [m²] の管なら、1秒間に断面を通る水は「断面 A・長さ v」の柱になり、その体積 ", /*#__PURE__*/React.createElement(Eq, {
@@ -13937,7 +14403,11 @@ const SuiryokuPage = ({
 })), /*#__PURE__*/React.createElement("p", null, "30 kPa の低下は、圧力水頭に直すと ", /*#__PURE__*/React.createElement(Eq, {
   tex: "30{,}000 \\div (1000 \\times 9.8) \\approx 3.06\\,\\text{m}",
   inline: true
-}), " にあたる。")), /*#__PURE__*/React.createElement(Box, {
+}), " にあたる。")), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-renzoku",
+  page: "suiryoku",
+  onNav: onNav
+}), /*#__PURE__*/React.createElement(Box, {
   kind: "warn",
   label: "単位換算の急所 — 3600 と 8760 を取り違えない"
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "使う関係は3つだけ"), "。"), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement(Eq, {
@@ -13990,6 +14460,7 @@ const SuiryokuPage = ({
   tex: "E\\,[\\text{GWh}] = 9.8\\,V H \\eta / (3.6\\times10^9)",
   inline: true
 }), "。")), /*#__PURE__*/React.createElement(Box, {
+  id: "sr-units",
   kind: "tip",
   label: "力 N・圧力 Pa・仕事 J・仕事率 W のつながり — H27 問1 型"
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "単位を組み替えて読む"), "：", /*#__PURE__*/React.createElement(Eq, {
@@ -14031,7 +14502,11 @@ const SuiryokuPage = ({
 }), "、", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\text{W} = \\text{kg}\\cdot\\text{m}^2/\\text{s}^3",
   inline: true
-}), "。Pa に面積 m² を掛けると N、N に距離 m を掛けると J、J を時間 s で割ると W になる。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}), "。Pa に面積 m² を掛けると N、N に距離 m を掛けると J、J を時間 s で割ると W になる。")), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-units",
+  page: "suiryoku",
+  onNav: onNav
+}), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "suiryoku",
   sectionId: "formula"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -14064,6 +14539,7 @@ const SuiryokuPage = ({
 })), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(Eq, {
   tex: "\\eta_{\\text{total}} = \\dfrac{51{,}744}{71{,}707} \\approx 72.2\\%"
 })))), /*#__PURE__*/React.createElement(Box, {
+  id: "sr-ex4",
   kind: "example",
   label: "④ 比速度と水車選定: N=300 min⁻¹・P=10,000 kW・H=100 m"
 }, /*#__PURE__*/React.createElement(Solution, null, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(Eq, {
@@ -14072,7 +14548,12 @@ const SuiryokuPage = ({
 })), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(Eq, {
   tex: "N_s = \\dfrac{300 \\times \\sqrt{10000}}{316.2} = \\dfrac{300 \\times 100}{316.2} \\approx 94.9",
   display: true
-})), /*#__PURE__*/React.createElement("p", null, "Ns が中程度 ⇒ ", /*#__PURE__*/React.createElement("strong", null, "フランシス水車"), "。ペルトンならもっと小さく、カプランならもっと大きい値になる（R06上問15型）。"))), /*#__PURE__*/React.createElement(Box, {
+})), /*#__PURE__*/React.createElement("p", null, "Ns が中程度 ⇒ ", /*#__PURE__*/React.createElement("strong", null, "フランシス水車"), "。ペルトンならもっと小さく、カプランならもっと大きい値になる（R06上問15型）。"))), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-ex4",
+  page: "suiryoku",
+  onNav: onNav
+}), /*#__PURE__*/React.createElement(Box, {
+  id: "sr-ex5",
   kind: "example",
   label: "⑤ 単位体積当たりの運動エネルギー: 流速 v=20 m/s"
 }, /*#__PURE__*/React.createElement(Solution, null, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(Eq, {
@@ -14083,7 +14564,12 @@ const SuiryokuPage = ({
   display: true
 })), /*#__PURE__*/React.createElement("p", null, "速度水頭に直すと ", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\dfrac{v^2}{2g} = \\dfrac{400}{2 \\times 9.8} \\approx 20.4\\,\\text{m}"
-}), "。", /*#__PURE__*/React.createElement("strong", null, "「流速20 m/s の水は落差約20 m に相当」"), "（数値が近いのはこの流速での偶然で、一般には v²/2g で換算する。10 m/s なら約 5.1 m）と押さえると、ベルヌーイの3項が同じ土俵（[m]）に乗っていることが実感できる（R07下問2・R03問2型）。"))), /*#__PURE__*/React.createElement(Box, {
+}), "。", /*#__PURE__*/React.createElement("strong", null, "「流速20 m/s の水は落差約20 m に相当」"), "（数値が近いのはこの流速での偶然で、一般には v²/2g で換算する。10 m/s なら約 5.1 m）と押さえると、ベルヌーイの3項が同じ土俵（[m]）に乗っていることが実感できる（R07下問2・R03問2型）。"))), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-ex5",
+  page: "suiryoku",
+  onNav: onNav
+}), /*#__PURE__*/React.createElement(Box, {
+  id: "sr-ex6",
   kind: "example",
   label: "⑥ 総水量から年間可能発電電力量[GW·h]（÷3600 の型・R06下 法規問11）"
 }, /*#__PURE__*/React.createElement("p", null, "流域面積 150 km²・年降水量 1,800 mm・流出係数 0.7・有効落差 100 m・総合効率 0.85 とすると"), /*#__PURE__*/React.createElement(Solution, null, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(Eq, {
@@ -14101,7 +14587,12 @@ const SuiryokuPage = ({
 }), /*#__PURE__*/React.createElement(Eq, {
   tex: "= \\dfrac{4.37\\times10^7}{10^6} \\approx 43.7\\,\\text{GWh}",
   display: true
-})), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "÷3600（秒→時間）と ÷10⁶（kWh→GWh）の二段"), "で単位が着地する。数値は型を確かめるための設定例で、設問の実数値ではない。"))), /*#__PURE__*/React.createElement(Box, {
+})), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "÷3600（秒→時間）と ÷10⁶（kWh→GWh）の二段"), "で単位が着地する。数値は型を確かめるための設定例で、設問の実数値ではない。"))), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-ex6",
+  page: "suiryoku",
+  onNav: onNav
+}), /*#__PURE__*/React.createElement(Box, {
+  id: "sr-ex7",
   kind: "example",
   label: "⑦ 流況曲線と調整池の有効貯水容量（R07上 問15）"
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "流況曲線"), "は、1年の日流量を大きい順に並べた曲線である。横軸 x 日の値は「1年のうち x 日はこの流量以上ある」ことを表す。 355 日の値を", /*#__PURE__*/React.createElement("strong", null, "渇水量"), "という。R07上 問15 の図では、渇水量が 8 m³/s、200 日の値が 14 m³/s である。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "(a)"), " 渇水量 8 m³/s のとき、1日に6時間だけ運転する最大の使用流量と、運転しない時間に調整池へ貯まる水量を求める（運転しない時間は河川の全流量を貯める）。"), /*#__PURE__*/React.createElement(Solution, null, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement(Eq, {
@@ -14129,10 +14620,19 @@ const SuiryokuPage = ({
   tex: "32 \\times 8 \\times 3600 = 921{,}600"
 }), " m³ より多いので、流量が 14 m³/s 以上ある日は、毎日この運転を続けられる（200 日の値なので、1年中この流量があるわけではない）。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "運転時間は (a) の6時間ではなく8時間。"), "6時間のまま計算すると ", /*#__PURE__*/React.createElement(Eq, {
   tex: "(32.0-14)\\times 6\\times 3600 = 388{,}800"
-}), " m³ になり、(1) 420 000 m³ を選んでしまう。容量は運転中の不足分をまかなえればよく、運転しない16時間に流れ込む量（806 400 m³）を全部貯める必要はない（貯めきれない分は放流してよい）。"))), /*#__PURE__*/React.createElement(Box, {
+}), " m³ になり、(1) 420 000 m³ を選んでしまう。容量は運転中の不足分をまかなえればよく、運転しない16時間に流れ込む量（806 400 m³）を全部貯める必要はない（貯めきれない分は放流してよい）。"))), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-ex7",
+  page: "suiryoku",
+  onNav: onNav
+}), /*#__PURE__*/React.createElement(Box, {
+  id: "sr-suigeki",
   kind: "tip",
   label: "水撃作用・キャビテーション（R02 問1 型の論説急所）"
-}, /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "水撃作用（ウォーターハンマー）"), "：負荷急減で水車の入口弁を急閉すると、水圧管内の水の慣性で圧力が急上昇する現象。対策は", /*#__PURE__*/React.createElement("strong", null, "サージタンク"), "（圧力変動を水位変動として吸収）、ペルトンの", /*#__PURE__*/React.createElement("strong", null, "デフレクタ"), "（ジェットをそらして緩閉を可能に）。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "キャビテーション"), "：流速が大きく圧力が飽和蒸気圧まで下がると気泡が発生し、崩壊時の衝撃でランナー・吸出し管を壊食する現象。対策は", /*#__PURE__*/React.createElement("strong", null, "吸出し管の高さ（吸出し高さ）を高くしすぎない"), "・比速度を大きくしすぎない・翼形状の工夫。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "吸出し管"), "：反動水車の出口と放水面の間の管。ランナー出口の速度エネルギーを圧力として回収し、", /*#__PURE__*/React.createElement("strong", null, "落差を有効利用"), "する（衝動水車のペルトンには無い）。"))), /*#__PURE__*/React.createElement(SectionCheck, {
+}, /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "水撃作用（ウォーターハンマー）"), "：負荷急減で水車の入口弁を急閉すると、水圧管内の水の慣性で圧力が急上昇する現象。対策は", /*#__PURE__*/React.createElement("strong", null, "サージタンク"), "（圧力変動を水位変動として吸収）、ペルトンの", /*#__PURE__*/React.createElement("strong", null, "デフレクタ"), "（ジェットをそらして緩閉を可能に）。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "キャビテーション"), "：流速が大きく圧力が飽和蒸気圧まで下がると気泡が発生し、崩壊時の衝撃でランナー・吸出し管を壊食する現象。対策は", /*#__PURE__*/React.createElement("strong", null, "吸出し管の高さ（吸出し高さ）を高くしすぎない"), "・比速度を大きくしすぎない・翼形状の工夫。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "吸出し管"), "：反動水車の出口と放水面の間の管。ランナー出口の速度エネルギーを圧力として回収し、", /*#__PURE__*/React.createElement("strong", null, "落差を有効利用"), "する（衝動水車のペルトンには無い）。"))), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "sr-suigeki",
+  page: "suiryoku",
+  onNav: onNav
+}), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "suiryoku",
   sectionId: "kaiho"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -14189,7 +14689,11 @@ const SuiryokuPage = ({
   href: "https://kfurufuru.github.io/secretary-portal-public/denken3-riron-wiki.html#exam-operation",
   target: "_blank",
   rel: "noopener"
-}, "→ 理論Wiki「7.4 本番運用」セクション3 で電卓の実戦テク（スイッチ設定・メモリー・GT・定数計算・ドリル10問）")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, "→ 理論Wiki「7.4 本番運用」セクション3 で電卓の実戦テク（スイッチ設定・メモリー・GT・定数計算・ドリル10問）")), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "trap",
+  page: "suiryoku",
+  onNav: onNav
+}), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "suiryoku",
   sectionId: "trap"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -14200,7 +14704,11 @@ const SuiryokuPage = ({
   style: {
     whiteSpace: "nowrap"
   }
-}, "判定"), /*#__PURE__*/React.createElement("th", null, "理由"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "ペルトン水車を故障などで急停止させるときは、ニードル弁で噴流を急速に止め、同時にデフレクタで噴流を遮断する"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "ニードル弁を急に閉じると、水圧管の水が急に止まって水撃作用（圧力の急上昇）が起きる。急停止ではデフレクタで噴流をランナーからそらし、ニードル弁はゆっくり閉じる。（R06上 問1 の誤りの選択肢）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "通常の運転では、ペルトン水車の流量はノズルの中のニードル弁で調整する"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "正")), /*#__PURE__*/React.createElement("td", null, "役割の分担で覚える。ニードル弁＝通常の流量調整、デフレクタ＝急停止（噴流をそらすだけで、水は止めない）。反動水車とクロスフロー水車の流量調整はガイドベーン。（R06上 問1 の正しい選択肢）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "吸出し管は、フランシス水車でもペルトン水車でも、ランナーから放水面までの落差を有効に利用して出力を増やす"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "吸出し管があるのは反動水車（フランシス・カプランなど）だけ。ペルトンはランナーが大気中で噴流を受けるので、ランナーより下の落差は使えない。（R04上 問1 の誤りの選択肢）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "カプラン水車は流量に応じて羽根の角度を変えられるので、部分負荷でも効率が下がりにくい"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "正")), /*#__PURE__*/React.createElement("td", null, "羽根が固定のプロペラ水車は、設計した流量から外れると効率が大きく下がる。羽根の角度を流量に合わせられるのがカプランの利点。（R06下 問1・R04上 問1 の正しい選択肢）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "クロスフロー水車は、円筒形のランナーを水が横切って通り抜ける水車で、小水力に多く使われ、流量が少ないときも効率が下がりにくい"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "正")), /*#__PURE__*/React.createElement("td", null, "ガイドベーンを持ち、流量を絞っても効率の低下が小さい。（R06上 問1 の正しい選択肢）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "比速度が大きい水車ほど高落差に適する"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "逆。比速度が大きい＝低落差・大流量（カプラン側）。ペルトンの比速度はフランシスより小さい。（R04下 問2・R05上 問1）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "比速度の大きい水車を大きな落差で使い、吸出し管を付けると、キャビテーションが起きやすい"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "正")), /*#__PURE__*/React.createElement("td", null, "落差が大きいとランナー出口の流速（放水速度）が大きくなり、吸出し管の中の圧力が飽和蒸気圧まで下がる。だから水車ごとに、その比速度に合う有効落差が決まっている。（R05上 問1）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "水車発電機は回転速度が小さいので、タービン発電機より磁極の数が多い"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "正")), /*#__PURE__*/React.createElement("td", null, "回転速度 n＝120f/p [min⁻¹]。同じ周波数 f なら、回転速度が小さいほど極数 p が多くなる。タービン発電機は2極が多い。（R06下 問1・R04上 問1 の正しい選択肢。タービン発電機の2極は R04上 問2）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "水力発電所の主変圧器は、発電機側を Y 結線、系統側を Δ 結線にしたものが多い"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "逆。発電機側が Δ、系統側（高電圧側）が Y。系統側の Y 結線の中性点を接地に使い、発電機側の Δ 結線で第3調波を環流させる。（R06下 問1 の誤りの選択肢）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "サージタンクを設ければ、水圧管の中でも水撃作用は起きなくなる"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "サージタンクは圧力導水路と水圧管の境に置き、水撃の圧力が導水路へ伝わるのを水位の上下で吸収する。水圧管の中の水撃は残るので、水圧管は水撃の圧力に耐える強さで造る。")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "アーチダムは、両岸の幅が広く、岩盤が丈夫な所に造る"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "両岸の幅が", /*#__PURE__*/React.createElement("strong", null, "狭い"), "所に造る。水圧をアーチで両岸の岩盤に伝えるので、コンクリートの量を減らせる。（R08上 問1 の誤りの選択肢）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "揚水運転の電動機入力は P＝9.8QH", /*#__PURE__*/React.createElement("sub", null, "p"), "η", /*#__PURE__*/React.createElement("sub", null, "p"), "η", /*#__PURE__*/React.createElement("sub", null, "m"), " [kW] で求める（η", /*#__PURE__*/React.createElement("sub", null, "p"), "：ポンプ効率、η", /*#__PURE__*/React.createElement("sub", null, "m"), "：電動機効率）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "効率は割る：P＝9.8QH", /*#__PURE__*/React.createElement("sub", null, "p"), "/(η", /*#__PURE__*/React.createElement("sub", null, "p"), "η", /*#__PURE__*/React.createElement("sub", null, "m"), ")。入力は水を押し上げる仕事より大きいはずなので、1 より小さい効率を掛けて小さくするのは向きが逆。H", /*#__PURE__*/React.createElement("sub", null, "p"), "＝総落差＋損失水頭（発電と逆で足す）。（R06上 問2 の電動機入力 241 MW がこの式）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "P＝9.8QHη で出した kW に、さらに 3600 を掛けて年間電力量を出す"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "Q から入った時点で単位は kW。掛けるのは運転時間 T[h]（1年中止まらず運転するなら 8760）。3600 で割るのは総水量 V[m³] から入ったとき。")))), /*#__PURE__*/React.createElement(SectionCheck, {
+}, "判定"), /*#__PURE__*/React.createElement("th", null, "理由"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "ペルトン水車を故障などで急停止させるときは、ニードル弁で噴流を急速に止め、同時にデフレクタで噴流を遮断する"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "ニードル弁を急に閉じると、水圧管の水が急に止まって水撃作用（圧力の急上昇）が起きる。急停止ではデフレクタで噴流をランナーからそらし、ニードル弁はゆっくり閉じる。（R06上 問1 の誤りの選択肢）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "通常の運転では、ペルトン水車の流量はノズルの中のニードル弁で調整する"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "正")), /*#__PURE__*/React.createElement("td", null, "役割の分担で覚える。ニードル弁＝通常の流量調整、デフレクタ＝急停止（噴流をそらすだけで、水は止めない）。反動水車とクロスフロー水車の流量調整はガイドベーン。（R06上 問1 の正しい選択肢）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "吸出し管は、フランシス水車でもペルトン水車でも、ランナーから放水面までの落差を有効に利用して出力を増やす"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "吸出し管があるのは反動水車（フランシス・カプランなど）だけ。ペルトンはランナーが大気中で噴流を受けるので、ランナーより下の落差は使えない。（R04上 問1 の誤りの選択肢）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "カプラン水車は流量に応じて羽根の角度を変えられるので、部分負荷でも効率が下がりにくい"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "正")), /*#__PURE__*/React.createElement("td", null, "羽根が固定のプロペラ水車は、設計した流量から外れると効率が大きく下がる。羽根の角度を流量に合わせられるのがカプランの利点。（R06下 問1・R04上 問1 の正しい選択肢）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "クロスフロー水車は、円筒形のランナーを水が横切って通り抜ける水車で、小水力に多く使われ、流量が少ないときも効率が下がりにくい"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "正")), /*#__PURE__*/React.createElement("td", null, "ガイドベーンを持ち、流量を絞っても効率の低下が小さい。（R06上 問1 の正しい選択肢）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "比速度が大きい水車ほど高落差に適する"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "逆。比速度が大きい＝低落差・大流量（カプラン側）。ペルトンの比速度はフランシスより小さい。（R04下 問2・R05上 問1）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "比速度の大きい水車を大きな落差で使い、吸出し管を付けると、キャビテーションが起きやすい"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "正")), /*#__PURE__*/React.createElement("td", null, "落差が大きいとランナー出口の流速（放水速度）が大きくなり、吸出し管の中の圧力が飽和蒸気圧まで下がる。だから水車ごとに、その比速度に合う有効落差が決まっている。（R05上 問1）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "水車発電機は回転速度が小さいので、タービン発電機より磁極の数が多い"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "正")), /*#__PURE__*/React.createElement("td", null, "回転速度 n＝120f/p [min⁻¹]。同じ周波数 f なら、回転速度が小さいほど極数 p が多くなる。タービン発電機は2極が多い。（R06下 問1・R04上 問1 の正しい選択肢。タービン発電機の2極は R04上 問2）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "水力発電所の主変圧器は、発電機側を Y 結線、系統側を Δ 結線にしたものが多い"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "逆。発電機側が Δ、系統側（高電圧側）が Y。系統側の Y 結線の中性点を接地に使い、発電機側の Δ 結線で第3調波を環流させる。（R06下 問1 の誤りの選択肢）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "サージタンクを設ければ、水圧管の中でも水撃作用は起きなくなる"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "サージタンクは圧力導水路と水圧管の境に置き、水撃の圧力が導水路へ伝わるのを水位の上下で吸収する。水圧管の中の水撃は残るので、水圧管は水撃の圧力に耐える強さで造る。")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "アーチダムは、両岸の幅が広く、岩盤が丈夫な所に造る"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "両岸の幅が", /*#__PURE__*/React.createElement("strong", null, "狭い"), "所に造る。水圧をアーチで両岸の岩盤に伝えるので、コンクリートの量を減らせる。（R08上 問1 の誤りの選択肢）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "揚水運転の電動機入力は P＝9.8QH", /*#__PURE__*/React.createElement("sub", null, "p"), "η", /*#__PURE__*/React.createElement("sub", null, "p"), "η", /*#__PURE__*/React.createElement("sub", null, "m"), " [kW] で求める（η", /*#__PURE__*/React.createElement("sub", null, "p"), "：ポンプ効率、η", /*#__PURE__*/React.createElement("sub", null, "m"), "：電動機効率）"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "効率は割る：P＝9.8QH", /*#__PURE__*/React.createElement("sub", null, "p"), "/(η", /*#__PURE__*/React.createElement("sub", null, "p"), "η", /*#__PURE__*/React.createElement("sub", null, "m"), ")。入力は水を押し上げる仕事より大きいはずなので、1 より小さい効率を掛けて小さくするのは向きが逆。H", /*#__PURE__*/React.createElement("sub", null, "p"), "＝総落差＋損失水頭（発電と逆で足す）。（R06上 問2 の電動機入力 241 MW がこの式）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "P＝9.8QHη で出した kW に、さらに 3600 を掛けて年間電力量を出す"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "誤")), /*#__PURE__*/React.createElement("td", null, "Q から入った時点で単位は kW。掛けるのは運転時間 T[h]（1年中止まらず運転するなら 8760）。3600 で割るのは総水量 V[m³] から入ったとき。")))), /*#__PURE__*/React.createElement(KakomonAskedHere, {
+  id: "seigo",
+  page: "suiryoku",
+  onNav: onNav
+}), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "suiryoku",
   sectionId: "seigo"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -14223,11 +14731,16 @@ const SuiryokuPage = ({
   id: "kakomon"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "8."), "出題実績（44問・うち R01〜R07 は全21問）"), /*#__PURE__*/React.createElement("p", null, "理論出力・有効落差・揚水・比速度の計算と、水車種別・発電所分類の論説/穴埋めが循環。", /*#__PURE__*/React.createElement("strong", null, "R01〜R07 の全21問"), "と、それぞれがこのページのどの節に対応するかを突き合わせる（未対応の節があれば穴）。"), /*#__PURE__*/React.createElement("div", {
-  className: "table-wrap"
-}, /*#__PURE__*/React.createElement("table", {
-  className: "data"
-}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "年度"), /*#__PURE__*/React.createElement("th", null, "問"), /*#__PURE__*/React.createElement("th", null, "テーマ"), /*#__PURE__*/React.createElement("th", null, "形式"), /*#__PURE__*/React.createElement("th", null, "該当節"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R07下"), /*#__PURE__*/React.createElement("td", null, "問1"), /*#__PURE__*/React.createElement("td", null, "水力発電所の落差分類"), /*#__PURE__*/React.createElement("td", null, "穴埋"), /*#__PURE__*/React.createElement("td", null, "1（落差の図）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R07下"), /*#__PURE__*/React.createElement("td", null, "問2"), /*#__PURE__*/React.createElement("td", null, "単位体積当たりの水の運動エネルギー"), /*#__PURE__*/React.createElement("td", null, "計算"), /*#__PURE__*/React.createElement("td", null, "3-07 / 4-⑤")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R07上"), /*#__PURE__*/React.createElement("td", null, "問1"), /*#__PURE__*/React.createElement("td", null, "水力発電所の理論出力と各単位"), /*#__PURE__*/React.createElement("td", null, "穴埋"), /*#__PURE__*/React.createElement("td", null, "3-01")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R07上"), /*#__PURE__*/React.createElement("td", null, "問15"), /*#__PURE__*/React.createElement("td", null, "調整池式水力発電所の使用水量と有効貯水容量"), /*#__PURE__*/React.createElement("td", null, "計算"), /*#__PURE__*/React.createElement("td", null, "2 / 3-05 / 4-⑦")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R06下"), /*#__PURE__*/React.createElement("td", null, "問1"), /*#__PURE__*/React.createElement("td", null, "水力発電の水車・発電機・主変圧器の特徴"), /*#__PURE__*/React.createElement("td", null, "論説"), /*#__PURE__*/React.createElement("td", null, "2")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R06上"), /*#__PURE__*/React.createElement("td", null, "問1"), /*#__PURE__*/React.createElement("td", null, "衝動水車を中心とした水力発電所"), /*#__PURE__*/React.createElement("td", null, "論説"), /*#__PURE__*/React.createElement("td", null, "2")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R06上"), /*#__PURE__*/React.createElement("td", null, "問2"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Term, null, "揚水発電"), "所の電動機入力と発電機出力"), /*#__PURE__*/React.createElement("td", null, "計算"), /*#__PURE__*/React.createElement("td", null, "3-02 / 4-③")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R06上"), /*#__PURE__*/React.createElement("td", null, "問15"), /*#__PURE__*/React.createElement("td", null, "水車の回転速度と比速度および水車の種類"), /*#__PURE__*/React.createElement("td", null, "計算"), /*#__PURE__*/React.createElement("td", null, "3-03 / 4-④")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R05下"), /*#__PURE__*/React.createElement("td", null, "問1"), /*#__PURE__*/React.createElement("td", null, "水力発電所の落差と理論式"), /*#__PURE__*/React.createElement("td", null, "穴埋"), /*#__PURE__*/React.createElement("td", null, "1 / 3-01")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R05下"), /*#__PURE__*/React.createElement("td", null, "問15"), /*#__PURE__*/React.createElement("td", null, "水力発電所の発電電力量と汽力発電所の重油使用量"), /*#__PURE__*/React.createElement("td", null, "計算"), /*#__PURE__*/React.createElement("td", null, "3-04")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R05上"), /*#__PURE__*/React.createElement("td", null, "問1"), /*#__PURE__*/React.createElement("td", null, "水車の比速度の定義と特徴"), /*#__PURE__*/React.createElement("td", null, "穴埋"), /*#__PURE__*/React.createElement("td", null, "3-03")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R04下"), /*#__PURE__*/React.createElement("td", null, "問1"), /*#__PURE__*/React.createElement("td", null, "水力発電の特徴や現在の概況"), /*#__PURE__*/React.createElement("td", null, "論説"), /*#__PURE__*/React.createElement("td", null, "0（森）/ 2")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R04下"), /*#__PURE__*/React.createElement("td", null, "問2"), /*#__PURE__*/React.createElement("td", null, "水力発電で使用される水車の特徴"), /*#__PURE__*/React.createElement("td", null, "穴埋"), /*#__PURE__*/React.createElement("td", null, "2")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R04上"), /*#__PURE__*/React.createElement("td", null, "問1"), /*#__PURE__*/React.createElement("td", null, "水力発電所における水車の特徴及び監視制御方式"), /*#__PURE__*/React.createElement("td", null, "論説"), /*#__PURE__*/React.createElement("td", null, "2")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R04上"), /*#__PURE__*/React.createElement("td", null, "問15"), /*#__PURE__*/React.createElement("td", null, "揚水発電所の揚水運転時の必要電力量及び流量"), /*#__PURE__*/React.createElement("td", null, "計算"), /*#__PURE__*/React.createElement("td", null, "3-02 / 4-③")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R03"), /*#__PURE__*/React.createElement("td", null, "問1"), /*#__PURE__*/React.createElement("td", null, "水力発電所の落差を得る方法や流量調整による分類"), /*#__PURE__*/React.createElement("td", null, "穴埋"), /*#__PURE__*/React.createElement("td", null, "1 / 2")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R03"), /*#__PURE__*/React.createElement("td", null, "問2"), /*#__PURE__*/React.createElement("td", null, "連続の定理及びベルヌーイの定理"), /*#__PURE__*/React.createElement("td", null, "計算"), /*#__PURE__*/React.createElement("td", null, "3-05,06 / 4-⑤")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R02"), /*#__PURE__*/React.createElement("td", null, "問1"), /*#__PURE__*/React.createElement("td", null, "ダム水路式発電所における水撃作用及びサージタンク"), /*#__PURE__*/React.createElement("td", null, "論説"), /*#__PURE__*/React.createElement("td", null, "4（水撃・キャビ）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R02"), /*#__PURE__*/React.createElement("td", null, "問15"), /*#__PURE__*/React.createElement("td", null, "貯水池を有する水力発電所の発電計画"), /*#__PURE__*/React.createElement("td", null, "計算"), /*#__PURE__*/React.createElement("td", null, "3-04,05")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R01"), /*#__PURE__*/React.createElement("td", null, "問1"), /*#__PURE__*/React.createElement("td", null, "水力発電所の水車及び発電機"), /*#__PURE__*/React.createElement("td", null, "論説"), /*#__PURE__*/React.createElement("td", null, "2")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "R01"), /*#__PURE__*/React.createElement("td", null, "問2"), /*#__PURE__*/React.createElement("td", null, "水車の構造と特徴"), /*#__PURE__*/React.createElement("td", null, "穴埋"), /*#__PURE__*/React.createElement("td", null, "2"))))), /*#__PURE__*/React.createElement("p", {
+}, "8."), "出題実績（44問・うち R01〜R07 は全21問）"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "R01〜R07 の全21問"), "について、", /*#__PURE__*/React.createElement("strong", null, "何が問われたか"), "を試験センターの問題冊子から1行に書き起こした。カードの「この節で解く」で該当の公式・例題・正誤表へ飛び、読んだら各節の「ここが問われた過去問」からこのカードへ戻る。問題文は「問題冊子を開く」で原本を見る。"), /*#__PURE__*/React.createElement("p", {
+  style: {
+    fontSize: 13,
+    color: "var(--ink-soft)"
+  }
+}, "問われたことの1行は自分の言葉での要約で、問題文の写しではない。正答は解答 PDF と照合済み（2026-11-14）。○△× は「このページだけで解けるか」の判定で、△×の問は穴としてカードに書いた。"), /*#__PURE__*/React.createElement(KakomonAskTable, {
+  f: "suiryoku",
+  page: "suiryoku",
+  onNav: onNav
+}), /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)"
@@ -14238,6 +14751,9 @@ const SuiryokuPage = ({
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "R08上の答え合わせ"), "：", /*#__PURE__*/React.createElement("strong", null, "計算は的中"), "（問2「理論的包蔵水力」・問15「揚水発電所の出力や入力及び効率」の2問）。論説は", /*#__PURE__*/React.createElement("strong", null, "ダムの種別"), "（問1）で、予告した水車種別・発電所分類とは別だった。"), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "R08下期"), "：水力は毎回2〜3問で電力の最大分野のひとつ。計算枠（発電出力 P=9.8QHη・揚水・比速度）は継続が濃厚で、", /*#__PURE__*/React.createElement("strong", null, "ここは落とさないこと"), "。論説はダムが直前に出たぶん、", /*#__PURE__*/React.createElement("strong", null, "水車種別（衝動/反動）"), "と", /*#__PURE__*/React.createElement("strong", null, "水撃作用・サージタンク（R02以来）"), "が本命。")), /*#__PURE__*/React.createElement(KakomonHistory, {
   c: "水",
   onNav: onNav
+}), /*#__PURE__*/React.createElement(SectionCheck, {
+  pageId: "suiryoku",
+  sectionId: "kakomon"
 }), /*#__PURE__*/React.createElement("h2", {
   id: "related"
 }, /*#__PURE__*/React.createElement("span", {
@@ -14296,6 +14812,9 @@ const SuiryokuPage = ({
   }, {
     id: "hoki-cross",
     label: "7. 法規科目との横断（同じ「水力」でも問われ方が違う）"
+  }, {
+    id: "kakomon",
+    label: "8. 出題実績（何が問われたか）"
   }]
 })), /*#__PURE__*/React.createElement(PageNav, {
   prev: {
