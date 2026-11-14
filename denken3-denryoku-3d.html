@@ -208,6 +208,9 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
 
 /* ---- 30秒理解 ---- */
 .oneliner{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 5px 5px 0;font-size:14.5px;font-weight:600;line-height:1.6;color:var(--ink);margin:0 0 12px}
+.newentry{border:1px solid var(--accent);border-radius:6px;padding:10px 12px;margin:0 0 12px;line-height:1.6}
+.newentry .go{display:inline-block;margin:6px 0 2px;padding:6px 12px;border-radius:5px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none}
+.newentry small{display:block;color:var(--ink-3)}
 .oneliner small{display:block;font-size:11px;font-weight:400;letter-spacing:.08em;color:var(--accent-ink);margin-bottom:3px}
 /* ---- 狙われるポイント ---- */
 .exam{list-style:none;padding:0;margin:0;display:grid;gap:7px}
@@ -1392,7 +1395,7 @@ const STUDY = {
    [
     "熱効率を上げる",
     "蒸気を高温高圧に・復水器の真空度を上げる・排熱を回収",
-    "再熱は3Dで見られる。再生サイクルとコンバインドサイクルはWikiで"
+    "再熱は汽力発電所3Dで見られる。再生サイクルとコンバインドサイクルも汽力発電所3D（原理・コンバインド）で"
    ]
   ],
   "predict": [
@@ -1414,7 +1417,7 @@ const STUDY = {
      "kC": 0.85
     },
     "hi": "eta",
-    "why": "η = 3.6 × 600 ÷ (130 × 44) ≒ 37.8 %。3.6 を掛け忘れると 10.5 %。所内率を引いた 35.9 % は送電端熱効率で、問われている「発電端」とは別物。"
+    "why": "η = 3.6 × 600 ÷ (130 × 44) ≒ 37.8 %。3.6 を掛け忘れると 10.5 %。所内率は、問われている「発電端」の計算には入れない（所内率を使うのは次の問い）。"
    },
    {
     "q": "上の発電所で所内率が 5 % のとき、送電端熱効率は？",
@@ -5457,13 +5460,21 @@ function renderPanel(){
         <li class="here"><b>ここでイメージを固める</b><span>設備を選ぶと <b>予想クイズ</b> が出る。答えを選ぶと3Dと数値が実際にその状態へ動くので、式の変数が「どこの動き」なのかを目で確かめられる</span></li>
       </ol>
       <h3>設備を選ぶ</h3>
-      <div class="overview-grid">${ORDER.map(k=>`<button data-id="${k}"><span class="num">${MACHINES[k].num}</span><span class="t">${MACHINES[k].title}</span><span class="c">過去問 ${cnt[k]}問</span><span class="s">${esc(MACHINES[k].kicker)}</span></button>`).join('')}</div>
+      <div class="overview-grid">${ORDER.map(k=>`<button data-id="${k}"><span class="num">${MACHINES[k].num}</span><span class="t">${MACHINES[k].title}</span><span class="c">過去問 ${cnt[k]}問${k==='karyoku' ? '・専用の3Dあり' : ''}</span><span class="s">${esc(MACHINES[k].kicker)}</span></button>`).join('')}</div>
       <div class="note"><b>使い方は3つだけ。</b>ドラッグで回す、ホイールで寄る、凡例の行に触れると部品を指す。<br>
       <b>過去問の答えはここに書かない。</b>この3Dは形と動きと式の向きを担当し、過去問の解答・解説は電力Wiki側だけが正本として持つ。予想クイズの数値は自作の練習用の算数で、過去問の解答ではない。過去問台帳（H18〜R08上の${KAKOMON.length}問）は電力Wikiの「分野別一覧」から7つの設備に当たる分を抜き出したもの。題名は出典（電験王）の題名の写しで、問題冊子との一次照合はしていない。誘導障害・直流送電など3Dに無い論点は、行のリンク先が別ページになる。</div>`;
     panel.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>select(b.dataset.id));
     return;
   }
   const m = MACHINES[id], st = STUDY[id];
+  /* 火力（汽力）は専用の3D（汽力発電所3D）で学ぶ。狙われるポイント・予想クイズ・即答チェック・過去問の一覧は、その「要点・過去問」タブへ移した
+     （2026-11-08 監修者さん決定「入口を一つにする」。記録のキーは同じなので、ここで解いた記録はそのまま続く）。STUDY.karyoku は検査とツアーのために残す */
+  if (id === 'karyoku'){
+    panel.innerHTML = `<div class="kicker">${esc(m.kicker)}</div><h2><span class="num">${m.num}</span>${m.title}</h2>
+      <div class="newentry"><b>火力（汽力）は、専用の3Dで学ぶ。</b>発電所の配置に近い形で、水・蒸気・燃焼ガス・燃焼用空気・冷却海水の流れ、断面図、T-s 線図とエンタルピー、効率、保護装置、水素冷却、コンバインドサイクルを見られる。<br><a class="go" href="denken3-karyoku-3d.html">汽力発電所3D を開く</a>
+      <small>この工場で出していた「電験で狙われるポイント」「予想クイズ」「即答チェック」「過去問の一覧」は、汽力発電所3D の「要点・過去問」タブへ移した。ここで解いた記録は、同じ間違いノートにそのまま続く。</small></div>`;
+    return;
+  }
   const qs = KAKOMON.filter(q=>q.p===id && q.v!==0);
   const older = KAKOMON.filter(q=>q.p===id && q.v===0).reverse();   // 新しい回から
   const bySec = {}; for (const q of qs) (bySec[q.sec] ||= []).push(q);
