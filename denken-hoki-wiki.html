@@ -14552,6 +14552,82 @@ function App() {
 })();
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(React.createElement(App, null));
+const LayersFold = ({
+  label,
+  children
+}) => {
+  const segs = () => location.hash.replace(/^#/, '').split(/[:/]/).map(x => {
+    try {
+      return decodeURIComponent(x);
+    } catch (e) {
+      return x;
+    }
+  });
+  const [pageKey] = React.useState(() => segs()[0] || 'unknown');
+  const stateKey = `hoki_layers::${pageKey}`;
+  const seenKey = `hoki_layers_seen::${pageKey}`;
+  const ref = React.useRef(null);
+  const [initialOpen] = React.useState(() => {
+    if (segs().slice(1).includes('layers')) return true;
+    try {
+      const st = localStorage.getItem(stateKey);
+      if (st === 'open') return true;
+      if (st === 'closed') return false;
+      return !localStorage.getItem(seenKey);
+    } catch (e) {
+      return true;
+    }
+  });
+  const cur = React.useRef(initialOpen);
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(seenKey, '1');
+    } catch (e) {}
+    const openIfTargeted = () => {
+      const s = segs();
+      if (s[0] !== pageKey || !ref.current || ref.current.open) return;
+      const hit = s.slice(1).some(id => {
+        if (id === 'layers') return true;
+        const el = id ? document.getElementById(id) : null;
+        return !!(el && ref.current.contains(el));
+      });
+      if (hit) {
+        cur.current = true;
+        ref.current.open = true;
+      }
+    };
+    openIfTargeted();
+    window.addEventListener('hashchange', openIfTargeted);
+    return () => window.removeEventListener('hashchange', openIfTargeted);
+  }, []);
+  const onToggle = e => {
+    const open = e.currentTarget.open;
+    if (open === cur.current) return;
+    cur.current = open;
+    try {
+      localStorage.setItem(stateKey, open ? 'open' : 'closed');
+    } catch (e2) {}
+  };
+  return React.createElement("details", {
+    ref: ref,
+    open: initialOpen,
+    onToggle: onToggle,
+    style: {
+      margin: '0 0 8px'
+    }
+  }, React.createElement("summary", {
+    style: {
+      cursor: 'pointer',
+      color: 'var(--ink-3)',
+      fontSize: 13
+    }
+  }, label || '全体像（森・ミクロ・マクロの図と表）'), React.createElement("div", {
+    style: {
+      marginTop: 6
+    }
+  }, children));
+};
+window.LayersFold = LayersFold;
 const STORAGE_KEY = 'hoki_quiz_glossary_progress';
 const BACKUP_KEY = 'hoki_quiz_glossary_lastBackup';
 const STAGE_INTERVALS = [0, 7, 30, 90, 180];
@@ -22476,7 +22552,7 @@ function BshuSetsuchiPage({
     lastChecked: "2026-08-19"
   }), React.createElement("h2", {
     id: "layers"
-  }, "このページ（B種接地抵抗値）を森・ミクロ・マクロで見る"), React.createElement("p", {
+  }, "このページ（B種接地抵抗値）を森・ミクロ・マクロで見る"), React.createElement(LayersFold, null, React.createElement("p", {
     style: {
       fontSize: 12.5,
       color: 'var(--ink-3)',
@@ -22738,7 +22814,7 @@ function BshuSetsuchiPage({
       padding: '6px 10px',
       borderBottom: '1px solid var(--line)'
     }
-  }, "中性点接地・混触防止板")))), React.createElement("h2", {
+  }, "中性点接地・混触防止板"))))), React.createElement("h2", {
     id: "exam-focus"
   }, "3. 試験で問われること"), React.createElement(SectionCheck, {
     pageId: "bshu-setsuchi",
@@ -36907,7 +36983,7 @@ function ZetsuenTairyokuPage({
     lastChecked: "2026-08-19"
   }), React.createElement("h2", {
     id: "layers"
-  }, "このページ（絶縁耐力試験）を森・ミクロ・マクロで見る"), React.createElement("p", {
+  }, "このページ（絶縁耐力試験）を森・ミクロ・マクロで見る"), React.createElement(LayersFold, null, React.createElement("p", {
     style: {
       fontSize: 12.5,
       color: 'var(--ink-3)',
@@ -37169,7 +37245,7 @@ function ZetsuenTairyokuPage({
       padding: '6px 10px',
       borderBottom: '1px solid var(--line)'
     }
-  }, "耐圧試験・試験用電源")))), React.createElement("h2", {
+  }, "耐圧試験・試験用電源"))))), React.createElement("h2", {
     id: "exam-focus"
   }, "3. 試験で問われること"), React.createElement(SectionCheck, {
     pageId: "zetsuen-tairyoku",
@@ -46083,7 +46159,9 @@ function KosakubutsuBunruiPage({
     }
   }, "法第38条の定義では ", React.createElement("strong", null, "電気工作物＝一般用＋事業用"), "、", React.createElement("strong", null, "事業用＝電気事業用＋自家用"), "。", React.createElement("strong", null, "小規模事業用は自家用の一部"), "（小規模発電設備）だが、届出＋使用前自己確認だけで足りる点が異なる。", React.createElement("strong", null, "義務の軽重で分けるときは「一般用・小規模事業用・自家用・電気事業用」の4区分"), "で整理する（下の義務マトリクス）。")), React.createElement("h2", {
     id: "layers"
-  }, "このページ（電気工作物の区分）を森・ミクロ・マクロで見る"), React.createElement("p", {
+  }, "このページ（電気工作物の区分）を森・ミクロ・マクロで見る"), React.createElement(LayersFold, {
+    label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+  }, React.createElement("p", {
     style: {
       fontSize: 12.5,
       color: 'var(--ink-3)',
@@ -46532,7 +46610,7 @@ function KosakubutsuBunruiPage({
       margin: '0 0 16px',
       lineHeight: 1.7
     }
-  }, "マクロ（解く道具）は、この下の", React.createElement("strong", null, "判定フロー・電圧区分表・出力閾値表・4区分義務マトリクス"), "がそのまま該当。境界の「以下／未満／超」の向きに注意。"), React.createElement("h2", {
+  }, "マクロ（解く道具）は、この下の", React.createElement("strong", null, "判定フロー・電圧区分表・出力閾値表・4区分義務マトリクス"), "がそのまま該当。境界の「以下／未満／超」の向きに注意。")), React.createElement("h2", {
     id: "kounai-zukai"
   }, "構内・構外と「一般用／自家用」の見分け方"), React.createElement(PlainExplain, null, React.createElement("p", {
     style: {
@@ -47929,7 +48007,9 @@ function ShuninGijutsusyaPage({
     lastChecked: "2026-07-11"
   }), React.createElement("h2", {
     id: "layers"
-  }, "このページ（主任技術者）を森・ミクロ・マクロで見る"), React.createElement("p", {
+  }, "このページ（主任技術者）を森・ミクロ・マクロで見る"), React.createElement(LayersFold, {
+    label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+  }, React.createElement("p", {
     style: {
       fontSize: 12.5,
       color: 'var(--ink-3)',
@@ -48410,7 +48490,7 @@ function ShuninGijutsusyaPage({
       margin: '0 0 16px',
       lineHeight: 1.7
     }
-  }, "マクロ（解く道具）は、この下の", React.createElement("strong", null, "監督範囲の数直線図・43条項番表・届出/許可/承認の手続種別表"), "がそのまま該当。2項＝許可／3項＝届出の入替ひっかけに注意。"), React.createElement(DenkenWikiCTA, {
+  }, "マクロ（解く道具）は、この下の", React.createElement("strong", null, "監督範囲の数直線図・43条項番表・届出/許可/承認の手続種別表"), "がそのまま該当。2項＝許可／3項＝届出の入替ひっかけに注意。")), React.createElement(DenkenWikiCTA, {
     url: "https://kfurufuru.github.io/denken-wiki/themes/shunin-gijutsusha/?h=%E4%B8%BB%E4%BB%BB%E6%8A%80%E8%A1%93%E8%80%85",
     label: "📖 詳細解説は denken-wiki で",
     note: "許可選任・兼任承認・外部委託承認の条文根拠と手続詳細は denken-wiki が SOT。"
@@ -49372,7 +49452,9 @@ function HoanKiteiPage({
     }
   }, "国が常時監視するのではなく", React.createElement("strong", null, "設置者が自主保安"), "する仕組み。", React.createElement("strong", null, "①保安規程（このページ）"), "で社内ルールを決め、②主任技術者を選任し、③技術基準に適合するよう維持・運用し、④事故時は報告する。②主任技術者 4.2・④事故報告 4.5 と連動。")), React.createElement("h2", {
     id: "layers"
-  }, "このページ（保安規程）を森・ミクロ・マクロで見る"), React.createElement("p", {
+  }, "このページ（保安規程）を森・ミクロ・マクロで見る"), React.createElement(LayersFold, {
+    label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+  }, React.createElement("p", {
     style: {
       fontSize: 12.5,
       color: 'var(--ink-3)',
@@ -49875,7 +49957,7 @@ function HoanKiteiPage({
       margin: '0 0 16px',
       lineHeight: 1.7
     }
-  }, "マクロ（解く道具）は、この下の", React.createElement("strong", null, "届出タイミング時間軸図・必要記載事項表（職保巡措記）・届出/遵守義務の整理表"), "がそのまま該当。"), React.createElement("h2", {
+  }, "マクロ（解く道具）は、この下の", React.createElement("strong", null, "届出タイミング時間軸図・必要記載事項表（職保巡措記）・届出/遵守義務の整理表"), "がそのまま該当。")), React.createElement("h2", {
     id: "tables"
   }, "保安規程の必要記載事項（電気事業法施行規則 第50条）"), React.createElement(SectionCheck, {
     pageId: "hoan-kitei",
@@ -55292,7 +55374,9 @@ function DenroZetsuenPage({
     }
   }, "denken-wiki 解釈第14条"), "／省令第58条（lawId 409M50000400052）は e-Gov で照合（最終確認 2026-07-16）。"), React.createElement("h2", {
     id: "layers"
-  }, "このページ（電路の絶縁）を森・ミクロ・マクロで見る"), React.createElement("p", {
+  }, "このページ（電路の絶縁）を森・ミクロ・マクロで見る"), React.createElement(LayersFold, {
+    label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+  }, React.createElement("p", {
     style: {
       fontSize: 12.5,
       color: 'var(--ink-3)',
@@ -56055,7 +56139,7 @@ function DenroZetsuenPage({
       margin: '0 0 16px',
       lineHeight: 1.7
     }
-  }, "マクロ（解く道具）は、この下の", React.createElement("strong", null, "図解①〜③（どこを・どの単位で・いくつ以上）と「配線方式別の判定例」"), "がそのまま該当。数値の並びは ", React.createElement("strong", null, "zetsuen-ichiran（2.2）"), "でも総覧できる。"), React.createElement("h2", {
+  }, "マクロ（解く道具）は、この下の", React.createElement("strong", null, "図解①〜③（どこを・どの単位で・いくつ以上）と「配線方式別の判定例」"), "がそのまま該当。数値の並びは ", React.createElement("strong", null, "zetsuen-ichiran（2.2）"), "でも総覧できる。")), React.createElement("h2", {
     id: "zukai"
   }, "条文を図で理解（省令第58条）"), React.createElement("div", {
     style: {
@@ -60598,7 +60682,7 @@ function TeiatsuDensenroZetsuenPage({
     lastChecked: "2026-09-11"
   }), React.createElement("h2", {
     id: "layers"
-  }, "このページ（低圧電線路の絶縁性能）を森・ミクロ・マクロで見る"), React.createElement("p", {
+  }, "このページ（低圧電線路の絶縁性能）を森・ミクロ・マクロで見る"), React.createElement(LayersFold, null, React.createElement("p", {
     style: {
       fontSize: 12.5,
       color: 'var(--ink-3)',
@@ -60860,7 +60944,7 @@ function TeiatsuDensenroZetsuenPage({
       padding: '6px 10px',
       borderBottom: '1px solid var(--line)'
     }
-  }, "クランプリーク測定・絶縁監視")))), React.createElement("h2", {
+  }, "クランプリーク測定・絶縁監視"))))), React.createElement("h2", {
     id: "exam-focus"
   }, "3. 試験で問われること"), React.createElement(SectionCheck, {
     pageId: "teiatsu-densenro-zetsuen",
@@ -63438,7 +63522,9 @@ function SetsuchiKojiPage({
     caption: "設備ルート。接地を「やらねばならない」根拠は省令第10・11条、「具体的な種類と抵抗値（10Ω・100Ω等）」は解釈第17条。数値は解釈の層、と覚える。"
   }), React.createElement("h2", {
     id: "layers"
-  }, "このページ（接地工事）を森・ミクロ・マクロで見る"), React.createElement("p", {
+  }, "このページ（接地工事）を森・ミクロ・マクロで見る"), React.createElement(LayersFold, {
+    label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+  }, React.createElement("p", {
     style: {
       fontSize: 12.5,
       color: 'var(--ink-3)',
@@ -64013,7 +64099,7 @@ function SetsuchiKojiPage({
       margin: '0 0 16px',
       lineHeight: 1.7
     }
-  }, "マクロ（解く道具）は、この下の", React.createElement("strong", null, "系統配置図・500Ω緩和表・B種倍々表"), "がそのまま該当。種別×数値の総覧は ", React.createElement("strong", null, "setsuchi-ichiran（2.1）"), "へ。"), React.createElement("div", {
+  }, "マクロ（解く道具）は、この下の", React.createElement("strong", null, "系統配置図・500Ω緩和表・B種倍々表"), "がそのまま該当。種別×数値の総覧は ", React.createElement("strong", null, "setsuchi-ichiran（2.1）"), "へ。")), React.createElement("div", {
     style: {
       marginBottom: 20
     }
@@ -73656,7 +73742,7 @@ function JuyoritsuKeisanPage({
     lastChecked: "2026-08-18"
   }), React.createElement("h2", {
     id: "layers"
-  }, "このページ（需要率・負荷率・不等率）を森・ミクロ・マクロで見る"), React.createElement("p", {
+  }, "このページ（需要率・負荷率・不等率）を森・ミクロ・マクロで見る"), React.createElement(LayersFold, null, React.createElement("p", {
     style: {
       fontSize: 12.5,
       color: 'var(--ink-3)',
@@ -73919,7 +74005,7 @@ function JuyoritsuKeisanPage({
       padding: '6px 10px',
       borderBottom: '1px solid var(--line)'
     }
-  }, "設備容量・契約電力の最適化")))), React.createElement("h2", {
+  }, "設備容量・契約電力の最適化"))))), React.createElement("h2", {
     id: "patterns"
   }, "出題パターン4種"), React.createElement(MemTable, {
     headers: ["パターン", "問われ方", "解法の核心"],
@@ -81184,7 +81270,7 @@ function DemandKanriPage({
     lastChecked: "2026-08-18"
   }), React.createElement("h2", {
     id: "layers"
-  }, "このページ（デマンド管理）を森・ミクロ・マクロで見る"), React.createElement("p", {
+  }, "このページ（デマンド管理）を森・ミクロ・マクロで見る"), React.createElement(LayersFold, null, React.createElement("p", {
     style: {
       fontSize: 12.5,
       color: 'var(--ink-3)',
@@ -81446,7 +81532,7 @@ function DemandKanriPage({
       padding: '6px 10px',
       borderBottom: '1px solid var(--line)'
     }
-  }, "デマンド警報・負荷制限")))), React.createElement(MemTable, {
+  }, "デマンド警報・負荷制限"))))), React.createElement(MemTable, {
     headers: ["年度・期", "問番号", "出題内容", "答え"],
     rows: [["R5上（2023）", "問10", "換気ファン5.5kW×台数 + 他10kW停止。9:20〜9:30の制御で300kW未満にする最小台数", "4台"], ["関連出題", "（参考）", "デマンド計算の単独出題はR5上 問10。最大需要電力を使う需要率・負荷率・不等率は別テーマ（1.6/6.1）で別途出題される", "─"]],
     note: "※ デマンド制御計算そのものの単独出題はR5上 問10。関連する需要率等の計算は各テーマページを参照（過大な網羅感を出さない限定集計）"

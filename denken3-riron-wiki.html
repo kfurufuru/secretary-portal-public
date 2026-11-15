@@ -6437,6 +6437,90 @@ Object.assign(window, {
   TrapPatternsPage,
   RironMissCards
 });
+
+/* ============================================================ 0節の折りたたみ（LayersFold）
+   0節（森・ミクロ・マクロ）の図と表を、初めて開いたページでは開き、2回目からは閉じる。
+   全体像は最初の1回で役目を終え、再訪のたびに読み飛ばすのが重いため（監修者さんの指摘「PCで毎回0から見るので重い」）。
+   電力Wiki の LayersFold（denryoku-pages-core.jsx）と同じ考え方。ページ ID は URL の先頭（: か / の前）から取る。
+   - 学習者が自分で開閉したら、そのページではその状態を覚える（riron_layers::<pageId>）。
+   - URL が「layers」か、この中の要素の id を指しているときは開く（別ページからのリンクで中の箱へ飛べるように）。この開きは記録しない。
+   - <details> なので閉じても中身は DOM に残り、ミラー（--dump-dom）から消えない。 */
+const LayersFold = ({
+  label,
+  children
+}) => {
+  const segs = () => location.hash.replace(/^#/, '').split(/[:/]/).map(x => {
+    try {
+      return decodeURIComponent(x);
+    } catch (e) {
+      return x;
+    }
+  });
+  const [pageKey] = React.useState(() => segs()[0] || 'unknown');
+  const stateKey = `riron_layers::${pageKey}`;
+  const seenKey = `riron_layers_seen::${pageKey}`;
+  const ref = React.useRef(null);
+  const [initialOpen] = React.useState(() => {
+    if (segs().slice(1).includes('layers')) return true;
+    try {
+      const st = localStorage.getItem(stateKey);
+      if (st === 'open') return true;
+      if (st === 'closed') return false;
+      return !localStorage.getItem(seenKey);
+    } catch (e) {
+      return true;
+    }
+  });
+  const cur = React.useRef(initialOpen); /* 自分で変えた開閉と、学習者の操作を見分ける */
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(seenKey, '1');
+    } catch (e) {/* localStorage が使えない端末 */}
+    const openIfTargeted = () => {
+      const s = segs();
+      if (s[0] !== pageKey || !ref.current || ref.current.open) return;
+      const hit = s.slice(1).some(id => {
+        if (id === 'layers') return true;
+        const el = id ? document.getElementById(id) : null;
+        return !!(el && ref.current.contains(el));
+      });
+      if (hit) {
+        cur.current = true;
+        ref.current.open = true;
+      }
+    };
+    openIfTargeted();
+    window.addEventListener('hashchange', openIfTargeted);
+    return () => window.removeEventListener('hashchange', openIfTargeted);
+  }, []);
+  const onToggle = e => {
+    const open = e.currentTarget.open;
+    if (open === cur.current) return; /* 描画時・リンクで開いたときの toggle は記録しない */
+    cur.current = open;
+    try {
+      localStorage.setItem(stateKey, open ? 'open' : 'closed');
+    } catch (e2) {/* noop */}
+  };
+  return /*#__PURE__*/React.createElement("details", {
+    ref: ref,
+    open: initialOpen,
+    onToggle: onToggle,
+    style: {
+      margin: '0 0 8px'
+    }
+  }, /*#__PURE__*/React.createElement("summary", {
+    style: {
+      cursor: 'pointer',
+      color: 'var(--ink-soft)',
+      fontSize: 13
+    }
+  }, label || '全体像（森・ミクロ・マクロの図と表）'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 6
+    }
+  }, children));
+};
+window.LayersFold = LayersFold;
 </script>
   <script>
 /* built from riron-pages-strategy.jsx — 直接編集しない。正(SoT)は riron-pages-strategy.jsx。編集後に build-riron-wiki.py を実行する */
@@ -10857,7 +10941,9 @@ const CapacitorLayers = () => /*#__PURE__*/React.createElement(React.Fragment, n
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（コンデンサ）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（コンデンサ）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -11373,7 +11459,7 @@ const CapacitorLayers = () => /*#__PURE__*/React.createElement(React.Fragment, n
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下の「2種類の誘電体挿入（縦/横）」にある ", /*#__PURE__*/React.createElement("strong", null, "誘電体・導体板挿入の断面図"), "を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下の「2種類の誘電体挿入（縦/横）」にある ", /*#__PURE__*/React.createElement("strong", null, "誘電体・導体板挿入の断面図"), "を参照。")));
 const CapacitorSphereFieldSvg = () => /*#__PURE__*/React.createElement("figure", {
   style: {
     margin: "14px 0",
@@ -14086,7 +14172,9 @@ const AcPowerLayers = () => /*#__PURE__*/React.createElement(React.Fragment, nul
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（交流電力）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（交流電力）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -14534,7 +14622,7 @@ const AcPowerLayers = () => /*#__PURE__*/React.createElement(React.Fragment, nul
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、「解説」タブの", /*#__PURE__*/React.createElement("strong", null, "電力三角形（P・Q・S と、力率改善で S が縮む図）"), "を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、「解説」タブの", /*#__PURE__*/React.createElement("strong", null, "電力三角形（P・Q・S と、力率改善で S が縮む図）"), "を参照。")));
 const AcPowerFormulasTab = ({
   onNav,
   switchTab
@@ -16012,7 +16100,9 @@ const ThreePhaseLayers = () => /*#__PURE__*/React.createElement(React.Fragment, 
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（三相交流）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（三相交流）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -16441,7 +16531,7 @@ const ThreePhaseLayers = () => /*#__PURE__*/React.createElement(React.Fragment, 
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下のセクション4「Y結線ベクトル図（√3 の見える化）」の", /*#__PURE__*/React.createElement("strong", null, "ベクトル図"), "を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下のセクション4「Y結線ベクトル図（√3 の見える化）」の", /*#__PURE__*/React.createElement("strong", null, "ベクトル図"), "を参照。")));
 const ThreePhaseFormulasTab = ({
   onNav,
   switchTab
@@ -20231,7 +20321,9 @@ const TransistorLayers = () => /*#__PURE__*/React.createElement(React.Fragment, 
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（トランジスタ）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（トランジスタ）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -20764,7 +20856,7 @@ const TransistorLayers = () => /*#__PURE__*/React.createElement(React.Fragment, 
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、解説タブ「直流動作点と電流帰還バイアスの『なぜ』」にある", /*#__PURE__*/React.createElement("strong", null, "電流帰還バイアス回路図"), "（分圧 → V_E = V_B − 0.6 → I_C ≈ V_E/R_E の解き筋がそのまま図になっている）を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、解説タブ「直流動作点と電流帰還バイアスの『なぜ』」にある", /*#__PURE__*/React.createElement("strong", null, "電流帰還バイアス回路図"), "（分圧 → V_E = V_B − 0.6 → I_C ≈ V_E/R_E の解き筋がそのまま図になっている）を参照。")));
 const TransistorFormulasTab = ({
   onNav,
   switchTab
@@ -23586,7 +23678,9 @@ const CoulombFieldLayers = () => /*#__PURE__*/React.createElement(React.Fragment
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（静電気・クーロンの法則）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（静電気・クーロンの法則）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -24440,7 +24534,7 @@ const CoulombFieldLayers = () => /*#__PURE__*/React.createElement(React.Fragment
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、解説タブ 3節の ", /*#__PURE__*/React.createElement("strong", null, "V（∝1/r）と E（∝1/r²）の減衰グラフ"), "（E=−dV/dr）と、5節の ", /*#__PURE__*/React.createElement("strong", null, "3電荷釣り合い図"), "（逆二乗＝距離2倍で力 1/4）を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、解説タブ 3節の ", /*#__PURE__*/React.createElement("strong", null, "V（∝1/r）と E（∝1/r²）の減衰グラフ"), "（E=−dV/dr）と、5節の ", /*#__PURE__*/React.createElement("strong", null, "3電荷釣り合い図"), "（逆二乗＝距離2倍で力 1/4）を参照。")));
 const CoulombFieldFluxFlowSvg = () => /*#__PURE__*/React.createElement("figure", {
   style: {
     margin: "10px 0 14px",
@@ -29226,7 +29320,9 @@ const ElectromagneticForceLayers = () => /*#__PURE__*/React.createElement(React.
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（電磁力）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（電磁力）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -29750,7 +29846,7 @@ const ElectromagneticForceLayers = () => /*#__PURE__*/React.createElement(React.
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下の「フレミング左手 vs 右手（指の対応表）」にある", /*#__PURE__*/React.createElement("strong", null, "左手モーター・右手発電機の3軸指対応図"), "を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下の「フレミング左手 vs 右手（指の対応表）」にある", /*#__PURE__*/React.createElement("strong", null, "左手モーター・右手発電機の3軸指対応図"), "を参照。")));
 
 // フレミング指対応の3秒ドリル。
 // 学習記録(records.json)で、フレミングの指対応は4回連続で未定着（直近は ng
@@ -39991,7 +40087,9 @@ const MagneticCircuitLayers = () => /*#__PURE__*/React.createElement(React.Fragm
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（磁気回路）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（磁気回路）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -40471,7 +40569,7 @@ const MagneticCircuitLayers = () => /*#__PURE__*/React.createElement(React.Fragm
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下のレイヤーA公式表の直後にある", /*#__PURE__*/React.createElement("strong", null, "電気回路 ⇔ 磁気回路の1:1対応図（図①）"), "を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下のレイヤーA公式表の直後にある", /*#__PURE__*/React.createElement("strong", null, "電気回路 ⇔ 磁気回路の1:1対応図（図①）"), "を参照。")));
 
 /* 動かして確かめる：空隙 lg を広げると磁気抵抗が空隙に支配され Φ が崩落する
    （denken-muscle のスライダー体験を単一 React 構成に移植。
@@ -42952,7 +43050,9 @@ const DcCircuitLayers = () => /*#__PURE__*/React.createElement(React.Fragment, n
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（直流回路）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（直流回路）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -43445,7 +43545,7 @@ const DcCircuitLayers = () => /*#__PURE__*/React.createElement(React.Fragment, n
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、解説タブ「テブナンの定理 — 2 ステップの『なぜ』」にある ", /*#__PURE__*/React.createElement("strong", null, "テブナン2ステップ図（Vth・Rth の求め方）"), "を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、解説タブ「テブナンの定理 — 2 ステップの『なぜ』」にある ", /*#__PURE__*/React.createElement("strong", null, "テブナン2ステップ図（Vth・Rth の求め方）"), "を参照。")));
 const DcCircuitFormulasTab = ({
   onNav,
   switchTab
@@ -48273,7 +48373,9 @@ const AcBasicsLayers = () => /*#__PURE__*/React.createElement(React.Fragment, nu
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（交流の基礎）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（交流の基礎）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -48785,7 +48887,7 @@ const AcBasicsLayers = () => /*#__PURE__*/React.createElement(React.Fragment, nu
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、解説タブ セクション4の ", /*#__PURE__*/React.createElement("strong", null, "ELI / ICE の位相図"), "（L は電流90°遅れ・C は電流90°進み）を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、解説タブ セクション4の ", /*#__PURE__*/React.createElement("strong", null, "ELI / ICE の位相図"), "（L は電流90°遅れ・C は電流90°進み）を参照。")));
 const AcBasicsFormulasTab = ({
   onNav,
   switchTab
@@ -50249,7 +50351,9 @@ const RlcResonanceLayers = () => /*#__PURE__*/React.createElement(React.Fragment
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（RLC共振）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（RLC共振）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -50816,7 +50920,7 @@ const RlcResonanceLayers = () => /*#__PURE__*/React.createElement(React.Fragment
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、解説タブ「共振条件 X_L = X_C の導出」の", /*#__PURE__*/React.createElement("strong", null, "周波数特性グラフ"), "（X_L と X_C の交点で Z 最小）と、「直列共振時の各素子電圧」の", /*#__PURE__*/React.createElement("strong", null, "電圧ベクトル図"), "（V_L＝V_C＝QV_s の相殺）を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、解説タブ「共振条件 X_L = X_C の導出」の", /*#__PURE__*/React.createElement("strong", null, "周波数特性グラフ"), "（X_L と X_C の交点で Z 最小）と、「直列共振時の各素子電圧」の", /*#__PURE__*/React.createElement("strong", null, "電圧ベクトル図"), "（V_L＝V_C＝QV_s の相殺）を参照。")));
 const RlcResonanceFormulasTab = ({
   onNav,
   switchTab
@@ -54318,7 +54422,7 @@ const InductanceLayers = () => /*#__PURE__*/React.createElement(React.Fragment, 
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（インダクタンス）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（インダクタンス）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, null, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -54559,7 +54663,7 @@ const InductanceLayers = () => /*#__PURE__*/React.createElement(React.Fragment, 
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下のセクション2「環状鉄心コイルの L 計算手順」にある ", /*#__PURE__*/React.createElement("strong", null, "L = μ₀μᵣN²A/l の記号対応図"), "と、セクション3「M の逆算式」の", /*#__PURE__*/React.createElement("strong", null, "和動/差動接続の比較図"), "を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下のセクション2「環状鉄心コイルの L 計算手順」にある ", /*#__PURE__*/React.createElement("strong", null, "L = μ₀μᵣN²A/l の記号対応図"), "と、セクション3「M の逆算式」の", /*#__PURE__*/React.createElement("strong", null, "和動/差動接続の比較図"), "を参照。")));
 
 /* 動かして確かめる：L = μ₀μᵣN²A/ℓ のライブ計算器
    （denken-muscle のスライダー体験を単一 React 構成に移植。
@@ -59138,7 +59242,9 @@ const RadianMeasureLayers = () => /*#__PURE__*/React.createElement(React.Fragmen
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（弧度法）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（弧度法）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -59540,7 +59646,7 @@ const RadianMeasureLayers = () => /*#__PURE__*/React.createElement(React.Fragmen
 }), " と ", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\omega = 2\\pi f",
   inline: true
-}), " の運用が全て。"));
+}), " の運用が全て。")));
 const RadianMeasurePage = ({
   onNav
 }) => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(MetaStrip, {
@@ -59734,7 +59840,9 @@ const PhaseDifferenceLayers = () => /*#__PURE__*/React.createElement(React.Fragm
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（位相差）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（位相差）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -60240,7 +60348,7 @@ const PhaseDifferenceLayers = () => /*#__PURE__*/React.createElement(React.Fragm
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下のセクション1「原理（時間ずれを角度で測る）」にある", /*#__PURE__*/React.createElement("strong", null, "位相子（回転ベクトル）と時間波形の図"), "を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下のセクション1「原理（時間ずれを角度で測る）」にある", /*#__PURE__*/React.createElement("strong", null, "位相子（回転ベクトル）と時間波形の図"), "を参照。")));
 const PhaseDifferencePage = ({
   onNav
 }) => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(MetaStrip, {
@@ -61850,7 +61958,9 @@ const OpAmpLayers = () => /*#__PURE__*/React.createElement(React.Fragment, null,
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（演算増幅器）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（演算増幅器）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -62335,7 +62445,7 @@ const OpAmpLayers = () => /*#__PURE__*/React.createElement(React.Fragment, null,
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下のレイヤーAにある ", /*#__PURE__*/React.createElement("strong", null, "反転増幅回路・非反転増幅回路の回路図"), "を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下のレイヤーAにある ", /*#__PURE__*/React.createElement("strong", null, "反転増幅回路・非反転増幅回路の回路図"), "を参照。")));
 const OpAmpFormulasTab = ({
   onNav,
   switchTab
@@ -63876,7 +63986,9 @@ const MeasurementLayers = () => /*#__PURE__*/React.createElement(React.Fragment,
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（電気・電子計測）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（電気・電子計測）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -64403,7 +64515,7 @@ const MeasurementLayers = () => /*#__PURE__*/React.createElement(React.Fragment,
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下の", /*#__PURE__*/React.createElement("strong", null, "図②（電圧計＝並列＋倍率器・電流計＝直列＋分流器の接続図）"), "を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下の", /*#__PURE__*/React.createElement("strong", null, "図②（電圧計＝並列＋倍率器・電流計＝直列＋分流器の接続図）"), "を参照。")));
 const MeasurementFormulasTab = ({
   onNav,
   switchTab
@@ -70139,7 +70251,9 @@ const BridgeCircuitLayers = () => /*#__PURE__*/React.createElement(React.Fragmen
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（ブリッジ回路）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（ブリッジ回路）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -70665,7 +70779,7 @@ const BridgeCircuitLayers = () => /*#__PURE__*/React.createElement(React.Fragmen
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下の", /*#__PURE__*/React.createElement("strong", null, "図①（ひし形と対辺の積）・図②（橋絡辺の見抜き方）"), "と、解説タブ4節の", /*#__PURE__*/React.createElement("strong", null, "図③（不平衡ブリッジのテブナン化）"), "を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下の", /*#__PURE__*/React.createElement("strong", null, "図①（ひし形と対辺の積）・図②（橋絡辺の見抜き方）"), "と、解説タブ4節の", /*#__PURE__*/React.createElement("strong", null, "図③（不平衡ブリッジのテブナン化）"), "を参照。")));
 const BridgeCircuitFormulasTab = ({
   onNav,
   switchTab
@@ -71442,7 +71556,9 @@ const TransientLayers = () => /*#__PURE__*/React.createElement(React.Fragment, n
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（過渡現象）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（過渡現象）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -72096,7 +72212,7 @@ const TransientLayers = () => /*#__PURE__*/React.createElement(React.Fragment, n
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、解説タブ 3節「時間変化グラフ」の充電カーブ（τ 後に63.2%・5τ で約99%）を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、解説タブ 3節「時間変化グラフ」の充電カーブ（τ 後に63.2%・5τ で約99%）を参照。")));
 const TransientFormulasTab = ({
   onNav,
   switchTab
@@ -74126,7 +74242,9 @@ const SemiconductorLayers = () => /*#__PURE__*/React.createElement(React.Fragmen
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0"), "このページ（半導体・ダイオード）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0"), "このページ（半導体・ダイオード）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -74611,7 +74729,7 @@ const SemiconductorLayers = () => /*#__PURE__*/React.createElement(React.Fragmen
     color: "var(--ink-soft)",
     margin: "0 0 4px"
   }
-}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下の ", /*#__PURE__*/React.createElement("strong", null, "図①（PN接合と空乏層：順/逆バイアスの幅変化）・図②（ダイオード記号の読み方）・図③（半波/全波整流の出力波形）"), "を参照。"));
+}, "▶ ", /*#__PURE__*/React.createElement("strong", null, "マクロ（解く）"), "の図解は、この下の ", /*#__PURE__*/React.createElement("strong", null, "図①（PN接合と空乏層：順/逆バイアスの幅変化）・図②（ダイオード記号の読み方）・図③（半波/全波整流の出力波形）"), "を参照。")));
 const SemiconductorFormulasTab = ({
   onNav,
   switchTab

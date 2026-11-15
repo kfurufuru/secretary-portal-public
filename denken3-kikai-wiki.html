@@ -8974,6 +8974,90 @@ Object.assign(window, {
   kakomonSlotLabel,
   isKakomonFeatured
 });
+
+/* ============================================================ 0節の折りたたみ（LayersFold）
+   0節（森・ミクロ・マクロ）の図と表を、初めて開いたページでは開き、2回目からは閉じる。
+   全体像は最初の1回で役目を終え、再訪のたびに読み飛ばすのが重いため（監修者さんの指摘「PCで毎回0から見るので重い」）。
+   電力Wiki の LayersFold（denryoku-pages-core.jsx）と同じ考え方。ページ ID は URL の先頭（: か / の前）から取る。
+   - 学習者が自分で開閉したら、そのページではその状態を覚える（kikai_layers::<pageId>）。
+   - URL が「layers」か、この中の要素の id を指しているときは開く（別ページからのリンクで中の箱へ飛べるように）。この開きは記録しない。
+   - <details> なので閉じても中身は DOM に残り、ミラー（--dump-dom）から消えない。 */
+const LayersFold = ({
+  label,
+  children
+}) => {
+  const segs = () => location.hash.replace(/^#/, '').split(/[:/]/).map(x => {
+    try {
+      return decodeURIComponent(x);
+    } catch (e) {
+      return x;
+    }
+  });
+  const [pageKey] = React.useState(() => segs()[0] || 'unknown');
+  const stateKey = `kikai_layers::${pageKey}`;
+  const seenKey = `kikai_layers_seen::${pageKey}`;
+  const ref = React.useRef(null);
+  const [initialOpen] = React.useState(() => {
+    if (segs().slice(1).includes('layers')) return true;
+    try {
+      const st = localStorage.getItem(stateKey);
+      if (st === 'open') return true;
+      if (st === 'closed') return false;
+      return !localStorage.getItem(seenKey);
+    } catch (e) {
+      return true;
+    }
+  });
+  const cur = React.useRef(initialOpen); /* 自分で変えた開閉と、学習者の操作を見分ける */
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(seenKey, '1');
+    } catch (e) {/* localStorage が使えない端末 */}
+    const openIfTargeted = () => {
+      const s = segs();
+      if (s[0] !== pageKey || !ref.current || ref.current.open) return;
+      const hit = s.slice(1).some(id => {
+        if (id === 'layers') return true;
+        const el = id ? document.getElementById(id) : null;
+        return !!(el && ref.current.contains(el));
+      });
+      if (hit) {
+        cur.current = true;
+        ref.current.open = true;
+      }
+    };
+    openIfTargeted();
+    window.addEventListener('hashchange', openIfTargeted);
+    return () => window.removeEventListener('hashchange', openIfTargeted);
+  }, []);
+  const onToggle = e => {
+    const open = e.currentTarget.open;
+    if (open === cur.current) return; /* 描画時・リンクで開いたときの toggle は記録しない */
+    cur.current = open;
+    try {
+      localStorage.setItem(stateKey, open ? 'open' : 'closed');
+    } catch (e2) {/* noop */}
+  };
+  return /*#__PURE__*/React.createElement("details", {
+    ref: ref,
+    open: initialOpen,
+    onToggle: onToggle,
+    style: {
+      margin: '0 0 8px'
+    }
+  }, /*#__PURE__*/React.createElement("summary", {
+    style: {
+      cursor: 'pointer',
+      color: 'var(--ink-soft)',
+      fontSize: 13
+    }
+  }, label || '全体像（森・ミクロ・マクロの図と表）'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 6
+    }
+  }, children));
+};
+window.LayersFold = LayersFold;
 </script>
   <script>
 /* built from kikai-tracker.jsx — 直接編集しない。正(SoT)は kikai-tracker.jsx。編集後に build-kikai-wiki.py を実行する */
@@ -13242,7 +13326,9 @@ const InductionMachineLayers = () => {
     id: "layers"
   }, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
-  }, "0."), "このページ（三相誘導電動機）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+  }, "0."), "このページ（三相誘導電動機）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+    label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+  }, /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--ink-soft)",
@@ -13848,7 +13934,7 @@ const InductionMachineLayers = () => {
     c: c,
     stageMap: IM_STAGE_SUBTOPICS,
     labels: IM_SUBTOPIC_LABEL
-  }));
+  })));
 };
 
 /* かご形と巻線形の回転子：二次回路を外へ出せるのは巻線形だけ（比例推移の入口） */
@@ -17775,7 +17861,9 @@ const DCMachineLayers = () => {
     id: "layers"
   }, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
-  }, "0."), "このページ（直流機）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+  }, "0."), "このページ（直流機）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+    label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+  }, /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--ink-soft)",
@@ -18413,7 +18501,7 @@ const DCMachineLayers = () => {
     c: c,
     stageMap: DC_STAGE_SUBTOPICS,
     labels: DC_SUBTOPIC_LABEL
-  }));
+  })));
 };
 
 /* 電機子反作用：中性軸の移動と、補極・補償巻線の配置 */
@@ -21926,7 +22014,9 @@ const SynchronousLayers = () => {
     id: "layers"
   }, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
-  }, "0."), "このページ（同期機）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+  }, "0."), "このページ（同期機）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+    label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+  }, /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--ink-soft)",
@@ -22566,7 +22656,7 @@ const SynchronousLayers = () => {
     c: c,
     stageMap: SY_STAGE_SUBTOPICS,
     labels: SY_SUBTOPIC_LABEL
-  }));
+  })));
 };
 
 /* 同期発電機の電機子反作用：力率による3ケースの起磁力の向き */
@@ -27157,7 +27247,9 @@ const SinglePhaseIMLayers = () => {
     id: "layers"
   }, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
-  }, "0."), "このページ（単相誘導電動機）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+  }, "0."), "このページ（単相誘導電動機）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+    label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+  }, /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--ink-soft)",
@@ -27709,7 +27801,7 @@ const SinglePhaseIMLayers = () => {
     stageMap: SP_STAGE_SUBTOPICS,
     labels: {},
     emptyNote: range => `出題数: 単相誘導電動機を主題とする行は ${range} の台帳に無い。ただし H21〜R8上 の22回では、R3 問4（a. 単相交流の交番磁界とコンデンサ始動）と H23 問2・R7下 問3（c. 単相誘導電動機の始動）が誘導機の空欄問題の一部として、H27 問3 が誘導機の正誤問題の選択肢 (3) として、H25 問3 が三相機の回転磁界の正誤問題の選択肢 (3)（1線が断線したときの単相の交番磁界。誤りの記述）として単相機の原理を問うた。`
-  }));
+  })));
 };
 const SinglePhaseIMPage = ({
   onNav
@@ -27861,7 +27953,9 @@ const TransformerLayers = () => {
     id: "layers"
   }, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
-  }, "0."), "このページ（変圧器）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+  }, "0."), "このページ（変圧器）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+    label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+  }, /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--ink-soft)",
@@ -28464,7 +28558,7 @@ const TransformerLayers = () => {
     c: c,
     stageMap: TR_STAGE_SUBTOPICS,
     labels: TR_SUBTOPIC_LABEL
-  }));
+  })));
 };
 
 /* ============================================================
@@ -40110,7 +40204,9 @@ const PowerElecLayers = () => {
     id: "layers"
   }, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
-  }, "0."), "このページ（パワーエレクトロニクス）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+  }, "0."), "このページ（パワーエレクトロニクス）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+    label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+  }, /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--ink-soft)",
@@ -40639,7 +40735,7 @@ const PowerElecLayers = () => {
     c: c,
     stageMap: PE_STAGE_SUBTOPICS,
     labels: PE_SUBTOPIC_LABEL
-  }));
+  })));
 };
 
 /* 単相全波ブリッジ整流：回路と出力波形（平均値 0.90V の由来） */
@@ -43539,7 +43635,9 @@ const KeikiYoHenseikiLayers = () => {
     id: "layers"
   }, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
-  }, "0."), "このページ（計器用変成器）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+  }, "0."), "このページ（計器用変成器）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+    label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+  }, /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--ink-soft)",
@@ -44065,7 +44163,7 @@ const KeikiYoHenseikiLayers = () => {
     stageMap: KY_STAGE_SUBTOPICS,
     labels: {},
     emptyNote: range => `出題数: CT・VT を主題とする小問は ${range} の台帳に無い（法規では R5下 問10 が出ている。法規 H24 問5〔電路の絶縁の例外〕も選択肢 d で計器用変成器の2次側電路の接地点を扱う。電力では R3 問7・R5上 問7・R6下 問7・H22 問9 が出ている。いずれも試験センター公表の問題冊子で確認）。`
-  }));
+  })));
 };
 
 /* CT は直列挿入・VT は並列接続：実配線の左右比較 */
@@ -45523,7 +45621,9 @@ const AutoControlLayers = () => {
     id: "layers"
   }, /*#__PURE__*/React.createElement("span", {
     className: "h-num"
-  }, "0."), "このページ（自動制御）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+  }, "0."), "このページ（自動制御）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+    label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
+  }, /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--ink-soft)",
@@ -46151,7 +46251,7 @@ const AutoControlLayers = () => {
     c: c,
     stageMap: AC_STAGE_SUBTOPICS,
     labels: AC_SUBTOPIC_LABEL
-  }));
+  })));
 };
 
 /* 一次遅れ系のステップ応答（時定数 T・63%・5T の図的定義） */
