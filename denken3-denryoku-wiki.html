@@ -3002,6 +3002,71 @@ const Solution = ({
   }
 }, children));
 
+/* 0節（森・ミクロ・マクロ）の図と表。初めて開いたページでは開いて見せ、2回目からは閉じる。
+   全体像は最初の1回で役目を終え、再訪のたびに図と表を読み飛ばすのが重いため（監修者さんの指摘「PCで毎回0から見るので重い」）。
+   学習者が自分で開閉したら、そのページではその状態を覚える。右レール TOC の「0」（#<pageId>:layers）で来たときは開く。
+   <details> なので閉じても中身は DOM に残り、ミラー（--dump-dom）から消えない。 */
+const LayersFold = ({
+  pageId,
+  children
+}) => {
+  const stateKey = `denryoku_layers::${pageId}`;
+  const seenKey = `denryoku_layers_seen::${pageId}`;
+  const targeted = () => location.hash.replace(/^#/, '') === `${pageId}:layers`;
+  const [initialOpen] = useState(() => {
+    if (targeted()) return true;
+    try {
+      const s = localStorage.getItem(stateKey);
+      if (s === 'open') return true;
+      if (s === 'closed') return false;
+      return !localStorage.getItem(seenKey);
+    } catch (e) {
+      return true;
+    }
+  });
+  const ref = useRef(null);
+  const cur = useRef(initialOpen); /* 自分で変えた開閉と、学習者の操作を見分ける */
+  useEffect(() => {
+    try {
+      localStorage.setItem(seenKey, '1');
+    } catch (e) {/* localStorage が使えない端末 */}
+    const onHash = () => {
+      if (targeted() && ref.current && !ref.current.open) {
+        cur.current = true;
+        ref.current.open = true;
+      }
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, [pageId]);
+  const onToggle = e => {
+    const open = e.currentTarget.open;
+    if (open === cur.current) return; /* 描画時・TOC から開いたときの toggle は記録しない */
+    cur.current = open;
+    try {
+      localStorage.setItem(stateKey, open ? 'open' : 'closed');
+    } catch (e2) {/* noop */}
+  };
+  return /*#__PURE__*/React.createElement("details", {
+    ref: ref,
+    open: initialOpen,
+    onToggle: onToggle,
+    style: {
+      margin: '0 0 8px'
+    }
+  }, /*#__PURE__*/React.createElement("summary", {
+    style: {
+      cursor: 'pointer',
+      color: 'var(--ink-soft)',
+      fontSize: 13
+    }
+  }, "全体像（森・ミクロ・マクロの図と表）"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 6
+    }
+  }, children));
+};
+
 /* 正誤判定表。命題だけを見せ、判定と理由は行ごとに開く（先に自分で正か誤かを決める）。
    中身は従来の表と同じく <thead> と <tbody><tr><td>命題</td><td>判定</td><td>理由</td></tr></tbody> で書く。 */
 const SeigoTable = ({
@@ -3064,7 +3129,8 @@ const SeigoTable = ({
 };
 Object.assign(window, {
   Solution,
-  SeigoTable
+  SeigoTable,
+  LayersFold
 });
 const FormulaCard = ({
   num,
@@ -4553,7 +4619,9 @@ const HaidenLayers = () => /*#__PURE__*/React.createElement(React.Fragment, null
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0."), "このページ（配電線路）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0."), "このページ（配電線路）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  pageId: "haiden"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -4736,7 +4804,7 @@ const HaidenLayers = () => /*#__PURE__*/React.createElement(React.Fragment, null
 }), "・", /*#__PURE__*/React.createElement(Eq, {
   tex: "P_{\\text{loss}} = 3I^2R",
   inline: true
-}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "柱上変圧器で 6.6 kV → 100/200 V に降圧。需要家引込口の", /*#__PURE__*/React.createElement("strong", null, "PAS"), "で区分・地絡保護。", /*#__PURE__*/React.createElement("strong", null, "進相コンデンサ"), "で力率を改善し電流そのものを減らす"), /*#__PURE__*/React.createElement("td", null, "柱上変圧器・PAS・進相コンデンサ"))))));
+}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "柱上変圧器で 6.6 kV → 100/200 V に降圧。需要家引込口の", /*#__PURE__*/React.createElement("strong", null, "PAS"), "で区分・地絡保護。", /*#__PURE__*/React.createElement("strong", null, "進相コンデンサ"), "で力率を改善し電流そのものを減らす"), /*#__PURE__*/React.createElement("td", null, "柱上変圧器・PAS・進相コンデンサ")))))));
 
 /* ============================================================
    過去問マスタ（WIKI_DATA.kakomon・H18〜R08上 425問）から描く表
@@ -7569,7 +7637,9 @@ const KakuuSoudenLayers = () => /*#__PURE__*/React.createElement(React.Fragment,
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0."), "このページ（架空送電線路）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0."), "このページ（架空送電線路）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  pageId: "kakuu-souden"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -7769,7 +7839,7 @@ const KakuuSoudenLayers = () => /*#__PURE__*/React.createElement(React.Fragment,
 }), "・", /*#__PURE__*/React.createElement(Eq, {
   tex: "P_{\\text{loss}} = 3I^2R",
   inline: true
-}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "275 kV・500 kV の", /*#__PURE__*/React.createElement("strong", null, "超高圧"), "で送り、変電所で降圧して配電する。電線・がいし・鉄塔・", /*#__PURE__*/React.createElement(Term, null, "架空地線"), "などの構成要素と、その保護・対策が問われる"), /*#__PURE__*/React.createElement("td", null, "超高圧送電・構成要素と保護"))))));
+}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "275 kV・500 kV の", /*#__PURE__*/React.createElement("strong", null, "超高圧"), "で送り、変電所で降圧して配電する。電線・がいし・鉄塔・", /*#__PURE__*/React.createElement(Term, null, "架空地線"), "などの構成要素と、その保護・対策が問われる"), /*#__PURE__*/React.createElement("td", null, "超高圧送電・構成要素と保護")))))));
 const KakuuSoudenPage = ({
   data,
   onNav
@@ -10557,7 +10627,9 @@ const KaryokuLayers = () => /*#__PURE__*/React.createElement(React.Fragment, nul
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0."), "このページ（火力発電）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0."), "このページ（火力発電）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  pageId: "karyoku"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -10743,7 +10815,7 @@ const KaryokuLayers = () => /*#__PURE__*/React.createElement(React.Fragment, nul
 }), "・", /*#__PURE__*/React.createElement(Eq, {
   tex: "B = \\dfrac{P_{\\text{gen}} H_r}{H_l}",
   inline: true
-}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "汽力はベース、ガスタービンは数分で立ち上がる", /*#__PURE__*/React.createElement("strong", null, "ピーク・非常用"), "、GTCC はその中間。", /*#__PURE__*/React.createElement("strong", null, "起動時間の差がそのまま用途の差"), "になる"), /*#__PURE__*/React.createElement("td", null, "節炭器・過熱器・再熱器・給水加熱器・復水器"))))));
+}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "汽力はベース、ガスタービンは数分で立ち上がる", /*#__PURE__*/React.createElement("strong", null, "ピーク・非常用"), "、GTCC はその中間。", /*#__PURE__*/React.createElement("strong", null, "起動時間の差がそのまま用途の差"), "になる"), /*#__PURE__*/React.createElement("td", null, "節炭器・過熱器・再熱器・給水加熱器・復水器")))))));
 
 /* 熱の流れを「棒の長さ＝熱量（電力）」で描く。node はその段の値、loss はその段で抜ける損失。
    前の node − loss が次の node と合わないときは console.error を出す（例の数値の取り違え検出）。
@@ -13274,7 +13346,9 @@ const SuiryokuLayers = () => /*#__PURE__*/React.createElement(React.Fragment, nu
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0."), "このページ（水力発電）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0."), "このページ（水力発電）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  pageId: "suiryoku"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -13463,7 +13537,7 @@ const SuiryokuLayers = () => /*#__PURE__*/React.createElement(React.Fragment, nu
 }), "・", /*#__PURE__*/React.createElement(Eq, {
   tex: "N_s = \\dfrac{N\\sqrt{P}}{H^{5/4}}",
   inline: true
-}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "流れ込み式はベース、貯水池式は季節調整、", /*#__PURE__*/React.createElement("strong", null, "揚水式は蓄電池の代わり"), "。夜間の余剰で水を汲み上げ、ピーク時に落として需給を合わせる"), /*#__PURE__*/React.createElement("td", null, "サージタンク・調速機・上下調整池"))))));
+}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "流れ込み式はベース、貯水池式は季節調整、", /*#__PURE__*/React.createElement("strong", null, "揚水式は蓄電池の代わり"), "。夜間の余剰で水を汲み上げ、ピーク時に落として需給を合わせる"), /*#__PURE__*/React.createElement("td", null, "サージタンク・調速機・上下調整池")))))));
 
 /* ---- 水車ランナーの実物写真（写真は window.SUISHA_IMG＝denryoku-cable-images.js） ----
    出典はすべて Wikimedia Commons（CC BY-SA）。作者・ライセンス・説明文は各 File ページで確認した。
@@ -15100,7 +15174,9 @@ const GenshiryokuLayers = () => /*#__PURE__*/React.createElement(React.Fragment,
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0."), "このページ（原子力発電）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0."), "このページ（原子力発電）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  pageId: "genshiryoku"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -15280,7 +15356,7 @@ const GenshiryokuLayers = () => /*#__PURE__*/React.createElement(React.Fragment,
 }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "視点"), /*#__PURE__*/React.createElement("th", null, "何を見るか"), /*#__PURE__*/React.createElement("th", null, "代表する式・量"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "ミクロ"), /*#__PURE__*/React.createElement("br", null), "（なぜ）"), /*#__PURE__*/React.createElement("td", null, "核分裂で出る中性子は速すぎて次の核分裂を起こしにくい。", /*#__PURE__*/React.createElement("strong", null, "減速材で熱中性子に落として連鎖反応を維持"), "し、", /*#__PURE__*/React.createElement("strong", null, "制御棒が中性子を吸って出力を絞る"), "。止めても核分裂生成物が崩壊熱を出し続けるので冷却は切れない"), /*#__PURE__*/React.createElement("td", null, "減速材・制御棒・冷却材・核燃料の4要素")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "マクロ"), /*#__PURE__*/React.createElement("br", null), "（解く）"), /*#__PURE__*/React.createElement("td", null, "ほぼ論説・穴埋め。", /*#__PURE__*/React.createElement("strong", null, "PWR と BWR の対比表"), "（系統数・タービン蒸気の放射性・圧力）と臨界条件が得点源。計算は燃料比較が中心"), /*#__PURE__*/React.createElement("td", null, "中性子増倍率 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "k = 1",
   inline: true
-}), "（臨界）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "燃料費が安く出力調整が不得手なため", /*#__PURE__*/React.createElement("strong", null, "定格一定のベース負荷"), "で運転する。ピーク追従は火力・揚水が担う"), /*#__PURE__*/React.createElement("td", null, "UO₂ペレット・ジルカロイ被覆管・MOX燃料"))))));
+}), "（臨界）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "燃料費が安く出力調整が不得手なため", /*#__PURE__*/React.createElement("strong", null, "定格一定のベース負荷"), "で運転する。ピーク追従は火力・揚水が担う"), /*#__PURE__*/React.createElement("td", null, "UO₂ペレット・ジルカロイ被覆管・MOX燃料")))))));
 const GenshiryokuPage = ({
   data,
   onNav
@@ -15978,7 +16054,9 @@ const ShinEnergyLayers = () => /*#__PURE__*/React.createElement(React.Fragment, 
   id: "layers"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "0."), "このページ（新エネルギー発電）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement("p", {
+}, "0."), "このページ（新エネルギー発電）を森・ミクロ・マクロで見る"), /*#__PURE__*/React.createElement(LayersFold, {
+  pageId: "shin-energy"
+}, /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: 13,
     color: "var(--ink-soft)",
@@ -16161,7 +16239,7 @@ const ShinEnergyLayers = () => /*#__PURE__*/React.createElement(React.Fragment, 
 }), "・", /*#__PURE__*/React.createElement(Eq, {
   tex: "E = P_{\\text{設備}} \\times (\\text{利用率}) \\times 8760",
   inline: true
-}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "出力変動は", /*#__PURE__*/React.createElement("strong", null, "蓄電池・", /*#__PURE__*/React.createElement(Term, null, "揚水発電")), "で吸収する。系統に載せるには単独運転防止など連系保護が要る。買取制度は FIT から FIP へ移行が進む"), /*#__PURE__*/React.createElement("td", null, "PCS（MPPT・単独運転防止）・FIT / FIP"))))));
+}))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "実務"), /*#__PURE__*/React.createElement("br", null), "（意味づけ）"), /*#__PURE__*/React.createElement("td", null, "出力変動は", /*#__PURE__*/React.createElement("strong", null, "蓄電池・", /*#__PURE__*/React.createElement(Term, null, "揚水発電")), "で吸収する。系統に載せるには単独運転防止など連系保護が要る。買取制度は FIT から FIP へ移行が進む"), /*#__PURE__*/React.createElement("td", null, "PCS（MPPT・単独運転防止）・FIT / FIP")))))));
 const ShinEnergyPage = ({
   data,
   onNav
