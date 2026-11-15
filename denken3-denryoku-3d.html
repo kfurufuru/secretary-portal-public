@@ -335,6 +335,7 @@ canvas.mini{width:100%;height:150px;display:block;border:1px solid var(--line-2)
   .cz-row{grid-template-columns:minmax(0,1fr) auto}
   .cz-bar,.cz-key{display:none}
 }
+header{position:relative}
 </style>
 
 <div class="app">
@@ -1162,7 +1163,7 @@ const STUDY = {
    {
     "t": "損失落差を引き、効率を掛ける",
     "sec": "formula",
-    "focus": "水圧管路",
+    "focus": "損失落差 hl",
     "set": {
      "sMode": "gen",
      "sType": "francis",
@@ -1181,7 +1182,7 @@ const STUDY = {
      "P"
     ],
     "op": "詳しい操作の 損失落差 hl を 5 m から 20 m に動かす。",
-    "see": "右の棒が「総落差での理論値 → 有効落差での理論値 → 水車 → 発電機」と一段ずつ短くなる。hl を増やすと2本目から下がる。",
+    "see": "3D の落差の矢印の右の列で、赤い区間（損失落差）が伸び、青紫の区間（有効落差）が縮む。右の棒は「総落差での理論値 → 有効落差での理論値 → 水車 → 発電機」と一段ずつ短くなる。hl を増やすと2本目から下がる。",
     "so": "有効落差 H = Hg − hl。損失落差は水圧管路などの摩擦で失う高さ。そのあと水車効率と発電機効率を掛ける。この向きを固めておくと、揚水で逆になるところで迷わない。",
     "q": [
      "R07上/15",
@@ -1308,7 +1309,7 @@ const STUDY = {
      "tot"
     ],
     "op": "運転を 揚水 にする。",
-    "see": "水の点が逆向き（放水路 → 貯水池）に流れ、発電機が電動機に変わる。全揚程は 300 + 10 = 310 m。総合効率はこの設定で約 67 %。",
+    "see": "水の点が逆向き（放水路 → 貯水池）に流れ、発電機が電動機に変わる。落差の矢印は、上の水面より上へ赤い区間（損失落差）だけ伸びる。全揚程は 300 + 10 = 310 m。総合効率はこの設定で約 67 %。",
     "so": "発電は「H = Hg − hl、効率を掛ける」、揚水は「Hp = Hg + hl、効率で割る」。総合効率 = ηt·ηg·ηp·ηm × (Hg − hl)/(Hg + hl)。上げるのに使った電力の 7 割前後しか戻らない。",
     "q": [
      "R08上/15",
@@ -3864,8 +3865,28 @@ function buildSuiryoku(g){
   const hgDn = mesh(new THREE.ConeGeometry(.07,.16,10), M.arrow, hgMark); hgDn.rotation.x = Math.PI;
   const hgLineU = pipe(V3(-5.1,0,0), V3(.15,0,0), M.arrow, hgMark, .012);   // 上の水面の高さ（ダムの下流側 x=-1.8 から寸法線まで）
   const hgLineL = pipe(V3(0,0,-.15), V3(0,0,.1), M.arrow, hgMark, .012);    // 下の水面の高さ（放水路の手前の縁から）
+  /* 損失落差 hl と、有効落差 H（発電）・全揚程 Hp（揚水）。総落差の矢印の右に2本目の列を立てる（過去問の図の並び）。
+     発電: 2本目の列を上の水面から hl（赤）と H（青紫）に分ける。揚水: 総落差の矢印の上に hl（赤）を足し、2本目の列を Hp（青紫）にする。
+     青紫は水の青（#3572D6）と分けるため。hl の長さは縮尺どおりではない（最低の長さを決めてある。凡例に書く） */
+  const hlMat = std({color:0xd24a43, emissive:0x6a1a16, emissiveIntensity:.5});
+  const hhMat = std({color:0x6a5acd, emissive:0x2a2070, emissiveIntensity:.5});
+  /* 両矢印の区間。set(y0, y1) は hgMark の中の高さ。短いと矢じりが重なるので、矢じりを外して棒だけにする。
+     区間の Group 自体を区間の中点へ動かす（凡例の引き出し線は Group の原点を指す。原点を y=0 に置いたままだと、
+     「損失落差 hl」の線が赤い区間でなく有効落差の棒を指した。2026-11-15 監査） */
+  const headSeg = (mat, x) => { const s = new THREE.Group(); hgMark.add(s); s.position.x = x;
+    const rod = mesh(new THREE.CylinderGeometry(.022,.022,1,8), mat, s);
+    const up = mesh(new THREE.ConeGeometry(.05,.1,10), mat, s), dn = mesh(new THREE.ConeGeometry(.05,.1,10), mat, s); dn.rotation.x = Math.PI;
+    s.userData.set = (y0, y1) => { const L = y1 - y0, tips = L >= .26, h = L/2; s.visible = L > .001; up.visible = dn.visible = tips;
+      s.position.y = (y0 + y1)/2;
+      rod.scale.y = Math.max(.01, tips ? L - .2 : L); rod.position.y = 0; up.position.y = h - .05; dn.position.y = -h + .05; };
+    return s; };
+  const COL2 = .24;
+  const segHl = headSeg(hlMat, COL2), segH = headSeg(hhMat, COL2), segHp = headSeg(hhMat, COL2), segHpTop = headSeg(hlMat, 0);
+  const hlTick = pipe(V3(COL2 - .1,0,0), V3(COL2 + .1,0,0), hlMat, hgMark, .012);   // 発電: hl と H の境目
+  const hpLine = pipe(V3(-.15,0,0), V3(COL2 + .1,0,0), hlMat, hgMark, .012);        // 揚水: 総落差 + hl の高さ
+  const colL = pipe(V3(-.1,0,0), V3(COL2 + .1,0,0), M.arrow, hgMark, .012);         // 2本目の列の下端（下の水面）
   hgMark.traverse(o => { o.castShadow = false; });
-  Object.assign(hgMark.userData, {hgRod, hgUp, hgDn, hgLineU, hgLineL, yL:.625});
+  Object.assign(hgMark.userData, {hgRod, hgUp, hgDn, hgLineU, hgLineL, yL:.625, segHl, segH, segHp, segHpTop, hlTick, hpLine, colL});
   /* 水の道は、どこでも上へ戻らない（y は増えない）。貯水池 → 導水路 → サージタンクの底 → 水圧管路 → 水車 */
   const P0 = [V3(-2.6,2.0), V3(-1.35,2.0), V3(0,2.0), V3(.45,2.0,.23), V3(1.2,.95,.62)];
   /* ランナの中心 (2.0, ·, 0) のまわりを、角度 π/2 から減る向き（ランナの回る向き）に回る。sw(φ, r, y): 入口から φ だけ回った点 */
@@ -3916,7 +3937,12 @@ function buildSuiryoku(g){
                               {obj:draft, t:'吸出し管（反動水車だけにある。ランナ出口の速度エネルギーを圧力として回収する）', c:'#6B7580'}]),
     {obj:gen, t: st.sMode==='pump' ? '発電電動機（いまは電動機）' : '発電機', c:'#3B5A73'},
     {obj:tail, t:'放水路（総落差の下の水面）', c:'#3572D6'},
-    {obj:hgMark, t:'総落差 Hg（上下の水面の高さの差。有効落差 H = Hg − hl とは別。図の高さは Hg に比例しない）', c:'#F0B57E'},
+    {obj:hgMark.userData.hgRod, t:'総落差 Hg（上下の水面の高さの差。図の高さは Hg に比例しない）', c:'#F0B57E'},
+    ...(st.sMode === 'pump'
+      ? [{obj:hgMark.userData.segHpTop, t:'損失落差 hl（損失水頭。揚水では総落差の上に足す。図の長さは縮尺どおりではない）', c:'#D24A43'},
+         {obj:hgMark.userData.segHp, t:'全揚程 Hp = Hg + hl（水面の高さの差に損失落差を足した、ポンプが水に与える高さ。所要電力はこの Hp を使い、効率で割る）', c:'#6A5ACD'}]
+      : [{obj:hgMark.userData.segHl, t:'損失落差 hl（損失水頭。発電では総落差の上の端から引く。図の長さは縮尺どおりではない）', c:'#D24A43'},
+         {obj:hgMark.userData.segH, t:'有効落差 H = Hg − hl（水車が使える高さ。発電機出力はこの H に水車効率と発電機効率を掛ける）', c:'#6A5ACD'}]),
   ];
 }
 /* 総落差 Hg［m］→ 図の上の水面の高さ y。20〜600 m（30倍）をそのまま箱に入れると低い側が潰れるので、対数で y=2.25〜3.0 に割り当てる
@@ -3929,6 +3955,18 @@ function animSuiryoku(g, t, st, dt){
     m.hgRod.scale.y = Math.max(.01, (yU - .12) - (yL + .12)); m.hgRod.position.y = (yU + yL)/2 - o;
     m.hgUp.position.y = yU - .08 - o; m.hgDn.position.y = yL + .08 - o;
     m.hgLineU.position.y = yU - o; m.hgLineL.position.y = yL - o;
+    /* hl の図の長さ: 図の総落差の長さ D に hl/Hg を掛ける（総落差の矢印は対数目盛りなので、縮尺どおりではない）。
+       短すぎて見えないので最低 0.1。上限は発電で D（hl ≥ Hg なら有効落差は 0 で、青紫の区間が消える）、揚水で 1.5·D。
+       上限を D より小さく切ると、hl > H のときに赤と青紫の長さの大小が逆に見えた（2026-11-15 監査: Hg=20・hl=15） */
+    const D = yU - yL, pump = st.sMode === 'pump';
+    const dh = st.sHl > 0 ? Math.min((pump ? 1.5 : 1)*D, Math.max(.1, D*st.sHl/st.sHg)) : 0;
+    m.segHl.visible = m.segH.visible = m.hlTick.visible = !pump;
+    m.segHp.visible = m.segHpTop.visible = m.hpLine.visible = pump;
+    m.colL.position.y = yL - o;
+    if (pump){ m.segHpTop.userData.set(yU - o, yU + dh - o); m.segHp.userData.set(yL - o, yU + dh - o);
+      m.hpLine.position.y = yU + dh - o; m.hpLine.visible = dh > 0; }
+    else { m.segHl.userData.set(yU - dh - o, yU - o); m.segH.userData.set(yL - o, yU - dh - o);
+      m.hlTick.position.y = yU - dh - o; m.hlTick.visible = dh > 0; }
     u.surgeW.scale.y = yU - 1.92; u.surgeW.position.y = 1.92 + (yU - 1.92)/2; }   // サージタンクの水位 ＝ 貯水池の水面
   for (const k in u.types) u.types[k].visible = (k === st.sType);
   const pel = st.sType === 'pelton';
@@ -4619,6 +4657,7 @@ function paintLegend(){ const a = activeRow(); legendRows.forEach((r,i)=>r.el.cl
    そこで引くと「回転子」が非表示の突極形を掴み、円筒形の歩で指し示しが黙って外れる
    （2026-10-11 実測: 同期機ツアー 5・7・8 歩目） */
 let focusReq;            // undefined = 要求なし／null = 固定を外す
+let lgScrollReq = false; // 固定した行を凡例の枠の中へ送る要求（updateLabels が行を出した後に送る）
 function focusByName(name){ focusReq = name || null; }
 /* 行の選び方: 名前そのもの、または「名前（…）」の行を先に探し、無ければ名前を含む行に落とす
    （誘導機の「回転子」が先に並ぶ「回転子の目印（白）」を掴まないように）。
@@ -4633,6 +4672,11 @@ function resolveFocus(){
   const row = focusRow(focusReq); focusReq = undefined;
   pinIdx = row ? legendRows.indexOf(row) : null;
   paintLegend();
+  /* 固定した行が凡例の枠の外（下へ送った所）にあると、引き出し線だけが枠の外から出て、どの行か読めない。枠の中まで送る
+     （水力の落差の行は凡例の末尾にあり、幅 1400 でも枠の下に隠れていた。2026-11-15 実描画）。
+     この時点では行がまだ display:none のことがある（部品の表示は animators が決め、凡例の行は updateLabels が出す）。
+     そこで要求だけ立て、updateLabels が行を出した後に送る（2026-11-15 監査: hl=0 からツアーで hl=5 にした歩） */
+  lgScrollReq = !!row;
   const nodes = row ? row.nodes.filter(n=>visibleInScene(n.obj)) : [];
   /* 同じ部品の歩が続くなら、動いているかを判定する前に画角を固定する。判定を先にすると、
      一時停止の歩（直流機8歩目「始動の瞬間は E = 0」）で回る電機子が「静止」と出て、
@@ -4735,6 +4779,9 @@ function updateLabels(){
     row.el.style.display = avail ? '' : 'none';
     const lit = avail && open && i === a;
     let ex = 0, ey = 0;
+    if (lit && lgScrollReq){ lgScrollReq = false; const lt = legendEl.getBoundingClientRect(), rt = row.el.getBoundingClientRect();
+      if (rt.bottom > lt.bottom) legendEl.scrollTop += rt.bottom - lt.bottom + 4;
+      else if (rt.top < lt.top) legendEl.scrollTop -= lt.top - rt.top + 4; }
     if (lit){ const r = row.el.getBoundingClientRect(); ex = r.right - vb.left; ey = r.top - vb.top + r.height/2; }
     row.nodes.forEach((n, k)=>{
       const {ln, dt} = row.lines[k];
