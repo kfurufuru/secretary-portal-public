@@ -8978,7 +8978,8 @@ Object.assign(window, {
 /* ============================================================ 0節の折りたたみ（LayersFold）
    0節（森・ミクロ・マクロ）の図と表を、初めて開いたページでは開き、2回目からは閉じる。
    全体像は最初の1回で役目を終え、再訪のたびに読み飛ばすのが重いため（監修者さんの指摘「PCで毎回0から見るので重い」）。
-   電力Wiki の LayersFold（denryoku-pages-core.jsx）と同じ考え方。ページ ID は URL の先頭（: か / の前）から取る。
+   電力Wiki の LayersFold（denryoku-pages-core.jsx）と同じ考え方。ページ ID は URL の先頭（/ の前）から取る。
+   機械のルーター（kikai-app.jsx の parseHash）は / だけを区切りにするので、ここも / だけで切る（電力の「#<page>:layers」形は機械では home に落ちる）。
    - 学習者が自分で開閉したら、そのページではその状態を覚える（kikai_layers::<pageId>）。
    - URL が「layers」か、この中の要素の id を指しているときは開く（別ページからのリンクで中の箱へ飛べるように）。この開きは記録しない。
    - <details> なので閉じても中身は DOM に残り、ミラー（--dump-dom）から消えない。 */
@@ -8986,7 +8987,7 @@ const LayersFold = ({
   label,
   children
 }) => {
-  const segs = () => location.hash.replace(/^#/, '').split(/[:/]/).map(x => {
+  const segs = () => location.hash.replace(/^#/, '').split('/').map(x => {
     try {
       return decodeURIComponent(x);
     } catch (e) {
@@ -15507,7 +15508,7 @@ const InductionMachinePage = ({
   }
 }, "巻線形"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "始動時の仕掛け"), /*#__PURE__*/React.createElement("td", null, "なし"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Term, null, "表皮効果")), /*#__PURE__*/React.createElement("td", null, "表皮効果"), /*#__PURE__*/React.createElement("td", null, "外部抵抗（", /*#__PURE__*/React.createElement(Term, null, "比例推移"), "）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "始動トルク"), /*#__PURE__*/React.createElement("td", null, "小"), /*#__PURE__*/React.createElement("td", null, "中"), /*#__PURE__*/React.createElement("td", null, "大"), /*#__PURE__*/React.createElement("td", null, "大")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "始動電流"), /*#__PURE__*/React.createElement("td", null, "大"), /*#__PURE__*/React.createElement("td", null, "中"), /*#__PURE__*/React.createElement("td", null, "小"), /*#__PURE__*/React.createElement("td", null, "小")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "運転時の力率・停動トルク"), /*#__PURE__*/React.createElement("td", null, "基準"), /*#__PURE__*/React.createElement("td", {
   colSpan: 2
-}, "普通かご形より", /*#__PURE__*/React.createElement("strong", null, "低い")), /*#__PURE__*/React.createElement("td", null, "—（下の箇条書き）"))))), /*#__PURE__*/React.createElement("p", {
+}, "普通かご形より", /*#__PURE__*/React.createElement("strong", null, "低い")), /*#__PURE__*/React.createElement("td", null, "始動が済めば外部抵抗を短絡して運転する（速度制御で残すと効率が下がる。下の箇条書き）。停動トルク（最大トルク）は外部抵抗の値で", /*#__PURE__*/React.createElement("strong", null, "変わらない"), "（", /*#__PURE__*/React.createElement(Term, null, "比例推移"), "）"))))), /*#__PURE__*/React.createElement("p", {
   style: {
     fontSize: "12.5px",
     color: "var(--ink-soft)"
@@ -23170,7 +23171,8 @@ const SyncShortCircuitFig = () => {
   }));
   return /*#__PURE__*/React.createElement(DiagramFrame, {
     caption: "図1.3.3b  同期発電機の1相等価回路。界磁と回転が作る起電力 E に、同期リアクタンス xs を直列にした「内部リアクタンス付きの電源」として見る。① 負荷時は E = V + jxs·I。② 三相の端子を短絡しても、回転と励磁が続く限り E は消えない。V = 0 なので E はすべて jxs にかかり、持続短絡電流の大きさは Is = E/xs（E は相電圧。線間電圧で与えられたら √3 で割る。ra は無視）。電流は E より約 90° 遅れる。ただし E は、短絡中の端子には現れない。同じ界磁電流のまま無負荷にしたときに端子に現れる電圧（無負荷飽和曲線の値）である。短絡中の実際の空隙磁束は、この遅れ電流の減磁作用で小さい。だから鉄心が飽和せず、三相短絡曲線は直線になる（図1.3.5。E を飽和した曲線から読むと xs が If で変わる話は図1.3.5b）",
-    viewBox: "0 0 316 400"
+    viewBox: "0 0 316 400",
+    maxWidth: "420px"
   }, /*#__PURE__*/React.createElement(Panel, {
     y0: 0,
     title: "① 負荷をつないだとき（ふつうの運転）",
@@ -26411,7 +26413,7 @@ const SynchronousPage = ({
   viewBox: "0 0 300 364",
   maxWidth: "420px",
   title: "図1.3.8 並列運転で起電力がずれたときに2台の間を流れる電流のベクトル図。上の①は起電力の大きさだけが違う場合で、E1とE2は同じ向き、差電圧ΔE＝E1−E2もEと同じ向きなので、ΔEより90°遅れる電流IcはEと直角の無効分（横流）になり、有効電力は動かず損失だけ増える。下の②は位相だけが違う場合で、E1がE2より進み、ΔEはEとほぼ直角なので、ΔEより90°遅れるIcはEとほぼ同相の有効分（同期化電流）になり、進んだ機から遅れた機へ有効電力が移る。",
-  caption: "図1.3.8  起電力がずれたときに流れる電流（ベクトル図）。Ic＝ΔE ／ j2xs なので Ic は ΔE より 90° 遅れる。Ic は発電機1から2へ流れる向きを正とした。②の角度は見やすく誇張している"
+  caption: "図1.3.8  起電力がずれたときに流れる電流（ベクトル図）。ΔE＝E₁−E₂（E₁ と E₂ の始点をそろえたとき、E₂ の先から E₁ の先へ向かう矢印。①は3本が一直線に重なるので、E₂ を下、ΔE を上にずらして描いた）。Ic＝ΔE ／ j2xs なので Ic は ΔE より 90° 遅れる。Ic は発電機1から2へ流れる向きを正とした。②の角度は見やすく誇張している"
 }, /*#__PURE__*/React.createElement("text", {
   x: "150",
   y: "18",
@@ -34414,7 +34416,7 @@ const TransformerPage = ({
   tex: "t"
 }), " を小さくするのはここを減らすため")), /*#__PURE__*/React.createElement("p", null, "したがって「鉄損は電圧の2乗に比例」は、", /*#__PURE__*/React.createElement("strong", null, "周波数一定のもとで、ヒステリシス損の指数 ", /*#__PURE__*/React.createElement(Eq, {
   tex: "n"
-}), " も 2 とみなした近似"), "。三種の全日効率問題では電圧・周波数は定格一定なので、結局「一定値」として扱えばよい。"), /*#__PURE__*/React.createElement("p", {
+}), " も 2 とみなした近似"), "。全日効率の計算では電圧・周波数を定格一定とするので、結局「一定値」として扱えばよい（全日効率は機械の本試験では H21〜R8上 に出ていない。計算問題は法規Wiki 1.4 で扱っている）。"), /*#__PURE__*/React.createElement("p", {
   style: {
     margin: "8px 0 0"
   }
@@ -37806,7 +37808,7 @@ const TransformerPage = ({
   tex: "0.731/0.065 \\approx 11.2"
 }), "。", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "選択肢(2)にちょうど用意されている"), "。複素数のまま足し、最後に絶対値"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "直列和のつもりで並列合成してしまう"), " — 2台が並列につながっている見た目に引きずられて ", /*#__PURE__*/React.createElement(Eq, {
+}, "この値は選択肢(2)と一致する"), "。複素数のまま足し、最後に絶対値"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "直列和のつもりで並列合成してしまう"), " — 2台が並列につながっている見た目に引きずられて ", /*#__PURE__*/React.createElement(Eq, {
   tex: "\\dot Z_A \\dot Z_B/(\\dot Z_A + \\dot Z_B) = 0.01193"
 }), " とすると ", /*#__PURE__*/React.createElement(Eq, {
   tex: "0.731/0.01193 \\approx 61.3"
@@ -47597,7 +47599,23 @@ const AutoControlPage = ({
   tex: "K/T"
 }), " で同じ）。", /*#__PURE__*/React.createElement("span", {
   className: "marker"
-}, "前向きが一次遅れ2段や「積分×一次遅れ」だと閉ループは二次系になり、折れ点が1つに定まらないので使えない"), "。 前向きが", /*#__PURE__*/React.createElement("strong", null, "積分1つだけ"), "なら、閉ループは一次遅れになる（下の囲み）。ただし開ループの直流ゲインが限りなく大きいので、この検算は使えない。"))), /*#__PURE__*/React.createElement(Box, {
+}, "前向きが一次遅れ2段や「積分×一次遅れ」だと閉ループは二次系になり、折れ点が1つに定まらないので使えない"), "。 前向きが", /*#__PURE__*/React.createElement("strong", null, "積分1つだけ"), "なら、閉ループは一次遅れになる（下の囲み）。ただし開ループの直流ゲインが限りなく大きいので、「直流ゲイン × 折れ点」の形では比べられない。 代わりに、", /*#__PURE__*/React.createElement("strong", null, "前向きが積分1つで、直結フィードバック（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "H = 1"
+}), "）のときに限り"), "、", /*#__PURE__*/React.createElement("strong", null, "開ループのゲインが 1（0 dB）になる角周波数"), "を見る。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "|G| = K/(\\omega T) = 1"
+}), " から ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "\\omega = K/T"
+}), " で、 閉ループの折れ点 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "K/T"
+}), "（直流ゲイン 1 × 折れ点 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "K/T"
+}), "）と一致する。折れ点を時定数 ", /*#__PURE__*/React.createElement(Eq, {
+  tex: "T/K"
+}), " と取り違えていないかの検算になる。", /*#__PURE__*/React.createElement(Eq, {
+  tex: "H \\neq 1"
+}), " や「積分×一次遅れ」には、この形のまま使わない。上の例題のような一次遅れにも使わない（", /*#__PURE__*/React.createElement(Eq, {
+  tex: "|G| = 1"
+}), " になるのは約 99.5 rad/s、閉ループの折れ点は 110 rad/s で一致しない）。"))), /*#__PURE__*/React.createElement(Box, {
   kind: "example",
   label: "前向きが積分1つ・直結フィードバック — 閉ループは一次遅れ（R5下 問13）"
 }, /*#__PURE__*/React.createElement("p", {
@@ -56801,7 +56819,7 @@ const DriveMechPage = ({
     }, /*#__PURE__*/React.createElement(QuickReview, {
       pageId: "drive-mech",
       pageTitle: "4.4 電動機応用"
-    }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプの所要動力の式は？"), "P = ρgQH/η（Q:流量[m³/s], H:全揚程[m]）。効率 η は分母＝入力は出力より大きい"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプ・送風機の負荷特性は？"), "二乗低減トルク負荷（T ∝ N²）。回転速度を下げると軸動力は N³ で減る＝", /*#__PURE__*/React.createElement(Term, null, "インバータ"), "省エネの根拠"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車が貯えるエネルギーは？"), "W = ½Jω²（J:慣性モーメント, ω:角速度）。負荷急変時に出し入れして速度変動を平滑化"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車を静止から回し上げる時間は？"), "回転の運動方程式 T = J·dω/dt から、加速トルク T が一定なら ", /*#__PURE__*/React.createElement("strong", null, "t = J(ω₂−ω₁)/T"), "。ここでの T は", /*#__PURE__*/React.createElement("strong", null, "電動機トルク − 負荷トルク"), "の余り。直線運動の F = ma と同じ形"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車効果 GD² から慣性モーメント J を出すには？"), /*#__PURE__*/React.createElement("strong", null, "4 で割る"), "（J = GD²/4）。D は回転直径（慣性半径の2倍）で、はずみ車の外径ではない。速度変化で出し入れするエネルギーは W = ½J(ω₁²−ω₂²)＝", /*#__PURE__*/React.createElement("strong", null, "2乗の差"), "で、差の2乗ではない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "釣合いおもり付きエレベータの所要出力は？"), "P = (m−m_c)gv/η。電動機が受け持つのは", /*#__PURE__*/React.createElement("strong", null, "かご＋荷とおもりの差"), "だけ。m をそのまま入れると大きく外す。力行／回生は ", /*#__PURE__*/React.createElement("strong", null, "m と m_c の大小"), "で決まり、m > m_c なら上昇＝力行・下降＝回生、空かごなど m < m_c では逆転する。", /*#__PURE__*/React.createElement("strong", null, "回生で電源へ戻る電力は |m−m_c|gv×η"), "（η で割らない。割ると放出した動力を超える）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "減速比 i の減速機を通すと速度・トルク・動力は？"), "速度 1/i 倍・トルク i 倍・", /*#__PURE__*/React.createElement("strong", null, "動力は不変"), "（損失無視）。両側で P = Tω を出して一致するかが検算。負荷慣性のモータ軸換算は 1/i²"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプの H は何を指す？流量の単位は？"), "H は", /*#__PURE__*/React.createElement("strong", null, "全揚程 ＝ 実揚程 ＋ 損失水頭"), "。流量が [m³/min] なら 60 で割って [m³/s] にしてから式に入れる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "トルク曲線の交点はいつ安定運転できる？"), "速度が微増したとき「電動機トルク − 負荷トルク」が", /*#__PURE__*/React.createElement("strong", null, "負"), "になれば安定（減速して戻る）。式では ", /*#__PURE__*/React.createElement("strong", null, "dT_L/dN > dT_M/dN"), "（符号込みの傾きの大小）。定トルク負荷なら停動トルクより左側は不安定だが、二乗低減トルク負荷では左側でも安定になりうるので「左側は必ず不安定」と覚えない。", /*#__PURE__*/React.createElement("strong", null, "交点であることは必要条件で、十分条件ではない")))))
+    }, /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプの所要動力の式は？"), "P = ρgQH/η（Q:流量[m³/s], H:全揚程[m]）。効率 η は分母＝入力は出力より大きい"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプ・送風機の負荷特性は？"), "二乗低減トルク負荷（T ∝ N²）。回転速度を下げると軸動力は N³ で減る＝", /*#__PURE__*/React.createElement(Term, null, "インバータ"), "省エネの根拠"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車が貯えるエネルギーは？"), "W = ½Jω²（J:慣性モーメント, ω:角速度）。負荷急変時に出し入れして速度変動を平滑化"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車を静止から回し上げる時間は？"), "回転の運動方程式 T = J·dω/dt から、加速トルク T が一定なら ", /*#__PURE__*/React.createElement("strong", null, "t = J(ω₂−ω₁)/T"), "。ここでの T は", /*#__PURE__*/React.createElement("strong", null, "電動機トルク − 負荷トルク"), "の余り。直線運動の F = ma と同じ形"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "はずみ車効果 GD² から慣性モーメント J を出すには？"), /*#__PURE__*/React.createElement("strong", null, "4 で割る"), "（J = GD²/4）。D は回転直径（慣性半径の2倍）で、はずみ車の外径ではない。速度変化で出し入れするエネルギーは W = ½J(ω₁²−ω₂²)＝", /*#__PURE__*/React.createElement("strong", null, "2乗の差"), "で、差の2乗ではない"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "釣合いおもり付きエレベータの所要出力は？"), "P = (m−m_c)gv/η。電動機が受け持つのは", /*#__PURE__*/React.createElement("strong", null, "かご＋荷とおもりの差"), "だけ。m をそのまま入れると大きく外す。力行／回生は ", /*#__PURE__*/React.createElement("strong", null, "m と m_c の大小"), "で決まり、m > m_c なら上昇＝力行・下降＝回生、空かごなど m < m_c では逆転する。", /*#__PURE__*/React.createElement("strong", null, "回生で電源へ戻る電力は |m−m_c|gv×η"), "（η で割らない。割ると放出した動力を超える）"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "減速比 i の減速機を通すと速度・トルク・動力は？"), "速度 1/i 倍・トルク i 倍・", /*#__PURE__*/React.createElement("strong", null, "動力は不変"), "（損失無視）。両側で P = Tω を出して一致するかが検算。負荷慣性のモータ軸換算は 1/i²"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "ポンプの H は何を指す？流量の単位は？"), "H は", /*#__PURE__*/React.createElement("strong", null, "全揚程 ＝ 実揚程 ＋ 損失水頭"), "。流量が [m³/min] なら 60 で、[m³/h] なら 3600 で割って [m³/s] にしてから式に入れる"), /*#__PURE__*/React.createElement("details", null, /*#__PURE__*/React.createElement("summary", null, "トルク曲線の交点はいつ安定運転できる？"), "速度が微増したとき「電動機トルク − 負荷トルク」が", /*#__PURE__*/React.createElement("strong", null, "負"), "になれば安定（減速して戻る）。式では ", /*#__PURE__*/React.createElement("strong", null, "dT_L/dN > dT_M/dN"), "（符号込みの傾きの大小）。定トルク負荷なら停動トルクより左側は不安定だが、二乗低減トルク負荷では左側でも安定になりうるので「左側は必ず不安定」と覚えない。", /*#__PURE__*/React.createElement("strong", null, "交点であることは必要条件で、十分条件ではない")))))
   }]
 });
 Object.assign(window, {
@@ -57185,7 +57203,7 @@ const TrendsPage = ({
       e.preventDefault();
       onNav("info-elec", "bit-byte");
     }
-  }, "3.2 情報・電子回路"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "r 進法の計算と、8ビットの絶対値表示・2の補数・オフセット・バイナリ（B問題・数値も同一）"), /*#__PURE__*/React.createElement("td", null, "H22 問18／R6上 問18"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("a", {
+  }, "3.2 情報・電子回路"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "r 進法の計算と、8ビットの絶対値表示・2の補数・オフセット・バイナリ（B問題・数値も同一。R6上 は (b) の選択肢の並びを替えたので正答の番号が違う）"), /*#__PURE__*/React.createElement("td", null, "H22 問18／R6上 問18"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("a", {
     href: "#",
     onClick: e => {
       e.preventDefault();
@@ -58957,7 +58975,7 @@ const GuidePage = ({
     tex: "E"
   }), " からベクトル図を描き直して、力率が題意どおりか見る")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "⑥")), /*#__PURE__*/React.createElement("td", null, "選択肢"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "自分の値が「誤答用に置かれた値」と一致していないか")), /*#__PURE__*/React.createElement("td", null, "次の見出しで詳しく")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "⑦")), /*#__PURE__*/React.createElement("td", null, "別解"), /*#__PURE__*/React.createElement("td", null, "別ルートで解き直す（時間があるときだけ）"), /*#__PURE__*/React.createElement("td", null, "一次換算で解いたものを二次換算でも解く"))))), /*#__PURE__*/React.createElement("h3", {
+  }, "自分の値が「具体的な間違いで再現できる値」と一致していないか")), /*#__PURE__*/React.createElement("td", null, "次の見出しで詳しく")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("strong", null, "⑦")), /*#__PURE__*/React.createElement("td", null, "別解"), /*#__PURE__*/React.createElement("td", null, "別ルートで解き直す（時間があるときだけ）"), /*#__PURE__*/React.createElement("td", null, "一次換算で解いたものを二次換算でも解く"))))), /*#__PURE__*/React.createElement("h3", {
     id: "honban-distractor"
   }, "選択肢は「情報」である — 誤答の値の多くは、具体的な間違いで再現できる"), /*#__PURE__*/React.createElement("p", null, "令和8年度上期・問2（直流発電機、", /*#__PURE__*/React.createElement(Eq, {
     tex: "D=0.5\\,\\mathrm{m}"
@@ -59014,7 +59032,7 @@ const GuidePage = ({
     }
   }, "5つのうち", /*#__PURE__*/React.createElement("strong", null, "4つが、名前の付く具体的な間違いの結果"), "である。", /*#__PURE__*/React.createElement("span", {
     className: "marker"
-  }, "R8上 問2 では、惜しい間違いの値が選択肢に用意されていた"), "（毎回ではない）。 とくに (3) 7.85 は、周速まで正しく出せた人が導体を1本と数えたときの値と一致する。試験センターは誤答の作り方を公表していないので、表の右の列は「その値になる間違いの例」であって、出題者の意図ではない。"), /*#__PURE__*/React.createElement("p", {
+  }, "R8上 問2 では、惜しい間違いの値が選択肢の中にあった"), "（毎回ではない）。 とくに (3) 7.85 は、周速まで正しく出せた人が導体を1本と数えたときの値と一致する。試験センターは誤答の作り方を公表していないので、表の右の列は「その値になる間違いの例」であって、出題者の意図ではない。"), /*#__PURE__*/React.createElement("p", {
     style: {
       margin: "8px 0 0"
     }
@@ -60313,7 +60331,7 @@ const OutputMapPage = ({
     className: "om-sw om-sw-v"
   }), " 一次照合済みの回（問題冊子を読んで付けた題名）\u3000", /*#__PURE__*/React.createElement("span", {
     className: "om-sw om-sw-u"
-  }), " 一次照合未了の回（電験王の記事題名を写した索引）"), /*#__PURE__*/React.createElement("div", {
+  }), " 一次照合未了の回（電験王の記事題名を写した索引。下の一覧では問番号に † を付ける）"), /*#__PURE__*/React.createElement("div", {
     className: "table-wrap"
   }, /*#__PURE__*/React.createElement("div", {
     className: "om-matrix",
@@ -60357,7 +60375,7 @@ const OutputMapPage = ({
       className: r.v ? 'v' : 'u'
     }, /*#__PURE__*/React.createElement("span", {
       className: "om-id"
-    }, r.s, " 問", r.q), /*#__PURE__*/React.createElement("span", null, r.t)))));
+    }, r.s, " 問", r.q, r.v ? '' : '†'), /*#__PURE__*/React.createElement("span", null, r.t)))));
   })), /*#__PURE__*/React.createElement(SectionCheck, {
     pageId: "output-map",
     sectionId: "kakomon"
