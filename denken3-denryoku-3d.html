@@ -1024,7 +1024,7 @@ const STUDY = {
    [
     "比速度",
     "Ns = N·√P / H^(5/4)",
-    "P は水車出力 kW、H は m。**高落差ほど小さい**。ペルトン < フランシス < プロペラ"
+    "P はランナー1個（ペルトンはノズル1本）当たりの水車出力 kW、H は有効落差 m。**高落差ほど小さい**。ペルトン < フランシス < プロペラ"
    ],
    [
     "ベルヌーイの定理",
@@ -1251,7 +1251,7 @@ const STUDY = {
     ],
     "op": "ペルトンで総落差 400 m・流量 10 m³/s・回転速度 200 min⁻¹ の比速度を読む。次に水車を プロペラ、総落差を 30 m、流量を 150 m³/s、詳しい操作の回転速度 N を 150 min⁻¹ にして読み比べる。",
     "see": "水車出力（右の棒の「水車」）は約 35 MW と 33 MW でほぼ同じなのに、比速度はペルトン側が約 21、プロペラ側が約 488 と 20 倍以上違う。回転速度はプロペラのほうが低いのに、それでも比速度は大きい。",
-    "so": "Ns = N·√P / H^(5/4)。P は水車出力（kW）。落差が低いほど分母の H^(5/4) が小さくなり、Ns は大きくなる。だから高落差はペルトン（Ns 小）、低落差はプロペラ（Ns 大）が向く。形式ごとの適用範囲（比速度の上限）はWikiで確かめる。単位は m·kW。",
+    "so": "Ns = N·√P / H^(5/4)。P はランナー1個（ペルトンはノズル1本）当たりの水車出力（kW）。落差が低いほど分母の H^(5/4) が小さくなり、Ns は大きくなる。だから高落差はペルトン（Ns 小）、低落差はプロペラ（Ns 大）が向く。形式ごとの適用範囲（比速度の上限）はWikiで確かめる。単位は m·kW。",
     "q": [
      "R06上/15",
      "R05上/1",
@@ -1292,7 +1292,7 @@ const STUDY = {
     "sec": "formula",
     "focus": "発電電動機",
     "set": {
-     "sMode": "pump",
+     "sMode": "gen",
      "sType": "francis",
      "sHg": 300,
      "sHl": 10,
@@ -3506,10 +3506,12 @@ const mesh = (g, m, parent, x=0, y=0, z=0) => { const o = new THREE.Mesh(g, m); 
    揚水は全揚程 Hp = 総落差 + 損失落差、所要電力 = 9.8·Q·Hp/(ηp·ηm)。
    比速度 Ns = N·√Pt / H^(5/4)（Pt は水車出力 kW、H は m） */
 function suModel(){
-  const st = state, H = Math.max(.1, st.sHg - st.sHl), Hp = st.sHg + st.sHl;
+  /* 損失落差 hl が総落差 Hg 以上なら有効落差は 0（noHead）。出力・比速度・総合効率は 0 にし、読み値の表で断る
+     （以前は H を 0.1 m に切り上げて比速度 35,428 m·kW を出し、揚水の総合効率は −24 % と出ていた。2026-11-18 監査） */
+  const st = state, noHead = st.sHl >= st.sHg, H = Math.max(0, st.sHg - st.sHl), Hp = st.sHg + st.sHl;
   const Pth = 9.8*st.sQ*H, Pt = Pth*st.sEt, P = Pt*st.sEg, Pin = 9.8*st.sQ*Hp/(st.sEp*st.sEm);
-  return {H, Hp, Pth, Pt, P, Pin, ns: st.sN*Math.sqrt(Pt)/Math.pow(H, 1.25), v: Math.sqrt(2*9.8*H),
-    total: st.sEt*st.sEg*st.sEp*st.sEm*(st.sHg - st.sHl)/(st.sHg + st.sHl)};
+  return {H, Hp, Pth, Pt, P, Pin, noHead, ns: H > 0 ? st.sN*Math.sqrt(Pt)/Math.pow(H, 1.25) : 0, v: Math.sqrt(2*9.8*H),
+    total: st.sEt*st.sEg*st.sEp*st.sEm*H/(st.sHg + st.sHl)};
 }
 /* 火力。発電端熱効率 η = 3600·P[kW] / (B[kg/h]·H[kJ/kg]) = 3.6·P[MW] / (B[t/h]·H[MJ/kg])。
    送電端は所内率の分だけ減る。CO2 は燃料中の炭素 c が全部燃えるとして B·c·44/12 */
@@ -3882,11 +3884,14 @@ function buildSuiryoku(g){
     return s; };
   const COL2 = .24;
   const segHl = headSeg(hlMat, COL2), segH = headSeg(hhMat, COL2), segHp = headSeg(hhMat, COL2), segHpTop = headSeg(hlMat, 0);
+  /* ペルトンは、ランナー（ノズル）より下の落差を使えない（ランナーが大気中にあり、吸出し管が無い。電力Wiki 1.1「吸出し管は反動水車だけ」）。
+     発電でペルトンのときだけ、2本目の列の下の部分（放水路の水面からランナーの高さまで）を灰色にする（2026-11-18 監査） */
+  const segLost = headSeg(std({color:0x8e9aa6, emissive:0x2a3036, emissiveIntensity:.4}), COL2);
   const hlTick = pipe(V3(COL2 - .1,0,0), V3(COL2 + .1,0,0), hlMat, hgMark, .012);   // 発電: hl と H の境目
   const hpLine = pipe(V3(-.15,0,0), V3(COL2 + .1,0,0), hlMat, hgMark, .012);        // 揚水: 総落差 + hl の高さ
   const colL = pipe(V3(-.1,0,0), V3(COL2 + .1,0,0), M.arrow, hgMark, .012);         // 2本目の列の下端（下の水面）
   hgMark.traverse(o => { o.castShadow = false; });
-  Object.assign(hgMark.userData, {hgRod, hgUp, hgDn, hgLineU, hgLineL, yL:.625, segHl, segH, segHp, segHpTop, hlTick, hpLine, colL});
+  Object.assign(hgMark.userData, {hgRod, hgUp, hgDn, hgLineU, hgLineL, yL:.625, segHl, segH, segHp, segHpTop, segLost, hlTick, hpLine, colL});
   /* 水の道は、どこでも上へ戻らない（y は増えない）。貯水池 → 導水路 → サージタンクの底 → 水圧管路 → 水車 */
   const P0 = [V3(-2.6,2.0), V3(-1.35,2.0), V3(0,2.0), V3(.45,2.0,.23), V3(1.2,.95,.62)];
   /* ランナの中心 (2.0, ·, 0) のまわりを、角度 π/2 から減る向き（ランナの回る向き）に回る。sw(φ, r, y): 入口から φ だけ回った点 */
@@ -3927,7 +3932,7 @@ function buildSuiryoku(g){
     {obj:dam, t:'ダム', c:'#9AA1A6'},
     {obj:head, t:'導水路', c:'#6B7580'},
     {obj:surge, t:'サージタンク（水撃作用を、中の水位の上下でやわらげる）', c:'#8E9AA6'},
-    {obj:pen, t:'水圧管路（ここで損失落差が出る）', c:'#6B7580'},
+    {obj:pen, t:'水圧管路（導水路・水圧管路などの摩擦で損失落差が出る）', c:'#6B7580'},
     {obj:runner, t:({pelton:'ペルトン水車（衝動水車。噴流は横から当たり、水は下へ落ちる）', francis:'フランシス水車（反動水車。水は外周から横に入り、中心から軸の向き（この図は立軸なので真下）へ抜ける）', propeller:'プロペラ水車（反動水車。水は羽根の間を軸に沿って（この図は立軸なので真下へ）抜ける）'})[st.sType], c:'#D9C7A0'},
     ...(st.sType==='pelton' ? [{obj:nozzle, t:'ノズル（水を噴流にしてバケットに当てる）', c:'#6B7580'},
                                {obj:needle, t:'ニードル弁（噴流の太さ＝流量を変える）', c:'#2B2B2B'},
@@ -3942,7 +3947,10 @@ function buildSuiryoku(g){
       ? [{obj:hgMark.userData.segHpTop, t:'損失落差 hl（損失水頭。揚水では総落差の上に足す。図の長さは縮尺どおりではない）', c:'#D24A43'},
          {obj:hgMark.userData.segHp, t:'全揚程 Hp = Hg + hl（水面の高さの差に損失落差を足した、ポンプが水に与える高さ。所要電力はこの Hp を使い、効率で割る）', c:'#6A5ACD'}]
       : [{obj:hgMark.userData.segHl, t:'損失落差 hl（損失水頭。発電では総落差の上の端から引く。図の長さは縮尺どおりではない）', c:'#D24A43'},
-         {obj:hgMark.userData.segH, t:'有効落差 H = Hg − hl（水車が使える高さ。発電機出力はこの H に水車効率と発電機効率を掛ける）', c:'#6A5ACD'}]),
+         ...(st.sType === 'pelton'
+           ? [{obj:hgMark.userData.segH, t:'有効落差（ペルトンが使えるのは青紫の部分だけ。読み値の H = Hg − hl は灰色の分を差し引いていないので、実際のペルトンの有効落差はそれより小さい）', c:'#6A5ACD'},
+              {obj:hgMark.userData.segLost, t:'ランナーより下の落差（ペルトンはランナーが大気中にあり、使えない。反動水車は吸出し管で使える）', c:'#8E9AA6'}]
+           : [{obj:hgMark.userData.segH, t:'有効落差 H = Hg − hl（水車が使える高さ。発電機出力はこの H に水車効率と発電機効率を掛ける）', c:'#6A5ACD'}])]),
   ];
 }
 /* 総落差 Hg［m］→ 図の上の水面の高さ y。20〜600 m（30倍）をそのまま箱に入れると低い側が潰れるので、対数で y=2.25〜3.0 に割り当てる
@@ -3959,14 +3967,21 @@ function animSuiryoku(g, t, st, dt){
        短すぎて見えないので最低 0.1。上限は発電で D（hl ≥ Hg なら有効落差は 0 で、青紫の区間が消える）、揚水で 1.5·D。
        上限を D より小さく切ると、hl > H のときに赤と青紫の長さの大小が逆に見えた（2026-11-15 監査: Hg=20・hl=15） */
     const D = yU - yL, pump = st.sMode === 'pump';
-    const dh = st.sHl > 0 ? Math.min((pump ? 1.5 : 1)*D, Math.max(.1, D*st.sHl/st.sHg)) : 0;
+    /* 発電でペルトンのときは、ランナーより下（灰色）を除いた高さ avail を、損失落差（赤）と有効落差（青紫）に割り振る。
+       H > 0 なら青紫に最低 0.06 を残す（hl が Hg に近いと、青紫が消えたのに読み値は H > 0 で、赤がランナーより下まで伸びた。2026-11-18 監査） */
+    const yR0 = (!pump && st.sType === 'pelton') ? Math.min(yU, Math.max(yL, u.runner.position.y)) : yL, avail = yU - yR0;
+    let dh = st.sHl > 0 ? Math.min(pump ? 1.5*D : avail, Math.max(.1, (pump ? D : avail)*st.sHl/st.sHg)) : 0;
+    if (!pump && st.sHg > st.sHl && avail - dh < .06) dh = Math.max(0, avail - .06);
     m.segHl.visible = m.segH.visible = m.hlTick.visible = !pump;
     m.segHp.visible = m.segHpTop.visible = m.hpLine.visible = pump;
     m.colL.position.y = yL - o;
     if (pump){ m.segHpTop.userData.set(yU - o, yU + dh - o); m.segHp.userData.set(yL - o, yU + dh - o);
       m.hpLine.position.y = yU + dh - o; m.hpLine.visible = dh > 0; }
-    else { m.segHl.userData.set(yU - dh - o, yU - o); m.segH.userData.set(yL - o, yU - dh - o);
-      m.hlTick.position.y = yU - dh - o; m.hlTick.visible = dh > 0; }
+    else { const yTop = yU - dh;
+      m.segHl.userData.set(yTop - o, yU - o); m.segH.userData.set(yR0 - o, yTop - o);
+      m.hlTick.position.y = yTop - o; m.hlTick.visible = dh > 0; }
+    m.segLost.visible = !pump && st.sType === 'pelton';
+    if (m.segLost.visible) m.segLost.userData.set(yL - o, yR0 - o);
     u.surgeW.scale.y = yU - 1.92; u.surgeW.position.y = 1.92 + (yU - 1.92)/2; }   // サージタンクの水位 ＝ 貯水池の水面
   for (const k in u.types) u.types[k].visible = (k === st.sType);
   const pel = st.sType === 'pelton';
@@ -3974,12 +3989,14 @@ function animSuiryoku(g, t, st, dt){
   u.draftF.visible = st.sType === 'francis'; u.draftK.visible = st.sType === 'propeller';
   const dir = st.sMode === 'pump' ? -1 : 1;
   /* ペルトン（衝動水車）は水を汲み上げられない。揚水を選んでも、噴流を逆に流して見せない（読み値の表で断る） */
-  const still = st.paused || (pel && st.sMode === 'pump');
+  /* 発電で損失落差 hl が総落差 Hg 以上なら、有効落差は 0 で水車は回らない。水の粒も止める（2026-11-18 監査） */
+  const noHead = st.sMode === 'gen' && st.sHl >= st.sHg;
+  const still = st.paused || (pel && st.sMode === 'pump') || noHead;
   /* 鉛直軸で回る（発電機と同じ軸）。噴流（x=1.58 で +z 向き）が当たるバケットが噴流と同じ向きに進む回り方にする
      （rotation.y を増やすと、中心の左 0.47 の点は +z へ動く。逆にすると噴流と正面衝突した。2026-11-01 監査） */
   u.runner.rotation.y += (still ? 0 : dir*dt*3);
   { const r = .025*Math.sqrt(Math.max(.1, st.sQ)/50); u.jet.scale.set(Math.min(.06, r), 1, Math.min(.06, r));   // 噴流の太さ: 断面積 ∝ 流量 Q
-    u.jet.visible = pel && st.sMode === 'gen' && !st.paused; }
+    u.jet.visible = pel && st.sMode === 'gen' && !st.paused && !noHead; }
   const on = pel ? [u.flowP] : st.sType === 'propeller' ? u.flowsK : u.flowsR;
   for (const f of [u.flowP, ...u.flowsR, ...u.flowsK]) if (!on.includes(f)) dkRun(f, 0, false);
   for (const f of on){ dkScale(f, st.sQ/50); dkRun(f, u.T*1.4, !still, dir); }   // 水の粒の大きさ ∝ 流量 Q
@@ -4962,18 +4979,19 @@ function refreshCtrl(){
   if (id==='suiryoku'){
     const m = suModel();
     if (state.sMode==='gen'){
-      rows=[['H','有効落差 H = Hg − hl', f1(m.H,0)+' m'],
+      rows=[['H','有効落差 H = Hg − hl', f1(m.H,0)+' m'+(m.noHead ? '（損失落差 hl が総落差 Hg 以上。水が水車を回せない）' : '')],
             ['Pth','理論水力 9.8·Q·H', f1(m.Pth/1000)+' MW'],
             ['P','発電機出力 P = 9.8·Q·H·ηt·ηg', f1(m.P/1000)+' MW'],
-            ['ns','比速度 Ns = N·√Pt / H^(5/4)', f1(m.ns,0)+' m·kW（N = '+state.sN+' min⁻¹）'],
+            ['ns','比速度 Ns = N·√Pt / H^(5/4)', m.noHead ? '—（有効落差が 0 m では決まらない）' : f1(m.ns,0)+' m·kW（N = '+state.sN+' min⁻¹）'],
             ['kind','水車の向き不向き', ({pelton:'衝動水車。高落差・小流量向き（比速度が小さい）', francis:'反動水車。中落差に広く使う', propeller:'反動水車。低落差・大流量向き（比速度が大きい）'})[state.sType]]];
-      if (state.sType==='pelton') rows.push(['v','ノズルの噴流速度 v = √(2gH)', f1(m.v)+' m/s（損失を無視した理論値）']);
-      note='※ Q は m³/s、H は m で 9.8·Q·H は kW。比速度は「同じ形の水車を 1 m の落差で 1 kW 出すときの回転速度」で、高落差の水車ほど小さい';
+      if (state.sType==='pelton' && !m.noHead) rows.push(['v','ノズルの噴流速度 v = √(2gH)', f1(m.v)+' m/s（損失を無視した理論値）'],
+        ['pelH','ペルトンの有効落差', '実際は、ランナーより下の落差（図の灰色）の分だけ Hg − hl より小さい。上の値はその差を引いていない（図は縮尺どおりでなく、差を m で読めないため）']);
+      note='※ Q は m³/s、H は m で 9.8·Q·H は kW。比速度は「同じ形の水車を 1 m の落差で 1 kW 出すときの回転速度」で、高落差の水車ほど小さい。式の P はランナー1個（ペルトンはノズル1本）当たりの出力で、この図は1個・1本として水車出力 Pt で計算している';
     } else {
       rows=[['Hp','全揚程 = Hg + hl', f1(m.Hp,0)+' m'],
             ['Pin','揚水の所要電力 9.8·Q·Hp/(ηp·ηm)', f1(m.Pin/1000)+' MW'],
             ['P','同じ流量で発電したときの出力', f1(m.P/1000)+' MW'],
-            ['tot','揚水発電の総合効率 ηt·ηg·ηp·ηm·(Hg−hl)/(Hg+hl)', f1(m.total*100)+' %（同じ流量・同じ時間で比べた値）']];
+            ['tot','揚水発電の総合効率 ηt·ηg·ηp·ηm·(Hg−hl)/(Hg+hl)', m.noHead ? '0 %（損失落差 hl が総落差 Hg 以上で、発電できない。この式は Hg > hl のときに使う）' : f1(m.total*100)+' %（同じ流量・同じ時間で比べた値）']];
       if (state.sType==='pelton') rows.unshift(['pel','ペルトン水車で揚水', 'できない。衝動水車は水を汲み上げられない。揚水はポンプ水車で行う（下の値は計算式の練習用）']);
       if (state.sType==='propeller') rows.unshift(['prp','プロペラ水車で揚水', '電力Wiki の適用落差の表では、揚水にも使うのはフランシス水車（中〜高落差・40〜600 m級）。カプラン・プロペラは低落差・大流量（〜60 m級）向き（下の値は計算式の練習用）']);
       note='※ 揚水では損失落差を総落差に足し、効率では割る。発電では損失落差を引き、効率を掛ける。向きが逆になるのが急所';
