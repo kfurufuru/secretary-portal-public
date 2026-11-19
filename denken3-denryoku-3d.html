@@ -4555,6 +4555,13 @@ const labelNodes = [];   // 全景の機器名ラベル
 let legendRows = [];     // {el, name, color, key, nodes[], lines[]}
 let hoverIdx = null;     // カーソルが乗っている行
 let pinIdx = null;       // クリック固定・ツアー指定の行
+/* 狭い画面（幅 900 未満）で行を固定したら、凡例はその1行だけを出す。凡例は幅いっぱいに広がるので、全部の行を出すと
+   指す部品を覆った（2026-11-18 実測: 幅 390 で凡例を開いてツアーを当てると、引き出し線の先が凡例の下に隠れた歩が、行を固定した歩のうち
+   機械 40/68・電力 31/37・理論 2/37）。lgAll は「ほかの行も出す」で全部に戻した状態 */
+let lgAll = false, lgMoreBtn = null;
+/* 狭い画面の判定は CSS の @media (max-width:900px) と同じにする（innerWidth < 900 だと幅ちょうど 900 で CSS は1列・凡例は幅いっぱい、
+   JS は広い画面扱いになり、凡例が部品を覆った。2026-11-19 監査: 電力 幅 900 で 21/49 歩） */
+const isNarrow = () => window.matchMedia('(max-width:900px)').matches;
 
 lgshow.onclick = ()=>{ legendEl.classList.remove('hidden'); lgshow.classList.add('hidden'); };
 
@@ -4584,14 +4591,17 @@ function rebuildLabels(){
     byName.get(l.t).nodes.push({obj:l.obj});
   }
   /* 狭い画面では畳んで開く。3Dの上に凡例が覆いかぶさるのを避ける */
-  const narrow = window.innerWidth < 900;
+  const narrow = isNarrow();
   legendEl.classList.toggle('hidden', narrow);
   lgshow.classList.toggle('hidden', !narrow);
   const cap = document.createElement('div'); cap.className = 'lgcap';
   const capT = document.createElement('span'); capT.textContent = '部品（行に触れると指す）';
   const hide = document.createElement('button'); hide.textContent = '隠す';
   hide.onclick = ()=>{ legendEl.classList.add('hidden'); lgshow.classList.remove('hidden'); };
-  cap.append(capT, hide); legendEl.appendChild(cap);
+  lgAll = false;
+  lgMoreBtn = document.createElement('button'); lgMoreBtn.className = 'lgmore';
+  lgMoreBtn.onclick = ()=>{ lgAll = !lgAll; lgScrollReq = true; };   // 全部に戻したら、固定した行を枠の中へ送る（送らないと枠の下に隠れた。2026-11-19 監査）
+  cap.append(capT, lgMoreBtn, hide); legendEl.appendChild(cap);
   for (const row of byName.values()){
     const b = document.createElement('button'); b.className = 'lgrow';
     const chip = document.createElement('i'); chip.style.background = row.color;
@@ -4688,6 +4698,7 @@ function focusRow(name){
 function resolveFocus(){
   const row = focusRow(focusReq); focusReq = undefined;
   pinIdx = row ? legendRows.indexOf(row) : null;
+  lgAll = false;
   paintLegend();
   /* 固定した行が凡例の枠の外（下へ送った所）にあると、引き出し線だけが枠の外から出て、どの行か読めない。枠の中まで送る
      （水力の落差の行は凡例の末尾にあり、幅 1400 でも枠の下に隠れていた。2026-11-15 実描画）。
@@ -4789,11 +4800,16 @@ function updateLabels(){
   const a = activeRow(), open = !legendEl.classList.contains('hidden');
   const vb = cv.getBoundingClientRect();
   hlTarget = null;
+  /* 狭い画面で固定中は、その1行だけ。固定した行が今は出せない（部品が見えていない）ときは1行にしない（空の箱になった。2026-11-19 監査） */
+  const pinRow = pinIdx != null ? legendRows[pinIdx] : null;
+  const compact = isNarrow() && !!pinRow && pinRow.nodes.some(n=>visibleInScene(n.obj)) && !lgAll;
+  if (lgMoreBtn){ lgMoreBtn.style.display = (isNarrow() && pinIdx != null) ? '' : 'none';
+    const t = lgAll ? '固定した行だけ' : 'ほかの行も出す'; if (lgMoreBtn.textContent !== t) lgMoreBtn.textContent = t; }
   legendRows.forEach((row, i)=>{
     /* 今そこに無い部品（かご形/巻線形・突極/円筒・反作用）は凡例からも消す。
        state を見に行かず、オブジェクト自身が表示されているかで判定する。 */
     const avail = row.nodes.some(n=>visibleInScene(n.obj));
-    row.el.style.display = avail ? '' : 'none';
+    row.el.style.display = (avail && (!compact || i === pinIdx)) ? '' : 'none';
     const lit = avail && open && i === a;
     let ex = 0, ey = 0;
     if (lit && lgScrollReq){ lgScrollReq = false; const lt = legendEl.getBoundingClientRect(), rt = row.el.getBoundingClientRect();
@@ -4983,7 +4999,10 @@ function refreshCtrl(){
             ['Pth','理論水力 9.8·Q·H', f1(m.Pth/1000)+' MW'],
             ['P','発電機出力 P = 9.8·Q·H·ηt·ηg', f1(m.P/1000)+' MW'],
             ['ns','比速度 Ns = N·√Pt / H^(5/4)', m.noHead ? '—（有効落差が 0 m では決まらない）' : f1(m.ns,0)+' m·kW（N = '+state.sN+' min⁻¹）'],
-            ['kind','水車の向き不向き', ({pelton:'衝動水車。高落差・小流量向き（比速度が小さい）', francis:'反動水車。中落差に広く使う', propeller:'反動水車。低落差・大流量向き（比速度が大きい）'})[state.sType]]];
+            ['kind','水車の向き不向き', ({pelton:'衝動水車。高落差・小流量向き（3種のうち比速度が最も小さい側に向く）', francis:'反動水車。中落差に広く使う（比速度は3種の中ほど）', propeller:'反動水車。低落差・大流量向き（3種のうち比速度が最も大きい側に向く）'})[state.sType]],
+            /* 比速度は N・P・H だけで決まり、水車の種類では変わらない。以前は種類の行の「比速度が小さい」が、隣の値（例: 207）そのものを
+               小さいと読ませた（2026-11-18 監査）。境界の数値は電力Wiki 1.1 が「目安（公式根拠ではない）」とするので出さない */
+            ['nsk','比速度と水車の選び方', 'Ns は N・P・H で決まり、水車を切り替えても変わらない。落差が低いほど Ns は大きく、ペルトン < フランシス < プロペラ・カプランの順に並ぶ（相対関係で覚える。種類の境界の数値は文献で幅がある目安）']];
       if (state.sType==='pelton' && !m.noHead) rows.push(['v','ノズルの噴流速度 v = √(2gH)', f1(m.v)+' m/s（損失を無視した理論値）'],
         ['pelH','ペルトンの有効落差', '実際は、ランナーより下の落差（図の灰色）の分だけ Hg − hl より小さい。上の値はその差を引いていない（図は縮尺どおりでなく、差を m で読めないため）']);
       note='※ Q は m³/s、H は m で 9.8·Q·H は kW。比速度は「同じ形の水車を 1 m の落差で 1 kW 出すときの回転速度」で、高落差の水車ほど小さい。式の P はランナー1個（ペルトンはノズル1本）当たりの出力で、この図は1個・1本として水車出力 Pt で計算している';

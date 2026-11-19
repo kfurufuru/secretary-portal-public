@@ -2442,6 +2442,13 @@ const labelNodes = [];   // 全景の機器名ラベル
 let legendRows = [];     // {el, name, color, key, nodes[], lines[]}
 let hoverIdx = null;     // カーソルが乗っている行
 let pinIdx = null;       // クリック固定・ツアー指定の行
+/* 狭い画面（幅 900 未満）で行を固定したら、凡例はその1行だけを出す。凡例は幅いっぱいに広がるので、全部の行を出すと
+   指す部品を覆った（2026-11-18 実測: 幅 390 で凡例を開いてツアーを当てると、引き出し線の先が凡例の下に隠れた歩が、行を固定した歩のうち
+   機械 40/68・電力 31/37・理論 2/37）。lgAll は「ほかの行も出す」で全部に戻した状態 */
+let lgAll = false, lgMoreBtn = null;
+/* 狭い画面の判定は CSS の @media (max-width:900px) と同じにする（innerWidth < 900 だと幅ちょうど 900 で CSS は1列・凡例は幅いっぱい、
+   JS は広い画面扱いになり、凡例が部品を覆った。2026-11-19 監査: 電力 幅 900 で 21/49 歩） */
+const isNarrow = () => window.matchMedia('(max-width:900px)').matches;
 
 lgshow.onclick = ()=>{ legendEl.classList.remove('hidden'); lgshow.classList.add('hidden'); };
 
@@ -2470,14 +2477,17 @@ function rebuildLabels(){
     byName.get(l.t).nodes.push({obj:l.obj});
   }
   /* 狭い画面では畳んで開く。3Dの上に凡例が覆いかぶさるのを避ける */
-  const narrow = window.innerWidth < 900;
+  const narrow = isNarrow();
   legendEl.classList.toggle('hidden', narrow);
   lgshow.classList.toggle('hidden', !narrow);
   const cap = document.createElement('div'); cap.className = 'lgcap';
   const capT = document.createElement('span'); capT.textContent = '部品（行に触れると指す）';
   const hide = document.createElement('button'); hide.textContent = '隠す';
   hide.onclick = ()=>{ legendEl.classList.add('hidden'); lgshow.classList.remove('hidden'); };
-  cap.append(capT, hide); legendEl.appendChild(cap);
+  lgAll = false;
+  lgMoreBtn = document.createElement('button'); lgMoreBtn.className = 'lgmore';
+  lgMoreBtn.onclick = ()=>{ lgAll = !lgAll; };
+  cap.append(capT, lgMoreBtn, hide); legendEl.appendChild(cap);
   for (const row of byName.values()){
     const b = document.createElement('button'); b.className = 'lgrow';
     const chip = document.createElement('i'); chip.style.background = row.color;
@@ -2573,6 +2583,7 @@ function focusRow(name){
 function resolveFocus(){
   const row = focusRow(focusReq); focusReq = undefined;
   pinIdx = row ? legendRows.indexOf(row) : null;
+  lgAll = false;
   paintLegend();
   const nodes = row ? row.nodes.filter(n=>visibleInScene(n.obj)) : [];
   /* 同じ部品の歩が続くなら、動いているかを判定する前に画角を固定する。判定を先にすると、
@@ -2669,11 +2680,16 @@ function updateLabels(){
   const a = activeRow(), open = !legendEl.classList.contains('hidden');
   const vb = cv.getBoundingClientRect();
   hlTarget = null;
+  /* 狭い画面で固定中は、その1行だけ。固定した行が今は出せない（部品が見えていない）ときは1行にしない（空の箱になった。2026-11-19 監査） */
+  const pinRow = pinIdx != null ? legendRows[pinIdx] : null;
+  const compact = isNarrow() && !!pinRow && pinRow.nodes.some(n=>visibleInScene(n.obj)) && !lgAll;
+  if (lgMoreBtn){ lgMoreBtn.style.display = (isNarrow() && pinIdx != null) ? '' : 'none';
+    const t = lgAll ? '固定した行だけ' : 'ほかの行も出す'; if (lgMoreBtn.textContent !== t) lgMoreBtn.textContent = t; }
   legendRows.forEach((row, i)=>{
     /* 今そこに無い部品（かご形/巻線形・突極/円筒・反作用）は凡例からも消す。
        state を見に行かず、オブジェクト自身が表示されているかで判定する。 */
     const avail = row.nodes.some(n=>visibleInScene(n.obj));
-    row.el.style.display = avail ? '' : 'none';
+    row.el.style.display = (avail && (!compact || i === pinIdx)) ? '' : 'none';
     const lit = avail && open && i === a;
     let ex = 0, ey = 0;
     if (lit){ const r = row.el.getBoundingClientRect(); ex = r.right - vb.left; ey = r.top - vb.top + r.height/2; }
