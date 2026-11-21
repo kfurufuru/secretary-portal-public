@@ -11215,6 +11215,30 @@ function ConclusionBox({
     }
   }, children));
 }
+function NumberTiles({
+  tiles = [],
+  source,
+  confirmedAt
+}) {
+  return React.createElement("div", {
+    className: "number-tiles"
+  }, React.createElement("ul", {
+    className: "number-tiles-grid"
+  }, tiles.map((t, i) => React.createElement("li", {
+    key: i,
+    className: "number-tile"
+  }, t.group && React.createElement("div", {
+    className: "number-tile-group"
+  }, t.group), React.createElement("div", {
+    className: "number-tile-value"
+  }, t.value, React.createElement("span", {
+    className: "number-tile-unit"
+  }, t.unit)), t.cond && React.createElement("div", {
+    className: "number-tile-cond"
+  }, t.cond)))), source && React.createElement("div", {
+    className: "number-tiles-source"
+  }, source, confirmedAt && `（照合日 ${confirmedAt}）`));
+}
 const FREQ_RANK_LABEL = Object.assign(Object.create(null), {
   max: '毎回',
   high: '頻出',
@@ -14486,6 +14510,14 @@ function App() {
     .goal-choices summary { font-size: 12px; color: var(--ink-3); cursor: pointer; }
     .conclusion-box { border: 2px solid var(--good); border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 24px; }
     .conclusion-label { font-weight: 700; color: var(--good); margin-bottom: 8px; font-size: 13px; }
+    .number-tiles { margin: 4px 0 14px; }
+    .number-tiles-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+    .number-tile { background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; min-width: 0; }
+    .number-tile-group { font-size: 11.5px; font-weight: 600; color: var(--ink-3); margin-bottom: 4px; overflow-wrap: anywhere; }
+    .number-tile-value { font-family: var(--serif); font-size: 32px; font-weight: 700; line-height: 1.15; color: var(--ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+    .number-tile-unit { font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--ink-2); margin-left: 4px; }
+    .number-tile-cond { font-size: 12.5px; line-height: 1.6; color: var(--ink-2); margin-top: 6px; overflow-wrap: anywhere; }
+    .number-tiles-source { font-size: 11.5px; color: var(--ink-3); margin-top: 8px; }
     .meta-strip-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 24px; }
     .meta-strip-table td { padding: 6px 10px; border: 1px solid var(--line); overflow-wrap: break-word; }
     .meta-strip-table td:first-child { color: var(--ink-3); width: 120px; }
@@ -55226,7 +55258,7 @@ function DenroZetsuenPage({
       padding: '6px 10px',
       borderBottom: '1px solid var(--line)'
     }
-  }, "3段階：対地電圧 150V以下 = ", React.createElement("strong", null, "0.1MΩ"), " ／ 150V超300V以下 = ", React.createElement("strong", null, "0.2MΩ"), " ／ 300V超 = ", React.createElement("strong", null, "0.4MΩ"))), React.createElement("tr", null, React.createElement("td", {
+  }, "3段階：使用電圧 300V以下で対地電圧 150V以下 = ", React.createElement("strong", null, "0.1MΩ"), " ／ 使用電圧 300V以下のその他 = ", React.createElement("strong", null, "0.2MΩ"), " ／ 使用電圧 300V超の低圧 = ", React.createElement("strong", null, "0.4MΩ"))), React.createElement("tr", null, React.createElement("td", {
     style: {
       padding: '6px 10px',
       background: 'var(--bg-2)',
@@ -55346,7 +55378,26 @@ function DenroZetsuenPage({
     correctIndex: 0,
     year: "頻出",
     note: "対地電圧で判断するのがコツ。読み終えたら戻って解こう"
-  }), React.createElement(ConclusionBox, null, React.createElement("ul", null, React.createElement("li", null, React.createElement("strong", null, "対地電圧 150V以下"), ": 0.1 MΩ 以上"), React.createElement("li", null, React.createElement("strong", null, "対地電圧 150V超 300V以下"), ": 0.2 MΩ 以上"), React.createElement("li", null, React.createElement("strong", null, "使用電圧 300V超の低圧"), ": 0.4 MΩ 以上"), React.createElement("li", null, "覚え方：", React.createElement("strong", null, "「い・に・し」（0.1→0.2→0.4）")), React.createElement("li", null, "接地式 vs 非接地式で対地電圧が変わるので、まず接地方式を確認"))), React.createElement(MetaStrip, {
+  }), React.createElement(ConclusionBox, null, React.createElement(NumberTiles, {
+    tiles: [{
+      group: '使用電圧 300V以下',
+      cond: '対地電圧 150V以下',
+      value: '0.1',
+      unit: 'MΩ 以上'
+    }, {
+      group: '使用電圧 300V以下',
+      cond: 'その他の場合（対地電圧 150V超）',
+      value: '0.2',
+      unit: 'MΩ 以上'
+    }, {
+      group: '使用電圧 300V超（低圧）',
+      cond: '対地電圧によらない（三相4線400V〔対地 約230V〕もこちら）',
+      value: '0.4',
+      unit: 'MΩ 以上'
+    }],
+    source: "典拠: 電技省令 第58条の表（e-Gov 法令API で逐語照合）。先に使用電圧で分け、使用電圧 300V以下だけを対地電圧で分ける。",
+    confirmedAt: "2026-11-20"
+  }), React.createElement("ul", null, React.createElement("li", null, "覚え方：", React.createElement("strong", null, "「い・に・し」（0.1→0.2→0.4）")), React.createElement("li", null, "使用電圧 300V以下なら、次に対地電圧を出す（接地式は電線と大地の間、非接地式は電線間の電圧）"))), React.createElement(MetaStrip, {
     ch: "CH03",
     category: "03 技術基準",
     importance: "S",
@@ -55354,7 +55405,7 @@ function DenroZetsuenPage({
     examType: "A問題・B問題",
     targets: "H24・H26・R05下・R06上下",
     tags: ["絶縁", "低圧", "表暗記", "優先度S", "電技解釈第14条"],
-    lastChecked: "2026-08-29"
+    lastChecked: "2026-11-21"
   }), React.createElement("div", {
     style: {
       fontSize: 11,
@@ -55372,7 +55423,7 @@ function DenroZetsuenPage({
     style: {
       color: 'var(--accent-ink)'
     }
-  }, "denken-wiki 解釈第14条"), "／省令第58条（lawId 409M50000400052）は e-Gov で照合（最終確認 2026-07-16）。"), React.createElement("h2", {
+  }, "denken-wiki 解釈第14条"), "／省令第58条（lawId 409M50000400052）は e-Gov で照合（最終確認 2026-11-20・e-Gov 法令API で表の入れ子を逐語照合）。"), React.createElement("h2", {
     id: "layers"
   }, "このページ（電路の絶縁）を森・ミクロ・マクロで見る"), React.createElement(LayersFold, {
     label: "全体像とミクロの仕組み図（森・ミクロ・マクロ）"
@@ -55815,7 +55866,7 @@ function DenroZetsuenPage({
     textAnchor: "middle",
     fontSize: "10.5",
     fill: "var(--ink)"
-  }, "対地 300V以下 → 0.2 MΩ"), React.createElement("rect", {
+  }, "対地 150V超 → 0.2 MΩ"), React.createElement("rect", {
     x: "286",
     y: "74",
     width: "148",
@@ -55881,7 +55932,7 @@ function DenroZetsuenPage({
       marginTop: 6,
       lineHeight: 1.6
     }
-  }, "ミクロ（なぜ）：漏れ電流＝対地電圧÷絶縁抵抗。例えば 0.1 MΩ ちょうどの電路に対地 150V なら 1.5 mA（↓1分復習の計算例）。電圧が高いほど同じ抵抗では漏れが増えるから、区分が上がるほど高い下限を要求する。")), React.createElement("div", {
+  }, "0.1・0.2 MΩ の段は使用電圧 300V以下の電路だけ（使用電圧 300V超は対地電圧によらず 0.4 MΩ）。ミクロ（なぜ）：漏れ電流＝対地電圧÷絶縁抵抗。例えば 0.1 MΩ ちょうどの電路に対地 150V なら 1.5 mA（↓1分復習の計算例）。電圧が高いほど同じ抵抗では漏れが増えるから、区分が上がるほど高い下限を要求する。")), React.createElement("div", {
     style: {
       background: 'var(--accent-soft)',
       borderRadius: 'var(--radius)',
@@ -56706,7 +56757,7 @@ function DenroZetsuenPage({
       maxWidth: 820
     },
     role: "img",
-    "aria-label": "低圧電路の絶縁抵抗値は電圧で3段階。対地電圧150V以下は0.1MΩ以上、対地電圧150V超300V以下は0.2MΩ以上、使用電圧300V超は0.4MΩ以上。語呂はい・に・し。150V境界は対地電圧、300V超は使用電圧で判定する。"
+    "aria-label": "低圧電路の絶縁抵抗値は電圧で3段階。対地電圧150V以下は0.1MΩ以上、使用電圧300V以下で対地電圧150V超は0.2MΩ以上、使用電圧300V超は0.4MΩ以上。語呂はい・に・し。150V境界は対地電圧、300V超は使用電圧で判定する。"
   }, React.createElement("rect", {
     x: "70",
     y: "70",
@@ -56851,7 +56902,7 @@ function DenroZetsuenPage({
     style: {
       fill: 'var(--ink-2)'
     }
-  }, "対地電圧 150V超〜300V以下"), React.createElement("text", {
+  }, "対地電圧 150V超（使用電圧300V以下）"), React.createElement("text", {
     x: "630",
     y: "196",
     textAnchor: "middle",
@@ -57023,8 +57074,8 @@ function DenroZetsuenPage({
     pageId: "denro-zetsuen",
     sectionId: "tables"
   }), React.createElement(MemTable, {
-    headers: ["電路区分", "対地電圧／使用電圧", "絶縁抵抗値"],
-    rows: [["低圧（150V以下）", "対地電圧 150V 以下", "0.1 MΩ 以上"], ["低圧（150V超300V以下）", "対地電圧 150V 超 300V 以下", "0.2 MΩ 以上"], ["低圧（300V超）", "使用電圧 300V 超", "0.4 MΩ 以上"]],
+    headers: ["使用電圧の区分", "対地電圧", "絶縁抵抗値"],
+    rows: [["低圧・使用電圧 300V 以下", "対地電圧 150V 以下", "0.1 MΩ 以上"], ["低圧・使用電圧 300V 以下", "その他の場合（対地電圧 150V 超）", "0.2 MΩ 以上"], ["低圧・使用電圧 300V 超", "対地電圧によらない", "0.4 MΩ 以上"]],
     note: "0.1MΩ「以上」が正解（0.1MΩちょうども合格）。「を超える」と書いてある選択肢はひっかけ"
   }), React.createElement("h2", {
     id: "examples"
@@ -59224,6 +59275,10 @@ function DenroZetsuenPage({
     }
   }, "数値境界の混同（以下・未満）"), "（対地電圧150V/300Vの境界は「以下」＝その値を含む。0.1/0.2/0.4MΩの切り替え点の取り違え対策）"), React.createElement(UpdateLog, {
     entries: [{
+      date: "2026-11-20",
+      content: "「まず覚える結論」を数字の札3枚（NumberTiles）にし、結論の箇条・A表「核心」行・暗記表・図3・ミクロ図の区分を省令第58条の表の入れ子（先に使用電圧 300V以下／超、300V以下だけを対地電圧 150V で分ける）に合わせた",
+      reason: "旧表記「対地電圧 150V超 300V以下 = 0.2」は三相4線400V（対地 約230V）が 0.2 と 0.4 の両方に当たった。e-Gov 法令API で第58条を逐語照合。GPT・Fable の2系統監査と壊す側検証の指摘を反映"
+    }, {
       date: "2026-08-29",
       content: "MetaStrip targets を「R06・R04・H29」→「H24・H26・R05下・R06上下」に是正。R04 と H29 は本ページ内で targets 文字列以外に1度も現れず、同ページの出題実績box（kakomon.yml 由来SoT・H24問5／H26問6／R05下問3／R06上問8／R06下問3）にも hoki-daily-pool.js の denro-zetsuen 4問（q68=R6上問8・q69=H24問5・R05下・R06下）にも対応する出題が無い。R06 も上下の別を落としていた。",
       reason: "targets の含意は『この年度の問題が本ページで解ける』であり、根拠の無い年度を載せると学習者が存在しない出題を探すことになる（#1238 で 3.3 接地工事の同型を是正したのと同じ穴）。2つの独立SoT（ページ内の出題実績box と daily-pool）が一致し、どちらも R04・H29 を含まないことを機械照合して確定した。年度の並びは本 repo で優勢な昇順・上下の圧縮表記（R05上下・R06上下）に合わせた。"
