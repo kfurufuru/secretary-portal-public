@@ -8532,7 +8532,22 @@ const ExamOperationPage = ({
     e.preventDefault();
     onNav('last-3days');
   }
-}, "直前3日戦略（7.2）"), " — 当日朝までの最終チェック"))), /*#__PURE__*/React.createElement(PageNav, {
+}, "直前3日戦略（7.2）"), " — 当日朝までの最終チェック")), /*#__PURE__*/React.createElement(SectionCheckSummary, {
+  pageId: "exam-operation",
+  sections: [{
+    id: "calc-drill",
+    label: "3-8. 電卓ドリル（自分の電卓を手に持って解く）"
+  }, {
+    id: "working-memory",
+    label: "8. 解くときの書き方（頭に載せる量を減らす）"
+  }]
+  /* タブの無いページなので hash を変えずにその場でスクロールする（同じ項目を2回押しても飛ぶ） */,
+  onJump: id => {
+    document.getElementById(id)?.scrollIntoView({
+      behavior: 'smooth'
+    });
+  }
+})), /*#__PURE__*/React.createElement(PageNav, {
   prev: {
     id: "retake-strategy",
     title: "7.3 再受験分析と戦略"
@@ -15873,6 +15888,12 @@ const AcPowerLearnTab = ({
 }, "△ / × / 未 のセクションを優先して再読しよう。"), /*#__PURE__*/React.createElement(SectionCheckSummary, {
   pageId: "ac-power",
   sections: [{
+    id: "formulas",
+    label: "公式1. 基本公式"
+  }, {
+    id: "formulas-b",
+    label: "公式2. 応用・変換公式"
+  }, {
     id: "solver-flow",
     label: "1. 解法フロー（汎用5ステップ）"
   }, {
@@ -15893,8 +15914,18 @@ const AcPowerLearnTab = ({
   }, {
     id: "related",
     label: "7. 関連項目"
+  }, {
+    id: "exam-5sec",
+    label: "9. 本番5秒チェック（試験トリアージ）"
   }],
   onJump: id => {
+    const formulasIds = ['formulas', 'formulas-b'];
+    /* 別のタブの節は3区切りの hash（#pageId:tab:sectionId）で、PageTabs がタブ切替後の再レンダを待ってスクロールする。
+       学習タブの節は従来どおり（同じ項目を2回押しても飛び、着地後のスクロールを引き戻さない） */
+    if (formulasIds.includes(id)) {
+      location.hash = 'ac-power:formulas:' + id;
+      return;
+    }
     location.hash = 'ac-power:learn';
     setTimeout(() => document.getElementById(id)?.scrollIntoView({
       behavior: 'smooth'
@@ -19993,6 +20024,9 @@ const ThreePhaseLearnTab = ({
     id: "three-phase-power-formula",
     label: "公式タブ セクション5 三相電力の使い方"
   }, {
+    id: "unbalanced-pf",
+    label: "公式タブ セクション6 不平衡負荷と力率改善"
+  }, {
     id: "principle",
     label: "解説タブ セクション1 原理"
   }, {
@@ -20040,7 +20074,7 @@ const ThreePhaseLearnTab = ({
   }],
   onJump: id => {
     const explainIds = ['principle', 'why-confuse', 'y-vs-delta', 'line-vs-phase', 'three-phase-power', 'y-delta-transform', 'traps', 'diffuse'];
-    const formulasIds = ['formulas', 'formulas-b', 'comparison', 'vector-diagram', 'three-phase-power-formula'];
+    const formulasIds = ['formulas', 'formulas-b', 'comparison', 'vector-diagram', 'three-phase-power-formula', 'unbalanced-pf'];
     const tab = explainIds.includes(id) ? 'explain' : formulasIds.includes(id) ? 'formulas' : 'learn';
     location.hash = 'three-phase:' + tab;
     setTimeout(() => document.getElementById(id)?.scrollIntoView({
@@ -23468,6 +23502,9 @@ const TransistorLearnTab = ({
   }, {
     id: "related",
     label: "7. 関連項目"
+  }, {
+    id: "exam-5sec",
+    label: "9. 本番5秒チェック（試験トリアージ）"
   }],
   onJump: id => {
     location.hash = 'transistor:learn';
@@ -39480,6 +39517,15 @@ const ElectromagneticForceLearnTab = ({
 }, "△ / × / 未 のセクションを優先して再読しよう。"), /*#__PURE__*/React.createElement(SectionCheckSummary, {
   pageId: "electromagnetic-force",
   sections: [{
+    id: "formulas",
+    label: "公式1. 基本公式"
+  }, {
+    id: "formulas-b",
+    label: "公式2. 形状別磁界・応用公式"
+  }, {
+    id: "radial-vs-concentric",
+    label: "公式5. 放射状か同心円状か — 2秒判別"
+  }, {
     id: "solver-flow",
     label: "1. 解法フロー（汎用5ステップ）"
   }, {
@@ -39509,8 +39555,18 @@ const ElectromagneticForceLearnTab = ({
   }, {
     id: "related",
     label: "10. 関連項目"
+  }, {
+    id: "exam-5sec",
+    label: "12. 本番5秒チェック（試験トリアージ）"
   }],
   onJump: id => {
+    const formulasIds = ['formulas', 'formulas-b', 'radial-vs-concentric'];
+    /* 別のタブの節は3区切りの hash（#pageId:tab:sectionId）で、PageTabs がタブ切替後の再レンダを待ってスクロールする。
+       学習タブの節は従来どおり（同じ項目を2回押しても飛び、着地後のスクロールを引き戻さない） */
+    if (formulasIds.includes(id)) {
+      location.hash = 'electromagnetic-force:formulas:' + id;
+      return;
+    }
     location.hash = 'electromagnetic-force:learn';
     setTimeout(() => document.getElementById(id)?.scrollIntoView({
       behavior: 'smooth'
@@ -52548,6 +52604,9 @@ const RlcResonanceLearnTab = ({
   }, {
     id: "related",
     label: "5. 関連項目"
+  }, {
+    id: "exam-5sec",
+    label: "7. 本番5秒チェック（試験トリアージ）"
   }],
   onJump: id => {
     location.hash = 'rlc-resonance:learn';
@@ -65395,6 +65454,9 @@ const MeasurementLearnTab = ({
     id: "z-conditions",
     label: "学習5. 3条件即答"
   }, {
+    id: "exam-history",
+    label: "学習6. 出題実績"
+  }, {
     id: "interleaving",
     label: "学習7. 混同テーマ"
   }, {
@@ -69570,6 +69632,9 @@ const ElectronMotionLearnTab = ({
   }, {
     id: "interleaving",
     label: "学習10. 混同しやすい他テーマ"
+  }, {
+    id: "exam-5sec",
+    label: "学習13. 本番5秒チェック（試験トリアージ）"
   }],
   onJump: id => {
     const explainIds = ['principle', 'why-confuse', 'e-field', 'b-field', 'combined', 'trajectory-matrix', 'distinguish', 'traps', 'applications'];
@@ -73352,6 +73417,9 @@ const TransientLearnTab = ({
   }, {
     id: "related",
     label: "7. 関連項目"
+  }, {
+    id: "exam-5sec",
+    label: "9. 本番5秒チェック（試験トリアージ）"
   }],
   onJump: id => {
     location.hash = 'transient:learn';
@@ -75789,6 +75857,12 @@ const SemiconductorLearnTab = ({
 }, "△ / × / 未 のセクションを優先して再読しよう。"), /*#__PURE__*/React.createElement(SectionCheckSummary, {
   pageId: "semiconductor",
   sections: [{
+    id: "hall",
+    label: "解説8. ホール効果・熱起電力"
+  }, {
+    id: "photoemission",
+    label: "解説9. 光電効果・電子放出"
+  }, {
     id: "ex-rectifier",
     label: "2. 例題1 全波整流"
   }, {
@@ -75808,6 +75882,13 @@ const SemiconductorLearnTab = ({
     label: "9. 本番5秒チェック"
   }],
   onJump: id => {
+    const explainIds = ['hall', 'photoemission'];
+    /* 別のタブの節は3区切りの hash（#pageId:tab:sectionId）で、PageTabs がタブ切替後の再レンダを待ってスクロールする。
+       学習タブの節は従来どおり（同じ項目を2回押しても飛び、着地後のスクロールを引き戻さない） */
+    if (explainIds.includes(id)) {
+      location.hash = 'semiconductor:explain:' + id;
+      return;
+    }
     location.hash = 'semiconductor:learn';
     setTimeout(() => document.getElementById(id)?.scrollIntoView({
       behavior: 'smooth'
