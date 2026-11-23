@@ -1075,6 +1075,26 @@ table.data-table tr:nth-child(even) td { background: color-mix(in oklab, var(--b
   .main svg[viewBox^="0 0 680 "] { min-width: 680px; }
   .main svg[viewBox^="0 0 700 "] { min-width: 700px; }
 }
+
+/* === 1行はしご（R5 規模感）。SVG ではなく HTML で描き、文字を本文と同じ大きさに保つ ===
+   SVG は viewBox が CSS 幅まで拡大縮小されるため、スマホに合わせた細い図が PC で約1.8倍に拡大された。
+   広い画面は「値｜棒｜名前」の1行。狭い画面は名前を棒の下に置き、棒の幅を確保する。
+   棒の長さ（width）と目盛りの縦線（background-image）は値ごとに違うので、JSX の style で渡す。 */
+.scale-ladder { margin: 16px 0 6px; padding: 10px 12px; background: var(--bg-sunken); border: 1px solid var(--rule); border-radius: 10px; font-size: 13px; line-height: 1.35; }
+.scale-ladder .sl-grid { display: grid; grid-template-columns: auto minmax(140px, 2fr) minmax(0, 3fr); column-gap: 8px; row-gap: 3px; align-items: center; }
+.scale-ladder .sl-ticks { position: relative; height: 16px; font-size: 11px; color: var(--ink-mute); }
+.scale-ladder .sl-ticks > span { position: absolute; white-space: nowrap; }
+.scale-ladder .sl-val { text-align: right; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.scale-ladder .sl-track { position: relative; height: 18px; }
+.scale-ladder .sl-bar { position: absolute; left: 0; top: 5px; height: 8px; border-radius: 2px; background: var(--ink-mute); opacity: 0.35; }
+.scale-ladder .sl-bar.sl-acc { background: var(--accent); opacity: 0.6; }
+.scale-ladder .sl-cap { font-size: 12px; color: var(--ink-soft); margin: 8px 0 0; }
+@media (max-width: 560px) {
+  .scale-ladder .sl-grid { grid-template-columns: auto minmax(0, 1fr); row-gap: 0; }
+  .scale-ladder .sl-val { grid-row: span 2; align-self: start; padding-top: 1px; }
+  .scale-ladder .sl-pad-end { display: none; }
+  .scale-ladder .sl-name { font-size: 12px; color: var(--ink-soft); margin-bottom: 5px; }
+}
   </style>
 </head>
 <body>
@@ -28218,7 +28238,7 @@ const ScaleLadderPage = ({
   migrated: false,
   eyebrow: "R5 · SCALE LADDER",
   title: "規模感（桁のはしご）",
-  deck: "容量・電圧・電流・抵抗・インピーダンス・力率の大きさを、身近な実物と電力設備で桁ごとに並べた。計算の答えの桁が合っているかを、実物の大きさで確かめるためのページ。",
+  deck: "容量・電圧・電流・抵抗・インピーダンス・力率・周波数の大きさを、身近なたとえと電力設備で桁ごとに並べた。計算の答えの桁が合っているかを確かめるためのページ。",
   meta: [{
     label: "種別",
     value: "リファレンス"
@@ -28231,320 +28251,228 @@ const ScaleLadderPage = ({
 }, /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
   label: "まず覚える結論"
-}, /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "1000倍ごとの目盛りに実物を当てて覚える。"), "容量なら 1 kW（ドライヤー）→ 1 MW（高圧受電の工場）→ 1 GW（原子力1基）。LED電球（10 W）はその手前。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "答えの桁を実物と比べる。"), "家庭の負荷が数 MW、発電所の出力が数 kW になったら、単位か桁を誤っている。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "量どうしはつながっている。"), "同じ電力・同じ力率・同じ線路なら、電圧を10倍にすると電流は1/10、線路損失（I²R）は1/100。容量が大きい需要家ほど高い電圧で受電するのはこのため。"))), /*#__PURE__*/React.createElement(Box, {
+}, /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "1000倍ごとの目盛りに実物を当てる。"), "容量なら 1 kW（ドライヤー）→ 1 MW（高圧受電の工場）→ 1 GW（原子力1基）。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "答えの桁を実物と比べる。"), "家庭の負荷が数 MW、発電所の出力が数 kW になったら、単位か桁を誤っている。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "量どうしはつながっている。"), "同じ電力・同じ力率・同じ線路なら、電圧を10倍にすると電流は1/10、線路損失（I²R）は1/100。大きい需要家ほど高い電圧で受電するのはこのため。"))), /*#__PURE__*/React.createElement(Box, {
   kind: "warn",
   label: "数値の性格"
-}, /*#__PURE__*/React.createElement("p", null, "図と表の数値の多くは、桁をつかむための", /*#__PURE__*/React.createElement("strong", null, "代表値・目安"), "で、公式の根拠ではない。試験で問われる値は、規格・法令の値やテーマ別ページの値で覚える。法令の値は条文名を添え、e-Gov 法令 API で逐語照合した", "（電気設備技術基準 省令第2条・第22条・第58条、電気事業法施行規則 第56条）。50 kW・2,000 kW・力率 85 % の基準は電力会社の契約の区分で、法令の値ではない。図の色付きの棒は、法令や契約の境目に当たる行。")), /*#__PURE__*/React.createElement("h2", {
+}, /*#__PURE__*/React.createElement("p", null, "はしごと表の数値の多くは、桁をつかむための", /*#__PURE__*/React.createElement("strong", null, "代表値・目安"), "で、公式の根拠ではない。試験で問われる値は規格・法令の値で覚える。法令の値には条文名を添えた", "。50 kW・2,000 kW・力率 0.85 は電力会社の契約の区分で、法令の値ではない。")), /*#__PURE__*/React.createElement("h2", {
   id: "youryou"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
 }, "1."), "容量（W・kVA）"), /*#__PURE__*/React.createElement("div", {
+  className: "scale-ladder",
+  role: "group",
+  "aria-label": "容量のはしご。対数目盛りで 1 W から 100 GW まで、LED電球から東京エリアの最大需要までを棒の長さで並べる"
+}, /*#__PURE__*/React.createElement("div", {
+  className: "sl-grid"
+}, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
+  className: "sl-ticks"
+}, /*#__PURE__*/React.createElement("span", {
   style: {
-    margin: "18px 0",
-    padding: "14px 12px",
-    background: "var(--bg-sunken)",
-    border: "1px solid var(--rule)",
-    borderRadius: "10px"
+    left: "0.00%",
+    transform: "translateX(0)"
   }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 272 406",
-  width: "100%",
+}, "1 W"), /*#__PURE__*/React.createElement("span", {
   style: {
-    maxWidth: "480px",
-    height: "auto",
-    display: "block",
-    margin: "0 auto"
-  },
-  role: "img",
-  "aria-label": "容量のはしご図。対数目盛りで 1 W から 100 GW まで、LED電球から東京エリアの最大需要までを棒の長さで並べる"
-}, /*#__PURE__*/React.createElement("line", {
-  x1: "4.0",
-  y1: "20",
-  x2: "4.0",
-  y2: "400",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "28.0",
-  y1: "20",
-  x2: "28.0",
-  y2: "400",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "52.0",
-  y1: "20",
-  x2: "52.0",
-  y2: "400",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "76.0",
-  y1: "20",
-  x2: "76.0",
-  y2: "400",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "100.0",
-  y1: "20",
-  x2: "100.0",
-  y2: "400",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "124.0",
-  y1: "20",
-  x2: "124.0",
-  y2: "400",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "148.0",
-  y1: "20",
-  x2: "148.0",
-  y2: "400",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "172.0",
-  y1: "20",
-  x2: "172.0",
-  y2: "400",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "196.0",
-  y1: "20",
-  x2: "196.0",
-  y2: "400",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "220.0",
-  y1: "20",
-  x2: "220.0",
-  y2: "400",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "244.0",
-  y1: "20",
-  x2: "244.0",
-  y2: "400",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "268.0",
-  y1: "20",
-  x2: "268.0",
-  y2: "400",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4.0",
-  y: "16",
-  textAnchor: "start",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 W"), /*#__PURE__*/React.createElement("text", {
-  x: "76.0",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 kW"), /*#__PURE__*/React.createElement("text", {
-  x: "148.0",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 MW"), /*#__PURE__*/React.createElement("text", {
-  x: "220.0",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 GW"), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "38",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "10 W"), "\u3000LED電球"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "43",
-  width: "24.0",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "72",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "1 kW"), "\u3000ドライヤー"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "77",
-  width: "72.0",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "106",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "3.7 kW"), "\u3000小型の誘導電動機"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "111",
-  width: "85.6",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "140",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "50 kW"), "\u3000低圧と高圧の契約の境目（目安）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "145",
-  width: "112.8",
-  height: "10",
-  rx: "2",
-  fill: "var(--accent)",
-  fillOpacity: "0.55"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "174",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "1 MW"), "\u3000高圧受電の工場・ビル"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "179",
-  width: "144.0",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "208",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "2 MW"), "\u3000特高受電の目安"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "213",
-  width: "151.2",
-  height: "10",
-  rx: "2",
-  fill: "var(--accent)",
-  fillOpacity: "0.55"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "242",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "5 MW"), "\u3000第三種の範囲外になる発電所の出力"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "247",
-  width: "160.8",
-  height: "10",
-  rx: "2",
-  fill: "var(--accent)",
-  fillOpacity: "0.55"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "276",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "17 MW"), "\u3000新幹線1編成（目安）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "281",
-  width: "173.5",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "310",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "40 MW"), "\u3000大工場（66 kV 受電級）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "315",
-  width: "182.4",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "344",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "1 GW"), "\u3000火力1ユニット・原子力1基"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "349",
-  width: "216.0",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "378",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "約55 GW"), "\u3000東京エリアの夏の最大需要（目安）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "383",
-  width: "257.8",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-})), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 12,
-    color: "var(--ink-soft)",
-    margin: "8px 0 0"
+    left: "27.27%",
+    transform: "translateX(-50%)"
   }
-}, "対数目盛り。実線が1000倍ごと（1 W・1 kW・1 MW・1 GW）、点線が10倍ごと。")), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "換算"), ": 1 万 kW ＝ 10 MW、100 万 kW ＝ 1 GW。電力科目は「万 kW」で出ることが多い。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "kVA と kW"), ": 変圧器・発電機は kVA（皮相電力）、負荷は kW（有効電力）で書かれることが多い。kVA に力率を掛けると kW になる。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "40 MW の実感"), ": 新幹線1編成（約 17 MW）の2〜3編成分、家庭の平均消費（1世帯 約 0.4 kW）の約10万世帯分（どちらも目安）。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, "1 kW"), /*#__PURE__*/React.createElement("span", {
+  style: {
+    left: "54.55%",
+    transform: "translateX(-50%)"
+  }
+}, "1 MW"), /*#__PURE__*/React.createElement("span", {
+  style: {
+    left: "81.82%",
+    transform: "translateX(-50%)"
+  }
+}, "1 GW")), /*#__PURE__*/React.createElement("span", {
+  className: "sl-pad-end"
+}), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "10 W"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(27.27% - 0.5px), var(--rule) calc(27.27% - 0.5px), var(--rule) calc(27.27% + 0.5px), transparent calc(27.27% + 0.5px)), linear-gradient(90deg, transparent calc(54.55% - 0.5px), var(--rule) calc(54.55% - 0.5px), var(--rule) calc(54.55% + 0.5px), transparent calc(54.55% + 0.5px)), linear-gradient(90deg, transparent calc(81.82% - 0.5px), var(--rule) calc(81.82% - 0.5px), var(--rule) calc(81.82% + 0.5px), transparent calc(81.82% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "9.1%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "LED電球"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "1 kW"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(27.27% - 0.5px), var(--rule) calc(27.27% - 0.5px), var(--rule) calc(27.27% + 0.5px), transparent calc(27.27% + 0.5px)), linear-gradient(90deg, transparent calc(54.55% - 0.5px), var(--rule) calc(54.55% - 0.5px), var(--rule) calc(54.55% + 0.5px), transparent calc(54.55% + 0.5px)), linear-gradient(90deg, transparent calc(81.82% - 0.5px), var(--rule) calc(81.82% - 0.5px), var(--rule) calc(81.82% + 0.5px), transparent calc(81.82% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "27.3%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "ドライヤー"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "3.7 kW"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(27.27% - 0.5px), var(--rule) calc(27.27% - 0.5px), var(--rule) calc(27.27% + 0.5px), transparent calc(27.27% + 0.5px)), linear-gradient(90deg, transparent calc(54.55% - 0.5px), var(--rule) calc(54.55% - 0.5px), var(--rule) calc(54.55% + 0.5px), transparent calc(54.55% + 0.5px)), linear-gradient(90deg, transparent calc(81.82% - 0.5px), var(--rule) calc(81.82% - 0.5px), var(--rule) calc(81.82% + 0.5px), transparent calc(81.82% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "32.4%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "小型の誘導電動機"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "50 kW"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(27.27% - 0.5px), var(--rule) calc(27.27% - 0.5px), var(--rule) calc(27.27% + 0.5px), transparent calc(27.27% + 0.5px)), linear-gradient(90deg, transparent calc(54.55% - 0.5px), var(--rule) calc(54.55% - 0.5px), var(--rule) calc(54.55% + 0.5px), transparent calc(54.55% + 0.5px)), linear-gradient(90deg, transparent calc(81.82% - 0.5px), var(--rule) calc(81.82% - 0.5px), var(--rule) calc(81.82% + 0.5px), transparent calc(81.82% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar sl-acc",
+  style: {
+    width: "42.7%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "低圧と高圧の契約の境目"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "1 MW"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(27.27% - 0.5px), var(--rule) calc(27.27% - 0.5px), var(--rule) calc(27.27% + 0.5px), transparent calc(27.27% + 0.5px)), linear-gradient(90deg, transparent calc(54.55% - 0.5px), var(--rule) calc(54.55% - 0.5px), var(--rule) calc(54.55% + 0.5px), transparent calc(54.55% + 0.5px)), linear-gradient(90deg, transparent calc(81.82% - 0.5px), var(--rule) calc(81.82% - 0.5px), var(--rule) calc(81.82% + 0.5px), transparent calc(81.82% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "54.5%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "高圧受電の工場・ビル"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "2 MW"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(27.27% - 0.5px), var(--rule) calc(27.27% - 0.5px), var(--rule) calc(27.27% + 0.5px), transparent calc(27.27% + 0.5px)), linear-gradient(90deg, transparent calc(54.55% - 0.5px), var(--rule) calc(54.55% - 0.5px), var(--rule) calc(54.55% + 0.5px), transparent calc(54.55% + 0.5px)), linear-gradient(90deg, transparent calc(81.82% - 0.5px), var(--rule) calc(81.82% - 0.5px), var(--rule) calc(81.82% + 0.5px), transparent calc(81.82% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar sl-acc",
+  style: {
+    width: "57.3%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "特高受電の目安"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "5 MW"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(27.27% - 0.5px), var(--rule) calc(27.27% - 0.5px), var(--rule) calc(27.27% + 0.5px), transparent calc(27.27% + 0.5px)), linear-gradient(90deg, transparent calc(54.55% - 0.5px), var(--rule) calc(54.55% - 0.5px), var(--rule) calc(54.55% + 0.5px), transparent calc(54.55% + 0.5px)), linear-gradient(90deg, transparent calc(81.82% - 0.5px), var(--rule) calc(81.82% - 0.5px), var(--rule) calc(81.82% + 0.5px), transparent calc(81.82% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar sl-acc",
+  style: {
+    width: "60.9%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "第三種の範囲外になる発電所"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "17 MW"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(27.27% - 0.5px), var(--rule) calc(27.27% - 0.5px), var(--rule) calc(27.27% + 0.5px), transparent calc(27.27% + 0.5px)), linear-gradient(90deg, transparent calc(54.55% - 0.5px), var(--rule) calc(54.55% - 0.5px), var(--rule) calc(54.55% + 0.5px), transparent calc(54.55% + 0.5px)), linear-gradient(90deg, transparent calc(81.82% - 0.5px), var(--rule) calc(81.82% - 0.5px), var(--rule) calc(81.82% + 0.5px), transparent calc(81.82% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "65.7%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "新幹線1編成"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "40 MW"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(27.27% - 0.5px), var(--rule) calc(27.27% - 0.5px), var(--rule) calc(27.27% + 0.5px), transparent calc(27.27% + 0.5px)), linear-gradient(90deg, transparent calc(54.55% - 0.5px), var(--rule) calc(54.55% - 0.5px), var(--rule) calc(54.55% + 0.5px), transparent calc(54.55% + 0.5px)), linear-gradient(90deg, transparent calc(81.82% - 0.5px), var(--rule) calc(81.82% - 0.5px), var(--rule) calc(81.82% + 0.5px), transparent calc(81.82% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "69.1%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "大工場"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "1 GW"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(27.27% - 0.5px), var(--rule) calc(27.27% - 0.5px), var(--rule) calc(27.27% + 0.5px), transparent calc(27.27% + 0.5px)), linear-gradient(90deg, transparent calc(54.55% - 0.5px), var(--rule) calc(54.55% - 0.5px), var(--rule) calc(54.55% + 0.5px), transparent calc(54.55% + 0.5px)), linear-gradient(90deg, transparent calc(81.82% - 0.5px), var(--rule) calc(81.82% - 0.5px), var(--rule) calc(81.82% + 0.5px), transparent calc(81.82% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "81.8%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "原子力1基・火力1ユニット"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "約 55 GW"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(27.27% - 0.5px), var(--rule) calc(27.27% - 0.5px), var(--rule) calc(27.27% + 0.5px), transparent calc(27.27% + 0.5px)), linear-gradient(90deg, transparent calc(54.55% - 0.5px), var(--rule) calc(54.55% - 0.5px), var(--rule) calc(54.55% + 0.5px), transparent calc(54.55% + 0.5px)), linear-gradient(90deg, transparent calc(81.82% - 0.5px), var(--rule) calc(81.82% - 0.5px), var(--rule) calc(81.82% + 0.5px), transparent calc(81.82% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "97.6%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "東京エリアの夏の最大需要")), /*#__PURE__*/React.createElement("p", {
+  className: "sl-cap"
+}, "対数目盛り（縦線が1000倍ごと）。色付きの棒は法令・契約の境目。契約の境目（50 kW・2,000 kW）は電力会社の区分で、法令の値ではない。")), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data"
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "規模"), /*#__PURE__*/React.createElement("th", null, "身近なたとえ"), /*#__PURE__*/React.createElement("th", null, "電力設備・試験の場面"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "数 W〜数 kW"), /*#__PURE__*/React.createElement("td", null, "LED電球（10 W）・ドライヤー（1 kW）"), /*#__PURE__*/React.createElement("td", null, "家庭の負荷。100 V・1 kW で 10 A")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "数 kW〜数十 kW"), /*#__PURE__*/React.createElement("td", null, "小型の誘導電動機（3.7 kW）"), /*#__PURE__*/React.createElement("td", null, "低圧の動力。50 kW が低圧と高圧の契約の境目")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "数百 kW〜2 MW"), /*#__PURE__*/React.createElement("td", null, "高圧受電の工場・ビル（1 MW）"), /*#__PURE__*/React.createElement("td", null, "6.6 kV で受電。2,000 kW 級から特高受電が目安（契約の区分）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "数 MW〜数十 MW"), /*#__PURE__*/React.createElement("td", null, "新幹線1編成（約 17 MW）・大工場（40 MW）"), /*#__PURE__*/React.createElement("td", null, "特高受電。発電所は 5,000 kW 以上で第三種の範囲外")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "1 GW 級"), /*#__PURE__*/React.createElement("td", null, "原子力1基・火力1ユニット"), /*#__PURE__*/React.createElement("td", null, "「100 万 kW」と書かれる")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "数十 GW"), /*#__PURE__*/React.createElement("td", null, "東京エリアの夏の最大需要（約 55 GW）"), /*#__PURE__*/React.createElement("td", null, "系統全体の大きさ"))))), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "換算"), ": 1 万 kW ＝ 10 MW、100 万 kW ＝ 1 GW。電力科目は「万 kW」で出ることが多い。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "kVA と kW"), ": 変圧器・発電機は kVA（皮相電力）、負荷は kW（有効電力）。kVA × 力率 ＝ kW。")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "scale-ladder",
   sectionId: "youryou"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -28552,288 +28480,217 @@ const ScaleLadderPage = ({
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
 }, "2."), "電圧（V）"), /*#__PURE__*/React.createElement("div", {
+  className: "scale-ladder",
+  role: "group",
+  "aria-label": "電圧のはしご。対数目盛りで 1 V から 1 MV まで、乾電池から基幹送電線までを棒の長さで並べる"
+}, /*#__PURE__*/React.createElement("div", {
+  className: "sl-grid"
+}, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
+  className: "sl-ticks"
+}, /*#__PURE__*/React.createElement("span", {
   style: {
-    margin: "18px 0",
-    padding: "14px 12px",
-    background: "var(--bg-sunken)",
-    border: "1px solid var(--rule)",
-    borderRadius: "10px"
+    left: "0.00%",
+    transform: "translateX(0)"
   }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 272 440",
-  width: "100%",
+}, "1 V"), /*#__PURE__*/React.createElement("span", {
   style: {
-    maxWidth: "480px",
-    height: "auto",
-    display: "block",
-    margin: "0 auto"
-  },
-  role: "img",
-  "aria-label": "電圧のはしご図。対数目盛りで 1 V から 1 MV まで、乾電池から 500 kV 基幹送電までを並べ、法令の境目3本を色付きにする"
-}, /*#__PURE__*/React.createElement("line", {
-  x1: "4.0",
-  y1: "20",
-  x2: "4.0",
-  y2: "434",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "48.0",
-  y1: "20",
-  x2: "48.0",
-  y2: "434",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "92.0",
-  y1: "20",
-  x2: "92.0",
-  y2: "434",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "136.0",
-  y1: "20",
-  x2: "136.0",
-  y2: "434",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "180.0",
-  y1: "20",
-  x2: "180.0",
-  y2: "434",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "224.0",
-  y1: "20",
-  x2: "224.0",
-  y2: "434",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "268.0",
-  y1: "20",
-  x2: "268.0",
-  y2: "434",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4.0",
-  y: "16",
-  textAnchor: "start",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 V"), /*#__PURE__*/React.createElement("text", {
-  x: "136.0",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 kV"), /*#__PURE__*/React.createElement("text", {
-  x: "268.0",
-  y: "16",
-  textAnchor: "end",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 MV"), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "38",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "1.5 V"), "\u3000乾電池"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "43",
-  width: "7.7",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "72",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "100 V"), "\u3000家庭のコンセント"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "77",
-  width: "88.0",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "106",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "600 V"), "\u3000低圧の上限（交流・省令第2条）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "111",
-  width: "122.2",
-  height: "10",
-  rx: "2",
-  fill: "var(--accent)",
-  fillOpacity: "0.55"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "140",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "750 V"), "\u3000低圧の上限（直流・省令第2条）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "145",
-  width: "126.5",
-  height: "10",
-  rx: "2",
-  fill: "var(--accent)",
-  fillOpacity: "0.55"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "174",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "1,500 V"), "\u3000直流電化（750 V 超で高圧）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "179",
-  width: "139.7",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "208",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "6.6 kV"), "\u3000高圧配電線"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "213",
-  width: "168.1",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "242",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "7,000 V"), "\u3000高圧の上限（省令第2条）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "247",
-  width: "169.2",
-  height: "10",
-  rx: "2",
-  fill: "var(--accent)",
-  fillOpacity: "0.55"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "276",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "22 kV"), "\u3000特高受電の工場"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "281",
-  width: "191.1",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "310",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "5 万V"), "\u3000第三種の範囲（未満・規則第56条）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "315",
-  width: "206.8",
-  height: "10",
-  rx: "2",
-  fill: "var(--accent)",
-  fillOpacity: "0.55"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "344",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "66 kV"), "\u3000大工場の受電・一次変電所"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "349",
-  width: "212.1",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "378",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "154 kV"), "\u3000超高圧変電所から下へ"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "383",
-  width: "228.3",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "412",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "500 kV"), "\u3000基幹送電線"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "417",
-  width: "250.8",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-})), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 12,
-    color: "var(--ink-soft)",
-    margin: "8px 0 0"
+    left: "50.00%",
+    transform: "translateX(-50%)"
   }
-}, "対数目盛り（実線が1000倍ごと、点線が10倍ごと）。色付きの棒は法令の境目（省令第2条の 600 V・750 V・7,000 V、施行規則第56条の 5 万V）。")), /*#__PURE__*/React.createElement("div", {
+}, "1 kV"), /*#__PURE__*/React.createElement("span", {
+  style: {
+    left: "100.00%",
+    transform: "translateX(-100%)"
+  }
+}, "1 MV")), /*#__PURE__*/React.createElement("span", {
+  className: "sl-pad-end"
+}), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "1.5 V"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "2.9%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "乾電池"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "100 V"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "33.3%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "家庭のコンセント"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "600 V"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar sl-acc",
+  style: {
+    width: "46.3%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "低圧の上限（交流）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "750 V"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar sl-acc",
+  style: {
+    width: "47.9%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "低圧の上限（直流）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "1,500 V"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "52.9%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "在来線の直流電化"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "6.6 kV"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "63.7%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "高圧配電線"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "7,000 V"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar sl-acc",
+  style: {
+    width: "64.1%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "高圧の上限"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "22 kV"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "72.4%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "特高受電の工場"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "5 万V"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar sl-acc",
+  style: {
+    width: "78.3%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "第三種の範囲（未満）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "66 kV"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "80.3%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "大工場の受電"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "154 kV"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "86.5%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "超高圧変電所"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "500 kV"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "95.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "基幹送電線")), /*#__PURE__*/React.createElement("p", {
+  className: "sl-cap"
+}, "対数目盛り（縦線が1000倍ごと）。色付きの棒は法令の境目（省令第2条の 600 V・750 V・7,000 V、施行規則第56条の 5 万V）。")), /*#__PURE__*/React.createElement("div", {
   className: "table-wrap"
 }, /*#__PURE__*/React.createElement("table", {
   className: "data"
-}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "区分"), /*#__PURE__*/React.createElement("th", null, "交流"), /*#__PURE__*/React.createElement("th", null, "直流"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "低圧"), /*#__PURE__*/React.createElement("td", null, "600 V 以下"), /*#__PURE__*/React.createElement("td", null, "750 V 以下")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "高圧"), /*#__PURE__*/React.createElement("td", null, "600 V を超え 7,000 V 以下"), /*#__PURE__*/React.createElement("td", null, "750 V を超え 7,000 V 以下")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "特別高圧"), /*#__PURE__*/React.createElement("td", {
-  colSpan: "2"
-}, "7,000 V を超えるもの（交流・直流共通）"))))), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "電力の流れ"), ": 発電機（十数 kV〜20 kV 台）→ 昇圧して基幹送電（500 kV・275 kV）→ 超高圧変電所（154 kV）→ 一次変電所（66 kV）→ 配電用変電所（6.6 kV）→ 柱上変圧器（100/200 V）。各段の電圧は代表的な値。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "直流は 750 V を超えると高圧"), "。在来線の直流 1,500 V は高圧に入る。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "特高でも第三種の範囲とは限らない"), "。第三種の範囲は電圧 5 万V 未満（出力 5,000 kW 以上の発電所又は蓄電所を除く）。66 kV 受電の工場は範囲外。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "区分"), /*#__PURE__*/React.createElement("th", null, "範囲（電気設備技術基準 省令第2条）"), /*#__PURE__*/React.createElement("th", null, "身近なたとえ・設備"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "低圧"), /*#__PURE__*/React.createElement("td", null, "交流 600 V 以下・直流 750 V 以下"), /*#__PURE__*/React.createElement("td", null, "家庭のコンセント（100/200 V）・乾電池（1.5 V）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "高圧"), /*#__PURE__*/React.createElement("td", null, "交流 600 V・直流 750 V を超え 7,000 V 以下"), /*#__PURE__*/React.createElement("td", null, "電柱の上の配電線（6.6 kV）・在来線の直流 1,500 V")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "特別高圧"), /*#__PURE__*/React.createElement("td", null, "7,000 V を超えるもの"), /*#__PURE__*/React.createElement("td", null, "大工場の受電（22〜66 kV）・送電線（154〜500 kV）"))))), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "電力の流れ"), ": 発電機（十数 kV〜20 kV 台）→ 基幹送電（500 kV・275 kV）→ 超高圧変電所（154 kV）→ 一次変電所（66 kV）→ 配電用変電所（6.6 kV）→ 柱上変圧器（100/200 V）。各段は代表的な値。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "特高でも第三種の範囲とは限らない"), "。第三種の範囲は電圧 5 万V 未満（出力 5,000 kW 以上の発電所又は蓄電所を除く・電気事業法施行規則第56条）。66 kV 受電の工場は範囲外。")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "scale-ladder",
   sectionId: "denatsu"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -28841,268 +28698,193 @@ const ScaleLadderPage = ({
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
 }, "3."), "電流（A）"), /*#__PURE__*/React.createElement("div", {
+  className: "scale-ladder",
+  role: "group",
+  "aria-label": "電流のはしご。対数目盛りで 1 mA から 100 kA まで、人が感じる電流から雷までを棒の長さで並べる"
+}, /*#__PURE__*/React.createElement("div", {
+  className: "sl-grid"
+}, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
+  className: "sl-ticks"
+}, /*#__PURE__*/React.createElement("span", {
   style: {
-    margin: "18px 0",
-    padding: "14px 12px",
-    background: "var(--bg-sunken)",
-    border: "1px solid var(--rule)",
-    borderRadius: "10px"
+    left: "0.00%",
+    transform: "translateX(0)"
   }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 272 372",
-  width: "100%",
+}, "1 mA"), /*#__PURE__*/React.createElement("span", {
   style: {
-    maxWidth: "480px",
-    height: "auto",
-    display: "block",
-    margin: "0 auto"
-  },
-  role: "img",
-  "aria-label": "電流のはしご図。対数目盛りで 1 mA から 100 kA まで、感じ始める電流から短絡電流・雷までを並べる"
-}, /*#__PURE__*/React.createElement("line", {
-  x1: "4.0",
-  y1: "20",
-  x2: "4.0",
-  y2: "366",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "37.0",
-  y1: "20",
-  x2: "37.0",
-  y2: "366",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "70.0",
-  y1: "20",
-  x2: "70.0",
-  y2: "366",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "103.0",
-  y1: "20",
-  x2: "103.0",
-  y2: "366",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "136.0",
-  y1: "20",
-  x2: "136.0",
-  y2: "366",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "169.0",
-  y1: "20",
-  x2: "169.0",
-  y2: "366",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "202.0",
-  y1: "20",
-  x2: "202.0",
-  y2: "366",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "235.0",
-  y1: "20",
-  x2: "235.0",
-  y2: "366",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "268.0",
-  y1: "20",
-  x2: "268.0",
-  y2: "366",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4.0",
-  y: "16",
-  textAnchor: "start",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 mA"), /*#__PURE__*/React.createElement("text", {
-  x: "103.0",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 A"), /*#__PURE__*/React.createElement("text", {
-  x: "202.0",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 kA"), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "38",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "1 mA"), "\u3000人が感じ始める（目安）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "43",
-  width: "2.0",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "72",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "4〜20 mA"), "\u3000計装の統一信号"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "77",
-  width: "42.9",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "106",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "0.2 A"), "\u3000地絡継電器の整定（目安）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "111",
-  width: "75.9",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "140",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "数 A"), "\u3000高圧配電線の1線地絡電流"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "145",
-  width: "114.7",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "174",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "10 A"), "\u3000ドライヤー 1 kW（100 V）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "179",
-  width: "132.0",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "208",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "約87 A"), "\u30001,000 kVA 変圧器の一次（6.6 kV）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "213",
-  width: "163.1",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "242",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "約350 A"), "\u300040 MW を 66 kV で受電（力率1）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "247",
-  width: "183.0",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "276",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "約2,750 A"), "\u3000同じ変圧器の二次（210 V）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "281",
-  width: "212.5",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "310",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "12.5 kA"), "\u3000高圧遮断器の定格遮断電流（例）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "315",
-  width: "234.2",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "344",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "数十 kA"), "\u3000雷（目安）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "349",
-  width: "246.7",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-})), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 12,
-    color: "var(--ink-soft)",
-    margin: "8px 0 0"
+    left: "37.50%",
+    transform: "translateX(-50%)"
   }
-}, "対数目盛り。実線が1000倍ごと（1 mA・1 A・1 kA）、点線が10倍ごと。")), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "同じ変圧器でも一次と二次で電流は約30倍違う"), "。1,000 kVA の三相変圧器は I ＝ S ÷ (√3 × V) で、6.6 kV 側 約 87 A、210 V 側 約 2,750 A。電流の比は電圧の比の逆。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "人が感じる電流（mA）・高圧の地絡電流（数 A）・短絡電流（kA）は、それぞれ桁が違う"), "。低圧の漏電遮断器は mA、高圧の地絡継電器は 1 A 未満（整定 0.2 A 程度が目安）、遮断器は kA 単位の電流を扱う。6.6 kV の非接地系統では地絡電流が短絡電流より桁違いに小さいので、地絡は過電流継電器ではなく、零相電流を見る地絡継電器で検出する。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "低圧電線路の絶縁性能"), ": 漏えい電流が最大供給電流の 1/2,000 を超えないこと（省令第22条）。最大供給電流 200 A なら上限 0.1 A。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, "1 A"), /*#__PURE__*/React.createElement("span", {
+  style: {
+    left: "75.00%",
+    transform: "translateX(-50%)"
+  }
+}, "1 kA")), /*#__PURE__*/React.createElement("span", {
+  className: "sl-pad-end"
+}), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "1 mA"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(37.50% - 0.5px), var(--rule) calc(37.50% - 0.5px), var(--rule) calc(37.50% + 0.5px), transparent calc(37.50% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "1.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "人が感じ始める"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "4〜20 mA"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(37.50% - 0.5px), var(--rule) calc(37.50% - 0.5px), var(--rule) calc(37.50% + 0.5px), transparent calc(37.50% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "16.3%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "計装の統一信号"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "0.2 A"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(37.50% - 0.5px), var(--rule) calc(37.50% - 0.5px), var(--rule) calc(37.50% + 0.5px), transparent calc(37.50% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "28.8%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "地絡継電器の整定"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "数 A"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(37.50% - 0.5px), var(--rule) calc(37.50% - 0.5px), var(--rule) calc(37.50% + 0.5px), transparent calc(37.50% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "43.5%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "高圧の1線地絡電流"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "10 A"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(37.50% - 0.5px), var(--rule) calc(37.50% - 0.5px), var(--rule) calc(37.50% + 0.5px), transparent calc(37.50% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "50.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "ドライヤー（100 V）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "約 87 A"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(37.50% - 0.5px), var(--rule) calc(37.50% - 0.5px), var(--rule) calc(37.50% + 0.5px), transparent calc(37.50% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "61.7%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "1,000 kVA 変圧器の一次（6.6 kV）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "約 350 A"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(37.50% - 0.5px), var(--rule) calc(37.50% - 0.5px), var(--rule) calc(37.50% + 0.5px), transparent calc(37.50% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "69.3%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "40 MW を 66 kV で受電（力率1）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "約 2,750 A"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(37.50% - 0.5px), var(--rule) calc(37.50% - 0.5px), var(--rule) calc(37.50% + 0.5px), transparent calc(37.50% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "80.5%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "同じ変圧器の二次（210 V）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "12.5 kA"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(37.50% - 0.5px), var(--rule) calc(37.50% - 0.5px), var(--rule) calc(37.50% + 0.5px), transparent calc(37.50% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "88.7%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "高圧遮断器の定格遮断電流（例）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "数十 kA"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(37.50% - 0.5px), var(--rule) calc(37.50% - 0.5px), var(--rule) calc(37.50% + 0.5px), transparent calc(37.50% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "93.5%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "雷")), /*#__PURE__*/React.createElement("p", {
+  className: "sl-cap"
+}, "対数目盛り（縦線が1000倍ごと）。人体・整定・雷の値は目安。")), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data"
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "規模"), /*#__PURE__*/React.createElement("th", null, "身近なたとえ"), /*#__PURE__*/React.createElement("th", null, "電力設備・試験の場面"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "mA"), /*#__PURE__*/React.createElement("td", null, "人が感じ始める（約 1 mA）・計装の 4〜20 mA"), /*#__PURE__*/React.createElement("td", null, "低圧の漏電遮断器は mA で動く")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "0.1〜数 A"), /*#__PURE__*/React.createElement("td", null, "地絡継電器の整定（0.2 A 程度）・高圧の1線地絡電流（数 A）"), /*#__PURE__*/React.createElement("td", null, "6.6 kV 非接地系統の地絡")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "数 A〜数千 A"), /*#__PURE__*/React.createElement("td", null, "ドライヤー（10 A）・変圧器の一次 87 A／二次 2,750 A"), /*#__PURE__*/React.createElement("td", null, "定格電流。三相は I ＝ S ÷ (√3 × V)")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "kA"), /*#__PURE__*/React.createElement("td", null, "遮断器の定格遮断電流（12.5 kA）・雷（数十 kA）"), /*#__PURE__*/React.createElement("td", null, "短絡電流と遮断容量"))))), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "同じ変圧器でも一次と二次で約30倍違う"), "。1,000 kVA なら 6.6 kV 側 約 87 A、210 V 側 約 2,750 A。電流の比は電圧の比の逆。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "地絡は短絡より桁違いに小さい"), "。6.6 kV の非接地系統では、地絡は過電流継電器ではなく、零相電流を見る地絡継電器（1 A 未満で整定）で検出する。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "低圧電線路の絶縁性能"), ": 漏えい電流が最大供給電流の 1/2,000 を超えないこと（省令第22条）。最大供給電流 200 A なら上限 0.1 A。")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "scale-ladder",
   sectionId: "denryuu"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -29110,304 +28892,165 @@ const ScaleLadderPage = ({
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
 }, "4."), "抵抗（Ω）"), /*#__PURE__*/React.createElement("div", {
+  className: "scale-ladder",
+  role: "group",
+  "aria-label": "抵抗のはしご。対数目盛りで 1 ミリオームから 1 テラオームまで、電線から高圧ケーブルの絶縁までを棒の長さで並べる"
+}, /*#__PURE__*/React.createElement("div", {
+  className: "sl-grid"
+}, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
+  className: "sl-ticks"
+}, /*#__PURE__*/React.createElement("span", {
   style: {
-    margin: "18px 0",
-    padding: "14px 12px",
-    background: "var(--bg-sunken)",
-    border: "1px solid var(--rule)",
-    borderRadius: "10px"
+    left: "0.00%",
+    transform: "translateX(0)"
   }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 272 304",
-  width: "100%",
+}, "1 mΩ"), /*#__PURE__*/React.createElement("span", {
   style: {
-    maxWidth: "480px",
-    height: "auto",
-    display: "block",
-    margin: "0 auto"
-  },
-  role: "img",
-  "aria-label": "抵抗のはしご図。対数目盛りで 10 マイクロオームから 10 ギガオームまで、電線・接地・人体・絶縁を並べる"
-}, /*#__PURE__*/React.createElement("line", {
-  x1: "4.0",
-  y1: "20",
-  x2: "4.0",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "21.6",
-  y1: "20",
-  x2: "21.6",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "39.2",
-  y1: "20",
-  x2: "39.2",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "56.8",
-  y1: "20",
-  x2: "56.8",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "74.4",
-  y1: "20",
-  x2: "74.4",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "92.0",
-  y1: "20",
-  x2: "92.0",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "109.6",
-  y1: "20",
-  x2: "109.6",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "127.2",
-  y1: "20",
-  x2: "127.2",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "144.8",
-  y1: "20",
-  x2: "144.8",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "162.4",
-  y1: "20",
-  x2: "162.4",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "180.0",
-  y1: "20",
-  x2: "180.0",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "197.6",
-  y1: "20",
-  x2: "197.6",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "215.2",
-  y1: "20",
-  x2: "215.2",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "232.8",
-  y1: "20",
-  x2: "232.8",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "250.4",
-  y1: "20",
-  x2: "250.4",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "268.0",
-  y1: "20",
-  x2: "268.0",
-  y2: "298",
-  stroke: "var(--rule)",
-  strokeWidth: "1",
-  strokeDasharray: "2 3"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "39.2",
-  y: "16",
-  textAnchor: "start",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 mΩ"), /*#__PURE__*/React.createElement("text", {
-  x: "92.0",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 Ω"), /*#__PURE__*/React.createElement("text", {
-  x: "144.8",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 kΩ"), /*#__PURE__*/React.createElement("text", {
-  x: "197.6",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 MΩ"), /*#__PURE__*/React.createElement("text", {
-  x: "250.4",
-  y: "16",
-  textAnchor: "end",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1 GΩ"), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "38",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "5.5 mΩ"), "\u3000銅線 2.0 mm を 1 m"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "43",
-  width: "48.2",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "72",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "0.17 Ω"), "\u3000銅線 100 mm² を 1 km"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "77",
-  width: "74.5",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "106",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "10 Ω"), "\u3000電熱器 1 kW（100 V）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "111",
-  width: "105.6",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "140",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "10〜100 Ω級"), "\u3000接地抵抗（種類で値が違う）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "145",
-  width: "114.4",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "174",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "250 Ω"), "\u3000計装の受信抵抗"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "179",
-  width: "130.2",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "208",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "約1 kΩ"), "\u3000人体（目安）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "213",
-  width: "140.8",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "242",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "0.1〜0.4 MΩ"), "\u3000低圧の絶縁抵抗（省令第58条）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "247",
-  width: "181.3",
-  height: "10",
-  rx: "2",
-  fill: "var(--accent)",
-  fillOpacity: "0.55"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "276",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "GΩ級"), "\u3000良好な高圧ケーブルの絶縁（目安）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "281",
-  width: "246.4",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-})), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 12,
-    color: "var(--ink-soft)",
-    margin: "8px 0 0"
+    left: "40.00%",
+    transform: "translateX(-50%)"
   }
-}, "対数目盛り。実線が1000倍ごと（1 mΩ・1 Ω・1 kΩ・1 MΩ・1 GΩ）、点線が10倍ごと。")), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "電線の抵抗"), "は R ＝ ρL/S（銅の抵抗率 1.72×10⁻⁸ Ω·m・20 ℃）。断面積 100 mm² の銅線でも 1 km で約 0.17 Ω。アルミは銅の約 1.6 倍。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "低圧の電路の絶縁抵抗"), "（省令第58条）: 使用電圧 300 V 以下で対地電圧 150 V 以下なら 0.1 MΩ 以上、使用電圧 300 V 以下のその他なら 0.2 MΩ 以上、使用電圧 300 V 超なら 0.4 MΩ 以上。0.2 と 0.4 の境目は対地電圧ではなく使用電圧の 300 V。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "オームの法則でつなぐ"), ": 100 V が人体（約 1 kΩ）にかかれば約 100 mA。100 V が 0.1 MΩ にかかれば 1 mA。「流したい所（電線・接地）は小さく、流したくない所（絶縁）は大きく」。電線（mΩ〜Ω）と低圧の電路の絶縁（省令第58条の 0.1 MΩ 以上）は10万倍以上、接地（10〜100 Ω級）と低圧の電路の絶縁でも数百倍以上離れている。なお 3節の省令第22条は低圧電線路の絶縁性能で、第58条（電気使用場所の低圧の電路）とは対象が違う。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, "1 kΩ"), /*#__PURE__*/React.createElement("span", {
+  style: {
+    left: "80.00%",
+    transform: "translateX(-50%)"
+  }
+}, "1 GΩ")), /*#__PURE__*/React.createElement("span", {
+  className: "sl-pad-end"
+}), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "5.5 mΩ"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "4.9%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "銅線 2.0 mm を 1 m"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "0.17 Ω"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "14.9%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "銅線 100 mm² を 1 km"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "10 Ω"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "26.7%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "電熱器 1 kW（100 V）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "10〜100 Ω 級"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "29.8%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "接地抵抗（種類で違う）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "250 Ω"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "36.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "計装の受信抵抗"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "約 1 kΩ"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "40.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "人体"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "0.1〜0.4 MΩ"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar sl-acc",
+  style: {
+    width: "55.3%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "低圧の絶縁抵抗（省令第58条）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "GΩ 級"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "80.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "良好な高圧ケーブルの絶縁")), /*#__PURE__*/React.createElement("p", {
+  className: "sl-cap"
+}, "対数目盛り（縦線が1000倍ごと）。人体・高圧ケーブルの値は目安。")), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data"
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "規模"), /*#__PURE__*/React.createElement("th", null, "身近なたとえ"), /*#__PURE__*/React.createElement("th", null, "電力設備・試験の場面"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "mΩ〜Ω"), /*#__PURE__*/React.createElement("td", null, "電線（銅線 100 mm² で 1 km 約 0.17 Ω）"), /*#__PURE__*/React.createElement("td", null, "流したい所。線路損失・電圧降下を決める")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "10〜100 Ω"), /*#__PURE__*/React.createElement("td", null, "電熱器（10 Ω）・接地抵抗（10〜100 Ω 級）"), /*#__PURE__*/React.createElement("td", null, "接地は種類で値が違う")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "数百 Ω〜kΩ"), /*#__PURE__*/React.createElement("td", null, "計装の受信抵抗（250 Ω）・人体（約 1 kΩ）"), /*#__PURE__*/React.createElement("td", null, "100 V が人体にかかると約 100 mA")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "MΩ〜GΩ"), /*#__PURE__*/React.createElement("td", null, "低圧の電路の絶縁（0.1 MΩ 以上）・高圧ケーブル（GΩ 級）"), /*#__PURE__*/React.createElement("td", null, "流したくない所"))))), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "電線の抵抗"), ": R ＝ ρL/S（銅 1.72×10⁻⁸ Ω·m・20 ℃）。アルミは銅の約 1.6 倍。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "低圧の電路の絶縁抵抗（省令第58条）"), ": 使用電圧 300 V 以下で対地電圧 150 V 以下なら 0.1 MΩ 以上、使用電圧 300 V 以下のその他なら 0.2 MΩ 以上、使用電圧 300 V 超なら 0.4 MΩ 以上。3節の第22条（低圧電線路）とは対象が違う。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "流したい所と流したくない所"), ": 電線と低圧の電路の絶縁は10万倍以上、接地と低圧の電路の絶縁でも数百倍以上離れている。")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "scale-ladder",
   sectionId: "teikou"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -29415,171 +29058,123 @@ const ScaleLadderPage = ({
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
 }, "5."), "インピーダンス（%Z・Ω）"), /*#__PURE__*/React.createElement("div", {
+  className: "scale-ladder",
+  role: "group",
+  "aria-label": "パーセントインピーダンスのはしご。対数目盛りで 1 % から 10,000 % まで、変圧器の %Z から励磁インピーダンスまでを棒の長さで並べる"
+}, /*#__PURE__*/React.createElement("div", {
+  className: "sl-grid"
+}, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
+  className: "sl-ticks"
+}, /*#__PURE__*/React.createElement("span", {
   style: {
-    margin: "18px 0",
-    padding: "14px 12px",
-    background: "var(--bg-sunken)",
-    border: "1px solid var(--rule)",
-    borderRadius: "10px"
+    left: "0.00%",
+    transform: "translateX(0)"
   }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 272 202",
-  width: "100%",
+}, "1 %"), /*#__PURE__*/React.createElement("span", {
   style: {
-    maxWidth: "480px",
-    height: "auto",
-    display: "block",
-    margin: "0 auto"
-  },
-  role: "img",
-  "aria-label": "パーセントインピーダンスのはしご図。対数目盛りで 1 % から 10,000 % まで、変圧器・直列リアクトル・同期リアクタンス・励磁インピーダンスを並べる"
-}, /*#__PURE__*/React.createElement("line", {
-  x1: "4.0",
-  y1: "20",
-  x2: "4.0",
-  y2: "196",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "70.0",
-  y1: "20",
-  x2: "70.0",
-  y2: "196",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "136.0",
-  y1: "20",
-  x2: "136.0",
-  y2: "196",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "202.0",
-  y1: "20",
-  x2: "202.0",
-  y2: "196",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "268.0",
-  y1: "20",
-  x2: "268.0",
-  y2: "196",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4.0",
-  y: "16",
-  textAnchor: "start",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1"), /*#__PURE__*/React.createElement("text", {
-  x: "70.0",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "10"), /*#__PURE__*/React.createElement("text", {
-  x: "136.0",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "100"), /*#__PURE__*/React.createElement("text", {
-  x: "202.0",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1,000"), /*#__PURE__*/React.createElement("text", {
-  x: "268.0",
-  y: "16",
-  textAnchor: "end",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "10,000 %"), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "38",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "4〜6 %"), "\u3000配電用変圧器の %Z"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "43",
-  width: "46.1",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "72",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "6 %"), "\u3000直列リアクトル（コンデンサ比）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "77",
-  width: "51.4",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "106",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "10〜15 %"), "\u3000大型変圧器の %Z"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "111",
-  width: "71.2",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "140",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "100〜200 %"), "\u3000同期発電機の同期リアクタンス"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "145",
-  width: "143.6",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "174",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "数千 %"), "\u3000変圧器の励磁インピーダンス"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "179",
-  width: "229.5",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-})), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 12,
-    color: "var(--ink-soft)",
-    margin: "8px 0 0"
+    left: "50.00%",
+    transform: "translateX(-50%)"
   }
-}, "対数目盛り（縦線が10倍ごと）。変圧器の %Z の範囲は R2 頻出数値暗記シートと同じ値。")), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "Ω ではなく %Z で比べる"), "。Ω の値は電圧の2乗で変わる。1,000 kVA・%Z 5 % の変圧器は、基準インピーダンス V²/S が 6.6 kV 側で 43.6 Ω なので Z ≒ 2.2 Ω、210 V 側で 0.044 Ω なので Z ≒ 2.2 mΩ。同じ 5 % が 1,000 倍違う Ω になる。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "短絡電流 ＝ 定格電流 × 100 / %Z"), "。%Z 5 % なら定格の20倍。%Z が小さいと電圧降下は小さいが短絡電流は大きく、遮断器の負担が増える（トレードオフ）。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "直列リアクトル 6 %"), ": 第5調波ではリアクタンスが5倍、コンデンサ側は1/5倍になるので、比は 5² × 6 % ＝ 150 % となり、回路が誘導性になる。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "対地静電容量"), ": 50 Hz で 1 µF のリアクタンスは約 3.2 kΩ。高圧配電系統の1相分の対地静電容量が 1 µF なら、1線地絡電流 3ωCE ≒ 3 × 314 × 1×10⁻⁶ × 3,810 ≒ 3.6 A（E ＝ 6,600/√3）。図3の「数 A」と同じ桁。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, "100 %"), /*#__PURE__*/React.createElement("span", {
+  style: {
+    left: "100.00%",
+    transform: "translateX(-100%)"
+  }
+}, "10⁴ %")), /*#__PURE__*/React.createElement("span", {
+  className: "sl-pad-end"
+}), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "4〜6 %"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(25.00% - 0.5px), var(--rule) calc(25.00% - 0.5px), var(--rule) calc(25.00% + 0.5px), transparent calc(25.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "17.5%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "配電用変圧器の %Z"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "6 %"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(25.00% - 0.5px), var(--rule) calc(25.00% - 0.5px), var(--rule) calc(25.00% + 0.5px), transparent calc(25.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "19.5%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "直列リアクトル（コンデンサ比）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "10〜15 %"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(25.00% - 0.5px), var(--rule) calc(25.00% - 0.5px), var(--rule) calc(25.00% + 0.5px), transparent calc(25.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "27.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "大型変圧器の %Z"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "80〜200 %"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(25.00% - 0.5px), var(--rule) calc(25.00% - 0.5px), var(--rule) calc(25.00% + 0.5px), transparent calc(25.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "52.8%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "同期発電機の同期リアクタンス（目安）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "数千 %"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(25.00% - 0.5px), var(--rule) calc(25.00% - 0.5px), var(--rule) calc(25.00% + 0.5px), transparent calc(25.00% + 0.5px)), linear-gradient(90deg, transparent calc(50.00% - 0.5px), var(--rule) calc(50.00% - 0.5px), var(--rule) calc(50.00% + 0.5px), transparent calc(50.00% + 0.5px)), linear-gradient(90deg, transparent calc(75.00% - 0.5px), var(--rule) calc(75.00% - 0.5px), var(--rule) calc(75.00% + 0.5px), transparent calc(75.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "86.9%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "変圧器の励磁インピーダンス")), /*#__PURE__*/React.createElement("p", {
+  className: "sl-cap"
+}, "対数目盛り（縦線が10倍ごと）。変圧器の %Z は R2 頻出数値暗記シートと同じ値。")), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data"
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "規模"), /*#__PURE__*/React.createElement("th", null, "身近なたとえ・設備"), /*#__PURE__*/React.createElement("th", null, "試験の場面"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "数 %"), /*#__PURE__*/React.createElement("td", null, "配電用変圧器（4〜6 %）・直列リアクトル（6 %）"), /*#__PURE__*/React.createElement("td", null, "短絡電流 ＝ 定格電流 × 100 / %Z（5 % なら20倍）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "10〜15 %"), /*#__PURE__*/React.createElement("td", null, "大型変圧器"), /*#__PURE__*/React.createElement("td", null, "%Z を大きくして短絡電流を抑える")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "80〜200 %"), /*#__PURE__*/React.createElement("td", null, "同期発電機の同期リアクタンス（目安）"), /*#__PURE__*/React.createElement("td", null, "短絡比 ＝ 100 / %Xs（0.5〜1.2 程度。試験の例題には 1.2 も出る＝%Xs 約 83 %）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "数千 %"), /*#__PURE__*/React.createElement("td", null, "変圧器の励磁インピーダンス"), /*#__PURE__*/React.createElement("td", null, "無負荷の励磁電流が小さい理由"))))), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "Ω ではなく %Z で比べる"), "。1,000 kVA・%Z 5 % なら、基準インピーダンス V²/S は 6.6 kV 側 43.6 Ω で Z ≒ 2.2 Ω、210 V 側 0.044 Ω で Z ≒ 2.2 mΩ。同じ 5 % が 1,000 倍違う Ω になる。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "直列リアクトル 6 %"), ": 第5調波ではリアクトルが5倍、コンデンサが1/5倍になり、比は 5² × 6 % ＝ 150 %。回路が誘導性になる。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "対地静電容量"), ": 50 Hz で 1 µF のリアクタンスは約 3.2 kΩ。1相 1 µF なら1線地絡電流 3ωCE ≒ 3 × 314 × 1×10⁻⁶ × 3,810 ≒ 3.6 A（E ＝ 6,600/√3）。3節の「数 A」と同じ桁。")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "scale-ladder",
   sectionId: "impedance"
 }), /*#__PURE__*/React.createElement("h2", {
@@ -29587,241 +29182,440 @@ const ScaleLadderPage = ({
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
 }, "6."), "力率（cos θ）"), /*#__PURE__*/React.createElement("div", {
+  className: "scale-ladder",
+  role: "group",
+  "aria-label": "力率のはしご。0 から 1 までの等間隔目盛りで、抵抗負荷からリアクトル・コンデンサまでを棒の長さで並べる"
+}, /*#__PURE__*/React.createElement("div", {
+  className: "sl-grid"
+}, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
+  className: "sl-ticks"
+}, /*#__PURE__*/React.createElement("span", {
   style: {
-    margin: "18px 0",
-    padding: "14px 12px",
-    background: "var(--bg-sunken)",
-    border: "1px solid var(--rule)",
-    borderRadius: "10px"
+    left: "0.00%",
+    transform: "translateX(0)"
   }
-}, /*#__PURE__*/React.createElement("svg", {
-  viewBox: "0 0 272 270",
-  width: "100%",
+}, "0"), /*#__PURE__*/React.createElement("span", {
   style: {
-    maxWidth: "480px",
-    height: "auto",
-    display: "block",
-    margin: "0 auto"
-  },
-  role: "img",
-  "aria-label": "力率のはしご図。0 から 1 までの等間隔目盛りで、抵抗負荷 1.0 から リアクトル・コンデンサの 0 までを並べ、同じ電力を送るときの電流倍率を添える"
-}, /*#__PURE__*/React.createElement("line", {
-  x1: "4.0",
-  y1: "20",
-  x2: "4.0",
-  y2: "264",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "56.8",
-  y1: "20",
-  x2: "56.8",
-  y2: "264",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "109.6",
-  y1: "20",
-  x2: "109.6",
-  y2: "264",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "162.4",
-  y1: "20",
-  x2: "162.4",
-  y2: "264",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "215.2",
-  y1: "20",
-  x2: "215.2",
-  y2: "264",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "268.0",
-  y1: "20",
-  x2: "268.0",
-  y2: "264",
-  stroke: "var(--rule)",
-  strokeWidth: "1"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4.0",
-  y: "16",
-  textAnchor: "start",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "0"), /*#__PURE__*/React.createElement("text", {
-  x: "56.8",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "0.2"), /*#__PURE__*/React.createElement("text", {
-  x: "109.6",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "0.4"), /*#__PURE__*/React.createElement("text", {
-  x: "162.4",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "0.6"), /*#__PURE__*/React.createElement("text", {
-  x: "215.2",
-  y: "16",
-  textAnchor: "middle",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "0.8"), /*#__PURE__*/React.createElement("text", {
-  x: "268.0",
-  y: "16",
-  textAnchor: "end",
-  fontSize: "11",
-  fill: "var(--ink-mute)"
-}, "1"), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "38",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "1.0"), "\u3000抵抗負荷（電流 1 倍）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "43",
-  width: "264.0",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "72",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "0.95"), "\u3000改善後の受電点（1.05 倍）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "77",
-  width: "250.8",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "106",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "0.9"), "\u3000改善の目標（1.11 倍）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "111",
-  width: "237.6",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "140",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "0.8"), "\u3000計算の定番（1.25 倍）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "145",
-  width: "211.2",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "174",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "0.6"), "\u3000軽負荷の電動機（1.67 倍）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "179",
-  width: "158.4",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "208",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "0.1〜0.2"), "\u3000無負荷の電動機・変圧器"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "213",
-  width: "39.6",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-}), /*#__PURE__*/React.createElement("text", {
-  x: "4",
-  y: "242",
-  fontSize: "12",
-  fill: "var(--ink)"
-}, /*#__PURE__*/React.createElement("tspan", {
-  fontWeight: "700"
-}, "0"), "\u3000リアクトル（遅れ）・コンデンサ（進み）"), /*#__PURE__*/React.createElement("rect", {
-  x: "4",
-  y: "247",
-  width: "2.0",
-  height: "10",
-  rx: "2",
-  fill: "var(--ink-mute)",
-  fillOpacity: "0.28"
-})), /*#__PURE__*/React.createElement("p", {
-  style: {
-    fontSize: 12,
-    color: "var(--ink-soft)",
-    margin: "8px 0 0"
+    left: "20.00%",
+    transform: "translateX(-50%)"
   }
-}, "等間隔目盛り。括弧内は、同じ有効電力を送るときに流れる電流の倍率（1/cos θ）。")), /*#__PURE__*/React.createElement("div", {
+}, "0.2"), /*#__PURE__*/React.createElement("span", {
+  style: {
+    left: "40.00%",
+    transform: "translateX(-50%)"
+  }
+}, "0.4"), /*#__PURE__*/React.createElement("span", {
+  style: {
+    left: "60.00%",
+    transform: "translateX(-50%)"
+  }
+}, "0.6"), /*#__PURE__*/React.createElement("span", {
+  style: {
+    left: "80.00%",
+    transform: "translateX(-50%)"
+  }
+}, "0.8"), /*#__PURE__*/React.createElement("span", {
+  style: {
+    left: "100.00%",
+    transform: "translateX(-100%)"
+  }
+}, "1")), /*#__PURE__*/React.createElement("span", {
+  className: "sl-pad-end"
+}), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "1.0"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "100.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "抵抗負荷（電流 1 倍）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "0.95"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "95.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "改善後の受電点（1.05 倍）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "0.9"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "90.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "改善の目標（1.11 倍）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "0.85"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar sl-acc",
+  style: {
+    width: "85.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "基本料金の割引・割増の基準（契約）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "0.8"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "80.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "計算の定番（1.25 倍）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "0.6"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "60.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "軽負荷の電動機（1.67 倍）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "0.1〜0.2"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "15.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "無負荷の電動機・変圧器"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "0"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(20.00% - 0.5px), var(--rule) calc(20.00% - 0.5px), var(--rule) calc(20.00% + 0.5px), transparent calc(20.00% + 0.5px)), linear-gradient(90deg, transparent calc(40.00% - 0.5px), var(--rule) calc(40.00% - 0.5px), var(--rule) calc(40.00% + 0.5px), transparent calc(40.00% + 0.5px)), linear-gradient(90deg, transparent calc(60.00% - 0.5px), var(--rule) calc(60.00% - 0.5px), var(--rule) calc(60.00% + 0.5px), transparent calc(60.00% + 0.5px)), linear-gradient(90deg, transparent calc(80.00% - 0.5px), var(--rule) calc(80.00% - 0.5px), var(--rule) calc(80.00% + 0.5px), transparent calc(80.00% + 0.5px)), linear-gradient(90deg, transparent calc(100.00% - 0.5px), var(--rule) calc(100.00% - 0.5px), var(--rule) calc(100.00% + 0.5px), transparent calc(100.00% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "1.0%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "リアクトル（遅れ）・コンデンサ（進み）")), /*#__PURE__*/React.createElement("p", {
+  className: "sl-cap"
+}, "等間隔目盛り。括弧内は、同じ電圧で同じ有効電力を送るときに流れる電流の倍率（1/cos θ）。0.85 は電力会社の契約の基準で、法令の値ではない。")), /*#__PURE__*/React.createElement("div", {
   className: "table-wrap"
 }, /*#__PURE__*/React.createElement("table", {
   className: "data"
-}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "cos θ"), /*#__PURE__*/React.createElement("th", null, "θ"), /*#__PURE__*/React.createElement("th", null, "tan θ"), /*#__PURE__*/React.createElement("th", null, "電流（1/cos θ）"), /*#__PURE__*/React.createElement("th", null, "線路損失（1/cos² θ）"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "1.0"), /*#__PURE__*/React.createElement("td", null, "0°"), /*#__PURE__*/React.createElement("td", null, "0"), /*#__PURE__*/React.createElement("td", null, "1 倍"), /*#__PURE__*/React.createElement("td", null, "1 倍")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "0.95"), /*#__PURE__*/React.createElement("td", null, "約 18°"), /*#__PURE__*/React.createElement("td", null, "約 0.33"), /*#__PURE__*/React.createElement("td", null, "約 1.05 倍"), /*#__PURE__*/React.createElement("td", null, "約 1.11 倍")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "0.9"), /*#__PURE__*/React.createElement("td", null, "約 26°"), /*#__PURE__*/React.createElement("td", null, "約 0.48"), /*#__PURE__*/React.createElement("td", null, "約 1.11 倍"), /*#__PURE__*/React.createElement("td", null, "約 1.23 倍")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "0.8"), /*#__PURE__*/React.createElement("td", null, "約 37°"), /*#__PURE__*/React.createElement("td", null, "0.75"), /*#__PURE__*/React.createElement("td", null, "1.25 倍"), /*#__PURE__*/React.createElement("td", null, "約 1.56 倍")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "0.6"), /*#__PURE__*/React.createElement("td", null, "約 53°"), /*#__PURE__*/React.createElement("td", null, "約 1.33"), /*#__PURE__*/React.createElement("td", null, "約 1.67 倍"), /*#__PURE__*/React.createElement("td", null, "約 2.78 倍"))))), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "力率改善に要るコンデンサ"), ": Qc ＝ P × (tan θ₁ − tan θ₂)。100 kW を 0.8 から 0.95 にすると 100 × (0.75 − 0.33) ≒ 42 kvar。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "0.95 → 1.0 は効果の割にコンデンサが大きい"), "（tan θ 約 0.33 分がすべて要る）。軽負荷時にコンデンサを入れたままにすると進み力率になり、受電電圧が上がる。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "遅れか進みかを必ず書く"), "。コイルは遅れ、コンデンサは進み。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "力率 85 %"), ": 基本料金の力率割引・割増の基準として一般的な値（電力会社の契約で、法令の値ではない。R2 頻出数値暗記シートと同じ）。")), /*#__PURE__*/React.createElement(SectionCheck, {
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "cos θ"), /*#__PURE__*/React.createElement("th", null, "θ"), /*#__PURE__*/React.createElement("th", null, "tan θ"), /*#__PURE__*/React.createElement("th", null, "電流（1/cos θ）"), /*#__PURE__*/React.createElement("th", null, "線路損失（1/cos² θ）"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "1.0"), /*#__PURE__*/React.createElement("td", null, "0°"), /*#__PURE__*/React.createElement("td", null, "0"), /*#__PURE__*/React.createElement("td", null, "1 倍"), /*#__PURE__*/React.createElement("td", null, "1 倍")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "0.95"), /*#__PURE__*/React.createElement("td", null, "約 18°"), /*#__PURE__*/React.createElement("td", null, "約 0.33"), /*#__PURE__*/React.createElement("td", null, "約 1.05 倍"), /*#__PURE__*/React.createElement("td", null, "約 1.11 倍")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "0.9"), /*#__PURE__*/React.createElement("td", null, "約 26°"), /*#__PURE__*/React.createElement("td", null, "約 0.48"), /*#__PURE__*/React.createElement("td", null, "約 1.11 倍"), /*#__PURE__*/React.createElement("td", null, "約 1.23 倍")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "0.8"), /*#__PURE__*/React.createElement("td", null, "約 37°"), /*#__PURE__*/React.createElement("td", null, "0.75"), /*#__PURE__*/React.createElement("td", null, "1.25 倍"), /*#__PURE__*/React.createElement("td", null, "約 1.56 倍")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "0.6"), /*#__PURE__*/React.createElement("td", null, "約 53°"), /*#__PURE__*/React.createElement("td", null, "約 1.33"), /*#__PURE__*/React.createElement("td", null, "約 1.67 倍"), /*#__PURE__*/React.createElement("td", null, "約 2.78 倍"))))), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "力率改善に要るコンデンサ"), ": Qc ＝ P × (tan θ₁ − tan θ₂)。100 kW を 0.8 から 0.95 にすると 100 × (0.75 − 0.33) ≒ 42 kvar。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "0.95 → 1.0 は効果の割にコンデンサが大きい"), "（tan θ 約 0.33 分がすべて要る）。軽負荷時に入れたままにすると進み力率になり、受電電圧が上がる。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "遅れか進みかを必ず書く"), "。コイルは遅れ、コンデンサは進み。")), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "scale-ladder",
   sectionId: "rikiritsu"
+}), /*#__PURE__*/React.createElement("h2", {
+  id: "shuuhasuu"
+}, /*#__PURE__*/React.createElement("span", {
+  className: "h-num"
+}, "7."), "周波数（Hz）"), /*#__PURE__*/React.createElement("div", {
+  className: "scale-ladder",
+  role: "group",
+  "aria-label": "周波数のはしご。対数目盛りで 1 Hz から約 3 GHz まで、すべり周波数から電子レンジまでを棒の長さで並べる"
+}, /*#__PURE__*/React.createElement("div", {
+  className: "sl-grid"
+}, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
+  className: "sl-ticks"
+}, /*#__PURE__*/React.createElement("span", {
+  style: {
+    left: "0.00%",
+    transform: "translateX(0)"
+  }
+}, "1 Hz"), /*#__PURE__*/React.createElement("span", {
+  style: {
+    left: "31.58%",
+    transform: "translateX(-50%)"
+  }
+}, "1 kHz"), /*#__PURE__*/React.createElement("span", {
+  style: {
+    left: "94.74%",
+    transform: "translateX(-100%)"
+  }
+}, "1 GHz")), /*#__PURE__*/React.createElement("span", {
+  className: "sl-pad-end"
+}), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "1.5 Hz"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(31.58% - 0.5px), var(--rule) calc(31.58% - 0.5px), var(--rule) calc(31.58% + 0.5px), transparent calc(31.58% + 0.5px)), linear-gradient(90deg, transparent calc(63.16% - 0.5px), var(--rule) calc(63.16% - 0.5px), var(--rule) calc(63.16% + 0.5px), transparent calc(63.16% + 0.5px)), linear-gradient(90deg, transparent calc(94.74% - 0.5px), var(--rule) calc(94.74% - 0.5px), var(--rule) calc(94.74% + 0.5px), transparent calc(94.74% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "1.9%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "誘導電動機のすべり周波数（例）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "50 Hz"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(31.58% - 0.5px), var(--rule) calc(31.58% - 0.5px), var(--rule) calc(31.58% + 0.5px), transparent calc(31.58% + 0.5px)), linear-gradient(90deg, transparent calc(63.16% - 0.5px), var(--rule) calc(63.16% - 0.5px), var(--rule) calc(63.16% + 0.5px), transparent calc(63.16% + 0.5px)), linear-gradient(90deg, transparent calc(94.74% - 0.5px), var(--rule) calc(94.74% - 0.5px), var(--rule) calc(94.74% + 0.5px), transparent calc(94.74% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar sl-acc",
+  style: {
+    width: "17.9%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "東日本の商用周波数"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "60 Hz"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(31.58% - 0.5px), var(--rule) calc(31.58% - 0.5px), var(--rule) calc(31.58% + 0.5px), transparent calc(31.58% + 0.5px)), linear-gradient(90deg, transparent calc(63.16% - 0.5px), var(--rule) calc(63.16% - 0.5px), var(--rule) calc(63.16% + 0.5px), transparent calc(63.16% + 0.5px)), linear-gradient(90deg, transparent calc(94.74% - 0.5px), var(--rule) calc(94.74% - 0.5px), var(--rule) calc(94.74% + 0.5px), transparent calc(94.74% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar sl-acc",
+  style: {
+    width: "18.7%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "西日本の商用周波数"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "100 Hz"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(31.58% - 0.5px), var(--rule) calc(31.58% - 0.5px), var(--rule) calc(31.58% + 0.5px), transparent calc(31.58% + 0.5px)), linear-gradient(90deg, transparent calc(63.16% - 0.5px), var(--rule) calc(63.16% - 0.5px), var(--rule) calc(63.16% + 0.5px), transparent calc(63.16% + 0.5px)), linear-gradient(90deg, transparent calc(94.74% - 0.5px), var(--rule) calc(94.74% - 0.5px), var(--rule) calc(94.74% + 0.5px), transparent calc(94.74% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "21.1%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "変圧器のうなり（60 Hz 系 120 Hz）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "250 Hz"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(31.58% - 0.5px), var(--rule) calc(31.58% - 0.5px), var(--rule) calc(31.58% + 0.5px), transparent calc(31.58% + 0.5px)), linear-gradient(90deg, transparent calc(63.16% - 0.5px), var(--rule) calc(63.16% - 0.5px), var(--rule) calc(63.16% + 0.5px), transparent calc(63.16% + 0.5px)), linear-gradient(90deg, transparent calc(94.74% - 0.5px), var(--rule) calc(94.74% - 0.5px), var(--rule) calc(94.74% + 0.5px), transparent calc(94.74% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "25.2%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "第5調波（60 Hz 系 300 Hz）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "400 Hz"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(31.58% - 0.5px), var(--rule) calc(31.58% - 0.5px), var(--rule) calc(31.58% + 0.5px), transparent calc(31.58% + 0.5px)), linear-gradient(90deg, transparent calc(63.16% - 0.5px), var(--rule) calc(63.16% - 0.5px), var(--rule) calc(63.16% + 0.5px), transparent calc(63.16% + 0.5px)), linear-gradient(90deg, transparent calc(94.74% - 0.5px), var(--rule) calc(94.74% - 0.5px), var(--rule) calc(94.74% + 0.5px), transparent calc(94.74% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "27.4%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "航空機の電源"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "2 kHz"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(31.58% - 0.5px), var(--rule) calc(31.58% - 0.5px), var(--rule) calc(31.58% + 0.5px), transparent calc(31.58% + 0.5px)), linear-gradient(90deg, transparent calc(63.16% - 0.5px), var(--rule) calc(63.16% - 0.5px), var(--rule) calc(63.16% + 0.5px), transparent calc(63.16% + 0.5px)), linear-gradient(90deg, transparent calc(94.74% - 0.5px), var(--rule) calc(94.74% - 0.5px), var(--rule) calc(94.74% + 0.5px), transparent calc(94.74% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "34.7%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "第40次調波（60 Hz 系 2.4 kHz）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "数 kHz〜"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(31.58% - 0.5px), var(--rule) calc(31.58% - 0.5px), var(--rule) calc(31.58% + 0.5px), transparent calc(31.58% + 0.5px)), linear-gradient(90deg, transparent calc(63.16% - 0.5px), var(--rule) calc(63.16% - 0.5px), var(--rule) calc(63.16% + 0.5px), transparent calc(63.16% + 0.5px)), linear-gradient(90deg, transparent calc(94.74% - 0.5px), var(--rule) calc(94.74% - 0.5px), var(--rule) calc(94.74% + 0.5px), transparent calc(94.74% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "42.1%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "インバータのキャリア（〜十数 kHz）"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "20 kHz"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(31.58% - 0.5px), var(--rule) calc(31.58% - 0.5px), var(--rule) calc(31.58% + 0.5px), transparent calc(31.58% + 0.5px)), linear-gradient(90deg, transparent calc(63.16% - 0.5px), var(--rule) calc(63.16% - 0.5px), var(--rule) calc(63.16% + 0.5px), transparent calc(63.16% + 0.5px)), linear-gradient(90deg, transparent calc(94.74% - 0.5px), var(--rule) calc(94.74% - 0.5px), var(--rule) calc(94.74% + 0.5px), transparent calc(94.74% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "45.3%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "人の耳に聞こえる上限"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "数十 kHz"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(31.58% - 0.5px), var(--rule) calc(31.58% - 0.5px), var(--rule) calc(31.58% + 0.5px), transparent calc(31.58% + 0.5px)), linear-gradient(90deg, transparent calc(63.16% - 0.5px), var(--rule) calc(63.16% - 0.5px), var(--rule) calc(63.16% + 0.5px), transparent calc(63.16% + 0.5px)), linear-gradient(90deg, transparent calc(94.74% - 0.5px), var(--rule) calc(94.74% - 0.5px), var(--rule) calc(94.74% + 0.5px), transparent calc(94.74% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "49.5%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "IH 調理器"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "約 1 MHz"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(31.58% - 0.5px), var(--rule) calc(31.58% - 0.5px), var(--rule) calc(31.58% + 0.5px), transparent calc(31.58% + 0.5px)), linear-gradient(90deg, transparent calc(63.16% - 0.5px), var(--rule) calc(63.16% - 0.5px), var(--rule) calc(63.16% + 0.5px), transparent calc(63.16% + 0.5px)), linear-gradient(90deg, transparent calc(94.74% - 0.5px), var(--rule) calc(94.74% - 0.5px), var(--rule) calc(94.74% + 0.5px), transparent calc(94.74% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "63.2%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "AM ラジオ"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-val"
+}, "2.45 GHz"), /*#__PURE__*/React.createElement("span", {
+  className: "sl-track",
+  style: {
+    backgroundImage: "linear-gradient(90deg, transparent calc(0.00% - 0.5px), var(--rule) calc(0.00% - 0.5px), var(--rule) calc(0.00% + 0.5px), transparent calc(0.00% + 0.5px)), linear-gradient(90deg, transparent calc(31.58% - 0.5px), var(--rule) calc(31.58% - 0.5px), var(--rule) calc(31.58% + 0.5px), transparent calc(31.58% + 0.5px)), linear-gradient(90deg, transparent calc(63.16% - 0.5px), var(--rule) calc(63.16% - 0.5px), var(--rule) calc(63.16% + 0.5px), transparent calc(63.16% + 0.5px)), linear-gradient(90deg, transparent calc(94.74% - 0.5px), var(--rule) calc(94.74% - 0.5px), var(--rule) calc(94.74% + 0.5px), transparent calc(94.74% + 0.5px))"
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  className: "sl-bar",
+  style: {
+    width: "98.8%"
+  }
+})), /*#__PURE__*/React.createElement("span", {
+  className: "sl-name"
+}, "電子レンジ")), /*#__PURE__*/React.createElement("p", {
+  className: "sl-cap"
+}, "対数目盛り（縦線が1000倍ごと）。60 Hz 系で値が違う行は括弧内に書いた。キャリア・IH は目安。")), /*#__PURE__*/React.createElement("div", {
+  className: "table-wrap"
+}, /*#__PURE__*/React.createElement("table", {
+  className: "data"
+}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "周波数"), /*#__PURE__*/React.createElement("th", null, "身近なたとえ"), /*#__PURE__*/React.createElement("th", null, "電験で出る場面"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "0 Hz"), /*#__PURE__*/React.createElement("td", null, "乾電池・直流送電"), /*#__PURE__*/React.createElement("td", null, "直流の定常状態では X", /*#__PURE__*/React.createElement("sub", null, "L"), " ＝ 0（コイルは短絡）、X", /*#__PURE__*/React.createElement("sub", null, "C"), " は無限大（コンデンサは開放）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "数 Hz"), /*#__PURE__*/React.createElement("td", null, "心拍（約 1 Hz）くらいのゆっくりした変化"), /*#__PURE__*/React.createElement("td", null, "すべり周波数 sf（s ＝ 3 %・50 Hz で 1.5 Hz）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "50/60 Hz"), /*#__PURE__*/React.createElement("td", null, "東日本／西日本のコンセント"), /*#__PURE__*/React.createElement("td", null, "4極の同期速度 1,500／1,800 min⁻¹（N", /*#__PURE__*/React.createElement("sub", null, "s"), " ＝ 120f/p）")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "100/120 Hz"), /*#__PURE__*/React.createElement("td", null, "変圧器の「ブーン」といううなり"), /*#__PURE__*/React.createElement("td", null, "鉄心の磁歪は電源の2倍の周波数で伸び縮みする")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "数百 Hz〜kHz"), /*#__PURE__*/React.createElement("td", null, "高調波（第n調波は n 倍）"), /*#__PURE__*/React.createElement("td", null, "第5調波 250/300 Hz。直列リアクトルで対策")), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  style: {
+    whiteSpace: "nowrap"
+  }
+}, "kHz〜GHz"), /*#__PURE__*/React.createElement("td", null, "インバータの「キーン」音・IH・電子レンジ"), /*#__PURE__*/React.createElement("td", null, "誘導加熱・誘電加熱（電熱）"))))), /*#__PURE__*/React.createElement("ul", null, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "周期で覚える"), ": 50 Hz は 20 ms、60 Hz は約 16.7 ms。遮断器の「3サイクル遮断」は 50 Hz で 60 ms、60 Hz で 50 ms。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "f で増える物・減る物を分ける"), ": X", /*#__PURE__*/React.createElement("sub", null, "L"), " ＝ 2πfL と同期速度は f に比例、X", /*#__PURE__*/React.createElement("sub", null, "C"), " ＝ 1/(2πfC) は f に反比例。変圧器の磁束（最大値 Φ", /*#__PURE__*/React.createElement("sub", null, "m"), "）は V ＝ 4.44fNΦ", /*#__PURE__*/React.createElement("sub", null, "m"), " から、同じ電圧なら f に反比例する。60 Hz 用の変圧器を同じ電圧の 50 Hz で使うと磁束は 1.2 倍になり、励磁電流と鉄損が増える。"), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "周波数は、法令が ± の数値を決めていない"), "（電圧は同じ第38条第1項が 101 ± 6 V などを決めている）。一般送配電事業者は周波数を「標準周波数に等しい値」に維持するよう努める（電気事業法第26条第1項・同施行規則第38条第2項）。±0.2 Hz などは電力会社の運用目標。")), /*#__PURE__*/React.createElement(SectionCheck, {
+  pageId: "scale-ladder",
+  sectionId: "shuuhasuu"
 }), /*#__PURE__*/React.createElement("h2", {
   id: "renshuu"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "7."), "桁チェック練習"), /*#__PURE__*/React.createElement("p", null, "先に答えの桁を予想してから開く。"), /*#__PURE__*/React.createElement(Box, {
+}, "8."), "桁チェック練習"), /*#__PURE__*/React.createElement("p", null, "先に答えの桁を予想してから開く。"), /*#__PURE__*/React.createElement(Box, {
   kind: "example",
   label: "問1\u30001,000 kVA・一次 6.6 kV の三相変圧器の定格一次電流は、約 9 A・約 87 A・約 870 A のどれか"
-}, /*#__PURE__*/React.createElement(Solution, null, /*#__PURE__*/React.createElement("p", null, "I ＝ 1,000,000 ÷ (√3 × 6,600) ≒ 1,000,000 ÷ 11,431 ≒ ", /*#__PURE__*/React.createElement("strong", null, "約 87 A"), "。図3の「約87 A」の行と同じ。√3 を忘れると約 152 A になる。"))), /*#__PURE__*/React.createElement(Box, {
+}, /*#__PURE__*/React.createElement(Solution, null, /*#__PURE__*/React.createElement("p", null, "I ＝ 1,000,000 ÷ (√3 × 6,600) ≒ 1,000,000 ÷ 11,431 ≒ ", /*#__PURE__*/React.createElement("strong", null, "約 87 A"), "。3節のはしごの「約 87 A」の行と同じ。√3 を忘れると約 152 A になる。"))), /*#__PURE__*/React.createElement(Box, {
   kind: "example",
   label: "問2\u3000%Z 5 % の変圧器の二次側で三相短絡が起きた。短絡電流は定格電流の何倍か（電源側のインピーダンスは無視）"
 }, /*#__PURE__*/React.createElement(Solution, null, /*#__PURE__*/React.createElement("p", null, "短絡電流 ＝ 定格電流 × 100 / %Z ＝ 定格電流 × 100 / 5 ＝ ", /*#__PURE__*/React.createElement("strong", null, "20 倍"), "。"))), /*#__PURE__*/React.createElement(Box, {
   kind: "example",
-  label: "問3\u3000同じ有効電力を同じ線路で送るとき、力率を 0.8 から 1.0 に上げると、線路損失は何倍になるか"
-}, /*#__PURE__*/React.createElement(Solution, null, /*#__PURE__*/React.createElement("p", null, "線路損失は 1/cos² θ に比例するので、(0.8/1.0)² ＝ ", /*#__PURE__*/React.createElement("strong", null, "0.64 倍"), "。損失は約 36 % 減る。"))), /*#__PURE__*/React.createElement(SectionCheck, {
+  label: "問3\u3000同じ電圧・同じ線路で同じ有効電力を送るとき、力率を 0.8 から 1.0 に上げると、線路損失は何倍になるか"
+}, /*#__PURE__*/React.createElement(Solution, null, /*#__PURE__*/React.createElement("p", null, "電圧と有効電力が同じなら、線路損失は 1/cos² θ に比例するので、(0.8/1.0)² ＝ ", /*#__PURE__*/React.createElement("strong", null, "0.64 倍"), "。損失は約 36 % 減る。"))), /*#__PURE__*/React.createElement(Box, {
+  kind: "example",
+  label: "問4\u300060 Hz 用の変圧器を、同じ電圧の 50 Hz の電源につないだ。鉄心の磁束はおよそ何倍になるか"
+}, /*#__PURE__*/React.createElement(Solution, null, /*#__PURE__*/React.createElement("p", null, "V ＝ 4.44fNΦ", /*#__PURE__*/React.createElement("sub", null, "m"), "（Φ", /*#__PURE__*/React.createElement("sub", null, "m"), " は磁束の最大値）より、V と N が同じなら Φ", /*#__PURE__*/React.createElement("sub", null, "m"), " は f に反比例する。Φ", /*#__PURE__*/React.createElement("sub", null, "m"), " は 60/50 ＝ ", /*#__PURE__*/React.createElement("strong", null, "1.2 倍"), "。励磁電流と鉄損が増え、過熱しやすくなる。"))), /*#__PURE__*/React.createElement(SectionCheck, {
   pageId: "scale-ladder",
   sectionId: "renshuu"
 }), /*#__PURE__*/React.createElement("h2", {
   id: "self-check"
 }, /*#__PURE__*/React.createElement("span", {
   className: "h-num"
-}, "8."), "理解度チェック（弱点の洗い出し）"), /*#__PURE__*/React.createElement("p", null, "各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。"), /*#__PURE__*/React.createElement(SectionCheckSummary, {
+}, "9."), "理解度チェック（弱点の洗い出し）"), /*#__PURE__*/React.createElement("p", null, "各セクション末尾の ◎○△× 評価（このブラウザに保存）を集計する。△・×・未評価のセクションから再読すると復習が最短になる。"), /*#__PURE__*/React.createElement(SectionCheckSummary, {
   pageId: "scale-ladder",
   sections: [{
     id: "youryou",
@@ -29842,8 +29636,11 @@ const ScaleLadderPage = ({
     id: "rikiritsu",
     label: "6. 力率（cos θ）"
   }, {
+    id: "shuuhasuu",
+    label: "7. 周波数（Hz）"
+  }, {
     id: "renshuu",
-    label: "7. 桁チェック練習"
+    label: "8. 桁チェック練習"
   }]
 }), /*#__PURE__*/React.createElement(Box, {
   kind: "tip",
