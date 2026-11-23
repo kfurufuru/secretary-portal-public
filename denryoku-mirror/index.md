@@ -8,6 +8,7 @@
 - [1.4 新エネルギー発電](shin-energy.md)
 - [2.1 変圧器（基礎ハブ）](henatsuki.md)
 - [2.1.1 %Z・基準容量換算・並行運転](pz-heikou.md)
+- [2.1.2 短絡電流・遮断器容量・OCR整定](tanraku-ocr.md)
 - [2.2 変圧器の損失・効率](henatsuki-loss.md)
 - [2.3 計器用変成器（VT・CT）](keiki-hensei.md)
 - [2.4 遮断器・断路器（CB・DS）](shadanki.md)
@@ -31,3 +32,4 @@
 - [R2 頻出数値暗記シート](numbers.md)
 - [R3 用語集](glossary.md)
 - [R4 絵文字マーカー凡例](emoji-legend.md)
+- [R5 規模感（桁のはしご）](scale-ladder.md)

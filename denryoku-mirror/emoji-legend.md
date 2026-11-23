@@ -46,3 +46,7 @@ R4 · EMOJI MARKER LEGEND
 
 R3 用語集
 
+次 →
+
+R5 規模感（桁のはしご）
+
