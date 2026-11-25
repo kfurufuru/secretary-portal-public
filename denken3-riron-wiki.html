@@ -54304,6 +54304,22 @@ const PageTabs = ({
      後から走って上書きすることがあるため、複数タイミング＋load 完了後にも再試行する */
   useEffect(() => {
     let timers = [];
+    let cancelled = false;
+    /* ユーザーが自分でスクロールしたら、保留中の再試行を打ち切る。打ち切らないと、着地から約3秒のあいだ
+       読み進めても見出しへ引き戻される（#2378 で実測）。合図はスクロールさせる入力だけにする:
+       ホイール・タッチのドラッグ・スクロールキー・スクロールバーの上の mousedown。
+       クリックや Shift などのスクロールしない入力で打ち切ると、ダブルクリックや押してすぐのキーで
+       着地しなくなる（#2381 の壊す側監査で再現）。scroll イベントは使わない（自分の scrollIntoView でも発火する）。
+       次の hashchange で打ち切りは解ける。 */
+    const SCROLL_KEYS = ['PageUp', 'PageDown', ' ', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+    const cancel = e => {
+      if (e.type === 'keydown' && !SCROLL_KEYS.includes(e.key)) return;
+      if (e.type === 'mousedown' && e.clientX < document.documentElement.clientWidth) return; /* スクロールバーの上だけ */
+      cancelled = true;
+      timers.forEach(clearTimeout);
+      timers = [];
+    };
+    const USER_INPUT = ['wheel', 'touchmove', 'keydown', 'mousedown'];
     /* jump は**発火時に hash を読み直す**。捕捉した parts を使うと、節を続けて切り替えた
        ときに先行アンカーのタイマーがビューポートを引き戻す（実測: 500ms 間隔で
        fleming-table → shape-table と切り替えると、約2.5秒間 24px と 1586px を往復した）。 */
@@ -54321,20 +54337,28 @@ const PageTabs = ({
     const jumpIfTargeted = () => {
       timers.forEach(clearTimeout); /* 先行アンカーの保留タイマーを取り消す */
       timers = [];
+      cancelled = false;
       const parts = location.hash.replace(/^#/, '').split(':');
       if (parts[0] !== pageId || !parts[2] || parts[1] !== activeTab) return;
       /* KaTeX/SVG の後続レンダで文書高が安定するまで段階的に再試行 */
       [150, 600, 1500, 3000].forEach(ms => timers.push(setTimeout(jump, ms)));
       if (document.readyState !== 'complete') {
-        window.addEventListener('load', () => timers.push(setTimeout(jump, 250)), {
+        window.addEventListener('load', () => {
+          if (!cancelled) timers.push(setTimeout(jump, 250));
+        }, {
           once: true
         });
       }
     };
     jumpIfTargeted();
     window.addEventListener('hashchange', jumpIfTargeted);
+    USER_INPUT.forEach(ev => window.addEventListener(ev, cancel, {
+      passive: true
+    }));
     return () => {
       window.removeEventListener('hashchange', jumpIfTargeted);
+      USER_INPUT.forEach(ev => window.removeEventListener(ev, cancel));
+      cancelled = true; /* 古い effect の load の再試行も止める（effect のやり直しで残らないように） */
       timers.forEach(clearTimeout);
     };
   }, [pageId, activeTab]);
@@ -82520,6 +82544,22 @@ const App = () => {
      KaTeX/SVG の後続レンダで文書高が変わる点は PageTabs と同じなので、再試行の刻みも揃える。 */
   useEffect(() => {
     let timers = [];
+    let cancelled = false;
+    /* ユーザーが自分でスクロールしたら、保留中の再試行を打ち切る。打ち切らないと、着地から約3秒のあいだ
+       読み進めても見出しへ引き戻される（#2378 で実測）。合図はスクロールさせる入力だけにする:
+       ホイール・タッチのドラッグ・スクロールキー・スクロールバーの上の mousedown。
+       クリックや Shift などのスクロールしない入力で打ち切ると、ダブルクリックや押してすぐのキーで
+       着地しなくなる（#2381 の壊す側監査で再現）。scroll イベントは使わない（自分の scrollIntoView でも発火する）。
+       次の hashchange で打ち切りは解ける。 */
+    const SCROLL_KEYS = ['PageUp', 'PageDown', ' ', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+    const cancel = e => {
+      if (e.type === 'keydown' && !SCROLL_KEYS.includes(e.key)) return;
+      if (e.type === 'mousedown' && e.clientX < document.documentElement.clientWidth) return; /* スクロールバーの上だけ */
+      cancelled = true;
+      timers.forEach(clearTimeout);
+      timers = [];
+    };
+    const USER_INPUT = ['wheel', 'touchmove', 'keydown', 'mousedown'];
     /* PageTabs 側と同じ理由で、jump は**発火時に hash を読み直す**（捕捉した parts を
        使うと先行アンカーのタイマーが引き戻す）。 */
     const jump = () => {
@@ -82542,19 +82582,27 @@ const App = () => {
     const jumpToAnchor = () => {
       timers.forEach(clearTimeout); /* 先行アンカーの保留タイマーを取り消す */
       timers = [];
+      cancelled = false;
       const parts = location.hash.replace(/^#/, '').split(':');
       if (parts.length !== 2 || !parts[1] || parts[0] === 'glossary') return;
       [150, 600, 1500, 3000].forEach(ms => timers.push(setTimeout(jump, ms)));
       if (document.readyState !== 'complete') {
-        window.addEventListener('load', () => timers.push(setTimeout(jump, 250)), {
+        window.addEventListener('load', () => {
+          if (!cancelled) timers.push(setTimeout(jump, 250));
+        }, {
           once: true
         });
       }
     };
     jumpToAnchor();
     window.addEventListener('hashchange', jumpToAnchor);
+    USER_INPUT.forEach(ev => window.addEventListener(ev, cancel, {
+      passive: true
+    }));
     return () => {
       window.removeEventListener('hashchange', jumpToAnchor);
+      USER_INPUT.forEach(ev => window.removeEventListener(ev, cancel));
+      cancelled = true; /* 古い effect の load の再試行も止める（effect のやり直しで残らないように） */
       timers.forEach(clearTimeout);
     };
   }, [page]);
