@@ -9429,6 +9429,20 @@ const SectionCheckSummary = ({
     href: `#${pageId}/${s.id}`,
     onClick: e => {
       e.preventDefault();
+      /* 同じ節を続けて押すと hash が変わらず、hashchange も App の着地処理も起きない。そのときはここで直接移る
+         （1分復習の qrGoSection・電力の kaJump と同じ。直す前は 390 幅で top=-36951 のまま飛ばなかった） */
+      let cur = location.hash;
+      try {
+        cur = decodeURIComponent(cur);
+      } catch (err) {/* 壊れた % はそのまま比べる */}
+      const el = cur === `#${pageId}/${s.id}` && document.getElementById(s.id);
+      if (el) {
+        el.scrollIntoView({
+          block: 'start',
+          behavior: 'auto'
+        });
+        return;
+      }
       if (onJump) onJump(s.id);else {
         location.hash = `${pageId}/${s.id}`;
       }

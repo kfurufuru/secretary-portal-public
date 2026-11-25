@@ -54304,6 +54304,8 @@ const PageTabs = ({
      後から走って上書きすることがあるため、複数タイミング＋load 完了後にも再試行する */
   useEffect(() => {
     let timers = [];
+    let gen = 0,
+      lastJumpAt = 0; /* 打ち切りの判定で、着地のやり直しと自分の再試行による移動を利用者の移動と取り違えないため */
     let cancelled = false;
     /* ユーザーが自分でスクロールしたら、保留中の再試行を打ち切る。打ち切らないと、着地から約3秒のあいだ
        読み進めても見出しへ引き戻される（#2378 で実測）。合図はスクロールさせる入力だけにする:
@@ -54312,12 +54314,29 @@ const PageTabs = ({
        着地しなくなる（#2381 の壊す側監査で再現）。scroll イベントは使わない（自分の scrollIntoView でも発火する）。
        次の hashchange で打ち切りは解ける。 */
     const SCROLL_KEYS = ['PageUp', 'PageDown', ' ', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
-    const cancel = e => {
-      if (e.type === 'keydown' && !SCROLL_KEYS.includes(e.key)) return;
-      if (e.type === 'mousedown' && e.clientX < document.documentElement.clientWidth) return; /* スクロールバーの上だけ */
+    /* スクロールキーは、押した後にページが実際に動いたときだけ打ち切る。要素の種類で決めると外れる:
+       ボタン・チェックボックスの上の PageDown・矢印・End はページを動かすのに、入力欄・select・range・summary の上の
+       Space や矢印は動かさない（電力 #2387・理論 #2395 の壊す側監査で、どちらの向きの外れも再現した）。
+       縦に動かないホイール（横スワイプ・Shift+ホイール）も打ち切らない。 */
+    const stop = () => {
       cancelled = true;
       timers.forEach(clearTimeout);
       timers = [];
+    };
+    const cancel = e => {
+      if (e.type === 'keydown') {
+        if (!SCROLL_KEYS.includes(e.key)) return;
+        const g = gen,
+          t0 = Date.now(),
+          y0 = window.scrollY;
+        setTimeout(() => {
+          if (g === gen && lastJumpAt < t0 && Math.abs(window.scrollY - y0) > 1) stop();
+        }, 100);
+        return;
+      }
+      if (e.type === 'wheel' && e.deltaY === 0) return;
+      if (e.type === 'mousedown' && e.clientX < document.documentElement.clientWidth) return; /* スクロールバーの上だけ */
+      stop();
     };
     const USER_INPUT = ['wheel', 'touchmove', 'keydown', 'mousedown'];
     /* jump は**発火時に hash を読み直す**。捕捉した parts を使うと、節を続けて切り替えた
@@ -54330,14 +54349,18 @@ const PageTabs = ({
       if (!el) return;
       /* 既に見出し位置（scroll-margin-top=24px 相当）にあれば再スクロールしない（冪等化） */
       const top = el.getBoundingClientRect().top;
-      if (Math.abs(top - 24) > 40) el.scrollIntoView({
-        block: 'start'
-      });
+      if (Math.abs(top - 24) > 40) {
+        lastJumpAt = Date.now();
+        el.scrollIntoView({
+          block: 'start'
+        });
+      }
     };
     const jumpIfTargeted = () => {
       timers.forEach(clearTimeout); /* 先行アンカーの保留タイマーを取り消す */
       timers = [];
       cancelled = false;
+      gen++;
       const parts = location.hash.replace(/^#/, '').split(':');
       if (parts[0] !== pageId || !parts[2] || parts[1] !== activeTab) return;
       /* KaTeX/SVG の後続レンダで文書高が安定するまで段階的に再試行 */
@@ -82544,6 +82567,8 @@ const App = () => {
      KaTeX/SVG の後続レンダで文書高が変わる点は PageTabs と同じなので、再試行の刻みも揃える。 */
   useEffect(() => {
     let timers = [];
+    let gen = 0,
+      lastJumpAt = 0; /* 打ち切りの判定で、着地のやり直しと自分の再試行による移動を利用者の移動と取り違えないため */
     let cancelled = false;
     /* ユーザーが自分でスクロールしたら、保留中の再試行を打ち切る。打ち切らないと、着地から約3秒のあいだ
        読み進めても見出しへ引き戻される（#2378 で実測）。合図はスクロールさせる入力だけにする:
@@ -82552,12 +82577,29 @@ const App = () => {
        着地しなくなる（#2381 の壊す側監査で再現）。scroll イベントは使わない（自分の scrollIntoView でも発火する）。
        次の hashchange で打ち切りは解ける。 */
     const SCROLL_KEYS = ['PageUp', 'PageDown', ' ', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
-    const cancel = e => {
-      if (e.type === 'keydown' && !SCROLL_KEYS.includes(e.key)) return;
-      if (e.type === 'mousedown' && e.clientX < document.documentElement.clientWidth) return; /* スクロールバーの上だけ */
+    /* スクロールキーは、押した後にページが実際に動いたときだけ打ち切る。要素の種類で決めると外れる:
+       ボタン・チェックボックスの上の PageDown・矢印・End はページを動かすのに、入力欄・select・range・summary の上の
+       Space や矢印は動かさない（電力 #2387・理論 #2395 の壊す側監査で、どちらの向きの外れも再現した）。
+       縦に動かないホイール（横スワイプ・Shift+ホイール）も打ち切らない。 */
+    const stop = () => {
       cancelled = true;
       timers.forEach(clearTimeout);
       timers = [];
+    };
+    const cancel = e => {
+      if (e.type === 'keydown') {
+        if (!SCROLL_KEYS.includes(e.key)) return;
+        const g = gen,
+          t0 = Date.now(),
+          y0 = window.scrollY;
+        setTimeout(() => {
+          if (g === gen && lastJumpAt < t0 && Math.abs(window.scrollY - y0) > 1) stop();
+        }, 100);
+        return;
+      }
+      if (e.type === 'wheel' && e.deltaY === 0) return;
+      if (e.type === 'mousedown' && e.clientX < document.documentElement.clientWidth) return; /* スクロールバーの上だけ */
+      stop();
     };
     const USER_INPUT = ['wheel', 'touchmove', 'keydown', 'mousedown'];
     /* PageTabs 側と同じ理由で、jump は**発火時に hash を読み直す**（捕捉した parts を
@@ -82575,14 +82617,18 @@ const App = () => {
       const el = document.getElementById(id);
       if (!el) return;
       const top = el.getBoundingClientRect().top;
-      if (Math.abs(top - 24) > 40) el.scrollIntoView({
-        block: 'start'
-      });
+      if (Math.abs(top - 24) > 40) {
+        lastJumpAt = Date.now();
+        el.scrollIntoView({
+          block: 'start'
+        });
+      }
     };
     const jumpToAnchor = () => {
       timers.forEach(clearTimeout); /* 先行アンカーの保留タイマーを取り消す */
       timers = [];
       cancelled = false;
+      gen++;
       const parts = location.hash.replace(/^#/, '').split(':');
       if (parts.length !== 2 || !parts[1] || parts[0] === 'glossary') return;
       [150, 600, 1500, 3000].forEach(ms => timers.push(setTimeout(jump, ms)));
