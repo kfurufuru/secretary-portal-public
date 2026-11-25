@@ -30365,6 +30365,25 @@ const App = () => {
      先行アンカーのタイマーがビューポートを引き戻す）。 */
   useEffect(() => {
     let timers = [];
+    let cancelled = false;
+    /* ユーザーが自分でスクロールしたら、保留中の再試行を打ち切る。打ち切らないと、着地から約3秒のあいだ
+       読み進めても見出しへ引き戻される（理論Wiki #2381 と同じ不具合。電力でも 390・1280 幅で再現した）。
+       合図はスクロールさせる入力だけにする: ホイール・タッチのドラッグ・スクロールキー・スクロールバーの上の mousedown。
+       クリックや Shift などのスクロールしない入力で打ち切ると、ダブルクリックや押してすぐのキーで
+       着地しなくなる（#2381 の壊す側監査で再現）。scroll イベントは使わない（自分の scrollIntoView でも発火する）。
+       次の hashchange で打ち切りは解ける。 */
+    const SCROLL_KEYS = ['PageUp', 'PageDown', ' ', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+    /* 入力欄・ボタンの上のキーと、縦に動かないホイール（横スワイプ・Shift+ホイール）はページをスクロールしないので打ち切らない
+       （本 PR の壊す側監査で、検索欄に「変圧 器」と打つと打ち切られて補正が止まる形を再現した）。 */
+    const cancel = e => {
+      if (e.type === 'keydown' && (!SCROLL_KEYS.includes(e.key) || e.target && e.target.closest && e.target.closest('input, textarea, select, button, [contenteditable]'))) return;
+      if (e.type === 'wheel' && e.deltaY === 0) return;
+      if (e.type === 'mousedown' && e.clientX < document.documentElement.clientWidth) return; /* スクロールバーの上だけ */
+      cancelled = true;
+      timers.forEach(clearTimeout);
+      timers = [];
+    };
+    const USER_INPUT = ['wheel', 'touchmove', 'keydown', 'mousedown'];
     const jump = () => {
       const parts = location.hash.replace(/^#/, '').split(':');
       if (parts.length !== 2 || !parts[1]) return;
@@ -30385,19 +30404,27 @@ const App = () => {
     const jumpToAnchor = () => {
       timers.forEach(clearTimeout);
       timers = [];
+      cancelled = false;
       const parts = location.hash.replace(/^#/, '').split(':');
       if (parts.length !== 2 || !parts[1]) return;
       [150, 600, 1500, 3000].forEach(ms => timers.push(setTimeout(jump, ms)));
       if (document.readyState !== 'complete') {
-        window.addEventListener('load', () => timers.push(setTimeout(jump, 250)), {
+        window.addEventListener('load', () => {
+          if (!cancelled) timers.push(setTimeout(jump, 250));
+        }, {
           once: true
         });
       }
     };
     jumpToAnchor();
     window.addEventListener('hashchange', jumpToAnchor);
+    USER_INPUT.forEach(ev => window.addEventListener(ev, cancel, {
+      passive: true
+    }));
     return () => {
       window.removeEventListener('hashchange', jumpToAnchor);
+      USER_INPUT.forEach(ev => window.removeEventListener(ev, cancel));
+      cancelled = true; /* 古い effect の load の再試行も止める（effect のやり直しで残らないように） */
       timers.forEach(clearTimeout);
     };
   }, [page]);
