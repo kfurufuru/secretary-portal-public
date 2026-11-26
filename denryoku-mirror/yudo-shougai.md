@@ -52,7 +52,7 @@ Y1
 
 静電誘導電圧（不平衡分・代表式）
 
- $E_s = \dfrac{\sqrt{C_a{}^2 + C_b{}^2 + C_c{}^2 - C_aC_b - C_bC_c - C_cC_a}}{C_a + C_b + C_c + C_s}\, E$
+ $\begin{aligned} E_s &= \dfrac{\sqrt{X}}{C_a + C_b + C_c + C_s}\, E \cr X &= C_a{}^2 + C_b{}^2 + C_c{}^2 \cr &\quad - C_aC_b - C_bC_c - C_cC_a \end{aligned}$
 
 E＝送電線の対地電圧。Ca＝Cb＝Cc（完全ねん架・対称配置）なら分子がゼロになり Es＝0。だから静電誘導対策の要はねん架と対称配置。
 
@@ -74,7 +74,7 @@ Y2
 
 電磁誘導電圧（地絡事故時）
 
- $E_m = \omega M \ell \,(3I_0) = 2\pi f\, M \ell \,(3I_0)\;[\text{V}]$
+ $\begin{aligned} E_m &= \omega M \ell \,(3I_0) \cr &= 2\pi f\, M \ell \,(3I_0)\;[\text{V}] \end{aligned}$
 
 M＝送電線と通信線の相互インダクタンス[H/km]、ℓ＝並行長[km]、3I₀＝地絡電流（零相電流の3倍）[A]。周波数 f・並行長 ℓ・地絡電流が大きいほど、離隔が小さいほど大きくなる。
 

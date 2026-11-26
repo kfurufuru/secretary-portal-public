@@ -62,9 +62,9 @@
 
 全日効率（24h積分）
 
- $\eta_{day} = \dfrac{\sum_k P_{out,k}\,t_k}{\sum_k P_{out,k}\,t_k + 24 P_i + \sum_k \alpha_k^2 P_{c,full}\,t_k} \times 100\,[\%]$
+ $\begin{aligned} \eta_{day} &= \dfrac{W_{out}}{W_{out} + 24 P_i + W_{cu}} \cr &\quad \times 100\,[\%] \cr W_{out} &= \sum_k P_{out,k}\,t_k \cr W_{cu} &= \sum_k \alpha_k^2 P_{c,full}\,t_k \end{aligned}$
 
-Pout,k=Sn·αk·cosθ（時間帯kの出力）、tk=時間帯kの時間[h]（Σtk=24h）、Pi=鉄損[W]（一定）、Pc,full=定格時の銅損[W]。
+Pout,k=Sn·αk·cosθ（時間帯kの出力）、tk=時間帯kの時間[h]（Σtk=24h）、Pi=鉄損[W]（一定）、Pc,full=定格時の銅損[W]。Wout・Wcu=1日の出力電力量・銅損電力量[Wh]。
 
 負荷率は皮相 [kV·A] 基準
 
@@ -94,9 +94,9 @@ Pout,k=Sn·αk·cosθ（時間帯kの出力）、tk=時間帯kの時間[h]（Σt
 
 ② 鉄損総量： $24 P_i = 24\times500 = 12{,}000\,\text{Wh} = 12\,\text{kWh}$
 
-③ 銅損総量： $(0.2^2\times8 + 0.6^2\times10 + 1.0^2\times6)\times1500 = (0.32+3.6+6.0)\times1500 = 9.92\times1500 = 14{,}880\,\text{Wh} \approx 14.88\,\text{kWh}$
+③ 銅損総量： $\begin{aligned} &(0.2^2\times8 + 0.6^2\times10 + 1.0^2\times6)\times1500 \cr &= (0.32+3.6+6.0)\times1500 = 9.92\times1500 \cr &= 14{,}880\,\text{Wh} \approx 14.88\,\text{kWh} \end{aligned}$
 
-④ 全日効率： $\eta_{day} = \dfrac{1360}{1360+12+14.88}\times100 = \dfrac{1360}{1386.88}\times100 \approx 98.06\%$
+④ 全日効率： $\begin{aligned} \eta_{day} &= \dfrac{1360}{1360+12+14.88}\times100 \cr &= \dfrac{1360}{1386.88}\times100 \approx 98.06\% \end{aligned}$
 
 計算チェック
 
@@ -110,7 +110,7 @@ Pout,k=Sn·αk·cosθ（時間帯kの出力）、tk=時間帯kの時間[h]（Σt
 
 年間損失電力量（季節変動なしの仮定）
 
- $W_{loss,year} = (24 P_i + \sum \alpha_k^2 P_{c,full}\,t_k) \times 365\,[\mathrm{Wh/yr}]$
+ $\begin{aligned} W_{loss,year} &= (24 P_i + W_{cu}) \cr &\quad \times 365\,[\mathrm{Wh/yr}] \cr W_{cu} &= \sum_k \alpha_k^2 P_{c,full}\,t_k \end{aligned}$
 
 負荷パターンが季節で変わらないと仮定し、1日の損失を365倍する。
 
@@ -138,7 +138,7 @@ Cは電力量単価。年間損失電力量に単価を掛けて円換算→更�
 
 更新による年間損失削減
 
- $\Delta W_{year} = \{(24 P_{i,old} + \sum \alpha_k^2 P_{c,old}\,t_k) - (24 P_{i,new} + \sum \alpha_k^2 P_{c,new}\,t_k)\}\times365$
+ $\begin{aligned} \Delta W_{year} &= 365\,(W_{old} - W_{new}) \cr W_{old} &= 24 P_{i,old} \cr &\quad + \sum \alpha_k^2 P_{c,old}\,t_k \cr W_{new} &= 24 P_{i,new} \cr &\quad + \sum \alpha_k^2 P_{c,new}\,t_k \end{aligned}$
 
 旧機（old）から新機（new）への更新で、年間損失電力量の差を取る。
 
@@ -258,7 +258,9 @@ I=更新投資額[円]、ΔWyear×C=年間損失削減額[円/年]。
 トラップ
 
 - 負荷率を「kW / 定格 kV·A」で計算する → 誤。負荷率は皮相基準。有効電力300kWは力率で割って皮相375kV·Aに直してから 500 で割る。kWのまま 300/500=0.6 は間違い。
+なぜ：変圧器の巻線を流れる電流は、有効電力ではなく皮相電力 [kV·A] で決まる。銅損は電流で決まるので、負荷率も電流に比例する皮相電力で測る。定格容量が kV·A で書かれているのも同じ理由である。
 - 銅損を負荷率の一次（×α）で計算する → 誤。銅損は  $\alpha^2 P_{c,full}$ 。負荷率0.5のとき銅損は1/4（半分ではない）。0.75のとき0.5625倍。
+なぜ：銅損は巻線の抵抗で生じる  $I^2R$  で、電流の2乗に比例する。負荷率 α は電流に比例するので、銅損は α² 倍になる。
 - 省エネ基準を「40%負荷時」評価と知らない → 誤。設問(a)の分母の  $W_{c40}$  は40%負荷時の銅損で、定格通電時とは違う。0.16を掛け／割り忘れると桁が違う。
 - 軽負荷時間が長いのに鉄損を軽視 → 誤。鉄損は無負荷でもかかる。深夜・休日が長い設備で見落とすと年間損失の半分以上を取りこぼす。
 - 年間値を365倍するのを忘れる → 誤。1日の損失と年間損失で桁が2桁以上違う。
